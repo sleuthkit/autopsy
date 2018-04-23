@@ -59,7 +59,7 @@ public class ViewContextAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());
-    private final Content content;
+    private Content content;
 
     /**
      * An action that displays the context for the source content of an artifact
@@ -79,6 +79,8 @@ public class ViewContextAction extends AbstractAction {
                     || (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK == file.getType() && UserPreferences.hideSlackFilesInDataSourcesTree())) {
                 this.setEnabled(false);
             }
+        } else {
+            this.content =  artifactNode.getLookup().lookup(Content.class);
         }
     }
 

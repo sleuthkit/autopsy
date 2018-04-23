@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,53 +20,44 @@ package org.sleuthkit.autopsy.modules.encryptiondetection;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
+import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- * File ingest module to detect encryption.
+ * Sample data source ingest module that doesn't do much. Demonstrates per
+ * ingest job module settings, checking for job cancellation, updating the
+ * DataSourceIngestModuleProgress object, and use of a subset of the available
+ * ingest services.
  */
-final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
+class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModule {
 
-    private static final int FILE_SIZE_MODULUS = 512;
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
-    private FileTypeDetector fileTypeDetector;
     private Blackboard blackboard;
     private double calculatedEntropy;
 
     private final double minimumEntropy;
-    private final int minimumFileSize;
-    private final boolean fileSizeMultipleEnforced;
-    private final boolean slackFilesAllowed;
 
-    /**
-     * Create a EncryptionDetectionFileIngestModule object that will detect
-     * files that are encrypted and create blackboard artifacts as appropriate.
-     * The supplied EncryptionDetectionIngestJobSettings object is used to
-     * configure the module.
-     */
-    EncryptionDetectionFileIngestModule(EncryptionDetectionIngestJobSettings settings) {
+    EncryptionDetectionDataSourceIngestModule(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropy = settings.getMinimumEntropy();
-        minimumFileSize = settings.getMinimumFileSize();
-        fileSizeMultipleEnforced = settings.isFileSizeMultipleEnforced();
-        slackFilesAllowed = settings.isSlackFilesAllowed();
     }
 
     @Override
@@ -74,41 +65,42 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         try {
             validateSettings();
             blackboard = Case.getOpenCase().getServices().getBlackboard();
-            fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
         }
     }
 
     @Override
-    public IngestModule.ProcessResult process(AbstractFile file) {
+    public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         try {
-            if (isFileEncrypted(file)) {
-                return flagFile(file);
+            System.out.println("PROCESS DS");
+            if (dataSource instanceof Image) {
+                List<VolumeSystem> volumeSystems = ((Image) dataSource).getVolumeSystems();
+                for (VolumeSystem volumeSystem : volumeSystems) {
+                    for (Volume volume : volumeSystem.getVolumes()) {
+                        if (volume.getFileSystems().isEmpty()) {
+                            if (isDataSourceEncrypted(volume)) {
+                                System.out.println("VOLUME ENCRYPTED");
+                                return flagVolume(volume);
+                            }
+                        }
+                    }
+                }
             }
-        } catch (ReadContentInputStreamException ex) {
-            logger.log(Level.WARNING, String.format("Unable to read file '%s'", file.getParentPath() + file.getName()), ex);
+        } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
+            logger.log(Level.WARNING, String.format("Unable to read data source '%s'", dataSource.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
         } catch (IOException | TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to process file '%s'", file.getParentPath() + file.getName()), ex);
+            logger.log(Level.SEVERE, String.format("Unable to process data source '%s'", dataSource.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
         }
 
         return IngestModule.ProcessResult.OK;
     }
 
-    /**
-     * Validate ingest module settings.
-     *
-     * @throws IngestModule.IngestModuleException If the input is empty,
-     *                                            invalid, or out of range.
-     */
     private void validateSettings() throws IngestModule.IngestModuleException {
         EncryptionDetectionTools.validateMinEntropyValue(minimumEntropy);
-        EncryptionDetectionTools.validateMinFileSizeValue(minimumFileSize);
     }
 
     /**
@@ -119,9 +111,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      * @return 'OK' if the file was processed successfully, or 'ERROR' if there
      *         was a problem.
      */
-    private IngestModule.ProcessResult flagFile(AbstractFile file) {
+    private IngestModule.ProcessResult flagVolume(Volume volume) {
         try {
-            BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED);
+            BlackboardArtifact artifact = volume.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED);
 
             try {
                 /*
@@ -141,18 +133,18 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
              * Make an ingest inbox message.
              */
             StringBuilder detailsSb = new StringBuilder();
-            detailsSb.append("File: ").append(file.getParentPath()).append(file.getName()).append("<br/>\n");
+            detailsSb.append("File: ").append(volume.getParent().getUniquePath()).append(volume.getName()).append("<br/>\n");
             detailsSb.append("Entropy: ").append(calculatedEntropy);
 
             services.postMessage(IngestMessage.createDataMessage(EncryptionDetectionModuleFactory.getModuleName(),
-                    "Encryption Detected Match: " + file.getName(),
+                    "Encryption Detected Match: " + volume.getName(),
                     detailsSb.toString(),
-                    file.getName(),
+                    volume.getName(),
                     artifact));
 
             return IngestModule.ProcessResult.OK;
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", volume.getName()), ex); //NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }
     }
@@ -167,47 +159,19 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      *
      * @return True if the AbstractFile is encrypted.
      */
-    private boolean isFileEncrypted(AbstractFile file) throws ReadContentInputStreamException, IOException, TskCoreException {
+    private boolean isDataSourceEncrypted(Content dataSource) throws ReadContentInputStream.ReadContentInputStreamException, IOException, TskCoreException {
         /*
          * Criteria for the checks in this method are partially based on
          * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
          */
 
-        boolean possiblyEncrypted = false;
-
-        /*
-         * Qualify the file type.
-         */
-        if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
-                && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)) {
-            /*
-             * Qualify the file against hash databases.
-             */
-            if (!file.getKnown().equals(TskData.FileKnown.KNOWN)) {
-                /*
-                 * Qualify the size.
-                 */
-                long contentSize = file.getSize();
-                if (contentSize >= minimumFileSize) {
-                    if (!fileSizeMultipleEnforced || (contentSize % FILE_SIZE_MODULUS) == 0) {
-                        /*
-                         * Qualify the MIME type.
-                         */
-                        String mimeType = fileTypeDetector.getMIMEType(file);
-                        if (mimeType.equals("application/octet-stream")) {
-                            possiblyEncrypted = true;
-                        }
-                    }
-                }
-            }
-        }
+        boolean possiblyEncrypted = true;
 
         if (possiblyEncrypted) {
-            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(file);
+            System.out.println("CALCULATE ENTROPY");
+            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(dataSource);
             if (calculatedEntropy >= minimumEntropy) {
+                System.out.println("ENTROPY INDICATED ENCRYPTED DS");
                 return true;
             }
         }
