@@ -26,7 +26,7 @@ import org.openide.windows.WindowManager;
 /**
  * Dialog box for configuring and running common files search.
  */
-public final class CommonFilesDialog extends javax.swing.JDialog {
+final class CommonFilesDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
 
