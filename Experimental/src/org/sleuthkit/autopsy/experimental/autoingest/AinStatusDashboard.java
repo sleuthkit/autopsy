@@ -19,11 +19,15 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Cursor;
+import java.awt.EventQueue;
+import java.util.Observable;
+import java.util.Observer;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
 
 /**
  * A dashboard for monitoring the existing AutoIngestNodes and their status.
  */
-final class AinStatusDashboard extends javax.swing.JPanel {
+final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     private final AutoIngestMonitor autoIngestMonitor;
     private final AinStatusPanel nodesPanel;
@@ -39,6 +43,13 @@ final class AinStatusDashboard extends javax.swing.JPanel {
         nodeStatusScrollPane.add(nodesPanel);
         nodeStatusScrollPane.setViewportView(nodesPanel);
         refreshTables();
+    }
+
+    /**
+     * Adds this panel as an observer of AutoIngestMonitor.
+     */
+    void startUp() {
+        autoIngestMonitor.addObserver(this);
     }
 
     /**
@@ -129,4 +140,12 @@ final class AinStatusDashboard extends javax.swing.JPanel {
     private javax.swing.JScrollPane nodeStatusScrollPane;
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void update(Observable o, Object arg) {
+        if (arg instanceof AutoIngestNodeState)
+            EventQueue.invokeLater(() -> {
+                refreshTables();
+            });
+    }
 }

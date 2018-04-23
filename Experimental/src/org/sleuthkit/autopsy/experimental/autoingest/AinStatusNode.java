@@ -28,10 +28,11 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
 
 /**
- * A node which represents all AutoIngestNodes .
- * Each AuotIngestNode will have a child node representing it and its status.
+ * A node which represents all AutoIngestNodes. Each AutoIngestNode will have a
+ * child node representing it and its status.
  */
 final class AinStatusNode extends AbstractNode {
 
@@ -45,36 +46,30 @@ final class AinStatusNode extends AbstractNode {
     /**
      * A ChildFactory for generating StatusNodes.
      */
-    static class AinStatusChildren extends ChildFactory<AutoIngestJob> {
+    static class AinStatusChildren extends ChildFactory<AutoIngestNodeState> {
 
         private final AutoIngestMonitor monitor;
 
         /**
-         * Create children nodes for the AutoIngestJobsNode which will each
-         * represent a single AutoIngestJob
+         * Create children nodes for the AutoIngestNodeState which will each
+         * represent a single node state
          *
-         * @param autoIngestMonitor the monitor which contains the
-         *                          AutoIngestJobs
+         * @param autoIngestMonitor the monitor which contains the node states
          */
         AinStatusChildren(AutoIngestMonitor autoIngestMonitor) {
             monitor = autoIngestMonitor;
         }
 
         @Override
-        protected boolean createKeys(List<AutoIngestJob> list) {
-            //get keys from monitor
-            //add keys to List
-            //TODO replace getting of pending jobs with getting of AINs 
-            //TODO change appropriate contructors to accomidate AINs instead of AutoIngestJobs
-            list.addAll(monitor.getJobsSnapshot().getPendingJobs());
+        protected boolean createKeys(List<AutoIngestNodeState> list) {
+            list.addAll(monitor.getNodeStates());
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(AutoIngestJob key) {
+        protected Node createNodeForKey(AutoIngestNodeState key) {
             return new StatusNode(key);
         }
-
     }
 
     /**
@@ -82,25 +77,32 @@ final class AinStatusNode extends AbstractNode {
      */
     static final class StatusNode extends AbstractNode {
 
-        private final String hostName;
-        private final String status;
+        private final AutoIngestNodeState nodeState;
 
         /**
-         * Construct a new StatusNode to represent an AutoIngestNode and its status.
+         * Construct a new StatusNode to represent an AutoIngestNode and its
+         * status.
          *
-         * @param job - the AutoIngestJob being represented by this node
+         * @param nodeState - the AutoIngestNodeState being represented by this
+         *                  node
          */
-        StatusNode(AutoIngestJob job) {
+        StatusNode(AutoIngestNodeState nodeState) {
             super(Children.LEAF);
-            hostName = "TODO - ADD HOST NAME";
-            status = "TODO - ADD NODE STATUS";
-            setName(hostName);
-            setDisplayName(hostName);
+            this.nodeState = nodeState;
+            setName(nodeState.getName());
+            setDisplayName(nodeState.getName());
         }
 
         @Override
         @Messages({"AinStatusNode.hostName.title=Host Name",
-            "AinStatusNode.status.title=Status"})
+            "AinStatusNode.status.title=Status",
+            "AinStatusNode.status.running=Running",
+            "AinStatusNode.status.pausedByUser=Paused By User",
+            "AinStatusNode.status.pausedForError=Paused Due to System Error",
+            "AinStatusNode.status.startingup=Starting Up",
+            "AinStatusNode.status.shuttingdown=Shutting Down",
+            "AinStatusNode.status.unknown=Unknown"
+        })
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -109,7 +111,27 @@ final class AinStatusNode extends AbstractNode {
                 s.put(ss);
             }
             ss.put(new NodeProperty<>(Bundle.AinStatusNode_hostName_title(), Bundle.AinStatusNode_hostName_title(), Bundle.AinStatusNode_hostName_title(),
-                    hostName));
+                    nodeState.getName()));
+            String status = Bundle.AinStatusNode_status_unknown();
+            switch (nodeState.getState()) {
+                case RUNNING:
+                    status = Bundle.AinStatusNode_status_running();
+                    break;
+                case STARTING_UP:
+                    status = Bundle.AinStatusNode_status_startingup();
+                    break;
+                case SHUTTING_DOWN:
+                    status = Bundle.AinStatusNode_status_shuttingdown();
+                    break;
+                case PAUSED_BY_REQUEST:
+                    status = Bundle.AinStatusNode_status_pausedByUser();
+                    break;
+                case PAUSED_DUE_TO_SYSTEM_ERROR:
+                    status = Bundle.AinStatusNode_status_pausedForError();
+                    break;
+                default:
+                    break;
+            }
             ss.put(new NodeProperty<>(Bundle.AinStatusNode_status_title(), Bundle.AinStatusNode_status_title(), Bundle.AinStatusNode_status_title(),
                     status));
             return s;
@@ -119,11 +141,12 @@ final class AinStatusNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
-//                if (status.equals("Paused")) {
-//                    actions.add(new AutoIngestAdminActions.ResumeAction());
-//                } else if (status.equals("Running")){
-//                    actions.add(new AutoIngestAdminActions.PauseAction());
-//                }
+                if (nodeState.getState() == AutoIngestNodeState.State.PAUSED_BY_REQUEST
+                        || nodeState.getState() == AutoIngestNodeState.State.PAUSED_DUE_TO_SYSTEM_ERROR) {
+                    actions.add(new AutoIngestAdminActions.ResumeAction());
+                } else if (nodeState.getState() == AutoIngestNodeState.State.RUNNING){
+                    actions.add(new AutoIngestAdminActions.PauseAction());
+                }
                 actions.add(new AutoIngestAdminActions.ShutdownAction());
             }
             return actions.toArray(new Action[actions.size()]);

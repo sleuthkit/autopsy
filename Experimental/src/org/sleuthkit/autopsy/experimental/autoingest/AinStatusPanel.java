@@ -29,7 +29,8 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 
 /**
- * A panel which displays an outline view with all auto ingest nodes and their status.
+ * A panel which displays an outline view with all auto ingest nodes and their
+ * status.
  */
 final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
@@ -49,8 +50,8 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
     }
 
     /**
-     * Set up the AinStatusPanel's so that its outlineView is displaying
-     * the host name and the node status.
+     * Set up the AinStatusPanel's so that its outlineView is displaying the
+     * host name and the node status.
      */
     void customize() {
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AinStatusNode_hostName_title());
@@ -89,11 +90,11 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
     }
 
     /**
-     * Update the contents of this AutoIngestJobsPanel while retaining currently
+     * Update the contents of this AinStatusPanel while retaining currently
      * selected node.
      *
-     * @param jobsSnapshot - the JobsSnapshot which will provide the new
-     *                     contents
+     * @param monitor - the AutoIngestMonitor which will provide the new
+     *                contents
      */
     void refresh(AutoIngestMonitor monitor) {
         outline.setRowSelectionAllowed(false);
@@ -101,7 +102,7 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
         AinStatusNode autoIngestNode = new AinStatusNode(monitor);
         explorerManager.setRootContext(autoIngestNode);
         outline.setRowSelectionAllowed(true);
-        if (selectedNodes.length > 0 && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
+        if (selectedNodes.length > 0 && autoIngestNode.getChildren().findChild(selectedNodes[0].getName()) != null && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
             try {
                 explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
             } catch (PropertyVetoException ignore) {

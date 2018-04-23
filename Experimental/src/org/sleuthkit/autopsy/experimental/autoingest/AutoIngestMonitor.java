@@ -23,14 +23,16 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -39,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
-
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.Event;
 /**
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
@@ -70,6 +72,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     private final Object jobsLock;
     @GuardedBy("jobsLock")
     private JobsSnapshot jobsSnapshot;
+
+    private Map<String, AutoIngestNodeState> nodeStates = new ConcurrentHashMap<>();
 
     /**
      * Constructs an auto ingest monitor responsible for monitoring and
@@ -219,14 +223,15 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     private void handleAutoIngestNodeStateEvent(AutoIngestNodeStateEvent event) {
         if (event.getEventType() == AutoIngestManager.Event.SHUTTING_DOWN) {
             // Remove node from collection.
-            jobsSnapshot.nodeState.remove(event.getNodeName());
+            nodeStates.remove(event.getNodeName());
         } else {
             // Otherwise either create an entry for the given node name or update
             // an existing entry in the map.
-            jobsSnapshot.nodeState.put(event.getNodeName(), event.getEventType());
+            nodeStates.put(event.getNodeName(), new AutoIngestNodeState(event.getNodeName(), event.getEventType()));
         }
         setChanged();
-        notifyObservers(jobsSnapshot);
+        // Trigger a dashboard refresh.
+        notifyObservers(nodeStates.get(event.getNodeName()));
     }
 
     /**
@@ -240,6 +245,14 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         synchronized (jobsLock) {
             return jobsSnapshot;
         }
+    }
+
+    /**
+     * Gets the current state of known AIN's in the system.
+     * @return 
+     */
+    List<AutoIngestNodeState> getNodeStates() {
+        return nodeStates.values().stream().collect(Collectors.toList());
     }
 
     /**
@@ -535,16 +548,14 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A snapshot of the pending jobs queue, running jobs list, completed
-     * jobs list and node state for an auto ingest cluster.
+     * A snapshot of the pending jobs queue, running jobs list and completed jobs
+     * list for an auto ingest cluster.
      */
     static final class JobsSnapshot {
 
         private final Set<AutoIngestJob> pendingJobs = new HashSet<>();
         private final Set<AutoIngestJob> runningJobs = new HashSet<>();
         private final Set<AutoIngestJob> completedJobs = new HashSet<>();
-
-        private HashMap<String, AutoIngestManager.Event> nodeState = new HashMap<>();
 
         /**
          * Gets the snapshot of the pending jobs queue for an auto ingest
@@ -652,6 +663,59 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             jobSet.add(job);
         }
 
+    }
+
+    /**
+     * Class that represents the state of an AIN for the dashboard.
+     */
+    static final class AutoIngestNodeState {
+
+        enum State {
+            STARTING_UP,
+            SHUTTING_DOWN,
+            RUNNING,
+            PAUSED_BY_REQUEST,
+            PAUSED_DUE_TO_SYSTEM_ERROR,
+            UNKNOWN
+        }
+
+        private final String nodeName;
+        private final State nodeState;
+
+        AutoIngestNodeState(String name, Event event) {
+            nodeName = name;
+            switch (event) {
+                case STARTING_UP:
+                    nodeState = State.STARTING_UP;
+                    break;
+                case SHUTTING_DOWN:
+                    nodeState = State.SHUTTING_DOWN;
+                    break;
+                case RUNNING:
+                    nodeState = State.RUNNING;
+                    break;
+                case PAUSED_BY_REQUEST:
+                    nodeState = State.PAUSED_BY_REQUEST;
+                    break;
+                case PAUSED_FOR_SYSTEM_ERROR:
+                    nodeState = State.PAUSED_DUE_TO_SYSTEM_ERROR;
+                    break;
+                case RESUMED:
+                    nodeState = State.RUNNING;
+                    break;
+                default:
+                    nodeState = State.UNKNOWN;
+                    break;
+            }
+        }
+
+        String getName() {
+            return nodeName;
+        }
+
+        State getState() {
+            return nodeState;
+        }
     }
 
     /**

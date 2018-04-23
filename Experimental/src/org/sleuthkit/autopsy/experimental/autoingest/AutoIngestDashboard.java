@@ -38,6 +38,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -237,9 +238,11 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        EventQueue.invokeLater(() -> {
-            refreshTables();
-        });
+        if (arg instanceof JobsSnapshot) {
+            EventQueue.invokeLater(() -> {
+                refreshTables();
+            });
+        }
     }
 
     /**

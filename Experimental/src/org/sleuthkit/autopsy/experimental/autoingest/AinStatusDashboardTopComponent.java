@@ -69,6 +69,7 @@ final class AinStatusDashboardTopComponent extends TopComponent {
                  * most recent configuration.
                  */
                 AinStatusDashboard nodeTab = new AinStatusDashboard(monitor);
+                nodeTab.startUp();
                 nodeTab.setSize(nodeTab.getPreferredSize());
                 tc.add(nodeTab);
                 tc.open();
