@@ -62,18 +62,23 @@ final class EncryptionDetectionTools {
         }
     }
 
+    private EncryptionDetectionTools() {
+    }
+    
     /**
-     * Calculate the entropy of the content. The result is used to qualify the
-     * content as an encrypted content.
+     * Calculate the entropy of the content. The result is used to qualify the content
+     * as possibly encrypted.
      *
      * @param content The content to be calculated against.
      *
      * @return The entropy of the content.
      *
-     * @throws IOException If there is a failure closing or reading from the
-     *                     InputStream.
+     * @throws ReadContentInputStreamException If there is a failure reading
+     *                                         from the InputStream.
+     * @throws IOException                     If there is a failure closing or
+     *                                         reading from the InputStream.
      */
-    static double calculateEntropy(Content content) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
+    private double calculateEntropy(Content content) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
         /*
          * Logic in this method is based on
          * https://github.com/willjasen/entropy/blob/master/entropy.java
@@ -106,6 +111,7 @@ final class EncryptionDetectionTools {
                     entropyAccumulator += (byteProbability * Math.log(byteProbability) * ONE_OVER_LOG2);
                 }
             }
+
             return -entropyAccumulator;
 
         } finally {
@@ -116,8 +122,5 @@ final class EncryptionDetectionTools {
                 bin.close();
             }
         }
-    }
-
-    private EncryptionDetectionTools() {
     }
 }
