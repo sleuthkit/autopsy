@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
         
 
 /**
@@ -308,6 +309,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * @param metric The metric to add. stopTiming() should already have been called.
      */
     private void addTimingMetric(TimingMetric metric) throws HealthMonitorException {
+        
         // Do as little as possible within the synchronized block to minimize
         // blocking with multiple threads.
         synchronized(this) {
@@ -355,9 +357,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             
             EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, normalization);
         } catch (NoCurrentCaseException ex) {
-            // If there's no case open, we just can't do the metrics
-        } catch (Exception ex) {
-            //bleh
+            // If there's no case open, we just can't do the metrics.
+        } catch (TskCoreException ex) {
+            throw new HealthMonitorException("Error running getImages()", ex);
         }
     }
     
