@@ -78,7 +78,7 @@ final class EncryptionDetectionTools {
      * @throws IOException                     If there is a failure closing or
      *                                         reading from the InputStream.
      */
-    private double calculateEntropy(Content content) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
+    static double calculateEntropy(Content content) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
         /*
          * Logic in this method is based on
          * https://github.com/willjasen/entropy/blob/master/entropy.java

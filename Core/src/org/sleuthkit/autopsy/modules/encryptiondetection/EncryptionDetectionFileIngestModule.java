@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.modules.encryptiondetection;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.logging.Level;
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -45,6 +48,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+
 
 /**
  * File ingest module to detect encryption and password protection.
