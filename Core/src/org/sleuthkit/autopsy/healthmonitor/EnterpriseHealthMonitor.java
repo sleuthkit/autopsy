@@ -65,7 +65,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
     private final static String MODULE_NAME = "EnterpriseHealthMonitor";
     private final static String IS_ENABLED_KEY = "is_enabled";
-    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
     
@@ -294,9 +294,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         if(isEnabled.get() && (metric != null)) {
             metric.stopTiming();
             try {
-                System.out.print("### " + metric.getName() + " : " + normalization + "," + metric.getDuration() + ",");
                 metric.normalize(normalization);
-                System.out.println(metric.getDuration());
                 getInstance().addTimingMetric(metric);
             } catch (HealthMonitorException ex) {
                 // We don't want calling methods to have to check for exceptions, so just log it
@@ -310,7 +308,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * @param metric The metric to add. stopTiming() should already have been called.
      */
     private void addTimingMetric(TimingMetric metric) throws HealthMonitorException {
-
         // Do as little as possible within the synchronized block to minimize
         // blocking with multiple threads.
         synchronized(this) {
@@ -340,7 +337,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private void performDatabaseQuery() throws HealthMonitorException {
         try {
             SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
-            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Database: getImages query (normalized based on number of images)");
+            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Database: getImages query");
             List<Image> images = skCase.getImages();
             
             // Through testing we found that this normalization gives us fairly 
@@ -357,19 +354,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             }
             
             EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, normalization);
-            /*metric.stopTiming();
-            
-            // TEMP TEMP TEMP
-            synchronized(this) {
-                if(timingInfoMap.containsKey(metric.getName())) {
-                    //timingInfoMap.get(metric.getName()).addMetric(metric);
-                } else {
-                    TimingInfo info = new TimingInfo(metric);
-                    info.max = images.size();
-                    timingInfoMap.put(metric.getName(), info);
-                }
-            }*/
-            
         } catch (NoCurrentCaseException ex) {
             // If there's no case open, we just can't do the metrics
         } catch (Exception ex) {
@@ -383,7 +367,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      */
     private void gatherTimerBasedMetrics() throws HealthMonitorException {
         // Time a database query
-        //performDatabaseQuery(); // TEMP TEMP put back
+        performDatabaseQuery();
     }
     
     /**
@@ -740,21 +724,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         }
     }
     
-    public static void tempDoTimer() {
-        try {
-            getInstance().healthMonitorExecutor.submit(new EnterpriseHealthMonitor.DatabaseWriteTask());
-        } catch (Exception ex) {
-            
-        }
-    }
-    
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
 
         switch (Case.Events.valueOf(evt.getPropertyName())) {
 
             case CURRENT_CASE:
-            case DATA_SOURCE_ADDED: // TEMP TEMP
                 if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
                     // When a case is closed, write the current metrics to the database
                     healthMonitorExecutor.submit(new EnterpriseHealthMonitor.DatabaseWriteTask());

@@ -74,9 +74,9 @@ public class TimingMetric {
         if (duration != null) {
             if(count < 0) {
                 throw new HealthMonitorException("normalize() called with negative count (" + count + ")");
-            } else if(count > 1) { // Small optimization to prevent dividing by one
+            } else if(count > 1) {
                 duration = duration / count;
-            } // If count = 0, do nothing
+            } // If count is 0 or 1, do nothing
         } else {
             throw new HealthMonitorException("normalize() called before stopTiming()");
         }

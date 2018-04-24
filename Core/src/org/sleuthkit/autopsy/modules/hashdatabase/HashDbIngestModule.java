@@ -184,11 +184,19 @@ public class HashDbIngestModule implements FileIngestModule {
         String md5Hash = file.getMd5Hash();
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
-                TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Disk: Hash Calculation (time per byte nono)");
+                TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Disk Reads: Hash calculation");
                 long calcstart = System.currentTimeMillis();
                 md5Hash = HashUtility.calculateMd5Hash(file);
-                if(file.getSize() > 0) {
-                    EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, 1);
+                if (file.getSize() > 0) {
+                    // Surprisingly, the hash calculation does not seem to be correlated that
+                    // strongly with file size until the files get large.
+                    // Only normalize if the file size is greater than ~1MB.
+                    if (file.getSize() < 1000000) {
+                        EnterpriseHealthMonitor.submitTimingMetric(metric);
+                    } else {
+                        // In testing, this normalization gave reasonable resuls
+                        EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, file.getSize() / 500000);
+                    }
                 }
                 file.setMd5Hash(md5Hash);
                 long delta = (System.currentTimeMillis() - calcstart);
