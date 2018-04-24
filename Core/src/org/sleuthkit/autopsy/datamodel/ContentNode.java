@@ -44,5 +44,5 @@ abstract class ContentNode extends DisplayableItemNode {
      *
      * @return visitor's visit return value
      */
-    public abstract <T> T accept(ContentNodeVisitor<T> v);
+    public abstract <T> T accept(ContentNodeVisitor<T> visitor);
 }

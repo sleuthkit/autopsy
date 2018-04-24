@@ -75,14 +75,14 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
         "VirtualDirectoryNode.createSheet.deviceId.displayName=Device ID",
         "VirtualDirectoryNode.createSheet.deviceId.desc=Device ID of the image"})
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
+        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
@@ -94,22 +94,22 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
             final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
             for (Map.Entry<String, Object> entry : map.entrySet()) {
-                ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+                sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
-            addTagProperty(ss);
+            addTagProperty(sheetSet);
         } else {
-            ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
+            sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_type_desc(),
                     Bundle.VirtualDirectoryNode_createSheet_type_text()));
-            ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_size_name(),
+            sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_size_name(),
                     Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_size_desc(),
                     this.content.getSize()));
             try (SleuthkitCase.CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
                 ResultSet timeZoneSet = query.getResultSet();
                 if (timeZoneSet.next()) {
-                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
+                    sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
                             Bundle.VirtualDirectoryNode_createSheet_timezone_displayName(),
                             Bundle.VirtualDirectoryNode_createSheet_timezone_desc(),
                             timeZoneSet.getString("time_zone")));
@@ -120,7 +120,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             try (SleuthkitCase.CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
                 ResultSet deviceIdSet = query.getResultSet();
                 if (deviceIdSet.next()) {
-                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
+                    sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
                             Bundle.VirtualDirectoryNode_createSheet_deviceId_displayName(),
                             Bundle.VirtualDirectoryNode_createSheet_deviceId_desc(),
                             deviceIdSet.getString("device_id")));
@@ -131,16 +131,16 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
         }
 
-        return s;
+        return sheet;
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }
