@@ -91,6 +91,10 @@ public class FileInstanceNode extends FileNode {
         map.put(CommonFilePropertyType.MimeType.toString(), node.getContent().getMIMEType());
     }
 
+    /**
+     * Encapsulates the columns to be displayed for reach row represented by an 
+     * instance of this object.
+     */
     @NbBundle.Messages({
         "CommonFilePropertyType.fileColLbl=File",
         "CommonFilePropertyType.pathColLbl=Parent Path",

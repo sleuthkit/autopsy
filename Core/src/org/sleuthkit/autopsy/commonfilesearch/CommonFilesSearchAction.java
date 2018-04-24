@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
@@ -46,7 +45,7 @@ final class CommonFilesSearchAction extends CallableSystemAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         new CommonFilesDialog().setVisible(true);
     }
 

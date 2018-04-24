@@ -71,6 +71,9 @@ public class CommonFileChildNodeLoading extends DisplayableItemNode {
         return sheet;
     }
 
+    /**
+     * Represents the sole column for the 'dummy' loading node.
+     */
     @NbBundle.Messages({
         "CommonFileChildLoadingPropertyType.fileColLbl=File"
     })
