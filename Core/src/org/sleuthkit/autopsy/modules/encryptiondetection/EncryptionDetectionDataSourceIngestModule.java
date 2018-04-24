@@ -77,14 +77,12 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         try {
-            System.out.println("PROCESS DS");
             if (dataSource instanceof Image) {
                 List<VolumeSystem> volumeSystems = ((Image) dataSource).getVolumeSystems();
                 for (VolumeSystem volumeSystem : volumeSystems) {
                     for (Volume volume : volumeSystem.getVolumes()) {
                         if (volume.getFileSystems().isEmpty()) {
                             if (isVolumeEncrypted(volume)) {
-                                System.out.println("VOLUME ENCRYPTED");
                                 return flagVolume(volume);
                             }
                         }
