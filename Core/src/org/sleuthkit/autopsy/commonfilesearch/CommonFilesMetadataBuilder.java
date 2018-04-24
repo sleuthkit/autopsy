@@ -45,12 +45,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
+@SuppressWarnings("PMD.AbstractNaming")
 abstract class CommonFilesMetadataBuilder {
 
     private final Map<Long, String> dataSourceIdToNameMap;
     private final boolean filterByMedia;
     private final boolean filterByDoc;
-    private final String filterByMimeTypesWhereClause = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
+    private static final String filterByMimeTypesWhereClause = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     /*
      * The set of the MIME types that will be checked for extension mismatches
@@ -222,9 +223,9 @@ abstract class CommonFilesMetadataBuilder {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
-        if (mimeTypesToFilterOn.size() > 0) {
+        if (!mimeTypesToFilterOn.isEmpty()) {
             for (String mimeType : mimeTypesToFilterOn) {
-                mimeTypeFilter.append("\"").append(mimeType).append("\",");
+                mimeTypeFilter.append('"').append(mimeType).append("\",");
             }
             mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
             mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});

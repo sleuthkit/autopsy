@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel used for common files search configuration and configuration business
  * logic. Nested within CommonFilesDialog.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CommonFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -312,59 +313,6 @@ final class CommonFilesPanel extends javax.swing.JPanel {
                 }
             }
         }.execute();
-    }
-
-    private class DataSourceComboBoxModel extends AbstractListModel<String> implements ComboBoxModel<String> {
-
-        private static final long serialVersionUID = 1L;
-        private final String[] dataSourceList;
-        String selection = null;
-
-        /**
-         * Use this to initialize the panel
-         */
-        DataSourceComboBoxModel() {
-            this.dataSourceList = new String[0];
-        }
-
-        /**
-         * Use this when we have data to display.
-         *
-         * @param theDataSoureList names of data sources for user to pick from
-         */
-        DataSourceComboBoxModel(String[] theDataSoureList) {
-            dataSourceList = theDataSoureList;
-        }
-
-        @Override
-        public void setSelectedItem(Object anItem) {
-            selection = (String) anItem;
-        }
-
-        @Override
-        public Object getSelectedItem() {
-            return selection;
-        }
-
-        @Override
-        public int getSize() {
-            return dataSourceList.length;
-        }
-
-        @Override
-        public String getElementAt(int index) {
-            return dataSourceList[index];
-        }
-
-        @Override
-        public void addListDataListener(ListDataListener l) {
-            this.listenerList.add(ListDataListener.class, l);
-        }
-
-        @Override
-        public void removeListDataListener(ListDataListener l) {
-            this.listenerList.remove(ListDataListener.class, l);
-        }
     }
 
     /**
