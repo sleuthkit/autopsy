@@ -70,7 +70,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.exception=Unexpected Exception loading DataSources."})
     public CommonFilesPanel() {
         initComponents();
-        
+
         this.setupDataSources();
     }
 
@@ -408,9 +408,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         pictureVideoCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.pictureVideoCheckbox.text")); // NOI18N
+        pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pictureVideoCheckboxActionPerformed(evt);
+            }
+        });
 
         documentsCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.documentsCheckbox.text")); // NOI18N
+        documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                documentsCheckboxActionPerformed(evt);
+            }
+        });
 
         dataSourceLabel.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceLabel, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.text")); // NOI18N
@@ -511,32 +521,56 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
-        if (this.allFileCategoriesRadioButton.isSelected()) {
-            
-            this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
-            this.documentsCheckboxState = this.documentsCheckbox.isSelected();
+        this.manageCheckBoxState();
+    }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
+
+    private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
+        this.manageCheckBoxState();
+    }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
+
+    private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
+        this.disableCheckBoxesForEmptySelection();
+    }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
+
+    private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
+        this.disableCheckBoxesForEmptySelection();
+    }//GEN-LAST:event_documentsCheckboxActionPerformed
+
+    public void disableCheckBoxesForEmptySelection() {
+        if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected()) {
+            this.allFileCategoriesRadioButton.setSelected(true);
             
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
         }
-    }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
-
-    private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
-        if (this.selectedFileCategoriesButton.isSelected()) {
-            
-            this.pictureVideoCheckbox.setSelected(this.pictureViewCheckboxState);
-            this.documentsCheckbox.setSelected(this.documentsCheckboxState);
-            
-            this.pictureVideoCheckbox.setEnabled(true);
-            this.documentsCheckbox.setEnabled(true);
-        }
-    }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
+    }
 
     private void withinDataSourceSelected(boolean selected) {
         selectDataSourceComboBox.setEnabled(selected);
         if (selectDataSourceComboBox.isEnabled()) {
             selectDataSourceComboBox.setSelectedIndex(0);
             singleDataSource = true;
+        }
+    }
+
+    private void manageCheckBoxState() {
+
+        if (this.allFileCategoriesRadioButton.isSelected()) {
+
+            this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
+            this.documentsCheckboxState = this.documentsCheckbox.isSelected();
+
+            this.pictureVideoCheckbox.setEnabled(false);
+            this.documentsCheckbox.setEnabled(false);
+        }
+
+        if (this.selectedFileCategoriesButton.isSelected()) {
+
+            this.pictureVideoCheckbox.setSelected(this.pictureViewCheckboxState);
+            this.documentsCheckbox.setSelected(this.documentsCheckboxState);
+
+            this.pictureVideoCheckbox.setEnabled(true);
+            this.documentsCheckbox.setEnabled(true);
         }
     }
 
