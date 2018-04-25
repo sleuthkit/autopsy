@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -29,22 +30,24 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.appservices.AutopsyService;
-import org.sleuthkit.autopsy.progress.ProgressIndicator;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -98,8 +101,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
     /**
      * Add the given Content object to the text index.
+     *
      * @param content The content to index.
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     @Override
     public void index(Content content) throws TskCoreException {
@@ -116,15 +121,15 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 ingester.indexText(new StringsTextExtractor(), content, null);
             } catch (Ingester.IngesterException ex1) {
                 throw new TskCoreException(ex.getCause().getMessage(), ex1);
-            }        
+            }
         }
-        
+
         // TODO: Review whether this is the right thing to do. We typically use
         // a combination of autoCommit and the SearchRunner to ensure that data
         // is committed but that might not be sufficient for reports (or artifacts).
         ingester.commit();
     }
-    
+
     /**
      * Tries to connect to the keyword search service.
      *
@@ -205,7 +210,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                  */
                 KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata);
                 if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
-                    throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));                    
+                    throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));
                 }
             }
             return; //only one core exists for each combination of solr and schema version
@@ -213,9 +218,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         //this code this code will only execute if an index for the current core was not found 
         logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class,
-                 "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+                "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
         throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
-                 "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+                "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
     }
 
     @Override
@@ -231,6 +236,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * Creates/opens the Solr core/text index for a case
      *
      * @param context The case context.
+     *
      * @throws
      * org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException
      */
@@ -366,11 +372,16 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             } else {
                 progress.switchToIndeterminate(Bundle.SolrSearch_openGiantCore_msg());
             }
-            
+
             KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
         }
+        if (context.cancelRequested()) {
+            return;
+        }
+
+        theCase.getSleuthkitCase().registerForEvents(this);
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
@@ -379,6 +390,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * Closes the open core.
      *
      * @param context
+     *
      * @throws
      * org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException
      */
@@ -401,6 +413,26 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             KeywordSearch.getServer().closeCore();
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
+        }
+
+        context.getCase().getSleuthkitCase().unregisterForEvents(this);
+    }
+
+    /**
+     * Event handler for ArtifactPublished events from SleuthkitCase.
+     *
+     * @param event The ArtifactPublished event to handle.
+     */
+    @NbBundle.Messages("SolrSearchService.indexingError=Unable to index blackboard artifact.")
+    @Subscribe
+    void handleNewArtifact(Blackboard.ArtifactPublished event) {
+        BlackboardArtifact bba = event.getArtifact();
+        try {
+            indexArtifact(bba);
+        } catch (TskCoreException ex) {
+            //TODO: is this the right error handling?
+            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), bba.getDisplayName());
         }
     }
 }
