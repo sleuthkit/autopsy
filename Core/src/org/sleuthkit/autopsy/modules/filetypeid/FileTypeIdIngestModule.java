@@ -26,15 +26,16 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFileTypesException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -156,7 +157,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             attributes.add(ruleNameAttribute);
             artifact.addAttributes(attributes);
             try {
-                Case.getOpenCase().getServices().getBlackboard().indexArtifact(artifact);
+                Case.getOpenCase().getSleuthkitCase().getBlackboard().indexArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
             } catch (NoCurrentCaseException ex) {

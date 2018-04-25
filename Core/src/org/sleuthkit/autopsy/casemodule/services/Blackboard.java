@@ -1,7 +1,7 @@
 /*
  * Sleuth Kit Data Model
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,26 +19,23 @@
 package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
-import java.io.IOException;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * A representation of the blackboard, a place where artifacts and their
  * attributes are posted.
  *
  * NOTE: This API of this class is under development.
+ *
+ * @deprecated Use org.sleuthkit.datamodel.Blackboard instead.
  */
+@Deprecated
 public final class Blackboard implements Closeable {
 
-    private SleuthkitCase caseDb;
-    
+    private org.sleuthkit.datamodel.Blackboard delegate;
+
     /**
      * Constructs a representation of the blackboard, a place where artifacts
      * and their attributes are posted.
@@ -46,7 +43,7 @@ public final class Blackboard implements Closeable {
      * @param casedb The case database.
      */
     Blackboard(SleuthkitCase casedb) {
-        this.caseDb = casedb;
+        this.delegate = casedb.getBlackboard();
     }
 
     /**
@@ -57,16 +54,13 @@ public final class Blackboard implements Closeable {
      * @throws BlackboardException If there is a problem indexing the artifact.
      */
     public synchronized void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
-        if (null == caseDb) {
+        if (null == delegate) {
             throw new BlackboardException("Blackboard has been closed");
         }
-        KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        if (null == searchService) {
-            throw new BlackboardException("Keyword search service not found");
-        }
+
         try {
-            searchService.indexArtifact(artifact);
-        } catch (TskCoreException ex) {
+            delegate.indexArtifact(artifact);
+        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException("Error indexing artifact", ex);
         }
     }
@@ -80,23 +74,18 @@ public final class Blackboard implements Closeable {
      *
      * @return A type object representing the artifact type.
      *
-     * @throws BlackboardBlackboardException If there is a problem getting or
-     *                                       adding the artifact type.
+     * @throws BlackboardException If there is a problem getting or adding the
+     *                             artifact type.
      */
     public synchronized BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
-        if (null == caseDb) {
+        if (null == delegate) {
             throw new BlackboardException("Blackboard has been closed");
         }
+
         try {
-            return caseDb.addBlackboardArtifactType(typeName, displayName);
-        } catch (TskDataException typeExistsEx) {
-            try {
-                return caseDb.getArtifactType(typeName);
-            } catch (TskCoreException ex) {
-                throw new BlackboardException("Failed to get or add artifact type", ex);
-            }
-        } catch (TskCoreException ex) {
-            throw new BlackboardException("Failed to get or add artifact type", ex);
+            return delegate.getOrAddArtifactType(typeName, displayName);
+        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+            throw new BlackboardException("Delegate org.sleuthkit.datamodel.Blackboard threw exception.", ex);
         }
     }
 
@@ -110,36 +99,29 @@ public final class Blackboard implements Closeable {
      *
      * @return A type object representing the attribute type.
      *
-     * @throws BlackboardBlackboardException If there is a problem getting or
-     *                                       adding the attribute type.
+     * @throws BlackboardException If there is a problem getting or adding the
+     *                             attribute type.
      */
     public synchronized BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
-        if (null == caseDb) {
+        if (null == delegate) {
             throw new BlackboardException("Blackboard has been closed");
         }
         try {
-            return caseDb.addArtifactAttributeType(typeName, valueType, displayName);
-        } catch (TskDataException typeExistsEx) {
-            try {
-                return caseDb.getAttributeType(typeName);
-            } catch (TskCoreException ex) {
-                throw new BlackboardException("Failed to get or add attribute type", ex);
-            }
-        } catch (TskCoreException ex) {
-            throw new BlackboardException("Failed to get or add attribute type", ex);
+            return delegate.getOrAddAttributeType(typeName, valueType, displayName);
+        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+            throw new BlackboardException("Delegate org.sleuthkit.datamodel.Blackboard threw exception.", ex);
         }
     }
 
     /**
      * Closes the blackboard.
      *
-     * @throws IOException If there is a problem closing the blackboard.
      */
     @Override
-    public synchronized void close() throws IOException {
-        caseDb = null;
+    public synchronized void close() {
+        delegate.close();
+        delegate = null;
     }
-
 
     /**
      * A blackboard exception.

@@ -21,23 +21,22 @@ package org.sleuthkit.autopsy.test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
-
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A file ingest module that creates some interestng artifacts 
- * with attributes based on files for test purposes.
+ * A file ingest module that creates some interestng artifacts with attributes
+ * based on files for test purposes.
  */
 @NbBundle.Messages({
     "InterestingArtifactCreatorIngestModule.exceptionMessage.errorCreatingCustomType=Error creating custom artifact type."
@@ -55,9 +54,9 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
-            Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
+            Blackboard blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
             artifactType = blackboard.getOrAddArtifactType(INT_ARTIFACT_TYPE_NAME, INT_ARTIFACT_DISPLAY_NAME);
-         } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
+        } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.InterestingArtifactCreatorIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
         }
     }
@@ -77,7 +76,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
              * type.
              */
             int randomArtIndex = (int) (Math.random() * 3);
-            Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
+            Blackboard blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
             BlackboardArtifact.Type artifactTypeBase = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAMES[randomArtIndex], ARTIFACT_DISPLAY_NAMES[randomArtIndex]);
             BlackboardArtifact artifactBase = file.newArtifact(artifactTypeBase.getTypeID());
             Collection<BlackboardAttribute> baseAttributes = new ArrayList<>();

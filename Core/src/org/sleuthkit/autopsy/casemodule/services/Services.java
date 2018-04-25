@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class Services implements Closeable {
 
-    private final List<Closeable> services = new ArrayList<>();
+    private final List<Closeable> servicesList = new ArrayList<>();
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
@@ -49,16 +49,16 @@ public class Services implements Closeable {
      */
     public Services(SleuthkitCase caseDb) {
         fileManager = new FileManager(caseDb);
-        services.add(fileManager);
+        servicesList.add(fileManager);
 
         tagsManager = new TagsManager(caseDb);
-        services.add(tagsManager);
+        servicesList.add(tagsManager);
 
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        services.add(keywordSearchService);
+        servicesList.add(keywordSearchService);
 
         blackboard = new Blackboard(caseDb);
-        services.add(blackboard);
+        servicesList.add(blackboard);
     }
 
     /**
@@ -92,7 +92,10 @@ public class Services implements Closeable {
      * Gets the blackboard service for the current case.
      *
      * @return The blackboard service for the current case.
+     *
+     * @deprecated Use SleuthkitCase.getBlackboard() instead.
      */
+    @Deprecated
     public Blackboard getBlackboard() {
         return blackboard;
     }
@@ -104,7 +107,7 @@ public class Services implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        for (Closeable service : services) {
+        for (Closeable service : servicesList) {
             service.close();
         }
     }

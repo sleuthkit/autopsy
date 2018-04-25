@@ -26,7 +26,6 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -36,6 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
@@ -88,7 +88,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);

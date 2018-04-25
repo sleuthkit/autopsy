@@ -30,7 +30,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -138,7 +138,7 @@ public class HashDbIngestModule implements FileIngestModule {
                         enabledHashSets.add(db);
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName()+ " hash set", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Error getting index status for " + db.getDisplayName() + " hash set", ex); //NON-NLS
                 }
             }
         }
@@ -147,15 +147,15 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
 
         // Skip unallocated space files.
-        if ((file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
-                file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
+        if ((file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+             || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
             return ProcessResult.OK;
         }
 
@@ -351,7 +351,7 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     private static synchronized void postSummary(long jobId,
-            List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
+                                                 List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
         IngestJobTotals jobTotals = getTotalsForIngestJobs(jobId);
         totalsForIngestJobs.remove(jobId);
 

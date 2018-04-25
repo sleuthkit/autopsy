@@ -29,7 +29,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -39,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -107,7 +107,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     @Messages({"FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public ProcessResult process(AbstractFile file) {
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();        
+            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -159,7 +159,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     detailsSb.append("Rule Set: " + filesSet.getName());
 
                     services.postMessage(IngestMessage.createDataMessage(InterestingItemsIngestModuleFactory.getModuleName(),
-                            "Interesting File Match: " + filesSet.getName() + "(" + file.getName() +")",
+                            "Interesting File Match: " + filesSet.getName() + "(" + file.getName() + ")",
                             detailsSb.toString(),
                             file.getName(),
                             artifact));
