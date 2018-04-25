@@ -1131,7 +1131,7 @@ public class Case {
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
-                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(true);
+                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
