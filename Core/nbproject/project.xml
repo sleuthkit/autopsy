@@ -412,6 +412,18 @@
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/bcprov-jdk15on-1.54.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-jdk15on-1.54.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-2.1.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-2.1.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jempbox-1.8.13.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jempbox-1.8.13.jar</binary-origin>
             </class-path-extension>
