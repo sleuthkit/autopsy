@@ -638,52 +638,12 @@ public class EventsRepository {
                     if (isNull(f)) {
                         logger.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                     } else {
-                        insertEventsForFile(f);
+                        eventManager.addFileSystemEvents(f);
                         updateProgress(i, numFiles);
                         updateMessage(f.getName());
                     }
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Failed to insert MAC time events for file : " + fID, tskCoreException); // NON-NLS
-                }
-            }
-        }
-
-        private void insertEventsForFile(AbstractFile f) throws TskCoreException {
-            //gather time stamps into map
-            HashMap<EventType, Long> timeMap = new HashMap<>();
-            timeMap.put(EventType.FILE_CREATED, f.getCrtime());
-            timeMap.put(EventType.FILE_ACCESSED, f.getAtime());
-            timeMap.put(EventType.FILE_CHANGED, f.getCtime());
-            timeMap.put(EventType.FILE_MODIFIED, f.getMtime());
-
-            /*
-             * if there are no legitimate ( greater than zero ) time stamps (
-             * eg, logical/local files) skip the rest of the event generation:
-             * this should result in dropping logical files, since they do not
-             * have legitimate time stamps.
-             */
-            if (Collections.max(timeMap.values()) > 0) {
-                final String uniquePath = f.getUniquePath();
-                final String parentPath = f.getParentPath();
-                long datasourceID = f.getDataSource().getId();
-                String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
-
-                String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
-                String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
-                shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
-                String medDesc = datasourceName + parentPath;
-
-                final TskData.FileKnown known = f.getKnown();
-                Set<String> hashSets = f.getHashSetNames();
-                List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
-
-                for (Map.Entry<EventType, Long> timeEntry : timeMap.entrySet()) {
-                    if (timeEntry.getValue() > 0) {
-                        // if the time is legitimate ( greater than zero ) insert it
-                        eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
-                                datasourceID, f.getId(), null, uniquePath, medDesc,
-                                shortDesc, known, hashSets.isEmpty() == false, tags.isEmpty() == false);
-                    }
                 }
             }
         }
@@ -720,7 +680,7 @@ public class EventsRepository {
                 for (int i = 0; i < numArtifacts; i++) {
                     try {
                         //for each artifact, extract the relevant information for the descriptions
-                        insertEventForArtifact(type, blackboardArtifacts.get(i));
+                        eventManager.addArtifactEvent(type, blackboardArtifacts.get(i));
                         updateProgress(i, numArtifacts);
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "There was a problem inserting event for artifact: " + blackboardArtifacts.get(i).getArtifactID(), ex); // NON-NLS
@@ -728,26 +688,6 @@ public class EventsRepository {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "There was a problem getting events with sub type " + type.getDisplayName() + ".", ex); // NON-NLS
-            }
-        }
-
-        private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart) throws TskCoreException {
-            ArtifactEventType.AttributeEventDescription eventDescription = type.buildEventDescription(bbart);
-
-            // if the time is legitimate ( greater than zero ) insert it into the db
-            if (eventDescription != null && eventDescription.getTime() > 0) {
-                long objectID = bbart.getObjectID();
-                AbstractFile f = skCase.getAbstractFileById(objectID);
-                long datasourceID = f.getDataSource().getId();
-                long artifactID = bbart.getArtifactID();
-                Set<String> hashSets = f.getHashSetNames();
-                List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
-                String fullDescription = eventDescription.getFullDescription();
-                String medDescription = eventDescription.getMedDescription();
-                String shortDescription = eventDescription.getShortDescription();
-                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID,
-                        objectID, artifactID, fullDescription, medDescription, shortDescription,
-                        null, hashSets.isEmpty() == false, tags.isEmpty() == false);
             }
         }
     }
