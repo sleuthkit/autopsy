@@ -682,7 +682,7 @@ public class EventsRepository {
                         // if the time is legitimate ( greater than zero ) insert it
                         eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
                                 datasourceID, f.getId(), null, uniquePath, medDesc,
-                                shortDesc, known, hashSets, tags);
+                                shortDesc, known, hashSets.isEmpty() == false, tags.isEmpty() == false);
                     }
                 }
             }
@@ -745,7 +745,9 @@ public class EventsRepository {
                 String fullDescription = eventDescription.getFullDescription();
                 String medDescription = eventDescription.getMedDescription();
                 String shortDescription = eventDescription.getShortDescription();
-                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags);
+                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID,
+                        objectID, artifactID, fullDescription, medDescription, shortDescription,
+                        null, hashSets.isEmpty() == false, tags.isEmpty() == false);
             }
         }
     }

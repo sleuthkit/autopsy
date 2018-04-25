@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.eventtype;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.scene.image.Image;
@@ -90,8 +91,24 @@ final public class EventTypeUtils {
         return IMAGE_BASE_PATH + imageFileName;
     }
 
-    public static Color getColor(EventType superType) {
-        return new Color(superType.getTypeID(), superType.getSuperType().getTypeID(), 0, 0);
+    public static Color getColor(EventType type) {
+        if (type.equals(EventType.ROOT_EVEN_TYPE)) {
+            return Color.hsb(359, .9, .9, 0);
+        }
+
+        EventType superType = type.getSuperType();
+
+        Color baseColor = getColor(superType);
+        int siblings = superType.getSiblingTypes().stream()
+                .max((t, t1) -> Integer.compare(t.getSubTypes().size(), t1.getSubTypes().size()))
+                .get().getSubTypes().size() + 1;
+        int superSiblingsCount = superType.getSiblingTypes().size();
+
+        int ordinal = new ArrayList<>(type.getSiblingTypes()).indexOf(type);
+        double offset = (360.0 / superSiblingsCount) / siblings;
+        Color deriveColor = baseColor.deriveColor(ordinal * offset, 1, 1, 1);
+
+        return Color.hsb(deriveColor.getHue(), deriveColor.getSaturation(), deriveColor.getBrightness());
     }
 
     private EventTypeUtils() {
