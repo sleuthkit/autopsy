@@ -151,7 +151,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 /*
                  * Index the artifact for keyword search.
                  */
-                blackboard.indexArtifact(artifact);
+                blackboard.publishArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }

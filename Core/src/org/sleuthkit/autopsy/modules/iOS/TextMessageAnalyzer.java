@@ -169,7 +169,7 @@ class TextMessageAnalyzer {
                     bba.addAttributes(attributes);
                     try {
                         // index the artifact for keyword search
-                        blackboard.indexArtifact(bba);
+                        blackboard.publishArtifact(bba);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(

@@ -146,7 +146,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.indexArtifact(bart);
+                    blackboard.publishArtifact(bart);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(FileExtMismatchDetectorModuleFactory.getModuleName(), Bundle.FileExtMismatchIngestModule_indexError_message());

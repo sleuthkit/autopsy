@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -299,7 +299,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
             try {
                 // index the artifact for keyword search
-                blackboard.indexArtifact(badFile);
+                blackboard.publishArtifact(badFile);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
