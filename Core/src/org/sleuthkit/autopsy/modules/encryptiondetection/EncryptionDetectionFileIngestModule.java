@@ -74,6 +74,13 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private static final int FILE_SIZE_MODULUS = 512;
     private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
     private static final int BYTE_OCCURENCES_BUFFER_SIZE = 256;
+    
+    private static final String MIME_TYPE_OOXML_PROTECTED = "application/x-ooxml-protected";
+    private static final String MIME_TYPE_MSWORD = "application/msword";
+    private static final String MIME_TYPE_MSEXCEL = "application/vnd.ms-excel";
+    private static final String MIME_TYPE_MSPOWERPOINT = "application/vnd.ms-powerpoint";
+    private static final String MIME_TYPE_MSACCESS = "application/x-msaccess";
+    private static final String MIME_TYPE_PDF = "application/pdf";
 
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
@@ -247,9 +254,8 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
         boolean passwordProtected = false;
 
-        String mimeType = file.getMIMEType();
-        switch (mimeType) {
-            case "application/x-ooxml-protected":
+        switch (file.getMIMEType()) {
+            case MIME_TYPE_OOXML_PROTECTED:
                 /*
                  * Office Open XML files that are password protected can be
                  * determined so simply by checking the MIME type.
@@ -257,10 +263,10 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 passwordProtected = true;
                 break;
 
-            case "application/msword":
-            case "application/vnd.ms-excel":
-            case "application/vnd.ms-powerpoint":
-            case "application/pdf": {
+            case MIME_TYPE_MSWORD:
+            case MIME_TYPE_MSEXCEL:
+            case MIME_TYPE_MSPOWERPOINT:
+            case MIME_TYPE_PDF: {
                 /*
                  * A file of one of these types will be determined to be
                  * password protected or not by attempting to parse it via Tika.
@@ -292,7 +298,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 break;
             }
 
-            case "application/x-msaccess": {
+            case MIME_TYPE_MSACCESS: {
                 /*
                  * Access databases are determined to be password protected
                  * using Jackcess. If the database can be opened, the password
