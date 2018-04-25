@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.Event;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
 /**
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
@@ -61,10 +62,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
         AutoIngestManager.Event.JOB_STARTED.toString(),
         AutoIngestManager.Event.RUNNING.toString(),
-        AutoIngestManager.Event.PAUSED_BY_REQUEST.toString(),
+        AutoIngestManager.Event.PAUSED_BY_USER_REQUEST.toString(),
         AutoIngestManager.Event.PAUSED_FOR_SYSTEM_ERROR.toString(),
         AutoIngestManager.Event.STARTING_UP.toString(),
         AutoIngestManager.Event.SHUTTING_DOWN.toString(),
+        AutoIngestManager.Event.SHUTDOWN.toString(),
         AutoIngestManager.Event.RESUMED.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
@@ -221,9 +223,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @param event A node state change event.
      */
     private void handleAutoIngestNodeStateEvent(AutoIngestNodeStateEvent event) {
-        if (event.getEventType() == AutoIngestManager.Event.SHUTTING_DOWN) {
+        AutoIngestNodeState oldNodeState = null;
+        if (event.getEventType() == AutoIngestManager.Event.SHUTDOWN) {
             // Remove node from collection.
-            nodeStates.remove(event.getNodeName());
+            oldNodeState = nodeStates.remove(event.getNodeName());
         } else {
             // Otherwise either create an entry for the given node name or update
             // an existing entry in the map.
@@ -231,7 +234,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         }
         setChanged();
         // Trigger a dashboard refresh.
-        notifyObservers(nodeStates.get(event.getNodeName()));
+        notifyObservers(oldNodeState == null ? nodeStates.get(event.getNodeName()) : oldNodeState);
     }
 
     /**
@@ -523,6 +526,45 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Send the given control event to the given node.
+     *
+     * @param eventType The type of control event to send.
+     * @param nodeName  The name of the node to send it to.
+     */
+    private void sendControlEventToNode(ControlEventType eventType, String nodeName) {
+        new Thread(() -> {
+            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName));
+        }).start();
+    }
+
+    /**
+     * Tell the specified node to pause.
+     *
+     * @param nodeName
+     */
+    void pauseAutoIngestNode(String nodeName) {
+        sendControlEventToNode(ControlEventType.PAUSE, nodeName);
+    }
+
+    /**
+     * Tell the specified node to resume.
+     *
+     * @param nodeName
+     */
+    void resumeAutoIngestNode(String nodeName) {
+        sendControlEventToNode(ControlEventType.RESUME, nodeName);
+    }
+
+    /**
+     * Tell the specified node to shutdown.
+     *
+     * @param nodeName
+     */
+    void shutdownAutoIngestNode(String nodeName) {
+        sendControlEventToNode(ControlEventType.SHUTDOWN, nodeName);
+    }
+
+    /**
      * A task that queries the coordination service for auto ingest manifest
      * node data and converts it to auto ingest jobs for publication top its
      * observers.
@@ -697,7 +739,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 case RUNNING:
                     nodeState = State.RUNNING;
                     break;
-                case PAUSED_BY_REQUEST:
+                case PAUSED_BY_USER_REQUEST:
                     nodeState = State.PAUSED_BY_REQUEST;
                     break;
                 case PAUSED_FOR_SYSTEM_ERROR:

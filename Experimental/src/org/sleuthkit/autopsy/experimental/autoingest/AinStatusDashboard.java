@@ -151,9 +151,10 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof AutoIngestNodeState)
+        if (arg instanceof AutoIngestNodeState) {
             EventQueue.invokeLater(() -> {
                 refreshTables();
             });
+        }
     }
 }

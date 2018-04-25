@@ -142,12 +142,11 @@ final class AinStatusNode extends AbstractNode {
             List<Action> actions = new ArrayList<>();
             if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                 if (nodeState.getState() == AutoIngestNodeState.State.PAUSED_BY_REQUEST
-                        || nodeState.getState() == AutoIngestNodeState.State.PAUSED_DUE_TO_SYSTEM_ERROR) {
-                    actions.add(new AutoIngestAdminActions.ResumeAction());
-                } else if (nodeState.getState() == AutoIngestNodeState.State.RUNNING){
-                    actions.add(new AutoIngestAdminActions.PauseAction());
+                        || nodeState.getState() == AutoIngestNodeState.State.PAUSED_DUE_TO_SYSTEM_ERROR
+                        || nodeState.getState() == AutoIngestNodeState.State.RUNNING) {
+                    actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.PauseResumeAction(nodeState));
                 }
-                actions.add(new AutoIngestAdminActions.ShutdownAction());
+                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.ShutdownAction(nodeState));
             }
             return actions.toArray(new Action[actions.size()]);
         }
