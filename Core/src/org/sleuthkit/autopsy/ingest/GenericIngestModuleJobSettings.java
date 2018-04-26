@@ -32,21 +32,36 @@ public class GenericIngestModuleJobSettings implements IngestModuleIngestJobSett
         return serialVersionUID;
     }
     
-    private Map<String, String> settings;
+    private final Map<String, String> settings;
     
     public GenericIngestModuleJobSettings(){
         this.settings = new HashMap<>();
         
     }
     
-    public Map<String,String> getSettings(){
-        return settings;
+    /**
+     * Return the string value for passed key parameter from the settings HashMap
+     * When the key does not exist null will be returned.
+     * @param key The key for setting to be fetched
+     * @return The value for the key passed as parameter
+     */
+    public String getSettings(String key){
+        return settings.get(key);
     }
     
+    /**
+     * Adds the passed key value pair to the settings HashMap
+     * @param key The key to be added to the settings
+     * @param value The value to be added for the key
+     */
     public void setSettings(String key ,String value){
         settings.put(key, value);
     }
     
+    /**
+     * removes the passed key parameter from the settings HashMap
+     * @param key The key to be removed from settings
+     */
     public void removeSettings(String key){
         settings.remove(key);
     }
