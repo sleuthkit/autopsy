@@ -44,20 +44,19 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Data source module to detect encryption.
  */
-class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModule {
+final class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModule {
 
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private Blackboard blackboard;
     private double calculatedEntropy;
-
     private final double minimumEntropy;
-    
+
     /**
-     * Create a EncryptionDetectionDataSourceIngestModule object that will detect
-     * volumes that are encrypted and create blackboard artifacts as appropriate.
-     * The supplied EncryptionDetectionIngestJobSettings object is used to
-     * configure the module.
+     * Create an EncryptionDetectionDataSourceIngestModule object that will
+     * detect volumes that are encrypted and create blackboard artifacts as
+     * appropriate. The supplied EncryptionDetectionIngestJobSettings object is
+     * used to configure the module.
      */
     EncryptionDetectionDataSourceIngestModule(EncryptionDetectionIngestJobSettings settings) {
         minimumEntropy = settings.getMinimumEntropy();
@@ -81,10 +80,8 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
                 List<VolumeSystem> volumeSystems = ((Image) dataSource).getVolumeSystems();
                 for (VolumeSystem volumeSystem : volumeSystems) {
                     for (Volume volume : volumeSystem.getVolumes()) {
-                        if (volume.getFileSystems().isEmpty()) {
-                            if (isVolumeEncrypted(volume)) {
-                                return flagVolume(volume);
-                            }
+                        if (isVolumeEncrypted(volume)) {
+                            return flagVolume(volume);
                         }
                     }
                 }
@@ -100,6 +97,14 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
         return IngestModule.ProcessResult.OK;
     }
 
+    /**
+     * Validate the relevant settings for the
+     * EncryptionDetectionDataSourceIngestModule
+     *
+     * @throws IngestModule.IngestModuleException If the input is empty,
+     *                                            invalid, or out of range.
+     *
+     */
     private void validateSettings() throws IngestModule.IngestModuleException {
         EncryptionDetectionTools.validateMinEntropyValue(minimumEntropy);
     }
@@ -109,8 +114,8 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
      *
      * @param The volume to be processed.
      *
-     * @return 'OK' if the volume was processed successfully, or 'ERROR' if there
-     *         was a problem.
+     * @return 'OK' if the volume was processed successfully, or 'ERROR' if
+     *         there was a problem.
      */
     private IngestModule.ProcessResult flagVolume(Volume volume) {
         try {
@@ -133,7 +138,7 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
             /*
              * Make an ingest inbox message.
              */
-            StringBuilder detailsSb = new StringBuilder();
+            StringBuilder detailsSb = new StringBuilder("");
             detailsSb.append("File: ").append(volume.getParent().getUniquePath()).append(volume.getName()).append("<br/>\n");
             detailsSb.append("Entropy: ").append(calculatedEntropy);
 
@@ -151,12 +156,10 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
     }
 
     /**
-     * This method checks if the AbstractFile input is encrypted. Initial
-     * qualifications require that it be an actual file that is not known, meets
-     * file size requirements, and has a MIME type of
-     * 'application/octet-stream'.
+     * This method checks if the Volume input is encrypted. Initial
+     * qualifications require that the Volume not have a file system.
      *
-     * @param file AbstractFile to be checked.
+     * @param volume Volume to be checked.
      *
      * @return True if the Volume is encrypted.
      */
@@ -165,16 +168,12 @@ class EncryptionDetectionDataSourceIngestModule implements DataSourceIngestModul
          * Criteria for the checks in this method are partially based on
          * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
          */
-
-        boolean possiblyEncrypted = true;
-
-        if (possiblyEncrypted) {
+        if (volume.getFileSystems().isEmpty()) {
             calculatedEntropy = EncryptionDetectionTools.calculateEntropy(volume);
             if (calculatedEntropy >= minimumEntropy) {
                 return true;
             }
         }
-
         return false;
     }
 }

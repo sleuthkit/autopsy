@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Content;
 
 /**
- *
+ * Class containing common methods concerning the Encryption Detection module.
  */
 final class EncryptionDetectionTools {
 
@@ -35,12 +35,10 @@ final class EncryptionDetectionTools {
     private static final int BYTE_OCCURENCES_BUFFER_SIZE = 256;
     static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
     static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
-
     static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
 
     @NbBundle.Messages({
-        "EncryptionDetectionTools.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0.",
-        "EncryptionDetectionTools.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater."
+        "EncryptionDetectionTools.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0."
     })
     /**
      * Check if the minimum entropy setting is in the accepted range for this
@@ -52,6 +50,9 @@ final class EncryptionDetectionTools {
         }
     }
 
+    @NbBundle.Messages({
+        "EncryptionDetectionTools.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater."
+    })
     /**
      * Check if the minimum file size setting is in the accepted range for this
      * module.
@@ -62,12 +63,10 @@ final class EncryptionDetectionTools {
         }
     }
 
-    private EncryptionDetectionTools() {
-    }
-    
+
     /**
-     * Calculate the entropy of the content. The result is used to qualify the content
-     * as possibly encrypted.
+     * Calculate the entropy of the content. The result is used to qualify the
+     * content as possibly encrypted.
      *
      * @param content The content to be calculated against.
      *
@@ -122,5 +121,11 @@ final class EncryptionDetectionTools {
                 bin.close();
             }
         }
+    }
+    
+    /**
+     * Private constructor for Encryption Detection Tools class.
+     */
+    private EncryptionDetectionTools() {
     }
 }
