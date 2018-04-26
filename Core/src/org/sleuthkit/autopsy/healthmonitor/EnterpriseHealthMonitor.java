@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.List;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import java.util.logging.Level;
 import java.util.Random;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -51,6 +53,10 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+        
 
 /**
  * Class for recording data on the health of the system.
@@ -274,11 +280,33 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Submit the metric that was previously obtained through getTimingMetric(),
+     * incorporating a count that the time should be divided by.
+     * Call this immediately after the section of code being timed.
+     * This method is safe to call regardless of whether the Enterprise Health
+     * Monitor is enabled.
+     * @param metric The TimingMetric object obtained from getTimingMetric()
+     * @param normalization The number to divide the time by (a zero here will be treated as a one)
+     */
+    public static void submitNormalizedTimingMetric(TimingMetric metric, long normalization) {
+        if(isEnabled.get() && (metric != null)) {
+            metric.stopTiming();
+            try {
+                metric.normalize(normalization);
+                getInstance().addTimingMetric(metric);
+            } catch (HealthMonitorException ex) {
+                // We don't want calling methods to have to check for exceptions, so just log it
+                logger.log(Level.SEVERE, "Error adding timing metric", ex);
+            }
+        }
+    }
+    
+    /**
      * Add the timing metric data to the map.
      * @param metric The metric to add. stopTiming() should already have been called.
      */
     private void addTimingMetric(TimingMetric metric) throws HealthMonitorException {
-
+        
         // Do as little as possible within the synchronized block to minimize
         // blocking with multiple threads.
         synchronized(this) {
@@ -297,11 +325,56 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Time a database query.
+     * Database queries are hard to test in normal processing because the time
+     * is so dependent on the size of the tables being queried. We use getImages here
+     * because every table it queries is the same size (one entry for each image) so
+     * we a) know the size of the tables and b) can use that table size to do
+     * normalization.
+     * @throws HealthMonitorException 
+     */
+    private void performDatabaseQuery() throws HealthMonitorException {
+        try {
+            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Database: getImages query");
+            List<Image> images = skCase.getImages();
+            
+            // Through testing we found that this normalization gives us fairly 
+            // consistent results for different numbers of data sources.
+            long normalization = images.size();
+            if (images.isEmpty()) {
+                normalization += 2;
+            } else if (images.size() == 1){
+                normalization += 3;
+            } else if (images.size() < 10) {
+                normalization += 5;
+            } else {
+                normalization += 7;
+            }
+            
+            EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, normalization);
+        } catch (NoCurrentCaseException ex) {
+            // If there's no case open, we just can't do the metrics.
+        } catch (TskCoreException ex) {
+            throw new HealthMonitorException("Error running getImages()", ex);
+        }
+    }
+    
+    /**
+     * Collect metrics at a scheduled time.
+     * @throws HealthMonitorException 
+     */
+    private void gatherTimerBasedMetrics() throws HealthMonitorException {
+        // Time a database query
+        performDatabaseQuery();
+    }
+    
+    /**
      * Write the collected metrics to the database.
      * @throws HealthMonitorException 
      */
     private void writeCurrentStateToDatabase() throws HealthMonitorException {
-                
+        
         Map<String, TimingInfo> timingMapCopy;
         
         // Do as little as possible within the synchronized block since it will
@@ -733,6 +806,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         public void run() {
             try {
                 getInstance().updateFromGlobalEnabledStatus();
+                getInstance().gatherTimerBasedMetrics();
                 getInstance().writeCurrentStateToDatabase();
             } catch (HealthMonitorException ex) {
                 logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
