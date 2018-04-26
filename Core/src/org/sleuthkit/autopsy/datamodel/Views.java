@@ -32,8 +32,8 @@ public class Views implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     public SleuthkitCase getSleuthkitCase() {

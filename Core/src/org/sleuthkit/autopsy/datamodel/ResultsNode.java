@@ -55,8 +55,8 @@ public class ResultsNode extends DisplayableItemNode {
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override
@@ -65,19 +65,19 @@ public class ResultsNode extends DisplayableItemNode {
         "ResultsNode.createSheet.name.displayName=Name",
         "ResultsNode.createSheet.name.desc=no description"})
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
-        ss.put(new NodeProperty<>(Bundle.ResultsNode_createSheet_name_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ResultsNode_createSheet_name_name(),
                 Bundle.ResultsNode_createSheet_name_displayName(),
                 Bundle.ResultsNode_createSheet_name_desc(),
                 NAME
         ));
-        return s;
+        return sheet;
     }
 
     @Override
