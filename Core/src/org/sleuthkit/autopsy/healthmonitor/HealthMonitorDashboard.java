@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Font;
 import java.io.File;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -57,7 +56,7 @@ public class HealthMonitorDashboard {
     
     private final static Logger logger = Logger.getLogger(HealthMonitorDashboard.class.getName());
     
-    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
+    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
     
     Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
@@ -165,8 +164,8 @@ public class HealthMonitorDashboard {
               
         // Add title
         JLabel timingMetricTitle = new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_timingMetricsTitle());
-        timingMetricTitle.setFont(new Font("Serif", Font.BOLD, 20));
         timingMetricPanel.add(timingMetricTitle);
+        timingMetricPanel.add(new JSeparator());
         
         // If the monitor isn't enabled, just add a message
         if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
@@ -204,7 +203,7 @@ public class HealthMonitorDashboard {
                         "HealthMonitorDashboard.createTimingControlPanel.maxDays=Max days to display"})
     private JPanel createTimingControlPanel() {
         JPanel timingControlPanel = new JPanel();
-        timingControlPanel.setBorder(BorderFactory.createEtchedBorder());
+        //timingControlPanel.setBorder(BorderFactory.createEtchedBorder());
         
         // If the monitor is not enabled, don't add any components
         if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
@@ -271,11 +270,6 @@ public class HealthMonitorDashboard {
             }
         });
         
-        // Create the panel
-        //timingButtonPanel = new JPanel();
-        //timingButtonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        //timingButtonPanel.setBorder(BorderFactory.createEtchedBorder());
-        
         // Add the date range combo box and label to the panel
         timingControlPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingControlPanel_maxDays()));
         timingControlPanel.add(dateComboBox);
@@ -323,11 +317,12 @@ public class HealthMonitorDashboard {
                 hostToDisplay = hostComboBox.getSelectedItem().toString();
             }
             
+            // Generate the graph
             TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(intermediateTimingDataForDisplay, 
                     TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true);
-            // Add the metric name
+            
+            // Add the metric name and the graph to the panel
             JLabel metricNameLabel = new JLabel(name);
-            metricNameLabel.setFont(new Font("Serif", Font.BOLD, 12));
             graphPanel.add(metricNameLabel);
             singleTimingGraphPanel.setPreferredSize(new Dimension(900,250));
             graphPanel.add(singleTimingGraphPanel);
@@ -388,6 +383,7 @@ public class HealthMonitorDashboard {
             }
         });
         
+        // Add the buttons
         adminPanel.add(enableButton);
         adminPanel.add(Box.createHorizontalStrut(25));
         adminPanel.add(disableButton);
@@ -443,7 +439,7 @@ public class HealthMonitorDashboard {
                     return dateRange;
                 }
             }
-            return ALL; // If the comparison failed, return the default
+            return ALL; // If the comparison failed, return a default
         }
     }
     

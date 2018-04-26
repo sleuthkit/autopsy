@@ -434,7 +434,7 @@ public class TestPanel extends javax.swing.JDialog {
         try {
             int nDays = Integer.valueOf(nDaysTextField.getText());
             int nNodes = Integer.valueOf(nNodesTextField.getText());
-            EnterpriseHealthMonitor.getInstance().populateDatabase(nDays, nNodes, false); // TEMP TEMP
+            EnterpriseHealthMonitor.getInstance().populateDatabaseWithSampleData(nDays, nNodes, false); // TEMP TEMP
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -459,7 +459,7 @@ public class TestPanel extends javax.swing.JDialog {
         try {
             int nDays = Integer.valueOf(nDaysTextField.getText());
             int nNodes = Integer.valueOf(nNodesTextField.getText());
-            EnterpriseHealthMonitor.getInstance().populateDatabase(nDays, nNodes, true); // TEMP TEMP
+            EnterpriseHealthMonitor.getInstance().populateDatabaseWithSampleData(nDays, nNodes, true); // TEMP TEMP
         } catch (Exception ex) {
             ex.printStackTrace();
         }

@@ -800,6 +800,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         /**
          * Perform all periodic tasks:
          * - Check if monitoring has been enabled / disabled in the database
+         * - Gather any additional metrics
          * - Write current metric data to the database
          */
         @Override
@@ -831,28 +832,21 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     /**
      * Debugging method to generate sample data for the database.
      * It will delete all current timing data and replace it with randomly generated values.
-     * If it is set to generate data for more than one node, the second node may be set to
-     * take longer than the others.
+     * If there is more than one node, the second node's times will trend upwards in the last few days.
      */
-    final void populateDatabase(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
+    final void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
         
         if(! isEnabled.get()) {
             throw new HealthMonitorException("Can't populate database - monitor not enabled");
         }
         
-        // Write to the database
+        // Get the database lock
         CoordinationService.Lock lock = getSharedDbLock();
         if(lock == null) {
             throw new HealthMonitorException("Error getting database lock");
         }
         
-        int minIndexTime = 9000000;
-        int maxIndexTimeOverMin = 50000000;
-        long indexMultiplier = 1;  // To test different scales
-        
-        int minConnTime = 15000000;
-        int maxConnTimeOverMin = 18000000;
-        long connTimeMultiplier = 1; // To test different scales
+        String[] metricNames = {"Disk Reads: Hash calculation", "Database: getImages query", "Solr: Index chunk", "Solr: Connectivity check"}; // NON-NLS 
         
         Random rand = new Random();
         
@@ -869,118 +863,102 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             
             try (Statement statement = conn.createStatement()) {
 
-                statement.execute("DELETE FROM timing_data");
+                statement.execute("DELETE FROM timing_data"); // NON-NLS
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                logger.log(Level.SEVERE, "Error clearing timing data", ex);
+                return;
             }
             
-            for(int node = 0;node < nNodes; node++) {
+            
+
+            // Add timing metrics to the database
+            String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
+
+                double count = 0;
+                double maxCount = nDays * 24 + 1;
+
+                for(String metricName:metricNames) {
+
+                    long baseIndex = rand.nextInt(900) + 100;
+                    int multiplier = rand.nextInt(5);
+                    long minIndexTimeNanos;
+                    switch(multiplier) {
+                        case 0:
+                            minIndexTimeNanos = baseIndex;
+                            break;
+                        case 1:
+                            minIndexTimeNanos = baseIndex * 1000;
+                            break;
+                        default:
+                            minIndexTimeNanos = baseIndex * 1000 * 1000;
+                    }
+
+                    long maxIndexTimeOverMin = minIndexTimeNanos * 3;
+                    
+                    for(int node = 0;node < nNodes; node++) {
                 
-                String host = "testHost" + node;
-
-                // Add timing metrics to the database
-                String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
-
-                    double count = 0;
-                    double maxCount = nDays * 24 + 1;
-                    
-                    // Record index chunk every hour
-                    for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += millisPerHour) {
-
-                        long aveTime;
+                        String host = "testHost" + node; // NON-NLS
                         
-                        // This creates data that increases in the last couple of days of the simulated
-                        // collection
-                        count++;
-                        double slowNodeMultiplier = 1.0;
-                        if((maxCount - count) <= 3 * 24) {
-                            slowNodeMultiplier += (3 - (maxCount - count) / 24) * 0.33;
-                        }
-                        
-                        if( ! createVerificationData ) {
-                            // Try to make a reasonable sample data set, with most points in a small range
-                            // but some higher and lower
-                            int outlierVal = rand.nextInt(30);
-                            if(outlierVal < 2){
-                                aveTime = minIndexTime + maxIndexTimeOverMin + rand.nextInt(maxIndexTimeOverMin);
-                            } else if(outlierVal == 2){
-                                aveTime = (minIndexTime / 2) + rand.nextInt(minIndexTime / 2);
-                            } else if(outlierVal < 17) {
-                                aveTime = minIndexTime + (rand.nextInt(maxIndexTimeOverMin) / 2);
+                        // Record data every hour, with a small amount of randomness about when it starts
+                        for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += millisPerHour) {
+
+                            double aveTime;
+
+                            // This creates data that increases in the last couple of days of the simulated
+                            // collection
+                            count++;
+                            double slowNodeMultiplier = 1.0;
+                            if((maxCount - count) <= 3 * 24) {
+                                slowNodeMultiplier += (3 - (maxCount - count) / 24) * 0.33;
+                            }
+
+                            if( ! createVerificationData ) {
+                                // Try to make a reasonable sample data set, with most points in a small range
+                                // but some higher and lower
+                                int outlierVal = rand.nextInt(30);
+                                long randVal = rand.nextLong();
+                                if(randVal < 0) {
+                                    randVal *= -1;
+                                }
+                                if(outlierVal < 2){
+                                    aveTime = minIndexTimeNanos + maxIndexTimeOverMin + randVal % maxIndexTimeOverMin;
+                                } else if(outlierVal == 2){
+                                    aveTime = (minIndexTimeNanos / 2) + randVal % (minIndexTimeNanos / 2);
+                                } else if(outlierVal < 17) {
+                                    aveTime = minIndexTimeNanos + randVal % (maxIndexTimeOverMin / 2);
+                                } else {
+                                    aveTime = minIndexTimeNanos + randVal % maxIndexTimeOverMin;
+                                }
+                                
+                                if(node == 1) {
+                                    aveTime = (long)((double)aveTime * slowNodeMultiplier);
+                                }
                             } else {
-                                aveTime = minIndexTime + rand.nextInt(maxIndexTimeOverMin);
+                                // Create a data set strictly for testing that the display is working
+                                // correctly. The average time will equal the day of the month from
+                                // the timestamp (in milliseconds)
+                                Calendar thisDate = new GregorianCalendar();
+                                thisDate.setTimeInMillis(timestamp);
+                                int day = thisDate.get(Calendar.DAY_OF_MONTH);
+                                aveTime = day * 1000000;
                             }
-                            aveTime = aveTime * indexMultiplier;
-                            if(node == 1) {
-                                aveTime = (long)((double)aveTime * slowNodeMultiplier);
-                            }
-                        } else {
-                            // Create a data set strictly for testing that the display is working
-                            // correctly. The average time will equal the day of the month from
-                            // the timestamp (in milliseconds)
-                            Calendar thisDate = new GregorianCalendar();
-                            thisDate.setTimeInMillis(timestamp);
-                            int day = thisDate.get(Calendar.DAY_OF_MONTH);
-                            aveTime = day * 1000000;
+                        
+                        
+                            statement.setString(1, metricName);
+                            statement.setString(2, host);
+                            statement.setLong(3, timestamp);
+                            statement.setLong(4, 0);
+                            statement.setDouble(5, aveTime / 1000000);
+                            statement.setDouble(6, 0);
+                            statement.setDouble(7, 0);
+
+                            statement.execute();
                         }
-                        
-                        
-                        statement.setString(1, "Solr: Index chunk");
-                        statement.setString(2, host);
-                        statement.setLong(3, timestamp);
-                        statement.setLong(4, 0);
-                        statement.setDouble(5, aveTime);
-                        statement.setDouble(6, 0);
-                        statement.setDouble(7, 0);
-
-                        statement.execute();
                     }
-                    
-                    // Make some case opening ones
-                    // Record index chunk every hour
-                    for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += (1 + rand.nextInt(10)) * millisPerHour) {
-
-                        long aveTime;
-                        if( ! createVerificationData ) {
-                            // Try to make a reasonable sample data set, with most points in a small range
-                            // but some higher and lower
-                            aveTime = minConnTime + rand.nextInt(maxConnTimeOverMin);
-
-                            // Check if we should make an outlier
-                            int outlierVal = rand.nextInt(30);
-                            if(outlierVal < 2){
-                                aveTime = minConnTime + maxConnTimeOverMin + rand.nextInt(maxConnTimeOverMin);
-                            } else if(outlierVal == 8){
-                                aveTime = (minConnTime / 2) + rand.nextInt(minConnTime / 2);
-                            }
-                            aveTime *= connTimeMultiplier;
-                        } else {
-                            // Create a data set strictly for testing that the display is working
-                            // correctly. The average time will equal the day of the month from
-                            // the timestamp (in milliseconds)
-                            Calendar thisDate = new GregorianCalendar();
-                            thisDate.setTimeInMillis(timestamp);
-                            int day = thisDate.get(Calendar.DAY_OF_MONTH);
-                            aveTime = day * 1000000;
-                        }
-                        
-                        statement.setString(1, "Solr: Connectivity check");
-                        statement.setString(2, host);
-                        statement.setLong(3, timestamp);
-                        statement.setLong(4, 0);
-                        statement.setDouble(5, aveTime);
-                        statement.setDouble(6, 0);
-                        statement.setDouble(7, 0);
-
-                        statement.execute();
-                    }
-
-                } catch (SQLException ex) {
-                    throw new HealthMonitorException("Error saving metric data to database", ex);
-                } finally {
-                    
                 }
+            } catch (SQLException ex) {
+                throw new HealthMonitorException("Error saving metric data to database", ex);
             }
         } finally {
             try {

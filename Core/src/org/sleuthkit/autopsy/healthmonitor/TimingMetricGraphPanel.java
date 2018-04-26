@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.logging.Level;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.DatabaseTimingResult;
 
 /**
@@ -62,6 +63,7 @@ class TimingMetricGraphPanel extends JPanel {
     private String yUnitString;
     private TrendLine trendLine;
     private final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+    private final long NANOSECONDS_PER_MILLISECOND = 1000 * 1000;
     long maxTimestamp;
     long minTimestamp;
     double maxMetricTime;
@@ -93,8 +95,6 @@ class TimingMetricGraphPanel extends JPanel {
         calcMinTimestamp(timingResultsFull);
         calcMaxMetricTime(timingResultsFull);
         calcMinMetricTime(timingResultsFull);  
-        
-        
     }
     
     /**
@@ -174,6 +174,13 @@ class TimingMetricGraphPanel extends JPanel {
      * For plotting data on the y-axis, we subtract from the max value in the graph and then scale to the size of the graph
      * @param g 
      */
+    @NbBundle.Messages({"TimingMetricGraphPanel.paintComponent.nanoseconds=nanoseconds",
+                        "TimingMetricGraphPanel.paintComponent.microseconds=microseconds",
+                        "TimingMetricGraphPanel.paintComponent.milliseconds=milliseconds",
+                        "TimingMetricGraphPanel.paintComponent.seconds=seconds",
+                        "TimingMetricGraphPanel.paintComponent.minutes=minutes",
+                        "TimingMetricGraphPanel.paintComponent.hours=hours",
+                        "TimingMetricGraphPanel.paintComponent.displayingTime=Displaying time in "})
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -182,8 +189,8 @@ class TimingMetricGraphPanel extends JPanel {
         
         // Get the max and min timestamps to create the x-axis.
         // We add a small buffer to each side so the data won't overwrite the axes.
-        double maxValueOnXAxis = maxTimestamp + 1000 * 60 *60 * 2; // Two hour buffer
-        double minValueOnXAxis = minTimestamp - 1000 * 60 * 60 * 2; // Two hour buffer
+        double maxValueOnXAxis = maxTimestamp + TimeUnit.HOURS.toMillis(2); // Two hour buffer
+        double minValueOnXAxis = minTimestamp - TimeUnit.HOURS.toMillis(2); // Two hour buffer
         
         // Get the max and min times to create the y-axis
         // We add a small buffer to each side so the data won't overwrite the axes.
@@ -216,31 +223,30 @@ class TimingMetricGraphPanel extends JPanel {
         double yScale = ((double) graphHeight) / (maxValueOnYAxis - minValueOnYAxis);  
         
         // Check if we should use a scale other than milliseconds
-        long middleOfGraphNano = (long)(minValueOnYAxis + (maxValueOnYAxis - minValueOnYAxis) / 2) * 1000000;
-        double yLabelScale;
-        
         // The idea here is to pick the scale that would most commonly be used to 
         // represent the middle of our data. For example, if the middle of the graph
         // would be 45,000,000 nanoseconds, then we would use milliseconds for the 
         // y-axis.
-        if(middleOfGraphNano < 1000) {
-            yUnitString = "nanoseconds";
-            yLabelScale = 1000000;
-        } else if (TimeUnit.NANOSECONDS.toMicros(middleOfGraphNano) < 1000) {
-            yUnitString = "microseconds";
-            yLabelScale = 1000;
-        } else if (TimeUnit.NANOSECONDS.toMillis(middleOfGraphNano) < 1000) {
-            yUnitString = "milliseconds";
+        long middleOfGraphNano = (long)((minValueOnYAxis + (maxValueOnYAxis - minValueOnYAxis) / 2.0) * NANOSECONDS_PER_MILLISECOND);
+        double yLabelScale;
+        if(middleOfGraphNano < TimeUnit.MICROSECONDS.toNanos(1)) {
+            yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_nanoseconds();
+            yLabelScale = TimeUnit.MILLISECONDS.toNanos(1);
+        } else if (TimeUnit.NANOSECONDS.toMicros(middleOfGraphNano) < TimeUnit.MILLISECONDS.toMicros(1)) {
+            yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_microseconds();
+            yLabelScale =  TimeUnit.MILLISECONDS.toMicros(1);
+        } else if (TimeUnit.NANOSECONDS.toMillis(middleOfGraphNano) < TimeUnit.SECONDS.toMillis(1)) {
+            yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_milliseconds();
             yLabelScale = 1;
-        } else if (TimeUnit.NANOSECONDS.toSeconds(middleOfGraphNano) < 60) {
-            yUnitString = "seconds";
-            yLabelScale = 1.0 / 1000;
-        } else if (TimeUnit.NANOSECONDS.toMinutes(middleOfGraphNano) < 60) {
-            yUnitString = "minutes";
-            yLabelScale = 1.0 / (1000 * 60);
+        } else if (TimeUnit.NANOSECONDS.toSeconds(middleOfGraphNano) < TimeUnit.MINUTES.toSeconds(1)) {
+            yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_seconds();
+            yLabelScale = 1.0 / TimeUnit.SECONDS.toMillis(1);
+        } else if (TimeUnit.NANOSECONDS.toMinutes(middleOfGraphNano) < TimeUnit.HOURS.toMinutes(1)) {
+            yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_minutes();
+            yLabelScale = 1.0 / (TimeUnit.MINUTES.toMillis(1));
         } else {
-            yUnitString = "hours";
-            yLabelScale = 1.0 / (1000 * 60 * 60);
+            yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_hours();
+            yLabelScale = 1.0 / (TimeUnit.HOURS.toMillis(1));
         }
 
         // Draw white background
@@ -273,7 +279,7 @@ class TimingMetricGraphPanel extends JPanel {
                 if (i == numberYDivisions) {
                     // Write the scale
                     g2.setColor(Color.BLACK);
-                    String scaleStr = "Displaying time in " + yUnitString;
+                    String scaleStr = Bundle.TimingMetricGraphPanel_paintComponent_displayingTime() + yUnitString;
                     g2.drawString(scaleStr, x0 - labelWidth - 5, padding);
                 }
             }
@@ -325,7 +331,7 @@ class TimingMetricGraphPanel extends JPanel {
 
             // Draw the label
             Calendar thisDate = new GregorianCalendar();
-            thisDate.setTimeZone(TimeZone.getTimeZone("GMT"));
+            thisDate.setTimeZone(TimeZone.getTimeZone("GMT")); // Stick with GMT to avoid daylight savings issues
             thisDate.setTimeInMillis(currentDivision);
             int month = thisDate.get(Calendar.MONTH) + 1;
             int day = thisDate.get(Calendar.DAY_OF_MONTH);
@@ -482,7 +488,7 @@ class TimingMetricGraphPanel extends JPanel {
     * 
     * y intercept = ( Σy - (slope) * Σx ) / n
     */
-    class TrendLine {
+    private class TrendLine {
 
         double slope;
         double yInt;
