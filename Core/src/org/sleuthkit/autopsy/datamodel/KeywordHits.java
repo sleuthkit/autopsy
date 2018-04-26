@@ -326,8 +326,8 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     // Created by CreateAutopsyNodeVisitor
@@ -346,8 +346,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -355,20 +355,20 @@ public class KeywordHits implements AutopsyVisitableItem {
             "KeywordHits.createSheet.name.displayName=Name",
             "KeywordHits.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_name_name(),
                     KeywordHits_createSheet_name_displayName(),
                     KeywordHits_createSheet_name_desc(),
                     getName()));
 
-            return s;
+            return sheet;
         }
 
         @Override
@@ -547,26 +547,26 @@ public class KeywordHits implements AutopsyVisitableItem {
             "KeywordHits.createSheet.numChildren.displayName=Number of Children",
             "KeywordHits.createSheet.numChildren.desc=no description"})
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_listName_name(),
                     KeywordHits_createSheet_listName_displayName(),
                     KeywordHits_createSheet_listName_desc(),
                     listName));
 
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_numChildren_name(),
                     KeywordHits_createSheet_numChildren_displayName(),
                     KeywordHits_createSheet_numChildren_desc(),
                     keywordResults.getKeywords(listName).size()));
 
-            return s;
+            return sheet;
         }
 
         @Override
@@ -575,8 +575,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
     }
 
@@ -636,8 +636,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -645,25 +645,25 @@ public class KeywordHits implements AutopsyVisitableItem {
             "KeywordHits.createSheet.filesWithHits.displayName=Files with Hits",
             "KeywordHits.createSheet.filesWithHits.desc=no description"})
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_listName_name(),
                     KeywordHits_createSheet_listName_displayName(),
                     KeywordHits_createSheet_listName_desc(),
                     getDisplayName()));
 
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_filesWithHits_name(),
                     KeywordHits_createSheet_filesWithHits_displayName(),
                     KeywordHits_createSheet_filesWithHits_desc(),
                     countTotalDescendants()));
 
-            return s;
+            return sheet;
         }
     }
 
@@ -777,32 +777,32 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_listName_name(),
                     KeywordHits_createSheet_listName_displayName(),
                     KeywordHits_createSheet_listName_desc(),
                     getDisplayName()));
 
-            ss.put(new NodeProperty<>(
+            sheetSet.put(new NodeProperty<>(
                     KeywordHits_createSheet_filesWithHits_name(),
                     KeywordHits_createSheet_filesWithHits_displayName(),
                     KeywordHits_createSheet_filesWithHits_desc(),
                     keywordResults.getArtifactIds(setName, keyword, instance).size()));
 
-            return s;
+            return sheet;
         }
 
     }
