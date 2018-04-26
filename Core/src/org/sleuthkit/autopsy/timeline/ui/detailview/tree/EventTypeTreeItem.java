@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * abstract EventTreeItem for event types
@@ -52,7 +52,7 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
             //sort childrens children
             getChildren().stream()
                     .map(EventsTreeItem.class::cast)
-                    .forEach(ti -> ti.sort(comp, true));
+                    .forEach(treeItem -> treeItem.sort(comp, true));
         }
     }
 

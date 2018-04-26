@@ -64,7 +64,6 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -82,22 +81,22 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.EventsRepository;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -150,7 +149,7 @@ public class TimeLineController {
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
 
     private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
-    private EventBus eventbus = new EventBus("TimeLineController_EventBus");
+    private final EventBus eventbus = new EventBus("TimeLineController_EventBus");
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
@@ -404,16 +403,18 @@ public class TimeLineController {
      * either file or artifact is not null the user will be prompted to choose a
      * derived event and time range to show in the Timeline List View.
      *
-     * @param repoBuilder A Function from Consumer<Worker.State> to
-     * CancellationProgressTask<?>. Ie a function that given a worker state
-     * listener, produces a task with that listener attached. Expected to be a
-     * method reference to either EventsRepository.rebuildRepository() or
-     * EventsRepository.rebuildTags()
+     * @param repoBuilder    A Function from Consumer<Worker.State> to
+     *                       CancellationProgressTask<?>. Ie a function that
+     *                       given a worker state listener, produces a task with
+     *                       that listener attached. Expected to be a method
+     *                       reference to either
+     *                       EventsRepository.rebuildRepository() or
+     *                       EventsRepository.rebuildTags()
      * @param markDBNotStale After the repo is rebuilt should it be marked not
-     * stale
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
-     * @param artifact The BlackboardArtifact to show in the List View.
+     *                       stale
+     * @param file           The AbstractFile from which to choose an event to
+     *                       show in the List View.
+     * @param artifact       The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
@@ -432,70 +433,31 @@ public class TimeLineController {
             return;  //if they cancel, do nothing.
         }
 
-        //get a task that rebuilds the repo with the below state listener attached
-        final CancellationProgressTask<?> rebuildRepositoryTask;
-        rebuildRepositoryTask = repoBuilder.apply(new Consumer<Worker.State>() {
-            @Override
-            public void accept(Worker.State newSate) {
-                //this will be on JFX thread
-                switch (newSate) {
-                    case SUCCEEDED:
-                        /*
-                         * Record if ingest was running the last time the db was
-                         * rebuilt, and hence it might stale.
-                         */
-                        try {
-                            perCaseTimelineProperties.setIngestRunning(ingestRunning);
-                        } catch (IOException ex) {
-                            MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                                    ingestRunning ? Bundle.TimeLineController_setIngestRunning_errMsgRunning()
-                                            : Bundle.TimeLinecontroller_setIngestRunning_errMsgNotRunning());
-                            logger.log(Level.SEVERE, "Error marking the ingest state while the timeline db was populated.", ex); //NON-NLS
-                        }
-                        if (markDBNotStale) {
-                            setEventsDBStale(false);
-                            filteredEvents.postDBUpdated();
-                        }
-                        if (file == null && artifact == null) {
-                            SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                            TimeLineController.this.showFullRange();
-                        } else {
-
-                            try {
-                                //prompt user to pick specific event and time range
-                                ShowInTimelineDialog showInTimelineDilaog = (file == null)
-                                        ? new ShowInTimelineDialog(TimeLineController.this, artifact)
-                                        : new ShowInTimelineDialog(TimeLineController.this, file);
-                                Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
-                                dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
-                                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                                    try {
-                                        showInListView(viewInTimelineRequestedEvent); //show requested event in list view
-                                    } catch (TskCoreException ex) {
-                                        logger.log(Level.SEVERE, "Error showing requested events in listview: " + viewInTimelineRequestedEvent, ex);
-                                        new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
-                                    }
-                                });
-                            } catch (TskCoreException tskCoreException) {
-                                logger.log(Level.SEVERE, "Error showing Timeline " , tskCoreException);
-                                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
-                            }
-
-                        }
-                        break;
-                    case FAILED:
-                    case CANCELLED:
-                        setEventsDBStale(true);
-                        break;
-                }
+        if (file == null && artifact == null) {
+            SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+            TimeLineController.this.showFullRange();
+        } else {
+            try {
+                //prompt user to pick specific event and time range
+                ShowInTimelineDialog showInTimelineDilaog = (file == null)
+                        ? new ShowInTimelineDialog(TimeLineController.this, artifact)
+                        : new ShowInTimelineDialog(TimeLineController.this, file);
+                Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
+                dialogResult.ifPresent(viewInTimelineRequestedEvent -> {
+                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                    try {
+                        showInListView(viewInTimelineRequestedEvent); //show requested event in list view
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Error showing requested events in listview: " + viewInTimelineRequestedEvent, ex);
+                        new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+                    }
+                });
+            } catch (TskCoreException tskCoreException) {
+                logger.log(Level.SEVERE, "Error showing Timeline ", tskCoreException);
+                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
             }
-        });
 
-        /*
-         * Since both of the expected repoBuilders start the back ground task,
-         * all we have to do is show progress dialog for the task
-         */
-        promptDialogManager.showDBPopulationProgressDialog(rebuildRepositoryTask);
+        }
     }
 
     /**
@@ -511,8 +473,8 @@ public class TimeLineController {
      * Rebuild the entire repo in the background, and show the timeline when
      * done.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -524,8 +486,8 @@ public class TimeLineController {
      * Drop the tags table and rebuild it in the background, and show the
      * timeline when done.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -547,7 +509,7 @@ public class TimeLineController {
      * ViewInTimelineRequestedEvent in the List View.
      *
      * @param requestEvent Contains the ID of the requested events and the
-     * timerange to show.
+     *                     timerange to show.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void showInListView(ViewInTimelineRequestedEvent requestEvent) throws TskCoreException {
@@ -581,8 +543,8 @@ public class TimeLineController {
      * Add the case and ingest listeners, prompt for rebuilding the database if
      * necessary, and show the timeline window.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -610,8 +572,8 @@ public class TimeLineController {
      * confirms, rebuilds the database. Shows the timeline window when the
      * rebuild is done, or immediately if the rebuild is not confirmed.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -651,7 +613,7 @@ public class TimeLineController {
      * The potential reasons are not necessarily orthogonal to each other.
      *
      * @return A list of reasons why the user might won't to rebuild the
-     * database.
+     *         database.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     @NbBundle.Messages({"TimeLineController.errorTitle=Timeline error.",
@@ -691,7 +653,7 @@ public class TimeLineController {
      * around the middle of the currently viewed time range.
      *
      * @param period The period of time to show around the current center of the
-     * view.
+     *               view.
      */
     synchronized public void pushPeriod(ReadablePeriod period) {
         synchronized (filteredEvents) {
@@ -751,7 +713,7 @@ public class TimeLineController {
      * @param timeRange The Interval to view.
      *
      * @return True if the interval was changed. False if the interval was the
-     * same as the existing one and no change happened.
+     *         same as the existing one and no change happened.
      */
     synchronized public boolean pushTimeRange(Interval timeRange) {
         //clamp timerange to case
@@ -940,7 +902,7 @@ public class TimeLineController {
      * Register the given object to receive events.
      *
      * @param o The object to register. Must implement public methods annotated
-     * with Subscribe.
+     *          with Subscribe.
      */
     synchronized public void registerForEvents(Object o) {
         eventbus.register(o);

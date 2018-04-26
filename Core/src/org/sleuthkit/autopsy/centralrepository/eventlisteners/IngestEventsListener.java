@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -47,6 +46,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.datamodel.Blackboard;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
@@ -123,19 +123,19 @@ public class IngestEventsListener {
     public synchronized static int getCeModuleInstanceCount() {
         return correlationModuleInstanceCount;
     }
-    
+
     /**
      * Are notable items being flagged?
-     * 
+     *
      * @return True if flagging notable items; otherwise false.
      */
     public synchronized static boolean isFlagNotableItems() {
         return flagNotableItems;
     }
-    
+
     /**
      * Configure the listener to flag notable items or not.
-     * 
+     *
      * @param value True to flag notable items; otherwise false.
      */
     public synchronized static void setFlagNotableItems(boolean value) {
@@ -163,8 +163,8 @@ public class IngestEventsListener {
             tifArtifact.addAttributes(attributes);
             try {
                 // index the artifact for keyword search
-                Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
-                blackboard.indexArtifact(tifArtifact);
+                Blackboard blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
+                blackboard.publishArtifact(tifArtifact);
             } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }

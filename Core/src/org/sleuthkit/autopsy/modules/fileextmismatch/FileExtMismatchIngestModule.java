@@ -26,7 +26,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -38,6 +37,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleSettings.CHECK_TYPE;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TskData;
@@ -110,7 +110,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Messages({"FileExtMismatchIngestModule.indexError.message=Failed to index file extension mismatch artifact for keyword search."})
     public ProcessResult process(AbstractFile abstractFile) {
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -121,15 +121,15 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
-                || (abstractFile.isFile() == false)) {
+            || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+            || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
+            || (abstractFile.isFile() == false)) {
             return ProcessResult.OK;
         }
 
         // deleted files often have content that was not theirs and therefor causes mismatch
         if ((abstractFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC))
-                || (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
+            || (abstractFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC))) {
             return ProcessResult.OK;
         }
 
@@ -146,7 +146,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.indexArtifact(bart);
+                    blackboard.publishArtifact(bart);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(FileExtMismatchDetectorModuleFactory.getModuleName(), Bundle.FileExtMismatchIngestModule_indexError_message());

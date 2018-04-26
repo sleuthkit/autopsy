@@ -21,11 +21,12 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
@@ -74,8 +75,6 @@ import org.sleuthkit.datamodel.timeline.ArtifactEventType;
 import org.sleuthkit.datamodel.timeline.CombinedEvent;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.FileSystemTypes;
-import org.sleuthkit.datamodel.timeline.RootEventType;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
@@ -443,6 +442,10 @@ public class EventsRepository {
         return dbWorker;
     }
 
+    ImmutableList<EventType> getEventTypes() {
+        return eventManager.getEventTypes();
+    }
+
     private enum DBPopulationMode {
 
         FULL,
@@ -541,10 +544,10 @@ public class EventsRepository {
                 logger.log(Level.INFO, "Beginning population of timeline db."); // NON-NLS
                 restartProgressHandle(Bundle.progressWindow_msg_gatheringData(), "", -1D, 1, true);
                 //reset database //TODO: can we do more incremental updates? -jm
-                eventManager.reInitializeDB();
+//                eventManager.reInitializeDB();
                 //grab ids of all files
                 List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"
-                        + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
+                                                                + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
                 final int numFiles = fileIDs.size();
 
                 insertMACTimeEvents(numFiles, fileIDs);
@@ -610,8 +613,7 @@ public class EventsRepository {
 
         private void insertArtifactDerivedEvents() {
             //insert artifact based events
-            //TODO: use (not-yet existing api) to grab all artifacts with timestamps, rather than the hardcoded lists in EventType -jm
-            for (EventType type : RootEventType.allTypes) {
+            for (EventType type : eventManager.getArtifactEventTypes()) {
                 if (isCancelRequested()) {
                     break;
                 }
@@ -636,7 +638,7 @@ public class EventsRepository {
                     if (isNull(f)) {
                         logger.log(Level.WARNING, "Failed to get data for file : {0}", fID); // NON-NLS
                     } else {
-                        insertEventsForFile(f);
+                        eventManager.addFileSystemEvents(f);
                         updateProgress(i, numFiles);
                         updateMessage(f.getName());
                     }
@@ -646,56 +648,16 @@ public class EventsRepository {
             }
         }
 
-        private void insertEventsForFile(AbstractFile f) throws TskCoreException {
-            //gather time stamps into map
-            EnumMap<FileSystemTypes, Long> timeMap = new EnumMap<>(FileSystemTypes.class);
-            timeMap.put(FileSystemTypes.FILE_CREATED, f.getCrtime());
-            timeMap.put(FileSystemTypes.FILE_ACCESSED, f.getAtime());
-            timeMap.put(FileSystemTypes.FILE_CHANGED, f.getCtime());
-            timeMap.put(FileSystemTypes.FILE_MODIFIED, f.getMtime());
-
-            /*
-             * if there are no legitimate ( greater than zero ) time stamps (
-             * eg, logical/local files) skip the rest of the event generation:
-             * this should result in dropping logical files, since they do not
-             * have legitimate time stamps.
-             */
-            if (Collections.max(timeMap.values()) > 0) {
-                final String uniquePath = f.getUniquePath();
-                final String parentPath = f.getParentPath();
-                long datasourceID = f.getDataSource().getId();
-                String datasourceName = StringUtils.substringBeforeLast(uniquePath, parentPath);
-
-                String rootFolder = StringUtils.substringBefore(StringUtils.substringAfter(parentPath, "/"), "/");
-                String shortDesc = datasourceName + "/" + StringUtils.defaultString(rootFolder);
-                shortDesc = shortDesc.endsWith("/") ? shortDesc : shortDesc + "/";
-                String medDesc = datasourceName + parentPath;
-
-                final TskData.FileKnown known = f.getKnown();
-                Set<String> hashSets = f.getHashSetNames();
-                List<ContentTag> tags = tagsManager.getContentTagsByContent(f);
-
-                for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
-                    if (timeEntry.getValue() > 0) {
-                        // if the time is legitimate ( greater than zero ) insert it
-                        eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
-                                datasourceID, f.getId(), null, uniquePath, medDesc,
-                                shortDesc, known, hashSets, tags);
-                    }
-                }
-            }
-        }
-
         @Override
         @NbBundle.Messages("msgdlg.problem.text=There was a problem populating the timeline."
-                + "  Not all events may be present or accurate.")
+                           + "  Not all events may be present or accurate.")
         protected void done() {
             super.done();
             try {
                 get();
             } catch (CancellationException ex) {
                 logger.log(Level.WARNING, "Timeline database population was cancelled by the user. " //NON-NLS
-                        + " Not all events may be present or accurate."); // NON-NLS
+                                          + " Not all events may be present or accurate."); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.msgdlg_problem_text());
@@ -718,32 +680,14 @@ public class EventsRepository {
                 for (int i = 0; i < numArtifacts; i++) {
                     try {
                         //for each artifact, extract the relevant information for the descriptions
-                        insertEventForArtifact(type, blackboardArtifacts.get(i));
+                        eventManager.addArtifactEvent(type, blackboardArtifacts.get(i));
                         updateProgress(i, numArtifacts);
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "There was a problem inserting event for artifact: " + blackboardArtifacts.get(i).getArtifactID(), ex); // NON-NLS
                     }
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "There was a problem getting events with sub type " + type.toString() + ".", ex); // NON-NLS
-            }
-        }
-
-        private void insertEventForArtifact(final ArtifactEventType type, BlackboardArtifact bbart) throws TskCoreException {
-            ArtifactEventType.AttributeEventDescription eventDescription = ArtifactEventType.buildEventDescription(type, bbart);
-
-            // if the time is legitimate ( greater than zero ) insert it into the db
-            if (eventDescription != null && eventDescription.getTime() > 0) {
-                long objectID = bbart.getObjectID();
-                AbstractFile f = skCase.getAbstractFileById(objectID);
-                long datasourceID = f.getDataSource().getId();
-                long artifactID = bbart.getArtifactID();
-                Set<String> hashSets = f.getHashSetNames();
-                List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
-                String fullDescription = eventDescription.getFullDescription();
-                String medDescription = eventDescription.getMedDescription();
-                String shortDescription = eventDescription.getShortDescription();
-                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags);
+                logger.log(Level.SEVERE, "There was a problem getting events with sub type " + type.getDisplayName() + ".", ex); // NON-NLS
             }
         }
     }

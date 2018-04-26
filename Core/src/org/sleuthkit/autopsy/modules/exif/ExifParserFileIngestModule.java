@@ -41,7 +41,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -51,6 +50,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -104,7 +104,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile content) {
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -213,7 +213,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.indexArtifact(bba);
+                    blackboard.publishArtifact(bba);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(

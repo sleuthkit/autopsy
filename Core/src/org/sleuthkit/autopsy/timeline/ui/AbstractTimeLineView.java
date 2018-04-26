@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
  */
 public abstract class AbstractTimeLineView extends BorderPane {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractTimeLineView.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractTimeLineView.class.getName());
 
     /**
      * Boolean property that holds true if the view does not show any events
@@ -156,7 +156,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
                     try {
                         this.hasVisibleEvents.set(updateTask.get());
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception updating view", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Unexpected exception updating view", ex); //NON-NLS
                     }
                     break;
             }
