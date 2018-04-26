@@ -94,7 +94,7 @@ public class EmbeddedFileTest extends NbTestCase {
         CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
     }
     
-    public void testEncription() {
+    public void testEncryption() {
         try {
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");            
             String protectedName1 = "password_protected.zip";
