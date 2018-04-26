@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,9 @@ import java.util.Map;
 
 
 /**
- * Generic Ingest Job settings class  
+ * Generic Ingest Job settings class.
+ * Primary use of this class is for Python modules because classes created in Python
+ * cannot be serialized / deserialized in Java. 
  */
 public class GenericIngestModuleJobSettings implements IngestModuleIngestJobSettings {
     private static final long serialVersionUID = 1L;
@@ -36,34 +38,33 @@ public class GenericIngestModuleJobSettings implements IngestModuleIngestJobSett
     
     public GenericIngestModuleJobSettings(){
         this.settings = new HashMap<>();
-        
     }
     
     /**
-     * Return the string value for passed key parameter from the settings HashMap
-     * When the key does not exist null will be returned.
-     * @param key The key for setting to be fetched
-     * @return The value for the key passed as parameter
+     * Return the string value for passed key parameter.
+     *
+     * @param key The key to lookup
+     * @return The value or null if the key was not found. 
      */
-    public String getSettings(String key){
+    public String getSetting(String key){
         return settings.get(key);
     }
     
     /**
-     * Adds the passed key value pair to the settings HashMap
+     * Adds the passed key value pair
+     *
      * @param key The key to be added to the settings
      * @param value The value to be added for the key
      */
-    public void setSettings(String key ,String value){
+    public void setSetting(String key, String value){
         settings.put(key, value);
     }
     
     /**
-     * removes the passed key parameter from the settings HashMap
-     * @param key The key to be removed from settings
+     * Removes the key from the settings. 
+     * @param key The key to be removed
      */
-    public void removeSettings(String key){
+    public void removeSetting(String key){
         settings.remove(key);
     }
-    
 }
