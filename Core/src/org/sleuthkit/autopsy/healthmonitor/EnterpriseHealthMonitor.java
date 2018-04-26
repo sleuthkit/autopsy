@@ -103,9 +103,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             logger.log(Level.SEVERE, "Unable to look up host name - falling back to UUID " + hostName, ex);
         }
         
-        // Read from module settings to determine if the module is enabled
-        System.out.println("\n### Checking if monitor is enabled...");
-        
+        // Read from the database to determine if the module is enabled
         updateFromGlobalEnabledStatus();
                 
         // Start the timer for database checks and writes
@@ -159,7 +157,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 initializeDatabaseSchema();
             }
             
-            // Set the enabled status in the databse to true
+            // Set the enabled status in the database to true
             setGlobalEnabledStatusInDB(true);
             
         } catch (CoordinationService.CoordinationServiceException ex) {
@@ -832,7 +830,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     /**
      * Debugging method to generate sample data for the database.
      * It will delete all current timing data and replace it with randomly generated values.
-     * If there is more than one node, the second node's times will trend upwards in the last few days.
+     * If there is more than one node, the second node's times will trend upwards.
      */
     final void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
         
@@ -875,9 +873,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
 
-                double count = 0;
-                double maxCount = nDays * 24 + 1;
-
                 for(String metricName:metricNames) {
 
                     long baseIndex = rand.nextInt(900) + 100;
@@ -899,6 +894,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                     for(int node = 0;node < nNodes; node++) {
                 
                         String host = "testHost" + node; // NON-NLS
+                        
+                        double count = 0;
+                        double maxCount = nDays * 24 + 1;
                         
                         // Record data every hour, with a small amount of randomness about when it starts
                         for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += millisPerHour) {
@@ -977,8 +975,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
-     * Get all timing metrics currently stored in the database. This also converts
-     * the times to milliseconds (from nanoseconds).
+     * Get all timing metrics currently stored in the database.
      * @return A map with metric name mapped to a list of data
      * @throws HealthMonitorException 
      */
@@ -1175,16 +1172,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         private double max;   // Maximum value found (milliseconds)
         private double min;   // Minimum value found (milliseconds)
 
-        // TODO - maybe delete this
-        DatabaseTimingResult(long timestamp, String hostname, long count, double average, double max, double min) {
-            this.timestamp = timestamp;
-            this.hostname = hostname;
-            this.count = count;
-            this.average = average;
-            this.max = max;
-            this.min = min;
-        }
-        
         DatabaseTimingResult(ResultSet resultSet) throws SQLException {
             this.timestamp = resultSet.getLong("timestamp");
             this.hostname = resultSet.getString("host");
