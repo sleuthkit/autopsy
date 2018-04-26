@@ -134,8 +134,8 @@ public class InterestingHits implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /**
@@ -156,25 +156,25 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                     getName()));
 
-            return s;
+            return sheet;
         }
 
         @Override
@@ -302,24 +302,24 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                     getName()));
 
-            return s;
+            return sheet;
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -392,22 +392,22 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                     getName()));
-            return s;
+            return sheet;
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override

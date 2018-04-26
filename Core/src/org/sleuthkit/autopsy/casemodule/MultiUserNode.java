@@ -115,19 +115,19 @@ final class MultiUserNode extends AbstractNode {
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
-            ss.put(new NodeProperty<>(Bundle.CaseNode_column_name(), Bundle.CaseNode_column_name(), Bundle.CaseNode_column_name(),
+            sheetSet.put(new NodeProperty<>(Bundle.CaseNode_column_name(), Bundle.CaseNode_column_name(), Bundle.CaseNode_column_name(),
                     caseName));
-            ss.put(new NodeProperty<>(Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
+            sheetSet.put(new NodeProperty<>(Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(), Bundle.CaseNode_column_createdTime(),
                     caseCreatedDate));
-            ss.put(new NodeProperty<>(Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(),
+            sheetSet.put(new NodeProperty<>(Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(), Bundle.CaseNode_column_metadataFilePath(),
                     caseMetadataFilePath));
-            return s;
+            return sheet;
         }
 
         @Override

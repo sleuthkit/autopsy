@@ -213,7 +213,7 @@
             </file>-->
             <file name="org-sleuthkit-autopsy-report-ReportWizardAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="104"/>
+                <attr name="position" intvalue="199"/>
             </file>
             <!--<file name="Separator1.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>-->
