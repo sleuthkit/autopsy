@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Central Repository
+ *
+ * Copyright 2015-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
@@ -9,8 +22,7 @@ import java.util.Objects;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
- *
- * @author Andrrew
+ * Used as a key to ensure we eliminate duplicates from the result set by not overwriting CR correlation instances.
  */
 final class ArtifactKey {
     
@@ -27,10 +39,18 @@ final class ArtifactKey {
         filePath = instance.getFilePath();
     }
     
+    /**
+     * 
+     * @return the dataSource device ID
+     */
     String getDataSource() {
         return dataSource;
     }
     
+    /**
+     * 
+     * @return the filPath including the filename and extension.
+     */
     String getFilePath() {
         return filePath;
     }
