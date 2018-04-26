@@ -442,7 +442,7 @@ public class TestPanel extends javax.swing.JDialog {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void newGraphButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newGraphButtonActionPerformed
-        HealthMonitorDashboard dashboard = new HealthMonitorDashboard();
+        HealthMonitorDashboard dashboard = new HealthMonitorDashboard(null);
         try {
             dashboard.display();
         } catch (Exception ex) {

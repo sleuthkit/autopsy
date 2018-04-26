@@ -63,8 +63,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static String MODULE_NAME = "EnterpriseHealthMonitor";
-    private final static String IS_ENABLED_KEY = "is_enabled";
     private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes  TODO - put back to an hour
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
@@ -100,21 +98,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         }
         
         // Read from module settings to determine if the module is enabled
-        if (ModuleSettings.settingExists(MODULE_NAME, IS_ENABLED_KEY)) {
-            if(ModuleSettings.getConfigSetting(MODULE_NAME, IS_ENABLED_KEY).equals("true")){
-                isEnabled.set(true);
-                try {
-                    activateMonitor();
-                } catch (HealthMonitorException ex) {
-                    // If we failed to activate it, then disable the monitor
-                    logger.log(Level.SEVERE, "Health monitor activation failed - disabling health monitor");
-                    setEnabled(false);
-                    throw ex;
-                }
-                return;
-            }
-        }
-        isEnabled.set(false);
+        System.out.println("\n### Checking if monitor is enabled...");
+        
+        updateFromGlobalEnabledStatus();
+                
+        // Start the timer for database checks and writes
+        startTimer();
     }
     
     /**
@@ -136,7 +125,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * out of the maps, and sets up the timer for writing to the database.
      * @throws HealthMonitorException 
      */
-    private synchronized void activateMonitor() throws HealthMonitorException {
+    private synchronized void activateMonitorLocally() throws HealthMonitorException {
         
         logger.log(Level.INFO, "Activating Servies Health Monitor");
         
@@ -164,15 +153,15 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 initializeDatabaseSchema();
             }
             
+            // Set the enabled status in the databse to true
+            setGlobalEnabledStatusInDB(true);
+            
         } catch (CoordinationService.CoordinationServiceException ex) {
             throw new HealthMonitorException("Error releasing database lock", ex);
         }
         
         // Clear out any old data
         timingInfoMap.clear();
-        
-        // Start the timer for database writes
-        startTimer();
     }
     
     /**
@@ -182,15 +171,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * and shuts down the connection pool.
      * @throws HealthMonitorException 
      */
-    private synchronized void deactivateMonitor() throws HealthMonitorException {
+    private synchronized void deactivateMonitorLocally() throws HealthMonitorException {
         
         logger.log(Level.INFO, "Deactivating Servies Health Monitor");
-        
+      
         // Clear out the collected data
         timingInfoMap.clear();
-        
-        // Stop the timer
-        stopTimer();
         
         // Shut down the connection pool
         shutdownConnections();
@@ -204,7 +190,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         stopTimer();
         
         healthMonitorOutputTimer = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("health_monitor_timer").build());
-        healthMonitorOutputTimer.scheduleWithFixedDelay(new DatabaseWriteTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
+        healthMonitorOutputTimer.scheduleWithFixedDelay(new PeriodicHealthMonitorTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
     }
     
     /**
@@ -236,15 +222,18 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         }
         
         if(enabled) {
-            getInstance().activateMonitor();
+            getInstance().activateMonitorLocally();
             
-            // If activateMonitor fails, we won't update either of these
-            ModuleSettings.setConfigSetting(MODULE_NAME, IS_ENABLED_KEY, "true");
+            // If activateMonitor fails, we won't update this
+            getInstance().setGlobalEnabledStatusInDB(true);
             isEnabled.set(true);
         } else {
-            ModuleSettings.setConfigSetting(MODULE_NAME, IS_ENABLED_KEY, "false");
+            if(isEnabled.get()) {
+                // If we were enabled before, set the global state to disabled
+                getInstance().setGlobalEnabledStatusInDB(false);
+            }
             isEnabled.set(false);
-            getInstance().deactivateMonitor();
+            getInstance().deactivateMonitorLocally();
         }
     }
     
@@ -395,7 +384,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 String createCommand = "SELECT 1 AS result FROM pg_database WHERE datname='" + DATABASE_NAME + "'"; 
                 rs = statement.executeQuery(createCommand);
                 if(rs.next()) {
-                    logger.log(Level.INFO, "Existing Enterprise Health Monitor database found");
                     return true;
                 }
             } finally {
@@ -534,6 +522,95 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Return whether the health monitor is locally enabled.
+     * This does not query the database.
+     * @return true if it is enabled, false otherwise
+     */
+    static boolean monitorIsEnabled() {
+        return isEnabled.get();
+    }
+    
+    /**
+     * Check whether monitoring should be enabled from the monitor database
+     * and enable/disable as needed.
+     * @throws HealthMonitorException 
+     */
+    final synchronized void updateFromGlobalEnabledStatus() throws HealthMonitorException {
+        
+        boolean previouslyEnabled = monitorIsEnabled();
+        
+        // We can't even check the database if multi user settings aren't enabled.
+        if (!UserPreferences.getIsMultiUserModeEnabled()) {
+            isEnabled.set(false);
+
+            if(previouslyEnabled) {
+                deactivateMonitorLocally();
+            }
+            return;
+        }
+        
+        // If the health monitor database doesn't exist or if it is not initialized, 
+        // then monitoring isn't enabled
+        if ((! databaseExists()) || (! databaseIsInitialized())) {
+            isEnabled.set(false);
+            
+            if(previouslyEnabled) {
+                deactivateMonitorLocally();
+            }
+            return;
+        }
+        
+        boolean currentlyEnabled = getGlobalEnabledStatusFromDB();
+        if( currentlyEnabled == previouslyEnabled) {
+            // Nothing needs to be done
+        } else {
+            if(currentlyEnabled == false) {
+                isEnabled.set(false);
+                deactivateMonitorLocally();
+            } else {
+                isEnabled.set(true);
+                activateMonitorLocally();
+            }
+        }
+    }
+    
+    /**
+     * Read the enabled status from the database.
+     * Check that the health monitor database exists before calling this.
+     * @return true if the database is enabled, false otherwise
+     * @throws HealthMonitorException 
+     */
+    private boolean getGlobalEnabledStatusFromDB() throws HealthMonitorException {
+        
+        try (Connection conn = connect();
+             Statement statement = conn.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='MONITOR_ENABLED'")) {
+
+            if (resultSet.next()) {
+                return(resultSet.getBoolean("value"));
+            }
+            throw new HealthMonitorException("No enabled status found in database");
+        } catch (SQLException ex) {
+            throw new HealthMonitorException("Error initializing database", ex);
+        }
+    }
+    
+    /**
+     * Set the global enabled status in the database.
+     * @throws HealthMonitorException 
+     */
+    private void setGlobalEnabledStatusInDB(boolean status) throws HealthMonitorException {
+        
+        try (Connection conn = connect();
+             Statement statement = conn.createStatement();) {
+                //statement.execute("INSERT INTO db_info (name, value) VALUES ('MONITOR_ENABLED', '" + status + "')");
+                statement.execute("UPDATE db_info SET value='" + status + "' WHERE name='MONITOR_ENABLED'");
+        } catch (SQLException ex) {
+            throw new HealthMonitorException("Error setting enabled status", ex);
+        }
+    }
+    
+    /**
      * Get the current schema version
      * @return the current schema version
      * @throws HealthMonitorException 
@@ -643,19 +720,22 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     /**
      * The task called by the ScheduledThreadPoolExecutor to handle
-     * the database writes.
+     * the database checks/writes.
      */
-    static final class DatabaseWriteTask implements Runnable {
+    static final class PeriodicHealthMonitorTask implements Runnable {
 
         /**
-         * Write current metric data to the database
+         * Perform all periodic tasks:
+         * - Check if monitoring has been enabled / disabled in the database
+         * - Write current metric data to the database
          */
         @Override
         public void run() {
             try {
+                getInstance().updateFromGlobalEnabledStatus();
                 getInstance().writeCurrentStateToDatabase();
             } catch (HealthMonitorException ex) {
-                logger.log(Level.SEVERE, "Error writing current metrics to database", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
             }
         }
     }
@@ -668,7 +748,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             case CURRENT_CASE:
                 if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
                     // When a case is closed, write the current metrics to the database
-                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.DatabaseWriteTask());
+                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.PeriodicHealthMonitorTask());
                 }
                 break;
         }
@@ -776,9 +856,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                         statement.setString(2, host);
                         statement.setLong(3, timestamp);
                         statement.setLong(4, 0);
-                        statement.setLong(5, aveTime);
-                        statement.setLong(6, 0);
-                        statement.setLong(7, 0);
+                        statement.setDouble(5, aveTime);
+                        statement.setDouble(6, 0);
+                        statement.setDouble(7, 0);
 
                         statement.execute();
                     }
@@ -815,9 +895,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                         statement.setString(2, host);
                         statement.setLong(3, timestamp);
                         statement.setLong(4, 0);
-                        statement.setLong(5, aveTime);
-                        statement.setLong(6, 0);
-                        statement.setLong(7, 0);
+                        statement.setDouble(5, aveTime);
+                        statement.setDouble(6, 0);
+                        statement.setDouble(7, 0);
 
                         statement.execute();
                     }
@@ -1057,9 +1137,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             this.timestamp = resultSet.getLong("timestamp");
             this.hostname = resultSet.getString("host");
             this.count = resultSet.getLong("count");
-            this.average = resultSet.getLong("average") / 1000000;
-            this.max = resultSet.getLong("max") / 1000000;
-            this.min = resultSet.getLong("min") / 1000000;
+            this.average = resultSet.getDouble("average");
+            this.max = resultSet.getDouble("max");
+            this.min = resultSet.getDouble("min");
         }
  
         /**

@@ -402,10 +402,60 @@ class TimingMetricGraphPanel extends JPanel {
         // Draw the trend line.
         // Don't draw anything if we don't have at least two data points.
         if(trendLine != null && (timingResults.size() > 1)) {
-            int x0 = (int) (leftGraphPadding);
-            int y0 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(minValueOnXAxis)) * yScale + topGraphPadding);
-            int x1 = (int) ((maxValueOnXAxis - minValueOnXAxis) * xScale + leftGraphPadding);
-            int y1 = (int) ((maxValueOnYAxis - trendLine.getExpectedValueAt(maxValueOnXAxis)) * yScale + topGraphPadding);
+            double x0value = minValueOnXAxis;
+            double y0value = trendLine.getExpectedValueAt(x0value);
+            if (y0value < minValueOnYAxis) {
+                try {
+                    y0value = minValueOnYAxis;
+                    x0value = trendLine.getXGivenY(y0value);
+                } catch (HealthMonitorException ex) {
+                    // The exception is caused by a slope of zero on the trend line, which 
+                    // shouldn't be able to happen at the same time as having a trend line that dips below the y-axis.
+                    // If it does, log a warning but continue on with the original values.
+                    logger.log(Level.WARNING, "Error plotting trend line", ex);
+                }
+            } else if (y0value > maxValueOnYAxis) {
+                try {
+                    y0value = minValueOnYAxis;
+                    x0value = trendLine.getXGivenY(y0value);
+                } catch (HealthMonitorException ex) {
+                    // The exception is caused by a slope of zero on the trend line, which 
+                    // shouldn't be able to happen at the same time as having a trend line that dips below the y-axis.
+                    // If it does, log a warning but continue on with the original values.
+                    logger.log(Level.WARNING, "Error plotting trend line", ex);
+                }
+            }
+            
+            int x0 = (int) ((x0value - minValueOnXAxis) * xScale) + leftGraphPadding;
+            int y0 = (int) ((maxValueOnYAxis - y0value) * yScale + topGraphPadding);
+
+            double x1value = maxValueOnXAxis;
+            double y1value = trendLine.getExpectedValueAt(maxValueOnXAxis);
+            if (y1value < minValueOnYAxis) {
+                try {
+                    y1value = minValueOnYAxis;
+                    x1value = trendLine.getXGivenY(y1value);
+                } catch (HealthMonitorException ex) {
+                    // The exception is caused by a slope of zero on the trend line, which 
+                    // shouldn't be able to happen at the same time as having a trend line that dips below the y-axis.
+                    // If it does, log a warning but continue on with the original values.
+                    logger.log(Level.WARNING, "Error plotting trend line", ex);
+                }
+            } else if (y1value > maxValueOnYAxis) {
+                try {
+                    y1value = maxValueOnYAxis;
+                    x1value = trendLine.getXGivenY(y1value);
+                } catch (HealthMonitorException ex) {
+                    // The exception is caused by a slope of zero on the trend line, which 
+                    // shouldn't be able to happen at the same time as having a trend line that dips below the y-axis.
+                    // If it does, log a warning but continue on with the original values.
+                    logger.log(Level.WARNING, "Error plotting trend line", ex);
+                }
+            }
+            
+            int x1 = (int) ((x1value - minValueOnXAxis) * xScale) + leftGraphPadding;
+            int y1 = (int) ((maxValueOnYAxis - y1value) * yScale + topGraphPadding);
+            
             g2.setStroke(GRAPH_STROKE);
             g2.setColor(trendLineColor);
             g2.drawLine(x0, y0, x1, y1);
@@ -483,16 +533,31 @@ class TimingMetricGraphPanel extends JPanel {
 
             // Calculate y intercept
             yInt = (sumY - slope * sumX) / n;
-       }
+        }
 
-       /**
-        * Get the expected y value for a given x
-        * @param x x coordinate of the point on the trend line
-        * @return expected y coordinate of this point on the trend line
-        */
-       double getExpectedValueAt(double x) {
-           return (slope * x + yInt);
-       }
+        /**
+         * Get the expected y value for a given x
+         * @param x x coordinate of the point on the trend line
+         * @return expected y coordinate of this point on the trend line
+         */
+        double getExpectedValueAt(double x) {
+            return (slope * x + yInt);
+        }
+
+        /**
+         * Get the x-coordinate for a given Y-coordinate.
+         * Should only be necessary when the trend line does not fit on the graph
+         * @param y the y coordinate
+         * @return expected x coordinate for the given y
+         * @throws HealthMonitorException 
+         */
+        double getXGivenY(double y) throws HealthMonitorException {
+            if (slope != 0.0) {
+                return (y - yInt / slope);
+            } else {
+                throw new HealthMonitorException("Attempted division by zero in trend line calculation");
+            }
+        }
    }
 
 }

@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitorDashboard;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -302,6 +303,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
         clusterMetricsButton = new javax.swing.JButton();
+        healthMonitorButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -342,6 +344,16 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(healthMonitorButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.healthMonitorButton.text")); // NOI18N
+        healthMonitorButton.setMaximumSize(new java.awt.Dimension(133, 23));
+        healthMonitorButton.setMinimumSize(new java.awt.Dimension(133, 23));
+        healthMonitorButton.setPreferredSize(new java.awt.Dimension(133, 23));
+        healthMonitorButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                healthMonitorButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -365,6 +377,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(healthMonitorButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(clusterMetricsButton)))
                 .addContainerGap())
         );
@@ -393,7 +407,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
-                    .addComponent(clusterMetricsButton))
+                    .addComponent(clusterMetricsButton)
+                    .addComponent(healthMonitorButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -415,9 +430,14 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
 
+    private void healthMonitorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_healthMonitorButtonActionPerformed
+        new HealthMonitorDashboard(this.getTopLevelAncestor()).display();
+    }//GEN-LAST:event_healthMonitorButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
     private javax.swing.JScrollPane completedScrollPane;
+    private javax.swing.JButton healthMonitorButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel lbCompleted;
     private javax.swing.JLabel lbPending;

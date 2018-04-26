@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.healthmonitor;
 
 import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.util.Set;
 import java.util.HashSet;
@@ -28,7 +30,9 @@ import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Font;
+import java.io.File;
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JComboBox;
 import javax.swing.JSeparator;
@@ -41,47 +45,129 @@ import java.util.Map;
 import javax.swing.BoxLayout;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.modules.Places;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  *
  */
-// TODO: keep public?
 public class HealthMonitorDashboard {
     
     private final static Logger logger = Logger.getLogger(HealthMonitorDashboard.class.getName());
+    
+    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
+    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
     
     Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
     
     private JPanel timingMetricPanel = null;
     private JPanel timingButtonPanel = null;
+    private JPanel adminPanel = null;
     private JComboBox dateComboBox = null;
     private JComboBox hostComboBox = null;
     private JCheckBox hostCheckBox = null;
+    private JButton enableButton = null;
+    private JButton disableButton = null;
+    private JDialog dialog = null;
+    private final Container parentWindow;
     
-    HealthMonitorDashboard() {
+    public HealthMonitorDashboard(Container parent) {
         timingData = new HashMap<>();
+        parentWindow = parent;
     }
     
-    void display() throws HealthMonitorException {
+    
+    private void refreshPanels() throws HealthMonitorException {
+        // Update the monitor status
+        EnterpriseHealthMonitor.getInstance().updateFromGlobalEnabledStatus();
         
-        // Get a copy of the timing data from the database
-        timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase();       
+        if(EnterpriseHealthMonitor.monitorIsEnabled()) {
+            // Get a copy of the timing data from the database
+            timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase(); 
+        }
         
-        // Set up the buttons
+        // Set up the UI
+        setupAdminPanel();
         setupTimingButtonPanel();
         addActionListeners();
         
         // Initialize and populate the timing metric panel 
-        populateTimingMetricPanel();
+        initializeTimingMetricPanel();        
+    }
+    
+    /**
+     * Display the Health Monitor dashboard.
+     */
+    public void display() {
+        if(dialog != null) {
+            dialog.setVisible(false);
+            dialog.dispose();
+        }
+        
+        try {
+            refreshPanels();
+        } catch (HealthMonitorException ex) {
+            logger.log(Level.SEVERE, "Error creating panels for health monitor dashboard", ex);
+            MessageNotifyUtil.Message.error("TEMP");
+        }
         
         JScrollPane scrollPane = new JScrollPane(timingMetricPanel);
-        JDialog dialog = new JDialog();
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        mainPanel.add(scrollPane);
+        File adminFile = new File(ADMIN_ACCESS_FILE_PATH);
+        System.out.println("admin file: " + adminFile.getAbsolutePath());
+        if(adminFile.exists()) {
+            mainPanel.add(adminPanel);
+        }
+        dialog = new JDialog();
         //dialog.setPreferredSize(new Dimension(1500, 800));
         dialog.setTitle("Enterprise Health Monitor");
-        dialog.add(scrollPane);
+        
+        dialog.add(mainPanel);
+        
         dialog.pack();
+        dialog.setLocationRelativeTo(parentWindow);
         dialog.setVisible(true);
+    }
+    
+    /**
+     * Initialize the admin panel, which allows the monitor to be enabled
+     * or diabled
+     * @throws HealthMonitorException 
+     */
+    private void setupAdminPanel() throws HealthMonitorException {
+        if (adminPanel == null) {
+            adminPanel = new JPanel();
+            adminPanel.setBorder(BorderFactory.createEtchedBorder());
+        } else {
+            adminPanel.removeAll();
+        }
+        
+        if (enableButton == null) {
+            enableButton = new JButton("Enable monitor");
+        }
+        
+        if(disableButton == null) {
+            disableButton = new JButton("Disable monitor");
+        }
+        
+        updateEnableButtons();
+        
+        adminPanel.add(enableButton);
+        adminPanel.add(Box.createHorizontalStrut(25));
+        adminPanel.add(disableButton);
+        
+    }
+    
+    /**
+     * Update the enable and disable buttons
+     */
+    private void updateEnableButtons() {
+        boolean isEnabled =  EnterpriseHealthMonitor.monitorIsEnabled();
+        enableButton.setEnabled(! isEnabled);
+        disableButton.setEnabled(isEnabled);
     }
     
     /**
@@ -95,6 +181,11 @@ public class HealthMonitorDashboard {
             //timingButtonPanel.setPreferredSize(new Dimension(1500, 100));
         } else {
             timingButtonPanel.removeAll();
+        }
+        
+        // If the monitor is not enabled, don't add any components
+        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+            return;
         }
         
         // The contents of the date combo box will never change, so we only need to
@@ -125,8 +216,8 @@ public class HealthMonitorDashboard {
         }
         
         // Create the panel
-        timingButtonPanel = new JPanel();
-        timingButtonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        //timingButtonPanel = new JPanel();
+        //timingButtonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         //timingButtonPanel.setBorder(BorderFactory.createEtchedBorder());
         
         // Add the date range combo box and label to the panel
@@ -155,7 +246,7 @@ public class HealthMonitorDashboard {
                 @Override
                 public void actionPerformed(ActionEvent arg0) {
                     try {
-                        populateTimingMetricPanel();
+                        initializeTimingMetricPanel();
                     } catch (HealthMonitorException ex) {
                         logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
                     }
@@ -170,7 +261,7 @@ public class HealthMonitorDashboard {
                 public void actionPerformed(ActionEvent arg0) {
                     try {
                         if((hostCheckBox != null) && hostCheckBox.isSelected()) {
-                            populateTimingMetricPanel();
+                            initializeTimingMetricPanel();
                         }
                     } catch (HealthMonitorException ex) {
                         logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
@@ -186,39 +277,84 @@ public class HealthMonitorDashboard {
                 public void actionPerformed(ActionEvent arg0) {
                     try {
                         hostComboBox.setEnabled(hostCheckBox.isSelected()); // Why isn't this working?
-                        populateTimingMetricPanel();
+                        initializeTimingMetricPanel();
                     } catch (HealthMonitorException ex) {
                         logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
                     }
                 }
             });
         }  
+        
+        // Set up a listener on the enable button
+        if((enableButton != null) && (enableButton.getActionListeners().length == 0)) {
+            enableButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    System.out.println("\n### In action listener for enable button");
+                    try {
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        //WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        EnterpriseHealthMonitor.setEnabled(true);
+                        HealthMonitorDashboard.this.updateEnableButtons();
+                        display();
+                    } catch (HealthMonitorException ex) {
+                        logger.log(Level.SEVERE, "Error enabling monitoring", ex);
+                    } finally {
+                        //WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
+                }
+            });
+        }  
+        
+        // Set up a listener on the disable button
+        if((disableButton != null) && (disableButton.getActionListeners().length == 0)) {
+            disableButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    System.out.println("\n### In action listener for disable button");
+                    try {
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        //WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        EnterpriseHealthMonitor.setEnabled(false);
+                        HealthMonitorDashboard.this.updateEnableButtons();
+                        display();
+                    } catch (HealthMonitorException ex) {
+                        logger.log(Level.SEVERE, "Error disabling monitoring", ex);
+                    } finally {
+                        //WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
+                }
+            });
+        }
     }
     
     /**
      * Initialize the panel holding the timing metrics.
-     * If it has not been initialized, create and set up the panel.
-     * Otherwise, clear any existing components out of the panel.
      */
-    private void initializeTimingMetricPanel() {
-        if(timingMetricPanel == null) {
-            timingMetricPanel = new JPanel();
-            timingMetricPanel.setLayout(new BoxLayout(timingMetricPanel, BoxLayout.PAGE_AXIS));
-            timingMetricPanel.setBorder(BorderFactory.createEtchedBorder());
-        } else {
-            // Clear out any existing components
-            timingMetricPanel.removeAll();
-        }
-    }
+    private void initializeTimingMetricPanel() throws HealthMonitorException {
     
-    private void populateTimingMetricPanel() throws HealthMonitorException {
-
-        initializeTimingMetricPanel();
+        timingMetricPanel = new JPanel();
+        timingMetricPanel.setLayout(new BoxLayout(timingMetricPanel, BoxLayout.PAGE_AXIS));
+        timingMetricPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        timingMetricPanel.setBorder(BorderFactory.createEtchedBorder());
               
         // Add title
         JLabel timingMetricTitle = new JLabel("Timing Metrics");
         timingMetricTitle.setFont(new Font("Serif", Font.BOLD, 20));
         timingMetricPanel.add(timingMetricTitle);
+        
+        // If the monitor isn't enabled, just add a message
+        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+            timingMetricPanel.setPreferredSize(new Dimension(400,100));
+            timingMetricPanel.add(new JLabel(" "));
+            timingMetricPanel.add(new JLabel("No data to display - monitor is not enabled"));
+            
+            timingMetricPanel.revalidate();
+            timingMetricPanel.repaint();
+            return;
+        }
         
         // Add the button controls
         timingMetricPanel.add(timingButtonPanel);
@@ -260,6 +396,10 @@ public class HealthMonitorDashboard {
 
         timingMetricPanel.revalidate();
         timingMetricPanel.repaint();
+        
+        if(dialog != null) {
+            dialog.pack();
+        }
     }
     
     enum DateRange {
