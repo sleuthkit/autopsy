@@ -422,11 +422,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         });
 
-        dataSourceLabel.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceLabel, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.text")); // NOI18N
         dataSourceLabel.setName(""); // NOI18N
 
-        categoriesLabel.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.categoriesLabel.text")); // NOI18N
         categoriesLabel.setName(""); // NOI18N
 
