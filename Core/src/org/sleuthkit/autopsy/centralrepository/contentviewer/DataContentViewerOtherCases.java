@@ -390,7 +390,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Determine what attributes can be used for correlation based on the node. 
-     *
+     * If EamDB is not enabled, get the default Files correlation.
      * @param node The node to correlate
      *
      * @return A list of attributes that can be used for correlation 
@@ -404,9 +404,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             ret.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, false, false));
         }
         
-        // we can correlate based on the MD5 if it is enabled
-        
-        if (this.file != null) {
+        // we can correlate based on the MD5 if it is enabled      
+        if (this.file != null && EamDb.isEnabled()) {
             try {
                 List<CorrelationAttribute.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
                 String md5 = this.file.getMd5Hash();
@@ -422,7 +421,14 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
             
-            //TODO add intra case stuff here
+            
+        } else {
+           try {
+            // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
+            ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), this.file.getMd5Hash()));
+             } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+            }
         }
 
         return ret;
@@ -444,12 +450,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         // @@@ Check exception
         try {
             String caseUUID = Case.getOpenCase().getName();
-            EamDb dbManager = EamDb.getInstance();
-            Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
-                    .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                    || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
-                    || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                    .collect(Collectors.toList());
+            Collection<CorrelationAttributeInstance> artifactInstances  = new ArrayList<>();
+            if(EamDb.isEnabled()) {
+                EamDb dbManager = EamDb.getInstance();
+                artifactInstances = dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
+                        .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                        || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
+                        || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
+                        .collect(Collectors.toList());
+            }
             
             if(corAttr.getCorrelationType().getDisplayName().equals("Files")){
                 String md5 = corAttr.getCorrelationValue();
@@ -459,16 +468,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 
                 CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
                                 
-                for(AbstractFile file : matches){
-                    
-                    if(this.file.equals(file)){
+                for(AbstractFile fileMatch : matches){                    
+                    if(this.file.equals(fileMatch)){
                         continue;
                     }
                     
-                    CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, file.getDataSource());
-                    String filePath = file.getParentPath();
-                    String comment = String.format("File Name: %s", new Object[]{file.getName()});
-                    TskData.FileKnown knownStatus = file.getKnown();
+                    CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, fileMatch.getDataSource());
+                    String filePath = fileMatch.getParentPath();
+                    String comment = String.format("File Name: %s", new Object[]{fileMatch.getName()});
+                    TskData.FileKnown knownStatus = fileMatch.getKnown();
                     CorrelationAttributeInstance inst = new CorrelationAttributeInstance(caze, dataSource, filePath, comment, knownStatus);
                     
                     artifactInstances.add(inst);
@@ -481,8 +489,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         } catch (NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
-            //TODO error handling
-            Exceptions.printStackTrace(ex);
+             // do nothing. 
+            // @@@ Review this behavior
         }
 
         return Collections.emptyList();
@@ -490,22 +498,14 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Override
     public boolean isSupported(Node node) {
-        //TODO for testing...
-//        if (!EamDb.isEnabled()) {
-//            return false;
-//        }
-
         this.file = this.getAbstractFileFromNode(node);
-        // Is supported if this node has correlatable content (File, BlackboardArtifact)
-        return !getCorrelationAttributesFromNode(node).isEmpty();
+        // Is supported if this node has correlatable content (File, BlackboardArtifact) or other common files across datasources.
+        return !getCorrelationAttributesFromNode(node).isEmpty() && this.file.getSize() > 0; // TODO should we check for 0 size md5 instead
     }
 
     @Override
     @Messages({"DataContentViewerOtherCases.table.nodbconnection=Cannot connect to central repository database."})
     public void setNode(Node node) {
-//        if (!EamDb.isEnabled()) {
-//            return;
-//        }
 
         reset(); // reset the table to empty.
         if (node == null) {
