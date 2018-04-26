@@ -44,7 +44,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * Viewer panel widget for keyword lists that is used in the ingest config and
  * options area.
  */
-class DropdownListSearchPanel extends KeywordSearchPanel {
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+class DropdownListSearchPanel extends AdHocSearchPanel {
 
     private static final Logger logger = Logger.getLogger(DropdownListSearchPanel.class.getName());
     private static DropdownListSearchPanel instance;
@@ -131,7 +132,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (ingestRunning) {
-                    SearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
+                    IngestSearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
                     logger.log(Level.INFO, "Submitted enqueued lists to ingest"); //NON-NLS
                 } else {
                     searchAction(e);

@@ -55,10 +55,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
  * Singleton keyword search manager: Launches search threads for each job and
  * performs commits, both on timed intervals.
  */
-final class SearchRunner {
+final class IngestSearchRunner {
 
-    private static final Logger logger = Logger.getLogger(SearchRunner.class.getName());
-    private static SearchRunner instance = null;
+    private static final Logger logger = Logger.getLogger(IngestSearchRunner.class.getName());
+    private static IngestSearchRunner instance = null;
     private IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private long currentUpdateIntervalMs;
@@ -71,7 +71,7 @@ final class SearchRunner {
     // maps a jobID to the search
     private Map<Long, SearchJobInfo> jobs = new ConcurrentHashMap<>();
 
-    SearchRunner() {
+    IngestSearchRunner() {
         currentUpdateIntervalMs = ((long) KeywordSearchSettings.getUpdateFrequency().getTime()) * 60 * 1000;
         ingester = Ingester.getDefault();
         jobProcessingExecutor = new ScheduledThreadPoolExecutor(NUM_SEARCH_SCHEDULING_THREADS, new ThreadFactoryBuilder().setNameFormat(SEARCH_SCHEDULER_THREAD_NAME).build());
@@ -81,9 +81,9 @@ final class SearchRunner {
      *
      * @return the singleton object
      */
-    public static synchronized SearchRunner getInstance() {
+    public static synchronized IngestSearchRunner getInstance() {
         if (instance == null) {
-            instance = new SearchRunner();
+            instance = new IngestSearchRunner();
         }
         return instance;
     }
@@ -167,7 +167,7 @@ final class SearchRunner {
         }
 
         //stop currentSearcher
-        SearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
+        IngestSearchRunner.Searcher currentSearcher = job.getCurrentSearcher();
         if ((currentSearcher != null) && (!currentSearcher.isDone())) {
             logger.log(Level.INFO, "Cancelling search job {0}", jobId); //NON-NLS
             currentSearcher.cancel(true);
@@ -229,7 +229,7 @@ final class SearchRunner {
                 logger.log(Level.INFO, "Checking for previous search for search job {0} before executing final search", job.getJobId()); //NON-NLS
                 job.waitForCurrentWorker();
 
-                SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
+                IngestSearchRunner.Searcher finalSearcher = new IngestSearchRunner.Searcher(job, true);
                 job.setCurrentSearcher(finalSearcher); //save the ref
                 logger.log(Level.INFO, "Kicking off final search for search job {0}", job.getJobId()); //NON-NLS
                 finalSearcher.execute(); //start thread
@@ -252,7 +252,7 @@ final class SearchRunner {
      */
     private final class PeriodicSearchTask implements Runnable {
 
-        private final Logger logger = Logger.getLogger(SearchRunner.PeriodicSearchTask.class.getName());
+        private final Logger logger = Logger.getLogger(IngestSearchRunner.PeriodicSearchTask.class.getName());
 
         @Override
         public void run() {
@@ -341,7 +341,7 @@ final class SearchRunner {
 
         // Map of keyword to the object ids that contain a hit
         private Map<Keyword, Set<Long>> currentResults; //guarded by SearchJobInfo.this
-        private SearchRunner.Searcher currentSearcher;
+        private IngestSearchRunner.Searcher currentSearcher;
         private AtomicLong moduleReferenceCount = new AtomicLong(0);
         private final Object finalSearchLock = new Object(); //used for a condition wait
 
@@ -393,11 +393,11 @@ final class SearchRunner {
             workerRunning = flag;
         }
 
-        private synchronized SearchRunner.Searcher getCurrentSearcher() {
+        private synchronized IngestSearchRunner.Searcher getCurrentSearcher() {
             return currentSearcher;
         }
 
-        private synchronized void setCurrentSearcher(SearchRunner.Searcher searchRunner) {
+        private synchronized void setCurrentSearcher(IngestSearchRunner.Searcher searchRunner) {
             currentSearcher = searchRunner;
         }
 
@@ -453,7 +453,7 @@ final class SearchRunner {
         private List<KeywordList> keywordLists;
         private Map<Keyword, KeywordList> keywordToList; //keyword to list name mapping
         private AggregateProgressHandle progressGroup;
-        private final Logger logger = Logger.getLogger(SearchRunner.Searcher.class.getName());
+        private final Logger logger = Logger.getLogger(IngestSearchRunner.Searcher.class.getName());
         private boolean finalRun = false;
 
         Searcher(SearchJobInfo job) {
@@ -483,7 +483,7 @@ final class SearchRunner {
                     if (progressGroup != null) {
                         progressGroup.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
                     }
-                    return SearchRunner.Searcher.this.cancel(true);
+                    return IngestSearchRunner.Searcher.this.cancel(true);
                 }
             }, null);
 
