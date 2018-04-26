@@ -1,14 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.testutils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.apache.commons.io.FileUtils;
@@ -17,13 +28,6 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
-import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
-import org.sleuthkit.datamodel.Content;
 
 public final class CaseUtils {
     
@@ -62,19 +66,7 @@ public final class CaseUtils {
             Assert.fail(ex);
         } 
     }
-    
-    public static void addDataSourceToCase(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
-        try {
-            DataSourceProcessorRunner.ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
-            List<String> errorMessages = callBack.getErrorMessages();
-            assertEquals(0, errorMessages.size());
-        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-            
-        }        
-    }
-    
+        
     public static void deleteCaseDir(Path caseDirectoryPath) {
         if (!caseDirectoryPath.toFile().exists()) {
             return;
@@ -87,23 +79,4 @@ public final class CaseUtils {
         }
     }
 
-    public static void runIngestJob(List<Content> datasources, IngestJobSettings ingestJobSettings) {
-        try {
-            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
-            for (IngestModuleError err : errs) {
-                System.out.println(String.format("Error: %s: %s.", err.getModuleDisplayName(), err.toString()));
-            }
-            assertEquals(0, errs.size());
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }        
-    }
-
-    public static IngestModuleTemplate getIngestModuleTemplate(IngestModuleFactoryAdapter factory) {
-        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
-        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
-        template.setEnabled(true);
-        return template;
-    }
 }

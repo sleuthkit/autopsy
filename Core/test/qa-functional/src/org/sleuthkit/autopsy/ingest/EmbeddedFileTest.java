@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -36,6 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
+import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -63,7 +63,7 @@ public class EmbeddedFileTest extends NbTestCase {
     public void setUp() {
         CaseUtils.createCase(CASE_DIRECTORY_PATH);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        CaseUtils.addDataSourceToCase(dataSourceProcessor, IMAGE_PATH);
+        IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
         
         try {
             openCase = Case.getOpenCase();
@@ -72,8 +72,8 @@ public class EmbeddedFileTest extends NbTestCase {
             Assert.fail(ex);
         } 
         
-        IngestModuleTemplate embeddedTemplate = CaseUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
-        IngestModuleTemplate hashLookupTemplate = CaseUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        IngestModuleTemplate embeddedTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
+        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
 
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(embeddedTemplate);
@@ -81,7 +81,7 @@ public class EmbeddedFileTest extends NbTestCase {
         IngestJobSettings ingestJobSettings = new IngestJobSettings(EmbeddedFileTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
         
         try {
-            CaseUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -94,7 +94,7 @@ public class EmbeddedFileTest extends NbTestCase {
         CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
     }
     
-    public void testEncription() {
+    public void testEncryption() {
         try {
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");            
             String protectedName1 = "password_protected.zip";
