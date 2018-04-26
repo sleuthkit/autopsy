@@ -13,7 +13,7 @@
 
     <target name="resolve">
         <ivy:settings file="ivysettings.xml" />
-        <ivy:resolve file="ivy.xml" conf="experimental"/>
+        <ivy:resolve file="ivy.xml" conf="experimental" log="quiet"/>
     </target>
  
     <target name="retrieve-experimental" depends="resolve">
