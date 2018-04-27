@@ -18,48 +18,36 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import static junit.framework.Assert.assertFalse;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import junit.framework.Test;
-import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
-import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
-import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner;
-import org.sleuthkit.autopsy.testutils.DataSourceProcessorRunner.ProcessorCallback;
-import org.sleuthkit.autopsy.testutils.IngestJobRunner;
+import org.sleuthkit.autopsy.testutils.CaseUtils;
+import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
-    private static final String CASE_NAME = "EncryptionDetectionTest";
-    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
-    private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
+    private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
+    private static final String VERICRYPT_DETECTION_CASE_NAME = "VeriCryptDetectionTest";
+
+    private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
+    private final Path VERICRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "vericrypt_detection_test.vhd");
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
@@ -74,51 +62,11 @@ public class EncryptionDetectionTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        // Delete the test directory, if it exists
-        if (CASE_DIRECTORY_PATH.toFile().exists()) {
-            try {
-                FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
-            }
-        }
-        assertFalse(String.format("Unable to delete existing test directory '%s'.", CASE_DIRECTORY_PATH.toString()), CASE_DIRECTORY_PATH.toFile().exists());
-
-        // Create the test directory
-        CASE_DIRECTORY_PATH.toFile().mkdirs();
-        assertTrue(String.format("Unable to create test directory '%s'.", CASE_DIRECTORY_PATH.toString()), CASE_DIRECTORY_PATH.toFile().exists());
-
-        try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, CASE_DIRECTORY_PATH.toString(), new CaseDetails(CASE_NAME));
-        } catch (CaseActionException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
-        assertTrue(CASE_DIR.exists());
-        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        try {
-            ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
-            List<Content> dataSourceContentList = callBack.getDataSourceContent();
-            String errorMessage = String.format("The data source processor callback should produce 1 data source Content object, but the actual count was %d.", dataSourceContentList.size());
-            assertEquals(errorMessage, 1, dataSourceContentList.size());
-            List<String> callbackErrorMessageList = callBack.getErrorMessages();
-            errorMessage = String.format("The data source processor callback produced %d error messages.", callbackErrorMessageList.size());
-            assertEquals(errorMessage, 0, callbackErrorMessageList.size());
-        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-
-        }
     }
 
     @Override
     public void tearDown() {
-        try {
-            Case.closeCurrentCase();
-        } catch (CaseActionException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        CaseUtils.closeCase();
     }
 
     /**
@@ -126,10 +74,20 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testPasswordProtection() {
         try {
+            CaseUtils.createCase(PASSWORD_DETECTION_CASE_NAME);
+
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
+            String joinedErrors = String.join(System.lineSeparator(), errorMessages);
+            assertEquals(joinedErrors, 0, errorMessages.size());
+
             Case openCase = Case.getOpenCase();
-            runIngestJob(openCase.getDataSources(), new EncryptionDetectionModuleFactory());
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
             FileManager fileManager = openCase.getServices().getFileManager();
-            Blackboard bb = openCase.getServices().getBlackboard();
             List<AbstractFile> results = fileManager.findFiles("%%", "ole2");
             results.addAll(fileManager.findFiles("%%", "ooxml"));
 
@@ -172,18 +130,31 @@ public class EncryptionDetectionTest extends NbTestCase {
         }
     }
 
-    private void runIngestJob(List<Content> datasources, IngestModuleFactory factory) {
-        IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
-        IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
-        template.setEnabled(true);
-        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
-        templates.add(template);
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+    /**
+     * Test the Encryption Detection module's detection of vericrypt encrypted
+     * container files and partitions.
+     */
+    public void testVeriCryptSupport() {
         try {
-            List<IngestModuleError> ingestModuleErrorsList = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
-            String errorMessage = String.format("The ingest job runner produced %d error messages.", ingestModuleErrorsList.size());
-            assertEquals(errorMessage, 0, ingestModuleErrorsList.size());
-        } catch (InterruptedException ex) {
+            CaseUtils.createCase(VERICRYPT_DETECTION_CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, VERICRYPT_DETECTION_IMAGE_PATH);
+            String joinedErrors = String.join(System.lineSeparator(), errorMessages);
+            //there will be 1 expected error regarding the encrypted partition not having a file system
+            assertEquals(joinedErrors, 1, errorMessages.size());
+            Case openCase = Case.getOpenCase();
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            //determine how to configure settings from here WJS-TODO
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.ALL_MODULES, templates);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+            //WJS-TODO test results
+            //There should be a single file system for the un-incrypted partition
+            //There should be a 2 TSK_ENCRYPTION_SUSPECTED artifacts
+            //one for the container file
+            //one for the encrypted partition
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
