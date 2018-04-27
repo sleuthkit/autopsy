@@ -28,7 +28,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -49,7 +48,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
@@ -69,7 +67,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes  TODO - put back to an hour
+    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
     
@@ -156,9 +154,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             if( ! databaseIsInitialized()) {
                 initializeDatabaseSchema();
             }
-            
-            // Set the enabled status in the database to true
-            setGlobalEnabledStatusInDB(true);
             
         } catch (CoordinationService.CoordinationServiceException ex) {
             throw new HealthMonitorException("Error releasing database lock", ex);
@@ -674,7 +669,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         
         try (Connection conn = connect();
              Statement statement = conn.createStatement();) {
-                //statement.execute("INSERT INTO db_info (name, value) VALUES ('MONITOR_ENABLED', '" + status + "')");
                 statement.execute("UPDATE db_info SET value='" + status + "' WHERE name='MONITOR_ENABLED'");
         } catch (SQLException ex) {
             throw new HealthMonitorException("Error setting enabled status", ex);
@@ -771,6 +765,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            statement.execute("INSERT INTO db_info (name, value) VALUES ('MONITOR_ENABLED', 'true')");
             
             conn.commit();
         } catch (SQLException ex) {
@@ -930,7 +925,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                                 }
                                 
                                 if(node == 1) {
-                                    aveTime = (long)((double)aveTime * slowNodeMultiplier);
+                                    aveTime = aveTime * slowNodeMultiplier;
                                 }
                             } else {
                                 // Create a data set strictly for testing that the display is working

@@ -59,20 +59,23 @@ class TimingMetricGraphPanel extends JPanel {
     private int numberYDivisions = 10;
     private List<DatabaseTimingResult> timingResults;
     private TimingMetricType timingMetricType;
+    private String metricName;
     private boolean doLineGraph;
     private String yUnitString;
     private TrendLine trendLine;
     private final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
     private final long NANOSECONDS_PER_MILLISECOND = 1000 * 1000;
-    long maxTimestamp;
-    long minTimestamp;
-    double maxMetricTime;
-    double minMetricTime;
+    private long maxTimestamp;
+    private long minTimestamp;
+    private double maxMetricTime;
+    private double minMetricTime;
 
-    TimingMetricGraphPanel(List<DatabaseTimingResult> timingResultsFull, TimingMetricType timingMetricType, String hostName, boolean doLineGraph) {
+    TimingMetricGraphPanel(List<DatabaseTimingResult> timingResultsFull, TimingMetricType timingMetricType, 
+            String hostName, boolean doLineGraph, String metricName) {
 
         this.timingMetricType = timingMetricType;
         this.doLineGraph = doLineGraph;
+        this.metricName = metricName;
         if(hostName == null || hostName.isEmpty()) {
             timingResults = timingResultsFull;
         } else {
@@ -180,7 +183,7 @@ class TimingMetricGraphPanel extends JPanel {
                         "TimingMetricGraphPanel.paintComponent.seconds=seconds",
                         "TimingMetricGraphPanel.paintComponent.minutes=minutes",
                         "TimingMetricGraphPanel.paintComponent.hours=hours",
-                        "TimingMetricGraphPanel.paintComponent.displayingTime=Displaying time in "})
+                        "TimingMetricGraphPanel.paintComponent.displayingTime=displaying time in "})
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -207,7 +210,8 @@ class TimingMetricGraphPanel extends JPanel {
         int leftGraphPadding = padding + labelPadding;
         int rightGraphPadding = padding;
         int topGraphPadding = padding + g2.getFontMetrics().getHeight();
-        int bottomGraphPadding = padding + labelPadding;
+        //int bottomGraphPadding = padding + labelPadding;
+        int bottomGraphPadding = labelPadding;
         
         // Calculate the scale for each axis.
         // The size of the graph area is the width/height of the panel minus any padding.
@@ -248,7 +252,7 @@ class TimingMetricGraphPanel extends JPanel {
             yUnitString = Bundle.TimingMetricGraphPanel_paintComponent_hours();
             yLabelScale = 1.0 / (TimeUnit.HOURS.toMillis(1));
         }
-
+        
         // Draw white background
         g2.setColor(Color.WHITE);
         g2.fillRect(leftGraphPadding, topGraphPadding, graphWidth, graphHeight); 
@@ -280,7 +284,8 @@ class TimingMetricGraphPanel extends JPanel {
                     // Write the scale
                     g2.setColor(Color.BLACK);
                     String scaleStr = Bundle.TimingMetricGraphPanel_paintComponent_displayingTime() + yUnitString;
-                    g2.drawString(scaleStr, x0 - labelWidth - 5, padding);
+                    String titleStr = metricName + " - " + scaleStr;
+                    g2.drawString(titleStr, x0 - labelWidth - 5, padding);
                 }
             }
             

@@ -42,6 +42,7 @@ import javax.swing.JScrollPane;
 import javax.swing.BorderFactory;
 import java.util.Map;
 import javax.swing.BoxLayout;
+import java.awt.GridLayout;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.modules.Places;
@@ -61,8 +62,8 @@ public class HealthMonitorDashboard {
     
     Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
 
-    private JComboBox dateComboBox = null;
-    private JComboBox hostComboBox = null;
+    private JComboBox<String> dateComboBox = null;
+    private JComboBox<String> hostComboBox = null;
     private JCheckBox hostCheckBox = null;
     private JPanel graphPanel = null;
     private JDialog dialog = null;
@@ -101,11 +102,10 @@ public class HealthMonitorDashboard {
         
         // Create the main panel for the dialog
         JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
                
-        // Put the timing data in a scroll pane and then add to the main panel
-        JScrollPane scrollPane = new JScrollPane(timingPanel);
-        mainPanel.add(scrollPane);      
+        // Add the timing panel
+        mainPanel.add(timingPanel);
         
         // Add the admin panel if the admin file is present
         File adminFile = new File(ADMIN_ACCESS_FILE_PATH);
@@ -157,26 +157,28 @@ public class HealthMonitorDashboard {
     @NbBundle.Messages({"HealthMonitorDashboard.createTimingPanel.noData=No data to display - monitor is not enabled",
                         "HealthMonitorDashboard.createTimingPanel.timingMetricsTitle=Timing Metrics"})
     private JPanel createTimingPanel() throws HealthMonitorException {
+        
+        // If the monitor isn't enabled, just add a message
+        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+            //timingMetricPanel.setPreferredSize(new Dimension(400,100));
+            JPanel emptyTimingMetricPanel = new JPanel();
+            emptyTimingMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_timingMetricsTitle()));
+            emptyTimingMetricPanel.add(new JLabel(" "));
+            emptyTimingMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_noData()));
+            
+            //timingMetricPanel.revalidate();
+            //timingMetricPanel.repaint();
+            return emptyTimingMetricPanel;
+        }
+        
         JPanel timingMetricPanel = new JPanel();
         timingMetricPanel.setLayout(new BoxLayout(timingMetricPanel, BoxLayout.PAGE_AXIS));
-        timingMetricPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         timingMetricPanel.setBorder(BorderFactory.createEtchedBorder());
               
         // Add title
         JLabel timingMetricTitle = new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_timingMetricsTitle());
         timingMetricPanel.add(timingMetricTitle);
-        timingMetricPanel.add(new JSeparator());
-        
-        // If the monitor isn't enabled, just add a message
-        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
-            timingMetricPanel.setPreferredSize(new Dimension(400,100));
-            timingMetricPanel.add(new JLabel(""));
-            timingMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_noData()));
-            
-            timingMetricPanel.revalidate();
-            timingMetricPanel.repaint();
-            return timingMetricPanel;
-        }
+        timingMetricPanel.add(new JSeparator());   
         
         // Add the controls
         timingMetricPanel.add(createTimingControlPanel());
@@ -184,11 +186,12 @@ public class HealthMonitorDashboard {
         
         // Create panel to hold graphs
         graphPanel = new JPanel();
-        graphPanel.setLayout(new BoxLayout(graphPanel, BoxLayout.PAGE_AXIS));
+        graphPanel.setLayout(new GridLayout(0,2));
         
-        // Update the graph panel and add to the timing metric panel
+        // Update the graph panel, put it in a scroll pane, and add to the timing metric panel
         updateTimingMetricGraphs();
-        timingMetricPanel.add(graphPanel);
+        JScrollPane scrollPane = new JScrollPane(graphPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        timingMetricPanel.add(scrollPane);
         timingMetricPanel.revalidate();
         timingMetricPanel.repaint();
 
@@ -203,7 +206,6 @@ public class HealthMonitorDashboard {
                         "HealthMonitorDashboard.createTimingControlPanel.maxDays=Max days to display"})
     private JPanel createTimingControlPanel() {
         JPanel timingControlPanel = new JPanel();
-        //timingControlPanel.setBorder(BorderFactory.createEtchedBorder());
         
         // If the monitor is not enabled, don't add any components
         if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
@@ -212,7 +214,7 @@ public class HealthMonitorDashboard {
         
         // Create the combo box for selecting how much data to display
         String[] dateOptionStrings = Arrays.stream(DateRange.values()).map(e -> e.getLabel()).toArray(String[]::new);
-        dateComboBox = new JComboBox(dateOptionStrings);
+        dateComboBox = new JComboBox<>(dateOptionStrings);
         dateComboBox.setSelectedItem(DateRange.TWO_WEEKS.getLabel());
         
         // Set up the listener on the date combo box
@@ -236,7 +238,7 @@ public class HealthMonitorDashboard {
         }
         
         // Load the host names into the combo box
-        hostComboBox = new JComboBox(hostNameSet.toArray(new String[hostNameSet.size()]));
+        hostComboBox = new JComboBox<>(hostNameSet.toArray(new String[hostNameSet.size()]));
         
         // Set up the listener on the combo box
         hostComboBox.addActionListener(new ActionListener() {
@@ -319,12 +321,10 @@ public class HealthMonitorDashboard {
             
             // Generate the graph
             TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(intermediateTimingDataForDisplay, 
-                    TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true);
+                    TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true, name);
+            //singleTimingGraphPanel.setBorder(BorderFactory.createEtchedBorder());
+            singleTimingGraphPanel.setPreferredSize(new Dimension(700,200));
             
-            // Add the metric name and the graph to the panel
-            JLabel metricNameLabel = new JLabel(name);
-            graphPanel.add(metricNameLabel);
-            singleTimingGraphPanel.setPreferredSize(new Dimension(900,250));
             graphPanel.add(singleTimingGraphPanel);
         }
         graphPanel.revalidate();
