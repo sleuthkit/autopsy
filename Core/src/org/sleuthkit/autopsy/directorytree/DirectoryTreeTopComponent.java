@@ -129,6 +129,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
+        
+        groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
     }
 
     /**
@@ -451,8 +453,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
                     showRejectedCheckBox.setSelected(false);
 
-                    groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
-                    
                     Node views = rootChildren.findChild(ViewsNode.NAME);
                     Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
                     tree.collapseNode(views);
