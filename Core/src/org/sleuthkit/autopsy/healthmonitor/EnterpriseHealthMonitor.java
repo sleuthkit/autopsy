@@ -81,6 +81,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private final Map<String, TimingInfo> timingInfoMap;
     private static final int CONN_POOL_SIZE = 10;
     private BasicDataSource connectionPool = null;
+    private CaseDbConnectionInfo connectionSettingsInUse = null;
     private String hostName;
     
     private EnterpriseHealthMonitor() throws HealthMonitorException {
@@ -490,6 +491,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private void setupConnectionPool() throws HealthMonitorException {
         try {
             CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
+            connectionSettingsInUse = db;
         
             connectionPool = new BasicDataSource();
             connectionPool.setDriverClassName("org.postgresql.Driver");
@@ -624,6 +626,22 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 deactivateMonitorLocally();
             }
             return;
+        }
+        
+        // If we're currently enabled, check whether the multiuser settings have changed.
+        // If they have, force a reset on the connection pool.
+        if(previouslyEnabled && (connectionSettingsInUse != null)) {
+            try {
+                CaseDbConnectionInfo currentSettings = UserPreferences.getDatabaseConnectionInfo();
+                if(! (connectionSettingsInUse.getUserName().equals(currentSettings.getUserName())
+                        && connectionSettingsInUse.getPassword().equals(currentSettings.getPassword())
+                        && connectionSettingsInUse.getPort().equals(currentSettings.getPort())
+                        && connectionSettingsInUse.getHost().equals(currentSettings.getHost()) )) {
+                    shutdownConnections();
+                }
+            } catch (UserPreferencesException ex) {
+                throw new HealthMonitorException("Error reading database connection info", ex);
+            }
         }
         
         boolean currentlyEnabled = getGlobalEnabledStatusFromDB();
