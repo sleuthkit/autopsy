@@ -157,7 +157,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that was created by a higher-level node that
          *               provides updates on events
          */
-        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o /*, long datasourceObjId */) {
+        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
 
             super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true),
                     Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
