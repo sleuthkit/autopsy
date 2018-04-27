@@ -42,6 +42,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -91,15 +92,16 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * @return The base expression to be used in the where clause of queries for
      *         files by mime type.
      */
-    static private String createBaseWhereExpr() {
+    private String createBaseWhereExpr() {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + " AND (type IN ("
                 + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
-                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal())) 
                 + "))"
+                + ( UserPreferences.groupItemsInTreeByDatasource() ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
     }
 
@@ -188,6 +190,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         return v.visit(this);
     }
 
+    long filteringDataSourceObjId() {
+        return typesRoot.filteringDataSourceObjId();
+    }
+    
     /**
      * Method to check if the node in question is a ByMimeTypeNode which is
      * empty.

@@ -61,6 +61,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 public class FileSize implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
+    private final long datasourceObjId;
 
     public enum FileSizeFilter implements AutopsyVisitableItem {
 
@@ -97,9 +98,14 @@ public class FileSize implements AutopsyVisitableItem {
     }
 
     public FileSize(SleuthkitCase skCase) {
-        this.skCase = skCase;
+        this(skCase, 0);
     }
 
+    public FileSize(SleuthkitCase skCase, long dsObjId) {
+        this.skCase = skCase;
+        this.datasourceObjId = dsObjId;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
@@ -109,6 +115,9 @@ public class FileSize implements AutopsyVisitableItem {
         return this.skCase;
     }
 
+    long filteringDataSourceObjId() {
+        return this.datasourceObjId;
+    }
     /*
      * Root node. Children are nodes for specific sizes.
      */
@@ -116,8 +125,8 @@ public class FileSize implements AutopsyVisitableItem {
 
         private static final String NAME = NbBundle.getMessage(FileSize.class, "FileSize.fileSizeRootNode.name");
 
-        FileSizeRootNode(SleuthkitCase skCase) {
-            super(Children.create(new FileSizeRootChildren(skCase), true), Lookups.singleton(NAME));
+        FileSizeRootNode(SleuthkitCase skCase, long datasourceObjId) {
+            super(Children.create(new FileSizeRootChildren(skCase, datasourceObjId), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
@@ -161,10 +170,12 @@ public class FileSize implements AutopsyVisitableItem {
     public static class FileSizeRootChildren extends ChildFactory<org.sleuthkit.autopsy.datamodel.FileSize.FileSizeFilter> {
 
         private SleuthkitCase skCase;
+        private long  datasourceObjId;
         private Observable notifier;
 
-        public FileSizeRootChildren(SleuthkitCase skCase) {
+        public FileSizeRootChildren(SleuthkitCase skCase, long datasourceObjId) {
             this.skCase = skCase;
+            this.datasourceObjId = datasourceObjId;
             notifier = new FileSizeRootChildrenObservable();
         }
 
@@ -248,7 +259,7 @@ public class FileSize implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(FileSizeFilter key) {
-            return new FileSizeNode(skCase, key, notifier);
+            return new FileSizeNode(skCase, key, notifier, datasourceObjId);
         }
 
         /*
@@ -257,12 +268,14 @@ public class FileSize implements AutopsyVisitableItem {
         public class FileSizeNode extends DisplayableItemNode {
 
             private FileSizeFilter filter;
+            private final long datasourceObjId;
 
             // use version with observer instead so that it updates
             @Deprecated
-            FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter) {
-                super(Children.create(new FileSizeChildren(filter, skCase, null), true), Lookups.singleton(filter.getDisplayName()));
+            FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, long datasourceObjId) {
+                super(Children.create(new FileSizeChildren(filter, skCase, null, datasourceObjId), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
+                this.datasourceObjId = datasourceObjId;
                 init();
             }
 
@@ -272,10 +285,12 @@ public class FileSize implements AutopsyVisitableItem {
              * @param filter
              * @param o      Observable that provides updates when events are
              *               fired
+             * @param datasourceObjId filter by data source, if configured in user preferences
              */
-            FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, Observable o) {
-                super(Children.create(new FileSizeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
+            FileSizeNode(SleuthkitCase skCase, FileSizeFilter filter, Observable o, long datasourceObjId) {
+                super(Children.create(new FileSizeChildren(filter, skCase, o, datasourceObjId), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
+                this.datasourceObjId = datasourceObjId;
                 init();
                 o.addObserver(new FileSizeNodeObserver());
             }
@@ -309,7 +324,7 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             private void updateDisplayName() {
-                final long numVisibleChildren = FileSizeChildren.calculateItems(skCase, filter);
+                final long numVisibleChildren = FileSizeChildren.calculateItems(skCase, filter, datasourceObjId);
                 super.setDisplayName(filter.getDisplayName() + " (" + numVisibleChildren + ")");
             }
 
@@ -349,6 +364,7 @@ public class FileSize implements AutopsyVisitableItem {
             private final SleuthkitCase skCase;
             private final FileSizeFilter filter;
             private final Observable notifier;
+            private final long datasourceObjId;
             private static final Logger logger = Logger.getLogger(FileSizeChildren.class.getName());
 
             /**
@@ -358,10 +374,12 @@ public class FileSize implements AutopsyVisitableItem {
              * @param o      Observable that provides updates when new files are
              *               added to case
              */
-            FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase, Observable o) {
+            FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase, Observable o, long dsObjId) {
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;
+                this.datasourceObjId = dsObjId;
+                
             }
 
             @Override
@@ -395,7 +413,7 @@ public class FileSize implements AutopsyVisitableItem {
                 return true;
             }
 
-            private static String makeQuery(FileSizeFilter filter) {
+            private static String makeQuery(FileSizeFilter filter, long filteringDSObjId) {
                 String query;
                 switch (filter) {
                     case SIZE_50_200:
@@ -427,6 +445,11 @@ public class FileSize implements AutopsyVisitableItem {
                     query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + ")"; //NON-NLS
                 }
 
+                // filter by datasource if indicated in user preferences
+                if (UserPreferences.groupItemsInTreeByDatasource()) {
+                    query +=  " AND data_source_obj_id = " + filteringDSObjId;
+                }
+                
                 return query;
             }
 
@@ -434,7 +457,7 @@ public class FileSize implements AutopsyVisitableItem {
                 List<AbstractFile> ret = new ArrayList<>();
 
                 try {
-                    String query = makeQuery(filter);
+                    String query = makeQuery(filter, datasourceObjId);
 
                     ret = skCase.findAllFilesWhere(query);
                 } catch (Exception e) {
@@ -449,9 +472,9 @@ public class FileSize implements AutopsyVisitableItem {
              *
              * @return
              */
-            static long calculateItems(SleuthkitCase sleuthkitCase, FileSizeFilter filter) {
+            static long calculateItems(SleuthkitCase sleuthkitCase, FileSizeFilter filter, long datasourceObjId) {
                 try {
-                    return sleuthkitCase.countFilesWhere(makeQuery(filter));
+                    return sleuthkitCase.countFilesWhere(makeQuery(filter, datasourceObjId));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting files by size search view count", ex); //NON-NLS
                     return 0;

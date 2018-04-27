@@ -60,6 +60,8 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
+    T visit(DataSourceLayerNode vn);
+    
     T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
 
     T visit(DeletedContentNode dcn);
@@ -307,6 +309,11 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(vn);
         }
 
+        @Override
+        public T visit(DataSourceLayerNode vn) {
+            return defaultVisit(vn);
+        }
+        
         @Override
         public T visit(ResultsNode rn) {
             return defaultVisit(rn);

@@ -72,11 +72,18 @@ public final class FileTypes implements AutopsyVisitableItem {
 
     private final SleuthkitCase skCase;
 
+    private final long datasourceObjId;
+    
     FileTypes(SleuthkitCase skCase) {
-        this.skCase = skCase;
-        updateShowCounts();
+        this(skCase, 0);
     }
 
+    FileTypes(SleuthkitCase skCase, long dsObjId) {
+        this.skCase = skCase;
+        this.datasourceObjId = dsObjId;
+        updateShowCounts();
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
@@ -86,6 +93,9 @@ public final class FileTypes implements AutopsyVisitableItem {
         return skCase;
     }
 
+    long filteringDataSourceObjId() {
+        return this.datasourceObjId;
+    }
     /**
      * Check the db to determine if the nodes should show child counts.
      */

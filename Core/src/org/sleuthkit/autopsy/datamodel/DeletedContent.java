@@ -61,6 +61,7 @@ import org.sleuthkit.datamodel.TskData;
 public class DeletedContent implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
+    private final long datasourceObjId;
 
     @NbBundle.Messages({"DeletedContent.fsDelFilter.text=File System",
         "DeletedContent.allDelFilter.text=All"})
@@ -101,9 +102,18 @@ public class DeletedContent implements AutopsyVisitableItem {
     }
 
     public DeletedContent(SleuthkitCase skCase) {
-        this.skCase = skCase;
+        this(skCase, 0);
     }
 
+    public DeletedContent(SleuthkitCase skCase, long dsObjId) {
+        this.skCase = skCase;
+        this.datasourceObjId = dsObjId;
+    }
+    
+    long filteringDataSourceObjId() {
+        return this.datasourceObjId;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> v) {
         return v.visit(this);
@@ -118,8 +128,8 @@ public class DeletedContent implements AutopsyVisitableItem {
         @NbBundle.Messages("DeletedContent.deletedContentsNode.name=Deleted Files")
         private static final String NAME = Bundle.DeletedContent_deletedContentsNode_name();
 
-        DeletedContentsNode(SleuthkitCase skCase) {
-            super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
+        DeletedContentsNode(SleuthkitCase skCase, long datasourceObjId) {
+            super(Children.create(new DeletedContentsChildren(skCase, datasourceObjId), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
@@ -164,11 +174,13 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         private SleuthkitCase skCase;
         private Observable notifier;
+        private final long datasourceObjId;
         // true if we have already told user that not all files will be shown
         private static volatile boolean maxFilesDialogShown = false;
 
-        public DeletedContentsChildren(SleuthkitCase skCase) {
+        public DeletedContentsChildren(SleuthkitCase skCase, long dsObjId) {
             this.skCase = skCase;
+            this.datasourceObjId = dsObjId;
             this.notifier = new DeletedContentsChildrenObservable();
         }
 
@@ -257,24 +269,27 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(DeletedContent.DeletedContentFilter key) {
-            return new DeletedContentNode(skCase, key, notifier);
+            return new DeletedContentNode(skCase, key, notifier, datasourceObjId);
         }
 
         public class DeletedContentNode extends DisplayableItemNode {
 
             private final DeletedContent.DeletedContentFilter filter;
+            private final long datasourceObjId;
 
             // Use version that has observer for updates
             @Deprecated
-            DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter) {
-                super(Children.create(new DeletedContentChildren(filter, skCase, null), true), Lookups.singleton(filter.getDisplayName()));
+            DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter, long dsObjId) {
+                super(Children.create(new DeletedContentChildren(filter, skCase, null, dsObjId ), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
+                this.datasourceObjId = dsObjId;
                 init();
             }
 
-            DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter, Observable o) {
-                super(Children.create(new DeletedContentChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
+            DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter, Observable o, long dsObjId) {
+                super(Children.create(new DeletedContentChildren(filter, skCase, o, dsObjId), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
+                this.datasourceObjId = dsObjId;
                 init();
                 o.addObserver(new DeletedContentNodeObserver());
             }
@@ -299,7 +314,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
             private void updateDisplayName() {
                 //get count of children without preloading all children nodes
-                final long count = DeletedContentChildren.calculateItems(skCase, filter);
+                final long count = DeletedContentChildren.calculateItems(skCase, filter, datasourceObjId);
                 //final long count = getChildren().getNodesCount(true);
                 super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
             }
@@ -351,11 +366,13 @@ public class DeletedContent implements AutopsyVisitableItem {
             private static final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
             private static final int MAX_OBJECTS = 10001;
             private final Observable notifier;
+            private final long datasourceObjId;
 
-            DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase, Observable o) {
+            DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase, Observable o, long datasourceObjId) {
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;
+                this.datasourceObjId = datasourceObjId;
             }
 
             private final Observer observer = new DeletedContentChildrenObserver();
@@ -405,7 +422,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 return true;
             }
 
-            static private String makeQuery(DeletedContent.DeletedContentFilter filter) {
+            static private String makeQuery(DeletedContent.DeletedContentFilter filter, long filteringDSObjId) {
                 String query = "";
                 switch (filter) {
                     case FS_DELETED_FILTER:
@@ -443,6 +460,10 @@ public class DeletedContent implements AutopsyVisitableItem {
                             + " OR known IS NULL)"; //NON-NLS
                 }
 
+                if (UserPreferences.groupItemsInTreeByDatasource()) {
+                    query +=  " AND data_source_obj_id = " + filteringDSObjId;
+                }
+                
                 query += " LIMIT " + MAX_OBJECTS; //NON-NLS
                 return query;
             }
@@ -450,7 +471,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             private List<AbstractFile> runFsQuery() {
                 List<AbstractFile> ret = new ArrayList<>();
 
-                String query = makeQuery(filter);
+                String query = makeQuery(filter, datasourceObjId);
                 try {
                     ret = skCase.findAllFilesWhere(query);
                 } catch (TskCoreException e) {
@@ -469,9 +490,9 @@ public class DeletedContent implements AutopsyVisitableItem {
              *
              * @return
              */
-            static long calculateItems(SleuthkitCase sleuthkitCase, DeletedContent.DeletedContentFilter filter) {
+            static long calculateItems(SleuthkitCase sleuthkitCase, DeletedContent.DeletedContentFilter filter, long datasourceObjId) {
                 try {
-                    return sleuthkitCase.countFilesWhere(makeQuery(filter));
+                    return sleuthkitCase.countFilesWhere(makeQuery(filter, datasourceObjId));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting deleted files search view count", ex); //NON-NLS
                     return 0;
