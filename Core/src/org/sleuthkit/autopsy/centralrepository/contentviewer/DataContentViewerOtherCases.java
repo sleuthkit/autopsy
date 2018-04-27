@@ -28,9 +28,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -46,7 +44,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -463,30 +460,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         .collect(Collectors.toMap(c -> new ArtifactKey(c), c -> c)));
             }
 
-            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-                String md5 = corAttr.getCorrelationValue();
-                final Case openCase = Case.getOpenCase();
-                SleuthkitCase tsk = openCase.getSleuthkitCase();
-                List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
-
-                CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
-
-                for (AbstractFile fileMatch : matches) {
-                    if (this.file.equals(fileMatch)) {
-                        continue;
-                    }
-
-                    CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, fileMatch.getDataSource());
-                    String filePath = fileMatch.getParentPath() + fileMatch.getName();
-                    ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
-                    if (!artifactInstances.containsKey(instKey)) {
-                        TskData.FileKnown knownStatus = fileMatch.getKnown();
-                        
-                        CorrelationAttributeInstance inst = new CorrelationAttributeInstance(caze, dataSource, filePath, "", knownStatus);
-                        artifactInstances.put(instKey, inst);
-                    }
-                }
-            }
+            AddCaseDbMatches(corAttr, artifactInstances);
 
             return artifactInstances;
         } catch (EamDbException ex) {
@@ -501,16 +475,55 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         return new HashMap<>(0);
     }
 
+    private void AddCaseDbMatches(CorrelationAttribute corAttr, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances) throws NoCurrentCaseException, TskCoreException, EamDbException {
+        if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
+            String md5 = corAttr.getCorrelationValue();
+            final Case openCase = Case.getOpenCase();
+            SleuthkitCase tsk = openCase.getSleuthkitCase();
+            List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
+            CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
+
+            for (AbstractFile fileMatch : matches) {
+                if (this.file.equals(fileMatch)) {
+                    continue; // If this is the file the user clicked on
+                }
+                CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, fileMatch.getDataSource());
+                AddCheckKnownStatus(caze, dataSource, artifactInstances, openCase, fileMatch);
+            }
+        }
+    }
+
+    private void AddCheckKnownStatus(CorrelationCase caze, CorrelationDataSource dataSource, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, final Case openCase, AbstractFile fileMatch) throws EamDbException, TskCoreException {
+        TskData.FileKnown knownStatus = fileMatch.getKnown();
+        String filePath = fileMatch.getParentPath() + fileMatch.getName();
+        ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
+        // If not known, check Tags for known and set
+        if (knownStatus.compareTo(TskData.FileKnown.KNOWN) != 0 && knownStatus.compareTo(TskData.FileKnown.BAD) != 0) {
+            List<ContentTag> fileMatchTags = openCase.getServices().getTagsManager().getContentTagsByContent(fileMatch);
+            for (ContentTag tag : fileMatchTags) {
+                TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
+                if (tagKnownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || tagKnownStatus.compareTo(TskData.FileKnown.BAD) == 0) {
+                    knownStatus = TskData.FileKnown.BAD;
+                    break;
+                }
+            }
+        }
+        // If known, or not in CR, add
+        if (knownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || knownStatus.compareTo(TskData.FileKnown.BAD) == 0 || !artifactInstances.containsKey(instKey)) {
+                CorrelationAttributeInstance inst = new CorrelationAttributeInstance(caze, dataSource, filePath, "", knownStatus);
+                artifactInstances.put(instKey, inst);
+        }
+    }
+
     @Override
     public boolean isSupported(Node node) {
         this.file = this.getAbstractFileFromNode(node);
         //  Is supported if this node
         //      has correlatable content (File, BlackboardArtifact) OR
         //      other common files across datasources.
-        return 
-                this.file != null && 
-                this.file.getSize() > 0 && 
-                !getCorrelationAttributesFromNode(node).isEmpty();
+        return this.file != null
+                && this.file.getSize() > 0
+                && !getCorrelationAttributesFromNode(node).isEmpty();
     }
 
     @Override
