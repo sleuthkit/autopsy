@@ -72,6 +72,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         initComponents();
 
         this.setupDataSources();
+        
+        this.errorText.setVisible(false);
     }
 
     /**
@@ -340,6 +342,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         documentsCheckbox = new javax.swing.JCheckBox();
         dataSourceLabel = new javax.swing.JLabel();
         categoriesLabel = new javax.swing.JLabel();
+        errorText = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.searchButton.text")); // NOI18N
         searchButton.setEnabled(false);
@@ -430,14 +433,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.categoriesLabel.text")); // NOI18N
         categoriesLabel.setName(""); // NOI18N
 
+        errorText.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.errorText.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(errorText)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton)
@@ -490,7 +498,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(searchButton)))
+                    .addComponent(searchButton)
+                    .addComponent(errorText)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -523,26 +532,29 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
         this.manageCheckBoxState();
+        this.toggleErrorTextAndSearchBox();
     }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
 
     private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
         this.manageCheckBoxState();
+        this.toggleErrorTextAndSearchBox();
     }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
 
     private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
-        this.disableCheckBoxesForEmptySelection();
+        this.toggleErrorTextAndSearchBox();
     }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
 
     private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
-        this.disableCheckBoxesForEmptySelection();
+        this.toggleErrorTextAndSearchBox();
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
-    public void disableCheckBoxesForEmptySelection() {
-        if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected()) {
-            this.allFileCategoriesRadioButton.setSelected(true);
-
-            this.pictureVideoCheckbox.setEnabled(false);
-            this.documentsCheckbox.setEnabled(false);
+    private void toggleErrorTextAndSearchBox() {
+        if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected() && !this.allFileCategoriesRadioButton.isSelected()) {
+            this.searchButton.setEnabled(false);
+            this.errorText.setVisible(true);
+        } else {
+            this.searchButton.setEnabled(true);
+            this.errorText.setVisible(false);
         }
     }
 
@@ -584,6 +596,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel dataSourceLabel;
     private javax.swing.ButtonGroup dataSourcesButtonGroup;
     private javax.swing.JCheckBox documentsCheckbox;
+    private javax.swing.JLabel errorText;
     private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
     private javax.swing.JCheckBox pictureVideoCheckbox;
     private javax.swing.JButton searchButton;
