@@ -139,8 +139,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
                 //try block releases resources - exceptions are handled in done()
-                try (CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE)) {
-                    ResultSet resultSet = query.getResultSet();
+                try (
+                        CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
+                        ResultSet resultSet = query.getResultSet()) {
+                    
                     while (resultSet.next()) {
                         Long objectId = resultSet.getLong(1);
                         String dataSourceName = resultSet.getString(2);
@@ -538,7 +540,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public void disableCheckBoxesForEmptySelection() {
         if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected()) {
             this.allFileCategoriesRadioButton.setSelected(true);
-            
+
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
         }
