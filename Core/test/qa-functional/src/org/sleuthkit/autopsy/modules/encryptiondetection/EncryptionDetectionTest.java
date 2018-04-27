@@ -132,6 +132,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             Blackboard bb = openCase.getServices().getBlackboard();
             List<AbstractFile> results = fileManager.findFiles("%%", "ole2");
             results.addAll(fileManager.findFiles("%%", "ooxml"));
+            results.addAll(fileManager.findFiles("%%", "pdf"));
 
             for (AbstractFile file : results) {
                 /*
@@ -150,7 +151,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                          * TSK_ENCRYPTION_DETECTED artifact.
                          */
                         int artifactsListSize = artifactsList.size();
-                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected", file.getName(), file.getId(), artifactsListSize);
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
                         assertEquals(errorMessage, 1, artifactsListSize);
 
                         String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
@@ -161,7 +162,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                          * Check that the unprotected file has no artifacts.
                          */
                         int artifactsListSize = artifactsList.size();
-                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected", file.getName(), file.getId(), artifactsListSize);
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
                         assertEquals(errorMessage, 0, artifactsListSize);
                     }
                 }

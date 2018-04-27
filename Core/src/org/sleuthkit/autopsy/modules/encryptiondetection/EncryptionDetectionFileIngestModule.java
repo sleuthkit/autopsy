@@ -18,6 +18,13 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
+import com.healthmarketscience.jackcess.CryptCodecProvider;
+import com.healthmarketscience.jackcess.Database;
+import com.healthmarketscience.jackcess.DatabaseBuilder;
+import com.healthmarketscience.jackcess.InvalidCredentialsException;
+import com.healthmarketscience.jackcess.impl.CodecProvider;
+import com.healthmarketscience.jackcess.impl.UnsupportedCodecException;
+import com.healthmarketscience.jackcess.util.MemFileChannel;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,6 +74,13 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private static final int FILE_SIZE_MODULUS = 512;
     private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
     private static final int BYTE_OCCURENCES_BUFFER_SIZE = 256;
+    
+    private static final String MIME_TYPE_OOXML_PROTECTED = "application/x-ooxml-protected";
+    private static final String MIME_TYPE_MSWORD = "application/msword";
+    private static final String MIME_TYPE_MSEXCEL = "application/vnd.ms-excel";
+    private static final String MIME_TYPE_MSPOWERPOINT = "application/vnd.ms-powerpoint";
+    private static final String MIME_TYPE_MSACCESS = "application/x-msaccess";
+    private static final String MIME_TYPE_PDF = "application/pdf";
 
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
@@ -137,7 +151,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     }
                 }
             }
-        } catch (ReadContentInputStreamException | SAXException | TikaException ex) {
+        } catch (ReadContentInputStreamException | SAXException | TikaException | UnsupportedCodecException ex) {
             logger.log(Level.WARNING, String.format("Unable to read file '%s'", file.getParentPath() + file.getName()), ex);
             return IngestModule.ProcessResult.ERROR;
         } catch (IOException ex) {
@@ -232,13 +246,16 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      *                                         file with Tika.
      * @throws TikaException                   If there was an issue parsing the
      *                                         file with Tika.
+     * @throws UnsupportedCodecException       If an Access database could not
+     *                                         be opened by Jackcess due to
+     *                                         unsupported encoding.
      */
-    private boolean isFilePasswordProtected(AbstractFile file) throws ReadContentInputStreamException, IOException, SAXException, TikaException {
+    private boolean isFilePasswordProtected(AbstractFile file) throws ReadContentInputStreamException, IOException, SAXException, TikaException, UnsupportedCodecException {
 
         boolean passwordProtected = false;
 
         switch (file.getMIMEType()) {
-            case "application/x-ooxml-protected":
+            case MIME_TYPE_OOXML_PROTECTED:
                 /*
                  * Office Open XML files that are password protected can be
                  * determined so simply by checking the MIME type.
@@ -246,9 +263,10 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 passwordProtected = true;
                 break;
 
-            case "application/msword":
-            case "application/vnd.ms-excel":
-            case "application/vnd.ms-powerpoint":
+            case MIME_TYPE_MSWORD:
+            case MIME_TYPE_MSEXCEL:
+            case MIME_TYPE_MSPOWERPOINT:
+            case MIME_TYPE_PDF: {
                 /*
                  * A file of one of these types will be determined to be
                  * password protected or not by attempting to parse it via Tika.
@@ -266,7 +284,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     parser.parse(bin, handler, metadata, new ParseContext());
                 } catch (EncryptedDocumentException ex) {
                     /*
-                     * Office OLE2 file is determined to be password protected.
+                     * File is determined to be password protected.
                      */
                     passwordProtected = true;
                 } finally {
@@ -277,6 +295,51 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                         bin.close();
                     }
                 }
+                break;
+            }
+
+            case MIME_TYPE_MSACCESS: {
+                /*
+                 * Access databases are determined to be password protected
+                 * using Jackcess. If the database can be opened, the password
+                 * is read from it to see if it's null. If the database can not
+                 * be opened due to an InvalidCredentialException being thrown,
+                 * it is automatically determined to be password protected.
+                 */
+                InputStream in = null;
+                BufferedInputStream bin = null;
+
+                try {
+                    in = new ReadContentInputStream(file);
+                    bin = new BufferedInputStream(in);
+                    MemFileChannel memFileChannel = MemFileChannel.newChannel(bin);
+                    CodecProvider codecProvider = new CryptCodecProvider();
+                    DatabaseBuilder databaseBuilder = new DatabaseBuilder();
+                    databaseBuilder.setChannel(memFileChannel);
+                    databaseBuilder.setCodecProvider(codecProvider);
+                    Database accessDatabase = databaseBuilder.open();
+                    /*
+                     * No exception has been thrown at this point, so the file
+                     * is either a JET database, or an unprotected ACE database.
+                     * Read the password from the database to see if it exists.
+                     */
+                    if (accessDatabase.getDatabasePassword() != null) {
+                        passwordProtected = true;
+                    }
+                } catch (InvalidCredentialsException ex) {
+                    /*
+                     * The ACE database is determined to be password protected.
+                     */
+                    passwordProtected = true;
+                } finally {
+                    if (in != null) {
+                        in.close();
+                    }
+                    if (bin != null) {
+                        bin.close();
+                    }
+                }
+            }
         }
 
         return passwordProtected;
