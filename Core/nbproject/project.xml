@@ -416,6 +416,18 @@
                 <binary-origin>release/modules/ext/tika-parsers-1.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/fontbox-2.0.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/fontbox-2.0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/pdfbox-2.0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/pdfbox-tools-2.0.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/pdfbox-tools-2.0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.8.11.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.8.11.jar</binary-origin>
             </class-path-extension>
