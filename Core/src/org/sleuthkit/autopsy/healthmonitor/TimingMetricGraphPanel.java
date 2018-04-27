@@ -203,14 +203,13 @@ class TimingMetricGraphPanel extends JPanel {
         maxValueOnYAxis = maxValueOnYAxis * 1.1;
 
         // The graph itself has the following corners:
-        // (padding + label padding, padding + font height) - top left
-        // (padding + label padding, getHeight() - label padding - padding x 2) - bottom left
-        // (getWidth() - padding, padding + font height) - top right 
-        // (padding + label padding, getHeight() - label padding - padding x 2) - bottom right
+        // (padding + label padding, padding + font height) -> top left
+        // (padding + label padding, getHeight() - label padding - padding) -> bottom left
+        // (getWidth() - padding, padding + font height) -> top right 
+        // (padding + label padding, getHeight() - label padding - padding) -> bottom right
         int leftGraphPadding = padding + labelPadding;
         int rightGraphPadding = padding;
         int topGraphPadding = padding + g2.getFontMetrics().getHeight();
-        //int bottomGraphPadding = padding + labelPadding;
         int bottomGraphPadding = labelPadding;
         
         // Calculate the scale for each axis.

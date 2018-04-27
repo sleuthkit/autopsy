@@ -983,23 +983,21 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             throw new HealthMonitorException("Health Monitor is not enabled");
         }
 
-        CoordinationService.Lock lock = getSharedDbLock();
-        if(lock == null) {
-            throw new HealthMonitorException("Error getting database lock");
-        }
-        
-        try{
+        try (CoordinationService.Lock lock = getSharedDbLock()) {
+            if(lock == null) {
+                throw new HealthMonitorException("Error getting database lock");
+            }
+            
             Connection conn = connect();
             if(conn == null) {
                 throw new HealthMonitorException("Error getting database connection");
             }    
-            ResultSet resultSet = null;
 
             Map<String, List<DatabaseTimingResult>> resultMap = new HashMap<>();
 
-            try (Statement statement = conn.createStatement()) {
-
-                resultSet = statement.executeQuery("SELECT * FROM timing_data");
+            try (Statement statement = conn.createStatement();
+                 ResultSet resultSet = statement.executeQuery("SELECT * FROM timing_data")) {
+                
                 while (resultSet.next()) {
                     String name = resultSet.getString("name");
                     DatabaseTimingResult timingResult = new DatabaseTimingResult(resultSet);
@@ -1016,25 +1014,14 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             } catch (SQLException ex) {
                 throw new HealthMonitorException("Error reading timing metrics from database", ex);
             } finally {
-                if(resultSet != null) {
-                    try {
-                        resultSet.close();
-                    } catch (SQLException ex) {
-                        logger.log(Level.SEVERE, "Error closing result set", ex);
-                    }
-                }
                 try {
                     conn.close();
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Error closing Connection.", ex);
                 }
             }
-        } finally {
-            try {
-                lock.release();
-            } catch (CoordinationService.CoordinationServiceException ex) {
-                throw new HealthMonitorException("Error releasing database lock", ex);
-            }
+        } catch (CoordinationService.CoordinationServiceException ex) {
+            throw new HealthMonitorException("Error getting database lock", ex);
         }
     }
     

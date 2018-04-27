@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.healthmonitor;
 
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -166,8 +165,6 @@ public class HealthMonitorDashboard {
             emptyTimingMetricPanel.add(new JLabel(" "));
             emptyTimingMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_noData()));
             
-            //timingMetricPanel.revalidate();
-            //timingMetricPanel.repaint();
             return emptyTimingMetricPanel;
         }
         
@@ -290,12 +287,19 @@ public class HealthMonitorDashboard {
      * Update the timing graphs.
      * @throws HealthMonitorException 
      */
+    @NbBundle.Messages({"HealthMonitorDashboard.updateTimingMetricGraphs.noData=No data to display"})
     private void updateTimingMetricGraphs() throws HealthMonitorException {
         
         // Clear out any old graphs
         graphPanel.removeAll();
         
-        for(String name:timingData.keySet()) {
+        if(timingData.keySet().isEmpty()) {
+            // There are no timing metrics in the database
+            graphPanel.add(new JLabel(Bundle.HealthMonitorDashboard_updateTimingMetricGraphs_noData()));
+            return;
+        }
+        
+        for(String metricName:timingData.keySet()) {
             
             // If necessary, trim down the list of results to fit the selected time range
             List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
@@ -303,17 +307,19 @@ public class HealthMonitorDashboard {
                 DateRange selectedDateRange = DateRange.fromLabel(dateComboBox.getSelectedItem().toString());
                 if(selectedDateRange != DateRange.ALL) {
                     long threshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
-                    intermediateTimingDataForDisplay = timingData.get(name).stream()
+                    intermediateTimingDataForDisplay = timingData.get(metricName).stream()
                             .filter(t -> t.getTimestamp() > threshold)
                             .collect(Collectors.toList());
                 } else {
-                    intermediateTimingDataForDisplay = timingData.get(name);
+                    intermediateTimingDataForDisplay = timingData.get(metricName);
                 }
             } else {
-                intermediateTimingDataForDisplay = timingData.get(name);
+                intermediateTimingDataForDisplay = timingData.get(metricName);
             }
             
-            // Get the name of the selected host, if there is one
+            // Get the name of the selected host, if there is one.
+            // The graph always uses the data from all hosts to generate the x and y scales
+            // so we don't filter anything out here.
             String hostToDisplay = null;
             if(hostCheckBox.isSelected() && (hostComboBox.getSelectedItem() != null)) {
                 hostToDisplay = hostComboBox.getSelectedItem().toString();
@@ -321,8 +327,7 @@ public class HealthMonitorDashboard {
             
             // Generate the graph
             TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(intermediateTimingDataForDisplay, 
-                    TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true, name);
-            //singleTimingGraphPanel.setBorder(BorderFactory.createEtchedBorder());
+                    TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true, metricName);
             singleTimingGraphPanel.setPreferredSize(new Dimension(700,200));
             
             graphPanel.add(singleTimingGraphPanel);
