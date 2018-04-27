@@ -18,18 +18,18 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.logging.Level;
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -43,31 +43,20 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+
+
 /**
  * File ingest module to detect encryption and password protection.
  */
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
-    static final double DEFAULT_CONFIG_MINIMUM_ENTROPY = 7.5;
-    static final int DEFAULT_CONFIG_MINIMUM_FILE_SIZE = 5242880; // 5MB;
-    static final boolean DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED = true;
-    static final boolean DEFAULT_CONFIG_SLACK_FILES_ALLOWED = true;
-
-    static final double MINIMUM_ENTROPY_INPUT_RANGE_MIN = 6.0;
-    static final double MINIMUM_ENTROPY_INPUT_RANGE_MAX = 8.0;
-    static final int MINIMUM_FILE_SIZE_INPUT_RANGE_MIN = 1;
-
     private static final int FILE_SIZE_MODULUS = 512;
-    private static final double ONE_OVER_LOG2 = 1.4426950408889634073599246810019; // (1 / log(2))
-    private static final int BYTE_OCCURENCES_BUFFER_SIZE = 256;
-
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
@@ -154,18 +143,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      * @throws IngestModule.IngestModuleException If the input is empty,
      *                                            invalid, or out of range.
      */
-    @NbBundle.Messages({
-        "EncryptionDetectionFileIngestModule.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0.",
-        "EncryptionDetectionFileIngestModule.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater."
-    })
     private void validateSettings() throws IngestModule.IngestModuleException {
-        if (minimumEntropy < MINIMUM_ENTROPY_INPUT_RANGE_MIN || minimumEntropy > MINIMUM_ENTROPY_INPUT_RANGE_MAX) {
-            throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumEntropyInput());
-        }
-
-        if (minimumFileSize < MINIMUM_FILE_SIZE_INPUT_RANGE_MIN) {
-            throw new IngestModule.IngestModuleException(Bundle.EncryptionDetectionFileIngestModule_errorMessage_minimumFileSizeInput());
-        }
+        EncryptionDetectionTools.validateMinEntropyValue(minimumEntropy);
+        EncryptionDetectionTools.validateMinFileSizeValue(minimumFileSize);
     }
 
     /**
@@ -315,72 +295,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 /*
                  * Qualify the entropy.
                  */
-                calculatedEntropy = calculateEntropy(file);
+                calculatedEntropy = EncryptionDetectionTools.calculateEntropy(file);
                 if (calculatedEntropy >= minimumEntropy) {
                     possiblyEncrypted = true;
                 }
             }
         }
-
         return possiblyEncrypted;
-    }
-
-    /**
-     * Calculate the entropy of the file. The result is used to qualify the file
-     * as possibly encrypted.
-     *
-     * @param file The file to be calculated against.
-     *
-     * @return The entropy of the file.
-     *
-     * @throws ReadContentInputStreamException If there is a failure reading
-     *                                         from the InputStream.
-     * @throws IOException                     If there is a failure closing or
-     *                                         reading from the InputStream.
-     */
-    private double calculateEntropy(AbstractFile file) throws ReadContentInputStreamException, IOException {
-        /*
-         * Logic in this method is based on
-         * https://github.com/willjasen/entropy/blob/master/entropy.java
-         */
-
-        InputStream in = null;
-        BufferedInputStream bin = null;
-
-        try {
-            in = new ReadContentInputStream(file);
-            bin = new BufferedInputStream(in);
-
-            /*
-             * Determine the number of times each byte value appears.
-             */
-            int[] byteOccurences = new int[BYTE_OCCURENCES_BUFFER_SIZE];
-            int readByte;
-            while ((readByte = bin.read()) != -1) {
-                byteOccurences[readByte]++;
-            }
-
-            /*
-             * Calculate the entropy based on the byte occurence counts.
-             */
-            long dataLength = file.getSize() - 1;
-            double entropyAccumulator = 0;
-            for (int i = 0; i < BYTE_OCCURENCES_BUFFER_SIZE; i++) {
-                if (byteOccurences[i] > 0) {
-                    double byteProbability = (double) byteOccurences[i] / (double) dataLength;
-                    entropyAccumulator += (byteProbability * Math.log(byteProbability) * ONE_OVER_LOG2);
-                }
-            }
-
-            return -entropyAccumulator;
-
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-            if (bin != null) {
-                bin.close();
-            }
-        }
     }
 }
