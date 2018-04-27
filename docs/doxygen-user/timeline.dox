@@ -69,6 +69,7 @@ The __Counts View__ shows a stacked bar chart. Use this type of graph to show ho
 
 The __Details View__ shows individual or groups of related events. Date/time is represented horizontally along the x-axis, but the vertical axis does not represent any specific units. You would use this interface to answer questions about what specific events happened in a given time frame or what events occurred before or after a given event.  You would generally use this type of interface after using the Counts View to identify a period of time that you wanted details on.  There can be a lot of details in this view and we have introduced zooming concepts, as described in the next section, to help with this. 
 
+The table on the bottom left hand side of the panel has a \ref quick_search feature which can be used to quickly find a node in the table. 
 
 Visualization settings
 ----------------------
