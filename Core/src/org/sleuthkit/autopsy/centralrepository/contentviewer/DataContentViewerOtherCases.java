@@ -481,6 +481,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                     ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
                     if (!artifactInstances.containsKey(instKey)) {
                         TskData.FileKnown knownStatus = fileMatch.getKnown();
+                        
                         CorrelationAttributeInstance inst = new CorrelationAttributeInstance(caze, dataSource, filePath, "", knownStatus);
                         artifactInstances.put(instKey, inst);
                     }
@@ -503,8 +504,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     @Override
     public boolean isSupported(Node node) {
         this.file = this.getAbstractFileFromNode(node);
-        // Is supported if this node has correlatable content (File, BlackboardArtifact) or other common files across datasources.
-        return !getCorrelationAttributesFromNode(node).isEmpty() && this.file.getSize() > 0; // TODO should we check for 0 size md5 instead
+        //  Is supported if this node
+        //      has correlatable content (File, BlackboardArtifact) OR
+        //      other common files across datasources.
+        return 
+                this.file != null && 
+                this.file.getSize() > 0 && 
+                !getCorrelationAttributesFromNode(node).isEmpty();
     }
 
     @Override
