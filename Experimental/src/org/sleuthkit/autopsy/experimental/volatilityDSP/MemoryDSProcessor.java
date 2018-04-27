@@ -117,7 +117,7 @@ public class MemoryDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getProfile(), configPanel.getPluginsToRun(), configPanel.getTimeZone(), progressMonitor, callback);
     }
 
     /**
@@ -131,6 +131,7 @@ public class MemoryDSProcessor implements DataSourceProcessor {
      *                        associated with the data source that is intended
      *                        to be unique across multiple cases (e.g., a UUID).
      * @param memoryImagePath Path to the memory image file.
+     * @param profile         Volatility profile to run or empty string to autodetect
      * @param pluginsToRun    The Volatility plugins to run.
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
@@ -139,8 +140,8 @@ public class MemoryDSProcessor implements DataSourceProcessor {
      *                        processing.
      * @param callback        Callback to call when processing is done.
      */
-    private void run(String deviceId, String memoryImagePath, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, pluginsToRun, timeZone, progressMonitor, callback);
+    private void run(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddMemoryImageTask(deviceId, memoryImagePath, profile, pluginsToRun, timeZone, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 

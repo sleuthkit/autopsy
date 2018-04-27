@@ -1543,8 +1543,8 @@ public class Case {
      * @throws TskCoreException if there is a problem adding the report to the
      *                          case database.
      */
-    public Report addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
-        return addReport(localPath, srcModuleName, reportName, null);
+    public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
+        addReport(localPath, srcModuleName, reportName, null);
     }
 
     /**
