@@ -170,7 +170,7 @@ public class FileSize implements AutopsyVisitableItem {
     public static class FileSizeRootChildren extends ChildFactory<org.sleuthkit.autopsy.datamodel.FileSize.FileSizeFilter> {
 
         private SleuthkitCase skCase;
-        private long  datasourceObjId;
+        private final long  datasourceObjId;
         private Observable notifier;
 
         public FileSizeRootChildren(SleuthkitCase skCase, long datasourceObjId) {
