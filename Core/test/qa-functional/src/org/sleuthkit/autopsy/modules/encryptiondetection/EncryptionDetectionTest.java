@@ -83,11 +83,11 @@ public class EncryptionDetectionTest extends NbTestCase {
                 Assert.fail(ex);
             }
         }
-        assertFalse("Unable to delete existing test directory", CASE_DIRECTORY_PATH.toFile().exists());
+        assertFalse(String.format("Unable to delete existing test directory '%s'.", CASE_DIRECTORY_PATH.toString()), CASE_DIRECTORY_PATH.toFile().exists());
 
         // Create the test directory
         CASE_DIRECTORY_PATH.toFile().mkdirs();
-        assertTrue("Unable to create test directory", CASE_DIRECTORY_PATH.toFile().exists());
+        assertTrue(String.format("Unable to create test directory '%s'.", CASE_DIRECTORY_PATH.toString()), CASE_DIRECTORY_PATH.toFile().exists());
 
         try {
             Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, CASE_DIRECTORY_PATH.toString(), new CaseDetails(CASE_NAME));
@@ -99,10 +99,12 @@ public class EncryptionDetectionTest extends NbTestCase {
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         try {
             ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, IMAGE_PATH);
-            List<Content> dataSourceContent = callBack.getDataSourceContent();
-            assertEquals(1, dataSourceContent.size());
-            List<String> errorMessages = callBack.getErrorMessages();
-            assertEquals(0, errorMessages.size());
+            List<Content> dataSourceContentList = callBack.getDataSourceContent();
+            String errorMessage = String.format("The data source processor callback should produce 1 data source Content object, but the actual count was %d.", dataSourceContentList.size());
+            assertEquals(errorMessage, 1, dataSourceContentList.size());
+            List<String> callbackErrorMessageList = callBack.getErrorMessages();
+            errorMessage = String.format("The data source processor callback produced %d error messages.", callbackErrorMessageList.size());
+            assertEquals(errorMessage, 0, callbackErrorMessageList.size());
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -114,18 +116,9 @@ public class EncryptionDetectionTest extends NbTestCase {
     public void tearDown() {
         try {
             Case.closeCurrentCase();
-            //Seems like we need some time to close the case.
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException ex) {
-                
-            }
-
-            FileUtils.deleteDirectory(CASE_DIR);
-        } catch (CaseActionException | IOException ex) {
+        } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
         }
-        assertFalse(CASE_DIR.exists());
     }
 
     /**
@@ -187,8 +180,9 @@ public class EncryptionDetectionTest extends NbTestCase {
         templates.add(template);
         IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
         try {
-            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
-            assertEquals(0, errs.size());
+            List<IngestModuleError> ingestModuleErrorsList = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
+            String errorMessage = String.format("The ingest job runner produced %d error messages.", ingestModuleErrorsList.size());
+            assertEquals(errorMessage, 0, ingestModuleErrorsList.size());
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
