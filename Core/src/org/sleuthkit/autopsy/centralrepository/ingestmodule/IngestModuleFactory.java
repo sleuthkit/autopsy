@@ -68,7 +68,17 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        return new IngestModule((IngestSettings) settings);
+        if (settings instanceof IngestSettings) {
+            return new IngestModule((IngestSettings) settings);
+        }
+        /*
+         * Compatibility check for older versions.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new IngestModule(new IngestSettings());
+        }
+        
+        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }
 
     @Override

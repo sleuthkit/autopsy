@@ -85,8 +85,8 @@ public final class FileTypes implements AutopsyVisitableItem {
     }
     
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     SleuthkitCase getSleuthkitCase() {
@@ -137,8 +137,8 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -147,19 +147,19 @@ public final class FileTypes implements AutopsyVisitableItem {
             "FileTypes.createSheet.name.displayName=Name",
             "FileTypes.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(Bundle.FileTypes_createSheet_name_name(),
+            sheetSet.put(new NodeProperty<>(Bundle.FileTypes_createSheet_name_name(),
                     Bundle.FileTypes_createSheet_name_displayName(),
                     Bundle.FileTypes_createSheet_name_desc(),
                     NAME
             ));
-            return s;
+            return sheet;
         }
 
         @Override

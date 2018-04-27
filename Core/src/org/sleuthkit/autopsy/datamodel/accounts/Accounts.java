@@ -115,8 +115,8 @@ final public class Accounts implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /**
@@ -207,8 +207,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -483,8 +483,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -627,8 +627,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -830,8 +830,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -1026,8 +1026,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -1215,8 +1215,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -1394,8 +1394,8 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -1403,13 +1403,13 @@ final public class Accounts implements AutopsyVisitableItem {
             return getClass().getName();
         }
 
-        private Sheet.Set getPropertySet(Sheet s) {
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+        private Sheet.Set getPropertySet(Sheet sheet) {
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
-            return ss;
+            return sheetSet;
         }
 
         @Override

@@ -135,38 +135,38 @@ public class ImageNode extends AbstractContentNode<Image> {
         "ImageNode.createSheet.deviceId.displayName=Device ID",
         "ImageNode.createSheet.deviceId.desc=Device ID of the image"})
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
+        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "ImageNode.createSheet.name.desc"),
                 getDisplayName()));
 
-        ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_type_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_type_name(),
                 Bundle.ImageNode_createSheet_type_displayName(),
                 Bundle.ImageNode_createSheet_type_desc(),
                 Bundle.ImageNode_createSheet_type_text()));
 
-        ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_size_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_size_name(),
                 Bundle.ImageNode_createSheet_size_displayName(),
                 Bundle.ImageNode_createSheet_size_desc(),
                 this.content.getSize()));
-        ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_sectorSize_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_sectorSize_name(),
                 Bundle.ImageNode_createSheet_sectorSize_displayName(),
                 Bundle.ImageNode_createSheet_sectorSize_desc(),
                 this.content.getSsize()));
 
-        ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_md5_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_md5_name(),
                 Bundle.ImageNode_createSheet_md5_displayName(),
                 Bundle.ImageNode_createSheet_md5_desc(),
                 this.content.getMd5()));
 
-        ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_timezone_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_timezone_name(),
                 Bundle.ImageNode_createSheet_timezone_displayName(),
                 Bundle.ImageNode_createSheet_timezone_desc(),
                 this.content.getTimeZone()));
@@ -174,7 +174,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         try (CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
             ResultSet deviceIdSet = query.getResultSet();
             if (deviceIdSet.next()) {
-                ss.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
+                sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
                         Bundle.ImageNode_createSheet_deviceId_displayName(),
                         Bundle.ImageNode_createSheet_deviceId_desc(),
                         deviceIdSet.getString("device_id")));
@@ -183,12 +183,12 @@ public class ImageNode extends AbstractContentNode<Image> {
             logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
         }
 
-        return s;
+        return sheet;
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override
@@ -197,8 +197,8 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override

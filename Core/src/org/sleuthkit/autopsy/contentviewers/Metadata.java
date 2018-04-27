@@ -59,9 +59,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextPane1 = new javax.swing.JTextPane();
 
-        setPreferredSize(new java.awt.Dimension(610, 52));
+        setPreferredSize(new java.awt.Dimension(100, 52));
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new java.awt.Dimension(610, 52));
 
         jTextPane1.setEditable(false);
