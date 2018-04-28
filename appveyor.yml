@@ -37,7 +37,7 @@ services:
 build_script:
   - cd %TSK_HOME%
   - python setupDevRepos.py
-  - python updateAndBuildAll.py -m
+  - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
   - cmd: ant dist-PostgreSQL
