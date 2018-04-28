@@ -237,7 +237,9 @@ class Ingester {
 
         try {
             //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
+            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Index chunk");
             solrServer.addDocument(updateDoc);
+            EnterpriseHealthMonitor.submitTimingMetric(metric);
             uncommitedIngests = true;
 
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
