@@ -45,33 +45,31 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
- * A Swing JPanel with a JTabbedPane child component that contains a collection
- * of result viewers (DataResultViewer) that is either supplied or provided by
- * the result viewer extension point (service providers that implement
- * DataResultViewer).
+ * A result view panel is a JPanel with a JTabbedPane child component that
+ * contains a collection of result viewers and implements the DataResult
+ * interface. The result viewers in a result view panel are either supplied
+ * during construction of the panel or are obtained from the result viewer
+ * extension point (DataResultViewer service providers).
  *
- * The "main" result view panel resides in the "main" result view (a
- * DataResultTopComponent) that is normally docked into the upper right hand
- * side of the main application window.
+ * A result view panel provides an implementation of the setNode API of the the
+ * DataResult interface that pushes a given NetBeans Node into its child result
+ * viewers via the DataResultViewer.setNode API. The result viewers are
+ * responsible for providing a view of the application data represented by the
+ * node. A typical result viewer is a JPanel that displays the child nodes of
+ * the given node using a NetBeans explorer view child component.
  *
- * All result view panels push a given root node into their child result
- * viewers, which are responsible for displaying the children of the node. The
- * application tree view (DirectoryTreeTopComponent) supplies the current root
- * node for the "main" result view panel by pushing its current selection to the
- * panel.
+ * A result panel should be child components of top components that are explorer
+ * manager providers. The parent top component is expected to expose a lookup
+ * maintained by its explorer manager to the actions global context. The child
+ * result view panel will then find the parent top component's explorer manager
+ * at runtime, so that it can act as an explorer manager provider for its child
+ * result viewers. This connects the nodes displayed in the result viewers to
+ * the actions global context.
  *
  * All result view panels push single node selections in the child result
  * viewers to either the "main" content view (DataContentTopComponent) that is
  * normally docked into the lower right hand side of the main application
  * window, or to a supplied custom content view (implements DataContent).
- *
- * All result view panels should be child components of top components that are
- * explorer manager providers. The parent top component is expected to expose a
- * lookup maintained by its explorer manager to the actions global context. The
- * child result view panel will then find the parent top component's explorer
- * manager at runtime, so that it can act as an explorer manager provider for
- * its child result viewers. This connects the nodes displayed in the result
- * viewers to the actions global context.
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 

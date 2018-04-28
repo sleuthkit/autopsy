@@ -22,23 +22,26 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 
 /**
- * An interface for result viewers. A result viewer uses a Swing component to
- * provide a view of the application data represented by a given NetBeans node.
- * Result viewers typically appear in a result view (a DataResultTopComponent)
- * docked into the upper right hand side of the main application window.
+ * An interface for result viewers. A result viewer uses a Swing Component to
+ * provide a view of the application data represented by a NetBeans Node passed
+ * to it via its setNode method.
  *
- * Typically, a result viewer is a JPanel that displays the child nodes of the
- * given node using a NetBeans explorer view as a child component. Such a result
+ * Result viewers are most commonly presented as a tab in a result view panel
+ * (DataResultPanel) inside a result view top component (DataResultTopComponent)
+ * that is docked into the upper right hand side (editor mode) of the main
+ * application window.
+ *
+ * A result viewer is typically a JPanel that displays the child nodes of the
+ * given node using a NetBeans explorer view child component. Such a result
  * viewer should use the explorer manager of the ancestor top component to
  * connect the lookups of the nodes displayed in the NetBeans explorer view to
  * the actions global context. It is strongly recommended that this type of
- * result viewer extends the abstract base class AbstractDataResultViewer, which
- * will handle some key aspects of working with the ancestor top component's
- * explorer manager.
+ * result viewer is implemented by extending the abstract base class
+ * AbstractDataResultViewer, which will handle some key aspects of working with
+ * the ancestor top component's explorer manager.
  *
  * This interface is an extension point, so classes that implement it should
  * provide an appropriate ServiceProvider annotation.
- *
  */
 public interface DataResultViewer {
 
