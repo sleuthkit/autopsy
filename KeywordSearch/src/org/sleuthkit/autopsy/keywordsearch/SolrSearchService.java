@@ -390,7 +390,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
          * in less than roughly two seconds. This stuff should be reworked using
          * an ExecutorService and tasks with Futures.
          */
-        KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
+        AdHocSearchChildFactory.BlackboardResultWriter.stopAllWriters();
         try {
             Thread.sleep(2000);
         } catch (InterruptedException ex) {
