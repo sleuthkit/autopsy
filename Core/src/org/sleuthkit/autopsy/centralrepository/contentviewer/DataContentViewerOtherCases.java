@@ -409,6 +409,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         // we can correlate based on the MD5 if it is enabled      
         if (this.file != null && EamDb.isEnabled()) {
             try {
+
                 List<CorrelationAttribute.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
                 String md5 = this.file.getMd5Hash();
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
@@ -460,11 +461,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
                         .collect(Collectors.toMap(c -> new ArtifactKey(c.getCorrelationDataSource().getDeviceID(), c.getFilePath()), c -> c)));
             }
-            for (Entry<ArtifactKey, CorrelationAttributeInstance> in : artifactInstances.entrySet()) {
-                CorrelationAttributeInstance mod = in.getValue();
-                mod.setComment("" + in.getKey().hashCode());
-                artifactInstances.put(in.getKey(), mod);
-            }
+
             if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
                 final Case openCase = Case.getOpenCase();
 
@@ -522,7 +519,6 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 }
             }
         }
-        caseDbInstance.setComment("" + instKey.hashCode());
 
         // If known, or not in CR, add
         if (knownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || knownStatus.compareTo(TskData.FileKnown.BAD) == 0 || !artifactInstances.containsKey(instKey)) {
