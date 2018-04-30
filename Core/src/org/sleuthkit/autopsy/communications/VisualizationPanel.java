@@ -44,6 +44,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -57,14 +58,18 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -78,6 +83,7 @@ import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.controlsfx.control.Notifications;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
 import org.openide.explorer.ExplorerManager;
@@ -89,7 +95,6 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.datamodel.CommunicationsFilter;
@@ -142,12 +147,38 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final Map<NamedGraphLayout, JButton> layoutButtons = new HashMap<>();
     private NamedGraphLayout currentLayout;
 
+    @NbBundle.Messages("VisalizationPanel.paintingError=Problem painting visualization.")
     public VisualizationPanel() {
         initComponents();
+        //initialize invisible JFXPanel that is used to show JFXNotifications over this window.
+        notificationsJFXPanel.setScene(new Scene(new Pane()));
 
         graph = new CommunicationsGraph(pinnedAccountModel, lockedVertexModel);
 
-        graphComponent = new mxGraphComponent(graph);
+        /*
+         * custom implementation of mxGraphComponent that uses... a custom
+         * implmementation of mxGraphControl ... that overrides paint so we can
+         * catch the NPEs we are getting and deal with them. For now that means
+         * just ignoring them.
+         */
+        graphComponent = new mxGraphComponent(graph) {
+            @Override
+            protected mxGraphComponent.mxGraphControl createGraphControl() {
+
+                return new mxGraphControl() {
+
+                    @Override
+                    public void paint(Graphics graphics) {
+                        try {
+                            super.paint(graphics);
+                        } catch (NullPointerException ex) {
+                            logger.log(Level.WARNING, "There was a NPE while painging the VisualizaitonPanel.", ex);
+                        }
+                    }
+
+                };
+            }
+        };
         graphComponent.setAutoExtend(true);
         graphComponent.setAutoScroll(true);
         graphComponent.setAutoscrolls(true);
@@ -355,6 +386,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         zoomLabel = new JLabel();
         clearVizButton = new JButton();
         jSeparator2 = new JToolBar.Separator();
+        notificationsJFXPanel = new JFXPanel();
 
         setLayout(new BorderLayout());
 
@@ -373,9 +405,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(71, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(248, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -504,7 +536,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
@@ -528,6 +560,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         );
 
         borderLayoutPanel.add(toolbar, BorderLayout.PAGE_START);
+        borderLayoutPanel.add(notificationsJFXPanel, BorderLayout.PAGE_END);
 
         splitPane.setLeftComponent(borderLayoutPanel);
 
@@ -589,12 +622,15 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.WARNING, "CVT graph layout failed.", ex);
-                    if (lockedVertexModel.isEmpty()) {
-                        MessageNotifyUtil.Message.error(Bundle.VisualizationPanel_layoutFail_text(layout.getDisplayName()));
-                    } else {
-                        MessageNotifyUtil.Message.error(Bundle.VisualizationPanel_layoutFailWithLockedVertices_text(layout.getDisplayName()));
-                    }
-                    undoManager.undo();
+                    String message = (lockedVertexModel.isEmpty())
+                            ? Bundle.VisualizationPanel_layoutFail_text(layout.getDisplayName())
+                            : Bundle.VisualizationPanel_layoutFailWithLockedVertices_text(layout.getDisplayName());
+
+                    Platform.runLater(()
+                            -> Notifications.create().owner(notificationsJFXPanel.getScene().getWindow())
+                                    .text(message)
+                                    .showWarning()
+                    );
                 }
             }
         }.execute();
@@ -651,6 +687,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JToolBar.Separator jSeparator1;
     private JToolBar.Separator jSeparator2;
     private JTextArea jTextArea1;
+    private JFXPanel notificationsJFXPanel;
     private JButton organicLayoutButton;
     private JPanel placeHolderPanel;
     private JSplitPane splitPane;
@@ -729,7 +766,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+                   || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
@@ -760,7 +797,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+                   || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
@@ -791,7 +828,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+                   || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
@@ -821,7 +858,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public boolean isVertexIgnored(Object vertex) {
             return super.isVertexIgnored(vertex)
-                    || lockedVertexModel.isVertexLocked((mxCell) vertex);
+                   || lockedVertexModel.isVertexLocked((mxCell) vertex);
         }
 
         @Override
