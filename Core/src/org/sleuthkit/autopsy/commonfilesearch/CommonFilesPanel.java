@@ -537,7 +537,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
         this.manageCheckBoxState();
-        this.toggleErrorTextAndSearchBox();
     }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
 
     private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
@@ -584,6 +583,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             this.pictureVideoCheckbox.setEnabled(true);
             this.documentsCheckbox.setEnabled(true);
+                        
+            this.toggleErrorTextAndSearchBox();
         }
     }
 
