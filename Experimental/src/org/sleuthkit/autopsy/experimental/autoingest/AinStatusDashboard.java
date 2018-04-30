@@ -64,7 +64,7 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
         refreshButton = new javax.swing.JButton();
         clusterMetricsButton = new javax.swing.JButton();
         nodeStatusScrollPane = new javax.swing.JScrollPane();
-        jLabel1 = new javax.swing.JLabel();
+        nodeStatusTableTitle = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.text")); // NOI18N
         refreshButton.setToolTipText(org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.toolTipText")); // NOI18N
@@ -81,8 +81,8 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
             }
         });
 
-        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.jLabel1.text")); // NOI18N
+        nodeStatusTableTitle.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nodeStatusTableTitle, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.nodeStatusTableTitle.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -93,7 +93,7 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(nodeStatusScrollPane)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(nodeStatusTableTitle)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -108,7 +108,7 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(40, 40, 40)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(nodeStatusTableTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(nodeStatusScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(382, 382, 382)
@@ -136,8 +136,8 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane nodeStatusScrollPane;
+    private javax.swing.JLabel nodeStatusTableTitle;
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
 
