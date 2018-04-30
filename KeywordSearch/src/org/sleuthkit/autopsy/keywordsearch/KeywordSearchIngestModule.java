@@ -288,7 +288,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return ProcessResult.OK;
             }
             List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
-            SearchRunner.getInstance().startJob(context, keywordListNames);
+            IngestSearchRunner.getInstance().startJob(context, keywordListNames);
             startedSearching = true;
         }
 
@@ -309,13 +309,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         if (context.fileIngestIsCancelled()) {
             logger.log(Level.INFO, "Keyword search ingest module instance {0} stopping search job due to ingest cancellation", instanceNum); //NON-NLS
-            SearchRunner.getInstance().stopJob(jobId);
+            IngestSearchRunner.getInstance().stopJob(jobId);
             cleanup();
             return;
         }
 
         // Remove from the search list and trigger final commit and final search
-        SearchRunner.getInstance().endJob(jobId);
+        IngestSearchRunner.getInstance().endJob(jobId);
 
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {

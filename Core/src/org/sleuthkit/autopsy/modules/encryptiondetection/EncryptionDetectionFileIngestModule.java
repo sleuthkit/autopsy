@@ -229,6 +229,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             case "application/msword":
             case "application/vnd.ms-excel":
             case "application/vnd.ms-powerpoint":
+            case "application/pdf":
                 /*
                  * A file of one of these types will be determined to be
                  * password protected or not by attempting to parse it via Tika.
@@ -246,7 +247,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     parser.parse(bin, handler, metadata, new ParseContext());
                 } catch (EncryptedDocumentException ex) {
                     /*
-                     * Office OLE2 file is determined to be password protected.
+                     * File is determined to be password protected.
                      */
                     passwordProtected = true;
                 } finally {
