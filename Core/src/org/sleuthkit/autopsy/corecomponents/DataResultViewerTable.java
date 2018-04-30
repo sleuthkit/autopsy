@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,155 +60,153 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
- * A tabular viewer for the results view.
+ * A tabular result viewer that displays the children of the given root node
+ * using an OutlineView.
  *
- * TODO (JIRA-2658): Fix DataResultViewer extension point. When this is done,
- * restore implementation of DataResultViewerTable as a DataResultViewer service
- * provider.
+ * Instances of this class should use the explorer manager of an ancestor top
+ * component to connect the lookups of the nodes displayed in the OutlineView to
+ * the actions global context. The explorer manager can be supplied during
+ * construction, but the typical use case is for the result viewer to find the
+ * ancestor top component's explorer manager at runtime.
  */
-//@ServiceProvider(service = DataResultViewer.class)
-public class DataResultViewerTable extends AbstractDataResultViewer {
+@ServiceProvider(service = DataResultViewer.class)
+public final class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
-    private static final Color TAGGED_COLOR = new Color(255, 255, 195);
+    static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
     private final String title;
+    private final Map<String, ETableColumn> columnMap;
+    private final Map<Integer, Property<?>> propertiesMap;
+    private final Outline outline;
+    private final TableListener outlineViewListener;
+    private Node rootNode;
 
     /**
-     * The properties map:
+     * Constructs a tabular result viewer that displays the children of the
+     * given root node using an OutlineView. The viewer should have an ancestor
+     * top component to connect the lookups of the nodes displayed in the
+     * OutlineView to the actions global context. The explorer manager will be
+     * discovered at runtime.
+     */
+    public DataResultViewerTable() {
+        this(null, Bundle.DataResultViewerTable_title());
+    }
+
+    /**
+     * Constructs a tabular result viewer that displays the children of a given
+     * root node using an OutlineView. The viewer should have an ancestor top
+     * component to connect the lookups of the nodes displayed in the
+     * OutlineView to the actions global context.
      *
-     * stored value of column index -> property at that index
-     *
-     * We move around stored values instead of directly using the column indices
-     * in order to not override settings for a column that may not appear in the
-     * current table view due to its collection of its children's properties.
-     */
-    private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
-
-    /**
-     * Stores references to the actual table column objects, keyed by column
-     * name, so that we can check there visibility later in
-     * storeColumnVisibility().
-     */
-    private final Map<String, ETableColumn> columnMap = new HashMap<>();
-
-    private Node currentRoot;
-
-    /*
-     * Convience reference to internal Outline.
-     */
-    private Outline outline;
-
-    /**
-     * Listener for table model event and mouse clicks.
-     */
-    private final  TableListener tableListener;
-
-    /**
-     * Creates a DataResultViewerTable object that is compatible with node
-     * multiple selection actions, and the default title.
-     *
-     * @param explorerManager allow for explorer manager sharing
+     * @param explorerManager The explorer manager of the ancestor top
+     *                        component.
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         this(explorerManager, Bundle.DataResultViewerTable_title());
     }
 
     /**
-     * Creates a DataResultViewerTable object that is compatible with node
-     * multiple selection actions, and a custom title.
+     * Constructs a tabular result viewer that displays the children of a given
+     * root node using an OutlineView with a given title. The viewer should have
+     * an ancestor top component to connect the lookups of the nodes displayed
+     * in the OutlineView to the actions global context.
      *
-     * @param explorerManager allow for explorer manager sharing
-     * @param title           The custom title.
+     * @param explorerManager The explorer manager of the ancestor top
+     *                        component.
+     * @param title           The title.
      */
     public DataResultViewerTable(ExplorerManager explorerManager, String title) {
         super(explorerManager);
         this.title = title;
-        
+        this.columnMap = new HashMap<>();
+        this.propertiesMap = new TreeMap<>();
+
+        /*
+         * Execute the code generated by the GUI builder.
+         */
         initComponents();
-        
+
+        /*
+         * Configure the child OutlineView (explorer view) component.
+         */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
         
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
         outline.setColumnSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        outline.setRootVisible(false);    // don't show the root node
+        outline.setRootVisible(false);
         outline.setDragEnabled(false);
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
-        
-        // add a listener so that when columns are moved, the new order is stored
-        tableListener = new TableListener();
-        outline.getColumnModel().addColumnModelListener(tableListener);
-        
-        // the listener also moves columns back if user tries to move the first column out of place
-        outline.getTableHeader().addMouseListener(tableListener);
+
+        /*
+         * Add a table listener to the child OutlineView (explorer view) to
+         * persist the order of the table columns when a column is moved.
+         */
+        outlineViewListener = new TableListener();
+        outline.getColumnModel().addColumnModelListener(outlineViewListener);
+
+        /*
+         * Add a mouse listener to the child OutlineView (explorer view) to make
+         * sure the first column of the table is kept in place.
+         */
+        outline.getTableHeader().addMouseListener(outlineViewListener);
     }
 
     /**
-     * Creates a DataResultViewerTable object that is NOT compatible with node
-     * multiple selection actions.
-     */
-    public DataResultViewerTable() {
-        this(new ExplorerManager(),Bundle.DataResultViewerTable_title());
-    }
-
-
-    /**
-     * Expand node
+     * Creates a new instance of a tabular result viewer that displays the
+     * children of a given root node using an OutlineView. This method exists to
+     * make it possible to use the default service provider instance of this
+     * class in the "main" results view of the application, while using distinct
+     * instances in other places in the UI.
      *
-     * @param n Node to expand
+     * @return A new instance of a tabular result viewer,
      */
     @Override
-    public void expandNode(Node n) {
-        super.expandNode(n);
+    public DataResultViewer createInstance() {
+        return new DataResultViewerTable();
+    }
 
-        outlineView.expandNode(n);
+    /**
+     * Gets the title of this tabular result viewer.
+     */
+    @Override
+    @NbBundle.Messages("DataResultViewerTable.title=Table")
+    public String getTitle() {
+        return title;
     }
     
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Indicates whether a given node is supported as a root node for this
+     * tabular viewer.
+     *
+     * @param candidateRootNode The candidate root node.
+     *
+     * @return
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        outlineView = new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 691, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 366, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.openide.explorer.view.OutlineView outlineView;
-    // End of variables declaration//GEN-END:variables
-
     @Override
-    public boolean isSupported(Node selectedNode) {
+    public boolean isSupported(Node candidateRootNode) {
         return true;
     }
 
+    /**
+     * Sets the current root node of this tabular result viewer.
+     *
+     * @param rootNode The node to set as the current root node, possibly null.
+     */
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void setNode(Node selectedNode) {
-
+    public void setNode(Node rootNode) {
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -217,30 +215,30 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * model."
          */
         outline.unsetQuickFilter();
-        // change the cursor to "waiting cursor" for this operation
+
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            boolean hasChildren = false;
-            if (selectedNode != null) {
-                // @@@ This just did a DB round trip to get the count and the results were not saved...
-                hasChildren = selectedNode.getChildren().getNodesCount() > 0;
-            }
-
-            if (hasChildren) {
-                currentRoot = selectedNode;
-                em.setRootContext(currentRoot);
+            /*
+             * If the given node is not null and has children, set it as the
+             * root context of the child OutlineView, otherwise make an
+             * "empty"node the root context.
+             *
+             * IMPORTANT NOTE: This is the first of many times where a
+             * getChildren call on the current root node causes all of the
+             * children of the root node to be created and defeats lazy child
+             * node creation, if it is enabled. It also likely leads to many
+             * case database round trips.
+             */
+            if (rootNode != null && rootNode.getChildren().getNodesCount() > 0) {
+                this.rootNode = rootNode;
+                this.getExplorerManager().setRootContext(this.rootNode);
                 setupTable();
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode); // make empty node
+                this.getExplorerManager().setRootContext(emptyNode);
                 outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-                /*
-                 * Since we are modifying the columns, we don't want to listen
-                 * to added/removed events as un-hide/hide.
-                 */
-                tableListener.listenToVisibilityChanges(false);
-                outlineView.setPropertyColumns(); // set the empty property header
+                outlineViewListener.listenToVisibilityChanges(false);
+                outlineView.setPropertyColumns();
             }
         } finally {
             this.setCursor(null);
@@ -248,16 +246,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Create Column Headers based on the Content represented by the Nodes in
-     * the table. Load persisted column order, sorting and visibility.
+     * Sets up the Outline view of this tabular result viewer by creating
+     * column headers based on the children of the current root node. The
+     * persisted column order, sorting and visibility is used.
      */
     private void setupTable() {
         /*
          * Since we are modifying the columns, we don't want to listen to
          * added/removed events as un-hide/hide, until the table setup is done.
          */
-        tableListener.listenToVisibilityChanges(false);
-        /**
+        outlineViewListener.listenToVisibilityChanges(false);
+        /*
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
          * which is the file name, etc. So, pop that property off the list, but
@@ -289,7 +288,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         setColumnWidths();
 
-        //Load column sorting information from preferences file and apply it to columns.
+        /*
+         * Load column sorting information from preferences file and apply it to
+         * columns.
+         */
         loadColumnSorting();
 
         /*
@@ -301,7 +303,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         populateColumnMap();
 
-        //Load column visibility information from preferences file and apply it to columns.
+        /*
+         * Load column visibility information from preferences file and apply it
+         * to columns.
+         */
         loadColumnVisibility();
 
         /*
@@ -309,32 +314,36 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * it.
          */
         SwingUtilities.invokeLater(() -> {
-            if (currentRoot instanceof TableFilterNode) {
-                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
+            if (rootNode instanceof TableFilterNode) {
+                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) rootNode).getChildNodeSelectionInfo();
                 if (null != selectedChildInfo) {
-                    Node[] childNodes = currentRoot.getChildren().getNodes(true);
+                    Node[] childNodes = rootNode.getChildren().getNodes(true);
                     for (int i = 0; i < childNodes.length; ++i) {
                         Node childNode = childNodes[i];
                         if (selectedChildInfo.matches(childNode)) {
                             try {
-                                em.setSelectedNodes(new Node[]{childNode});
+                                this.getExplorerManager().setSelectedNodes(new Node[]{childNode});
                             } catch (PropertyVetoException ex) {
                                 LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
                             }
                             break;
                         }
                     }
-                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
+                    ((TableFilterNode) rootNode).setChildNodeSelectionInfo(null);
                 }
             }
         });
 
-        //the table setup is done, so any added/removed events can now be treated as un-hide/hide.
-        tableListener.listenToVisibilityChanges(true);
+        /*
+         * The table setup is done, so any added/removed events can now be
+         * treated as un-hide/hide.
+         */
+        outlineViewListener.listenToVisibilityChanges(true);
     }
 
     /*
-     * Populate the map with references to the column objects for use when
+     * Populates the column map for the child OutlineView of this tabular
+     * result viewer with references to the column objects for use when
      * loading/storing the visibility info.
      */
     private void populateColumnMap() {
@@ -351,8 +360,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /*
+     * Sets the column widths for the child OutlineView of this tabular results
+     * viewer.
+     */
     private void setColumnWidths() {
-        if (currentRoot.getChildren().getNodesCount() != 0) {
+        if (rootNode.getChildren().getNodesCount() != 0) {
             final Graphics graphics = outlineView.getGraphics();
             if (graphics != null) {
                 final FontMetrics metrics = graphics.getFontMetrics();
@@ -388,8 +401,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /*
+     * Sets up the columns for the child OutlineView of this tabular results
+     * viewer with respect to column names and visisbility.
+     */
     synchronized private void assignColumns(List<Property<?>> props) {
-        // Get the columns setup with respect to names and sortability
         String[] propStrings = new String[props.size() * 2];
         for (int i = 0; i < props.size(); i++) {
             final Property<?> prop = props.get(i);
@@ -402,29 +418,25 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             propStrings[2 * i] = prop.getName();
             propStrings[2 * i + 1] = prop.getDisplayName();
         }
-
         outlineView.setPropertyColumns(propStrings);
     }
 
     /**
-     * Store the current column visibility information into a preference file.
+     * Persists the current column visibility information for the child
+     * OutlineView of this tabular result viewer using a preferences file.
      */
     private synchronized void storeColumnVisibility() {
-        if (currentRoot == null || propertiesMap.isEmpty()) {
+        if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (currentRoot instanceof TableFilterNode) {
-            TableFilterNode tfn = (TableFilterNode) currentRoot;
+        if (rootNode instanceof TableFilterNode) {
+            TableFilterNode tfn = (TableFilterNode) rootNode;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             final ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
-
-            //store hidden state
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
-
                 String columnName = entry.getKey();
                 final String columnHiddenKey = ResultViewerPersistence.getColumnHiddenKey(tfn, columnName);
                 final TableColumn column = entry.getValue();
-
                 boolean columnHidden = columnModel.isColumnHidden(column);
                 if (columnHidden) {
                     preferences.putBoolean(columnHiddenKey, true);
@@ -436,16 +448,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Store the current column order information into a preference file.
+     * Persists the current column ordering for the child OutlineView of this
+     * tabular result viewer using a preferences file.
      */
     private synchronized void storeColumnOrder() {
-        if (currentRoot == null || propertiesMap.isEmpty()) {
+        if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (currentRoot instanceof TableFilterNode) {
-            TableFilterNode tfn = (TableFilterNode) currentRoot;
+        if (rootNode instanceof TableFilterNode) {
+            TableFilterNode tfn = (TableFilterNode) rootNode;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
                 preferences.putInt(ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName()), entry.getKey());
@@ -454,20 +466,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Store the current column sorting information into a preference file.
+     * Persists the current column sorting information using a preferences file.
      */
     private synchronized void storeColumnSorting() {
-        if (currentRoot == null || propertiesMap.isEmpty()) {
+        if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (currentRoot instanceof TableFilterNode) {
-            final TableFilterNode tfn = ((TableFilterNode) currentRoot);
+        if (rootNode instanceof TableFilterNode) {
+            final TableFilterNode tfn = ((TableFilterNode) rootNode);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
                 ETableColumn etc = entry.getValue();
                 String columnName = entry.getKey();
-
                 //store sort rank and order
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
@@ -485,47 +496,43 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Reads and applies the column sorting information persisted to the
-     * preferences file. Must be called after loadColumnOrder() since it depends
-     * on propertiesMap being initialized, and after assignColumns since it
-     * cannot set the sort on columns that have not been added to the table.
+     * preferences file. Must be called after loadColumnOrder, since it depends
+     * on the properties map being initialized, and after assignColumns, since
+     * it cannot set the sort on columns that have not been added to the table.
      */
     private synchronized void loadColumnSorting() {
-        if (currentRoot == null || propertiesMap.isEmpty()) {
+        if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-
-        if (currentRoot instanceof TableFilterNode) {
-            final TableFilterNode tfn = (TableFilterNode) currentRoot;
-
+        if (rootNode instanceof TableFilterNode) {
+            final TableFilterNode tfn = (TableFilterNode) rootNode;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             //organize property sorting information, sorted by rank
             TreeSet<ColumnSortInfo> sortInfos = new TreeSet<>(Comparator.comparing(ColumnSortInfo::getRank));
             propertiesMap.entrySet().stream().forEach(entry -> {
                 final String propName = entry.getValue().getName();
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-
                 Integer sortRank = preferences.getInt(ResultViewerPersistence.getColumnSortRankKey(tfn, propName), 0);
                 //default to true => ascending
                 Boolean sortOrder = preferences.getBoolean(ResultViewerPersistence.getColumnSortOrderKey(tfn, propName), true);
-
                 sortInfos.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
             });
-
             //apply sort information in rank order.
             sortInfos.forEach(sortInfo -> outline.setColumnSorted(sortInfo.modelIndex, sortInfo.order, sortInfo.rank));
         }
     }
 
+    /**
+     * Reads and applies the column visibility information persisted to the
+     * preferences file.
+     */
     private synchronized void loadColumnVisibility() {
-        if (currentRoot == null || propertiesMap.isEmpty()) {
+        if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-
-        if (currentRoot instanceof TableFilterNode) {
-
+        if (rootNode instanceof TableFilterNode) {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-
-            final TableFilterNode tfn = ((TableFilterNode) currentRoot);
+            final TableFilterNode tfn = ((TableFilterNode) rootNode);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
                 final String propName = entry.getValue().getName();
@@ -538,7 +545,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets a list of child properties (columns) in the order persisted in the
-     * preference file. Also initialized the propertiesMap with the column
+     * preference file. Also initialized the properties map with the column
      * order.
      *
      * @return a List<Node.Property<?>> of the properties in the persisted
@@ -546,14 +553,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
 
-        List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(currentRoot, 100);
+        List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(rootNode, 100);
 
         // If node is not table filter node, use default order for columns
-        if (!(currentRoot instanceof TableFilterNode)) {
+        if (!(rootNode instanceof TableFilterNode)) {
             return props;
         }
 
-        final TableFilterNode tfn = ((TableFilterNode) currentRoot);
+        final TableFilterNode tfn = ((TableFilterNode) rootNode);
         propertiesMap.clear();
 
         /*
@@ -590,24 +597,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return new ArrayList<>(propertiesMap.values());
     }
 
-    @Override
-    @NbBundle.Messages("DataResultViewerTable.title=Table")
-    public String getTitle() {
-        return title;
-    }
-
-    @Override
-    public DataResultViewer createInstance() {
-        return new DataResultViewerTable();
-    }
-
+    /**
+     * Frees the resources that have been allocated by this tabular results
+     * viewer, in preparation for permanently disposing of it.
+     */
     @Override
     public void clearComponent() {
         this.outlineView.removeAll();
         this.outlineView = null;
-
         super.clearComponent();
-
     }
 
     /**
@@ -778,8 +776,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             // only override the color if a node is not selected
-            if (currentRoot != null && !isSelected) {
-                Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
+            if (rootNode != null && !isSelected) {
+                Node node = rootNode.getChildren().getNodeAt(table.convertRowIndexToModel(row));
                 boolean tagFound = false;
                 if (node != null) {
                     Node.PropertySet[] propSets = node.getPropertySets();
@@ -799,10 +797,37 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
                 //if the node does have associated tags, set its background color
                 if (tagFound) {
-                    component.setBackground(TAGGED_COLOR);
+                    component.setBackground(TAGGED_ROW_COLOR);
                 }
             }
             return component;
         }
     }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        outlineView = new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 691, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 366, Short.MAX_VALUE)
+        );
+    }// </editor-fold>//GEN-END:initComponents
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private org.openide.explorer.view.OutlineView outlineView;
+    // End of variables declaration//GEN-END:variables
+
 }

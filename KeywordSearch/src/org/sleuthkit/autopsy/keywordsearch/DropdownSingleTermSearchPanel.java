@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -42,7 +43,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * perform this task at the desired size, and neither could numerous other
  * fonts.
  */
-public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
@@ -135,8 +137,22 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
      *
      * @return The keyword list.
      */
+    @NbBundle.Messages({"DropdownSingleTermSearchPanel.warning.title=Warning",
+    "DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]"})
     @Override
     List<KeywordList> getKeywordLists() {
+        
+        if (regexRadioButton.isSelected()) {
+            if((keywordTextField.getText() != null)  && 
+                    (keywordTextField.getText().startsWith("^") || 
+                    (keywordTextField.getText().endsWith("$") && ! keywordTextField.getText().endsWith("\\$")))) {
+
+                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.title"),
+                        NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.text"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            }
+        }
+        
         List<Keyword> keywords = new ArrayList<>();
         keywords.add(new Keyword(keywordTextField.getText(), !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
         List<KeywordList> keywordLists = new ArrayList<>();
