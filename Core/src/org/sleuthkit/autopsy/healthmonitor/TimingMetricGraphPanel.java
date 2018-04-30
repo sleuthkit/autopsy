@@ -165,6 +165,8 @@ class TimingMetricGraphPanel extends JPanel {
             minTimestamp = Math.min(minTimestamp, score.getTimestamp());
         }
     }
+    
+    
 
     /**
      * Setup of the graphics panel:
@@ -258,6 +260,7 @@ class TimingMetricGraphPanel extends JPanel {
         
         // Create hatch marks and grid lines for y axis.
         int labelWidth;
+        int positionForMetricNameLabel = 0;
         for (int i = 0; i < numberYDivisions + 1; i++) {
             int x0 = leftGraphPadding;
             int x1 = pointWidth + leftGraphPadding;
@@ -278,13 +281,9 @@ class TimingMetricGraphPanel extends JPanel {
                 g2.drawString(yLabel, x0 - labelWidth - 5, y0 + (fontMetrics.getHeight() / 2) - 3);
                 
                 // The nicest looking alignment for this label seems to be left-aligned with the top
-                // y-axis label
+                // y-axis label. Save this position to be used to write the label later.
                 if (i == numberYDivisions) {
-                    // Write the scale
-                    g2.setColor(Color.BLACK);
-                    String scaleStr = Bundle.TimingMetricGraphPanel_paintComponent_displayingTime() + yUnitString;
-                    String titleStr = metricName + " - " + scaleStr;
-                    g2.drawString(titleStr, x0 - labelWidth - 5, padding);
+                    positionForMetricNameLabel = x0 - labelWidth - 5;
                 }
             }
             
@@ -470,6 +469,17 @@ class TimingMetricGraphPanel extends JPanel {
             g2.setColor(trendLineColor);
             g2.drawLine(x0, y0, x1, y1);
         }
+        
+        // The graph lines may have extended up past the bounds of the graph. Overwrite that
+        // area with the original background color.
+        g2.setColor(this.getBackground());
+        g2.fillRect(leftGraphPadding, 0, graphWidth, topGraphPadding); 
+
+        // Write the scale. Do this after we erase the top block of the graph.
+        g2.setColor(Color.BLACK);
+        String scaleStr = Bundle.TimingMetricGraphPanel_paintComponent_displayingTime() + yUnitString;
+        String titleStr = metricName + " - " + scaleStr;
+        g2.drawString(titleStr, positionForMetricNameLabel, padding);
     }
     
     /**
