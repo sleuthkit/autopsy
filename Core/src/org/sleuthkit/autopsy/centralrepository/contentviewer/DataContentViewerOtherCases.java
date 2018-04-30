@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
@@ -449,7 +450,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         // @@@ Check exception
         try {
             String caseUUID = Case.getOpenCase().getName();
-            Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
+            HashMap<ArtifactKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 EamDb dbManager = EamDb.getInstance();
@@ -457,10 +458,21 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                         || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
                         || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                        .collect(Collectors.toMap(c -> new ArtifactKey(c), c -> c)));
+                        .collect(Collectors.toMap(c -> new ArtifactKey(c.getCorrelationDataSource().getDeviceID(), c.getFilePath()), c -> c)));
             }
+            for (Entry<ArtifactKey, CorrelationAttributeInstance> in : artifactInstances.entrySet()) {
+                CorrelationAttributeInstance mod = in.getValue();
+                mod.setComment("" + in.getKey().hashCode());
+                artifactInstances.put(in.getKey(), mod);
+            }
+            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
+                final Case openCase = Case.getOpenCase();
 
-            AddCaseDbMatches(corAttr, artifactInstances);
+                List<AbstractFile> caseDbFiles = AddCaseDbMatches(corAttr, openCase);
+                for (AbstractFile caseDbFile : caseDbFiles) {
+                    AddOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
+                }
+            }
 
             return artifactInstances;
         } catch (EamDbException ex) {
@@ -475,43 +487,46 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         return new HashMap<>(0);
     }
 
-    private void AddCaseDbMatches(CorrelationAttribute corAttr, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances) throws NoCurrentCaseException, TskCoreException, EamDbException {
-        if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-            String md5 = corAttr.getCorrelationValue();
-            final Case openCase = Case.getOpenCase();
-            SleuthkitCase tsk = openCase.getSleuthkitCase();
-            List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
-            CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
+    private List<AbstractFile> AddCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
+        String md5 = corAttr.getCorrelationValue();
 
-            for (AbstractFile fileMatch : matches) {
-                if (this.file.equals(fileMatch)) {
-                    continue; // If this is the file the user clicked on
-                }              
-                AddOrUpdateAttributeInstance(caze, artifactInstances, openCase, fileMatch); // Determine whether to add fileMatch based on known status
+        SleuthkitCase tsk = openCase.getSleuthkitCase();
+        List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
+
+        List<AbstractFile> caseDbArtifactInstances = new ArrayList<>();
+        for (AbstractFile fileMatch : matches) {
+            if (this.file.equals(fileMatch)) {
+                continue; // If this is the file the user clicked on
             }
+            caseDbArtifactInstances.add(fileMatch);
         }
+        return caseDbArtifactInstances;
+
     }
 
-    private void AddOrUpdateAttributeInstance(CorrelationCase caze, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, final Case openCase, AbstractFile fileMatch) throws EamDbException, TskCoreException {
-        TskData.FileKnown knownStatus = fileMatch.getKnown();     
-        CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, fileMatch.getDataSource());
-        String filePath = fileMatch.getParentPath() + fileMatch.getName();
+    private void AddOrUpdateAttributeInstance(final Case openCase, HashMap<ArtifactKey, CorrelationAttributeInstance> artifactInstances, AbstractFile caseDbFile) throws TskCoreException, EamDbException {
+        CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
+        CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, caseDbFile.getDataSource());
+        String filePath = caseDbFile.getParentPath() + caseDbFile.getName();
         ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
+        CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(caze, dataSource, filePath, "", caseDbFile.getKnown());
+        TskData.FileKnown knownStatus = caseDbInstance.getKnownStatus();
         // If not known, check Tags for known and set
         if (knownStatus.compareTo(TskData.FileKnown.KNOWN) != 0 && knownStatus.compareTo(TskData.FileKnown.BAD) != 0) {
-            List<ContentTag> fileMatchTags = openCase.getServices().getTagsManager().getContentTagsByContent(fileMatch);
+            List<ContentTag> fileMatchTags = openCase.getServices().getTagsManager().getContentTagsByContent(caseDbFile);
             for (ContentTag tag : fileMatchTags) {
                 TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
                 if (tagKnownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || tagKnownStatus.compareTo(TskData.FileKnown.BAD) == 0) {
-                    knownStatus = TskData.FileKnown.BAD;
+                    caseDbInstance.setKnownStatus(TskData.FileKnown.BAD);
                     break;
                 }
             }
         }
+        caseDbInstance.setComment("" + instKey.hashCode());
+
         // If known, or not in CR, add
         if (knownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || knownStatus.compareTo(TskData.FileKnown.BAD) == 0 || !artifactInstances.containsKey(instKey)) {
-                CorrelationAttributeInstance inst = new CorrelationAttributeInstance(caze, dataSource, filePath, "", knownStatus);
-                artifactInstances.put(instKey, inst);
+            artifactInstances.put(instKey, caseDbInstance);
         }
     }
 

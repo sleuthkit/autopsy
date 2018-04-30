@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
  * Used as a key to ensure we eliminate duplicates from the result set by not overwriting CR correlation instances.
@@ -31,13 +30,9 @@ final class ArtifactKey {
     
     ArtifactKey(String theDataSource, String theFilePath) {
         dataSource = theDataSource;
-        filePath = theFilePath;
+        filePath = theFilePath.toLowerCase();
     }
-    
-    ArtifactKey(CorrelationAttributeInstance instance) {
-        dataSource = instance.getCorrelationDataSource().getDeviceID();
-        filePath = instance.getFilePath();
-    }
+   
     
     /**
      * 
@@ -66,9 +61,10 @@ final class ArtifactKey {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.dataSource);
-        hash = 67 * hash + Objects.hashCode(this.filePath);
-        return hash;
+        //int hash = 7;
+        //hash = 67 * hash + this.dataSource.hashCode();
+        //hash = 67 * hash + this.filePath.hashCode();
+      
+        return Objects.hash(dataSource, filePath);
     }
 }
