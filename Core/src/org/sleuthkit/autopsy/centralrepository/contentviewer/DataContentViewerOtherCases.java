@@ -486,15 +486,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             for (AbstractFile fileMatch : matches) {
                 if (this.file.equals(fileMatch)) {
                     continue; // If this is the file the user clicked on
-                }
-                CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, fileMatch.getDataSource());
-                AddCheckKnownStatus(caze, dataSource, artifactInstances, openCase, fileMatch);
+                }              
+                AddOrUpdateAttributeInstance(caze, artifactInstances, openCase, fileMatch); // Determine whether to add fileMatch based on known status
             }
         }
     }
 
-    private void AddCheckKnownStatus(CorrelationCase caze, CorrelationDataSource dataSource, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, final Case openCase, AbstractFile fileMatch) throws EamDbException, TskCoreException {
-        TskData.FileKnown knownStatus = fileMatch.getKnown();
+    private void AddOrUpdateAttributeInstance(CorrelationCase caze, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, final Case openCase, AbstractFile fileMatch) throws EamDbException, TskCoreException {
+        TskData.FileKnown knownStatus = fileMatch.getKnown();     
+        CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, fileMatch.getDataSource());
         String filePath = fileMatch.getParentPath() + fileMatch.getName();
         ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
         // If not known, check Tags for known and set
