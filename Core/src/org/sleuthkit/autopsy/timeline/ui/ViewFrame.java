@@ -82,7 +82,6 @@ import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
-import org.sleuthkit.autopsy.timeline.actions.UpdateDB;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
@@ -95,6 +94,7 @@ import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
+import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
@@ -209,8 +209,6 @@ final public class ViewFrame extends BorderPane {
     private Button snapShotButton;
     @FXML
     private Button refreshButton;
-    @FXML
-    private Button updateDBButton;
 
     /*
      * Default zoom in/out buttons provided by the ViewFrame, some views replace
@@ -248,7 +246,7 @@ final public class ViewFrame extends BorderPane {
         @Override
         public void invalidated(Observable observable) {
             if (rangeSlider.isHighValueChanging() == false
-                    && rangeSlider.isLowValueChanging() == false) {
+                && rangeSlider.isLowValueChanging() == false) {
                 Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
                 if (false == controller.pushTimeRange(new Interval(
                         (long) (rangeSlider.getLowValue() + minTime),
@@ -349,15 +347,14 @@ final public class ViewFrame extends BorderPane {
         viewModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
         viewModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
         modeSegButton.setToggleGroup(viewModeToggleGroup);
-        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode) ->
-                controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
+        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode)
+                -> controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
         );
 
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
         syncViewMode();
 
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
-        ActionUtils.configureButton(new UpdateDB(controller), updateDBButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.ViewFrame_startLabel_text());
@@ -467,28 +464,8 @@ final public class ViewFrame extends BorderPane {
     }
 
     /**
-     * Handle a DataSourceAddedEvent from the events model by showing a
-     * notification.
-     *
-     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
-     * EventBus in order for this handler to be invoked.
-     *
-     * @param event The DataSourceAddedEvent to handle.
-     */
-    @Subscribe
-    @NbBundle.Messages({
-        "# {0} - datasource name",
-        "ViewFrame.notification.newDataSource={0} has been added as a new datasource.  The Timeline DB may be out of date."})
-    public void handlDataSourceAdded(DataSourceAddedEvent event) {
-        Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_newDataSource(event.getDataSource().getName()), new ImageView(WARNING));
-        });
-    }
-
-    /**
-     * Handle a DataSourceAnalysisCompletedEvent from the events modelby showing
-     * a notification.
+     * Handle a DataSourceAnalysisCompletedEvent from the events model by
+     * showing a notification.
      *
      * NOTE: This ViewFrame must be registered with the filteredEventsModel's
      * EventBus in order for this handler to be invoked.
@@ -498,11 +475,11 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     @NbBundle.Messages({
         "# {0} - datasource name",
-        "ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline DB may be out of date."})
-    public void handleAnalysisCompleted(DataSourceAnalysisCompletedEvent event) {
+        "ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline visualization may be out of date."})
+    public void handleAnalysisCompleted(TimelineManager.TimelineEventCreated event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_analysisComplete(event.getDataSource().getName()), new ImageView(WARNING));
+            notificationPane.getActions().setAll(new Refresh());
+            notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"), new ImageView(WARNING));
         });
     }
 
@@ -664,6 +641,7 @@ final public class ViewFrame extends BorderPane {
                 throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
         }
         controller.registerForEvents(hostedView);
+        controller.getAutopsyCase().getSleuthkitCase().registerForEvents(this);
 
         viewModeToggleGroup.setValue(newViewMode); //this selects the right toggle automatically
 
