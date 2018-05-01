@@ -163,7 +163,8 @@ abstract class CommonFilesMetaDataBuilder {
         SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
 
-        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement); ResultSet resultSet = query.getResultSet()) {
+        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)) {
+            ResultSet resultSet = query.getResultSet();
             while (resultSet.next()) {
                 Long objectId = resultSet.getLong(1);
                 String md5 = resultSet.getString(2);
@@ -200,7 +201,7 @@ abstract class CommonFilesMetaDataBuilder {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
-        if (mimeTypesToFilterOn.isEmpty()) {
+        if (mimeTypesToFilterOn.size() > 0) {
             for (String mimeType : mimeTypesToFilterOn) {
                 mimeTypeFilter.append("\"").append(mimeType).append("\",");
             }
@@ -215,21 +216,21 @@ abstract class CommonFilesMetaDataBuilder {
         "CommonFilesMetaDataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
     })
     protected abstract String buildTabTitle();
-
+    
     @NbBundle.Messages({
         "CommonFilesMetaDataBuilder.buildCategorySelectionString.doc=Documents",
         "CommonFilesMetaDataBuilder.buildCategorySelectionString.media=Media",
         "CommonFilesMetaDataBuilder.buildCategorySelectionString.all=All File Categories"
     })
-    protected String buildCategorySelectionString() {
-        if (!this.filterByDoc && !this.filterByMedia) {
+    protected String buildCategorySelectionString(){
+        if(!this.filterByDoc && !this.filterByMedia){
             return Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_all();
         } else {
-            List<String> filters = new ArrayList<>();
-            if (this.filterByDoc) {
+            List<String> filters = new ArrayList<String>();
+            if(this.filterByDoc){
                 filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_doc());
             }
-            if (this.filterByMedia) {
+            if(this.filterByMedia){
                 filters.add(Bundle.CommonFilesMetaDataBuilder_buildCategorySelectionString_media());
             }
             return String.join(", ", filters);

@@ -23,46 +23,42 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Utility and wrapper model around data required for Common Files Search
- * results. Subclass this to implement different selections of files from the
- * case.
+ * Utility and wrapper model around data required for Common Files Search results.
+ * Subclass this to implement different selections of files from the case.
  */
 final class CommonFilesMetaData {
-
+    
     private final Map<String, Md5MetaData> metadata;
 
     /**
      * Create meta dat object which can be handed off to the node factories
-     *
      * @param metadata map of md5 to parent-level node meta data
      * @param dataSourcesMap map of obj_id to data source name
      */
     CommonFilesMetaData(Map<String, Md5MetaData> metadata) {
         this.metadata = metadata;
     }
-
+    
     /**
      * Find the meta data for the given md5.
-     *
-     * This is a convenience method - you can also iterate over
-     * <code>getMetaData()</code>.
-     *
+     * 
+     * This is a convenience method - you can also iterate over <code>getMetaData()</code>.
      * @param md5 key
-     * @return
+     * @return 
      */
-    Md5MetaData getMetaDataForMd5(String md5) {
+    Md5MetaData getMetaDataForMd5(String md5){
         return this.metadata.get(md5);
     }
-
-    Map<String, Md5MetaData> getMataData() {
+    
+    Map<String, Md5MetaData> getMataData(){
         return Collections.unmodifiableMap(this.metadata);
     }
 
     int size() {
         int count = 0;
-        for (Md5MetaData data : this.metadata.values()) {
+        for(Md5MetaData data : this.metadata.values()){
             count += data.size();
-        }
+        }        
         return count;
     }
 }

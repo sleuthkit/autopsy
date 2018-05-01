@@ -141,6 +141,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
         
+        
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
         outline.setColumnSelectionAllowed(true);

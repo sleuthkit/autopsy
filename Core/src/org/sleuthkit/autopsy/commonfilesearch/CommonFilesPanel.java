@@ -263,11 +263,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     setTitleForSingleSource(dataSourceId);
                 }
-
+                
                 this.tabTitle = builder.buildTabTitle();
-
+                
                 CommonFilesMetaData metaData = builder.findCommonFiles();
-
+                
                 return metaData;
             }
 
