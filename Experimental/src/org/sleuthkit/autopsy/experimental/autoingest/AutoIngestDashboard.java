@@ -236,6 +236,15 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         }).start();
     }
 
+    /**
+     * Shut down parts of the AutoIngestDashboard which were initialized
+     */
+    void shutDown() {
+        if (autoIngestMonitor != null) {
+            autoIngestMonitor.shutDown();
+        }
+    }
+
     @Override
     public void update(Observable observable, Object arg) {
         if (arg instanceof JobsSnapshot) {

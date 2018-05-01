@@ -94,17 +94,24 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         }
     }
 
-    public static void closeTopComponent() {
+    @Override
+    protected void componentClosed() {
         if (topComponentInitialized) {
             final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (tc != null) {
                 try {
+                    for (Component comp : getComponents()) {
+                        if (comp instanceof AutoIngestDashboard) {
+                            ((AutoIngestDashboard) comp).shutDown();
+                        }
+                    }
                     tc.close();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
+        super.componentClosed();
     }
 
     public AutoIngestDashboardTopComponent() {

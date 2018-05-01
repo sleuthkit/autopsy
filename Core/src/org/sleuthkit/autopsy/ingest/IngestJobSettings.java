@@ -501,13 +501,16 @@ public final class IngestJobSettings {
                     this.warnings.add(warning);
                 }
             } else {
-                try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                    settings = (IngestModuleIngestJobSettings) in.readObject();
-                } catch (IOException | ClassNotFoundException exception) {
-                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
-                    logger.log(Level.WARNING, warning, exception);
-                    this.warnings.add(warning);
-                }
+                // @@@ BC Jython serialization is currently broken and this 
+                // throws an exception. (-2323).  Commenting out so that 
+                // Python modules will at least load with default settings. 
+//                try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+//                    settings = (IngestModuleIngestJobSettings) in.readObject();
+//                } catch (IOException | ClassNotFoundException exception) {
+//                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
+//                    logger.log(Level.WARNING, warning, exception);
+//                    this.warnings.add(warning);
+//                }
             }
         }
         if (settings == null) {

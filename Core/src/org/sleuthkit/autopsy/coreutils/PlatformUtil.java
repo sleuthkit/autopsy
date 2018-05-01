@@ -358,7 +358,7 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) { //NON-NLS
+                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() <= 5) { //NON-NLS
                     String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         try {
@@ -401,7 +401,7 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) { //NON-NLS
+                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() <= 7) { //NON-NLS
                     String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         drives.add(new LocalDisk(path, path, f.getTotalSpace()));

@@ -42,7 +42,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * perform this task at the desired size, and neither could numerous other
  * fonts.
  */
-public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
