@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  */
 final public class CommonFilesNode extends DisplayableItemNode {
     
-    CommonFilesNode(CommonFilesMetaData metaDataList) {
-        super(Children.create(new Md5NodeFactory(metaDataList), true), Lookups.singleton(CommonFilesNode.class));
+    CommonFilesNode(CommonFilesMetadata metadataList) {
+        super(Children.create(new Md5NodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
     }
 
     @NbBundle.Messages({
@@ -70,10 +70,10 @@ final public class CommonFilesNode extends DisplayableItemNode {
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
-        private CommonFilesMetaData metadata;
+        private CommonFilesMetadata metadata;
 
-        Md5NodeFactory(CommonFilesMetaData theMetaDataList) {
-            this.metadata = theMetaDataList;
+        Md5NodeFactory(CommonFilesMetadata metadata) {
+            this.metadata = metadata;
         }
 
         protected void removeNotify() {
@@ -82,13 +82,13 @@ final public class CommonFilesNode extends DisplayableItemNode {
         
         @Override
         protected Node createNodeForKey(String md5){
-            Md5MetaData metaData = this.metadata.getMetaDataForMd5(md5);
-            return new Md5Node(metaData);
+            Md5Metadata metadata = this.metadata.getMetadataForMd5(md5);
+            return new Md5Node(metadata);
         }
 
         @Override
         protected boolean createKeys(List<String> list) {
-            list.addAll(this.metadata.getMataData().keySet());
+            list.addAll(this.metadata.getMetadata().keySet());
             return true;
         }
     }

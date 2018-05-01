@@ -22,22 +22,25 @@ import java.awt.event.ActionEvent;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.Installer;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
  */
-final class CommonFilesSearchAction extends CallableSystemAction {
-
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
+final public class CommonFilesSearchAction extends CallableSystemAction {
 
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
 
     CommonFilesSearchAction() {
         super();
-        this.setEnabled(true);
-
+        this.setEnabled(false);
+    }
+    
+    @Override
+    public boolean isEnabled(){
+        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
     }
 
     public static synchronized CommonFilesSearchAction getDefault() {
@@ -48,14 +51,12 @@ final class CommonFilesSearchAction extends CallableSystemAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        //TODO maybe we want to reuse a cached version of htis???
+    public void actionPerformed(ActionEvent event) {
         new CommonFilesDialog().setVisible(true);
     }
 
     @Override
     public void performAction() {
-        //TODO maybe we want to reuse a cached version of htis???
         new CommonFilesDialog().setVisible(true);
     }
 

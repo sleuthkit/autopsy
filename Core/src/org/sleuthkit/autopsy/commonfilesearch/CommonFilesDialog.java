@@ -26,6 +26,7 @@ import org.openide.windows.WindowManager;
 /**
  * Dialog box for configuring and running common files search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class CommonFilesDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -40,7 +41,7 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
         super(new JFrame(Bundle.CommonFilesDialog_frame_title()),
                 Bundle.CommonFilesDialog_frame_msg(), true);
         initComponents();
-
+        
         this.setResizable(false);
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
     }
@@ -54,27 +55,29 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        commonFilesPanel = new org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel();
+        commonFilesPanel1 = new org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setSize(new java.awt.Dimension(340, 320));
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
             }
         });
 
-        commonFilesPanel.setMaximumSize(new java.awt.Dimension(362, 312));
-        commonFilesPanel.setMinimumSize(new java.awt.Dimension(362, 312));
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(commonFilesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(commonFilesPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(commonFilesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(commonFilesPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         pack();
@@ -86,6 +89,6 @@ public final class CommonFilesDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formWindowClosed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel commonFilesPanel;
+    private org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel commonFilesPanel1;
     // End of variables declaration//GEN-END:variables
 }

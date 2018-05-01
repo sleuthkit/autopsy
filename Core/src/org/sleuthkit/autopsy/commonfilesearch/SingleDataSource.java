@@ -24,20 +24,24 @@ import java.util.Map;
 /**
  * Provides logic for selecting common files from a single data source.
  */
-final class SingleDataSource extends CommonFilesMetaDataBuilder {
+final class SingleDataSource extends CommonFilesMetadataBuilder {
 
-    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5"; //NON-NLS
     private final Long selectedDataSourceId;
+    private final String dataSourceName;
 
     /**
      * Implements the algorithm for getting common files that appear at least
      * once in the given data source.
      * @param dataSourceId data source id for which common files must appear at least once
-     * @param dataSourceIdMap map of obj_id to data source name
+     * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
     SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         this.selectedDataSourceId = dataSourceId;
+        this.dataSourceName = dataSourceIdMap.get(this.selectedDataSourceId);
     }
 
     @Override
@@ -48,6 +52,8 @@ final class SingleDataSource extends CommonFilesMetaDataBuilder {
 
     @Override
     protected String buildTabTitle() {
-        return String.format(Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleSingle(), new Object[]{this.buildCategorySelectionString()});
+        final String buildCategorySelectionString = this.buildCategorySelectionString();
+        final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleSingle();
+        return String.format(titleTemplate, new Object[]{this.dataSourceName, buildCategorySelectionString});
     }
 }

@@ -28,12 +28,12 @@ import java.util.Set;
 /**
  * Encapsulates data required to instantiate an <code>Md5Node</code>.
  */
-final public class Md5MetaData {
+final public class Md5Metadata {
     
-    private String md5;
-    private List<FileInstanceMetaData> fileInstances;
+    private final String md5;
+    private final List<FileInstanceMetadata> fileInstances;
     
-    Md5MetaData(String md5, List<FileInstanceMetaData> fileInstances){
+    Md5Metadata(String md5, List<FileInstanceMetadata> fileInstances){
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
@@ -42,21 +42,25 @@ final public class Md5MetaData {
         return this.md5;
     }
     
-    void addFileInstanceMetaData(FileInstanceMetaData metadata){
+    void addFileInstanceMetadata(FileInstanceMetadata metadata){
         this.fileInstances.add(metadata);
     }
     
-    public Collection<FileInstanceMetaData> getMetaData(){
+    public Collection<FileInstanceMetadata> getMetadata(){
         return Collections.unmodifiableCollection(this.fileInstances);
     }
     
+    /**
+     * How many distinct file instances exist for the MD5 represented by this object?
+     * @return number of instances
+     */
     public int size(){
         return this.fileInstances.size();
     }
 
     public String getDataSources() {
         Set<String> sources = new HashSet<String> ();
-        for(FileInstanceMetaData data  : this.fileInstances){
+        for(FileInstanceMetadata data  : this.fileInstances){
             sources.add(data.getDataSourceName());
         }
         return String.join(", ", sources);

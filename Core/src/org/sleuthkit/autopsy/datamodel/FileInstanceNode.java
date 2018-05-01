@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -67,7 +68,9 @@ public class FileInstanceNode extends FileNode {
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
             final String propString = propType.toString();
-            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
+            final Object property = map.get(propString);
+            final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
+            sheetSet.put(nodeProperty);
         }
 
         this.addTagProperty(sheetSet);
@@ -88,9 +91,13 @@ public class FileInstanceNode extends FileNode {
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
-        map.put(CommonFilePropertyType.MimeType.toString(), node.getContent().getMIMEType());
+        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }
 
+    /**
+     * Encapsulates the columns to be displayed for reach row represented by an 
+     * instance of this object.
+     */
     @NbBundle.Messages({
         "CommonFilePropertyType.fileColLbl=File",
         "CommonFilePropertyType.pathColLbl=Parent Path",

@@ -517,9 +517,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                                     NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                     logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
-                } // catch and ignore if we were cancelled
+                }
                 catch (java.util.concurrent.CancellationException ex) {
-                    logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage());
+                    // catch and ignore if we were cancelled
                 }
             }
         }.execute();

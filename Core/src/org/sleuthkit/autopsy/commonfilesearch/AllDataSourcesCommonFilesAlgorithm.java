@@ -24,15 +24,17 @@ import java.util.Map;
 /**
  * Provides logic for selecting common files from all data sources.
  */
-final class AllDataSources extends CommonFilesMetaDataBuilder {
+final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
 
-    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5";
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5"; //NON-NLS
 
     /**
      * Implements the algorithm for getting common files across all data sources.
      * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
-    AllDataSources(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    AllDataSourcesCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
 
     }
@@ -45,6 +47,8 @@ final class AllDataSources extends CommonFilesMetaDataBuilder {
 
     @Override
     protected String buildTabTitle() {
-        return String.format(Bundle.CommonFilesMetaDataBuilder_buildTabTitle_titleAll(), new Object[]{this.buildCategorySelectionString()});
+        final String buildCategorySelectionString = this.buildCategorySelectionString();
+        final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleAll();
+        return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
     }
 }

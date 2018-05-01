@@ -22,7 +22,6 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
@@ -108,8 +107,7 @@ public class TableFilterNode extends FilterNode {
         if (this.forceUseWrappedDisplayName) {
             return super.getDisplayName();
         } else if (createChildren) {
-            final String message = NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
-            return message;
+            return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
         }

@@ -31,9 +31,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesPanel;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetaData;
-import org.sleuthkit.autopsy.commonfilesearch.Md5MetaData;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -47,13 +46,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Md5Node extends DisplayableItemNode {
     
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());    
+    private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());    
     
     private final String md5Hash;
     private final int commonFileCount;
     private final String dataSources;
 
-    public Md5Node(Md5MetaData data) {
+    public Md5Node(Md5Metadata data) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true),
                 Lookups.singleton(data.getMd5()));
@@ -129,16 +128,16 @@ public class Md5Node extends DisplayableItemNode {
     /**
      * Child generator for <code>FileInstanceNode</code> of <code>Md5Node</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetaData> {
+    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> {
 
-        private final Md5MetaData descendants;
+        private final Md5Metadata descendants;
 
-        FileInstanceNodeFactory(Md5MetaData descendants) {
+        FileInstanceNodeFactory(Md5Metadata descendants) {
             this.descendants = descendants;
         }
 
         @Override
-        protected Node createNodeForKey(FileInstanceMetaData file) {
+        protected Node createNodeForKey(FileInstanceMetadata file) {
             try {
                 Case currentCase = Case.getOpenCase();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -150,13 +149,12 @@ public class Md5Node extends DisplayableItemNode {
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
             }
-            //TODO smells bad...do something?
             return null;
         }
 
         @Override
-        protected boolean createKeys(List<FileInstanceMetaData> list) {            
-            list.addAll(this.descendants.getMetaData());
+        protected boolean createKeys(List<FileInstanceMetadata> list) {            
+            list.addAll(this.descendants.getMetadata());
             return true;
         }
     }
