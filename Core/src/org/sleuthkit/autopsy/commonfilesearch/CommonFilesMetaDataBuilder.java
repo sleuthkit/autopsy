@@ -163,8 +163,7 @@ abstract class CommonFilesMetaDataBuilder {
         SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
 
-        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement)) {
-            ResultSet resultSet = query.getResultSet();
+        try (CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement); ResultSet resultSet = query.getResultSet()) {
             while (resultSet.next()) {
                 Long objectId = resultSet.getLong(1);
                 String md5 = resultSet.getString(2);
@@ -201,7 +200,7 @@ abstract class CommonFilesMetaDataBuilder {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
-        if (mimeTypesToFilterOn.size() > 0) {
+        if (mimeTypesToFilterOn.isEmpty()) {
             for (String mimeType : mimeTypesToFilterOn) {
                 mimeTypeFilter.append("\"").append(mimeType).append("\",");
             }

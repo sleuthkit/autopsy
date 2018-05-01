@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
@@ -465,9 +464,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
                 final Case openCase = Case.getOpenCase();
 
-                List<AbstractFile> caseDbFiles = AddCaseDbMatches(corAttr, openCase);
+                List<AbstractFile> caseDbFiles = addCaseDbMatches(corAttr, openCase);
                 for (AbstractFile caseDbFile : caseDbFiles) {
-                    AddOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
+                    addOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
                 }
             }
 
@@ -484,7 +483,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         return new HashMap<>(0);
     }
 
-    private List<AbstractFile> AddCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
+    private List<AbstractFile> addCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
         String md5 = corAttr.getCorrelationValue();
 
         SleuthkitCase tsk = openCase.getSleuthkitCase();
@@ -501,7 +500,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     }
 
-    private void AddOrUpdateAttributeInstance(final Case openCase, HashMap<ArtifactKey, CorrelationAttributeInstance> artifactInstances, AbstractFile caseDbFile) throws TskCoreException, EamDbException {
+    private void addOrUpdateAttributeInstance(final Case openCase, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, AbstractFile caseDbFile) throws TskCoreException, EamDbException {
         CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
         CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, caseDbFile.getDataSource());
         String filePath = caseDbFile.getParentPath() + caseDbFile.getName();
