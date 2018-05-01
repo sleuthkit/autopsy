@@ -1725,13 +1725,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     setChanged();
                     notifyObservers(Event.PAUSED_BY_USER_REQUEST);
-
-                    /**
-                     * Publish an event to let remote listeners know that a
-                     * pause has been requested.
-                     */
-                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_USER_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
                 }
+                /**
+                 * Publish an event to let remote listeners know that a pause
+                 * has been requested.
+                 */
+                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSE_REQUESTED, AutoIngestManager.LOCAL_HOST_NAME));
             }
         }
 
@@ -3104,6 +3103,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         JOB_COMPLETED,
         CASE_PRIORITIZED,
         CASE_DELETED,
+        PAUSE_REQUESTED,
         PAUSED_BY_USER_REQUEST,
         PAUSED_FOR_SYSTEM_ERROR,
         RESUMED,

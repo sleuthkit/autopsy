@@ -62,6 +62,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
         AutoIngestManager.Event.JOB_STARTED.toString(),
         AutoIngestManager.Event.RUNNING.toString(),
+        AutoIngestManager.Event.PAUSE_REQUESTED.toString(),
         AutoIngestManager.Event.PAUSED_BY_USER_REQUEST.toString(),
         AutoIngestManager.Event.PAUSED_FOR_SYSTEM_ERROR.toString(),
         AutoIngestManager.Event.STARTING_UP.toString(),
@@ -719,6 +720,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             STARTING_UP,
             SHUTTING_DOWN,
             RUNNING,
+            PAUSE_REQUESTED,
             PAUSED_BY_REQUEST,
             PAUSED_DUE_TO_SYSTEM_ERROR,
             UNKNOWN
@@ -747,6 +749,9 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     break;
                 case RESUMED:
                     nodeState = State.RUNNING;
+                    break;
+                case PAUSE_REQUESTED:
+                    nodeState = State.PAUSE_REQUESTED;
                     break;
                 default:
                     nodeState = State.UNKNOWN;

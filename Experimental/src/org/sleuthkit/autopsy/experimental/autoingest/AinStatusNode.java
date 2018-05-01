@@ -97,6 +97,7 @@ final class AinStatusNode extends AbstractNode {
         @Messages({"AinStatusNode.hostName.title=Host Name",
             "AinStatusNode.status.title=Status",
             "AinStatusNode.status.running=Running",
+            "AinStatusNode.status.pauseRequested=Pause Requested",
             "AinStatusNode.status.pausedByUser=Paused By User",
             "AinStatusNode.status.pausedForError=Paused Due to System Error",
             "AinStatusNode.status.startingup=Starting Up",
@@ -128,6 +129,9 @@ final class AinStatusNode extends AbstractNode {
                     break;
                 case PAUSED_DUE_TO_SYSTEM_ERROR:
                     status = Bundle.AinStatusNode_status_pausedForError();
+                    break;
+                case PAUSE_REQUESTED:
+                    status = Bundle.AinStatusNode_status_pauseRequested();
                     break;
                 default:
                     break;
