@@ -13,7 +13,7 @@ before_install:
 install:
  - sudo apt-get install testdisk
  - cd sleuthkit/sleuthkit 
- - sh install-sleuthkit.sh
+ - sh travis_build.sh
 script:
  - set -e
  - echo "building autopsy..." && echo -en 'travis_fold:start:script.build\\r'	

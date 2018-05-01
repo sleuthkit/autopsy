@@ -30,12 +30,12 @@ import org.openide.util.NbBundle;
  * class and extended classes model the user's intentions, not necessarily how
  * the search manager and 3rd party tools actually perform the search.
  */
-abstract class KeywordSearchPanel extends javax.swing.JPanel {
+abstract class AdHocSearchPanel extends javax.swing.JPanel {
 
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
 
-    KeywordSearchPanel() {
+    AdHocSearchPanel() {
         initListeners();
     }
 
@@ -110,7 +110,7 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
             }
         }
 
-        KeywordSearchQueryDelegator man = null;
+        AdHocSearchDelegator man = null;
 
         final List<KeywordList> keywordLists = getKeywordLists();
         if (keywordLists.isEmpty()) {
@@ -119,7 +119,7 @@ abstract class KeywordSearchPanel extends javax.swing.JPanel {
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        man = new KeywordSearchQueryDelegator(keywordLists);
+        man = new AdHocSearchDelegator(keywordLists);
 
         if (man.validate()) {
             man.execute();

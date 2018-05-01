@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Component;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -74,7 +75,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                     AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
                     tc.add(dashboard);
                     dashboard.setSize(dashboard.getPreferredSize());
-                    
+
                     tc.open();
                 }
                 tc.toFront();
@@ -86,22 +87,43 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         }
     }
 
-    public static void closeTopComponent() {
+    @Override
+    protected void componentClosed() {
         if (topComponentInitialized) {
             final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (tc != null) {
                 try {
+                    for (Component comp : getComponents()) {
+                        if (comp instanceof AutoIngestDashboard) {
+                            ((AutoIngestDashboard) comp).shutDown();
+                        }
+                    }
                     tc.close();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
+        super.componentClosed();
     }
 
     public AutoIngestDashboardTopComponent() {
         initComponents();
         setName(Bundle.CTL_AutoIngestDashboardTopComponent());
+    }
+
+    /**
+     * Get the current AutoIngestDashboard if there is one.
+     *
+     * @return the current AutoIngestDashboard or null if there is not one
+     */
+    AutoIngestDashboard getAutoIngestDashboard() {
+        for (Component comp : getComponents()) {
+            if (comp instanceof AutoIngestDashboard) {
+                return (AutoIngestDashboard) comp;
+            }
+        }
+        return null;
     }
 
     @Override

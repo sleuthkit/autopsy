@@ -98,7 +98,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
     public MessageContentViewer() {
         initComponents();
-        drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", Node.EMPTY, 0, null);
+        drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 

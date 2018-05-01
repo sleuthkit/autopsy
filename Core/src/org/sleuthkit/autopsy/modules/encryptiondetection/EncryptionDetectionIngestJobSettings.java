@@ -26,7 +26,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 final class EncryptionDetectionIngestJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-
+    private static final double DEFAULT_CONFIG_MINIMUM_ENTROPY = 7.5;
+    private static final int DEFAULT_CONFIG_MINIMUM_FILE_SIZE = 5242880; // 5MB;
+    private static final boolean DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED = true;
+    private static final boolean DEFAULT_CONFIG_SLACK_FILES_ALLOWED = true;
     private double minimumEntropy;
     private int minimumFileSize;
     private boolean fileSizeMultipleEnforced;
@@ -36,10 +39,10 @@ final class EncryptionDetectionIngestJobSettings implements IngestModuleIngestJo
      * Instantiate the ingest job settings with default values.
      */
     EncryptionDetectionIngestJobSettings() {
-        this.minimumEntropy = EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_MINIMUM_ENTROPY;
-        this.minimumFileSize = EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_MINIMUM_FILE_SIZE;
-        this.fileSizeMultipleEnforced = EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED;
-        this.slackFilesAllowed = EncryptionDetectionFileIngestModule.DEFAULT_CONFIG_SLACK_FILES_ALLOWED;
+        this.minimumEntropy = DEFAULT_CONFIG_MINIMUM_ENTROPY;
+        this.minimumFileSize = DEFAULT_CONFIG_MINIMUM_FILE_SIZE;
+        this.fileSizeMultipleEnforced = DEFAULT_CONFIG_FILE_SIZE_MULTIPLE_ENFORCED;
+        this.slackFilesAllowed = DEFAULT_CONFIG_SLACK_FILES_ALLOWED;
     }
 
     /**

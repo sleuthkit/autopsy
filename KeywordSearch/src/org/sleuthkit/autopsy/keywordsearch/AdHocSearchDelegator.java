@@ -37,14 +37,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Delegates the actual work to the various implementations of
  * KeywordSearchQuery.
  */
-class KeywordSearchQueryDelegator {
+class AdHocSearchDelegator {
 
-    private List<KeywordList> keywordLists;
+    private final List<KeywordList> keywordLists;
     private List<KeywordSearchQuery> queryDelegates;
     private static int resultWindowCount = 0; //keep track of unique window ids to display
-    private static Logger logger = Logger.getLogger(KeywordSearchQueryDelegator.class.getName());
+    private static final Logger logger = Logger.getLogger(AdHocSearchDelegator.class.getName());
 
-    public KeywordSearchQueryDelegator(List<KeywordList> keywordLists) {
+    public AdHocSearchDelegator(List<KeywordList> keywordLists) {
         this.keywordLists = keywordLists;
         init();
     }
@@ -66,14 +66,14 @@ class KeywordSearchQueryDelegator {
      * Post results into a new DataResultViewer.
      */
     public void execute() {
-        Collection<QueryRequest> queryRequests = new ArrayList<>();
+        Collection<AdHocQueryRequest> queryRequests = new ArrayList<>();
         int queryID = 0;
         StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
         for (KeywordSearchQuery q : queryDelegates) {
             Map<String, Object> kvs = new LinkedHashMap<>();
             final String queryStr = q.getQueryString();
             queryConcat.append(queryStr).append(" ");
-            queryRequests.add(new QueryRequest(kvs, ++queryID, q));
+            queryRequests.add(new AdHocQueryRequest(kvs, ++queryID, q));
         }
 
         String queryConcatStr = queryConcat.toString();
@@ -85,7 +85,7 @@ class KeywordSearchQueryDelegator {
         Node rootNode;
         if (queryRequests.size() > 0) {
             Children childNodes =
-                    Children.create(new KeywordSearchResultFactory(queryRequests), true);
+                    Children.create(new AdHocSearchChildFactory(queryRequests), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {
