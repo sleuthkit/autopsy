@@ -58,9 +58,10 @@ class TimingMetricGraphPanel extends JPanel {
     private int pointWidth = 4;
     private int numberYDivisions = 10;
     private List<DatabaseTimingResult> timingResults;
-    private TimingMetricType timingMetricType;
     private String metricName;
     private boolean doLineGraph;
+    private boolean skipOutliers;
+    private boolean showTrendLine;
     private String yUnitString;
     private TrendLine trendLine;
     private final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -70,11 +71,12 @@ class TimingMetricGraphPanel extends JPanel {
     private double maxMetricTime;
     private double minMetricTime;
 
-    TimingMetricGraphPanel(List<DatabaseTimingResult> timingResultsFull, TimingMetricType timingMetricType, 
-            String hostName, boolean doLineGraph, String metricName) {
+    TimingMetricGraphPanel(List<DatabaseTimingResult> timingResultsFull, 
+            String hostName, boolean doLineGraph, String metricName, boolean skipOutliers, boolean showTrendLine) {
 
-        this.timingMetricType = timingMetricType;
         this.doLineGraph = doLineGraph;
+        this.skipOutliers = skipOutliers;
+        this.showTrendLine = showTrendLine;
         this.metricName = metricName;
         if(hostName == null || hostName.isEmpty()) {
             timingResults = timingResultsFull;
@@ -84,89 +86,48 @@ class TimingMetricGraphPanel extends JPanel {
                             .collect(Collectors.toList());
         }
         
-        try {
-            trendLine = new TrendLine(timingResults, timingMetricType);
-        } catch (HealthMonitorException ex) {
-            // Log it, set trendLine to null and continue on
-            logger.log(Level.WARNING, "Can not generate a trend line on empty data set");
-            trendLine = null;
+        if(showTrendLine) {
+            try {
+                trendLine = new TrendLine(timingResults);
+            } catch (HealthMonitorException ex) {
+                // Log it, set trendLine to null and continue on
+                logger.log(Level.WARNING, "Can not generate a trend line on empty data set");
+                trendLine = null;
+            }
         }
         
         // Calculate these using the full data set, to make it easier to compare the results for
-        // individual hosts
-        calcMaxTimestamp(timingResultsFull);
-        calcMinTimestamp(timingResultsFull);
-        calcMaxMetricTime(timingResultsFull);
-        calcMinMetricTime(timingResultsFull);  
-    }
-    
-    /**
-     * Set the highest metric time for the given type
-     */
-    private void calcMaxMetricTime(List<DatabaseTimingResult> timingResultsFull) {
-        // Find the highest of the values being graphed
+        // individual hosts. Calculate the average at the same time.
         maxMetricTime = Double.MIN_VALUE;
-        for (DatabaseTimingResult score : timingResultsFull) {
-            // Use only the data we're graphing to determing the max
-            switch (timingMetricType) {
-                case MAX:
-                    maxMetricTime = Math.max(maxMetricTime, score.getMax());
-                    break;
-                case MIN:
-                    maxMetricTime = Math.max(maxMetricTime, score.getMin());
-                    break;
-                case AVERAGE:
-                default:
-                    maxMetricTime = Math.max(maxMetricTime, score.getAverage());
-                    break;
-            }
-        }
-    }
-    
-    /**
-     * Set the lowest metric time for the given type
-     */
-    private void calcMinMetricTime(List<DatabaseTimingResult> timingResultsFull) {
-        // Find the lowest of the values being graphed
         minMetricTime = Double.MAX_VALUE;
-        for (DatabaseTimingResult result : timingResultsFull) {
-            // Use only the data we're graphing to determing the min
-            switch (timingMetricType) {
-                case MAX:
-                    minMetricTime = Math.min(minMetricTime, result.getMax());
-                    break;
-                case MIN:
-                    minMetricTime = Math.min(minMetricTime, result.getMin());
-                    break;
-                case AVERAGE:
-                default:
-                    minMetricTime = Math.min(minMetricTime, result.getAverage());
-                    break;
-            }
-        }
-    }
-    
-    /**
-     * Set the largest timestamp in the data collection
-     */
-    private void calcMaxTimestamp(List<DatabaseTimingResult> timingResultsFull) {
         maxTimestamp = Long.MIN_VALUE;
-        for (DatabaseTimingResult score : timingResultsFull) {
-            maxTimestamp = Math.max(maxTimestamp, score.getTimestamp());
-        }
-    }
-    
-    /**
-     * Set the smallest timestamp in the data collection
-     */
-    private void calcMinTimestamp(List<DatabaseTimingResult> timingResultsFull) {
         minTimestamp = Long.MAX_VALUE;
-        for (DatabaseTimingResult score : timingResultsFull) {
-            minTimestamp = Math.min(minTimestamp, score.getTimestamp());
+        double averageMetricTime = 0.0;
+        for (DatabaseTimingResult result : timingResultsFull) {
+
+            maxMetricTime = Math.max(maxMetricTime, result.getAverage());
+            minMetricTime = Math.min(minMetricTime, result.getAverage());
+            
+            maxTimestamp = Math.max(maxTimestamp, result.getTimestamp());
+            minTimestamp = Math.min(minTimestamp, result.getTimestamp());
+            
+            averageMetricTime += result.getAverage();
+        }
+        averageMetricTime = averageMetricTime / timingResultsFull.size();
+        
+        // If we're omitting outliers, we may use a different maxMetricTime.
+        // If the max time is reasonably close to the average, do nothing
+        if (this.skipOutliers && (maxMetricTime > (averageMetricTime * 5))) {
+            // Calculate the standard deviation
+            double intermediateValue = 0.0;
+            for (DatabaseTimingResult result : timingResultsFull) {
+                double diff = result.getAverage() - averageMetricTime;
+                intermediateValue += diff * diff;
+            }
+            double standardDeviation = Math.sqrt(intermediateValue / timingResultsFull.size());
+            maxMetricTime = averageMetricTime + standardDeviation;
         }
     }
-    
-    
 
     /**
      * Setup of the graphics panel:
@@ -353,20 +314,7 @@ class TimingMetricGraphPanel extends JPanel {
         // Create the points to plot
         List<Point> graphPoints = new ArrayList<>();
         for (int i = 0; i < timingResults.size(); i++) {     
-            double metricTime;
-            switch (timingMetricType) {
-            case MAX:
-                metricTime = timingResults.get(i).getMax();
-                break;            
-            case MIN:
-                metricTime = timingResults.get(i).getMin();
-                break;
-            case AVERAGE:
-            default:
-                metricTime = timingResults.get(i).getAverage();
-                break;
-
-            }
+            double metricTime = timingResults.get(i).getAverage();
             
             int x1 = (int) ((timingResults.get(i).getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
             int y1 = (int) ((maxValueOnYAxis - metricTime) * yScale + topGraphPadding);
@@ -410,7 +358,7 @@ class TimingMetricGraphPanel extends JPanel {
         
         // Draw the trend line.
         // Don't draw anything if we don't have at least two data points.
-        if(trendLine != null && (timingResults.size() > 1)) {
+        if(showTrendLine && (trendLine != null) && (timingResults.size() > 1)) {
             double x0value = minValueOnXAxis;
             double y0value = trendLine.getExpectedValueAt(x0value);
             if (y0value < minValueOnYAxis) {
@@ -483,15 +431,6 @@ class TimingMetricGraphPanel extends JPanel {
     }
     
     /**
-     * The metric field we want to graph
-     */
-    enum TimingMetricType {
-        AVERAGE,
-        MAX,
-        MIN;
-    }
-    
-    /**
     * Class to generate a linear trend line from timing metric data.
     * 
     * Formula for the linear trend line:
@@ -507,7 +446,7 @@ class TimingMetricGraphPanel extends JPanel {
         double slope;
         double yInt;
 
-        TrendLine(List<DatabaseTimingResult> timingResults, TimingMetricGraphPanel.TimingMetricType timingMetricType) throws HealthMonitorException {
+        TrendLine(List<DatabaseTimingResult> timingResults) throws HealthMonitorException {
 
             if((timingResults == null) || timingResults.isEmpty()) {
                 throw new HealthMonitorException("Can not generate trend line for empty/null data set");
@@ -521,19 +460,7 @@ class TimingMetricGraphPanel extends JPanel {
             double sumXsquared = 0;
             for(int i = 0;i < n;i++) {
                 double x = timingResults.get(i).getTimestamp();
-                double y;
-                switch (timingMetricType) {
-                    case MAX:
-                        y = timingResults.get(i).getMax();
-                        break;
-                    case MIN:
-                        y = timingResults.get(i).getMin();
-                        break;
-                    case AVERAGE:
-                    default:
-                        y = timingResults.get(i).getAverage();
-                        break;
-                }
+                double y = timingResults.get(i).getAverage();
 
                 sumX += x;
                 sumY += y;
