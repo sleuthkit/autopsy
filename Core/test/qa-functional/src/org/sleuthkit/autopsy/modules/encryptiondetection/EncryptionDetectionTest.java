@@ -177,7 +177,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                     }
                 }
             }
-            assertEquals("No tsk encryption detected artifacts were created for any volume", 1, numberOfEncryptedVolumes);
+            assertEquals("One volume should exist with an encryption suspsected artifact", 1, numberOfEncryptedVolumes);
 
             //ensure the encrypyted container file was also detected correctly
             FileManager fileManager = openCase.getServices().getFileManager();
