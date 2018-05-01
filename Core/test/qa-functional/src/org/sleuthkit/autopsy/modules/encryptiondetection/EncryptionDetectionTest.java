@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -84,7 +85,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             Case openCase = Case.getOpenCase();
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
 
             FileManager fileManager = openCase.getServices().getFileManager();
@@ -134,27 +135,57 @@ public class EncryptionDetectionTest extends NbTestCase {
     /**
      * Test the Encryption Detection module's detection of vericrypt encrypted
      * container files and partitions.
+     * 
+     * Test passes if the following are true.
+     * 
+     * 1. A partition was detected without a file system by checking for the error.
+     * 2. Only 1 data source exsists in the case, to ensure a stale case did not get used.
+     * 3. One volume has a TSK_ENCRYPTION_SUSPECTED artifact associated with it.
+     * 4. A single file named vericrpytContainerFile exists.
+     * 5. The file named vericrpytContainerFile has a TSK_ENCRYPTION_SUSPECTED artifact associated with it.
      */
     public void testVeriCryptSupport() {
         try {
             CaseUtils.createCase(VERICRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, VERICRYPT_DETECTION_IMAGE_PATH);
-            String joinedErrors = String.join(System.lineSeparator(), errorMessages);
+            String joinedErrors; 
+            if (errorMessages.isEmpty()) {
+                joinedErrors = "Encrypted partition did not cause error, it was expected to";
+            }
+            else{
+                joinedErrors = String.join(System.lineSeparator(), errorMessages);
+            }
             //there will be 1 expected error regarding the encrypted partition not having a file system
             assertEquals(joinedErrors, 1, errorMessages.size());
+
             Case openCase = Case.getOpenCase();
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
-            //determine how to configure settings from here WJS-TODO
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.ALL_MODULES, templates);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
-            //WJS-TODO test results
-            //There should be a single file system for the un-incrypted partition
-            //There should be a 2 TSK_ENCRYPTION_SUSPECTED artifacts
-            //one for the container file
-            //one for the encrypted partition
+            //image includes an encrypted container file with size greater than 5 mb so default settings detect it
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(VERICRYPT_DETECTION_CASE_NAME, IngestType.ALL_MODULES, templates);
 
+            assertEquals("Expected only one data source to exist in the Case", 1, openCase.getDataSources().size());
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+           
+            //check that one of the partitions has an encrypted volume
+            int numberOfEncryptedVolumes = 0;
+            for (Content datasource : openCase.getDataSources()) { //data source
+                for (Content volumeSystem : datasource.getChildren()) { //volume system 
+                    for (Content volume : volumeSystem.getChildren()) { //volumes
+                        numberOfEncryptedVolumes += volume.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size();
+                    }
+                }
+            }
+            assertEquals("No tsk encryption detected artifacts were created for any volume", 1, numberOfEncryptedVolumes);
+
+            //ensure the encrypyted container file was also detected correctly
+            FileManager fileManager = openCase.getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("vericrpytContainerFile");
+            assertEquals("Expected 1 file named vericryptContainerFile to exist in test image", 1, results.size());
+            for (AbstractFile file : results) {
+                assertEquals("Encrypted Container file should have one encyption suspected artifact", 1, file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size());
+            }
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
