@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,10 +31,13 @@ import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -285,14 +290,16 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 
-                    //TODO consider getting em from ExplorerManager.find(this) rather the this wonky stuff seen here...
-                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, DirectoryTreeTopComponent.getDefault().getExplorerManager());
+                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
-                    DataResultTopComponent component = DataResultTopComponent.createInstance(this.tabTitle);
-
-                    DataResultTopComponent.initInstance(pathText, tableFilterWithDescendantsNode, metadata.size(), component);
+                    DataResultViewerTable table = new DataResultViewerTable();
+                    
+                    Collection<DataResultViewer> viewers = new ArrayList<>(1);
+                    viewers.add(table);
+                                        
+                    DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
