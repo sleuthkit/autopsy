@@ -144,9 +144,9 @@
             </fileset>
         </delete>
         
-        <!-- step (4) zip again, but with the version numbers in the dir -->
+        <!-- step (4) zip again, but with the version numbers in the name & root folder -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
-            <zipfileset dir="${zip-tmp}/${app.name}"/>
+            <zipfileset dir="${zip-tmp}/${app.name}" prefix="${app.name}-${app.version}"/>
         </zip>
 
         <delete dir="${zip-tmp}"/>
@@ -285,9 +285,20 @@
     
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
-    <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
+    <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">    
+        <!-- Unzip file -->
+        <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
+        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-tmp-installer"/>
+        
+        <!-- Make a folder to move the contents into so that we get rid of the folder with the version number -->
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
-        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
+        <mkdir dir="${nbdist.dir}/${app.name}-installer"/>
+        <move todir="${nbdist.dir}/${app.name}-installer">
+            <fileset dir="${nbdist.dir}/${app.name}-tmp-installer/${app.name}-${app.version}">
+                <include name="**"/>
+            </fileset>
+        </move>
+        <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
         
         <antcall target="build-installer-${os.family}" />
     </target>
