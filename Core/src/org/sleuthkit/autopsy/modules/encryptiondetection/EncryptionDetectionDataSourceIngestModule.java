@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -38,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Volume;
@@ -85,6 +87,10 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
         }
     }
 
+    @Messages({
+        "EncryptionDetectionDataSourceIngestModule.artifactComment.bitlocker=Bitlocker encryption detected.",
+        "EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
+    })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
@@ -94,10 +100,13 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                 for (VolumeSystem volumeSystem : volumeSystems) {
                     for (Volume volume : volumeSystem.getVolumes()) {
                         if (isBitlockerVolume(volume)) {
-                            return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
+                            return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED,
+                                    Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_bitlocker());
                         }
                         if (isVolumeEncrypted(volume)) {
-                            return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED);
+                            return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
+                                    String.format(Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_suspected(),
+                                            calculatedEntropy));
                         }
                     }
                 }
@@ -130,13 +139,16 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
      *
      * @param volume       The volume to be processed.
      * @param artifactType The type of artifact to create.
+     * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the volume was processed successfully, or 'ERROR' if
      *         there was a problem.
      */
-    private IngestModule.ProcessResult flagVolume(Volume volume, BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+    private IngestModule.ProcessResult flagVolume(Volume volume, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
         try {
             BlackboardArtifact artifact = volume.newArtifact(artifactType);
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                    EncryptionDetectionModuleFactory.getModuleName(), comment));
 
             try {
                 /*
@@ -202,7 +214,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
      * @param volume Volume to be checked.
      *
      * @return True if the Volume has been encrypted with Bitlocker.
-     * 
+     *
      * @throws ReadContentInputStreamException If there is a failure reading
      *                                         from the InputStream.
      * @throws IOException                     If there is a failure closing or
