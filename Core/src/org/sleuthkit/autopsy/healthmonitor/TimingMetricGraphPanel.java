@@ -563,7 +563,7 @@ class TimingMetricGraphPanel extends JPanel {
          */
         double getXGivenY(double y) throws HealthMonitorException {
             if (slope != 0.0) {
-                return (y - yInt / slope);
+                return ((y - yInt) / slope);
             } else {
                 throw new HealthMonitorException("Attempted division by zero in trend line calculation");
             }
