@@ -21,9 +21,14 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -34,6 +39,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -41,6 +49,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
+import static org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus.PENDING;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.Event;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
 /**
@@ -523,6 +532,66 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
             }
             return jobsSnapshot;
+        }
+    }
+
+    /**
+     * Send an event to tell a remote node to cancel the given job.
+     *
+     * @param job
+     */
+    void cancelJob(AutoIngestJob job) {
+        new Thread(() -> {
+            eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job));
+        }).start();
+    }
+
+    /**
+     * Send an event to tell a remote node to reprocess the given job.
+     *
+     * @param job
+     */
+    void reprocessJob(AutoIngestJob job) throws AutoIngestMonitorException {
+
+        synchronized (jobsLock) {
+            /*
+             * Find the job in the completed jobs list.
+             */
+            for (AutoIngestJob completedJob : jobsSnapshot.getCompletedJobs()) {
+                if (completedJob.equals(job)) {
+                    break;
+                }
+            }
+
+            /*
+             * Add the job to the pending jobs queue and update the coordination
+             * service manifest node data for the job.
+             */
+            if (null != job && !job.getCaseDirectoryPath().toString().isEmpty()) {
+                /**
+                 * We reset the status, completion date and processing stage but
+                 * we keep the original priority.
+                 */
+                job.setErrorsOccurred(false);
+                job.setCompletedDate(new Date(0));
+                job.setProcessingStatus(PENDING);
+                job.setProcessingStage(AutoIngestJob.Stage.PENDING, Date.from(Instant.now()));
+                String manifestNodePath = job.getManifest().getFilePath().toString();
+                try {
+                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(job);
+                    coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+                } catch (CoordinationServiceException | InterruptedException ex) {
+                    throw new AutoIngestMonitorException("Error reprocessing job " + job.toString(), ex);
+                }
+
+                /*
+                 * Publish a reprocess event.
+                 */
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new AutoIngestJobReprocessEvent(job));
+                }).start();
+
+            }
         }
     }
 

@@ -21,21 +21,27 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 final class AutoIngestAdminActions {
 
+    private static final Logger logger = Logger.getLogger(AutoIngestAdminActions.class.getName());
+
     static abstract class AutoIngestNodeControlAction extends AbstractAction {
 
         private final AutoIngestNodeState nodeState;
-        private final Logger logger = Logger.getLogger(AutoIngestNodeControlAction.class.getName());
 
         AutoIngestNodeControlAction(AutoIngestNodeState nodeState, String title) {
             super(title);
@@ -165,14 +171,50 @@ final class AutoIngestAdminActions {
     static final class CancelJobAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        CancelJobAction() {
+        CancelJobAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_cancelJobAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3738
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                Object[] options = {
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.CancelJob"),
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DoNotCancelJob")};
+                int reply = JOptionPane.showOptionDialog(dashboard.getRunningJobsPanel(),
+                        NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.CancelJobAreYouSure"),
+                        NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.ConfirmCancellationHeader"),
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[1]);
+                if (reply == 0) {
+                    /*
+                     * Call setCursor on this to ensure it appears (if there is
+                     * time to see it).
+                     */
+                    dashboard.getRunningJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    dashboard.getMonitor().cancelJob(job);
+                    EventQueue.invokeLater(() -> {
+                        dashboard.getRunningJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                        dashboard.getRunningJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    });
+                }
+            }
         }
 
         @Override
@@ -201,18 +243,47 @@ final class AutoIngestAdminActions {
         }
     }
 
-    @NbBundle.Messages({"AutoIngestAdminActions.reprocessJobAction.title=Reprocess Job"})
+    @NbBundle.Messages({"AutoIngestAdminActions.reprocessJobAction.title=Reprocess Job",
+        "AutoIngestAdminActions.reprocessJobAction.error=Failed to reprocess job"})
     static final class ReprocessJobAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        ReprocessJobAction() {
+        ReprocessJobAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_reprocessJobAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3739
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                try {
+                    /*
+                     * Call setCursor on this to ensure it appears (if there is
+                     * time to see it).
+                     */
+                    dashboard.getCompletedJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    dashboard.getMonitor().reprocessJob(job);
+                    EventQueue.invokeLater(() -> {
+                        dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                        dashboard.getCompletedJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    });
+                } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                    logger.log(Level.SEVERE, Bundle.AutoIngestAdminActions_reprocessJobAction_error(), ex);
+                    MessageNotifyUtil.Message.error(Bundle.AutoIngestAdminActions_reprocessJobAction_error());
+                }
+            }
         }
 
         @Override
@@ -221,18 +292,28 @@ final class AutoIngestAdminActions {
         }
     }
 
-    @NbBundle.Messages({"AutoIngestAdminActions.deleteCaseAction.title=Delete Case"})
+    @NbBundle.Messages({"AutoIngestAdminActions.deleteCaseAction.title=Delete Case",
+        "AutoIngestAdminActions.deleteCaseAction.error=Failed to delete case."})
     static final class DeleteCaseAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        DeleteCaseAction() {
+        DeleteCaseAction(AutoIngestJob selectedJob) {
             super(Bundle.AutoIngestAdminActions_deleteCaseAction_title());
+            this.job = selectedJob;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3740
+            try {
+                String caseName = job.getManifest().getCaseName();
+                Path metadataFilePath = job.getCaseDirectoryPath().resolve(caseName + CaseMetadata.getFileExtension());
+                Case.deleteCase(new CaseMetadata(metadataFilePath));
+            } catch (CaseMetadata.CaseMetadataException | CaseActionException ex) {
+                logger.log(Level.SEVERE, Bundle.AutoIngestAdminActions_deleteCaseAction_error(), ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestAdminActions_deleteCaseAction_error());
+            }
         }
 
         @Override

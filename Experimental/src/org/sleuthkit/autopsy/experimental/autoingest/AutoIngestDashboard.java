@@ -122,6 +122,14 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         return pendingJobsPanel;
     }
 
+    AutoIngestJobsPanel getRunningJobsPanel() {
+        return runningJobsPanel;
+    }
+
+    AutoIngestJobsPanel getCompletedJobsPanel() {
+        return completedJobsPanel;
+    }
+
     /**
      * Update status of the services on the dashboard
      */

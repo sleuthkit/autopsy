@@ -137,7 +137,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.REPORT_STATE.toString(),
         ControlEventType.PAUSE.toString(),
         ControlEventType.RESUME.toString(),
-        ControlEventType.SHUTDOWN.toString()}));
+        ControlEventType.SHUTDOWN.toString(),
+        Event.CANCEL_JOB.toString(),
+        Event.REPROCESS_JOB.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -287,6 +289,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     handleRemoteRequestNodeStateEvent();
                 } else if (event instanceof AutoIngestNodeControlEvent) {
                     handleRemoteNodeControlEvent((AutoIngestNodeControlEvent) event);
+                } else if (event instanceof AutoIngestJobCancelEvent) {
+                    handleRemoteJobCancelledEvent((AutoIngestJobCancelEvent) event);
+                } else if (event instanceof AutoIngestJobReprocessEvent) {
+                    handleRemoteJobReprocessEvent((AutoIngestJobReprocessEvent) event);
                 }
             }
         }
@@ -372,6 +378,38 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         setChanged();
         notifyObservers(Event.JOB_COMPLETED);
+    }
+
+    /**
+     * Processes a job cancellation request from the dashboard.
+     *
+     * @param event
+     */
+    private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
+        AutoIngestJob job = event.getJob();
+        if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            if (currentJob == event.getJob()) {
+                cancelCurrentJob();
+            }
+        }
+    }
+
+    /**
+     * Process a job reprocess event from a remote host.
+     *
+     * @param event
+     */
+    private void handleRemoteJobReprocessEvent(AutoIngestJobReprocessEvent event) {
+        synchronized (jobsLock) {
+            AutoIngestJob job = event.getJob();
+            if (completedJobs.contains(job)) {
+                // Remove from completed jobs table.
+                completedJobs.remove(job);
+                // Add to pending jobs table and re-sort.
+                pendingJobs.add(job);
+                Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+            }
+        }
     }
 
     /**
@@ -3111,7 +3149,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         RUNNING,
         SHUTTING_DOWN,
         SHUTDOWN,
-        REPORT_STATE
+        REPORT_STATE,
+        CANCEL_JOB,
+        REPROCESS_JOB,
+        DELETE_CASE
     }
 
     /**
