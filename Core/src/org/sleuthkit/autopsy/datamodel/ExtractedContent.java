@@ -35,6 +35,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -58,11 +59,28 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;   // set to null after case has been closed
     public static final String NAME = NbBundle.getMessage(RootNode.class, "ExtractedContentNode.name.text");
+    private final long datasourceObjId;
 
+    /**
+     * Constructs extracted content object 
+     * 
+     * @param skCase Case DB
+     */
     public ExtractedContent(SleuthkitCase skCase) {
-        this.skCase = skCase;
+        this(skCase, 0);
     }
 
+    /**
+     * Constructs extracted content object 
+     * 
+     * @param skCase Case DB
+     * @param objId Object id of the parent datasource 
+     */
+    public ExtractedContent(SleuthkitCase skCase, long objId) {
+        this.skCase = skCase;
+        this.datasourceObjId = objId;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -270,6 +288,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //TEST COMMENT
             if (skCase != null) {
                 try {
+                    // RAMAN TBD: filter on datasource obj id
                     List<BlackboardArtifact.Type> types = skCase.getArtifactTypesInUse();
                     types.removeAll(doNotShow);
                     Collections.sort(types,
@@ -332,7 +351,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
             try {
-                this.childCount = skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
+                this.childCount = UserPreferences.groupItemsInTreeByDatasource() ? 
+                        skCase.getBlackboardArtifactsCount(type.getTypeID(), datasourceObjId) :
+                        skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
             } catch (TskException ex) {
                 Logger.getLogger(TypeNode.class.getName())
                         .log(Level.WARNING, "Error getting child count", ex); //NON-NLS
@@ -454,7 +475,10 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifact> list) {
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
+                    List<BlackboardArtifact> arts = 
+                            UserPreferences.groupItemsInTreeByDatasource() ?
+                            skCase.getBlackboardArtifacts(TSK_ACCOUNT, datasourceObjId) :
+                            skCase.getBlackboardArtifacts(type.getTypeID());
                     list.addAll(arts);
                 } catch (TskException ex) {
                     Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS

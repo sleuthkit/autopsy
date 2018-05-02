@@ -23,6 +23,8 @@ import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.datamodel.DataSourcesLayerChildren.SubtreeEnum;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -36,14 +38,17 @@ public class ResultsNode extends DisplayableItemNode {
     
     
     public ResultsNode(SleuthkitCase sleuthkitCase) {
-        super(new RootContentChildren(Arrays.asList(
-                new ExtractedContent(sleuthkitCase),
-                new KeywordHits(sleuthkitCase),
-                new HashsetHits(sleuthkitCase),
-                new EmailExtracted(sleuthkitCase),
-                new InterestingHits(sleuthkitCase),
-                new Accounts(sleuthkitCase)
-        )), Lookups.singleton(NAME));
+        super(UserPreferences.groupItemsInTreeByDatasource() ?
+                new DataSourcesLayerChildren(sleuthkitCase, SubtreeEnum.RESULTS) :
+                new RootContentChildren(Arrays.asList(
+                    new ExtractedContent(sleuthkitCase),
+                    new KeywordHits(sleuthkitCase),
+                    new HashsetHits(sleuthkitCase),
+                    new EmailExtracted(sleuthkitCase),
+                    new InterestingHits(sleuthkitCase),
+                    new Accounts(sleuthkitCase) )
+                ),
+                Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png"); //NON-NLS

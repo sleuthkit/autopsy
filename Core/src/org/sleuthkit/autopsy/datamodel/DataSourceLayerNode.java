@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DataSourcesLayerChildren.SubtreeEnum;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
@@ -87,6 +88,14 @@ public class DataSourceLayerNode extends DisplayableItemNode {
                                 );   
                     
                 case RESULTS:   //  TBD:
+                    return new  RootContentChildren(Arrays.asList(
+                                    new ExtractedContent(Case.getOpenCase().getSleuthkitCase()),
+                                    new KeywordHits(Case.getOpenCase().getSleuthkitCase()),
+                                    new HashsetHits(Case.getOpenCase().getSleuthkitCase()),
+                                    new EmailExtracted(Case.getOpenCase().getSleuthkitCase()),
+                                    new InterestingHits(Case.getOpenCase().getSleuthkitCase()),
+                                    new Accounts(Case.getOpenCase().getSleuthkitCase()) 
+                    ));
                 case TAGS:      //  TBD:
                 case REPORTS:   //  TBD:
                     
