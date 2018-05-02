@@ -34,12 +34,12 @@ install:
         pushd C:\
         git clone https://github.com/sleuthkit/sleuthkit 2>&1 | %{ "$_" }
         popd
-        python setupSleuthkitBranch.py
+        python setupSleuthkitBranch.py 2>&1 | %{ "$_" }
       } else {
         pushd $env:TSK_HOME
         git reset --hard
         popd
-        python setupSleuthkitBranch.py
+        python setupSleuthkitBranch.py 2>&1 | %{ "$_" }
         pushd $env:TSK_HOME
         git pull 2>&1 | %{ "$_" }
         popd
