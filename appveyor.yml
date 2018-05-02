@@ -26,7 +26,8 @@ environment:
 
 install:
   - ps: choco install ant --ignore-dependencies
-  - git clone https://github.com/sleuthkit/sleuthkit	+  - ps: $env:Path="C:\Program Files\Java\jdk1.8.0\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
+  - git clone https://github.com/sleuthkit/sleuthkit
+  - ps: $env:Path="C:\Program Files\Java\jdk1.8.0\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
   - ps: popd	+  - set PATH=C:\Python36-x64\';%PATH%
   - ps: >-
       if (!(Test-path -Path $env:TSK_HOME)){
