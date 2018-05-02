@@ -508,19 +508,20 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(caze, dataSource, filePath, "", caseDbFile.getKnown());
         TskData.FileKnown knownStatus = caseDbInstance.getKnownStatus();
         // If not known, check Tags for known and set
-        if (knownStatus.compareTo(TskData.FileKnown.KNOWN) != 0 && knownStatus.compareTo(TskData.FileKnown.BAD) != 0) {
+        TskData.FileKnown knownBad = TskData.FileKnown.BAD;
+        if (!knownStatus.equals(knownBad)) {
             List<ContentTag> fileMatchTags = openCase.getServices().getTagsManager().getContentTagsByContent(caseDbFile);
             for (ContentTag tag : fileMatchTags) {
                 TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
-                if (tagKnownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || tagKnownStatus.compareTo(TskData.FileKnown.BAD) == 0) {
-                    caseDbInstance.setKnownStatus(TskData.FileKnown.BAD);
+                if (tagKnownStatus.equals(knownBad)) {
+                    caseDbInstance.setKnownStatus(knownBad);
                     break;
                 }
             }
         }
 
         // If known, or not in CR, add
-        if (knownStatus.compareTo(TskData.FileKnown.KNOWN) == 0 || knownStatus.compareTo(TskData.FileKnown.BAD) == 0 || !artifactInstances.containsKey(instKey)) {
+        if (knownStatus.equals(knownBad) || !artifactInstances.containsKey(instKey)) {
             artifactInstances.put(instKey, caseDbInstance);
         }
     }
