@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -96,42 +95,61 @@ public class EncryptionDetectionTest extends NbTestCase {
              * Purge specific files to be tested.
              */
             FileManager fileManager = openCase.getServices().getFileManager();
-            List<AbstractFile> results = fileManager.findFiles("%%", "ole2");
-            results.addAll(fileManager.findFiles("%%", "ooxml"));
-            results.addAll(fileManager.findFiles("%%", "pdf"));
-            results.addAll(fileManager.findFiles("%%", "mdb"));
-            results.addAll(fileManager.findFiles("%%", "accdb"));
+            List<List<AbstractFile>> allResults = new ArrayList<>(0);
+            
+            List<AbstractFile> ole2Results = fileManager.findFiles("%%", "ole2");
+            assertEquals("Unexpected number of OLE2 results.", 11, ole2Results.size());
+            
+            List<AbstractFile> ooxmlResults = fileManager.findFiles("%%", "ooxml");
+            assertEquals("Unexpected number of OOXML results.", 13, ooxmlResults.size());
+            
+            List<AbstractFile> pdfResults = fileManager.findFiles("%%", "pdf");
+            assertEquals("Unexpected number of PDF results.", 6, pdfResults.size());
+            
+            List<AbstractFile> mdbResults = fileManager.findFiles("%%", "mdb");
+            assertEquals("Unexpected number of MDB results.", 25, mdbResults.size());
+            
+            List<AbstractFile> accdbResults = fileManager.findFiles("%%", "accdb");
+            assertEquals("Unexpected number of ACCDB results.", 10, accdbResults.size());
+            
+            allResults.add(ole2Results);
+            allResults.add(ooxmlResults);
+            allResults.add(pdfResults);
+            allResults.add(mdbResults);
+            allResults.add(accdbResults);
 
-            for (AbstractFile file : results) {
-                /*
-                 * Process only non-slack files.
-                 */
-                if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+            for (List<AbstractFile> results : allResults) {
+                for (AbstractFile file : results) {
                     /*
-                     * Determine which assertions to use for the file based on
-                     * its name.
+                     * Process only non-slack files.
                      */
-                    boolean fileProtected = file.getName().split("\\.")[0].endsWith("-protected");
-                    List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
-                    if (fileProtected) {
+                    if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         /*
-                         * Check that the protected file has one
-                         * TSK_ENCRYPTION_DETECTED artifact.
+                         * Determine which assertions to use for the file based on
+                         * its name.
                          */
-                        int artifactsListSize = artifactsList.size();
-                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
-                        assertEquals(errorMessage, 1, artifactsListSize);
+                        boolean fileProtected = file.getName().split("\\.")[0].endsWith("-protected");
+                        List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
+                        if (fileProtected) {
+                            /*
+                             * Check that the protected file has one
+                             * TSK_ENCRYPTION_DETECTED artifact.
+                             */
+                            int artifactsListSize = artifactsList.size();
+                            String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
+                            assertEquals(errorMessage, 1, artifactsListSize);
 
-                        String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
-                        errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
-                        assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.toString(), artifactTypeName);
-                    } else {
-                        /*
-                         * Check that the unprotected file has no artifacts.
-                         */
-                        int artifactsListSize = artifactsList.size();
-                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
-                        assertEquals(errorMessage, 0, artifactsListSize);
+                            String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
+                            errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
+                            assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.toString(), artifactTypeName);
+                        } else {
+                            /*
+                             * Check that the unprotected file has no artifacts.
+                             */
+                            int artifactsListSize = artifactsList.size();
+                            String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
+                            assertEquals(errorMessage, 0, artifactsListSize);
+                        }
                     }
                 }
             }
