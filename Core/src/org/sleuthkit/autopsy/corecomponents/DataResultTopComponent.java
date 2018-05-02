@@ -99,7 +99,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), null);
         initInstance(description, node, childNodeCount, resultViewTopComponent);
         return resultViewTopComponent;
-    }
+    }    
 
     /**
      * Creates a result view top component that provides multiple views of the
@@ -146,7 +146,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), null);
         return resultViewTopComponent;
     }
-
+    
     /**
      * Initializes a partially initialized result view top component.
      *

@@ -296,7 +296,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    private static String getHashSetHitsForFile(AbstractFile file) {
+    public static String getHashSetHitsForFile(AbstractFile file) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {

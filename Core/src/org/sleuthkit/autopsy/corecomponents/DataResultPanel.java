@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
@@ -561,6 +561,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * Worker for RootNodeListener childrenAdded.
+     */        
+    class SetupTabsChildrenWorker extends SwingWorker<Void, Void> {
+        
+        private final Node childNode;
+        SetupTabsChildrenWorker(Node aChildNode) {
+            childNode = aChildNode;
+        }
+        @Override
+        protected Void doInBackground() throws Exception {
+             setupTabs(childNode);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            setupTabs(childNode);
+        }
+    }
+    /**
      * Responds to changes in the root node due to asynchronous child node
      * creation.
      */
@@ -586,13 +606,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              */
             if (waitingForData && containsReal(delta)) {
                 waitingForData = false;
-                if (SwingUtilities.isEventDispatchThread()) {
-                    setupTabs(nme.getNode());
-                } else {
-                    SwingUtilities.invokeLater(() -> {
-                        setupTabs(nme.getNode());
-                    });
-                }
+                Node childNode = nme.getNode();
+                new SetupTabsChildrenWorker(childNode).execute();
             }
         }
 
