@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
  * PListViewer - a file viewer for binary plist files.
  *
  */
-public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
+class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private static final String[] MIMETYPES = new String[]{"application/x-bplist"};

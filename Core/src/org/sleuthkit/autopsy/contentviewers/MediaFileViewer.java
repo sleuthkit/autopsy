@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Media content viewer for videos, sounds and images.
  */
-public class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
+class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());
     private AbstractFile lastFile;

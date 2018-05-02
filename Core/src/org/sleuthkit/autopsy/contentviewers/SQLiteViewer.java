@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * A file content viewer for SQLite database files.
  */
-public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
+class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
