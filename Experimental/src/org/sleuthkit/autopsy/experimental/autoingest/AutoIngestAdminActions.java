@@ -25,7 +25,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 final class AutoIngestAdminActions {
-   
+
     @NbBundle.Messages({"AutoIngestAdminActions.progressDialogAction.title=Ingest Progress"})
     static final class ProgressDialogAction extends AbstractAction {
 
@@ -152,4 +152,65 @@ final class AutoIngestAdminActions {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
     }
+
+    @NbBundle.Messages({"AutoIngestAdminActions.pause.title=Pause Node"})
+    static final class PauseAction extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+
+        PauseAction() {
+            super(Bundle.AutoIngestAdminActions_pause_title());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            //TODO JIRA-
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
+
+    @NbBundle.Messages({"AutoIngestAdminActions.resume.title=Resume Node"})
+    static final class ResumeAction extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+
+        ResumeAction() {
+            super(Bundle.AutoIngestAdminActions_resume_title());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            //TODO JIRA-
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
+
+    @NbBundle.Messages({"AutoIngestAdminActions.shutdown.title=Shutdown Node"})
+    static final class ShutdownAction extends AbstractAction {
+
+        private static final long serialVersionUID = 1L;
+
+        ShutdownAction() {
+            super(Bundle.AutoIngestAdminActions_shutdown_title());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            //TODO JIRA-
+        }
+
+        @Override
+        public Object clone() throws CloneNotSupportedException {
+            return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+    }
+
 }
