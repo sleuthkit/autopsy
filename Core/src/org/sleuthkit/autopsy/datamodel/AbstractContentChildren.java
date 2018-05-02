@@ -162,12 +162,12 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(DeletedContent dc) {
-            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase());
+            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(FileSize dc) {
-            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase());
+            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
         }
 
         @Override
@@ -234,7 +234,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
-            return ftByMimeTypeItem.new ByMimeTypeNode();
+            return ftByMimeTypeItem.new ByMimeTypeNode(/*ftByMimeTypeItem.filteringDataSourceObjId()*/);
         }
     }
 }

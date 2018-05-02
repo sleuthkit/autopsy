@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,8 @@ import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.datamodel.DataSourcesLayerChildren.SubtreeEnum;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -34,14 +36,19 @@ public class ViewsNode extends DisplayableItemNode {
     public static final String NAME = NbBundle.getMessage(ViewsNode.class, "ViewsNode.name.text");
 
     public ViewsNode(SleuthkitCase sleuthkitCase) {
-        super(new RootContentChildren(Arrays.asList(
-                new FileTypes(sleuthkitCase),
-                // June '15: Recent Files was removed because it was not useful w/out filtering
-                // add it back in if we can filter the results to a more managable size. 
-                // new RecentFiles(sleuthkitCase),
-                new DeletedContent(sleuthkitCase),
-                new FileSize(sleuthkitCase))),
-                Lookups.singleton(NAME));
+        
+        super(  UserPreferences.groupItemsInTreeByDatasource() ?
+                new DataSourcesLayerChildren(sleuthkitCase, SubtreeEnum.VIEWS) :
+                new RootContentChildren(Arrays.asList(
+                    new FileTypes(sleuthkitCase),
+                    // June '15: Recent Files was removed because it was not useful w/out filtering
+                    // add it back in if we can filter the results to a more managable size. 
+                    // new RecentFiles(sleuthkitCase),
+                    new DeletedContent(sleuthkitCase),
+                    new FileSize(sleuthkitCase))
+                ),
+                Lookups.singleton(NAME)
+            );
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png"); //NON-NLS
