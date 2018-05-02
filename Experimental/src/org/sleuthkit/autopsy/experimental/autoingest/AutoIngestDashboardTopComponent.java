@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -39,8 +40,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 )
 @TopComponent.Registration(mode = "dashboard", openAtStartup = false)
 @Messages({
-    "CTL_AutoIngestDashboardAction=Auto Ingest Dashboard",
-    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Dashboard"})
+    "CTL_AutoIngestDashboardAction=Auto Ingest Jobs",
+    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs"})
 public final class AutoIngestDashboardTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
@@ -75,8 +76,14 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                     AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
                     tc.add(dashboard);
                     dashboard.setSize(dashboard.getPreferredSize());
-
+                    //if the user has administrator access enabled open the Node Status top component as well
+                    if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
+                        EventQueue.invokeLater(() -> {  
+                            AinStatusDashboardTopComponent.openTopComponent(dashboard.getMonitor());
+                        });          
+                    }
                     tc.open();
+
                 }
                 tc.toFront();
                 tc.requestActive();
@@ -87,17 +94,24 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         }
     }
 
-    public static void closeTopComponent() {
+    @Override
+    protected void componentClosed() {
         if (topComponentInitialized) {
             final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (tc != null) {
                 try {
+                    for (Component comp : getComponents()) {
+                        if (comp instanceof AutoIngestDashboard) {
+                            ((AutoIngestDashboard) comp).shutDown();
+                        }
+                    }
                     tc.close();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
+        super.componentClosed();
     }
 
     public AutoIngestDashboardTopComponent() {

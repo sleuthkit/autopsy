@@ -59,7 +59,7 @@ If you are viewing files from the Views and Results nodes, you can right-click o
 
 If you want to search for single keywords, then you can use the search box in the upper right of the program. The results will be shown in a table in the upper right.
 
-The tree on the left as well as the table on the right have a \ref quick_search feature which can be used to quickly find a visible node. 
+The tree on the left as well as the table on the right have a \ref ui_quick_search feature which can be used to quickly find a visible node. 
 
 You can tag (bookmark) arbitrary files so that you can more quickly find them later or so that you can include them specifically in a report.
 
