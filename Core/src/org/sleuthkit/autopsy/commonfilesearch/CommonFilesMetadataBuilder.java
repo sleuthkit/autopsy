@@ -238,21 +238,22 @@ abstract class CommonFilesMetadataBuilder {
         "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
     })
     protected abstract String buildTabTitle();
-    
+  
     @NbBundle.Messages({
         "CommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents",
         "CommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
         "CommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
     })
-    protected String buildCategorySelectionString(){
-        if(!this.filterByDoc && !this.filterByMedia){
+
+    protected String buildCategorySelectionString() {
+        if (!this.filterByDoc && !this.filterByMedia) {
             return Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_all();
         } else {
-            List<String> filters = new ArrayList<String>();
-            if(this.filterByDoc){
+            List<String> filters = new ArrayList<>();
+            if (this.filterByDoc) {
                 filters.add(Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_doc());
             }
-            if(this.filterByMedia){
+            if (this.filterByMedia) {
                 filters.add(Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_media());
             }
             return String.join(", ", filters);

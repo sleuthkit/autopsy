@@ -29,7 +29,9 @@ final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilde
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5"; //NON-NLS
 
     /**
-     * Implements the algorithm for getting common files across all data sources.
+     * Implements the algorithm for getting common files across all data
+     * sources.
+     *
      * @param dataSourceIdMap a map of obj_id to datasource name
      * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
