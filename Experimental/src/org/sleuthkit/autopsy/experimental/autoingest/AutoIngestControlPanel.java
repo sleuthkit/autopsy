@@ -850,6 +850,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 case JOB_STARTED:
                 case JOB_COMPLETED:
                 case CASE_DELETED:
+                case REPROCESS_JOB:
                     updateExecutor.submit(new UpdateAllJobsTablesTask());
                     break;
                 case PAUSED_BY_USER_REQUEST:

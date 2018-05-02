@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -268,21 +269,23 @@ final class AutoIngestAdminActions {
 
             AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
             if (dashboard != null) {
-                try {
-                    /*
-                     * Call setCursor on this to ensure it appears (if there is
-                     * time to see it).
-                     */
-                    dashboard.getCompletedJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    dashboard.getMonitor().reprocessJob(job);
-                    EventQueue.invokeLater(() -> {
-                        dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                /*
+                 * Call setCursor on this to ensure it appears (if there is
+                 * time to see it).
+                 */
+                dashboard.getCompletedJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                EventQueue.invokeLater(() -> {
+                    try {
+                        dashboard.getMonitor().reprocessJob(job);
+                        dashboard.refreshTables();
                         dashboard.getCompletedJobsPanel().setCursor(Cursor.getDefaultCursor());
-                    });
-                } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                    logger.log(Level.SEVERE, Bundle.AutoIngestAdminActions_reprocessJobAction_error(), ex);
-                    MessageNotifyUtil.Message.error(Bundle.AutoIngestAdminActions_reprocessJobAction_error());
-                }
+                    } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                        logger.log(Level.SEVERE, Bundle.AutoIngestAdminActions_reprocessJobAction_error(), ex);
+                        MessageNotifyUtil.Message.error(Bundle.AutoIngestAdminActions_reprocessJobAction_error());
+                    } finally {
+                        dashboard.getCompletedJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    }
+                });
             }
         }
 

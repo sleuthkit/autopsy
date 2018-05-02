@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingSta
 import static org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus.PENDING;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.Event;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
+
 /**
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
@@ -262,7 +263,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
     /**
      * Gets the current state of known AIN's in the system.
-     * @return 
+     *
+     * @return
      */
     List<AutoIngestNodeState> getNodeStates() {
         return nodeStates.values().stream().collect(Collectors.toList());
@@ -559,6 +561,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
              */
             for (AutoIngestJob completedJob : jobsSnapshot.getCompletedJobs()) {
                 if (completedJob.equals(job)) {
+                    // Remove from the completed jobs collection.
+                    jobsSnapshot.removeCompletedJob(job);
                     break;
                 }
             }
@@ -583,6 +587,9 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 } catch (CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error reprocessing job " + job.toString(), ex);
                 }
+
+                // Add to pending jobs collection.
+                jobsSnapshot.addOrReplacePendingJob(job);
 
                 /*
                  * Publish a reprocess event.
@@ -660,8 +667,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A snapshot of the pending jobs queue, running jobs list and completed jobs
-     * list for an auto ingest cluster.
+     * A snapshot of the pending jobs queue, running jobs list and completed
+     * jobs list for an auto ingest cluster.
      */
     static final class JobsSnapshot {
 
@@ -714,7 +721,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
          * Removes a job, if present, in the snapshot of the pending jobs queue
          * for an auto ingest cluster.
          *
-         * @param job The auot ingest job.
+         * @param job The auto ingest job.
          */
         private void removePendingJob(AutoIngestJob job) {
             this.pendingJobs.remove(job);
@@ -734,7 +741,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
          * Removes a job, if present, in the snapshot of the running jobs list
          * for an auto ingest cluster.
          *
-         * @param job The auot ingest job.
+         * @param job The auto ingest job.
          */
         private void removeRunningJob(AutoIngestJob job) {
             this.runningJobs.remove(job);
@@ -755,10 +762,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
          * Removes a job, if present, in the snapshot of the completed jobs list
          * for an auto ingest cluster.
          *
-         * @param job The auot ingest job.
+         * @param job The auto ingest job.
          */
         private void removeCompletedJob(AutoIngestJob job) {
-            this.pendingJobs.remove(job);
+            this.completedJobs.remove(job);
         }
 
         /**

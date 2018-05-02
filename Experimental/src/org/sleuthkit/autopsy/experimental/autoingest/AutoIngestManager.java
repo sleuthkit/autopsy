@@ -408,6 +408,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 // Add to pending jobs table and re-sort.
                 pendingJobs.add(job);
                 Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+
+                notifyObservers(Event.REPROCESS_JOB);
             }
         }
     }
