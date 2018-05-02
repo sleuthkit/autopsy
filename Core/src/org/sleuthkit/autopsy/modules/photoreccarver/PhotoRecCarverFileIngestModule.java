@@ -427,7 +427,7 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
         Path path;
         try {
-            path = Paths.get(Case.getOpenCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+            path = Paths.get(Case.getCurrentOpenCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
         }

@@ -345,7 +345,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
             new Thread(() -> {
                 try {
-                    Case.getOpenCase().notifyAddingDataSource(dataSourceId);
+                    Case.getCurrentOpenCase().notifyAddingDataSource(dataSourceId);
                 } catch (NoCurrentCaseException ex) {
                      Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
                 }
@@ -417,9 +417,9 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
         new Thread(() -> {
             try {
                 if (!contents.isEmpty()) {
-                    Case.getOpenCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
+                    Case.getCurrentOpenCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
                 } else {
-                    Case.getOpenCase().notifyFailedAddingDataSource(dataSourceId);
+                    Case.getCurrentOpenCase().notifyFailedAddingDataSource(dataSourceId);
                 }
             } catch (NoCurrentCaseException ex) {
                 Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS

@@ -108,7 +108,7 @@ class VolatilityProcessor {
         this.errorMsgs.clear();
 
         try {
-            this.currentCase = Case.getOpenCase();
+            this.currentCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_progressMessage_noCurrentCase(), ex);
         }

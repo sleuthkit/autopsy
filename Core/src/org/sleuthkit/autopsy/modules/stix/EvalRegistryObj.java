@@ -348,7 +348,7 @@ class EvalRegistryObj extends EvaluatableObject {
         // Make the temp directory
         String tmpDir;
         try {
-           tmpDir = Case.getOpenCase().getTempDirectory() + File.separator + "STIX"; //NON-NLS
+           tmpDir = Case.getCurrentOpenCase().getTempDirectory() + File.separator + "STIX"; //NON-NLS
         } catch (NoCurrentCaseException ex) { 
             throw new TskCoreException(ex.getLocalizedMessage());
         }
@@ -385,7 +385,7 @@ class EvalRegistryObj extends EvaluatableObject {
         List<AbstractFile> registryFiles = new ArrayList<AbstractFile>();
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) { 
             throw new TskCoreException(ex.getLocalizedMessage());
         }

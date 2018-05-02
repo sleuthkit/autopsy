@@ -220,7 +220,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
-                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                    BlackboardArtifact associatedArtifact = Case.getCurrentOpenCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
                     rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
 
                 }

@@ -194,7 +194,7 @@ public final class ImageGalleryController {
             stale.set(b);
         });
         try {
-            new PerCaseProperties(Case.getOpenCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
+            new PerCaseProperties(Case.getCurrentOpenCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(ImageGalleryController.class.getName()).log(Level.WARNING, "Exception while getting open case."); //NON-NLS
         }
@@ -214,7 +214,7 @@ public final class ImageGalleryController {
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
             try {
                 //if we just turned on listening and a case is open and that case is not up to date
-                if (newValue && !oldValue && ImageGalleryModule.isDrawableDBStale(Case.getOpenCase())) {
+                if (newValue && !oldValue && ImageGalleryModule.isDrawableDBStale(Case.getCurrentOpenCase())) {
                     //populate the db
                     queueDBTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
                 }

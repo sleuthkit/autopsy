@@ -74,7 +74,7 @@ public class CorrelationDataSource implements Serializable {
     public static CorrelationDataSource fromTSKDataSource(CorrelationCase correlationCase, Content dataSource) throws EamDbException {
         Case curCase;
         try {
-            curCase = Case.getOpenCase();
+            curCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) {
             throw new EamDbException("Autopsy case is closed");
         }

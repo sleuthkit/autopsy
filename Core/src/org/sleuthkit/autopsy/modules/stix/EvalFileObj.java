@@ -62,7 +62,7 @@ class EvalFileObj extends EvaluatableObject {
 
         Case case1;
         try {
-            case1 = Case.getOpenCase();
+            case1 = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) { 
            return new ObservableResult(id, "Exception while getting open case.", //NON-NLS
                             spacing, ObservableResult.ObservableState.FALSE, null);

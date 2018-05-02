@@ -121,7 +121,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     @Subscribe
     public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
         try {
-            final CommunicationsManager commsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
+            final CommunicationsManager commsManager = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager();
             accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, filterChangeEvent.getNewFilter()), true)));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);

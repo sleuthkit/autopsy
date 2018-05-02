@@ -184,7 +184,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
          */
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) {
             return true;
         }

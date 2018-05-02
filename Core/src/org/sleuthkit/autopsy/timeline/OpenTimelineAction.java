@@ -81,7 +81,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
     @Override
     public boolean isEnabled() {
         /**
-         * We used to also check if Case.getOpenCase().hasData() was true. We
+         * We used to also check if Case.getCurrentOpenCase().hasData() was true. We
          * disabled that check because if it is executed while a data source is
          * being added, it blocks the edt. We still do that in ImageGallery.
          */
@@ -112,7 +112,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
     synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
         try {
-            Case currentCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentOpenCase();
             if (currentCase.hasData() == false) {
                 MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
@@ -213,7 +213,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
 
     private boolean tooManyFiles() {
         try {
-            return FILE_LIMIT < Case.getOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
+            return FILE_LIMIT < Case.getCurrentOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can not open timeline with no case open.", ex);
         } catch (TskCoreException ex) {

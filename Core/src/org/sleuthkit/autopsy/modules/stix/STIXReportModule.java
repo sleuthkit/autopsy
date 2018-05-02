@@ -186,7 +186,7 @@ public class STIXReportModule implements GeneralReportModule {
 
             // Set the progress bar to done. If any errors occurred along the way, modify
             // the "complete" message to indicate this.
-            Case.getOpenCase().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
+            Case.getCurrentOpenCase().addReport(reportPath, Bundle.STIXReportModule_srcModuleName_text(), "");
             if (hadErrors) {
                 progressPanel.complete(ReportStatus.ERROR);
                 progressPanel.updateStatusLabel(

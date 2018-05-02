@@ -46,6 +46,6 @@ public class ContentTagAddedEvent extends TagAddedEvent<ContentTag> implements S
      * @throws TskCoreException
      */
     ContentTag getTagByID() throws NoCurrentCaseException, TskCoreException {
-        return Case.getOpenCase().getServices().getTagsManager().getContentTagByTagID(getTagID());
+        return Case.getCurrentOpenCase().getServices().getTagsManager().getContentTagByTagID(getTagID());
     }
 }

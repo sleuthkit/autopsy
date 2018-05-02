@@ -189,7 +189,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         try {
             if (IngestManager.getInstance().isIngestRunning() == false) {
                 enabledForCaseBox.setEnabled(true);
-                enabledForCaseBox.setSelected(ImageGalleryModule.isEnabledforCase(Case.getOpenCase()));
+                enabledForCaseBox.setSelected(ImageGalleryModule.isEnabledforCase(Case.getCurrentOpenCase()));
             } else {
                 enabledForCaseBox.setEnabled(false);
                 enabledForCaseBox.setSelected(enabledByDefaultBox.isSelected());
@@ -204,7 +204,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
     void store() {
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(ImageGalleryOptionsPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;

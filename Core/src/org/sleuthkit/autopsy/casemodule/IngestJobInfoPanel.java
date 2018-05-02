@@ -76,7 +76,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private void refresh() {
         try {
-            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentOpenCase().getSleuthkitCase();
             List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
             this.ingestJobs = ingestJobs;
             this.repaint();
@@ -116,7 +116,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
             if (columnIndex == 0) {
                 try {
-                    SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+                    SleuthkitCase skCase = Case.getCurrentOpenCase().getSleuthkitCase();
                     return skCase.getContentById(currIngestJob.getObjectId()).getName();
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Failed to get content from db", ex);

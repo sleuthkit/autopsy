@@ -50,7 +50,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
 
     void updateCaseInfo() {
         try {
-            theCase = Case.getOpenCase();
+            theCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) { 
             LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;

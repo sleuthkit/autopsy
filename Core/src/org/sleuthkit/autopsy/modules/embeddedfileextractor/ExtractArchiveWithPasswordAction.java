@@ -111,8 +111,8 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
         protected Boolean doInBackground() {
             boolean done = false;
             try {
-                String moduleDirRelative = Paths.get(Case.getOpenCase().getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-                String moduleDirAbsolute = Paths.get(Case.getOpenCase().getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+                String moduleDirRelative = Paths.get(Case.getCurrentOpenCase().getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+                String moduleDirAbsolute = Paths.get(Case.getCurrentOpenCase().getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
                 /*
                  * Construct a file type detector.
                  */

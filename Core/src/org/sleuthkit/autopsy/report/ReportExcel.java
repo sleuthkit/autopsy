@@ -113,7 +113,7 @@ class ReportExcel implements TableReportModule {
         try {
             out = new FileOutputStream(reportPath);
             wb.write(out);
-            Case.getOpenCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+            Case.getCurrentOpenCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
                     "ReportExcel.endReport.srcModuleName.text"), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write Excel report.", ex); //NON-NLS
@@ -305,7 +305,7 @@ class ReportExcel implements TableReportModule {
     private void writeSummaryWorksheet() {
         Case currentCase;
         try {
-            currentCase = Case.getOpenCase();
+            currentCase = Case.getCurrentOpenCase();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;

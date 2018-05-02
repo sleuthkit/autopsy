@@ -319,7 +319,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         // Copy the file to temp folder
         String tmpDBPathName;
         try {
-            tmpDBPathName = Case.getOpenCase().getTempDirectory() + File.separator + sqliteDbFile.getName();
+            tmpDBPathName = Case.getCurrentOpenCase().getTempDirectory() + File.separator + sqliteDbFile.getName();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
@@ -372,7 +372,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * @param metaFileName name of meta file to look for
      */
     private void findAndCopySQLiteMetaFile(AbstractFile sqliteFile, String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
-        Case openCase = Case.getOpenCase();
+        Case openCase = Case.getCurrentOpenCase();
         SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
         FileManager fileManager = services.getFileManager();

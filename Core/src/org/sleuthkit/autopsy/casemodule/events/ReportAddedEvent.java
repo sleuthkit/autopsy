@@ -70,7 +70,7 @@ public final class ReportAddedEvent extends AutopsyEvent implements Serializable
         }
         try {
             long id = (Long) super.getNewValue();
-            List<Report> reports = Case.getOpenCase().getSleuthkitCase().getAllReports();
+            List<Report> reports = Case.getCurrentOpenCase().getSleuthkitCase().getAllReports();
             for (Report thisReport : reports) {
                 if (thisReport.getId() == id) {
                     report = thisReport;

@@ -583,37 +583,13 @@ public class Case {
     }
 
     /**
-     * Deprecated. Use getOpenCase() instead.
-     * 
-     * Gets the current case, if there is one, at the time of the call.
-     *
-     * @return The current case.
-     *
-     * @throws IllegalStateException if there is no current case.
-     * 
-     * @deprecated. Use getOpenCase() instead.
-    */
-    @Deprecated
-    public static Case getCurrentCase() {
-        /*
-         * Throwing an unchecked exception is a bad idea here.
-         *
-         */
-        try {
-            return getOpenCase();
-        } catch (NoCurrentCaseException ex) {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
-        }
-    }
-
-    /**
      * Gets the current open case, if there is one, at the time of the call.
      *
      * @return The open case.
      *
      * @throws NoCurrentCaseException if there is no open case.
      */
-    public static Case getOpenCase() throws NoCurrentCaseException {
+    public static Case getCurrentOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
         if (openCase == null) {
             throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
@@ -2747,4 +2723,26 @@ public class Case {
         deleteReports(reports);
     }
 
+    /**
+     * Gets the current case, if there is one, at the time of the call.
+     *
+     * @return The current case.
+     *
+     * @throws IllegalStateException if there is no current case.
+     * 
+     * @deprecated Use getOpenCase() instead.
+    */
+    @Deprecated
+    public static Case getCurrentCase() {
+        /*
+         * Throwing an unchecked exception is a bad idea here.
+         *
+         */
+        try {
+            return getCurrentOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
+        }
+    }    
+    
 }

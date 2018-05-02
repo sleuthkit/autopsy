@@ -241,7 +241,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -266,7 +266,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentOpenCase();
                         emailResults.update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**

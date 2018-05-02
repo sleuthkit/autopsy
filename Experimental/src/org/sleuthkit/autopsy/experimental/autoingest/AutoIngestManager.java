@@ -2271,7 +2271,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
                         }
                         currentJob.setCaseDirectoryPath(caseDirectoryPath);
-                        Case caseForJob = Case.getOpenCase();
+                        Case caseForJob = Case.getCurrentOpenCase();
                         SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
                         return caseForJob;
 
@@ -2282,7 +2282,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     } catch (NoCurrentCaseException ex) {
                         /*
                          * Deal with the unfortunate fact that
-                         * Case.getOpenCase throws NoCurrentCaseException.
+                         * Case.getCurrentOpenCase throws NoCurrentCaseException.
                          */
                         throw new CaseManagementException(String.format("Error getting current case %s for %s", caseName, manifest.getFilePath()), ex);
                     }

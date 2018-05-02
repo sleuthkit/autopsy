@@ -87,7 +87,7 @@ class AddLocalFilesTask implements Runnable {
         List<String> errors = new ArrayList<>();
         try {
             progress.setIndeterminate(true);
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            FileManager fileManager = Case.getCurrentOpenCase().getServices().getFileManager();
             LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", localFilePaths, new ProgressUpdater());
             newDataSources.add(newDataSource);
         } catch (TskDataException | TskCoreException | NoCurrentCaseException ex) {

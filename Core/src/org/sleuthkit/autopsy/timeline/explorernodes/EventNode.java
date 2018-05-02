@@ -223,7 +223,7 @@ public class EventNode extends DisplayableItemNode {
          */
         final SingleEvent eventById = eventsModel.getEventById(eventID);
 
-        SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+        SleuthkitCase sleuthkitCase = Case.getCurrentOpenCase().getSleuthkitCase();
         AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
 
         if (eventById.getArtifactID().isPresent()) {

@@ -72,7 +72,7 @@ public class DeleteContentTagAction extends AbstractAction {
         new Thread(() -> {
             for (ContentTag tag : selectedTags) {
                 try {
-                    Case.getOpenCase().getServices().getTagsManager().deleteContentTag(tag);
+                    Case.getCurrentOpenCase().getServices().getTagsManager().deleteContentTag(tag);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(DeleteContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {

@@ -119,7 +119,7 @@ class KeywordHit implements Comparable<KeywordHit> {
             // If the hit was in an artifact, look up the source content for the artifact.
             SleuthkitCase caseDb;
             try {
-                caseDb = Case.getOpenCase().getSleuthkitCase();
+                caseDb = Case.getCurrentOpenCase().getSleuthkitCase();
             } catch (NoCurrentCaseException ex) {
                 throw new TskCoreException("Exception while getting open case.", ex);
             }

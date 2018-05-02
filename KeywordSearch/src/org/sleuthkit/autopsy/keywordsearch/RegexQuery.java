@@ -591,7 +591,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+            AccountFileInstance ccAccountInstance = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
             
             ccAccountInstance.addAttributes(attributes);
 

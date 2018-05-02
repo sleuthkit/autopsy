@@ -283,7 +283,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         errorLabel.setVisible(false);
 
         try {
-            final Case.CaseType currentCaseType = Case.getOpenCase().getCaseType();
+            final Case.CaseType currentCaseType = Case.getCurrentOpenCase().getCaseType();
 
             for (String currentPath : pathsList) {
                 if (!PathValidator.isValid(currentPath, currentCaseType)) {

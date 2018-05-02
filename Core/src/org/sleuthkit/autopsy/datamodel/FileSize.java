@@ -202,7 +202,7 @@ public class FileSize implements AutopsyVisitableItem {
                     try {
                         // new file was added
                         // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
-                        Case.getOpenCase();
+                        Case.getCurrentOpenCase();
                         update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**
@@ -219,7 +219,7 @@ public class FileSize implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentOpenCase();
                         update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**

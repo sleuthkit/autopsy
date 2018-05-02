@@ -374,7 +374,7 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         int i = 0;
         String currentCaseName = null;
         try {
-            currentCaseName = Case.getOpenCase().getDisplayName();
+            currentCaseName = Case.getCurrentOpenCase().getDisplayName();
         } catch (NoCurrentCaseException ex) {
             // in case there is no current case.
         }
@@ -407,7 +407,7 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         String[] casePaths = new String[LENGTH];
         String currentCasePath = null;
         try {
-            currentCasePath = Case.getOpenCase().getMetadata().getFilePath().toString();
+            currentCasePath = Case.getCurrentOpenCase().getMetadata().getFilePath().toString();
         } catch (NoCurrentCaseException ex) {
             /*
              * There may be no current case.

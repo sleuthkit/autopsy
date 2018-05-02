@@ -412,7 +412,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentOpenCase();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -435,7 +435,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentOpenCase();
                         keywordResults.update();
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.

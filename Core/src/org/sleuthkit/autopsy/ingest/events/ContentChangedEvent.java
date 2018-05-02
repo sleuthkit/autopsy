@@ -86,7 +86,7 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
         }
         try {
             SerializableEventData data = (SerializableEventData) super.getOldValue();
-            Content content = Case.getOpenCase().getSleuthkitCase().getContentById(data.contentId);
+            Content content = Case.getCurrentOpenCase().getSleuthkitCase().getContentById(data.contentId);
             eventData = new ModuleContentEvent(data.moduleName, content);
             return eventData;
         } catch (NoCurrentCaseException | TskCoreException ex) {

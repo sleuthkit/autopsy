@@ -425,7 +425,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         for (String modifiedTagDisplayName : updatedStatusTags) {
             //if  user closes their case after options have been changed but before application of them is complete don't notify
             try {
-                Case.getOpenCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
+                Case.getCurrentOpenCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
             } catch (NoCurrentCaseException ex) {
                 Logger.getLogger(TagOptionsPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }

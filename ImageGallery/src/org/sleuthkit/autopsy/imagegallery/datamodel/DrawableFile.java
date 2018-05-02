@@ -75,7 +75,7 @@ public abstract class DrawableFile {
     }
 
     public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
-        return create(Case.getOpenCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
+        return create(Case.getCurrentOpenCase().getSleuthkitCase().getAbstractFileById(id), analyzed);
     }
 
     private SoftReference<Image> imageRef;

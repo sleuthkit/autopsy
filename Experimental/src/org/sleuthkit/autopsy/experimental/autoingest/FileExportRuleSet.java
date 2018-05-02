@@ -375,7 +375,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
          */
         List<Long> evaluate(long dataSourceId) throws ExportRulesException {
             try {
-                SleuthkitCase db = Case.getOpenCase().getSleuthkitCase();
+                SleuthkitCase db = Case.getCurrentOpenCase().getSleuthkitCase();
                 try (SleuthkitCase.CaseDbQuery queryResult = db.executeQuery(getQuery(dataSourceId))) {
                     ResultSet resultSet = queryResult.getResultSet();
                     List<Long> fileIds = new ArrayList<>();
@@ -1063,7 +1063,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
             private String getConditionClause(int index) throws ExportRulesException {
                 Case currentCase;
                 try {
-                    currentCase = Case.getOpenCase();
+                    currentCase = Case.getCurrentOpenCase();
                 } catch (NoCurrentCaseException ex) {
                     throw new ExportRulesException("Exception while getting open case.", ex);
                 }

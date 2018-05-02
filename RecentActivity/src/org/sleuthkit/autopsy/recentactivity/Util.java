@@ -193,7 +193,7 @@ class Util {
         parent_path = parent_path.substring(0, index);
         List<AbstractFile> files = null;
         try {
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            FileManager fileManager = Case.getCurrentOpenCase().getServices().getFileManager();
             files = fileManager.findFiles(dataSource, name, parent_path);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS

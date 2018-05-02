@@ -57,7 +57,7 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
     public void performAction() {
         File outputDir;
         try {
-            Case currentCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentOpenCase();
             outputDir = new File(currentCase.getOutputDirectory());
             if (outputDir.exists()) {
                 try {

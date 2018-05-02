@@ -385,7 +385,7 @@ public class ImageUtils {
     private static File getCachedThumbnailLocation(long fileID) {
         return cacheFileMap.computeIfAbsent(fileID, id -> {
             try {
-                String cacheDirectory = Case.getOpenCase().getCacheDirectory();
+                String cacheDirectory = Case.getCurrentOpenCase().getCacheDirectory();
                 return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NON-NLS
             } catch (NoCurrentCaseException e) {
                 LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open."); //NON-NLS

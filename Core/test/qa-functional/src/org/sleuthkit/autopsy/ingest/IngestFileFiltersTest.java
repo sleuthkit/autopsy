@@ -134,7 +134,7 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet Files_Dirs_Unalloc_Ingest_Filter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);        
 
         try {
-            Case openCase = Case.getOpenCase();
+            Case openCase = Case.getCurrentOpenCase();
             runIngestJob(openCase.getDataSources(), Files_Dirs_Unalloc_Ingest_Filter);
             FileManager fileManager = openCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");

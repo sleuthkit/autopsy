@@ -153,7 +153,7 @@ public class SaveSnapshotAsReport extends Action {
 
                 try {
                     //add main file as report to case
-                    Case.getOpenCase().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
+                    Case.getCurrentOpenCase().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     LOGGER.log(Level.WARNING, "Failed to add " + reportMainFilePath.toString() + " to case as a report", ex); //NON_NLS
                     new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_FailedToAddReport()).show();

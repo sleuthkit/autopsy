@@ -72,7 +72,7 @@ class FileReportText implements FileReportModule {
         if (out != null) {
             try {
                 out.close();
-                Case.getOpenCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
+                Case.getCurrentOpenCase().addReport(reportPath, NbBundle.getMessage(this.getClass(),
                         "FileReportText.getName.text"), "");
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not close output writer when ending report.", ex); //NON-NLS

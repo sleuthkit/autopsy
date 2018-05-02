@@ -140,7 +140,7 @@ public class AddContentTagAction extends AddTagAction {
                         }
                     }
 
-                    Case.getOpenCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
+                    Case.getCurrentOpenCase().getServices().getTagsManager().addContentTag(file, tagName, comment);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     AbstractFile fileCopy = file;
