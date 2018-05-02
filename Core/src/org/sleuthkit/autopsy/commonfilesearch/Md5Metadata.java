@@ -59,7 +59,7 @@ final public class Md5Metadata {
     }
 
     public String getDataSources() {
-        Set<String> sources = new HashSet<String> ();
+        Set<String> sources = new HashSet<> ();
         for(FileInstanceMetadata data  : this.fileInstances){
             sources.add(data.getDataSourceName());
         }

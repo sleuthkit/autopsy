@@ -32,12 +32,13 @@ final class CommonFilesMetadata {
 
     /**
      * Create meta dat object which can be handed off to the node factories
+     *
      * @param metadata map of md5 to parent-level node meta data
      */
     CommonFilesMetadata(Map<String, Md5Metadata> metadata) {
         this.metadata = metadata;
     }
-    
+
     /**
      * Find the meta data for the given md5.
      *
@@ -63,7 +64,7 @@ final class CommonFilesMetadata {
         int count = 0;
         for (Md5Metadata data : this.metadata.values()) {
             count += data.size();
-        }        
+        }
         return count;
     }
 }

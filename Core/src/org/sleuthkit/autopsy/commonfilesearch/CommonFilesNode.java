@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  */
 final public class CommonFilesNode extends DisplayableItemNode {
     
+
     CommonFilesNode(CommonFilesMetadata metadataList) {
         super(Children.create(new Md5NodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
     }
@@ -79,7 +80,7 @@ final public class CommonFilesNode extends DisplayableItemNode {
         protected void removeNotify() {
             metadata = null;
         }
-        
+
         @Override
         protected Node createNodeForKey(String md5){
             Md5Metadata metadata = this.metadata.getMetadataForMd5(md5);
