@@ -24,7 +24,6 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 

@@ -58,7 +58,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * PListViewer - a file viewer for binary plist files.

@@ -197,6 +197,7 @@ public final class IngestServices {
      *
      * @deprecated Use getCase instead.
      */
+    @Deprecated
     public Case getCurrentCase() {
         return Case.getCurrentCase();
     }
