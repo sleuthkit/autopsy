@@ -225,8 +225,6 @@ public class TimeLineController {
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<Interval> selectedTimeRange = new ReadOnlyObjectWrapper<>();
 
-    private final ReadOnlyBooleanWrapper eventsDBStale = new ReadOnlyBooleanWrapper(true);
-
     private final PromptDialogManager promptDialogManager = new PromptDialogManager(this);
 
     /**
@@ -254,41 +252,6 @@ public class TimeLineController {
      */
     synchronized public Interval getSelectedTimeRange() {
         return selectedTimeRange.get();
-    }
-
-    public ReadOnlyBooleanProperty eventsDBStaleProperty() {
-        return eventsDBStale.getReadOnlyProperty();
-    }
-
-    /**
-     * Is the events db out of date (stale)?
-     *
-     * @return True if the events db is out of date , false otherwise
-     */
-    public boolean isEventsDBStale() {
-        return eventsDBStale.get();
-    }
-
-    /**
-     * Set the events database stale or not
-     *
-     * @param stale The new state of the events db: stale/not-stale
-     */
-    @NbBundle.Messages({
-        "TimeLineController.setEventsDBStale.errMsgStale=Failed to mark the timeline db as stale. Some results may be out of date or missing.",
-        "TimeLineController.setEventsDBStale.errMsgNotStale=Failed to mark the timeline db as not stale. Some results may be out of date or missing."})
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void setEventsDBStale(final Boolean stale) {
-        eventsDBStale.set(stale);
-        try {
-            //persist to disk
-            perCaseTimelineProperties.setDbStale(stale);
-        } catch (IOException ex) {
-            MessageNotifyUtil.Notify.error(Bundle.Timeline_dialogs_title(),
-                    stale ? Bundle.TimeLineController_setEventsDBStale_errMsgStale()
-                            : Bundle.TimeLineController_setEventsDBStale_errMsgNotStale());
-            logger.log(Level.SEVERE, "Error marking the timeline db as stale.", ex); //NON-NLS
-        }
     }
 
     synchronized public ReadOnlyBooleanProperty canAdvanceProperty() {
@@ -326,7 +289,6 @@ public class TimeLineController {
     public TimeLineController(Case autoCase) throws TskCoreException {
         this.autoCase = autoCase;
         this.perCaseTimelineProperties = new PerCaseTimelineProperties(autoCase);
-        eventsDBStale.set(perCaseTimelineProperties.isDBStale());
         EventsRepository eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
 
         /*
@@ -426,7 +388,6 @@ public class TimeLineController {
         IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
         IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
         Case.removePropertyChangeListener(caseListener);
-        autoCase.getSleuthkitCase().unregisterForEvents(this);
         if (topComponent != null) {
             topComponent.close();
             topComponent = null;
@@ -449,7 +410,6 @@ public class TimeLineController {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
             IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
             Case.addPropertyChangeListener(caseListener);
-            autoCase.getSleuthkitCase().registerForEvents(this);
             listeningToAutopsy = true;
         }
         Platform.runLater(() -> {
@@ -791,7 +751,7 @@ public class TimeLineController {
                 case CONTENT_CHANGED:
                 case DATA_ADDED:
                     //since black board artifacts or new derived content have been added, the DB is stale.
-                    Platform.runLater(() -> setEventsDBStale(true));
+                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case FILE_DONE:
                     /*
@@ -814,7 +774,6 @@ public class TimeLineController {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED:
                     //mark db stale, and prompt to rebuild
-                    Platform.runLater(() -> setEventsDBStale(true));
                     filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case DATA_SOURCE_ANALYSIS_STARTED:
@@ -848,13 +807,14 @@ public class TimeLineController {
                     executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
                     break;
                 case DATA_SOURCE_ADDED:
-                    //mark db stale, and prompt to rebuild
-                    Platform.runLater(() -> setEventsDBStale(true));
                     filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case CURRENT_CASE:
                     //close timeline on case changes.
                     SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
+                    break;
+                case EVENT_ADDED:
+                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
             }
         }

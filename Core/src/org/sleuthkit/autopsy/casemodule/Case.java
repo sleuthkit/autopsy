@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -105,6 +106,7 @@ import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
+import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
@@ -112,6 +114,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
@@ -144,6 +147,7 @@ public class Case {
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
+    private final TSKCaseRepublisher tskEventForwarder = new TSKCaseRepublisher();
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -369,9 +373,22 @@ public class Case {
          * old value of the PropertyChangeEvent is the display name of the tag
          * definition that has changed.
          */
-        TAG_DEFINITION_CHANGED;
-
+        TAG_DEFINITION_CHANGED,
+        /**
+         * An event, such mac time or web activity was added to the current
+         * case. The old value is null and the new value is the SingleEvent that
+         * was added.
+         */
+        EVENT_ADDED;
     };
+
+    private final class TSKCaseRepublisher {
+
+        @Subscribe
+        public void handleTimelineEventCreated(TimelineManager.EventAddedEvent event) {
+            eventPublisher.publish(new EventAddedEvent(event));
+        }
+    }
 
     /**
      * Adds a subscriber to all case events. To subscribe to only specific
@@ -477,8 +494,8 @@ public class Case {
      */
     public static boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                 || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                 || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
 
     /**
@@ -584,15 +601,15 @@ public class Case {
 
     /**
      * Deprecated. Use getOpenCase() instead.
-     * 
+     *
      * Gets the current case, if there is one, at the time of the call.
      *
      * @return The current case.
      *
      * @throws IllegalStateException if there is no current case.
-     * 
+     *
      * @deprecated. Use getOpenCase() instead.
-    */
+     */
     @Deprecated
     public static Case getCurrentCase() {
         /*
@@ -854,9 +871,9 @@ public class Case {
                 hostClause = File.separator + NetworkUtils.getLocalHostName();
             }
             result = result && (new File(caseDir + hostClause + File.separator + EXPORT_FOLDER)).mkdirs()
-                    && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
-                    && (new File(caseDir + hostClause + File.separator + TEMP_FOLDER)).mkdirs()
-                    && (new File(caseDir + hostClause + File.separator + CACHE_FOLDER)).mkdirs();
+                     && (new File(caseDir + hostClause + File.separator + LOG_FOLDER)).mkdirs()
+                     && (new File(caseDir + hostClause + File.separator + TEMP_FOLDER)).mkdirs()
+                     && (new File(caseDir + hostClause + File.separator + CACHE_FOLDER)).mkdirs();
 
             if (result == false) {
                 throw new CaseActionException(
@@ -1565,7 +1582,7 @@ public class Case {
         String normalizedLocalPath;
         try {
             if (localPath.toLowerCase().contains("http:")) {
-		            normalizedLocalPath = localPath;
+                normalizedLocalPath = localPath;
             } else {
                 normalizedLocalPath = Paths.get(localPath).normalize().toString();
             }
@@ -2039,6 +2056,8 @@ public class Case {
                 }
             }
         }
+
+        caseDb.registerForEvents(tskEventForwarder);
     }
 
     /**
@@ -2224,6 +2243,7 @@ public class Case {
     private void close(ProgressIndicator progressIndicator) {
         IngestManager.getInstance().cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
 
+        caseDb.unregisterForEvents(tskEventForwarder);
         /*
          * Stop sending/receiving case events to and from other nodes if this is
          * a multi-user case.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,11 +28,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -58,6 +61,7 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
+import javafx.util.Duration;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import jfxtras.scene.control.LocalDateTimePicker;
@@ -71,11 +75,9 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
@@ -86,7 +88,7 @@ import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
+import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
@@ -94,7 +96,6 @@ import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
-import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
@@ -444,28 +445,13 @@ final public class ViewFrame extends BorderPane {
         Platform.runLater(() -> {
             if (Bundle.ViewFrame_tagsAddedOrDeleted().equals(notificationPane.getText())) {
                 notificationPane.hide();
+
             }
+            refreshHistorgram();
         });
     }
 
     /**
-     * Handle a DBUpdatedEvent from the events model by refreshing the view.
-     *
-     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
-     * EventBus in order for this handler to be invoked.
-     *
-     * @param event The DBUpdatedEvent to handle.
-     */
-    @Subscribe
-    public void handleDBUpdated(DBUpdatedEvent event) {
-        hostedView.refresh();
-        refreshHistorgram();
-        Platform.runLater(notificationPane::hide);
-    }
-
-    /**
-     * Handle a DataSourceAnalysisCompletedEvent from the events model by
-     * showing a notification.
      *
      * NOTE: This ViewFrame must be registered with the filteredEventsModel's
      * EventBus in order for this handler to be invoked.
@@ -475,11 +461,17 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     @NbBundle.Messages({
         "# {0} - datasource name",
-        "ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline visualization may be out of date."})
-    public void handleAnalysisCompleted(TimelineManager.TimelineEventCreated event) {
+        "ViewFrame.notification.analysisComplete=New events have been added. The Timeline visualization may be out of date."})
+    public void handleEventAdded(EventAddedEvent event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new Refresh());
-            notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"), new ImageView(WARNING));
+            if (hostedView.isOutOfDate() == false) {
+                hostedView.setOutOfDate();
+                notificationPane.getActions().setAll(new Refresh());
+                notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"), new ImageView(WARNING));
+                PauseTransition transition = new PauseTransition(Duration.seconds(30));
+                transition.setOnFinished(actionEvent -> notificationPane.hide());
+                transition.play();
+            }
         });
     }
 
@@ -691,6 +683,7 @@ final public class ViewFrame extends BorderPane {
         timeRangeToolBar.getItems().removeAll(this.timeNavigationNodes); //remove old nodes
         this.timeNavigationNodes.setAll(timeNavigationNodes);
         timeRangeToolBar.getItems().addAll(TIME_TOOLBAR_INSERTION_INDEX, timeNavigationNodes);
+
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
