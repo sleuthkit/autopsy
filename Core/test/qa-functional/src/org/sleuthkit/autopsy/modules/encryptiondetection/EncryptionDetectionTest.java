@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
-    private static final String BITLOCKER_CASE_NAME = "testPasswordProtection";
+    private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
     private static final String PASSWORD_CASE_NAME = "testPasswordProtection";
     private static final Path BITLOCKER_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), BITLOCKER_CASE_NAME);
     private static final Path PASSWORD_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), PASSWORD_CASE_NAME);
