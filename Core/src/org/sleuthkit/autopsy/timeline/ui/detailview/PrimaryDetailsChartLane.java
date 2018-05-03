@@ -26,7 +26,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
-import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import org.sleuthkit.datamodel.timeline.EventCluster;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 

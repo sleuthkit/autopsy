@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.ui.eventtype;
+package org.sleuthkit.autopsy.timeline.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.timeline.EventType;
  */
 final public class EventTypeUtils {
 
-    static final private String IMAGE_BASE_PATH = "/org/sleuthkit/autopsy/timeline/images/";
+    static final private String IMAGE_BASE_PATH = "org/sleuthkit/autopsy/timeline/images/";
     static private final Map<EventType, Image> imageMap = new HashMap<>();
 
     public static Image getImage(EventType type) {

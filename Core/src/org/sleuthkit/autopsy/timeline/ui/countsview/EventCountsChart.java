@@ -52,9 +52,9 @@ import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils;
-import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getColor;
-import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getImagePath;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 import org.sleuthkit.datamodel.timeline.EventType;
 

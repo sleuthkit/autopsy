@@ -54,9 +54,9 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
-import org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils;
-import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getColor;
-import static org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils.getImagePath;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
