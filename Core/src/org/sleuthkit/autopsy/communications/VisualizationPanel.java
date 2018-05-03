@@ -208,11 +208,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         applyLayout(fastOrganicLayout);
     }
 
-    /**
-     *
-     * @param layoutButton the value of layoutButton
-     * @param layout       the value of layout
-     */
     @Override
     public Lookup getLookup() {
         return proxyLookup;
