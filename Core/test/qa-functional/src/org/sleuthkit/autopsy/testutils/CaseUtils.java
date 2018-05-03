@@ -29,29 +29,46 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 
+/**
+ * Common case utility methods.
+ */
 public final class CaseUtils {
-    
+
+    /**
+     * CaseUtils constructor. Since this class is not meant to allow for
+     * instantiation, this constructor is 'private'.
+     */
     private CaseUtils() {
     }
-    
-    public static void createCase(Path caseDirectoryPath) {
+
+    /**
+     * Create a new case. If the case already exists at the specified path, the
+     * existing case will be removed prior to creation of the new case.
+     *
+     * @param caseDirectoryPath The path to the case data.
+     * @param caseDisplayName   The display name for the case.
+     */
+    public static void createCase(Path caseDirectoryPath, String caseDisplayName) {
         //Make sure the test is starting with a clean state. So delete the test directory, if it exists.
         deleteCaseDir(caseDirectoryPath);
         assertFalse("Unable to delete existing test directory", caseDirectoryPath.toFile().exists());
- 
+
         // Create the test directory
         caseDirectoryPath.toFile().mkdirs();
         assertTrue("Unable to create test directory", caseDirectoryPath.toFile().exists());
 
         try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails("IngestFiltersTest"));
+            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(caseDisplayName));
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }        
+        }
         assertTrue(caseDirectoryPath.toFile().exists());
     }
-    
+
+    /**
+     * Close the currently opened case.
+     */
     public static void closeCase() {
         try {
             Case.closeCurrentCase();
@@ -64,9 +81,14 @@ public final class CaseUtils {
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        } 
+        }
     }
-        
+
+    /**
+     * Delete a case at the specified path.
+     *
+     * @param caseDirectoryPath The path to the case to be removed.
+     */
     public static void deleteCaseDir(Path caseDirectoryPath) {
         if (!caseDirectoryPath.toFile().exists()) {
             return;
