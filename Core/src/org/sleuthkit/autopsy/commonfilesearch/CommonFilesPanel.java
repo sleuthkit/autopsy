@@ -42,7 +42,6 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -77,7 +76,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         initComponents();
 
         this.setupDataSources();
-        
+
         this.errorText.setVisible(false);
     }
 
@@ -97,10 +96,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void setupDataSources() {
 
         new SwingWorker<Map<Long, String>, Void>() {
-
-            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
-            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
 
             private void updateUi() {
 
@@ -132,48 +127,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 return CommonFilesPanel.this.dataSourceMap.size() >= 2;
             }
 
-            private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
-                        ResultSet resultSet = query.getResultSet()) {
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        dataSouceMap.put(objectId, dataSourceName);
-                    }
-                }
-            }
-
-            private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
-                        ResultSet resultSet = query.getResultSet()) {
-                    
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        File image = new File(dataSourceName);
-                        String dataSourceNameTrimmed = image.getName();
-                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
-                    }
-                }
-            }
-
             @Override
             protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-
-                Map<Long, String> dataSouceMap = new HashMap<>();
-
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-                loadLogicalSources(tskDb, dataSouceMap);
-
-                loadImageSources(tskDb, dataSouceMap);
-
-                return dataSouceMap;
+                DataSourceLoader loader = new DataSourceLoader();
+                return loader.getDataSourceMap();
             }
 
             @Override
@@ -296,10 +253,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
                     DataResultViewerTable table = new DataResultViewerTable();
-                    
+
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
-                                        
+
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
 
                 } catch (InterruptedException ex) {
@@ -591,7 +548,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             this.pictureVideoCheckbox.setEnabled(true);
             this.documentsCheckbox.setEnabled(true);
-                        
+
             this.toggleErrorTextAndSearchBox();
         }
     }

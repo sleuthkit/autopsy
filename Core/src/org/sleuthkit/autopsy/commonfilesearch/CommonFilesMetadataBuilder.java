@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This entire thing runs on a background thread where exceptions are handled.
  */
 @SuppressWarnings("PMD.AbstractNaming")
-abstract class CommonFilesMetadataBuilder {
+public abstract class CommonFilesMetadataBuilder {
 
     private final Map<Long, String> dataSourceIdToNameMap;
     private final boolean filterByMedia;

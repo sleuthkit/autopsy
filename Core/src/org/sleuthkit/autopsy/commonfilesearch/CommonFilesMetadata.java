@@ -27,7 +27,7 @@ import java.util.Map;
  * results. Subclass this to implement different selections of files from the
  * case.
  */
-final class CommonFilesMetadata {
+final public class CommonFilesMetadata {
 
     private final Map<String, Md5Metadata> metadata;
 
@@ -61,7 +61,7 @@ final class CommonFilesMetadata {
      * How many distinct file instances exist for this metadata?
      * @return number of file instances
      */
-    int size() {
+    public int size() {
         int count = 0;
         for (Md5Metadata data : this.metadata.values()) {
             count += data.size();

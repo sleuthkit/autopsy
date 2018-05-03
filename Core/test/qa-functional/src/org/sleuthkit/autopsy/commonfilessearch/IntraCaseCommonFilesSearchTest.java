@@ -19,75 +19,149 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import static junit.framework.Assert.assertFalse;
-import org.apache.commons.io.FileUtils;
+import java.sql.SQLException;
+import java.util.Map;
+import junit.framework.Assert;
+import static junit.framework.Assert.*;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
+import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  * @author bsweeney
  */
-public class IntraCaseCommonFilesSearchTest extends NbTestCase {
-    
+public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
+
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
-    private static final File CASE_DIR = new File(CASE_DIRECTORY_PATH.toString());
-    private final Path IMAGE_PATH_1 = Paths.get(this.getDataDir().toString(), "3776", "3776-1.e01.ad1");
-    private final Path IMAGE_PATH_2 = Paths.get(this.getDataDir().toString(), "3776", "3776-2.e01.ad1");
-    private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "3776", "3776-3.e01.ad1");
-    private final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "3776", "3776-4.e01.ad1");
-    
+
+    private final Path IMAGE_PATH_1 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image1_v1.vhd");
+    private final Path IMAGE_PATH_2 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image2_v1.vhd");
+    private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image3_v1.vhd");
+    private final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image4_v1.vhd");
+
+    protected DataSourceLoader dataSourceLoader;
+
     public IntraCaseCommonFilesSearchTest(String name) {
         super(name);
     }
-    
-    @Override
-    public void setUp(){
 
-        CaseUtils.createCase(CASE_DIRECTORY_PATH);   
-    }
-    
-    /**
-     * Add images #1, #2, #3, and #4 to case. Do not ingest.
-     * Find all matches & all file types. Confirm no matches are found (since there are no hashes to match).
-     * Find all matches on image #1 & all file types. Confirm no matches.
-     */
-    public void testOne(){
-        
-    }
-    
-    
-    /**
-     * Add #1, #2, #3, and #4 to case and ingest with hash algorithm.
-     * Find all matches & all file types. Confirm file.jpg is found on all three and file.docx is found on two.
-     * Find matches on ‘#1’ & all file types. Confirm same results.
-     * Find matches on ‘#2 & all file types: Confirm file.jpg.
-     * Find matches on ‘#3’ & all file types: Confirm file.jpg and file.docx.
-     * Find matches on #4 & all file types: Confirm nothing is found
-     */
-    public void testTwo(){
-        
-    }
-    
-    /**
-     * Add #1 and #4 to case and ingest.
-     * Find all matches & all file types. Confirm nothing matches
-     */
-    public void testThree(){
-        
-    }
-    
     @Override
-    public void tearDown(){
+    public void setUp() {
+
+        CaseUtils.createCase(CASE_DIRECTORY_PATH);
+
+        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_1);
+        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_2);
+        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_3);
+        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_4);
+
+        this.dataSourceLoader = new DataSourceLoader();
+    }
+
+    @Override
+    public void tearDown() {
         CaseUtils.closeCase();
         CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
     }
-    
+
+    public class UningestedCases extends IntraCaseCommonFilesSearchTest {
+
+        public UningestedCases(String name) {
+            super(name);
+        }
+
+        /**
+         * Add images #1, #2, #3, and #4 to case. Do not ingest. Find all
+         * matches & all file types. Confirm no matches are found (since there
+         * are no hashes to match). Find all matches on image #1 & all file
+         * types. Confirm no matches.
+         */
+        public void testOne() {
+            try {
+                Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+
+                CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
+                CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+
+                int resultCount = metadata.size();
+                assertEquals(resultCount, 0);
+                
+            } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+                fail(ex.getMessage());
+            }
+        }
+
+        public void testTwo() {
+            try {
+                Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+                Long first = new Long(1);
+
+                CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
+                CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+                
+                int resultCount = metadata.size();
+                assertEquals(resultCount, 0);
+                
+            } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+                fail(ex.getMessage());
+            }
+        }
+    }
+
+    public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
+
+        public IngestedWithHashAlgOnly(String name) {
+            super(name);
+        }
+
+        /**
+         * Add #1, #2, #3, and #4 to case and ingest with hash algorithm. Find
+         * all matches & all file types. Confirm file.jpg is found on all three
+         * and file.docx is found on two. Find matches on ‘#1’ & all file types.
+         * Confirm same results. Find matches on ‘#2 & all file types: Confirm
+         * file.jpg. Find matches on ‘#3’ & all file types: Confirm file.jpg and
+         * file.docx. Find matches on #4 & all file types: Confirm nothing is
+         * found
+         */
+        public void testTwo() {
+
+        }
+
+    }
+
+    public class NoMatches extends IntraCaseCommonFilesSearchTest {
+
+        public NoMatches(String name) {
+            super(name);
+        }
+
+        @Override
+        public void setUp() {
+
+            CaseUtils.createCase(CASE_DIRECTORY_PATH);
+            IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_1);
+            IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_4);
+        }
+
+        /**
+         * Add #1 and #4 to case and ingest. Find all matches & all file types.
+         * Confirm nothing matches
+         */
+        public void testThree() {
+
+        }
+    }
 }
