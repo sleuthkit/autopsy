@@ -49,7 +49,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils;

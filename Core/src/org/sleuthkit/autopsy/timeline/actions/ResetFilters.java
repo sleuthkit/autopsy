@@ -23,7 +23,7 @@ import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 
 /**
  * Action that resets the filters to their initial/default state.

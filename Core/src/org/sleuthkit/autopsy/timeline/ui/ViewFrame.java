@@ -87,7 +87,7 @@ import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;

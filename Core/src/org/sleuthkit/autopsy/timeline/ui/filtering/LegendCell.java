@@ -29,7 +29,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.eventtype.EventTypeUtils;
 import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;

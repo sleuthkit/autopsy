@@ -42,7 +42,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.filters.Filter;

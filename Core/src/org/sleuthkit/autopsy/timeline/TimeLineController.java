@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline;
 import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +33,6 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyListProperty;
@@ -71,13 +69,10 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import org.sleuthkit.autopsy.timeline.datamodel.EventsRepository;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -160,7 +155,6 @@ public class TimeLineController {
         statusMessage.set(string);
     }
     private final Case autoCase;
-    private final PerCaseTimelineProperties perCaseTimelineProperties;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<DescriptionFilter> quickHideFilters = FXCollections.observableArrayList();
@@ -288,9 +282,7 @@ public class TimeLineController {
 
     public TimeLineController(Case autoCase) throws TskCoreException {
         this.autoCase = autoCase;
-        this.perCaseTimelineProperties = new PerCaseTimelineProperties(autoCase);
-        EventsRepository eventsRepository = new EventsRepository(autoCase, currentParams.getReadOnlyProperty());
-
+        filteredEvents = new FilteredEventsModel(autoCase, currentParams.getReadOnlyProperty());
         /*
          * as the history manager's current state changes, modify the tags
          * filter to be in sync, and expose that as propery from
@@ -299,10 +291,9 @@ public class TimeLineController {
          */
         historyManager.currentState().addListener((Observable observable) -> {
             ZoomParams historyManagerParams = historyManager.getCurrentState();
-            eventsRepository.syncTagsFilter(historyManagerParams.getFilter().getTagsFilter());
+            filteredEvents.syncTagsFilter(historyManagerParams.getFilter().getTagsFilter());
             currentParams.set(historyManagerParams);
         });
-        filteredEvents = eventsRepository.getEventsModel();
 
         InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
                 EventTypeZoomLevel.BASE_TYPE,
@@ -814,6 +805,7 @@ public class TimeLineController {
                     SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                     break;
                 case EVENT_ADDED:
+                    filteredEvents.invalidateCaches();
                     filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
             }
