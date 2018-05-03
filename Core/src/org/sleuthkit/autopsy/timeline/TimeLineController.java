@@ -73,6 +73,8 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
+import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
+import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -194,7 +196,6 @@ public class TimeLineController {
     private boolean listeningToAutopsy = false;
 
     private final PropertyChangeListener caseListener = new AutopsyCaseListener();
-    private final PropertyChangeListener ingestJobListener = new AutopsyIngestJobListener();
     private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
@@ -377,7 +378,6 @@ public class TimeLineController {
     public void shutDownTimeLine() {
         listeningToAutopsy = false;
         IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
-        IngestManager.getInstance().removeIngestJobEventListener(ingestJobListener);
         Case.removePropertyChangeListener(caseListener);
         if (topComponent != null) {
             topComponent.close();
@@ -399,7 +399,6 @@ public class TimeLineController {
         // listen for case changes (specifically images being added, and case changes).
         if (Case.isCaseOpen() && !listeningToAutopsy) {
             IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
-            IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
             Case.addPropertyChangeListener(caseListener);
             listeningToAutopsy = true;
         }
@@ -741,37 +740,13 @@ public class TimeLineController {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
                 case DATA_ADDED:
-                    //since black board artifacts or new derived content have been added, the DB is stale.
-                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                     break;
                 case FILE_DONE:
                     /*
-                     * Do nothing, since we have captured all new results in
-                     * CONTENT_CHANGED and DATA_ADDED or the IngestJob listener,
+                     * Since the known state or hash hit state may have changed
+                     * invalidate caches.
                      */
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Listener for IngestManager.IngestJobEvents
-     */
-    @Immutable
-    private class AutopsyIngestJobListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
-                case DATA_SOURCE_ANALYSIS_COMPLETED:
-                    //mark db stale, and prompt to rebuild
-                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
-                    break;
-                case DATA_SOURCE_ANALYSIS_STARTED:
-                case CANCELLED:
-                case COMPLETED:
-                case STARTED:
-                    break;
+                    executor.submit(filteredEvents::invalidateAllCaches);
             }
         }
     }
@@ -798,15 +773,14 @@ public class TimeLineController {
                     executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
                     break;
                 case DATA_SOURCE_ADDED:
-                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
+                    executor.submit(() -> filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt));
                     break;
                 case CURRENT_CASE:
                     //close timeline on case changes.
                     SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                     break;
                 case EVENT_ADDED:
-                    filteredEvents.invalidateCaches();
-                    filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
+                    executor.submit(filteredEvents::invalidateAllCaches);
                     break;
             }
         }

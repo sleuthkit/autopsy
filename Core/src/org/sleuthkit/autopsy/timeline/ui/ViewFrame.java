@@ -461,8 +461,8 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     @NbBundle.Messages({
         "# {0} - datasource name",
-        "ViewFrame.notification.analysisComplete=New events have been added. The Timeline visualization may be out of date."})
-    public void handleEventAdded(EventAddedEvent event) {
+        "ViewFrame.notification.analysisComplete=The event data has changed, the visualization may be out of date."})
+    public void handleEventAdded(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
             if (hostedView.isOutOfDate() == false) {
                 hostedView.setOutOfDate();

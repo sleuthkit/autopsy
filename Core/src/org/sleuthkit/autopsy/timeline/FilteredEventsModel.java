@@ -132,45 +132,24 @@ public final class FilteredEventsModel {
         this.eventManager = autoCase.getSleuthkitCase().getTimelineManager();
         populateFilterData();
 
+        //caches
         idToEventCache = CacheBuilder.newBuilder()
                 .maximumSize(5000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoader<Long, SingleEvent>() {
-                    @Override
-                    public SingleEvent load(Long eventID) throws TskCoreException {
-                        return eventManager.getEventById(eventID);
-                    }
-                });
+                .build(new CacheLoaderImpl<>(eventManager::getEventById));
         eventCountsCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoader<ZoomParams, Map<EventType, Long>>() {
-                    @Override
-                    public Map<EventType, Long> load(ZoomParams params) throws TskCoreException {
-                        return eventManager.countEventsByType(params);
-                    }
-                });
+                .build(new CacheLoaderImpl<>(eventManager::countEventsByType));
         eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
-                .expireAfterAccess(10, TimeUnit.MINUTES
-                ).build(new CacheLoader<ZoomParams, List<EventStripe>>() {
-                    @Override
-                    public List<EventStripe> load(ZoomParams params) throws TskCoreException {
-                        return eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone());
-                    }
-                });
-        maxCache = CacheBuilder.newBuilder().build(new CacheLoader<Object, Long>() {
-            @Override
-            public Long load(Object ignored) throws TskCoreException {
-                return eventManager.getMaxTime();
-            }
-        });
-        minCache = CacheBuilder.newBuilder().build(new CacheLoader<Object, Long>() {
-            @Override
-            public Long load(Object ignored) throws TskCoreException {
-                return eventManager.getMinTime();
-            }
-        });
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(new CacheLoaderImpl<>(params -> eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone())));
+
+        maxCache = CacheBuilder.newBuilder()
+                .build(new CacheLoaderImpl<>(ignored -> eventManager.getMaxTime()));
+        minCache = CacheBuilder.newBuilder()
+                .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinTime()));
 
         getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
@@ -275,11 +254,11 @@ public final class FilteredEventsModel {
      *                   tags in use in the case
      */
     public void syncTagsFilter(TagsFilter tagsFilter) {
-        for (TagName t : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(t));
+        for (TagName tagName : tagNames) {
+            tagsFilter.addSubFilter(new TagNameFilter(tagName));
         }
-        for (TagNameFilter t : tagsFilter.getSubFilters()) {
-            t.setDisabled(tagNames.contains(t.getTagName()) == false);
+        for (TagNameFilter filter : tagsFilter.getSubFilters()) {
+            filter.setDisabled(tagNames.contains(filter.getTagName()) == false);
         }
     }
 
@@ -352,8 +331,8 @@ public final class FilteredEventsModel {
         });
 
         TagsFilter tagsFilter = new TagsFilter();
-        getTagNames().stream().forEach(t -> {
-            TagNameFilter tagNameFilter = new TagNameFilter(t);
+        getTagNames().stream().forEach(tagName -> {
+            TagNameFilter tagNameFilter = new TagNameFilter(tagName);
             tagNameFilter.setSelected(true);
             tagsFilter.addSubFilter(tagNameFilter);
         });
@@ -642,19 +621,6 @@ public final class FilteredEventsModel {
         return eventManager.getEventTypes();
     }
 
-    void invalidateCaches() {
-        minCache.invalidateAll();
-        maxCache.invalidateAll();
-        eventCountsCache.invalidateAll();
-        eventStripeCache.invalidateAll();
-        idToEventCache.invalidateAll();
-        try {
-            populateFilterData();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to populate filter data.", ex); //NON-NLS
-        }
-    }
-
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, true);
         if (!updatedEventIDs.isEmpty()) {
@@ -664,21 +630,58 @@ public final class FilteredEventsModel {
     }
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
+        Set<Long> updatedEventIDs =eventManager.setEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
     }
 
-    synchronized private void invalidateCaches(Set<Long> updatedEventIDs) {
+    synchronized Set<Long> setFileStatus(AbstractFile file) throws TskCoreException {
+        Set<Long> updatedEventIDs = eventManager.setFileStatus(file);
+        if (!updatedEventIDs.isEmpty()) {
+            invalidateCaches(updatedEventIDs);
+        }
+        return updatedEventIDs;
+    }
+
+    synchronized void invalidateAllCaches() {
+        minCache.invalidateAll();
+        maxCache.invalidateAll();
+        idToEventCache.invalidateAll();
+        invalidateCaches(Collections.emptyList());
+    }
+
+    synchronized private void invalidateCaches(Collection<Long> updatedEventIDs) {
+        idToEventCache.invalidateAll(updatedEventIDs);
         eventCountsCache.invalidateAll();
         eventStripeCache.invalidateAll();
-        idToEventCache.invalidateAll(updatedEventIDs);
         try {
             populateFilterData();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed topopulate filter data.", ex); //NON-NLS
+        }
+        eventbus.post(new CacheInvalidatedEvent());
+    }
+
+    private static class CacheLoaderImpl<K, V> extends CacheLoader<K, V> {
+
+        private final EventType.CheckedFunction<K, V> func;
+
+        CacheLoaderImpl(EventType.CheckedFunction<K, V> func) {
+            this.func = func;
+        }
+
+        @Override
+        public V load(K key) throws Exception {
+            return func.apply(key);
+        }
+
+    }
+
+    public static class CacheInvalidatedEvent {
+
+        private CacheInvalidatedEvent() {
         }
     }
 }
