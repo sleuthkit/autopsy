@@ -38,6 +38,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
+import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -79,6 +80,12 @@ class TikaTextExtractor extends ContentTextExtractor {
         officeParserConfig.setUseSAXPptxExtractor(true);
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
+        
+        // OCR 
+        TesseractOCRConfig config = new TesseractOCRConfig();
+        String tesseractFolder = "C:\\Program Files (x86)\\Tesseract-OCR\\";
+        config.setTesseractPath(tesseractFolder);
+        parseContext.set(TesseractOCRConfig.class, config);        
 
         //Parse the file in a task, a convenient way to have a timeout...
         final Future<Reader> future = tikaParseExecutor.submit(() -> new ParsingReader(parser, stream, metadata, parseContext));
