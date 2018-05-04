@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
-import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
@@ -52,7 +51,6 @@ import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
@@ -202,8 +200,8 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             final Node node = item.getNode();
             if (node != null) {
                 node.setStyle("-fx-border-width: 2; "
-                        + " -fx-border-color: " + ColorUtilities.getRGBCode(getColor(eventType.getSuperType())) + "; "
-                        + " -fx-bar-fill: " + ColorUtilities.getRGBCode(getColor(eventType))); // NON-NLS
+                              + " -fx-border-color: " + ColorUtilities.getRGBCode(getColor(eventType.getSuperType())) + "; "
+                              + " -fx-bar-fill: " + ColorUtilities.getRGBCode(getColor(eventType))); // NON-NLS
                 node.setCursor(Cursor.HAND);
 
                 final Tooltip tooltip = new Tooltip(Bundle.CountsViewPane_tooltip_text(

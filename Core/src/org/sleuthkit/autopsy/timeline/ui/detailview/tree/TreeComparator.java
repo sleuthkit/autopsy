@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,10 @@ import java.util.Comparator;
 import javafx.scene.control.TreeItem;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
-import org.sleuthkit.datamodel.timeline.EventType;
 
+/**
+ * Comparators of TreeItems: these are the ways the EventsTree can be sorted.
+ */
 @NbBundle.Messages({"TreeComparator.Description.displayName=Description",
     "TreeComparator.Count.displayName=Count",
     "TreeComparator.Type.displayName=Type"})
@@ -31,20 +33,20 @@ enum TreeComparator implements Comparator<TreeItem<TimeLineEvent>> {
 
     Description(Bundle.TreeComparator_Description_displayName()) {
         @Override
-        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-            return o1.getValue().getDescription().compareTo(o2.getValue().getDescription());
+        public int compare(TreeItem<TimeLineEvent> item1, TreeItem<TimeLineEvent> item2) {
+            return item1.getValue().getDescription().compareTo(item2.getValue().getDescription());
         }
     },
     Count(Bundle.TreeComparator_Count_displayName()) {
         @Override
-        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-            return Long.compare(o2.getValue().getSize(), o1.getValue().getSize());
+        public int compare(TreeItem<TimeLineEvent> item1, TreeItem<TimeLineEvent> item2) {
+            return Long.compare(item2.getValue().getSize(), item1.getValue().getSize());
         }
     },
     Type(Bundle.TreeComparator_Type_displayName()) {
         @Override
-        public int compare(TreeItem<TimeLineEvent> o1, TreeItem<TimeLineEvent> o2) {
-            return o1.getValue().getEventType().compareTo(o2.getValue().getEventType());
+        public int compare(TreeItem<TimeLineEvent> item1, TreeItem<TimeLineEvent> item2) {
+            return item1.getValue().getEventType().compareTo(item2.getValue().getEventType());
         }
     };
 

@@ -229,8 +229,7 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      * Make a series for each event type in a consistent order.
      */
     protected final void createSeries() {
-      ;
-        for (EventType eventType :   getController().getEventsModel().getEventTypes()) {
+        for (EventType eventType : getController().getEventsModel().getEventTypes()) {
             XYChart.Series<X, Y> series = new XYChart.Series<>();
             series.setName(eventType.getDisplayName());
             eventTypeToSeriesMap.put(eventType, series);
@@ -241,13 +240,13 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
     /**
      * Get the series for the given EventType.
      *
-     * @param et The EventType to get the series for
+     * @param eventType The EventType to get the series for
      *
      * @return A Series object to contain all the events with the given
      *         EventType
      */
-    protected final XYChart.Series<X, Y> getSeries(final EventType et) {
-        return eventTypeToSeriesMap.get(et);
+    protected final XYChart.Series<X, Y> getSeries(final EventType eventType) {
+        return eventTypeToSeriesMap.get(eventType);
     }
 
     /**
@@ -257,16 +256,19 @@ public abstract class AbstractTimelineChart<X, Y, NodeType extends Node, ChartTy
      */
     protected AbstractTimelineChart(TimeLineController controller) {
         super(controller);
-        Platform.runLater(() -> {
-            VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
-            vBox.setFillWidth(false);
-            HBox hBox = new HBox(getSpacer(), vBox);
-            hBox.setFillHeight(false);
-            setBottom(hBox);
-            DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
-            getSpacer().minWidthProperty().bind(spacerSize);
-            getSpacer().prefWidthProperty().bind(spacerSize);
-            getSpacer().maxWidthProperty().bind(spacerSize);
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                VBox vBox = new VBox(getSpecificLabelPane(), getContextLabelPane());
+                vBox.setFillWidth(false);
+                HBox hBox = new HBox(getSpacer(), vBox);
+                hBox.setFillHeight(false);
+                setBottom(hBox);
+                DoubleBinding spacerSize = getYAxis().widthProperty().add(getYAxis().tickLengthProperty()).add(getAxisMargin());
+                getSpacer().minWidthProperty().bind(spacerSize);
+                getSpacer().prefWidthProperty().bind(spacerSize);
+                getSpacer().maxWidthProperty().bind(spacerSize);
+            }
         });
 
         createSeries();

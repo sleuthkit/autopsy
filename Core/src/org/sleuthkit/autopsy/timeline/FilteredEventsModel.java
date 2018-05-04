@@ -630,7 +630,7 @@ public final class FilteredEventsModel {
     }
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
-        Set<Long> updatedEventIDs =eventManager.setEventsTagged(objID, artifactID, tagged);
+        Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }
@@ -664,6 +664,13 @@ public final class FilteredEventsModel {
         eventbus.post(new CacheInvalidatedEvent());
     }
 
+    /**
+     * Extension of CacheLoader that delegates the load method to the Function
+     * passed to the constructor.
+     *
+     * @param <K> Key type.
+     * @param <V> Value type.
+     */
     private static class CacheLoaderImpl<K, V> extends CacheLoader<K, V> {
 
         private final EventType.CheckedFunction<K, V> func;
@@ -679,6 +686,11 @@ public final class FilteredEventsModel {
 
     }
 
+    /**
+     * Event fired when a cache has been invalidated. The UI should make it
+     * clear that the view is potentially out of date and present an action to
+     * refresh the view.
+     */
     public static class CacheInvalidatedEvent {
 
         private CacheInvalidatedEvent() {

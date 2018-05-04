@@ -34,8 +34,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -79,6 +77,7 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
@@ -87,8 +86,6 @@ import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
@@ -422,7 +419,7 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        hostedView.setOutOfDate();
+        hostedView.setNeedsRefresh();
         Platform.runLater(() -> {
             if (notificationPane.isShowing() == false) {
                 notificationPane.getActions().setAll(new Refresh());
@@ -464,8 +461,8 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.notification.analysisComplete=The event data has changed, the visualization may be out of date."})
     public void handleEventAdded(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
-            if (hostedView.isOutOfDate() == false) {
-                hostedView.setOutOfDate();
+            if (hostedView.needsRefresh() == false) {
+                hostedView.setNeedsRefresh();
                 notificationPane.getActions().setAll(new Refresh());
                 notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"), new ImageView(WARNING));
                 PauseTransition transition = new PauseTransition(Duration.seconds(30));

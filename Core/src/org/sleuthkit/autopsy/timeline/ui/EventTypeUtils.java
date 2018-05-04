@@ -26,7 +26,8 @@ import javafx.scene.paint.Color;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
- *
+ * Utilities for dealy with EventTypes, specifically for getting GUI properties
+ * for them.
  */
 final public class EventTypeUtils {
 
@@ -100,7 +101,7 @@ final public class EventTypeUtils {
 
         Color baseColor = getColor(superType);
         int siblings = superType.getSiblingTypes().stream()
-                .max((t, t1) -> Integer.compare(t.getSubTypes().size(), t1.getSubTypes().size()))
+                .max((type1, type2) -> Integer.compare(type1.getSubTypes().size(), type2.getSubTypes().size()))
                 .get().getSubTypes().size() + 1;
         int superSiblingsCount = superType.getSiblingTypes().size();
 

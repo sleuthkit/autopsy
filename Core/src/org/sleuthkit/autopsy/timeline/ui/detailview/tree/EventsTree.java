@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,12 +52,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
-import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
+import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 
 /**
  * Shows all EventBundles from the assigned DetailViewPane in a tree organized
@@ -88,11 +87,11 @@ final public class EventsTree extends BorderPane {
     public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
 
-        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends TimeLineEvent> c) -> {
+        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends TimeLineEvent> change) -> {
             //on jfx thread
-            while (c.next()) {
-                c.getRemoved().forEach(getRoot()::remove);
-                c.getAddedSubList().forEach(getRoot()::insert);
+            while (change.next()) {
+                change.getRemoved().forEach(getRoot()::remove);
+                change.getAddedSubList().forEach(getRoot()::insert);
             }
         });
 
@@ -249,6 +248,9 @@ final public class EventsTree extends BorderPane {
         }
     }
 
+    /**
+     * A ListCell for showing TreeComparators
+     */
     static private class TreeComparatorCell extends ListCell<TreeComparator> {
 
         @Override

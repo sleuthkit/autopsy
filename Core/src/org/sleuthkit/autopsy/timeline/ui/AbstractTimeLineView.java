@@ -108,7 +108,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      *
      * @return True if the view does not represent the current state of the DB.
      */
-    public boolean isOutOfDate() {
+    public boolean needsRefresh() {
         return outOfDate.get();
     }
 
@@ -257,7 +257,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * Set this view out of date because, for example, tags have been updated
      * but the view was not refreshed.
      */
-    void setOutOfDate() {
+    void setNeedsRefresh() {
         outOfDate.set(true);
     }
 
