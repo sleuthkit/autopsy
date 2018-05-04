@@ -151,7 +151,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param currentRootNode   The current root (parent) node for the nodes
      *                          displayed. May be changed by calling setNode.
      * @param childNodeCount    The cardinality of the root node's children.
-     * @param customContentView A content view,mMay be null.
+     * @param customContentView A custom content view to use instead of the
+     *                          "main" content view that is normally docked into
+     *                          the lower right hand side of the main
+     *                          application window. May be null, if no content
+     *                          view is needed.
      *
      * @return A result view panel.
      */
@@ -220,10 +224,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param viewers     A collection of result viewers to use instead of the
      *                    result viewers provided by the results viewer
      *                    extension point, may be empty.
-     * @param contentView A custom content view to use instead of the "main"
-     *                    content view that is normally docked into the lower
-     *                    right hand side of the main application window, may be
-     *                    null.
+     * @param contentView A content view to into which to push single node
+     *                    selections in the child result viewers, may be null.
      */
     DataResultPanel(String title, boolean isMain, Collection<DataResultViewer> viewers, DataContent contentView) {
         this.setTitle(title);
