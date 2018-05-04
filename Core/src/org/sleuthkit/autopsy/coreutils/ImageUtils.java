@@ -132,8 +132,7 @@ public class ImageUtils {
         } catch (UnsatisfiedLinkError e) {
             openCVLoadedTemp = false;
             LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
-            //TODO: show warning bubble
-
+            MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
         }
 
         OPEN_CV_LOADED = openCVLoadedTemp;
