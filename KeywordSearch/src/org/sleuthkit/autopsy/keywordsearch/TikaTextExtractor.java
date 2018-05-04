@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.io.CharSource;
+import java.io.File;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +42,9 @@ import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.openide.util.NbBundle;
+import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -54,6 +58,10 @@ class TikaTextExtractor extends ContentTextExtractor {
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
 
     private final AutoDetectParser parser = new AutoDetectParser();
+    
+    private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
+    private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
+    private static final File TESSERACT_PATH = locateTesseractExecutable();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
             = new Tika().getParser().getSupportedTypes(new ParseContext())
@@ -81,11 +89,13 @@ class TikaTextExtractor extends ContentTextExtractor {
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
         
-        // OCR 
-        TesseractOCRConfig config = new TesseractOCRConfig();
-        String tesseractFolder = "C:\\Program Files (x86)\\Tesseract-OCR\\";
-        config.setTesseractPath(tesseractFolder);
-        parseContext.set(TesseractOCRConfig.class, config);        
+        // OCR
+        if (TESSERACT_PATH != null) {
+            TesseractOCRConfig config = new TesseractOCRConfig();
+            String tesseractFolder = TESSERACT_PATH.getParent();
+            config.setTesseractPath(tesseractFolder);
+            parseContext.set(TesseractOCRConfig.class, config);
+        }
 
         //Parse the file in a task, a convenient way to have a timeout...
         final Future<Reader> future = tikaParseExecutor.submit(() -> new ParsingReader(parser, stream, metadata, parseContext));
@@ -117,6 +127,29 @@ class TikaTextExtractor extends ContentTextExtractor {
         } finally {
             future.cancel(true);
         }
+    }
+
+    /**
+     * Finds and returns the path to the Tesseract executable, if able.
+     *
+     * @return A File reference or null.
+     */
+    private static File locateTesseractExecutable() {
+        if (!PlatformUtil.isWindowsOS()) {
+            return null;
+        }
+
+        String executableToFindName = Paths.get(TESSERACT_DIR_NAME, TESSERACT_EXECUTABLE).toString();
+        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, TikaTextExtractor.class.getPackage().getName(), false);
+        if (null == exeFile) {
+            return null;
+        }
+
+        if (!exeFile.canExecute()) {
+            return null;
+        }
+
+        return exeFile;
     }
 
     /**
