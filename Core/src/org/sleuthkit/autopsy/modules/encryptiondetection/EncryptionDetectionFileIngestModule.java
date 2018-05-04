@@ -121,11 +121,13 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     String mimeType = fileTypeDetector.getMIMEType(file);
                     if (mimeType.equals("application/octet-stream")) {
                         if (isFileEncryptionSuspected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected());
+                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
+                                    String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
                         }
                     } else {
                         if (isFilePasswordProtected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
+                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED,
+                                    Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                         }
                     }
                 }
