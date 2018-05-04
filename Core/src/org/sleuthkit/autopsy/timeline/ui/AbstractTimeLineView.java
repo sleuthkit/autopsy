@@ -119,7 +119,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * @return A ReadOnlyBooleanProperty that holds the out-of-date state for
      *         this view.
      */
-    public ReadOnlyBooleanProperty outOfDateProperty() {
+    public ReadOnlyBooleanProperty needsRefreshProperty() {
         return outOfDate.getReadOnlyProperty();
     }
 

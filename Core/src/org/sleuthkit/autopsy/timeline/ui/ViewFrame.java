@@ -440,10 +440,7 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         Platform.runLater(() -> {
-            if (Bundle.ViewFrame_tagsAddedOrDeleted().equals(notificationPane.getText())) {
-                notificationPane.hide();
-
-            }
+            notificationPane.hide();
             refreshHistorgram();
         });
     }
@@ -823,7 +820,7 @@ final public class ViewFrame extends BorderPane {
             setLongText(Bundle.ViewFrame_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.postRefreshRequest());
-            disabledProperty().bind(hostedView.outOfDateProperty().not());
+            disabledProperty().bind(hostedView.needsRefreshProperty().not());
         }
     }
 }
