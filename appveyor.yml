@@ -30,13 +30,13 @@ install:
   - set PATH=C:\Python36-x64\';%PATH%
   - cd C:\
   - git clone https://github.com/sleuthkit/sleuthkit
-
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - python setupSleuthkitBranch.py
 services:
   - postgresql95
 
 build_script:
   - cd %TSK_HOME%
-  - python setupSleuthkitBranch.py
   - python setupDevRepos.py
   - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
