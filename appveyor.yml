@@ -1,21 +1,19 @@
 version: 4.6.0.{build}
 
 cache:
-  - C:\Users\appveyor\.ant -> appveyor.yml
-  - C:\Users\appveyor\.ivy2 -> appveyor.yml
-  - C:\ProgramData\chocolatey\bin -> appveyor.yml
-  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+  - C:\Users\appveyor\.ant
+  - C:\ProgramData\chocolatey\bin
+  - C:\ProgramData\chocolatey\lib
+  - C:\libewf_64bit
+  - C:\libvhdi_64bit
+  - C:\libvmdk_64bit
+  - C:\zlib
+  - C:\sleuthkit
+  - '%APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data'
 
-branches:
-    only:
-      - develop
 
 image: Visual Studio 2015
 platform: x64
-init:
-  - ps: choco install ant --ignore-dependencies
-  - ps: $env:Path="C:\Program Files\Java\jdk1.8.0\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
-  - set PATH=C:\Python36-x64\';%PATH%
 environment:
     global:
       TSK_HOME: "C:\\sleuthkit"
@@ -27,9 +25,25 @@ environment:
       PYTHON: "C:\\Python36-x64"
 
 install:
-  - ps: pushd C:\
+  - ps: choco install ant --ignore-dependencies
   - git clone https://github.com/sleuthkit/sleuthkit
-  - ps: popd
+  - ps: $env:Path="C:\Program Files\Java\jdk1.8.0\bin;$($env:Path);C:\ProgramData\chocolatey\lib\ant"
+  - set PATH=C:\Python36-x64\';%PATH%
+  - ps: >-
+      if (!(Test-path -Path $env:TSK_HOME)){
+        pushd C:\
+        git clone https://github.com/sleuthkit/sleuthkit 2>&1 | %{ "$_" }
+        popd
+        python setupSleuthkitBranch.py 2>&1 | %{ "$_" }
+      } else {
+        pushd $env:TSK_HOME
+        git reset --hard
+        popd
+        python setupSleuthkitBranch.py 2>&1 | %{ "$_" }
+        pushd $env:TSK_HOME
+        git pull 2>&1 | %{ "$_" }
+        popd
+      }
 
 services:
   - postgresql95
