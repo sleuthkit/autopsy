@@ -27,6 +27,7 @@ import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -35,6 +36,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -96,7 +98,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      * @return The result view top component.
      */
     public static DataResultTopComponent createInstance(String title, String description, Node node, int childNodeCount) {
-        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), null);
+        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
         initInstance(description, node, childNodeCount, resultViewTopComponent);
         return resultViewTopComponent;
     }    
@@ -121,7 +123,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      * @return The result view top component.
      */
     public static DataResultTopComponent createInstance(String title, String description, Node node, int childNodeCount, Collection<DataResultViewer> viewers) {
-        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, viewers, null);
+        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, viewers, DataContentTopComponent.findInstance());
         initInstance(description, node, childNodeCount, resultViewTopComponent);
         return resultViewTopComponent;
     }
@@ -143,7 +145,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      * @return The partially initialized result view top component.
      */
     public static DataResultTopComponent createInstance(String title) {
-        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), null);
+        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
         return resultViewTopComponent;
     }
     
@@ -210,7 +212,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      *              component's tab.
      */
     public DataResultTopComponent(String title) {
-        this(true, title, null, Collections.emptyList(), null);
+        this(true, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
     }
 
     /**
@@ -229,10 +231,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      *                                the result viewers provided by the results
      *                                viewer extension point will be used.
      * @param contentViewTopComponent A content view to which this result view
-     *                                will be linked. If null, this result view
-     *                                will be linked to the content view docked
-     *                                into the lower right hand side of the main
-     *                                application window,
+     *                                will be linked, possibly null.
      */
     private DataResultTopComponent(boolean isMain, String title, String mode, Collection<DataResultViewer> viewers, DataContentTopComponent contentViewTopComponent) {
         this.isMain = isMain;
@@ -445,7 +444,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      */
     @Deprecated
     public DataResultTopComponent(boolean isMain, String title) {
-        this(false, title, null, Collections.emptyList(), null);
+        this(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
     }
 
     /**
