@@ -104,7 +104,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A result view panel.
      */
     public static DataResultPanel createInstance(String title, String description, Node currentRootNode, int childNodeCount) {
-        DataResultPanel resultPanel = new DataResultPanel(title, false, Collections.emptyList(), Lookup.getDefault().lookup(DataContent.class));
+        DataResultPanel resultPanel = new DataResultPanel(title, false, Collections.emptyList(), DataContentTopComponent.findInstance());
         createInstanceCommon(title, description, currentRootNode, childNodeCount, resultPanel);
         resultPanel.open();
         return resultPanel;
@@ -116,7 +116,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * of the result viewers provided by the results viewer extension point. The
      * result view panel will push single node selections from its child result
      * viewers to the "main" content view that is normally docked into the lower
-     * right hand side of the main application window..
+     * right hand side of the main application window.
      *
      * @param title           The title for the result view panel.
      * @param description     Descriptive text about the source of the nodes
@@ -131,7 +131,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A result view panel.
      */
     public static DataResultPanel createInstance(String title, String description, Node currentRootNode, int childNodeCount, Collection<DataResultViewer> viewers) {
-        DataResultPanel resultPanel = new DataResultPanel(title, false, viewers, Lookup.getDefault().lookup(DataContent.class));
+        DataResultPanel resultPanel = new DataResultPanel(title, false, viewers, DataContentTopComponent.findInstance());
         createInstanceCommon(title, description, currentRootNode, childNodeCount, resultPanel);
         resultPanel.open();
         return resultPanel;
