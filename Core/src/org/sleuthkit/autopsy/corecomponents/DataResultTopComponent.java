@@ -27,7 +27,6 @@ import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.RetainLocation;
@@ -36,7 +35,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -70,7 +68,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * viewers to the actions global context.
  */
 @RetainLocation("editor")
-public class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
+public final class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
     private static final List<String> activeComponentIds = Collections.synchronizedList(new ArrayList<String>());
