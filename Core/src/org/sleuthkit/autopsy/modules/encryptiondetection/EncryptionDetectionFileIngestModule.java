@@ -30,6 +30,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -43,13 +44,12 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
-
 
 /**
  * File ingest module to detect encryption and password protection.
@@ -95,6 +95,10 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         }
     }
 
+    @Messages({
+        "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
+        "EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
+    })
     @Override
     public IngestModule.ProcessResult process(AbstractFile file) {
 
@@ -117,11 +121,11 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     String mimeType = fileTypeDetector.getMIMEType(file);
                     if (mimeType.equals("application/octet-stream")) {
                         if (isFileEncryptionSuspected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED);
+                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected());
                         }
                     } else {
                         if (isFilePasswordProtected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
+                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                         }
                     }
                 }
@@ -153,13 +157,17 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      *
      * @param file         The file to be processed.
      * @param artifactType The type of artifact to create.
+     * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the file was processed successfully, or 'ERROR' if there
      *         was a problem.
      */
-    private IngestModule.ProcessResult flagFile(AbstractFile file, BlackboardArtifact.ARTIFACT_TYPE artifactType) {
+    private IngestModule.ProcessResult flagFile(AbstractFile file, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
         try {
             BlackboardArtifact artifact = file.newArtifact(artifactType);
+
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                    EncryptionDetectionModuleFactory.getModuleName(), comment));
 
             try {
                 /*
