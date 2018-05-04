@@ -583,11 +583,34 @@ public class Case {
     }
 
     /**
-     * Gets the current open case, if there is one, at the time of the call.
+     * Gets the current case. This method should only be called by clients that
+     * can be sure a case is currently open. Some examples of suitable clients
+     * are data source processors, ingest modules, and report modules.
      *
-     * @return The open case.
+     * @return The current case.
+     */
+    public static Case getCurrentCase() {
+        try {
+            return getCurrentOpenCase();
+        } catch (NoCurrentCaseException ex) {
+            /*
+             * Throw a runtime exception, since this is a programming error.
+             */
+            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
+        }
+    }
+
+    /**
+     * Gets the current case, if there is one, or throws an exception. This
+     * method should only be called by methods known to run in threads other
+     * than threads that close the current case, where the exception provides
+     * some protection from the consequences of the race condition between the
+     * calling thread and the case closing thread, although it is not
+     * fool-proof.
      *
-     * @throws NoCurrentCaseException if there is no open case.
+     * @return The current case.
+     *
+     * @throws NoCurrentCaseException if there is no current case.
      */
     public static Case getCurrentOpenCase() throws NoCurrentCaseException {
         Case openCase = currentCase;
@@ -1541,7 +1564,7 @@ public class Case {
         String normalizedLocalPath;
         try {
             if (localPath.toLowerCase().contains("http:")) {
-		            normalizedLocalPath = localPath;
+                normalizedLocalPath = localPath;
             } else {
                 normalizedLocalPath = Paths.get(localPath).normalize().toString();
             }
@@ -2723,26 +2746,4 @@ public class Case {
         deleteReports(reports);
     }
 
-    /**
-     * Gets the current case, if there is one, at the time of the call.
-     *
-     * @return The current case.
-     *
-     * @throws IllegalStateException if there is no current case.
-     * 
-     * @deprecated Use getOpenCase() instead.
-    */
-    @Deprecated
-    public static Case getCurrentCase() {
-        /*
-         * Throwing an unchecked exception is a bad idea here.
-         *
-         */
-        try {
-            return getCurrentOpenCase();
-        } catch (NoCurrentCaseException ex) {
-            throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
-        }
-    }    
-    
 }
