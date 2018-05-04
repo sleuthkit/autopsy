@@ -39,3 +39,7 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 - In a terminal, change to the ‘bin’ directory in the Autopsy folder.
 - Run Autopsy
   % ./autopsy
+
+* Limitations (Updated May 2018) * 
+- Timeline does not work on OS X
+- Video thumbnails are not generated (need to get a consistent version of OpenCV)
