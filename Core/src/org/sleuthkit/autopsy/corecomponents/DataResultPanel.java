@@ -70,7 +70,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  * selections in the child result viewers to a content view (implements
  * DataContent). The content view could be the "main" content view
  * (DataContentTopComponent) that is normally docked into the lower right hand
- * side of the main application window, or could be a custom content view.
+ * side of the main application window, or it could be a custom content view.
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
