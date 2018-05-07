@@ -160,6 +160,8 @@ public class EncryptionDetectionTest extends NbTestCase {
         }
     }
 
+    //Being ignored because test occasionally crashes causing problems TODO JIRA-3820 
+    //remove ignored_ when underlying issue is resolved
     /**
      * Test the Encryption Detection module's detection of vericrypt encrypted
      * container files and partitions.
@@ -173,7 +175,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      * 5. The file named vericrpytContainerFile has a TSK_ENCRYPTION_SUSPECTED
      * artifact associated with it.
      */
-    public void testVeriCryptSupport() {
+    public void ignored_testVeriCryptSupport() {
         try {
             CaseUtils.createCase(VERICRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
