@@ -53,7 +53,7 @@ final public class CommonFilesMetadata {
         return this.metadata.get(md5);
     }
 
-    Map<String, Md5Metadata> getMetadata() {
+    public Map<String, Md5Metadata> getMetadata() {
         return Collections.unmodifiableMap(this.metadata);
     }
 
