@@ -2326,7 +2326,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
                         }
                         currentJob.setCaseDirectoryPath(caseDirectoryPath);
-                        Case caseForJob = Case.getOpenCase();
+                        Case caseForJob = Case.getCurrentCase();
                         sysLogger.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
                         return caseForJob;
 
@@ -2334,13 +2334,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         throw new CaseManagementException(String.format("Error creating solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
-                    } catch (NoCurrentCaseException ex) {
-                        /*
-                         * Deal with the unfortunate fact that Case.getOpenCase
-                         * throws NoCurrentCaseException.
-                         */
-                        throw new CaseManagementException(String.format("Error getting current case %s for %s", caseName, manifest.getFilePath()), ex);
-                    }
+                    } 
                 } else {
                     throw new CaseManagementException(String.format("Timed out acquiring case name lock for %s for %s", caseName, manifest.getFilePath()));
                 }

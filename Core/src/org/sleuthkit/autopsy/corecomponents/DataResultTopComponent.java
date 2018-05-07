@@ -375,7 +375,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public boolean canClose() {
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException unused) {
             return true;
         }

@@ -170,7 +170,7 @@ abstract class CommonFilesMetadataBuilder {
 
         Map<String, Md5Metadata> commonFiles = new HashMap<>();
 
-        SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+        SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
 
         try (

@@ -1,0 +1,45 @@
+This document outlines how to run a packaged version of Autopsy on Linux or OS X.  It does not cover how to compile it from source or the Windows installer. 
+
+
+* Prerequisites *
+
+The following need to be done at least once. They do not need to be repeated for each Autopsy release.
+
+- Install testdisk for photorec functionality
+-- Linux:  % sudo apt-get install testdisk
+-- OS X: % brew install testdisk
+
+- Install Oracle Java and set JAVA_HOME. 
+-- Linux: Use the instructions here: https://medium.com/coderscorner/installing-oracle-java-8-in-ubuntu-16-10-845507b13343
+-- OS X: Use The Oracle website: https://www.java.com/
+         Set JAVA_HOME with something like: export JAVA_HOME=`/usr/libexec/java_home` in .bash_profile
+
+
+* Install The Sleuth Kit Java Bindings *
+
+Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libraries of The Sleuth Kit installed, which is not part of all packages. 
+
+- Linux: Install the sleuthkit-java.deb file that you can download from github.com/sleuthkit/sleuthkit/releases.  This will install libewf, etc. 
+-- % sudo apt install ./sleuthkit-java_4.6.0-1_amd64.deb
+
+- OS X: Install The Sleuth Kit from brew.  
+-- % brew install sleuthkit
+
+
+* Install Autopsy *
+
+- Extract the contents of the Autopsy ZIP file to a folder.
+- Open a terminal and cd into the Autopsy folder. 
+- Run the unix_setup.sh script to configure Autopsy
+  % sh unix_setup.sh
+
+
+* Running Autopsy *
+
+- In a terminal, change to the ‘bin’ directory in the Autopsy folder.
+- Run Autopsy
+  % ./autopsy
+
+* Limitations (Updated May 2018) * 
+- Timeline does not work on OS X
+- Video thumbnails are not generated (need to get a consistent version of OpenCV)

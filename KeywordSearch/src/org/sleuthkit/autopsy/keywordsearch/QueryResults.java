@@ -213,7 +213,7 @@ class QueryResults {
                  */
                 Content content = null;
                 try {
-                    SleuthkitCase tskCase = Case.getOpenCase().getSleuthkitCase();
+                    SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                     content = tskCase.getContentById(hit.getContentID());
                 } catch (TskCoreException | NoCurrentCaseException tskCoreException) {
                     logger.log(Level.SEVERE, "Failed to get text source object for ", tskCoreException); //NON-NLS
