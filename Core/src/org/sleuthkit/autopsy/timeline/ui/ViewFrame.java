@@ -20,15 +20,18 @@ package org.sleuthkit.autopsy.timeline.ui;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -59,9 +62,9 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Callback;
-import javafx.util.Duration;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import javax.swing.Timer;
 import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import jfxtras.scene.control.ToggleGroupValue;
@@ -107,10 +110,17 @@ final public class ViewFrame extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(ViewFrame.class.getName());
 
-    private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); //NON-NLS
     private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
+
+    private NotificationState notificationState = NotificationState.Ready;
+
+    enum NotificationState {
+        Showing,
+        Paused,
+        Ready;
+    }
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
@@ -255,6 +265,25 @@ final public class ViewFrame extends BorderPane {
         }
     };
 
+    private final Timer notificationTimer = new Timer(30_000, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            Platform.runLater(() -> {
+                switch (notificationState) {
+                    case Ready:
+                        break;
+                    case Showing:
+                        notificationPane.hide();
+                        notificationState = NotificationState.Paused;
+                        break;
+                    case Paused:
+                        notificationState = NotificationState.Ready;
+                        break;
+                }
+            });
+        }
+    });
+
     /**
      * hides the notification pane on any event
      */
@@ -333,6 +362,8 @@ final public class ViewFrame extends BorderPane {
 
         //configure notification pane 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
+
+        notificationPane.setGraphic(new ImageView(WARNING));
         setCenter(notificationPane);
 
         //configure view mode toggle
@@ -406,7 +437,7 @@ final public class ViewFrame extends BorderPane {
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
-
+        notificationTimer.start();
     }
 
     /**
@@ -419,11 +450,20 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        hostedView.setNeedsRefresh();
+
         Platform.runLater(() -> {
-            if (notificationPane.isShowing() == false) {
-                notificationPane.getActions().setAll(new Refresh());
-                notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted(), new ImageView(INFORMATION));
+            hostedView.setNeedsRefresh();
+            switch (notificationState) {
+                case Paused:
+                    break;
+                case Ready:
+                    notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted());
+                    notificationState = NotificationState.Showing;
+                    break;
+                case Showing:
+                    notificationPane.setText(Bundle.ViewFrame_tagsAddedOrDeleted());
+                    notificationTimer.restart();
+                    break;
             }
         });
     }
@@ -441,6 +481,7 @@ final public class ViewFrame extends BorderPane {
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         Platform.runLater(() -> {
             notificationPane.hide();
+            notificationState = NotificationState.Paused;
             refreshHistorgram();
         });
     }
@@ -460,15 +501,28 @@ final public class ViewFrame extends BorderPane {
         Platform.runLater(() -> {
             if (hostedView.needsRefresh() == false) {
                 hostedView.setNeedsRefresh();
-                notificationPane.getActions().setAll(new Refresh());
-                notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"), new ImageView(WARNING));
-                PauseTransition transition = new PauseTransition(Duration.seconds(30));
-                transition.setOnFinished(actionEvent -> notificationPane.hide());
-                transition.play();
+                switch (notificationState) {
+                    case Paused:
+                        break;
+                    case Ready:
+                        notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationState = NotificationState.Showing;
+                        break;
+                    case Showing:
+                        notificationPane.setText(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationTimer.restart();
+                        break;
+                }
             }
         });
     }
 
+    /**
+     * Display the given message in the notificationPane and then autohide it
+     * after 30 seconds.
+     *
+     * @param message The message to display.
+     */
     /**
      * Refresh the Histogram to represent the current state of the DB.
      */
@@ -626,6 +680,7 @@ final public class ViewFrame extends BorderPane {
             default:
                 throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
         }
+        notificationPane.getActions().setAll(new Refresh());
         controller.registerForEvents(hostedView);
         controller.getAutopsyCase().getSleuthkitCase().registerForEvents(this);
 
