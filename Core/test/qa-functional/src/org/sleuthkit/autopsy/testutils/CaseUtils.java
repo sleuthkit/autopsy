@@ -38,7 +38,8 @@ import org.sleuthkit.autopsy.casemodule.CaseDetails;
 public final class CaseUtils {
 
     /**
-     * Private constructor for CaseUtils class.
+     * CaseUtils constructor. Since this class is not meant to allow for
+     * instantiation, this constructor is 'private'.
      */
     private CaseUtils() {
     }
@@ -69,6 +70,7 @@ public final class CaseUtils {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+
         assertTrue(caseDir.exists());
     }
 

@@ -38,9 +38,9 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Content;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
@@ -83,46 +83,74 @@ public class EncryptionDetectionTest extends NbTestCase {
             assertEquals(joinedErrors, 0, errorMessages.size());
 
             Case openCase = Case.getOpenCase();
+            /*
+             * Create ingest job settings.
+             */
+
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
 
+            /*
+             * Purge specific files to be tested.
+             */
             FileManager fileManager = openCase.getServices().getFileManager();
-            List<AbstractFile> results = fileManager.findFiles("%%", "ole2");
-            results.addAll(fileManager.findFiles("%%", "ooxml"));
-            results.addAll(fileManager.findFiles("%%", "pdf"));
+            List<List<AbstractFile>> allResults = new ArrayList<>(0);
 
-            for (AbstractFile file : results) {
-                /*
-                 * Process only non-slack files.
-                 */
-                if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+            List<AbstractFile> ole2Results = fileManager.findFiles("%%", "ole2");
+            assertEquals("Unexpected number of OLE2 results.", 11, ole2Results.size());
+
+            List<AbstractFile> ooxmlResults = fileManager.findFiles("%%", "ooxml");
+            assertEquals("Unexpected number of OOXML results.", 13, ooxmlResults.size());
+
+            List<AbstractFile> pdfResults = fileManager.findFiles("%%", "pdf");
+            assertEquals("Unexpected number of PDF results.", 6, pdfResults.size());
+
+            List<AbstractFile> mdbResults = fileManager.findFiles("%%", "mdb");
+            assertEquals("Unexpected number of MDB results.", 25, mdbResults.size());
+
+            List<AbstractFile> accdbResults = fileManager.findFiles("%%", "accdb");
+            assertEquals("Unexpected number of ACCDB results.", 10, accdbResults.size());
+
+            allResults.add(ole2Results);
+            allResults.add(ooxmlResults);
+            allResults.add(pdfResults);
+            allResults.add(mdbResults);
+            allResults.add(accdbResults);
+
+            for (List<AbstractFile> results : allResults) {
+                for (AbstractFile file : results) {
                     /*
-                     * Determine which assertions to use for the file based on
-                     * its name.
+                     * Process only non-slack files.
                      */
-                    boolean fileProtected = file.getName().split("\\.")[0].endsWith("-protected");
-                    List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
-                    if (fileProtected) {
+                    if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         /*
-                         * Check that the protected file has one
-                         * TSK_ENCRYPTION_DETECTED artifact.
+                         * Determine which assertions to use for the file based
+                         * on its name.
                          */
-                        int artifactsListSize = artifactsList.size();
-                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
-                        assertEquals(errorMessage, 1, artifactsListSize);
+                        boolean fileProtected = file.getName().split("\\.")[0].endsWith("-protected");
+                        List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
+                        if (fileProtected) {
+                            /*
+                             * Check that the protected file has one
+                             * TSK_ENCRYPTION_DETECTED artifact.
+                             */
+                            int artifactsListSize = artifactsList.size();
+                            String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
+                            assertEquals(errorMessage, 1, artifactsListSize);
 
-                        String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
-                        errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
-                        assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.toString(), artifactTypeName);
-                    } else {
-                        /*
-                         * Check that the unprotected file has no artifacts.
-                         */
-                        int artifactsListSize = artifactsList.size();
-                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
-                        assertEquals(errorMessage, 0, artifactsListSize);
+                            String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
+                            errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
+                            assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.toString(), artifactTypeName);
+                        } else {
+                            /*
+                             * Check that the unprotected file has no artifacts.
+                             */
+                            int artifactsListSize = artifactsList.size();
+                            String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
+                            assertEquals(errorMessage, 0, artifactsListSize);
+                        }
                     }
                 }
             }

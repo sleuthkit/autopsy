@@ -39,7 +39,8 @@ import org.sleuthkit.datamodel.Content;
 public final class IngestUtils {
 
     /**
-     * Private constructor for IngestUtils class.
+     * IngestUtils constructor. Since this class is not meant to allow for
+     * instantiation, this constructor is 'private'.
      */
     private IngestUtils() {
     }
