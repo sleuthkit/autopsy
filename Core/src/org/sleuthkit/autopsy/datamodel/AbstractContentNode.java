@@ -120,7 +120,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
                         + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ") AS OBJECT_IDS"; //NON-NLS;
   
             
-            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentOpenCase().getSleuthkitCase().executeQuery(query)) {
+            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 if(resultSet.next()){
                     return (0 < resultSet.getInt("count"));

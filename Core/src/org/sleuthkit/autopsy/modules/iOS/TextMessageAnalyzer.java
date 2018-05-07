@@ -68,7 +68,7 @@ class TextMessageAnalyzer {
     void findTexts(IngestJobContext context) {
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
@@ -82,7 +82,7 @@ class TextMessageAnalyzer {
             }
             for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentOpenCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(Case.getCurrentCaseThrows().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
                     fileId = file.getId();
                     ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
@@ -112,7 +112,7 @@ class TextMessageAnalyzer {
         }
         Case currentCase;
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;

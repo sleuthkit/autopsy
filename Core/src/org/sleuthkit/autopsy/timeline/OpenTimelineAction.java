@@ -112,7 +112,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
     synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
         try {
-            Case currentCase = Case.getCurrentOpenCase();
+            Case currentCase = Case.getCurrentCaseThrows();
             if (currentCase.hasData() == false) {
                 MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
@@ -213,7 +213,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
 
     private boolean tooManyFiles() {
         try {
-            return FILE_LIMIT < Case.getCurrentOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
+            return FILE_LIMIT < Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1 = 1");
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can not open timeline with no case open.", ex);
         } catch (TskCoreException ex) {

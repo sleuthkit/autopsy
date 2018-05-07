@@ -319,7 +319,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         // Display warning if there is one (but don't disable "next" button)
         try {
-            if (false == PathValidator.isValid(path, Case.getCurrentOpenCase().getCaseType())) {
+            if (false == PathValidator.isValid(path, Case.getCurrentCaseThrows().getCaseType())) {
                 pathErrorLabel.setVisible(true);
                 pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
             }

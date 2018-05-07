@@ -163,7 +163,7 @@ public class IngestEventsListener {
             tifArtifact.addAttributes(attributes);
             try {
                 // index the artifact for keyword search
-                Blackboard blackboard = Case.getCurrentOpenCase().getServices().getBlackboard();
+                Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
                 blackboard.indexArtifact(tifArtifact);
             } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS

@@ -90,7 +90,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
     HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
         this.settings = settings;
-        skCase = Case.getCurrentOpenCase().getSleuthkitCase();
+        skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
     @Override
@@ -147,7 +147,7 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         try {
-            blackboard = Case.getCurrentOpenCase().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;

@@ -139,7 +139,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         // Tag name DTOs may be null (user tag names that have not been used do
         // not exist in the database).
         try {
-            TagsManager tagsManager = Case.getCurrentOpenCase().getServices().getTagsManager();
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             tagNamesSet.addAll(tagsManager.getAllTagNames());
 
         } catch (TskCoreException | NoCurrentCaseException ex) {

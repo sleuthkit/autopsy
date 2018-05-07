@@ -63,7 +63,7 @@ public final class IngestServices {
      * @throws NoCurrentCaseException if there is no open case.
      */
     public Case getCase() throws NoCurrentCaseException {
-        return Case.getCurrentOpenCase();
+        return Case.getCurrentCaseThrows();
     }
 
     /**
@@ -74,7 +74,7 @@ public final class IngestServices {
      * @throws NoCurrentCaseException if there is no open case.
      */
     public SleuthkitCase getCaseDatabase() throws NoCurrentCaseException {
-        return Case.getCurrentOpenCase().getSleuthkitCase();
+        return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
     /**

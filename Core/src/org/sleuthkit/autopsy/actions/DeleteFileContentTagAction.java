@@ -98,7 +98,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
             protected Void doInBackground() throws Exception {
                 TagsManager tagsManager;
                 try {
-                    tagsManager = Case.getCurrentOpenCase().getServices().getTagsManager();
+                    tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Error untagging file. No open case found.", ex); //NON-NLS
                     Platform.runLater(() ->
@@ -152,7 +152,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 Map<String, TagName> tagNamesMap = null;
                 try {
                     // Get the current set of tag names.
-                    TagsManager tagsManager = Case.getCurrentOpenCase().getServices().getTagsManager();
+                    TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
 
                     tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
                 } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -165,7 +165,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
                         List<ContentTag> existingTagsList =
-                                Case.getCurrentOpenCase().getServices().getTagsManager()
+                                Case.getCurrentCaseThrows().getServices().getTagsManager()
                                         .getContentTagsByContent(file);
 
                         for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {

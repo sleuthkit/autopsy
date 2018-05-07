@@ -104,7 +104,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile content) {
         try {
-            blackboard = Case.getCurrentOpenCase().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;

@@ -350,7 +350,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
          */
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             return true;
         }

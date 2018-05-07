@@ -248,7 +248,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 long objId = artifact.getObjectID();
                 AbstractFile file = null;
                 try {
-                    file = Case.getCurrentOpenCase().getSleuthkitCase().getAbstractFileById(objId);
+                    file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(objId);
                 } catch (TskException | NoCurrentCaseException ex) {
 
                 }

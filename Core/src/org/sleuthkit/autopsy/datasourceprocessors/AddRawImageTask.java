@@ -127,7 +127,7 @@ final class AddRawImageTask implements Runnable {
     private void addImageToCase(List<Content> dataSources, List<String> errorMessages) {
         SleuthkitCase caseDatabase;
         try {
-            caseDatabase = Case.getCurrentOpenCase().getSleuthkitCase();
+            caseDatabase = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
             errorMessages.add(Bundle.AddRawImageTask_noOpenCase_errMsg());
             logger.log(Level.SEVERE, Bundle.AddRawImageTask_noOpenCase_errMsg(), ex);

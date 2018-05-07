@@ -101,7 +101,7 @@ public final class ExtractAction extends AbstractAction {
     private void extractFile(ActionEvent e, AbstractFile selectedFile) {
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             JOptionPane.showMessageDialog((Component) e.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
@@ -127,7 +127,7 @@ public final class ExtractAction extends AbstractAction {
     private void extractFiles(ActionEvent e, Collection<? extends AbstractFile> selectedFiles) {
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             JOptionPane.showMessageDialog((Component) e.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS

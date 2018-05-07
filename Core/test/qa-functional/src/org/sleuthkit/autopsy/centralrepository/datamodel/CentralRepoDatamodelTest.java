@@ -2344,7 +2344,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Test creating a case from an Autopsy case
             // The case may already be in the database - the result is the same either way
             try {
-                caseB = EamDb.getInstance().newCase(Case.getCurrentOpenCase());
+                caseB = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
                 assertTrue("Failed to create correlation case from Autopsy case", caseB != null);
             } catch (EamDbException | NoCurrentCaseException ex) {
                 Exceptions.printStackTrace(ex);
@@ -2413,7 +2413,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // Test getting a case from an Autopsy case
             try {
-                CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getCurrentOpenCase());
+                CorrelationCase tempCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
                 assertTrue("getCase returned null for current Autopsy case", tempCase != null);
             } catch (EamDbException | NoCurrentCaseException ex) {
                 Exceptions.printStackTrace(ex);

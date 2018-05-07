@@ -98,7 +98,7 @@ final class ReportVisualPanel2 extends JPanel {
     private void initTags() {
         List<TagName> tagNamesInUse;
         try {
-            tagNamesInUse = Case.getCurrentOpenCase().getServices().getTagsManager().getTagNamesInUse();
+            tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(ReportVisualPanel2.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             return;
@@ -137,7 +137,7 @@ final class ReportVisualPanel2 extends JPanel {
     private void initArtifactTypes() {
 
         try {
-            Case openCase = Case.getCurrentOpenCase();
+            Case openCase = Case.getCurrentCaseThrows();
             ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
             doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),

@@ -100,7 +100,7 @@ class AddArchiveTask implements Runnable {
 
         // extract the archive and pass the extracted folder as input
         try {
-            Case currentCase = Case.getCurrentOpenCase();
+            Case currentCase = Case.getCurrentCaseThrows();
 
             // create folder to extract archive to
             Path destinationFolder = createDirectoryForFile(archivePath, currentCase.getModuleDirectory());

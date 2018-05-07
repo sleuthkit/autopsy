@@ -104,7 +104,7 @@ final class AccountDeviceInstanceKey {
 
     private static String getDataSourceName(AccountDeviceInstance accountDeviceInstance) {
         try {
-            SleuthkitCase db = Case.getCurrentOpenCase().getSleuthkitCase();
+            SleuthkitCase db = Case.getCurrentCaseThrows().getSleuthkitCase();
             for (DataSource dataSource : db.getDataSources()) {
                 if (dataSource.getDeviceId().equals(accountDeviceInstance.getDeviceId())) {
                     return db.getContentById(dataSource.getId()).getName();

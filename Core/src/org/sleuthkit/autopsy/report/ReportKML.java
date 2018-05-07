@@ -101,7 +101,7 @@ class ReportKML implements GeneralReportModule {
     @Override
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
@@ -387,7 +387,7 @@ class ReportKML implements GeneralReportModule {
             if (result == ReportProgressPanel.ReportStatus.ERROR) {
                 prependedStatus = "Incomplete ";
             }
-            Case.getCurrentOpenCase().addReport(kmlFileFullPath,
+            Case.getCurrentCaseThrows().addReport(kmlFileFullPath,
                     NbBundle.getMessage(this.getClass(), "ReportKML.genReport.srcModuleName.text"),
                     prependedStatus + NbBundle.getMessage(this.getClass(), "ReportKML.genReport.reportName"));
         } catch (IOException ex) {

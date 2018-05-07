@@ -495,7 +495,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
          * Create an account.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content);
+            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content);
             ccAccountInstance.addAttributes(attributes);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS

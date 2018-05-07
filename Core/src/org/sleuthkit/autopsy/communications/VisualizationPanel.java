@@ -295,7 +295,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         windowAncestor = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this);
 
         try {
-            commsManager = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager();
+            commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
         } catch (NoCurrentCaseException ex) {

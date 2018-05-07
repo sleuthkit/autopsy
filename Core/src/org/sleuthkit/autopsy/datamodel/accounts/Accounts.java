@@ -238,7 +238,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -262,7 +262,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
@@ -364,7 +364,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -388,7 +388,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
 
                     } catch (NoCurrentCaseException notUsed) {
@@ -513,7 +513,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -537,7 +537,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
 
                     } catch (NoCurrentCaseException notUsed) {
@@ -647,7 +647,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -671,7 +671,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
 
                     } catch (NoCurrentCaseException notUsed) {
@@ -858,7 +858,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -882,7 +882,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
 
                         refresh(true);
                     } catch (NoCurrentCaseException notUsed) { //NOPMD empy catch clause

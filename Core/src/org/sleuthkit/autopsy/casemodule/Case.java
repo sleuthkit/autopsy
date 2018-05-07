@@ -591,7 +591,7 @@ public class Case {
      */
     public static Case getCurrentCase() {
         try {
-            return getCurrentOpenCase();
+            return getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             /*
              * Throw a runtime exception, since this is a programming error.
@@ -601,18 +601,23 @@ public class Case {
     }
 
     /**
-     * Gets the current case, if there is one, or throws an exception. This
-     * method should only be called by methods known to run in threads other
-     * than threads that close the current case, where the exception provides
-     * some protection from the consequences of the race condition between the
-     * calling thread and the case closing thread, although it is not
-     * fool-proof.
+     * Gets the current case, if there is one, or throws an exception if there
+     * is no current case. This method should only be called by methods known to
+     * run in threads where it is possible that another thread has closed the
+     * current case. The exception provides some protection from the
+     * consequences of the race condition between the calling thread and a case
+     * closing thread, but it is not fool-proof. Background threads calling this
+     * method should put all operations in an exception firewall with a try and
+     * catch-all block to handle the possibility of bad timing.
+     *
+     * TODO (JIRA-3825): Introduce a reference counting scheme for this get case
+     * method.
      *
      * @return The current case.
      *
      * @throws NoCurrentCaseException if there is no current case.
      */
-    public static Case getCurrentOpenCase() throws NoCurrentCaseException {
+    public static Case getCurrentCaseThrows() throws NoCurrentCaseException {
         Case openCase = currentCase;
         if (openCase == null) {
             throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));

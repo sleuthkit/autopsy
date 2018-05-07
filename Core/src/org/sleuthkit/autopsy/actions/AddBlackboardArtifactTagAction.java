@@ -84,7 +84,7 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
         new Thread(() -> {
             for (BlackboardArtifact artifact : selectedArtifacts) {
                 try {
-                    Case.getCurrentOpenCase().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
+                    Case.getCurrentCaseThrows().getServices().getTagsManager().addBlackboardArtifactTag(artifact, tagName, comment);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error tagging result", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {

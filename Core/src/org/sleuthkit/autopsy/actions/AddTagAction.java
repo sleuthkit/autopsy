@@ -93,7 +93,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
             try {
-                TagsManager tagsManager = Case.getCurrentOpenCase().getServices().getTagsManager();
+                TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
@@ -170,7 +170,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
         private void getAndAddTag(String tagDisplayName, TagName tagName, String comment) {
             Case openCase;
             try {
-                openCase = Case.getCurrentOpenCase();
+                openCase = Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException ex) {
                 Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
                 return;

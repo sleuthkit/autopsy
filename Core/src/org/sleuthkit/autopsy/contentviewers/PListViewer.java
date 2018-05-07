@@ -191,7 +191,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
 
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) { 
                 JOptionPane.showMessageDialog(this,
                         "Failed to export plist file.",

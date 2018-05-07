@@ -81,7 +81,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         this.context = context;
         long dataSourceObjId = context.getDataSource().getId();
         try {
-            Case currentCase = Case.getCurrentOpenCase();
+            Case currentCase = Case.getCurrentCaseThrows();
             SleuthkitCase caseDb = currentCase.getSleuthkitCase();
             DataSource dataSource = caseDb.getDataSource(dataSourceObjId);
             parentDeviceId = dataSource.getDeviceId();
@@ -234,7 +234,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         List<AbstractFile> vmFiles = new ArrayList<>();
         for (String vmExtension : GeneralFilter.VIRTUAL_MACHINE_EXTS) {
             String searchString = "%" + vmExtension;    // want a search string that looks like this "%.vmdk"
-            vmFiles.addAll(Case.getCurrentOpenCase().getServices().getFileManager().findFiles(dataSource, searchString));
+            vmFiles.addAll(Case.getCurrentCaseThrows().getServices().getFileManager().findFiles(dataSource, searchString));
         }
         return vmFiles;
     }
@@ -275,7 +275,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * Try to add the virtual machine file to the case as a data source.
          */
         UUID taskId = UUID.randomUUID();
-        Case.getCurrentOpenCase().notifyAddingDataSource(taskId);
+        Case.getCurrentCaseThrows().notifyAddingDataSource(taskId);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         AddDataSourceCallback dspCallback = new AddDataSourceCallback(vmFile);
         synchronized (this) {
@@ -291,7 +291,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * ingest context.
          */
         if (!dspCallback.vmDataSources.isEmpty()) {
-            Case.getCurrentOpenCase().notifyDataSourceAdded(dspCallback.vmDataSources.get(0), taskId);
+            Case.getCurrentCaseThrows().notifyDataSourceAdded(dspCallback.vmDataSources.get(0), taskId);
             List<Content> dataSourceContent = new ArrayList<>(dspCallback.vmDataSources);
             IngestJobSettings ingestJobSettings = new IngestJobSettings(context.getExecutionContext());
             for (String warning : ingestJobSettings.getWarnings()) {
@@ -302,7 +302,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
                     NbBundle.getMessage(this.getClass(), "VMExtractorIngestModule.addedVirtualMachineImage.message", vmFile.toString())));
             IngestManager.getInstance().queueIngestJob(dataSourceContent, ingestJobSettings);
         } else {
-            Case.getCurrentOpenCase().notifyFailedAddingDataSource(taskId);
+            Case.getCurrentCaseThrows().notifyFailedAddingDataSource(taskId);
         }
     }
 

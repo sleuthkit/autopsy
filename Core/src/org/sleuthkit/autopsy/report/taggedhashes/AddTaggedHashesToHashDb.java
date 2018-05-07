@@ -69,7 +69,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
     public void generateReport(String reportPath, ReportProgressPanel progressPanel) {
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "No open Case", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);

@@ -209,7 +209,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Due to some unresolved issues with how cases are
                          * closed, it is possible for the event to have a null
@@ -233,7 +233,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         hashsetResults.update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**

@@ -240,7 +240,7 @@ final public class FiltersPanel extends JPanel {
      */
     private void updateDeviceFilter(boolean initialState) {
         try {
-            final SleuthkitCase sleuthkitCase = Case.getCurrentOpenCase().getSleuthkitCase();
+            final SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();

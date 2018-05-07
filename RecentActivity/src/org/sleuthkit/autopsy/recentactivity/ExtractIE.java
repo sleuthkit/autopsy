@@ -75,7 +75,7 @@ class ExtractIE extends Extract {
 
     ExtractIE() throws NoCurrentCaseException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
-        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentOpenCase(), "IE") + File.separator + "results"; //NON-NLS
+        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
 

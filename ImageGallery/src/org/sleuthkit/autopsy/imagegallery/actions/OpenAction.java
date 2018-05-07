@@ -109,7 +109,7 @@ public final class OpenAction extends CallableSystemAction {
     public boolean isEnabled() {
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             return false;
         }
@@ -154,7 +154,7 @@ public final class OpenAction extends CallableSystemAction {
         //check case
         final Case currentCase;
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
@@ -188,7 +188,7 @@ public final class OpenAction extends CallableSystemAction {
 
     private boolean tooManyFiles() {
         try {
-            return FILE_LIMIT < Case.getCurrentOpenCase().getSleuthkitCase().countFilesWhere("1 = 1");
+            return FILE_LIMIT < Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1 = 1");
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Can not open image gallery with no case open.", ex);
         } catch (TskCoreException ex) {

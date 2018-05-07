@@ -299,7 +299,7 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             Case curCase;
             try {
-                curCase = Case.getCurrentOpenCase();
+                curCase = Case.getCurrentCaseThrows();
             } catch (Exception e) {
                 setImgLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 setStatusMsg("");
@@ -380,7 +380,7 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             Case curCase;
             try {
-                curCase = Case.getCurrentOpenCase();
+                curCase = Case.getCurrentCaseThrows();
             } catch (Exception e) {
                 setFileReadLabel(
                         NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
@@ -472,7 +472,7 @@ public class PerformancePanel extends javax.swing.JDialog {
 
             Case curCase;
             try {
-                curCase = Case.getCurrentOpenCase();
+                curCase = Case.getCurrentCaseThrows();
             } catch (Exception e) {
                 setDbLabel(NbBundle.getMessage(this.getClass(), "PerformancePanel.label.caseNotOpen.text"));
                 return;

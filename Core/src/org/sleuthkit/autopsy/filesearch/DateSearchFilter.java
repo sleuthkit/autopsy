@@ -141,7 +141,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         try {
             // get the latest case
-            Case currentCase = Case.getCurrentOpenCase(); // get the most updated case
+            Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
 
             Set<TimeZone> caseTimeZones = currentCase.getTimeZones();
             Iterator<TimeZone> iterator = caseTimeZones.iterator();
@@ -282,7 +282,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                      * that is already closed.
                      */
                     try {
-                        Case.getCurrentOpenCase();
+                        Case.getCurrentCaseThrows();
                         SwingUtilities.invokeLater(DateSearchFilter.this::updateTimeZoneList);
                     } catch (NoCurrentCaseException notUsed) {
                         /**

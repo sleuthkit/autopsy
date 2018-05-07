@@ -71,7 +71,7 @@ final class ContactAnalyzer {
     public void findContacts(IngestJobContext context) {
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
@@ -116,7 +116,7 @@ final class ContactAnalyzer {
         }
         Case currentCase;
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;

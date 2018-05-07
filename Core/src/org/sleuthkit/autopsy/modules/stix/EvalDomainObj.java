@@ -55,7 +55,7 @@ class EvalDomainObj extends EvaluatableObject {
 
         Case case1;
         try {
-            case1 = Case.getCurrentOpenCase();
+            case1 = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             return new ObservableResult(id, "Exception while getting open case.", //NON-NLS
                     spacing, ObservableResult.ObservableState.FALSE, null);

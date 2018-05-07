@@ -101,7 +101,7 @@ abstract class EvaluatableObject {
 
         List<BlackboardArtifact> hits = null;
         try {
-            Case case1 = Case.getCurrentOpenCase();
+            Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
 
             String[] parts = item.getValue().toString().split("##comma##"); //NON-NLS

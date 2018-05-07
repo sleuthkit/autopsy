@@ -64,7 +64,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (editCurrentCase) {
             Case openCase;
             try {
-                openCase = Case.getCurrentOpenCase();
+                openCase = Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException ex) { 
                 LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
                 return;
@@ -94,7 +94,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     private void setUpOrganizationData() {
         if (EamDb.isEnabled()) {
             try {
-                Case currentCase = Case.getCurrentOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 if (currentCase != null) {
                     EamDb dbManager = EamDb.getInstance();
                     selectedOrg = dbManager.getCase(currentCase).getOrg();
@@ -567,7 +567,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     private void updateCaseDetails() throws NoCurrentCaseException {
         if (caseDisplayNameTextField.isVisible()) {
             try {
-                Case.getCurrentOpenCase().updateCaseDetails(new CaseDetails(
+                Case.getCurrentCaseThrows().updateCaseDetails(new CaseDetails(
                         caseDisplayNameTextField.getText(), caseNumberTextField.getText(),
                         examinerTextField.getText(), tfExaminerPhoneText.getText(),
                         tfExaminerEmailText.getText(), taNotesText.getText()));
@@ -586,7 +586,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (EamDb.isEnabled()) {
             try {
                 EamDb dbManager = EamDb.getInstance();
-                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentOpenCase());
+                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCaseThrows());
                 if (caseDisplayNameTextField.isVisible()) {
                     correlationCase.setDisplayName(caseDisplayNameTextField.getText());
                 }

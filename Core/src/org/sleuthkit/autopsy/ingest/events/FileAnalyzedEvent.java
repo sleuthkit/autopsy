@@ -77,7 +77,7 @@ public final class FileAnalyzedEvent extends AutopsyEvent implements Serializabl
         }
         try {
             long id = (Long) super.getOldValue();
-            file = Case.getCurrentOpenCase().getSleuthkitCase().getAbstractFileById(id);
+            file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(id);
             return file;
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS

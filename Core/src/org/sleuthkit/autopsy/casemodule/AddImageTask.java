@@ -109,7 +109,7 @@ class AddImageTask implements Runnable {
     public void run() {
         Case currentCase;
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;

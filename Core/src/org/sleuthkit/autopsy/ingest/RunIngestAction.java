@@ -84,7 +84,7 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     @Override
     public boolean isEnabled() {
         try {
-            Case openCase = Case.getCurrentOpenCase();
+            Case openCase = Case.getCurrentCaseThrows();
             return openCase.hasData();
         } catch (NoCurrentCaseException ex) {
             return false;

@@ -75,7 +75,7 @@ public class ArtifactSelectionDialog extends javax.swing.JDialog {
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
 
-            artifactTypes = Case.getCurrentOpenCase().getSleuthkitCase().getArtifactTypesInUse();
+            artifactTypes = Case.getCurrentCaseThrows().getSleuthkitCase().getArtifactTypesInUse();
             artifactTypes.removeAll(doNotReport);
             Collections.sort(artifactTypes, new Comparator<BlackboardArtifact.Type>() {
                 @Override

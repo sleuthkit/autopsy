@@ -54,7 +54,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
     })
     private void customizeComponents() {
         try {
-            propertiesPanel = new CasePropertiesPanel(Case.getCurrentOpenCase());
+            propertiesPanel = new CasePropertiesPanel(Case.getCurrentCaseThrows());
         } catch (NoCurrentCaseException ex) { 
             Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
         }

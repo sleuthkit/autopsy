@@ -90,7 +90,7 @@ public class EamArtifactUtil {
         // if they asked for it, add the instance details associated with this occurance.
         if (!eamArtifacts.isEmpty() && addInstanceDetails) {
             try {
-                Case currentCase = Case.getCurrentOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
                 if (null == bbSourceFile) {
                     //@@@ Log this
@@ -98,9 +98,9 @@ public class EamArtifactUtil {
                 }
 
                 // make an instance for the BB source file 
-                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentOpenCase());
+                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
                 if (null == correlationCase) {
-                    correlationCase = EamDb.getInstance().newCase(Case.getCurrentOpenCase());
+                    correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
                 }
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
                         correlationCase,
@@ -146,7 +146,7 @@ public class EamArtifactUtil {
                 // Get the associated artifact
                 BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
-                    BlackboardArtifact associatedArtifact = Case.getCurrentOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     return EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(correlationType, associatedArtifact);
                 }
 
@@ -254,9 +254,9 @@ public class EamArtifactUtil {
         try {
             CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
-            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentOpenCase());
+            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
             if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentOpenCase());
+                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,

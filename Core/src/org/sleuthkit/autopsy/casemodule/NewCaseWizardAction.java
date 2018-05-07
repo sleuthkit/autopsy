@@ -91,9 +91,9 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     if (EamDb.isEnabled()) {  //if the eam is enabled we need to save the case organization information now
                             EamDb dbManager = EamDb.getInstance();
                             if (dbManager != null) {
-                                CorrelationCase cRCase = dbManager.getCase(Case.getCurrentOpenCase());
+                                CorrelationCase cRCase = dbManager.getCase(Case.getCurrentCaseThrows());
                                 if (cRCase == null) {
-                                    cRCase = dbManager.newCase(Case.getCurrentOpenCase());
+                                    cRCase = dbManager.newCase(Case.getCurrentCaseThrows());
                                 }
                                 if (!organizationName.isEmpty()) {
                                     for (EamOrganization org : dbManager.getOrganizations()) {

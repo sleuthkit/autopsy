@@ -98,7 +98,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
             protected Void doInBackground() throws Exception {
                 TagsManager tagsManager;
                 try {
-                    tagsManager = Case.getCurrentOpenCase().getServices().getTagsManager();
+                    tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Error untagging artifact. No open case found.", ex); //NON-NLS
                     Platform.runLater(()
@@ -155,7 +155,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                 Map<String, TagName> tagNamesMap = null;
                 try {
                     // Get the current set of tag names.
-                    TagsManager tagsManager = Case.getCurrentOpenCase().getServices().getTagsManager();
+                    TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
 
                     tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
                 } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -168,7 +168,7 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
                         List<BlackboardArtifactTag> existingTagsList
-                                = Case.getCurrentOpenCase().getServices().getTagsManager()
+                                = Case.getCurrentCaseThrows().getServices().getTagsManager()
                                 .getBlackboardArtifactTagsByArtifact(artifact);
 
                         for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {

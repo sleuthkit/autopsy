@@ -58,7 +58,7 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
 
         Case currentCase;
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ignore) {
             // thorown by Case.getCurrentOpenCase() if currentCase is null
             return null;

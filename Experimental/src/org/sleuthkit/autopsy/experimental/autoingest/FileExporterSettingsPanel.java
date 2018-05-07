@@ -529,7 +529,7 @@ public final class FileExporterSettingsPanel extends JPanel {
     void populateArtifacts() {
         Set<String> artifactTypes = scanRulesForArtifacts();
         try {
-            SleuthkitCase currentCase = Case.getCurrentOpenCase().getSleuthkitCase();
+            SleuthkitCase currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             for (BlackboardArtifact.Type type : currentCase.getArtifactTypes()) {
                 artifactTypes.add(type.getTypeName());
             }
@@ -603,7 +603,7 @@ public final class FileExporterSettingsPanel extends JPanel {
         Set<String> attributeTypes = scanRulesForAttributes();
 
         try {
-            SleuthkitCase currentCase = Case.getCurrentOpenCase().getSleuthkitCase();
+            SleuthkitCase currentCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             for (BlackboardAttribute.Type type : currentCase.getAttributeTypes()) {
                 attributeTypes.add(type.getTypeName());
                 attributeTypeMap.put(type.getTypeName(), type.getValueType());

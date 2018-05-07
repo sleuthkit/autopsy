@@ -145,7 +145,7 @@ public final class IngestMonitor {
          */
         private void findRootDirectoryForCurrentCase() {
             try {
-                Case currentCase = Case.getCurrentOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 findRootDirectoryForCurrentCase(currentCase);
             } catch (NoCurrentCaseException unused) {
                 /*

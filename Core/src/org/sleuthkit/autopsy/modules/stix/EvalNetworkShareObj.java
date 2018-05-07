@@ -89,7 +89,7 @@ class EvalNetworkShareObj extends EvaluatableObject {
         try {
             List<BlackboardArtifact> finalHits = new ArrayList<BlackboardArtifact>();
 
-            Case case1 = Case.getCurrentOpenCase();
+            Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
             List<BlackboardArtifact> artList
                     = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_REMOTE_DRIVE);

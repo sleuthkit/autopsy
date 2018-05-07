@@ -101,7 +101,7 @@ public class VideoUtils {
      *
      */
     public static File getVideoFileInTempDir(AbstractFile file) throws NoCurrentCaseException {
-        return Paths.get(Case.getCurrentOpenCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
+        return Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {

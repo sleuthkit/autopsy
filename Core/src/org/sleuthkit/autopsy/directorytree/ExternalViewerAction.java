@@ -89,7 +89,7 @@ public class ExternalViewerAction extends AbstractAction {
         // Get the temp folder path of the case
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
             return;

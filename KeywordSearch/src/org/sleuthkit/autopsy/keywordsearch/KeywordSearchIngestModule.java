@@ -184,7 +184,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         // if first instance of this module for this job then check the server and existence of keywords
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.KeywordSearchIngestModule_noOpenCase_errMsg(), ex);
         }

@@ -75,7 +75,7 @@ class ReportBodyFile implements GeneralReportModule {
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
         // Start the progress bar and setup the report
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
@@ -161,7 +161,7 @@ class ReportBodyFile implements GeneralReportModule {
                     if (out != null) {
                         out.flush();
                         out.close();
-                        Case.getCurrentOpenCase().addReport(reportPath,
+                        Case.getCurrentCaseThrows().addReport(reportPath,
                                 NbBundle.getMessage(this.getClass(),
                                         "ReportBodyFile.generateReport.srcModuleName.text"), "");
 

@@ -66,7 +66,7 @@ final class CaseDeleteAction extends CallableSystemAction {
         "# {0} - exception message", "Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}",})
     public void actionPerformed(ActionEvent e) {
         try {
-            Case currentCase = Case.getCurrentOpenCase();
+            Case currentCase = Case.getCurrentCaseThrows();
             String caseName = currentCase.getName();
             String caseDirectory = currentCase.getCaseDirectory();
 

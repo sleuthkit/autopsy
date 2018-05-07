@@ -191,7 +191,7 @@ public class IngestManager {
                  * only necessary for multi-user cases.
                  */
                 try {
-                    if (Case.getCurrentOpenCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                    if (Case.getCurrentCaseThrows().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                         return;
                     }
                 } catch (NoCurrentCaseException noCaseOpenException) {
@@ -252,7 +252,7 @@ public class IngestManager {
         caseIsOpen = true;
         clearIngestMessageBox();
         try {
-            Case openedCase = Case.getCurrentOpenCase();
+            Case openedCase = Case.getCurrentCaseThrows();
             String channelPrefix = openedCase.getName();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 jobEventPublisher.openRemoteEventChannel(String.format(INGEST_JOB_EVENT_CHANNEL_NAME, channelPrefix));
@@ -369,7 +369,7 @@ public class IngestManager {
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             return new IngestJobStartResult(null, new IngestManagerException("Exception while getting open case.", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
         }

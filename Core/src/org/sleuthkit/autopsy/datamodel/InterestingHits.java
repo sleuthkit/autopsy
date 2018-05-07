@@ -200,7 +200,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                  * that is already closed.
                  */
                 try {
-                    Case.getCurrentOpenCase();
+                    Case.getCurrentCaseThrows();
                     /**
                      * Even with the check above, it is still possible that
                      * the case will be closed in a different thread before
@@ -226,7 +226,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                  * that is already closed.
                  */
                 try {
-                    Case.getCurrentOpenCase();
+                    Case.getCurrentCaseThrows();
                     interestingResults.update();
                 } catch (NoCurrentCaseException notUsed) {
                     /**

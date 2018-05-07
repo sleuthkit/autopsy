@@ -103,7 +103,7 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         private void reloadKeys() {
             try {
-                currentKeys = Case.getCurrentOpenCase().getDataSources();
+                currentKeys = Case.getCurrentCaseThrows().getDataSources();
                 setKeys(currentKeys);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS

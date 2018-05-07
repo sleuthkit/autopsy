@@ -104,7 +104,7 @@ class ReportHTML implements TableReportModule {
 
     // Refesh the member variables
     private void refresh() throws NoCurrentCaseException {
-        currentCase = Case.getCurrentOpenCase();
+        currentCase = Case.getCurrentCaseThrows();
         skCase = currentCase.getSleuthkitCase();
 
         dataTypes = new TreeMap<>();
@@ -890,7 +890,7 @@ class ReportHTML implements TableReportModule {
         String indexFilePath = path + "report.html"; //NON-NLS
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;

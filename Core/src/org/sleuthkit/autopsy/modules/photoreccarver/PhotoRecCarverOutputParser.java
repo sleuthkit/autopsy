@@ -100,7 +100,7 @@ class PhotoRecCarverOutputParser {
             NodeList fileRanges;
             Element entry;
             Path filePath;
-            FileManager fileManager = Case.getCurrentOpenCase().getServices().getFileManager();
+            FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
 
             // create and initialize the list to put into the database
             List<CarvingResult.CarvedFile> carvedFiles = new ArrayList<>();

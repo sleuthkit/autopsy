@@ -228,7 +228,7 @@ class ReportGenerator {
     private List<AbstractFile> getFiles() {
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("meta_type != " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
             return absFiles;
         } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -253,7 +253,7 @@ class ReportGenerator {
     private static String createReportDirectory(ReportModule module) throws IOException {
         Case currentCase;
         try {
-            currentCase = Case.getCurrentOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             throw new IOException("Exception while getting open case.", ex);
         }

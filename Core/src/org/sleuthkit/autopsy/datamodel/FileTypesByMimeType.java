@@ -164,7 +164,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                  * already closed.
                  */
                 try {
-                    Case.getCurrentOpenCase();
+                    Case.getCurrentCaseThrows();
                     typesRoot.updateShowCounts();
                     populateHashMap();
                 } catch (NoCurrentCaseException notUsed) {

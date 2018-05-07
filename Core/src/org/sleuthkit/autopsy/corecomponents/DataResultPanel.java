@@ -489,7 +489,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          */
         Case openCase;
         try {
-            openCase = Case.getCurrentOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             return true;
         }
@@ -535,7 +535,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             try {
-                Case.getCurrentOpenCase();
+                Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException ex) {
                 return;
             }
