@@ -175,7 +175,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      * 5. The file named veracrpytContainerFile has a TSK_ENCRYPTION_SUSPECTED
      * artifact associated with it.
      */
-    public void testVeraCryptSupport() {
+    public void ignored_testVeraCryptSupport() {
         try {
             CaseUtils.createCase(VERACRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
