@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Video viewer part of the Media View layered pane. Uses different engines
  * depending on platform.
  */
-public abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, MediaFileViewer.MediaViewPanel {
+abstract class MediaViewVideoPanel extends JPanel implements FrameCapture, MediaFileViewer.MediaViewPanel {
 
     private static final Set<String> AUDIO_EXTENSIONS = new TreeSet<>(Arrays.asList(".mp3", ".wav", ".wma")); //NON-NLS
 
