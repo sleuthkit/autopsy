@@ -1682,7 +1682,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 if (CaseDeletionResult.FAILED == result) {
                     JOptionPane.showMessageDialog(this,
-                            String.format("Could not delete case %s. It may be in in use.", caseName),
+                            String.format("Could not delete case %s. It may be in use.", caseName),
                             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
                             JOptionPane.INFORMATION_MESSAGE);
                 } else if (CaseDeletionResult.PARTIALLY_DELETED == result) {
