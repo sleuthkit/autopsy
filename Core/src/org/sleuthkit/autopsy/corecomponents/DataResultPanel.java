@@ -58,18 +58,19 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  * node. A typical result viewer is a JPanel that displays the child nodes of
  * the given node using a NetBeans explorer view child component.
  *
- * A result panel should be child components of top components that are explorer
- * manager providers. The parent top component is expected to expose a lookup
- * maintained by its explorer manager to the actions global context. The child
- * result view panel will then find the parent top component's explorer manager
- * at runtime, so that it can act as an explorer manager provider for its child
- * result viewers. This connects the nodes displayed in the result viewers to
- * the actions global context.
+ * All result view panels should be child components of top components that are
+ * explorer manager providers. The parent top component is expected to expose a
+ * lookup maintained by its explorer manager to the actions global context. The
+ * child result view panel will then find the parent top component's explorer
+ * manager at runtime, so that it can act as an explorer manager provider for
+ * its child result viewers. This connects the nodes displayed in the result
+ * viewers to the actions global context.
  *
- * All result view panels push single node selections in the child result
- * viewers to either the "main" content view (DataContentTopComponent) that is
- * normally docked into the lower right hand side of the main application
- * window, or to a supplied custom content view (implements DataContent).
+ * Result view panels can be constructed so that they push single node
+ * selections in the child result viewers to a content view (implements
+ * DataContent). The content view could be the "main" content view
+ * (DataContentTopComponent) that is normally docked into the lower right hand
+ * side of the main application window, or it could be a custom content view.
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
@@ -103,7 +104,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A result view panel.
      */
     public static DataResultPanel createInstance(String title, String description, Node currentRootNode, int childNodeCount) {
-        DataResultPanel resultPanel = new DataResultPanel(title, false, Collections.emptyList(), null);
+        DataResultPanel resultPanel = new DataResultPanel(title, false, Collections.emptyList(), DataContentTopComponent.findInstance());
         createInstanceCommon(title, description, currentRootNode, childNodeCount, resultPanel);
         resultPanel.open();
         return resultPanel;
@@ -115,7 +116,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * of the result viewers provided by the results viewer extension point. The
      * result view panel will push single node selections from its child result
      * viewers to the "main" content view that is normally docked into the lower
-     * right hand side of the main application window..
+     * right hand side of the main application window.
      *
      * @param title           The title for the result view panel.
      * @param description     Descriptive text about the source of the nodes
@@ -130,7 +131,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A result view panel.
      */
     public static DataResultPanel createInstance(String title, String description, Node currentRootNode, int childNodeCount, Collection<DataResultViewer> viewers) {
-        DataResultPanel resultPanel = new DataResultPanel(title, false, viewers, null);
+        DataResultPanel resultPanel = new DataResultPanel(title, false, viewers, DataContentTopComponent.findInstance());
         createInstanceCommon(title, description, currentRootNode, childNodeCount, resultPanel);
         resultPanel.open();
         return resultPanel;
@@ -141,7 +142,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * contains instances of the result viewers (DataResultViewer) provided by
      * the result viewer extension point (service providers that implement
      * DataResultViewer). The result view panel will push single node selections
-     * from its child result viewers to the supplied custom content view.
+     * from its child result viewers to the supplied content view, which can be
+     * null if a content view is not needed.
      *
      * @param title             The title for the result view panel.
      * @param description       Descriptive text about the source of the nodes
@@ -152,7 +154,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param customContentView A custom content view to use instead of the
      *                          "main" content view that is normally docked into
      *                          the lower right hand side of the main
-     *                          application window.
+     *                          application window. May be null, if no content
+     *                          view is needed.
      *
      * @return A result view panel.
      */
@@ -212,28 +215,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * contains a collection of result viewers that is either supplied or
      * provided by the result viewer extension point.
      *
-     * @param title             The title of the result view panel.
-     * @param isMain            Whether or not the result view panel is the
-     *                          "main" instance of the panel that resides in the
-     *                          "main" results view (DataResultTopComponent)
-     *                          that is normally docked into the upper right
-     *                          hand side of the main application window.
-     * @param viewers           A collection of result viewers to use instead of
-     *                          the result viewers provided by the results
-     *                          viewer extension point, may be empty.
-     * @param customContentView A custom content view to use instead of the
-     *                          "main" content view that is normally docked into
-     *                          the lower right hand side of the main
-     *                          application window, may be null.
+     * @param title       The title of the result view panel.
+     * @param isMain      Whether or not the result view panel is the "main"
+     *                    instance of the panel that resides in the "main"
+     *                    results view (DataResultTopComponent) that is normally
+     *                    docked into the upper right hand side of the main
+     *                    application window.
+     * @param viewers     A collection of result viewers to use instead of the
+     *                    result viewers provided by the results viewer
+     *                    extension point, may be empty.
+     * @param contentView A content view to into which to push single node
+     *                    selections in the child result viewers, may be null.
      */
-    DataResultPanel(String title, boolean isMain, Collection<DataResultViewer> viewers, DataContent customContentView) {
+    DataResultPanel(String title, boolean isMain, Collection<DataResultViewer> viewers, DataContent contentView) {
         this.setTitle(title);
         this.isMain = isMain;
-        if (customContentView == null) {
-            this.contentView = Lookup.getDefault().lookup(DataContent.class);
-        } else {
-            this.contentView = customContentView;
-        }
+        this.contentView = contentView;
         this.resultViewers = new ArrayList<>(viewers);
         this.explorerManagerListener = new ExplorerManagerListener();
         this.rootNodeListener = new RootNodeListener();
@@ -562,16 +559,18 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Worker for RootNodeListener childrenAdded.
-     */        
+     */
     class SetupTabsChildrenWorker extends SwingWorker<Void, Void> {
-        
+
         private final Node childNode;
+
         SetupTabsChildrenWorker(Node aChildNode) {
             childNode = aChildNode;
         }
+
         @Override
         protected Void doInBackground() throws Exception {
-             setupTabs(childNode);
+            setupTabs(childNode);
             return null;
         }
 
@@ -580,6 +579,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             setupTabs(childNode);
         }
     }
+
     /**
      * Responds to changes in the root node due to asynchronous child node
      * creation.
