@@ -133,7 +133,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
-        Event.JOB_STARTED.toString()}));
+        Event.JOB_STARTED.toString(),
+        Event.REPORT_STATE.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -164,6 +165,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private Path rootOutputDirectory;
     private volatile State state;
     private volatile ErrorState errorState;
+
+    private volatile AutoIngestNodeStateEvent lastPublishedStateEvent;
 
     /**
      * Gets a singleton auto ingest manager responsible for processing auto
@@ -235,6 +238,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         jobStatusPublishingExecutor.scheduleWithFixedDelay(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         state = State.RUNNING;
+
+        eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RUNNING, LOCAL_HOST_NAME));
         errorState = ErrorState.NONE;
     }
 
@@ -275,6 +280,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     handleRemoteCasePrioritizationEvent((AutoIngestCasePrioritizedEvent) event);
                 } else if (event instanceof AutoIngestCaseDeletedEvent) {
                     handleRemoteCaseDeletedEvent((AutoIngestCaseDeletedEvent) event);
+                } else if (event instanceof AutoIngestRequestNodeStateEvent) {
+                    handleRemoteRequestNodeStateEvent();
                 }
             }
         }
@@ -377,7 +384,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
-     * Processes a case deletin event from another node by triggering an
+     * Processes a case deletion event from another node by triggering an
      * immediate input directory scan.
      *
      * @param event A case deleted event from another auto ingest node.
@@ -391,6 +398,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Handle a request for current state by re-sending the last state event.
+     */
+    private void handleRemoteRequestNodeStateEvent() {
+        // Re-publish last state event.
+        eventPublisher.publishRemotely(lastPublishedStateEvent);
+    }
+
+    /**
      * Shuts down auto ingest.
      */
     void shutDown() {
@@ -400,6 +415,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         sysLogger.log(Level.INFO, "Auto ingest shutting down");
         state = State.SHUTTING_DOWN;
         try {
+            eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.SHUTTING_DOWN, AutoIngestManager.LOCAL_HOST_NAME));
             eventPublisher.removeSubscriber(EVENT_LIST, instance);
             stopInputFolderScans();
             stopJobProcessing();
@@ -1681,6 +1697,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     setChanged();
                     notifyObservers(Event.PAUSED_BY_REQUEST);
+
+                    /**
+                     * Publish an event to let remote listeners know that the
+                     * node has been paused.
+                     */
+                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
                 }
             }
         }
@@ -1704,6 +1726,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     setChanged();
                     notifyObservers(Event.RESUMED);
+
+                    /**
+                     * Publish an event to let remote listeners know that the
+                     * node has been resumed.
+                     */
+                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
                 }
                 pauseLock.notifyAll();
             }
@@ -1724,10 +1752,23 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     pauseRequested = false;
                     setChanged();
                     notifyObservers(Event.PAUSED_BY_REQUEST);
+
+                    /**
+                     * Publish an event to let remote listeners know that the
+                     * node has been paused.
+                     */
+                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
+
                     pauseLock.wait();
                     sysLogger.log(Level.INFO, "Job processing resumed after pause request");
                     setChanged();
                     notifyObservers(Event.RESUMED);
+
+                    /**
+                     * Publish an event to let remote listeners know that the
+                     * node has been resumed.
+                     */
+                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
                 }
             }
         }
@@ -1744,11 +1785,24 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 sysLogger.log(Level.SEVERE, "Job processing paused for system error");
                 setChanged();
                 notifyObservers(Event.PAUSED_FOR_SYSTEM_ERROR);
+
+                /**
+                 * Publish an event to let remote listeners know that the node
+                 * has been paused.
+                 */
+                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_FOR_SYSTEM_ERROR, AutoIngestManager.LOCAL_HOST_NAME));
+
                 pauseLock.wait();
                 errorState = ErrorState.NONE;
                 sysLogger.log(Level.INFO, "Job processing resumed after system error");
                 setChanged();
                 notifyObservers(Event.RESUMED);
+
+                /**
+                 * Publish an event to let remote listeners know that the node
+                 * has been resumed.
+                 */
+                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
             }
         }
 
@@ -2255,13 +2309,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Case.openAsCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                            
+
                             // Create the case directory now in case it is needed by selectSolrServerForCase
                             Case.createCaseDirectory(caseDirectoryPath.toString(), CaseType.MULTI_USER_CASE);
-                            
+
                             // If a list of servers exists, choose one to use for this case
                             Server.selectSolrServerForCase(rootOutputDirectory, caseDirectoryPath);
-                            
+
                             CaseDetails caseDetails = new CaseDetails(caseName);
                             Case.createAsCurrentCase(CaseType.MULTI_USER_CASE, caseDirectoryPath.toString(), caseDetails);
                             /*
@@ -2282,8 +2336,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (NoCurrentCaseException ex) {
                         /*
-                         * Deal with the unfortunate fact that
-                         * Case.getOpenCase throws NoCurrentCaseException.
+                         * Deal with the unfortunate fact that Case.getOpenCase
+                         * throws NoCurrentCaseException.
                          */
                         throw new CaseManagementException(String.format("Error getting current case %s for %s", caseName, manifest.getFilePath()), ex);
                     }
@@ -2490,7 +2544,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         sysLogger.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
                         ingestLock.wait();
-                       
+
                         // at this point we got the content object(s) from the current DSP.
                         // check whether the data source was processed successfully
                         if ((dataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
@@ -2500,7 +2554,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             logDataSourceProcessorResult(dataSource);
                             continue;
                         }
-                        
+
                         logDataSourceProcessorResult(dataSource);
                         return;
                     }
@@ -3016,7 +3070,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         CASE_DELETED,
         PAUSED_BY_REQUEST,
         PAUSED_FOR_SYSTEM_ERROR,
-        RESUMED
+        RESUMED,
+        STARTING_UP,
+        RUNNING,
+        SHUTTING_DOWN,
+        REPORT_STATE
     }
 
     /**
