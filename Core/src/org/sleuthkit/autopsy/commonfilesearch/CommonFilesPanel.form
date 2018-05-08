@@ -34,25 +34,20 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="commonFilesSearchLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="categoriesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="categoriesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="allFileCategoriesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="selectedFileCategoriesButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Group type="102" alignment="0" attributes="0">
-                                              <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
+                                              <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="allFileCategoriesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="selectedFileCategoriesButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <EmptySpace min="21" pref="21" max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="pictureVideoCheckbox" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="documentsCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      </Group>
-                                                  </Group>
+                                                  <Component id="pictureVideoCheckbox" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="documentsCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                       </Group>
-                                      <EmptySpace min="-2" pref="277" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="intraCaseRadio" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" attributes="0">
@@ -86,7 +81,7 @@
                               </Group>
                           </Group>
                       </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="13" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>

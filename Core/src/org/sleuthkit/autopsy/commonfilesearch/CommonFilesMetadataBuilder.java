@@ -212,7 +212,7 @@ abstract class CommonFilesMetadataBuilder {
     }
     
     /**
-     * TODO Refactor, abstract shared code above
+     * TODO Refactor, abstract shared code above, call this method via new AllDataSourcesEamDbCommonFilesAlgorithm Class
      * @param correlationCase Optionally null, otherwise a case, or could be a CR case ID
      * @return
      * @throws TskCoreException
@@ -221,7 +221,7 @@ abstract class CommonFilesMetadataBuilder {
      * @throws EamDbException 
      */
     public CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-        CommonFilesMetadata metaData  =  this.findCommonFiles(); // TODO, have another method which returns ALL md5/objectIds nstead of current query of count > 2
+        CommonFilesMetadata metaData  =  this.findCommonFiles(); 
         Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
         List<String> values = Arrays.asList((String[]) commonFiles.keySet().toArray()); 
          
@@ -293,7 +293,8 @@ abstract class CommonFilesMetadataBuilder {
 
     @NbBundle.Messages({
         "CommonFilesMetadataBuilder.buildTabTitle.titleAll=Common Files (All Data Sources, %s)",
-        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
+        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)",
+        "CommonFilesMetadataBuilder.buildTabTitle.titleEamDb=Common Files (Central Repository Source(s), %s)",
     })
     protected abstract String buildTabTitle();
 

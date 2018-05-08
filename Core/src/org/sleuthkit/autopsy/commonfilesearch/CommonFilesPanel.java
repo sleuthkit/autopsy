@@ -267,6 +267,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);
 
                     setTitleForSingleSource(dataSourceId);
+                } else if(false) { 
+                    // TODO, is CR cases, add option chosen CorrelationCase ID lookup
+                    builder = new AllDataSourcesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);    
                 }
 
                 this.tabTitle = builder.buildTabTitle();

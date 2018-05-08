@@ -648,11 +648,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * TODO, shares code with getArtifactInstancesByTypeValue, refactor and
-     * abstract Retrieves eamArtiifact instances from the database that match
-     * the given list of MD5 values;
+     * Retrieves eamArtiifact instances from the database that match
+     * the given list of MD5 values and optionally filters by given case.
      *
-     * @param correlationCase Case id to search on
+     * @param correlationCase Case id to search on, if null, searches all cases
      * @param values List of ArtifactInstance MD5 values to find matches of.
      *
      * @return List of artifact instances for a given list of MD5 values
@@ -704,7 +703,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, valuesString);
-            if (singleCase) {
+            if (singleCase && correlationCase != null) {
                 preparedStatement.setString(2, String.valueOf(correlationCase.getID()));
             }
 
