@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.filesearch;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,15 +34,19 @@ import javax.swing.event.ListSelectionEvent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Subpanel with controls for data source filtering.
+ */
 public class DataSourcePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(DataSourcePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final Map<Long, String> dataSourceMap = new HashMap<>();
-    private List<String> toolTipList = new ArrayList<>();
+    private final List<String> toolTipList = new ArrayList<>();
 
     /**
      * Creates new form DataSourcePanel
@@ -52,19 +54,19 @@ public class DataSourcePanel extends javax.swing.JPanel {
     public DataSourcePanel() {
         initComponents();
         setComponentsEnabled();
-        this.dataSourceList.addListSelectionListener((ListSelectionEvent e) -> {
+        this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
         });
         this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
 
             @Override
-            public void mouseDragged(MouseEvent e) {
+            public void mouseDragged(MouseEvent evt) {
             }
 
             @Override
-            public void mouseMoved(MouseEvent e) {
-                JList<String> DsList = (JList<String>) e.getSource();
-                int index = DsList.locationToIndex(e.getPoint());
+            public void mouseMoved(MouseEvent evt) {
+                JList<String> DsList = (JList<String>) evt.getSource();
+                int index = DsList.locationToIndex(evt.getPoint());
                 if (index > -1) {
                     DsList.setToolTipText(toolTipList.get(index));
                 }
@@ -72,29 +74,38 @@ public class DataSourcePanel extends javax.swing.JPanel {
     });
     }
 
+    /**
+     * Get dataSourceMap with object id and data source display name. Add the data source full name to toolTipList
+     *
+     * @return The list of data source name
+     */
     private List<String> getDataSourceArray() {
+        List<String> dataSourceList = new ArrayList<>();
         try {
-            Case currentCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCaseThrows();
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            getLoadLogicalSources(tskDb);
-            getLoadImageSources(tskDb);
+            List<DataSource> dataSources = tskDb.getDataSources();
+            Collections.sort(dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
+            for (DataSource ds : dataSources) {
+                String dsName = ds.getName();
+                File dataSourceFullName = new File(dsName);
+                String displayName = dataSourceFullName.getName();
+                dataSourceMap.put(ds.getId(), displayName);  
+                toolTipList.add(dsName);
+                dataSourceList.add(displayName);
+            }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Unable to get current open case.", ex);
-        } catch (TskCoreException | SQLException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get data source info from database.", ex);
         }
-
-        List<String> dataSourcesList = new ArrayList<>(dataSourceMap.values());
-        Collections.sort(dataSourcesList, (String dsName1, String dsName2) -> dsName1.compareTo(dsName2));
-        List<String> dataSourceDisplayNames = new ArrayList<>();
-        for (String dataSource : dataSourcesList) {
-            File dataSourceFullName = new File(dataSource);
-            dataSourceDisplayNames.add(dataSourceFullName.getName());
-            toolTipList.add(dataSourceFullName.getParent());
-        }
-        return dataSourceDisplayNames;
+        return dataSourceList;
     }
 
+    /**
+     * Get a set of data source object ids that are selected.
+     * @return A set of selected object ids. 
+     */
     Set<Long> getDataSourcesSelected() {
         Set<Long> dataSourceObjIdSet = new HashSet<>();
         for (Long key : dataSourceMap.keySet()) {
@@ -108,14 +119,21 @@ public class DataSourcePanel extends javax.swing.JPanel {
         return dataSourceObjIdSet;
     }
 
+    /**
+     * Is dataSourceCheckBox selected
+     * @return true if the dataSoureCheckBox is selected
+     */
     boolean isSelected() {
         return this.dataSourceCheckBox.isSelected();
     }
 
+    /**
+     * Enable the dataSourceList and dataSourceNoteLable if the dataSourceCheckBox is checked.
+     */
     void setComponentsEnabled() {
         boolean enabled = this.isSelected();
         this.dataSourceList.setEnabled(enabled);
-        this.jLabel.setEnabled(enabled);
+        this.dataSourceNoteLable.setEnabled(enabled);
     }
 
     /**
@@ -130,7 +148,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
         dataSourceCheckBox = new javax.swing.JCheckBox();
-        jLabel = new javax.swing.JLabel();
+        dataSourceNoteLable = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(100, 100));
@@ -138,7 +156,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         dataSourceList.setModel(new javax.swing.AbstractListModel<String>() {
             List<String> strings  = getDataSourceArray();
             public int getSize() { return strings.size(); }
-            public String getElementAt(int i) { return strings.get(i); }
+            public String getElementAt(int idx) { return strings.get(idx); }
         });
         dataSourceList.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(dataSourceList);
@@ -150,8 +168,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel, org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.jLabel.text")); // NOI18N
+        dataSourceNoteLable.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNoteLable, org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.dataSourceNoteLable.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -165,7 +183,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel)
+                        .addComponent(dataSourceNoteLable)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -176,7 +194,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel)
+                .addComponent(dataSourceNoteLable)
                 .addContainerGap())
         );
 
@@ -189,41 +207,10 @@ public class DataSourcePanel extends javax.swing.JPanel {
         this.dataSourceList.setSelectedIndices(new int[0]);
     }//GEN-LAST:event_dataSourceCheckBoxActionPerformed
 
-    private void getLoadLogicalSources(SleuthkitCase tskDb) throws TskCoreException, SQLException {
-        final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info)) order by name";
-
-        try (
-                SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
-                ResultSet resultSet = query.getResultSet()) {
-            while (resultSet.next()) {
-                Long objectId = resultSet.getLong("obj_id");
-                String dataSourceName = resultSet.getString("name");
-                dataSourceMap.put(objectId, dataSourceName);
-                toolTipList.add(dataSourceName);
-            }
-        }
-    }
-
-    private void getLoadImageSources(SleuthkitCase tskDb) throws SQLException, TskCoreException {
-        final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info)) order by name";
-        try (
-                SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
-                ResultSet resultSet = query.getResultSet()) {
-
-            while (resultSet.next()) {
-                Long objectId = resultSet.getLong("obj_id");
-                String dataSourceName = resultSet.getString("name");
-                File image = new File(dataSourceName);
-                dataSourceMap.put(objectId, image.getName());
-                toolTipList.add(dataSourceName);
-             }
-        }
-    }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox dataSourceCheckBox;
     private javax.swing.JList<String> dataSourceList;
-    private javax.swing.JLabel jLabel;
+    private javax.swing.JLabel dataSourceNoteLable;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }

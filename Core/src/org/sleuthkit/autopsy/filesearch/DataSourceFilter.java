@@ -26,10 +26,17 @@ import org.openide.util.NbBundle.Messages;
  */
 class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
 
+    /**
+     * Construct DataSourceFilter with the DataSourcePanel
+     * @param component A DataSourcePanel
+     */
     public DataSourceFilter(DataSourcePanel component) {
         super(component);
     }
 
+    /**
+     * Default constructor to construct a new DataSourceFilter with a new DataSourcePanel
+     */
     public DataSourceFilter() {
         this(new DataSourcePanel());
     }
@@ -43,16 +50,16 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
     public String getPredicate() throws FilterValidationException {
         String predicate = "";
         for (Long dataSourceObjId : this.getComponent().getDataSourcesSelected()) {
-            predicate += "data_source_obj_id = '" + dataSourceObjId + "' OR ";
-        }
-        if (predicate.length() > 3) {
-            predicate = predicate.substring(0, predicate.length() - 3);
+            if (!predicate.isEmpty()) {
+                predicate += " OR ";
+            }
+            predicate += "data_source_obj_id = '" + dataSourceObjId + "'";
         }
         return predicate;
     }
 
     @Override
-    public void addActionListener(ActionListener l) {
+    public void addActionListener(ActionListener lis) {
     }
 
     @Override
