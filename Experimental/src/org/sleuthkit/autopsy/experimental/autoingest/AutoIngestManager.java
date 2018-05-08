@@ -388,7 +388,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
         AutoIngestJob job = event.getJob();
         if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
-            if (currentJob == event.getJob()) {
+            if (event.getJob().equals(currentJob)) {
                 cancelCurrentJob();
             }
         }
@@ -3147,8 +3147,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         SHUTDOWN,
         REPORT_STATE,
         CANCEL_JOB,
-        REPROCESS_JOB,
-        DELETE_CASE
+        REPROCESS_JOB
     }
 
     /**
