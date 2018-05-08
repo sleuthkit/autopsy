@@ -63,7 +63,6 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -133,6 +132,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
+        Event.CASE_DELETED.toString(),
         Event.JOB_STARTED.toString(),
         Event.REPORT_STATE.toString(),
         ControlEventType.PAUSE.toString(),

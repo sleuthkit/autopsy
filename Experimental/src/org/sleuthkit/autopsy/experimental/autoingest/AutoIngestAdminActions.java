@@ -204,8 +204,8 @@ final class AutoIngestAdminActions {
                      * time to see it).
                      */
                     dashboard.getRunningJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    dashboard.getMonitor().cancelJob(job);
                     EventQueue.invokeLater(() -> {
+                        dashboard.getMonitor().cancelJob(job);
                         dashboard.getRunningJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
                         dashboard.getRunningJobsPanel().setCursor(Cursor.getDefaultCursor());
                     });
@@ -331,22 +331,24 @@ final class AutoIngestAdminActions {
                         options,
                         options[JOptionPane.NO_OPTION]);
                 if (reply == JOptionPane.YES_OPTION) {
-                    dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    AutoIngestManager.CaseDeletionResult result = dashboard.getMonitor().deleteCase(job);
+                    EventQueue.invokeLater(() -> {
+                        dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        AutoIngestManager.CaseDeletionResult result = dashboard.getMonitor().deleteCase(job);
 
-                    dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
-                    dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    if (AutoIngestManager.CaseDeletionResult.FAILED == result) {
-                        JOptionPane.showMessageDialog(dashboard,
-                                String.format("Could not delete case %s. It may be in use.", caseName),
-                                org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
-                                JOptionPane.INFORMATION_MESSAGE);
-                    } else if (AutoIngestManager.CaseDeletionResult.PARTIALLY_DELETED == result) {
-                        JOptionPane.showMessageDialog(dashboard,
-                                String.format("Could not fully delete case %s. See log for details.", caseName),
-                                org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
-                                JOptionPane.INFORMATION_MESSAGE);
-                    }
+                        dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                        dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        if (AutoIngestManager.CaseDeletionResult.FAILED == result) {
+                            JOptionPane.showMessageDialog(dashboard,
+                                    String.format("Could not delete case %s. It may be in use.", caseName),
+                                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } else if (AutoIngestManager.CaseDeletionResult.PARTIALLY_DELETED == result) {
+                            JOptionPane.showMessageDialog(dashboard,
+                                    String.format("Could not fully delete case %s. See log for details.", caseName),
+                                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    });
                 }
             }
         }
