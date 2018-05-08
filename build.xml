@@ -67,6 +67,16 @@
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>
 
+    <target name="clean" depends="suite.clean">
+	<delete includeEmptyDirs="true" failonerror="false">
+		<fileset dir="docs\doxygen-user\user-docs" includes="**/*"/>
+	</delete>
+
+	<delete includeEmptyDirs="true" fileonerror="false">
+  		<fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
+	</delete>
+    </target>
+
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
       version number. -->
