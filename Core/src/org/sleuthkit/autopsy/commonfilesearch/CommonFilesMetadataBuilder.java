@@ -22,16 +22,24 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -200,6 +208,54 @@ abstract class CommonFilesMetadataBuilder {
         }
 
         return new CommonFilesMetadata(commonFiles);
+    }
+    
+    /**
+     * TODO Refactor, abstract shared code above
+     * @param correlationCase Optionally null, otherwise a case, or could be a CR case ID
+     * @return
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     * @throws SQLException
+     * @throws EamDbException 
+     */
+    public CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+
+        List<String> values = Arrays.asList((String[])  this.findCommonFiles().getMetadata().keySet().toArray());
+        
+        Map<String, Md5Metadata> commonFiles = new HashMap<>();
+         
+        try {
+
+            EamDb dbManager = EamDb.getInstance();
+            Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
+                    .collect(Collectors.toList());
+            
+             for (CorrelationAttributeInstance instance : artifactInstances) {
+                Long objectId =  1L; // instance.getID(); ID is currently private
+                String md5 = ""; // instance.getValue(); Currently not a member of COrrelationAttributeInstance .. since before we were looking up one at a time.
+                String dataSource = instance.getCorrelationDataSource().getName();
+
+                if (md5 == null || HashUtility.isNoDataMd5(md5)) {
+                    continue;
+                }
+
+                if (commonFiles.containsKey(md5)) {
+                    final Md5Metadata md5Metadata = commonFiles.get(md5);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                } else {
+                    final List<FileInstanceMetadata> fileInstances = new ArrayList<>();
+                    fileInstances.add(new FileInstanceMetadata(objectId, dataSource));
+                    Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
+                    commonFiles.put(md5, md5Metadata);
+                }
+             }
+            
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+        } 
+        return new CommonFilesMetadata(commonFiles);
+    
     }
 
     /**

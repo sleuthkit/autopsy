@@ -648,6 +648,82 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * TODO, shares code with getArtifactInstancesByTypeValue, refactor and abstract
+     * Retrieves eamArtiifact instances from the database that match the given
+     * list of MD5 values;
+     * 
+     * @param correlationCase Case id  to search on
+     * @param values List of ArtifactInstance MD5 values to find matches of.
+     * 
+     * @return List of artifact instances for a given list of MD5 values
+     */
+     public List<CorrelationAttributeInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
+      CorrelationAttribute.Type aType = CorrelationAttribute.getDefaultCorrelationTypes().get(0); // Files type
+        if(aType == null) {
+            throw new EamDbException("Correlation Type is null");
+        }
+        boolean singleCase = false;
+        if (correlationCase != null) {
+            singleCase = false;
+        }
+        Connection conn = connect();
+
+        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
+
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        
+        String valuesString = "";
+        StringBuilder valuesFilter = new StringBuilder(values.size());
+        if (!values.isEmpty()) {
+            for (String value : values) {
+                valuesFilter.append("'").append(value).append("',");
+            }
+            valuesString = valuesFilter.toString().substring(0, valuesFilter.length() - 1);
+        }
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        StringBuilder sql = new StringBuilder(9);
+        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM ");
+        sql.append(tableName);
+        sql.append(" LEFT JOIN cases ON ");
+        sql.append(tableName);
+        sql.append(".case_id=cases.id");
+        sql.append(" LEFT JOIN data_sources ON ");
+        sql.append(tableName);
+        sql.append(".data_source_id=data_sources.id");
+        sql.append(" WHERE value IN (?)");
+        if(singleCase) {
+            sql.append(" AND ");
+            sql.append(tableName);
+            sql.append(".case_id = ?");
+        }
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setString(1, valuesString);
+            if(singleCase) {
+                preparedStatement.setString(2, String.valueOf(correlationCase.getID()));
+            }
+            
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstances.add(artifactInstance);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return artifactInstances;
+     }
+     
+    /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
      *

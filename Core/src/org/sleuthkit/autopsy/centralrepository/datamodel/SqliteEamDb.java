@@ -419,6 +419,25 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         }            
     }    
     
+    
+    /**
+     * Retrieves eamArtiifact instances from the database that match the given
+     * list of MD5 values;
+     * 
+     * @param correlationCase Case id  to search on
+     * @param values List of ArtifactInstance MD5 values to find matches of.
+     * 
+     * @return List of artifact instances for a given list of MD5 values
+     */
+     public List<CorrelationAttributeInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.getArtifactInstancesByCaseValues(correlationCase, values);
+        } finally {
+            releaseSharedLock();
+        } 
+     }
+    
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
