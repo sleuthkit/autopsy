@@ -82,7 +82,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             String joinedErrors = String.join(System.lineSeparator(), errorMessages);
             assertEquals(joinedErrors, 0, errorMessages.size());
 
-            Case openCase = Case.getOpenCase();
+            Case openCase = Case.getCurrentCaseThrows();
             /*
              * Create ingest job settings.
              */
@@ -187,7 +187,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             //there will be 1 expected error regarding the encrypted partition not having a file system
             assertEquals(joinedErrors, 1, errorMessages.size());
 
-            Case openCase = Case.getOpenCase();
+            Case openCase = Case.getCurrentCaseThrows();
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
             //image includes an encrypted container file with size greater than 5 mb so default settings detect it
