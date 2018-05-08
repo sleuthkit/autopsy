@@ -81,7 +81,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Unable to get current open case.", ex);
         } catch (TskCoreException | SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to data source info from database.", ex);
+            logger.log(Level.SEVERE, "Failed to get data source info from database.", ex);
         }
 
         List<String> dataSourcesList = new ArrayList<>(dataSourceMap.values());
