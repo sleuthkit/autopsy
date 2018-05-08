@@ -83,11 +83,11 @@ public class EventNode extends DisplayableItemNode {
         "NodeProperty.displayName.known=Known",
         "NodeProperty.displayName.dateTime=Date/Time"})
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set properties = s.get(Sheet.PROPERTIES);
+        Sheet sheet = super.createSheet();
+        Sheet.Set properties = sheet.get(Sheet.PROPERTIES);
         if (properties == null) {
             properties = Sheet.createPropertiesSet();
-            s.put(properties);
+            sheet.put(properties);
         }
 
         properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
@@ -97,7 +97,7 @@ public class EventNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>("eventSubType", Bundle.NodeProperty_displayName_subType(), "sub type", event.getEventType().getDisplayName())); // NON-NLS
         properties.put(new NodeProperty<>("Known", Bundle.NodeProperty_displayName_known(), "known", event.getKnown().toString())); // NON-NLS
 
-        return s;
+        return sheet;
     }
 
     /**
@@ -224,7 +224,7 @@ public class EventNode extends DisplayableItemNode {
          */
         final SingleEvent eventById = eventsModel.getEventById(eventID);
 
-        SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+        SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
 
         if (eventById.getArtifactID().isPresent()) {

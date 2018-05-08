@@ -64,8 +64,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     public SleuthkitCase getSleuthkitCase() {
@@ -152,24 +152,24 @@ public class ExtractedContent implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "ExtractedContentNode.createSheet.name.desc"),
                     NAME));
-            return s;
+            return sheet;
         }
 
         @Override
@@ -211,7 +211,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  * may be received for a case that is already closed.
                  */
                 try {
-                    Case.getOpenCase();
+                    Case.getCurrentCaseThrows();
                     /**
                      * Due to some unresolved issues with how cases are closed,
                      * it is possible for the event to have a null oldValue if
@@ -234,7 +234,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  * may be received for a case that is already closed.
                  */
                 try {
-                    Case.getOpenCase();
+                    Case.getCurrentCaseThrows();
                     refresh(true);
                 } catch (NoCurrentCaseException notUsed) {
                     /**
@@ -342,29 +342,29 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.name"),
                     NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.displayName"),
                     NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.desc"),
                     type.getDisplayName()));
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
                     NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
                     NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
                     childCount));
 
-            return s;
+            return sheet;
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -402,7 +402,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -427,7 +427,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
                     } catch (NoCurrentCaseException notUsed) {
                         /**

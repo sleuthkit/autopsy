@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,63 +71,68 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     private static final Logger logger = Logger.getLogger(SolrSearchService.class.getName());
 
     /**
-     * Adds an artifact to the keyword search text index as a concantenation of
-     * all of its attributes.
+     * Indexes the given content for keyword search.
      *
-     * @param artifact The artifact to index.
+     * IMPORTANT: Currently, there are two correct uses for this code:
      *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    @Override
-    public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
-        if (artifact == null) {
-            return;
-        }
-
-        // We only support artifact indexing for Autopsy versions that use
-        // the negative range for artifact ids.
-        if (artifact.getArtifactID() > 0) {
-            return;
-        }
-        final Ingester ingester = Ingester.getDefault();
-
-        try {
-            ingester.indexMetaDataOnly(artifact);
-            ingester.indexText(new ArtifactTextExtractor(), artifact, null);
-        } catch (Ingester.IngesterException ex) {
-            throw new TskCoreException(ex.getCause().getMessage(), ex);
-        }
-    }
-
-    /**
-     * Add the given Content object to the text index.
+     * 1) Indexing an artifact created during while either the file level ingest
+     * module pipeline or the first stage data source level ingest module
+     * pipeline of an ingest job is running.
+     * 
+     * 2) Indexing a report.  
      *
      * @param content The content to index.
      *
-     * @throws TskCoreException
+     * @throws TskCoreException If there is a problem indexing the content.
      */
     @Override
     public void index(Content content) throws TskCoreException {
+        /*
+         * TODO (JIRA-1099): The following code has some issues that need to be
+         * resolved. For artifacts, it is assumed that the posting of artifacts
+         * is only occuring during an ingest job with an enabled keyword search
+         * ingest module handling index commits; it also assumes that the
+         * artifacts are only posted by modules in the either the file level
+         * ingest pipeline or the first stage data source level ingest pipeline,
+         * so that the artifacts will be searched during a periodic or final
+         * keyword search. It also assumes that the only other type of Content
+         * for which this API will be called are Reports generated at a time
+         * when doing a commit is required and desirable, i.e., in a context
+         * other than an ingest job.
+         */
         if (content == null) {
             return;
         }
         final Ingester ingester = Ingester.getDefault();
-
-        try {
-            ingester.indexText(new TikaTextExtractor(), content, null);
-        } catch (Ingester.IngesterException ex) {
-            try {
-                // Try the StringsTextExtractor if Tika extractions fails.
-                ingester.indexText(new StringsTextExtractor(), content, null);
-            } catch (Ingester.IngesterException ex1) {
-                throw new TskCoreException(ex.getCause().getMessage(), ex1);
+        if (content instanceof BlackboardArtifact) {
+            BlackboardArtifact artifact = (BlackboardArtifact) content;
+            if (artifact.getArtifactID() > 0) {
+                /*
+                 * Artifact indexing is only supported for artifacts that use
+                 * negative artifact ids to avoid overlapping with the object
+                 * ids of other types of Content.
+                 */
+                return;
             }
+            try {
+                ingester.indexMetaDataOnly(artifact);
+                ingester.indexText(new ArtifactTextExtractor(), artifact, null);
+            } catch (Ingester.IngesterException ex) {
+                throw new TskCoreException(ex.getCause().getMessage(), ex);
+            }
+        } else {
+            try {
+                ingester.indexText(new TikaTextExtractor(), content, null);
+            } catch (Ingester.IngesterException ex) {
+                try {
+                    // Try the StringsTextExtractor if Tika extractions fails.
+                    ingester.indexText(new StringsTextExtractor(), content, null);
+                } catch (Ingester.IngesterException ex1) {
+                    throw new TskCoreException(ex.getCause().getMessage(), ex1);
+                }
+            }
+            ingester.commit();
         }
-
-        // TODO: Review whether this is the right thing to do. We typically use
-        // a combination of autoCommit and the SearchRunner to ensure that data
-        // is committed but that might not be sufficient for reports (or artifacts).
-        ingester.commit();
     }
 
     /**
@@ -402,7 +407,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
          * in less than roughly two seconds. This stuff should be reworked using
          * an ExecutorService and tasks with Futures.
          */
-        KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
+        AdHocSearchChildFactory.BlackboardResultWriter.stopAllWriters();
         try {
             Thread.sleep(2000);
         } catch (InterruptedException ex) {
@@ -435,4 +440,36 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), bba.getDisplayName());
         }
     }
+
+    /**
+     * Adds an artifact to the keyword search text index as a concantenation of
+     * all of its attributes.
+     *
+     * @param artifact The artifact to index.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     * @deprecated Call index(Content) instead.
+     */
+    @Deprecated
+    @Override
+    public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
+        if (artifact == null) {
+            return;
+        }
+
+        // We only support artifact indexing for Autopsy versions that use
+        // the negative range for artifact ids.
+        if (artifact.getArtifactID() > 0) {
+            return;
+        }
+        final Ingester ingester = Ingester.getDefault();
+
+        try {
+            ingester.indexMetaDataOnly(artifact);
+            ingester.indexText(new ArtifactTextExtractor(), artifact, null);
+        } catch (Ingester.IngesterException ex) {
+            throw new TskCoreException(ex.getCause().getMessage(), ex);
+        }
+    }
+
 }

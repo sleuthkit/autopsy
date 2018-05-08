@@ -60,7 +60,7 @@ public class EventRootNode extends DisplayableItemNode {
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return null;
     }
 

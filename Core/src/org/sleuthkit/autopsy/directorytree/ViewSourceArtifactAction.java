@@ -49,7 +49,7 @@ class ViewSourceArtifactAction extends AbstractAction {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     if (associatedArtifact != null) {
                         dirTree.viewArtifact(associatedArtifact);
                         break;

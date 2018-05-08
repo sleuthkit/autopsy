@@ -66,7 +66,7 @@ final class CustomArtifactType {
      * @throws BlackboardException If there is an error adding any of the types.
      */
     static void addToCaseDatabase() throws Blackboard.BlackboardException, NoCurrentCaseException {
-        Blackboard blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
+        Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         artifactType = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAME, ARTIFACT_DISPLAY_NAME);
         intAttrType = blackboard.getOrAddAttributeType(INT_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, INT_ATTR_DISPLAY_NAME);
         doubleAttrType = blackboard.getOrAddAttributeType(DOUBLE_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE, DOUBLE_ATTR_DISPLAY_NAME);

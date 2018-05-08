@@ -170,10 +170,13 @@ final class RegexQuery implements KeywordSearchQuery {
          */
         // We construct the query by surrounding it with slashes (to indicate it is
         // a regular expression search) and .* as anchors (if the query doesn't
-        // already have them).
+        // already have them). We do not add .* if there is a boundary character.
+        boolean skipWildcardPrefix = queryStringContainsWildcardPrefix || getQueryString().startsWith("^");
+        boolean skipWildcardSuffix = queryStringContainsWildcardSuffix || 
+                (getQueryString().endsWith("$") && ( ! getQueryString().endsWith("\\$")));
         solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/"
-                + (queryStringContainsWildcardPrefix ? "" : ".*") + getQueryString()
-                + (queryStringContainsWildcardSuffix ? "" : ".*") + "/");
+                + (skipWildcardPrefix ? "" : ".*") + getQueryString()
+                + (skipWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
         solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
@@ -591,7 +594,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
             
             ccAccountInstance.addAttributes(attributes);
 

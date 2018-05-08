@@ -51,7 +51,7 @@ class StixArtifactData {
 
     public StixArtifactData(long a_objId, String a_observableId, String a_objType) {
         try {
-            Case case1 = Case.getOpenCase();
+            Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
             file = sleuthkitCase.getAbstractFileById(a_objId);
         } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -66,7 +66,7 @@ class StixArtifactData {
     public void createArtifact(String a_title) throws TskCoreException {
         Blackboard blackboard;
         try {
-            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_noOpenCase_errMsg(), ex.getLocalizedMessage());

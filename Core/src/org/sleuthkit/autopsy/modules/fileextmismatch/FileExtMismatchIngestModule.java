@@ -110,7 +110,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
     @Messages({"FileExtMismatchIngestModule.indexError.message=Failed to index file extension mismatch artifact for keyword search."})
     public ProcessResult process(AbstractFile abstractFile) {
         try {
-            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;

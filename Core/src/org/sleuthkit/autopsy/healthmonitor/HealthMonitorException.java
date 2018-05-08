@@ -16,35 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponentinterfaces;
-
-import java.awt.Component;
-import java.util.List;
-import org.sleuthkit.datamodel.AbstractFile;
+package org.sleuthkit.autopsy.healthmonitor;
 
 /**
- * Defines an interface for application specific content viewer
- *
+ * Exception used internally by the Services Health Monitor
  */
-public interface FileTypeViewer {
+class HealthMonitorException extends Exception {
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * Returns list of MIME types supported by this viewer
-     */
-    List<String> getSupportedMIMETypes();
+    HealthMonitorException(String message) {
+        super(message);
+    }
 
-    /**
-     * Display the given file's content in the view panel
-     */
-    void setFile(AbstractFile file);
-
-    /**
-     * Returns panel
-     */
-    Component getComponent();
-
-    /**
-     * Clears the data in the panel
-     */
-    void resetComponent();
+    HealthMonitorException(String message, Throwable cause) {
+        super(message, cause);
+    }   
 }

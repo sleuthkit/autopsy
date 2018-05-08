@@ -23,7 +23,7 @@
    
     <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
-        <ivy:resolve/>
+        <ivy:resolve log="quiet"/>
         <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
     </target>
     

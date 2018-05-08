@@ -386,8 +386,15 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                actionsList.add(new ViewContextAction(
+                                // action to go to the source file of the artifact
+                Content fileContent = ban.getLookup().lookup(AbstractFile.class);
+                if (fileContent == null) {
+                    Content content = ban.getLookup().lookup(Content.class);
+                    actionsList.add(new ViewContextAction("View Source Content in Directory", content));
+                } else {
+                    actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                }
             }
             Content c = ban.getLookup().lookup(File.class);
             Node n = null;

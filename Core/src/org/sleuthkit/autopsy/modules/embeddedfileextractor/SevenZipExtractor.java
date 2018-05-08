@@ -284,7 +284,7 @@ class SevenZipExtractor {
         //check if already has derived files, skip
         //check if local unpacked dir exists 
         if (archiveFile.hasChildren() && new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-            return Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
+            return Case.getCurrentCaseThrows().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
         }
         return new ArrayList<>();
     }
@@ -494,7 +494,7 @@ class SevenZipExtractor {
         final long archiveId = archiveFile.getId();
         SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr = null;
         try {
-            blackboard = Case.getOpenCase().getSleuthkitCase().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             unpackSuccessful = false;
@@ -997,7 +997,7 @@ class SevenZipExtractor {
          * files for the entire hierarchy
          */
         void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
-            final FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            final FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
             for (UnpackedNode child : rootNode.children) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }

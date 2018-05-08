@@ -20,6 +20,8 @@ The middle column displays each account, its device and type, and the number of 
 
 Selecting an account in the middle column will bring up the messages for that account in the right hand column. Here data about each message is displayed in the top section, and the messages itself can be seen in the bottom section (if applicable).
 
+The middle column and the right hand column both have a \ref ui_quick_search feature which can be used to quickly find a visible item in their section's table. 
+
 \image html cvt_messages.png
 
 */
