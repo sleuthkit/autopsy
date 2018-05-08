@@ -180,7 +180,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        dataSourceCheckBox.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.dataSourceCheckBox.AccessibleContext.accessibleName")); // NOI18N
+        dataSourceCheckBox.getAccessibleContext().setAccessibleName("");
     }// </editor-fold>//GEN-END:initComponents
 
     private void dataSourceCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourceCheckBoxActionPerformed
