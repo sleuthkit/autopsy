@@ -69,7 +69,7 @@ public class DataSourceLoader {
     public Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
         Map<Long, String> dataSouceMap = new HashMap<>();
 
-        Case currentCase = Case.getOpenCase();
+        Case currentCase = Case.getCurrentCaseThrows();
         SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
         loadLogicalSources(tskDb, dataSouceMap);

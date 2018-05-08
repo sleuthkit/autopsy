@@ -21,15 +21,51 @@ package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.netbeans.junit.NbTestCase;
+import org.openide.util.Exceptions;
+import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * @author bsweeney
+ * Provides setup and utility for testing presence of files in different data
+ * sets discoverable by Common Files Features.
+ *
+ * Data set definitions:
+ *
+ * set 1 
+ * + file1 
+ *  - IMG_6175.jpg 
+ * + file2 
+ *  - IMG_6175.jpg 
+ * + file3 
+ *  - BasicStyleGuide.doc
+ *
+ * set 2 
+ *  - adsf.pdf 
+ *  - IMG_6175.jpg
+ *
+ * set 3 
+ *  - BasicStyleGuide.doc 
+ *  - IMG_6175.jpg
+ *
+ * set 4 
+ *  - file.dat (empty file)
  */
 public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
 
@@ -40,6 +76,16 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
     private final Path IMAGE_PATH_2 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image2_v1.vhd");
     private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image3_v1.vhd");
     protected final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image4_v1.vhd");
+    
+    protected final String IMG = "IMG_6175.jpg";
+    protected final String DOC = "BasicStyleGuide.doc";
+    protected final String PDF = "adsf.pdf";
+    protected final String EMPTY = "file.dat";
+    
+    protected final String SET1 = "commonfiles_image1_v1.vhd";
+    protected final String SET2 = "commonfiles_image2_v1.vhd";
+    protected final String SET3 = "commonfiles_image3_v1.vhd";
+    protected final String SET4 = "commonfiles_image4_v1.vhd";
 
     protected DataSourceLoader dataSourceLoader;
 
@@ -50,7 +96,7 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
     @Override
     public void setUp() {
 
-        CaseUtils.createCase(CASE_DIRECTORY_PATH);
+        CaseUtils.createCase(CASE_DIRECTORY_PATH, "IntraCaseCommonFilesSearchTests");
 
         IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_1);
         IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_2);
@@ -64,5 +110,57 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
     public void tearDown() {
         CaseUtils.closeCase();
         CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
+    }
+
+    protected boolean fileExists(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
+
+        int tally = 0;
+
+        for (AbstractFile file : files) {
+
+            Long id = file.getId();
+
+            String fileName = file.getName();
+
+            String dataSourceName = objectIdToDataSource.get(id);
+
+            if (fileName.equals(name) && dataSourceName.equals(dataSource)) {
+                tally++;
+            }
+        }
+
+        return tally == count;
+    }
+
+    protected boolean fileExists(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
+        return fileExists(files, objectIdToDataSource, name, dataSource, 1);
+    }
+    
+    protected Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
+        Map<Long, String> instanceIdToDataSource = new HashMap<>();
+
+        for (Map.Entry<String, Md5Metadata> entry : metadata.getMetadata().entrySet()) {
+            for (FileInstanceMetadata md : entry.getValue().getMetadata()) {
+                instanceIdToDataSource.put(md.getObjectId(), md.getDataSourceName());
+            }
+        }
+
+        return instanceIdToDataSource;
+    }
+
+    protected List<AbstractFile> getFiles(Set<Long> keySet) {
+        List<AbstractFile> files = new ArrayList<>(keySet.size());
+
+        for (Long id : keySet) {
+            try {
+                AbstractFile file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(id);
+                files.add(file);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+                Assert.fail(ex);
+            }
+        }
+
+        return files;
     }
 }
