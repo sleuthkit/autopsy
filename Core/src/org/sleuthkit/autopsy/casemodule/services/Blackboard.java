@@ -1,14 +1,14 @@
 /*
- * Sleuth Kit Data Model
+ * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *	 http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,7 +65,7 @@ public final class Blackboard implements Closeable {
             throw new BlackboardException("Keyword search service not found");
         }
         try {
-            searchService.indexArtifact(artifact);
+            searchService.index(artifact);
         } catch (TskCoreException ex) {
             throw new BlackboardException("Error indexing artifact", ex);
         }

@@ -115,7 +115,7 @@ public final class Reports implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         ReportNodeFactory.this.refresh(true);
                     } catch (NoCurrentCaseException notUsed) {
                         /**
@@ -129,7 +129,7 @@ public final class Reports implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<Report> keys) {
             try {
-                keys.addAll(Case.getOpenCase().getAllReports());
+                keys.addAll(Case.getCurrentCaseThrows().getAllReports());
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(Reports.ReportNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get reports", ex); //NON-NLS
             }
@@ -266,7 +266,7 @@ public final class Reports implements AutopsyVisitableItem {
                         NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.title"),
                         JOptionPane.YES_NO_OPTION)) {
                     try {
-                        Case.getOpenCase().deleteReports(selectedReportsCollection);
+                        Case.getCurrentCaseThrows().deleteReports(selectedReportsCollection);
                     } catch (TskCoreException | NoCurrentCaseException ex) {
                         Logger.getLogger(DeleteReportAction.class.getName()).log(Level.SEVERE, "Error deleting reports", ex); // NON-NLS
                         MessageNotifyUtil.Message.error(Bundle.DeleteReportAction_showConfirmDialog_errorMsg());

@@ -98,7 +98,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         this.settings = settings;
         this.dataSources.addAll(dataSources);
         try {
-            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "No open case", ex);

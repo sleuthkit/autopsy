@@ -34,7 +34,8 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 /**
  * Factory class to generate nodes for SQLite table rows
  */
-public class SQLiteTableRowFactory extends ChildFactory<Integer> {
+
+class SQLiteTableRowFactory extends ChildFactory<Integer> {
 
     private final List<Map<String, Object>> rows;
     private final List<Action> colActions;

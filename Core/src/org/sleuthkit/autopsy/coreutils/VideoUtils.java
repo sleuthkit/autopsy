@@ -45,8 +45,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class VideoUtils {
 
-    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS =
-            Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
+    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
+            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
                     "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", //NON-NLS
                     "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", //NON-NLS
                     "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", //NON-NLS
@@ -91,8 +91,17 @@ public class VideoUtils {
     private VideoUtils() {
     }
 
-    public static File getTempVideoFile(AbstractFile file) throws NoCurrentCaseException {
-        return Paths.get(Case.getOpenCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
+    /**
+     * Gets a File object in the temp directory of the current case for the
+     * given AbstractFile object.
+     *
+     * @param file The AbstractFile object
+     *
+     * @return The File object
+     *
+     */
+    public static File getVideoFileInTempDir(AbstractFile file) throws NoCurrentCaseException {
+        return Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
@@ -104,7 +113,7 @@ public class VideoUtils {
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
         java.io.File tempFile;
         try {
-            tempFile = getTempVideoFile(file);
+            tempFile = getVideoFileInTempDir(file);
         } catch (NoCurrentCaseException ex) {
             LOGGER.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
             return null;
@@ -189,4 +198,25 @@ public class VideoUtils {
         }
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
+
+    /**
+     * Gets a File object in the temp directory of the current case for the
+     * given AbstractFile object.
+     *
+     * @param file The AbstractFile object
+     *
+     * @return The File object
+     *
+     * @deprecated Call getVideoFileInTempDir instead.
+     */
+    @Deprecated
+    public static File getTempVideoFile(AbstractFile file) {
+        try {
+            return getVideoFileInTempDir(file);
+        } catch (NoCurrentCaseException ex) {
+            // Mimic the old behavior.
+            throw new IllegalStateException(ex);
+        }
+    }
+    
 }
