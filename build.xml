@@ -72,7 +72,7 @@
 		<fileset dir="docs\doxygen-user\user-docs" includes="**/*"/>
 	</delete>
 
-	<delete includeEmptyDirs="true" fileonerror="false">
+	<delete includeEmptyDirs="true" failonerror="false">
   		<fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
 	</delete>
     </target>
