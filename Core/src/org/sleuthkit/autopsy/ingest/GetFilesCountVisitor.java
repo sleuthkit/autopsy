@@ -47,7 +47,7 @@ final class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
         //case of a real fs, query all files for it
         SleuthkitCase sc;
         try {
-            sc = Case.getOpenCase().getSleuthkitCase();
+            sc = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return 0L;

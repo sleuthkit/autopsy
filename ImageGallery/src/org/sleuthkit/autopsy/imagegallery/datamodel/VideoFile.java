@@ -91,7 +91,7 @@ public class VideoFile extends DrawableFile {
         if (media != null) {
             return media;
         }
-        final File cacheFile = VideoUtils.getTempVideoFile(this.getAbstractFile());
+        final File cacheFile = VideoUtils.getVideoFileInTempDir(this.getAbstractFile());
 
         if (cacheFile.exists() == false || cacheFile.length() < getAbstractFile().getSize()) {
             Files.createParentDirs(cacheFile);

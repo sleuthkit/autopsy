@@ -94,7 +94,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         typesRoot.updateShowCounts();
                         update();
                     } catch (NoCurrentCaseException notUsed) {

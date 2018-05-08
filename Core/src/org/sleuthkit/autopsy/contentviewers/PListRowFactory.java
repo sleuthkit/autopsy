@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 /**
  * Factory class to create nodes for Plist table view
  */
-public class PListRowFactory extends ChildFactory<Integer> {
+
+class PListRowFactory extends ChildFactory<Integer> {
 
     private final List<PropKeyValue> rows;
 

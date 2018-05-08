@@ -145,7 +145,7 @@ final class AddMemoryImageTask implements Runnable {
     private Image addImageToCase() throws NoCurrentCaseException, TskCoreException {
         progressMonitor.setProgressText(Bundle.AddMemoryImageTask_progressMessage_addingImageFile( memoryImagePath));
 
-        SleuthkitCase caseDatabase = Case.getOpenCase().getSleuthkitCase();
+        SleuthkitCase caseDatabase = Case.getCurrentCaseThrows().getSleuthkitCase();
         caseDatabase.acquireSingleUserCaseWriteLock();
         try {
             /*
