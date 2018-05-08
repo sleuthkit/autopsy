@@ -82,7 +82,8 @@ public class EncryptionDetectionTest extends NbTestCase {
             String joinedErrors = String.join(System.lineSeparator(), errorMessages);
             assertEquals(joinedErrors, 0, errorMessages.size());
 
-            Case openCase = Case.getCurrentCaseThrows();
+            Case openCase = Case.getCurrentCaseThrows();    
+
             /*
              * Create ingest job settings.
              */
