@@ -139,7 +139,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
         final File tempFile;
         try {
-            tempFile = VideoUtils.getTempVideoFile(currentFile);
+            tempFile = VideoUtils.getVideoFileInTempDir(currentFile);
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
