@@ -25,21 +25,21 @@ import java.util.Objects;
  */
 final class ArtifactKey {
     
-    private final String dataSource;
+    private final String dataSourceID;
     private final String filePath;
     
     ArtifactKey(String theDataSource, String theFilePath) {
-        dataSource = theDataSource;
+        dataSourceID = theDataSource;
         filePath = theFilePath.toLowerCase();
     }
    
     
     /**
      * 
-     * @return the dataSource device ID
+     * @return the dataSourceID device ID
      */
-    String getDataSource() {
-        return dataSource;
+    String getDataSourceID() {
+        return dataSourceID;
     }
     
     /**
@@ -53,7 +53,7 @@ final class ArtifactKey {
     @Override
     public boolean equals(Object other) {
         if (other instanceof ArtifactKey) {
-            return ((ArtifactKey) other).getDataSource().equals(dataSource) && ((ArtifactKey) other).getFilePath().equals(filePath);
+            return ((ArtifactKey) other).getDataSourceID().equals(dataSourceID) && ((ArtifactKey) other).getFilePath().equals(filePath);
         }
         return false;
         
@@ -62,9 +62,9 @@ final class ArtifactKey {
     @Override
     public int hashCode() {
         //int hash = 7;
-        //hash = 67 * hash + this.dataSource.hashCode();
+        //hash = 67 * hash + this.dataSourceID.hashCode();
         //hash = 67 * hash + this.filePath.hashCode();
       
-        return Objects.hash(dataSource, filePath);
+        return Objects.hash(dataSourceID, filePath);
     }
 }

@@ -135,7 +135,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         "DataContentViewerOtherCases.correlatedArtifacts.title=Attribute Frequency",
         "DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get frequency details."})
     /**
-     * Show how common the selected
+     * Show how common the selected correlationAttributes are with details dialog.
      */
     private void showCommonalityDetails() {
         if (correlationAttributes.isEmpty()) {
@@ -426,7 +426,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         } else {
             try {
                 // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
-                ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), this.file.getMd5Hash()));
+                if(this.file != null) {
+                    ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), this.file.getMd5Hash()));
+                }
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
@@ -521,7 +523,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         }
 
         // If known, or not in CR, add
-        if (knownStatus.equals(knownBad) || !artifactInstances.containsKey(instKey)) {
+        if (caseDbInstance.getKnownStatus().equals(knownBad) || !artifactInstances.containsKey(instKey)) {
             artifactInstances.put(instKey, caseDbInstance);
         }
     }
