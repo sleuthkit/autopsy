@@ -2,12 +2,13 @@
 
 # Verifies programs are installed and copies native code into the Autopsy folder structure
 
-TSK_VERSION=4.6.0
+TSK_VERSION=4.6.1
 
 # Verify PhotoRec was installed
 photorec_filepath=/usr/bin/photorec
-if [ -f "$photorec_filepath"  ]; then
-	echo "$photorec_filepath found"
+photorec_osx_filepath=/usr/local/bin/photorec
+if [ -f "$photorec_filepath"  ] || [ -f "$photorec_osx_filepath" ]; then
+	echo "photorec found"
 else
 	echo "ERROR: Photorec not found, please install the testdisk package"
 	exit 1
@@ -27,12 +28,23 @@ else
 fi
 
 # Verify Sleuth Kit Java was installed
-sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar;
+
+
+if [ -f "/usr/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
+    sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar
+elif [ -f "/usr/local/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
+    sleuthkit_jar_filepath=/usr/local/share/java/sleuthkit-$TSK_VERSION.jar
+else
+    echo "sleuthkit.jar file not found"
+    echo "exiting .."
+    exit 1
+fi
+
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-postgresql-$TSK_VERSION.jar;
 if [ -f "$sleuthkit_jar_filepath" ]; then
 	echo "$sleuthkit_jar_filepath found"
 	echo "Copying into the Autopsy directory"
-    	rm $ext_jar_filepath;
+    	rm -f $ext_jar_filepath;
     	if [ "$?" -gt 0 ]; then  #checking if remove operation failed
         	echo "exiting .."
         	exit 1

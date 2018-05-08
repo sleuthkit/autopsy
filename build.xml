@@ -91,19 +91,11 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-        <if>
-            <equals arg1="${os.family}" arg2="unix"/>
-            <then>
-                <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
-                <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
-            </then>
-        </if>
-        <if>
-            <equals arg1="${os.family}" arg2="windows"/>
-            <then>
-                <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
-            </then>
-        </if>
+        <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
+        <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
+        <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
+        <unzip src="${thirdparty.dir}/gstreamer/windows/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
+            
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
@@ -153,9 +145,9 @@
             </fileset>
         </delete>
         
-        <!-- step (4) zip again, but with the version numbers in the dir -->
+        <!-- step (4) zip again, but with the version numbers in the name & root folder -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
-            <zipfileset dir="${zip-tmp}/${app.name}"/>
+            <zipfileset dir="${zip-tmp}/${app.name}" prefix="${app.name}-${app.version}"/>
         </zip>
 
         <delete dir="${zip-tmp}"/>
@@ -294,9 +286,20 @@
     
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
-    <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
+    <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">    
+        <!-- Unzip file -->
+        <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
+        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-tmp-installer"/>
+        
+        <!-- Make a folder to move the contents into so that we get rid of the folder with the version number -->
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
-        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
+        <mkdir dir="${nbdist.dir}/${app.name}-installer"/>
+        <move todir="${nbdist.dir}/${app.name}-installer">
+            <fileset dir="${nbdist.dir}/${app.name}-tmp-installer/${app.name}-${app.version}">
+                <include name="**"/>
+            </fileset>
+        </move>
+        <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
         
         <antcall target="build-installer-${os.family}" />
     </target>

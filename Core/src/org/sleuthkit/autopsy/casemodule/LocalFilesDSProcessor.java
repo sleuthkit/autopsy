@@ -197,7 +197,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getOpenCase().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
+            File l01Dir = new File(Case.getCurrentCaseThrows().getModuleDirectory(), L01_EXTRACTION_DIR);  //WJS-TODO change to getOpenCase() when that method exists
             if (!l01Dir.exists()) {
                 l01Dir.mkdirs();
             }

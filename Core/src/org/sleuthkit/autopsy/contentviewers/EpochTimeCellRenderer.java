@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Custom Cell renderer to display a SQLite column cell as readable Epoch date/time 
  *
  */
-public class EpochTimeCellRenderer extends DefaultTableCellRenderer {
+class EpochTimeCellRenderer extends DefaultTableCellRenderer {
     
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());

@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -41,13 +40,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.EncodingType;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
@@ -70,6 +69,8 @@ class VolatilityProcessor {
     private String moduleOutputPath;
     private FileManager fileManager;
     private volatile boolean isCancelled;
+    private Content outputVirtDir;
+    private String profile;
 
     /**
      * Constructs a processor that runs Volatility on a given memory image file
@@ -77,11 +78,13 @@ class VolatilityProcessor {
      *
      * @param memoryImagePath Path to memory image file.
      * @param dataSource      The memory image data source.
+     * @param profile         Volatility profile to run or empty string to autodetect
      * @param plugInToRuns    Volatility plugins to run.
      * @param progressMonitor Progress monitor for reporting progress during
      *                        processing.
      */
-    VolatilityProcessor(String memoryImagePath, Image dataSource, List<String> plugInToRun, DataSourceProcessorProgressMonitor progressMonitor) {
+    VolatilityProcessor(String memoryImagePath, Image dataSource, String profile, List<String> plugInToRun, DataSourceProcessorProgressMonitor progressMonitor) {
+        this.profile = profile;
         this.memoryImagePath = memoryImagePath;
         this.pluginsToRun = plugInToRun;
         this.dataSource = dataSource;
@@ -105,7 +108,7 @@ class VolatilityProcessor {
         this.errorMsgs.clear();
 
         try {
-            this.currentCase = Case.getOpenCase();
+            this.currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_progressMessage_noCurrentCase(), ex);
         }
@@ -117,6 +120,13 @@ class VolatilityProcessor {
 
         fileManager = currentCase.getServices().getFileManager();
 
+        try {
+            // make a virtual directory to store the reports
+            outputVirtDir = currentCase.getSleuthkitCase().addVirtualDirectory(dataSource.getId(), "ModuleOutput");
+        } catch (TskCoreException ex) {
+           throw new VolatilityProcessorException("Error creating virtual directory", ex);
+        }
+        
         /*
          * Make an output folder unique to this data source.
          */
@@ -124,9 +134,14 @@ class VolatilityProcessor {
         moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), VOLATILITY, dataSourceId.toString()).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
-            directory.mkdirs();
+            directory.mkdirs();   
+        }
+        
+        // if they did not specify a profile, then run imageinfo to get one
+        if (profile.isEmpty() ) {
             progressMonitor.setProgressText(Bundle.VolatilityProcessor_progressMessage_runningImageInfo("imageinfo")); //NON-NLS
             runVolatilityPlugin("imageinfo"); //NON-NLS
+            profile = getProfileFromImageInfoOutput();
         }
 
         progressMonitor.setIndeterminate(false);
@@ -136,7 +151,6 @@ class VolatilityProcessor {
                 break;
             }
             String pluginToRun = pluginsToRun.get(i);
-            progressMonitor.setProgressText(Bundle.VolatilityProcessor_progressMessage_runningImageInfo(pluginToRun));
             runVolatilityPlugin(pluginToRun);
             progressMonitor.setProgress(i);
         }
@@ -172,28 +186,44 @@ class VolatilityProcessor {
         "VolatilityProcessor_exceptionMessage_errorIndexingOutput=Error indexing output for {0} plugin"
     })
     private void runVolatilityPlugin(String pluginToRun) throws VolatilityProcessorException {
+        progressMonitor.setProgressText("Running module " + pluginToRun);
+        
         List<String> commandLine = new ArrayList<>();
         commandLine.add("\"" + executableFile + "\""); //NON-NLS
         File memoryImage = new File(memoryImagePath);
         commandLine.add("--filename=" + memoryImage.getName()); //NON-NLS
-
-        File imageInfoOutputFile = new File(moduleOutputPath + "\\imageinfo.txt"); //NON-NLS
-        if (imageInfoOutputFile.exists()) {
-            String memoryProfile = parseImageInfoOutput(imageInfoOutputFile);
-            commandLine.add("--profile=" + memoryProfile); //NON-NLS
+        if (!profile.isEmpty()) {
+            commandLine.add("--profile=" + profile); //NON-NLS
         }
-
         commandLine.add(pluginToRun);
 
-        String outputFile = moduleOutputPath + "\\" + pluginToRun + ".txt"; //NON-NLS
+        switch (pluginToRun) {
+            case "dlldump":
+            case "moddump":
+            case "procdump":
+            case "dumpregistry":
+            case "dumpfiles":      
+                String outputDir = moduleOutputPath + File.separator + pluginToRun;
+                File directory = new File(outputDir);
+                if (!directory.exists()) {
+                    directory.mkdirs();   
+                }
+                commandLine.add("--dump-dir=" + outputDir); //NON-NLS
+                break;
+            default:
+                break;
+        }
+        
+        String outputFileAsString = moduleOutputPath + File.separator + pluginToRun + ".txt"; //NON-NLS
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
          * Add an environment variable to force Volatility to run with the same
          * permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-        processBuilder.redirectOutput(new File(outputFile));
-        processBuilder.redirectError(new File(moduleOutputPath + "\\Volatility_Run.err"));  //NON-NLS
+        File outputFile = new File(outputFileAsString);
+        processBuilder.redirectOutput(outputFile);
+        processBuilder.redirectError(new File(moduleOutputPath + File.separator +  "Volatility_err.txt"));  //NON-NLS
         processBuilder.directory(new File(memoryImage.getParent()));
 
         try {
@@ -209,32 +239,16 @@ class VolatilityProcessor {
         if (isCancelled) {
             return;
         }
-
-        /*
-         * Add the plugin output file to the case as a report.
-         */
+        
         try {
-            Report report = currentCase.getSleuthkitCase().addReport(outputFile, VOLATILITY, VOLATILITY + " " + pluginToRun + " Plugin"); //NON-NLS
-            try {
-                KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-                if (searchService != null) {
-                    searchService.index(report);
-                } else {
-                    errorMsgs.add(Bundle.VolatilityProcessor_exceptionMessage_searchServiceNotFound(pluginToRun));
-                    /*
-                     * Log the exception as well as add it to the error
-                     * messages, to ensure that the stack trace is not lost.
-                     */
-                    logger.log(Level.WARNING, Bundle.VolatilityProcessor_exceptionMessage_errorIndexingOutput(pluginToRun));
-                }
-            } catch (TskCoreException ex) {
-                throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorIndexingOutput(pluginToRun), ex);
-            }
+            String relativePath = new File(currentCase.getCaseDirectory()).toURI().relativize(new File(outputFileAsString).toURI()).getPath();
+            fileManager.addDerivedFile(pluginToRun, relativePath, outputFile.length(), 0, 0, 0, 0, true, outputVirtDir, null, null, null, null, EncodingType.NONE);
         } catch (TskCoreException ex) {
-            throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorAddingOutput(pluginToRun), ex);
+            errorMsgs.add("Error adding " + pluginToRun + " volatility report as a file");        
+            logger.log(Level.WARNING, "Error adding report as derived file", ex);
         }
-
-        createArtifactsFromPluginOutput(pluginToRun, new File(outputFile));
+        
+        createArtifactsFromPluginOutput(pluginToRun, new File(outputFileAsString));
     }
 
     /**
@@ -263,12 +277,18 @@ class VolatilityProcessor {
     @NbBundle.Messages({
         "VolatilityProcessor_exceptionMessage_failedToParseImageInfo=Could not parse image info"
     })
-    private String parseImageInfoOutput(File imageOutputFile) throws VolatilityProcessorException {
+    private String getProfileFromImageInfoOutput() throws VolatilityProcessorException {
+        File imageOutputFile = new File(moduleOutputPath + File.separator + "imageinfo.txt"); //NON-NLS  
         try (BufferedReader br = new BufferedReader(new FileReader(imageOutputFile))) {
             String fileRead = br.readLine();
-            String[] profileLine = fileRead.split(":");  //NON-NLS
-            String[] memProfile = profileLine[1].split(",|\\("); //NON-NLS
-            return memProfile[0].replaceAll("\\s+", ""); //NON-NLS
+            if (fileRead != null) {
+                String[] profileLine = fileRead.split(":");  //NON-NLS
+                String[] memProfile = profileLine[1].split(",|\\("); //NON-NLS
+                return memProfile[0].replaceAll("\\s+", ""); //NON-NLS
+            }
+            else {
+                throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_failedToParseImageInfo());
+            }
         } catch (IOException ex) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_failedToParseImageInfo(), ex);
         }
@@ -314,6 +334,8 @@ class VolatilityProcessor {
 
             String filePath = volfile.getParent();
 
+            logger.log(Level.INFO, "Looking up file " + fileName + " at path " + filePath);
+            
             try {
                 List<AbstractFile> resolvedFiles;
                 if (filePath == null) {
@@ -333,12 +355,13 @@ class VolatilityProcessor {
                     }
 
                     fileName += ".%"; //NON-NLS
+                    logger.log(Level.INFO, "Looking up file (extension wildcard) " + fileName + " at path " + filePath);
+            
                     if (filePath == null) {
                         resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
                     } else {
                         resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
                     }
-
                 }
 
                 if (resolvedFiles.isEmpty()) {
@@ -387,6 +410,7 @@ class VolatilityProcessor {
      * @param pluginOutputFile File that contains the output to parse.
      */
     private void createArtifactsFromPluginOutput(String pluginName, File pluginOutputFile) throws VolatilityProcessorException {
+        progressMonitor.setProgressText("Parsing module " + pluginName);
         Set<String> fileSet = null;
         switch (pluginName) {
             case "dlllist": //NON-NLS
@@ -421,6 +445,7 @@ class VolatilityProcessor {
         }
 
         if (fileSet != null && !fileSet.isEmpty()) {
+            progressMonitor.setProgressText("Flagging files from module " + pluginName);
             flagFiles(fileSet, pluginName);
         }
     }

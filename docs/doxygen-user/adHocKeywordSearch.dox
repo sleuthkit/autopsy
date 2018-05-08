@@ -39,6 +39,11 @@ Substring match should be used where the search term is just part of a word, or 
 
 Regex match can be used to search for a specific pattern. Regular expressions are supported using Lucene Regex Syntax which is documented here: https://www.elastic.co/guide/en/elasticsearch/reference/1.6/query-dsl-regexp-query.html#regexp-syntax. Wildcards are automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to make the resulting keyword hit more amenable to highlighting.
 
+<b>Note:</b> Since Autopsy 4.4, boundary characters ('^' and '$') no longer work as word boundaries. Previously a search for "^[0-9]{5}$" would return all five 
+digit strings surrounded by some type of non-word characters. For example, "The number 12345 is.." would contain a match, while "123456789 people" would not. This was because the regex
+was compared against each "word" in the document. In newer versions, the text is not split into words internally so this type of search no longer works. To get similar results, replace the 
+boundary characters with the specific characters that should represent a word break. For example, "^[0-9]{5}$" could become "[ \.\-\,][0-9]{5}[ \.\-\,]".
+
 There is some validation on the regex but it's best to test on a sample image to make sure your regexes are correct and working as expected. One simple way to test is by creating a sample text file that your expression should match, ingesting it as a \ref ds_log "Logical File Set" and then running the regex query.
 
 > In the year 1885 in an article titled Current Notes, the quick brown fox first jumped over the lazy dog.

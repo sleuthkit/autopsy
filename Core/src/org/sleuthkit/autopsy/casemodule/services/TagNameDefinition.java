@@ -297,7 +297,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
             }
             setting.append(tagName.toSettingsFormat());
             try {
-                SleuthkitCase caseDb = Case.getOpenCase().getSleuthkitCase();
+                SleuthkitCase caseDb = Case.getCurrentCaseThrows().getSleuthkitCase();
                 tagName.saveToCase(caseDb);
             } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);

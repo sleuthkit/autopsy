@@ -975,7 +975,7 @@ public class TimeLineController {
              * already closed.
              */
             try {
-                Case.getOpenCase();
+                Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException notUsed) {
                 // Case is closed, do nothing.
                 return;
