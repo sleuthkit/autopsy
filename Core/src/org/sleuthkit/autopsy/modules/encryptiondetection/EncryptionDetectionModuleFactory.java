@@ -107,11 +107,14 @@ public class EncryptionDetectionModuleFactory implements IngestModuleFactory {
 
     @Override
     public boolean isDataSourceIngestModuleFactory() {
-        return false;
+        return true;
     }
 
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException();
+        if (!(settings instanceof EncryptionDetectionIngestJobSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be an instance of EncryptionDetectionIngestJobSettings.");
+        }
+        return new EncryptionDetectionDataSourceIngestModule((EncryptionDetectionIngestJobSettings) settings);
     }
 }

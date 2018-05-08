@@ -53,15 +53,17 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * FilterNode containing properties and actions for keyword search.
+ * 
+ * Wraps the generic KeyValue node and customizes the property sheet and lookup
  */
-class KeywordSearchFilterNode extends FilterNode {
+class AdHocSearchFilterNode extends FilterNode {
 
     /**
      * Instantiate a KeywordSearchFilterNode.
      * 
      * @param original         The original source node.
      */
-    KeywordSearchFilterNode(Node original) {
+    AdHocSearchFilterNode(Node original) {
         super(original, null, new ProxyLookup(original.getLookup()));
     }
 
@@ -116,7 +118,7 @@ class KeywordSearchFilterNode extends FilterNode {
         @Override
         public List<Action> visit(Report r) {
             List<Action> actionsList = new ArrayList<>();
-            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
+            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), AdHocSearchFilterNode.this));
 
             actionsList.addAll(ContextMenuExtensionPoint.getActions());
             return actionsList;
@@ -161,7 +163,7 @@ class KeywordSearchFilterNode extends FilterNode {
 
         private List<Action> getFileActions(boolean enableHashSearch) {
             List<Action> actionsList = new ArrayList<>();
-            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
+            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), AdHocSearchFilterNode.this));
             actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
             actionsList.add(null);
             actionsList.add(ExtractAction.getInstance());
