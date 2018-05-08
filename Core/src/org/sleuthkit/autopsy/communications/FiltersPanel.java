@@ -209,7 +209,7 @@ final public class FiltersPanel extends JPanel {
 
         //TODO: something like this commented code could be used to show only
         //the account types that are found:
-        //final CommunicationsManager communicationsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
+        //final CommunicationsManager communicationsManager = Case.getCurrentOpenCase().getSleuthkitCase().getCommunicationsManager();
         //List<Account.Type> accountTypesInUse = communicationsManager.getAccountTypesInUse();
         //accountTypesInUSe.forEach(...)
         Account.Type.PREDEFINED_ACCOUNT_TYPES.forEach(type -> {
@@ -240,7 +240,7 @@ final public class FiltersPanel extends JPanel {
      */
     private void updateDeviceFilter(boolean initialState) {
         try {
-            final SleuthkitCase sleuthkitCase = Case.getOpenCase().getSleuthkitCase();
+            final SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
 
             for (DataSource dataSource : sleuthkitCase.getDataSources()) {
                 String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
