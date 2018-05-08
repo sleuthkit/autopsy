@@ -150,11 +150,11 @@ public final class IngestMonitor {
          */
         private void findRootDirectoryForCurrentCase() {
             try {
-                Case currentCase = Case.getOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 findRootDirectoryForCurrentCase(currentCase);
             } catch (NoCurrentCaseException unused) {
                 /*
-                 * Case.getOpenCase() throws NoCurrentCaseException when there
+                 * Case.getCurrentOpenCase() throws NoCurrentCaseException when there
                  * is no case.
                  */
                 root = new File(File.separator);

@@ -139,7 +139,7 @@ public class Md5Node extends DisplayableItemNode {
         @Override
         protected Node createNodeForKey(FileInstanceMetadata file) {
             try {
-                Case currentCase = Case.getOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
                 AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
                 
