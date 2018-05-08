@@ -21,16 +21,11 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
-import java.nio.file.Path;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
@@ -309,13 +304,50 @@ final class AutoIngestAdminActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
                 String caseName = job.getManifest().getCaseName();
-                Path metadataFilePath = job.getCaseDirectoryPath().resolve(caseName + CaseMetadata.getFileExtension());
-                Case.deleteCase(new CaseMetadata(metadataFilePath));
-            } catch (CaseMetadata.CaseMetadataException | CaseActionException ex) {
-                logger.log(Level.SEVERE, Bundle.AutoIngestAdminActions_deleteCaseAction_error(), ex);
-                MessageNotifyUtil.Message.error(Bundle.AutoIngestAdminActions_deleteCaseAction_error());
+
+                Object[] options = {
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.Delete"),
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DoNotDelete")
+                };
+                Object[] msgContent = {org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DeleteAreYouSure") + "\"" + caseName + "\"?"};
+                int reply = JOptionPane.showOptionDialog(dashboard,
+                        msgContent,
+                        org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.ConfirmDeletionHeader"),
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[JOptionPane.NO_OPTION]);
+                if (reply == JOptionPane.YES_OPTION) {
+                    dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    AutoIngestManager.CaseDeletionResult result = dashboard.getMonitor().deleteCase(job);
+
+                    dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                    dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    if (AutoIngestManager.CaseDeletionResult.FAILED == result) {
+                        JOptionPane.showMessageDialog(dashboard,
+                                String.format("Could not delete case %s. It may be in use.", caseName),
+                                org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } else if (AutoIngestManager.CaseDeletionResult.PARTIALLY_DELETED == result) {
+                        JOptionPane.showMessageDialog(dashboard,
+                                String.format("Could not fully delete case %s. See log for details.", caseName),
+                                org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
+                                JOptionPane.INFORMATION_MESSAGE);
+                    }
+                }
             }
         }
 

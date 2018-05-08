@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
@@ -49,7 +50,9 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
+import static org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus.DELETED;
 import static org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus.PENDING;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.Event;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
 
@@ -549,23 +552,17 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * Send an event to tell a remote node to reprocess the given job.
+     * Reprocess the given job.
      *
      * @param job
      */
     void reprocessJob(AutoIngestJob job) throws AutoIngestMonitorException {
-
         synchronized (jobsLock) {
-            /*
-             * Find the job in the completed jobs list.
-             */
-            for (AutoIngestJob completedJob : jobsSnapshot.getCompletedJobs()) {
-                if (completedJob.equals(job)) {
-                    // Remove from the completed jobs collection.
-                    jobsSnapshot.removeCompletedJob(job);
-                    break;
-                }
+            if (!jobsSnapshot.getCompletedJobs().contains(job)) {
+                return;
             }
+
+            jobsSnapshot.removeCompletedJob(job);
 
             /*
              * Add the job to the pending jobs queue and update the coordination
@@ -600,6 +597,60 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
             }
         }
+    }
+
+    /**
+     * Deletes a case. This includes deleting the case directory, the text
+     * index, and the case database. This does not include the directories
+     * containing the data sources and their manifests.
+     *
+     * @param job The job whose case you want to delete
+     *
+     * @return A result code indicating success, partial success, or failure.
+     */
+    CaseDeletionResult deleteCase(AutoIngestJob job) {
+        CaseDeletionResult result = CaseDeletionResult.FULLY_DELETED;
+
+        synchronized (jobsLock) {
+            String caseName = job.getManifest().getCaseName();
+            Path metadataFilePath = job.getCaseDirectoryPath().resolve(caseName + CaseMetadata.getFileExtension());
+
+            try {
+                CaseMetadata metadata = new CaseMetadata(metadataFilePath);
+                Case.deleteCase(metadata);
+
+            } catch (CaseMetadata.CaseMetadataException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Failed to get case metadata file %s for case %s at %s", metadataFilePath.toString(), caseName, job.getCaseDirectoryPath().toString()), ex);
+                return CaseDeletionResult.FAILED;
+            } catch (CaseActionException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Failed to physically delete case %s at %s", caseName, job.getCaseDirectoryPath().toString()), ex);
+                return CaseDeletionResult.FAILED;
+            }
+
+            // Update the state of completed jobs associated with this case to indicate
+            // that the case has been deleted
+            for (AutoIngestJob completedJob : jobsSnapshot.getCompletedJobs()) {
+                if (caseName.equals(completedJob.getManifest().getCaseName())) {
+                    try {
+                        completedJob.setProcessingStatus(DELETED);
+                        AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(completedJob);
+                        coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, completedJob.getManifest().getFilePath().toString(), nodeData.toArray());
+                    } catch (CoordinationServiceException | InterruptedException ex) {
+                        LOGGER.log(Level.SEVERE, String.format("Failed to update completed job node data for %s when deleting case %s", completedJob.getManifest().getFilePath().toString(), caseName), ex);
+                        return CaseDeletionResult.PARTIALLY_DELETED;
+                    }
+                }
+            }
+
+            // Remove jobs associated with this case from the completed jobs collection.
+            jobsSnapshot.completedJobs.removeIf((AutoIngestJob completedJob) -> 
+                completedJob.getManifest().getCaseName().equals(caseName));
+
+            // Publish a message to update auto ingest nodes.
+            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME));
+        }
+
+        return result;
     }
 
     /**
