@@ -170,7 +170,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             AutoIngestJobsNode autoIngestNode = new AutoIngestJobsNode(jobsSnapshot, status);
             explorerManager.setRootContext(autoIngestNode);
             outline.setRowSelectionAllowed(true);     
-            if (selectedNodes.length > 0 && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
+            if (selectedNodes.length > 0 && autoIngestNode.getChildren().findChild(selectedNodes[0].getName()) != null && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
                 try {
                     explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
                 } catch (PropertyVetoException ignore) {

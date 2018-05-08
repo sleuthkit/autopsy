@@ -93,6 +93,7 @@ import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.Shar
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.AutoIngestJobException;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -133,7 +134,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
         Event.JOB_STARTED.toString(),
-        Event.REPORT_STATE.toString()}));
+        Event.REPORT_STATE.toString(),
+        ControlEventType.PAUSE.toString(),
+        ControlEventType.RESUME.toString(),
+        ControlEventType.SHUTDOWN.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -281,6 +285,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     handleRemoteCaseDeletedEvent((AutoIngestCaseDeletedEvent) event);
                 } else if (event instanceof AutoIngestRequestNodeStateEvent) {
                     handleRemoteRequestNodeStateEvent();
+                } else if (event instanceof AutoIngestNodeControlEvent) {
+                    handleRemoteNodeControlEvent((AutoIngestNodeControlEvent) event);
                 }
             }
         }
@@ -404,6 +410,28 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         eventPublisher.publishRemotely(lastPublishedStateEvent);
     }
 
+    private void handleRemoteNodeControlEvent(AutoIngestNodeControlEvent event) {
+        if (event.getNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            switch (event.getControlEventType()) {
+                case PAUSE:
+                    pause();
+                    break;
+                case RESUME:
+                    resume();
+                    break;
+                case SHUTDOWN:
+                    shutDown();
+                    // Notify the front end (if any) to shutdown.
+                    setChanged();
+                    notifyObservers(Event.SHUTTING_DOWN);
+                    break;
+                default:
+                    SYS_LOGGER.log(Level.WARNING, "Received unsupported control event: {0}", event.getControlEventType());
+                    break;
+            }
+        }
+    }
+
     /**
      * Shuts down auto ingest.
      */
@@ -418,6 +446,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             eventPublisher.removeSubscriber(EVENT_LIST, instance);
             stopInputFolderScans();
             stopJobProcessing();
+            eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.SHUTDOWN, AutoIngestManager.LOCAL_HOST_NAME));
             eventPublisher.closeRemoteEventChannel();
             cleanupJobs();
 
@@ -1695,14 +1724,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      * object.
                      */
                     setChanged();
-                    notifyObservers(Event.PAUSED_BY_REQUEST);
-
-                    /**
-                     * Publish an event to let remote listeners know that the
-                     * node has been paused.
-                     */
-                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
+                    notifyObservers(Event.PAUSED_BY_USER_REQUEST);
                 }
+                /**
+                 * Publish an event to let remote listeners know that a pause
+                 * has been requested.
+                 */
+                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSE_REQUESTED, AutoIngestManager.LOCAL_HOST_NAME));
             }
         }
 
@@ -1745,18 +1773,22 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                              if auto ingest is shutting down.
          */
         private void pauseIfRequested() throws InterruptedException {
+            if (State.SHUTTING_DOWN == state) {
+                return;
+            }
+
             synchronized (pauseLock) {
                 if (pauseRequested) {
                     SYS_LOGGER.log(Level.INFO, "Job processing paused by request");
                     pauseRequested = false;
                     setChanged();
-                    notifyObservers(Event.PAUSED_BY_REQUEST);
+                    notifyObservers(Event.PAUSED_BY_USER_REQUEST);
 
                     /**
                      * Publish an event to let remote listeners know that the
                      * node has been paused.
                      */
-                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
+                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.PAUSED_BY_USER_REQUEST, AutoIngestManager.LOCAL_HOST_NAME));
 
                     pauseLock.wait();
                     SYS_LOGGER.log(Level.INFO, "Job processing resumed after pause request");
@@ -1780,6 +1812,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                              if auto ingest is shutting down.
          */
         private void pauseForSystemError() throws InterruptedException {
+            if (State.SHUTTING_DOWN == state) {
+                return;
+            }
+
             synchronized (pauseLock) {
                 SYS_LOGGER.log(Level.SEVERE, "Job processing paused for system error");
                 setChanged();
@@ -3061,12 +3097,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         JOB_COMPLETED,
         CASE_PRIORITIZED,
         CASE_DELETED,
-        PAUSED_BY_REQUEST,
+        PAUSE_REQUESTED,
+        PAUSED_BY_USER_REQUEST,
         PAUSED_FOR_SYSTEM_ERROR,
         RESUMED,
         STARTING_UP,
         RUNNING,
         SHUTTING_DOWN,
+        SHUTDOWN,
         REPORT_STATE
     }
 
