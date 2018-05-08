@@ -606,8 +606,6 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return A result code indicating success, partial success, or failure.
      */
     CaseDeletionResult deleteCase(AutoIngestJob job) {
-        CaseDeletionResult result = CaseDeletionResult.FULLY_DELETED;
-
         synchronized (jobsLock) {
             String caseName = job.getManifest().getCaseName();
             Path metadataFilePath = job.getCaseDirectoryPath().resolve(caseName + CaseMetadata.getFileExtension());
@@ -647,7 +645,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME));
         }
 
-        return result;
+        return CaseDeletionResult.FULLY_DELETED;
     }
 
     /**
