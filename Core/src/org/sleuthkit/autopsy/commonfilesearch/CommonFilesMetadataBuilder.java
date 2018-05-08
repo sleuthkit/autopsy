@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeCommonInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -220,28 +221,29 @@ abstract class CommonFilesMetadataBuilder {
      * @throws EamDbException 
      */
     public CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-
-        List<String> values = Arrays.asList((String[])  this.findCommonFiles().getMetadata().keySet().toArray());
-        
-        Map<String, Md5Metadata> commonFiles = new HashMap<>();
+        CommonFilesMetadata metaData  =  this.findCommonFiles(); // TODO, have another method which returns ALL md5/objectIds nstead of current query of count > 2
+        Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
+        List<String> values = Arrays.asList((String[]) commonFiles.keySet().toArray()); 
          
         try {
 
             EamDb dbManager = EamDb.getInstance();
-            Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
+            Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
                     .collect(Collectors.toList());
             
-             for (CorrelationAttributeInstance instance : artifactInstances) {
-                Long objectId =  1L; // instance.getID(); ID is currently private
-                String md5 = ""; // instance.getValue(); Currently not a member of COrrelationAttributeInstance .. since before we were looking up one at a time.
+             
+             for (CorrelationAttributeCommonInstance instance : artifactInstances) {
+                Long objectId =  1L; //TODO, need to retrieve ALL (even count < 2) AbstractFiles from this case to us for objectId for CR matches;
+                String md5 = instance.getValue();
                 String dataSource = instance.getCorrelationDataSource().getName();
 
                 if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                     continue;
                 }
-
+                // TODO Build a 3rd list which contains instances which are in commonFiles map, use current case objectId
                 if (commonFiles.containsKey(md5)) {
                     final Md5Metadata md5Metadata = commonFiles.get(md5);
+                    //TODO should FIleInstanceMetadata carry Knownstatus from CR instances?
                     md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
                 } else {
                     final List<FileInstanceMetadata> fileInstances = new ArrayList<>();

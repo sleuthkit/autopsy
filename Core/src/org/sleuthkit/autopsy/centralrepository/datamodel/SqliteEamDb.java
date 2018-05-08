@@ -34,9 +34,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 
 /**
- * Sqlite implementation of the Central Repository database.
- * All methods in AbstractSqlEamDb that read or write to the database should
- * be overriden here and use appropriate locking.
+ * Sqlite implementation of the Central Repository database. All methods in
+ * AbstractSqlEamDb that read or write to the database should be overriden here
+ * and use appropriate locking.
  */
 public class SqliteEamDb extends AbstractSqlEamDb {
 
@@ -47,17 +47,18 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     private BasicDataSource connectionPool = null;
 
     private final SqliteEamDbSettings dbSettings;
-    
+
     // While the Sqlite database should only be used for single users, it is still
     // possible for multiple threads to attempt to write to the database simultaneously. 
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true);
 
     /**
      * Get the singleton instance of SqliteEamDb
-     * 
+     *
      * @return the singleton instance of SqliteEamDb
-     * 
-     * @throws EamDbException if one or more default correlation type(s) have an invalid db table name.
+     *
+     * @throws EamDbException if one or more default correlation type(s) have an
+     * invalid db table name.
      */
     public synchronized static SqliteEamDb getInstance() throws EamDbException {
         if (instance == null) {
@@ -68,9 +69,9 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
-     * 
-     * @throws EamDbException if the AbstractSqlEamDb class has one or more default
-     *      correlation type(s) having an invalid db table name.
+     *
+     * @throws EamDbException if the AbstractSqlEamDb class has one or more
+     * default correlation type(s) having an invalid db table name.
      */
     private SqliteEamDb() throws EamDbException {
         dbSettings = new SqliteEamDbSettings();
@@ -80,7 +81,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     @Override
     public void shutdownConnections() throws EamDbException {
         try {
-            synchronized(this) {
+            synchronized (this) {
                 if (null != connectionPool) {
                     connectionPool.close();
                     connectionPool = null; // force it to be re-created on next connect()
@@ -90,7 +91,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS
         }
     }
-    
+
     @Override
     public void updateSettings() {
         synchronized (this) {
@@ -108,9 +109,9 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
     @Override
     public void reset() throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
-        
+
             Connection conn = connect();
 
             try {
@@ -151,11 +152,11 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      *
      */
     private void setupConnectionPool() throws EamDbException {
-        
+
         if (dbSettings.dbFileExists() == false) {
             throw new EamDbException("Central repository database missing");
         }
-        
+
         connectionPool = new BasicDataSource();
         connectionPool.setDriverClassName(dbSettings.getDriver());
         connectionPool.setUrl(dbSettings.getConnectionURL());
@@ -201,25 +202,24 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         return "";
     }
 
-   
     /**
      * Add a new name/value pair in the db_info table.
      *
-     * @param name  Key to set
+     * @param name Key to set
      * @param value Value to set
      *
      * @throws EamDbException
      */
     @Override
     public void newDbInfo(String name, String value) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.newDbInfo(name, value);
         } finally {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
      * Get the value for the given name from the name/value db_info table.
      *
@@ -231,47 +231,47 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public String getDbInfo(String name) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getDbInfo(name);
         } finally {
             releaseSharedLock();
-        }    
+        }
     }
-    
+
     /**
      * Update the value for a name in the name/value db_info table.
      *
-     * @param name  Name to find
+     * @param name Name to find
      * @param value Value to assign to name.
      *
      * @throws EamDbException
      */
     @Override
     public void updateDbInfo(String name, String value) throws EamDbException {
-         try{
+        try {
             acquireExclusiveLock();
             super.updateDbInfo(name, value);
         } finally {
             releaseExclusiveLock();
-        }       
+        }
     }
-    
-     /**
+
+    /**
      * Creates new Case in the database from the given case
-     * 
+     *
      * @param autopsyCase The case to add
      */
     @Override
     public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
-         try{
+        try {
             acquireExclusiveLock();
             return super.newCase(autopsyCase);
         } finally {
             releaseExclusiveLock();
-        }          
-    }    
-    
+        }
+    }
+
     /**
      * Creates new Case in the database
      *
@@ -281,14 +281,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
-         try{
+        try {
             acquireExclusiveLock();
             return super.newCase(eamCase);
         } finally {
             releaseExclusiveLock();
-        }          
+        }
     }
-    
+
     /**
      * Updates an existing Case in the database
      *
@@ -296,14 +296,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public void updateCase(CorrelationCase eamCase) throws EamDbException {
-         try{
+        try {
             acquireExclusiveLock();
             super.updateCase(eamCase);
         } finally {
             releaseExclusiveLock();
-        }           
-    }    
-    
+        }
+    }
+
     /**
      * Retrieves Case details based on Case UUID
      *
@@ -313,14 +313,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCaseByUUID(caseUUID);
         } finally {
             releaseSharedLock();
-        }            
-    }   
-    
+        }
+    }
+
     /**
      * Retrieves cases that are in DB.
      *
@@ -328,14 +328,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public List<CorrelationCase> getCases() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCases();
         } finally {
             releaseSharedLock();
-        }            
-    } 
-    
+        }
+    }
+
     /**
      * Creates new Data Source in the database
      *
@@ -343,32 +343,33 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
-         try{
+        try {
             acquireExclusiveLock();
             super.newDataSource(eamDataSource);
         } finally {
             releaseExclusiveLock();
-        }            
-    }    
-     
+        }
+    }
+
     /**
      * Retrieves Data Source details based on data source device ID
      *
-     * @param correlationCase the current CorrelationCase used for ensuring uniqueness of DataSource
+     * @param correlationCase the current CorrelationCase used for ensuring
+     * uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
     @Override
     public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getDataSource(correlationCase, dataSourceDeviceId);
         } finally {
             releaseSharedLock();
-        }               
-    }    
-    
+        }
+    }
+
     /**
      * Return a list of data sources in the DB
      *
@@ -376,14 +377,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public List<CorrelationDataSource> getDataSources() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getDataSources();
         } finally {
             releaseSharedLock();
-        }              
-    }  
-    
+        }
+    }
+
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
@@ -392,57 +393,57 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public void addArtifact(CorrelationAttribute eamArtifact) throws EamDbException {
-         try{
+        try {
             acquireExclusiveLock();
             super.addArtifact(eamArtifact);
         } finally {
             releaseExclusiveLock();
-        }                
-    }    
-    
+        }
+    }
+
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
-     * @param aType  The type of the artifact
-     * @param value  The correlation value
+     * @param aType The type of the artifact
+     * @param value The correlation value
      *
      * @return List of artifact instances for a given type/value
      */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValue(aType, value);
         } finally {
             releaseSharedLock();
-        }            
-    }    
-    
-    
+        }
+    }
+
     /**
      * Retrieves eamArtiifact instances from the database that match the given
      * list of MD5 values;
-     * 
-     * @param correlationCase Case id  to search on
+     *
+     * @param correlationCase Case id to search on
      * @param values List of ArtifactInstance MD5 values to find matches of.
-     * 
+     *
      * @return List of artifact instances for a given list of MD5 values
      */
-     public List<CorrelationAttributeInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
-        try{
+    @Override
+    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
+        try {
             acquireSharedLock();
             return super.getArtifactInstancesByCaseValues(correlationCase, values);
         } finally {
             releaseSharedLock();
-        } 
-     }
-    
+        }
+    }
+
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
      *
-     * @param aType    EamArtifact.Type to search for
+     * @param aType EamArtifact.Type to search for
      * @param filePath File path to search for
      *
      * @return List of 0 or more EamArtifactInstances
@@ -451,14 +452,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByPath(CorrelationAttribute.Type aType, String filePath) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getArtifactInstancesByPath(aType, filePath);
         } finally {
             releaseSharedLock();
-        }              
-    }   
-    
+        }
+    }
+
     /**
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
@@ -467,29 +468,29 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param value The value to search for
      *
      * @return Number of artifact instances having ArtifactType and
-     *         ArtifactValue.
-     * @throws EamDbException 
+     * ArtifactValue.
+     * @throws EamDbException
      */
     @Override
     public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCountArtifactInstancesByTypeValue(aType, value);
         } finally {
             releaseSharedLock();
-        }    
+        }
     }
-    
+
     @Override
     public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getFrequencyPercentage(corAttr);
         } finally {
             releaseSharedLock();
-        }            
-    }    
-    
+        }
+    }
+
     /**
      * Retrieves number of unique caseDisplayName / dataSource tuples in the
      * database that are associated with the artifactType and artifactValue of
@@ -503,112 +504,111 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCountUniqueCaseDataSourceTuplesHavingTypeValue(aType, value);
         } finally {
             releaseSharedLock();
-        }  
-    }    
-    
+        }
+    }
 
     @Override
     public Long getCountUniqueDataSources() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCountUniqueDataSources();
         } finally {
             releaseSharedLock();
-        }  
-    }    
-    
+        }
+    }
+
     /**
      * Retrieves number of eamArtifact instances in the database that are
      * associated with the caseDisplayName and dataSource of the given
      * eamArtifact instance.
      *
-     * @param caseUUID     Case ID to search for
+     * @param caseUUID Case ID to search for
      * @param dataSourceID Data source ID to search for
      *
      * @return Number of artifact instances having caseDisplayName and
-     *         dataSource
+     * dataSource
      */
     @Override
     public Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCountArtifactInstancesByCaseDataSource(caseUUID, dataSourceID);
         } finally {
             releaseSharedLock();
-        }          
-    }    
-    
+        }
+    }
+
     /**
      * Executes a bulk insert of the eamArtifacts added from the
      * prepareBulkArtifact() method
      */
     @Override
     public void bulkInsertArtifacts() throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.bulkInsertArtifacts();
         } finally {
             releaseExclusiveLock();
-        }            
-    }    
-    
+        }
+    }
+
     /**
      * Executes a bulk insert of the cases
      */
     @Override
     public void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.bulkInsertCases(cases);
         } finally {
             releaseExclusiveLock();
-        }         
-    }    
-    
+        }
+    }
+
     /**
-     * Sets an eamArtifact instance to the given knownStatus. 
-     * knownStatus should be BAD if the file has been tagged with a notable tag and
-     * UNKNOWN otherwise. If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist it is added with the
-     * given status.
+     * Sets an eamArtifact instance to the given knownStatus. knownStatus should
+     * be BAD if the file has been tagged with a notable tag and UNKNOWN
+     * otherwise. If eamArtifact exists, it is updated. If eamArtifact does not
+     * exist it is added with the given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param knownStatus The status to change the artifact to. Should never be KNOWN
+     * @param knownStatus The status to change the artifact to. Should never be
+     * KNOWN
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.setArtifactInstanceKnownStatus(eamArtifact, knownStatus);
         } finally {
             releaseExclusiveLock();
-        }     
-    }   
-    
+        }
+    }
+
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
      * "Bad".
      *
      * @param aType EamArtifact.Type to search for
      * @param value Value to search for
-     * 
+     *
      * @return List with 0 or more matching eamArtifact instances.
      */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getArtifactInstancesKnownBad(aType, value);
         } finally {
             releaseSharedLock();
-        }       
-    }    
-    
+        }
+    }
+
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
@@ -619,14 +619,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCountArtifactInstancesKnownBad(aType, value);
         } finally {
             releaseSharedLock();
-        }             
-    }    
-    
+        }
+    }
+
     /**
      * Gets list of distinct case display names, where each case has 1+ Artifact
      * Instance matching eamArtifact with knownStatus = "Bad".
@@ -635,37 +635,39 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
-     *         bad
+     * bad
      *
      * @throws EamDbException
      */
     @Override
     public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getListCasesHavingArtifactInstancesKnownBad(aType, value);
         } finally {
             releaseSharedLock();
-        }       
-    }    
-    
+        }
+    }
+
     /**
      * Remove a reference set and all values contained in it.
+     *
      * @param referenceSetID
-     * @throws EamDbException 
+     * @throws EamDbException
      */
     @Override
-    public void deleteReferenceSet(int referenceSetID) throws EamDbException{
-        try{
+    public void deleteReferenceSet(int referenceSetID) throws EamDbException {
+        try {
             acquireExclusiveLock();
             super.deleteReferenceSet(referenceSetID);
         } finally {
             releaseExclusiveLock();
-        }   
-    }    
-    
+        }
+    }
+
     /**
      * Check if the given hash is in a specific reference set
+     *
      * @param value
      * @param referenceSetID
      * @param correlationTypeID
@@ -673,32 +675,34 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.isValueInReferenceSet(value, referenceSetID, correlationTypeID);
         } finally {
             releaseSharedLock();
-        }          
+        }
     }
-    
+
     /**
-     * Check whether a reference set with the given name/version is in the central repo.
-     * Used to check for name collisions when creating reference sets.
+     * Check whether a reference set with the given name/version is in the
+     * central repo. Used to check for name collisions when creating reference
+     * sets.
+     *
      * @param referenceSetName
      * @param version
      * @return true if a matching set is found
-     * @throws EamDbException 
+     * @throws EamDbException
      */
     @Override
     public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.referenceSetExists(referenceSetName, version);
         } finally {
             releaseSharedLock();
-        }  
+        }
     }
-    
+
     /**
      * Is the artifact known as bad according to the reference entries?
      *
@@ -708,34 +712,34 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
-        try{
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {
+        try {
             acquireSharedLock();
             return super.isArtifactKnownBadByReference(aType, value);
         } finally {
             releaseSharedLock();
-        }      
+        }
     }
-    
+
     /**
      * Add a new organization
      *
      * @return the Organization ID of the newly created organization.
-     * 
+     *
      * @param eamOrg The organization to add
      *
      * @throws EamDbException
      */
     @Override
     public long newOrganization(EamOrganization eamOrg) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             return super.newOrganization(eamOrg);
         } finally {
             releaseExclusiveLock();
-        }         
-    }    
-    
+        }
+    }
+
     /**
      * Get all organizations
      *
@@ -745,14 +749,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public List<EamOrganization> getOrganizations() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getOrganizations();
         } finally {
             releaseSharedLock();
-        }    
-    }    
-    
+        }
+    }
+
     /**
      * Get an organization having the given ID
      *
@@ -764,33 +768,34 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public EamOrganization getOrganizationByID(int orgID) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getOrganizationByID(orgID);
         } finally {
             releaseSharedLock();
-        }    
-    } 
-    
+        }
+    }
+
     @Override
     public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
-          try{
+        try {
             acquireExclusiveLock();
             super.updateOrganization(updatedOrganization);
         } finally {
             releaseExclusiveLock();
-        }      
+        }
     }
-    
+
     @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
-          try{
+        try {
             acquireExclusiveLock();
             super.deleteOrganization(organizationToDelete);
         } finally {
             releaseExclusiveLock();
-        }      
+        }
     }
+
     /**
      * Add a new Global Set
      *
@@ -802,14 +807,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             return super.newReferenceSet(eamGlobalSet);
         } finally {
             releaseExclusiveLock();
-        }     
-    }    
-    
+        }
+    }
+
     /**
      * Get a reference set by ID
      *
@@ -821,52 +826,51 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public EamGlobalSet getReferenceSetByID(int referenceSetID) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getReferenceSetByID(referenceSetID);
         } finally {
             releaseSharedLock();
-        }            
-    }    
-    
+        }
+    }
+
     /**
      * Get all reference sets
      *
      * @param correlationType Type of sets to return
-     * 
+     *
      * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
      */
     @Override
     public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getAllReferenceSets(correlationType);
         } finally {
             releaseSharedLock();
-        } 
+        }
     }
-    
+
     /**
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
-     * @param correlationType       Correlation Type that this Reference
-     *                              Instance is
+     * @param correlationType Correlation Type that this Reference Instance is
      *
      * @throws EamDbException
      */
     @Override
     public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.addReferenceInstance(eamGlobalFileInstance, correlationType);
         } finally {
             releaseExclusiveLock();
-        }  
-    }  
-    
+        }
+    }
+
     /**
      * Insert the bulk collection of Reference Type Instances
      *
@@ -874,18 +878,18 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttribute.Type contentType) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.bulkInsertReferenceTypeEntries(globalInstances, contentType);
         } finally {
             releaseExclusiveLock();
-        }  
-    }    
-    
+        }
+    }
+
     /**
      * Get all reference entries having a given correlation type and value
      *
-     * @param aType  Type to use for matching
+     * @param aType Type to use for matching
      * @param aValue Value to use for matching
      *
      * @return List of all global file instances with a type and value
@@ -894,14 +898,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getReferenceInstancesByTypeValue(aType, aValue);
         } finally {
             releaseSharedLock();
-        }    
-    }    
-    
+        }
+    }
+
     /**
      * Add a new EamArtifact.Type to the db.
      *
@@ -913,71 +917,71 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public int newCorrelationType(CorrelationAttribute.Type newType) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             return super.newCorrelationType(newType);
         } finally {
             releaseExclusiveLock();
-        }  
-    }    
-    
+        }
+    }
+
     /**
      * Get the list of EamArtifact.Type's that will be used to correlate
      * artifacts.
      *
      * @return List of EamArtifact.Type's. If none are defined in the database,
-     *         the default list will be returned.
+     * the default list will be returned.
      *
      * @throws EamDbException
      */
     @Override
     public List<CorrelationAttribute.Type> getDefinedCorrelationTypes() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getDefinedCorrelationTypes();
         } finally {
             releaseSharedLock();
-        }    
-    }    
-    
+        }
+    }
+
     /**
      * Get the list of enabled EamArtifact.Type's that will be used to correlate
      * artifacts.
      *
      * @return List of enabled EamArtifact.Type's. If none are defined in the
-     *         database, the default list will be returned.
+     * database, the default list will be returned.
      *
      * @throws EamDbException
      */
     @Override
     public List<CorrelationAttribute.Type> getEnabledCorrelationTypes() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getEnabledCorrelationTypes();
         } finally {
             releaseSharedLock();
-        }   
-    }    
-    
+        }
+    }
+
     /**
      * Get the list of supported EamArtifact.Type's that can be used to
      * correlate artifacts.
      *
      * @return List of supported EamArtifact.Type's. If none are defined in the
-     *         database, the default list will be returned.
+     * database, the default list will be returned.
      *
      * @throws EamDbException
      */
     @Override
     public List<CorrelationAttribute.Type> getSupportedCorrelationTypes() throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getSupportedCorrelationTypes();
         } finally {
             releaseSharedLock();
-        }  
-    }    
-    
+        }
+    }
+
     /**
      * Update a EamArtifact.Type.
      *
@@ -987,14 +991,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public void updateCorrelationType(CorrelationAttribute.Type aType) throws EamDbException {
-        try{
+        try {
             acquireExclusiveLock();
             super.updateCorrelationType(aType);
         } finally {
             releaseExclusiveLock();
-        } 
-    } 
-    
+        }
+    }
+
     /**
      * Get the EamArtifact.Type that has the given Type.Id.
      *
@@ -1006,73 +1010,76 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      */
     @Override
     public CorrelationAttribute.Type getCorrelationTypeById(int typeId) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getCorrelationTypeById(typeId);
         } finally {
             releaseSharedLock();
-        }  
-    }   
-    
+        }
+    }
+
     /**
      * Upgrade the schema of the database (if needed)
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public void upgradeSchema() throws EamDbException, SQLException {
-        try{
+        try {
             acquireExclusiveLock();
             super.upgradeSchema();
         } finally {
             releaseExclusiveLock();
-        } 
+        }
     }
-    
+
     /**
-     * Gets an exclusive lock (if applicable).
-     * Will return the lock if successful, null if unsuccessful because locking
-     * isn't supported, and throw an exception if we should have been able to get the
-     * lock but failed (meaning the database is in use).
+     * Gets an exclusive lock (if applicable). Will return the lock if
+     * successful, null if unsuccessful because locking isn't supported, and
+     * throw an exception if we should have been able to get the lock but failed
+     * (meaning the database is in use).
+     *
      * @return the lock, or null if locking is not supported
-     * @throws EamDbException if the coordination service is running but we fail to get the lock
+     * @throws EamDbException if the coordination service is running but we fail
+     * to get the lock
      */
     @Override
-    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException{
+    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException {
         // Multiple users are not supported for SQLite
         return null;
     }
-    
+
     /**
-     * Acquire the lock that provides exclusive access to the case database. 
-     * Call this method in a try block with a call to
-     * the lock release method in an associated finally block.
+     * Acquire the lock that provides exclusive access to the case database.
+     * Call this method in a try block with a call to the lock release method in
+     * an associated finally block.
      */
     private void acquireExclusiveLock() {
         rwLock.writeLock().lock();
     }
 
     /**
-     * Release the lock that provides exclusive access to the database.
-     * This method should always be called in the finally
-     * block of a try block in which the lock was acquired.
+     * Release the lock that provides exclusive access to the database. This
+     * method should always be called in the finally block of a try block in
+     * which the lock was acquired.
      */
     private void releaseExclusiveLock() {
         rwLock.writeLock().unlock();
     }
 
     /**
-     * Acquire the lock that provides shared access to the case database.
-     * Call this method in a try block with a call to the
-     * lock release method in an associated finally block.
+     * Acquire the lock that provides shared access to the case database. Call
+     * this method in a try block with a call to the lock release method in an
+     * associated finally block.
      */
     private void acquireSharedLock() {
         rwLock.readLock().lock();
     }
 
     /**
-     * Release the lock that provides shared access to the database.
-     * This method should always be called in the finally block
-     * of a try block in which the lock was acquired.
+     * Release the lock that provides shared access to the database. This method
+     * should always be called in the finally block of a try block in which the
+     * lock was acquired.
      */
     private void releaseSharedLock() {
         rwLock.readLock().unlock();
