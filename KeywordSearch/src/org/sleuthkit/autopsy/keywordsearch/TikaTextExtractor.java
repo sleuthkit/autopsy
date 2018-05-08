@@ -94,6 +94,7 @@ class TikaTextExtractor extends ContentTextExtractor {
             TesseractOCRConfig config = new TesseractOCRConfig();
             String tesseractFolder = TESSERACT_PATH.getParent();
             config.setTesseractPath(tesseractFolder);
+            config.setLanguage("eng+ara");
             parseContext.set(TesseractOCRConfig.class, config);
         }
 
