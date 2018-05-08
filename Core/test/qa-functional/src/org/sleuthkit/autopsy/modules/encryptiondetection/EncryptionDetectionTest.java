@@ -160,8 +160,6 @@ public class EncryptionDetectionTest extends NbTestCase {
         }
     }
 
-    //Being ignored because test occasionally crashes causing problems TODO JIRA-3820 
-    //remove ignored_ when underlying issue is resolved
     /**
      * Test the Encryption Detection module's detection of veracrypt encrypted
      * container files and partitions.
