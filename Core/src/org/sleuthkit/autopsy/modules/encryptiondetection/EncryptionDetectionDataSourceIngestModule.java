@@ -148,7 +148,11 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
             StringBuilder detailsSb = new StringBuilder("");
             detailsSb.append("File: ").append(volume.getParent().getUniquePath()).append(volume.getName());
             if (artifactType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED)) {
+<<<<<<< HEAD
                 detailsSb.append("<br/>\nEntropy: ").append(calculatedEntropy);
+=======
+                detailsSb.append("<br/>\n").append("Entropy: ").append(calculatedEntropy);
+>>>>>>> b8ec65adb... Bitlocker detection implemented.
             }
 
             services.postMessage(IngestMessage.createDataMessage(EncryptionDetectionModuleFactory.getModuleName(),
