@@ -157,7 +157,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         /*
          * custom implementation of mxGraphComponent that uses... a custom
-         * implmementation of mxGraphControl ... that overrides paint so we can
+         * implementation of mxGraphControl ... that overrides paint so we can
          * catch the NPEs we are getting and deal with them. For now that means
          * just ignoring them.
          */
@@ -172,7 +172,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                         try {
                             super.paint(graphics);
                         } catch (NullPointerException ex) { //NOPMD  We can't find the underlying cause in jgraphx
-                            logger.log(Level.WARNING, "There was a NPE while painting the VisualizaitonPanel.", ex);
+                            logger.log(Level.WARNING, "There was a NPE while painting the VisualizationPanel", ex);
                         }
                     }
 
