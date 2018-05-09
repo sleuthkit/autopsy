@@ -212,7 +212,7 @@ public class HealthMonitorDashboard {
         // Create the combo box for selecting how much data to display
         String[] dateOptionStrings = Arrays.stream(DateRange.values()).map(e -> e.getLabel()).toArray(String[]::new);
         dateComboBox = new JComboBox<>(dateOptionStrings);
-        dateComboBox.setSelectedItem(DateRange.TWO_WEEKS.getLabel());
+        dateComboBox.setSelectedItem(DateRange.ONE_DAY.getLabel());
         
         // Set up the listener on the date combo box
         dateComboBox.addActionListener(new ActionListener() {
@@ -401,11 +401,13 @@ public class HealthMonitorDashboard {
      */
     @NbBundle.Messages({"HealthMonitorDashboard.DateRange.all=All",
                         "HealthMonitorDashboard.DateRange.twoWeeks=Two weeks",
-                        "HealthMonitorDashboard.DateRange.oneWeek=One week"})
+                        "HealthMonitorDashboard.DateRange.oneWeek=One week",
+                        "HealthMonitorDashboard.DateRange.oneDay=One day"})
     private enum DateRange {
         ALL(Bundle.HealthMonitorDashboard_DateRange_all(), 0),
         TWO_WEEKS(Bundle.HealthMonitorDashboard_DateRange_twoWeeks(), 14),
-        ONE_WEEK(Bundle.HealthMonitorDashboard_DateRange_oneWeek(), 7);
+        ONE_WEEK(Bundle.HealthMonitorDashboard_DateRange_oneWeek(), 7),
+        ONE_DAY(Bundle.HealthMonitorDashboard_DateRange_oneDay(), 1);
         
         private final String label;
         private final long numberOfDays;
