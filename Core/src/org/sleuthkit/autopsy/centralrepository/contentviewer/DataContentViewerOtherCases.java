@@ -427,7 +427,10 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             try {
                 // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
                 if(this.file != null) {
-                    ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), this.file.getMd5Hash()));
+                    String md5 = this.file.getMd5Hash();
+                    if(md5 != null && !md5.isEmpty()) {
+                        ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0),md5));
+                    }
                 }
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
@@ -451,7 +454,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     private Map<ArtifactKey, CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
-            String caseUUID = Case.getOpenCase().getName();
+            final Case openCase = Case.getCurrentCase();
+            String caseUUID = openCase.getName();
             HashMap<ArtifactKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
 
             if (EamDb.isEnabled()) {
@@ -463,9 +467,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         .collect(Collectors.toMap(c -> new ArtifactKey(c.getCorrelationDataSource().getDeviceID(), c.getFilePath()), c -> c)));
             }
 
-            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
-                final Case openCase = Case.getOpenCase();
-
+            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
                 List<AbstractFile> caseDbFiles = addCaseDbMatches(corAttr, openCase);
                 for (AbstractFile caseDbFile : caseDbFiles) {
                     addOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
