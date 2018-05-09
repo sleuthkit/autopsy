@@ -24,8 +24,8 @@ package org.sleuthkit.autopsy.commonfilesearch;
  */
 final public class FileInstanceMetadata {
     
-    private Long objectId;
-    private String dataSourceName;
+    private final Long objectId;
+    private final String dataSourceName;
     
     /**
      * Create meta data required to find an abstract file and build a FileInstanceNode.

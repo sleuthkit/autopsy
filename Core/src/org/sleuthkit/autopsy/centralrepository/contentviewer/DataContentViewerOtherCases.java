@@ -464,7 +464,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                         || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
                         || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                        .collect(Collectors.toMap(c -> new ArtifactKey(c.getCorrelationDataSource().getDeviceID(), c.getFilePath()), c -> c)));
+                        .collect(Collectors.toMap(
+                                correlationAttr -> new ArtifactKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
+                                correlationAttr -> correlationAttr)));
             }
 
             if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
@@ -482,6 +484,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         } catch (TskCoreException ex) {
             // do nothing. 
             // @@@ Review this behavior
+            LOGGER.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
         }
 
         return new HashMap<>(0);
