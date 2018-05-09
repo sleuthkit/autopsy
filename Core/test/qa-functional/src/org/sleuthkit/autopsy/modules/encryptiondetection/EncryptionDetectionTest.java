@@ -62,10 +62,6 @@ public class EncryptionDetectionTest extends NbTestCase {
     }
 
     @Override
-    public void setUp() {
-    }
-
-    @Override
     public void tearDown() {
         CaseUtils.closeCase();
     }
