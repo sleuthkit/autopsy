@@ -115,7 +115,6 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
     @Messages({
         "EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.",
-        "EncryptionDetectionFileIngestModule.artifactComment.sqlCipher=Suspected SQLCipher encryption due to high entropy (%f).",
         "EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
     })
     @Override
@@ -140,13 +139,8 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     String mimeType = fileTypeDetector.getMIMEType(file);
                     if (mimeType.equals("application/octet-stream")) {
                         if (isFileEncryptionSuspected(file)) {
-                            String comment;
-                            if (file.getNameExtension().equalsIgnoreCase(DATABASE_FILE_EXTENSION)) {
-                                comment = Bundle.EncryptionDetectionFileIngestModule_artifactComment_sqlCipher();
-                            } else {
-                                comment = Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected();
-                            }
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, String.format(comment, calculatedEntropy));
+                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
+                                    String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
                         }
                     } else {
                         if (isFilePasswordProtected(file)) {
