@@ -64,7 +64,7 @@ import org.xml.sax.SAXException;
 final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter {
 
     private static final int FILE_SIZE_MODULUS = 512;
-    
+
     private static final String MIME_TYPE_OOXML_PROTECTED = "application/x-ooxml-protected";
     private static final String MIME_TYPE_MSWORD = "application/msword";
     private static final String MIME_TYPE_MSEXCEL = "application/vnd.ms-excel";
