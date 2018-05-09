@@ -41,7 +41,7 @@ public class NoMatches extends IntraCaseCommonFilesSearchTest {
     @Override
     public void setUp() {
 
-        CaseUtils.createCase(CASE_DIRECTORY_PATH);
+        CaseUtils.createCase(CASE_DIRECTORY_PATH, this.getCaseName());
         IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_1);
         IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_4);
     }
@@ -52,5 +52,10 @@ public class NoMatches extends IntraCaseCommonFilesSearchTest {
      */
     public void testThree() {
 
+    }
+
+    @Override
+    protected String getCaseName() {
+        return "NoMatchesTest";
     }
 }

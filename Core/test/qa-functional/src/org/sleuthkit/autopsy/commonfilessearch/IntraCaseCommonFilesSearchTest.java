@@ -111,6 +111,11 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
         CaseUtils.closeCase();
         CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
     }
+    
+    /**
+     * Override this to provide a string for subclasses to use in CaseUtils.createCase(...)
+     */    
+    protected abstract String getCaseName();
 
     protected boolean fileExists(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
 

@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Add #1, #2, #3, and #4 to case and ingest with hash algorithm. 
+ * Add set 1, set 2, set 3, and set 4 to case and ingest with hash algorithm. 
  */
 public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
 
@@ -80,7 +80,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
      * Find all matches & all file types. Confirm file.jpg is found on all three and
      * file.docx is found on two. 
      */
-    public void testOne() {
+    public void testOneA() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
 
@@ -94,9 +94,100 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+                        
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            
+
+        } catch (NoCurrentCaseException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (SQLException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+    
+    /**
+     * Find all matches & only image types. Confirm file.jpg is found on all three. 
+     */
+    public void testOneB() {
+        try {
+            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+
+            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
+            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+
+            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+                        
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            
+
+        } catch (NoCurrentCaseException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (SQLException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+    
+    /**
+     * Find all matches & only image types. Confirm file.jpg is found on all three. 
+     */
+    public void testOneC() {
+        try {
+            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+
+            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, true);
+            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+
+            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 3));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
@@ -118,14 +209,12 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
         }
     }
 
-
-
     /**
-     * Find matches on ‘#1’ & all file types. Confirm
+     * Find matches on set 1 & all file types. Confirm
      * same results. 
      * 
      */
-    public void testTwo() {
+    public void testTwoA() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
             Long first = new Long(1);
@@ -137,12 +226,15 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 3));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
@@ -161,7 +253,93 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     }
     
     /**
-     * Find matches on ‘#2 & all file types: Confirm file.jpg.
+     * Find matches on set 1 & only media types. Confirm
+     * same results. 
+     * 
+     */
+    public void testTwoB() {
+        try {
+            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+            Long first = new Long(1);
+
+            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
+            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            
+            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+    
+    /**
+     * Find matches on set 1 & all file types. Confirm
+     * same results. 
+     * 
+     */
+    public void testTwoC() {
+        try {
+            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+            Long first = new Long(1);
+
+            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
+            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            
+            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+    
+    /**
+     * Find matches on set 2 & all file types: Confirm file.jpg.
      * 
      */
     public void testThree(){
@@ -179,9 +357,12 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
-            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+                        
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
@@ -200,7 +381,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     }
     
     /**
-     * Find matches on #4 & all file types: Confirm nothing is found.
+     * Find matches on set 4 & all file types: Confirm nothing is found.
      */
     public void testFour(){
         try {
@@ -216,10 +397,13 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
@@ -238,7 +422,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     }
     
     /**
-     * Find matches on ‘#3’ & all file types: Confirm file.jpg and file.docx.
+     * Find matches on set 3 & all file types: Confirm file.jpg and file.docx.
      */
     public void testFive(){
         try {
@@ -254,10 +438,13 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));            
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
@@ -273,5 +460,10 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+    }
+
+    @Override
+    protected String getCaseName() {
+        return "IngestedWithHashAlgOnlyTests";
     }
 }
