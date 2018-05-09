@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-17 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -237,5 +237,4 @@ public final class PromptDialogManager {
         dialog.setHeaderText(Bundle.PromptDialogManager_showTimeLineDisabledMessage_headerText());
         dialog.showAndWait();
     }
-
 }

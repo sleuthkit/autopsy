@@ -61,7 +61,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * current state of the DB, because, for example, tags have been updated but
      * the view. was not refreshed.
      */
-    private final ReadOnlyBooleanWrapper outOfDate = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyBooleanWrapper needsRefresh = new ReadOnlyBooleanWrapper(false);
 
     /**
      * Listener that is attached to various properties that should trigger a
@@ -109,7 +109,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * @return True if the view does not represent the current state of the DB.
      */
     public boolean needsRefresh() {
-        return outOfDate.get();
+        return needsRefresh.get();
     }
 
     /**
@@ -120,7 +120,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      *         this view.
      */
     public ReadOnlyBooleanProperty needsRefreshProperty() {
-        return outOfDate.getReadOnlyProperty();
+        return needsRefresh.getReadOnlyProperty();
     }
 
     /**
@@ -258,7 +258,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
      * but the view was not refreshed.
      */
     void setNeedsRefresh() {
-        outOfDate.set(true);
+        needsRefresh.set(true);
     }
 
     /**
@@ -322,7 +322,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
         @Override
         protected void succeeded() {
             super.succeeded();
-            outOfDate.set(false);
+            needsRefresh.set(false);
             cleanup();
         }
 
