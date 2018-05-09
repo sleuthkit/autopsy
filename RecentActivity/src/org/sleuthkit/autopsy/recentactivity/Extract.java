@@ -53,7 +53,7 @@ abstract class Extract {
 
     final void init() throws IngestModuleException {
         try {
-            currentCase = Case.getOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
             tskCase = currentCase.getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
@@ -126,7 +126,7 @@ abstract class Extract {
                "Extract.noOpenCase.errMsg=No open case available."})
     void indexArtifact(BlackboardArtifact bbart) {
         try {
-            Blackboard blackboard = Case.getOpenCase().getServices().getBlackboard();
+            Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
             // index the artifact for keyword search
             blackboard.indexArtifact(bbart);
         } catch (Blackboard.BlackboardException ex) {

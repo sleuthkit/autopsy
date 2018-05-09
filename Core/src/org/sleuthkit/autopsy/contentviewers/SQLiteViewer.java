@@ -50,13 +50,12 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * A file content viewer for SQLite database files.
  */
-public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
+class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;
     public static final String[] SUPPORTED_MIMETYPES = new String[]{"application/x-sqlite3"};
@@ -320,7 +319,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         // Copy the file to temp folder
         String tmpDBPathName;
         try {
-            tmpDBPathName = Case.getOpenCase().getTempDirectory() + File.separator + sqliteDbFile.getName();
+            tmpDBPathName = Case.getCurrentCaseThrows().getTempDirectory() + File.separator + sqliteDbFile.getName();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
@@ -373,7 +372,7 @@ public class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * @param metaFileName name of meta file to look for
      */
     private void findAndCopySQLiteMetaFile(AbstractFile sqliteFile, String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
-        Case openCase = Case.getOpenCase();
+        Case openCase = Case.getCurrentCaseThrows();
         SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
         FileManager fileManager = services.getFileManager();

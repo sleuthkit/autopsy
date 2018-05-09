@@ -217,7 +217,7 @@ class ArchiveFilePanel extends JPanel implements DocumentListener {
 
         // display warning if there is one (but don't disable "next" button)
         try {
-            if (false == PathValidator.isValid(path, Case.getOpenCase().getCaseType())) {
+            if (false == PathValidator.isValid(path, Case.getCurrentCaseThrows().getCaseType())) {
                 errorLabel.setVisible(true);
                 errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
             }

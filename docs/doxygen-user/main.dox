@@ -39,7 +39,7 @@ The following topics are available here:
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
  - \subpage content_viewer_page
- - \subpage quick_search
+ - \subpage ui_quick_search
  - \subpage image_gallery_page
  - \subpage file_search_page
  - \subpage ad_hoc_keyword_search_page

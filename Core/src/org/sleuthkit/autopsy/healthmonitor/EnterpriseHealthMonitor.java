@@ -329,7 +329,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      */
     private void performDatabaseQuery() throws HealthMonitorException {
         try {
-            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Database: getImages query");
             List<Image> images = skCase.getImages();
             

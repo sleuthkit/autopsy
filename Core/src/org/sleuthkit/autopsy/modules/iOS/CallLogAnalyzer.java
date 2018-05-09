@@ -65,7 +65,7 @@ final class CallLogAnalyzer {
     public void findCallLogs(IngestJobContext context) {
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
@@ -80,7 +80,7 @@ final class CallLogAnalyzer {
             }
             for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getOpenCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(Case.getCurrentCaseThrows().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
                     fileId = file.getId();
                     ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
@@ -117,7 +117,7 @@ final class CallLogAnalyzer {
 
         Case currentCase;
         try {
-            currentCase = Case.getOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;

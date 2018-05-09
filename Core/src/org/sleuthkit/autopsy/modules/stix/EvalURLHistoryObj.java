@@ -139,7 +139,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
                 }
 
                 try {
-                    Case case1 = Case.getOpenCase();
+                    Case case1 = Case.getCurrentCaseThrows();
                     SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
                     List<BlackboardArtifact> artList
                             = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
@@ -232,7 +232,7 @@ class EvalURLHistoryObj extends EvaluatableObject {
             // It doesn't seem too useful, but we can just search for the browser name
             // if there aren't any URL entries
             try {
-                Case case1 = Case.getOpenCase();
+                Case case1 = Case.getCurrentCaseThrows();
                 SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
                 List<BlackboardArtifact> artList
                         = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);

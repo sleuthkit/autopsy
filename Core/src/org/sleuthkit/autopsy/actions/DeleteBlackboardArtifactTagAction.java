@@ -73,7 +73,7 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
         new Thread(() -> {
             for (BlackboardArtifactTag tag : selectedTags) {
                 try {
-                    Case.getOpenCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
+                    Case.getCurrentCaseThrows().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(DeleteBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {

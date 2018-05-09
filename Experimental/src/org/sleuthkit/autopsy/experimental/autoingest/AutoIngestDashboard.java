@@ -26,23 +26,28 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
+import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitorDashboard;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
  */
 final class AutoIngestDashboard extends JPanel implements Observer {
-
+    
+    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
+    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
@@ -243,16 +248,18 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        EventQueue.invokeLater(() -> {
-            refreshTables();
-        });
+        if (arg instanceof JobsSnapshot) {
+            EventQueue.invokeLater(() -> {
+                refreshTables();
+            });
+        }
     }
 
     /**
      * Reloads the table models using a jobs snapshot and refreshes the JTables
      * that use the models.
      *
-     * @param jobsSnapshot The jobs snapshot.
+     * @param nodeStateSnapshot The jobs snapshot.
      */
     void refreshTables() {
         pendingJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
@@ -289,6 +296,11 @@ final class AutoIngestDashboard extends JPanel implements Observer {
             super(message, cause);
         }
 
+    }
+
+    static boolean isAdminAutoIngestDashboard() {
+        File f = new File(ADMIN_ACCESS_FILE_PATH);
+        return f.exists();
     }
 
     /**
