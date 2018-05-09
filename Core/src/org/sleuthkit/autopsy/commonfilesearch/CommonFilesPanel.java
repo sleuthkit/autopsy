@@ -166,7 +166,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 Map<Long, String> dataSouceMap = new HashMap<>();
 
-                Case currentCase = Case.getOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
                 loadLogicalSources(tskDb, dataSouceMap);

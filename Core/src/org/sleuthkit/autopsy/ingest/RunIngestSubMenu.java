@@ -49,7 +49,7 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
         List<Content> dataSources = new ArrayList<>();
 
         try {
-            dataSources = Case.getOpenCase().getDataSources();
+            dataSources = Case.getCurrentCaseThrows().getDataSources();
         } catch (IllegalStateException ex) {
             // No open Cases, create a disabled empty menu
             return getEmpty();

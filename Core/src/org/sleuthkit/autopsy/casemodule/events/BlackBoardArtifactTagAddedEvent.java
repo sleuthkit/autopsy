@@ -47,6 +47,6 @@ public class BlackBoardArtifactTagAddedEvent extends TagAddedEvent<BlackboardArt
      */
     @Override
     BlackboardArtifactTag getTagByID() throws NoCurrentCaseException, TskCoreException {
-        return Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagByTagID(getTagID());
+        return Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagByTagID(getTagID());
     }
 }
