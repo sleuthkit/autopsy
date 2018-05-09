@@ -12,6 +12,7 @@
 /Core/build/
 /Core/dist/
 /Core/nbproject/*
+/Core/test/qa-functional/data/*
 !/Core/nbproject/project.xml
 !/Core/nbproject/project.properties
 
