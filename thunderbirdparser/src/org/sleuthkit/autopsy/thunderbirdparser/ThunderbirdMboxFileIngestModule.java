@@ -32,7 +32,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -48,6 +47,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -90,7 +90,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public ProcessResult process(AbstractFile abstractFile) {
 
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
@@ -193,7 +193,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.indexArtifact(artifact);
+                    blackboard.publishArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
@@ -524,7 +524,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             
             try {
                 // index the artifact for keyword search
-                blackboard.indexArtifact(bbart);
+                blackboard.publishArtifact(bbart);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());

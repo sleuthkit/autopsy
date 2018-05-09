@@ -31,7 +31,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
@@ -126,9 +125,9 @@ abstract class Extract {
                "Extract.noOpenCase.errMsg=No open case available."})
     void indexArtifact(BlackboardArtifact bbart) {
         try {
-            Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             // index the artifact for keyword search
-            blackboard.indexArtifact(bbart);
+            blackboard.publishArtifact(bbart);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
