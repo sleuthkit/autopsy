@@ -673,9 +673,22 @@ public final class FilteredEventsModel {
      */
     private static class CacheLoaderImpl<K, V> extends CacheLoader<K, V> {
 
-        private final EventType.CheckedFunction<K, V> func;
+        /**
+         * Functinal interface for a function from I to O that throws an
+         * Exception.
+         *
+         * @param <I> Input type.
+         * @param <O> Output type.
+         */
+        @FunctionalInterface
+        interface CheckedFunction<I, O> {
 
-        CacheLoaderImpl(EventType.CheckedFunction<K, V> func) {
+            O apply(I input) throws Exception;
+        }
+
+        private final CheckedFunction<K, V> func;
+
+        CacheLoaderImpl(CheckedFunction<K, V> func) {
             this.func = func;
         }
 
@@ -696,4 +709,5 @@ public final class FilteredEventsModel {
         private CacheInvalidatedEvent() {
         }
     }
+
 }
