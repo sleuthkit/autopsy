@@ -225,7 +225,7 @@ abstract class CommonFilesMetadataBuilder {
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
         if (!mimeTypesToFilterOn.isEmpty()) {
             for (String mimeType : mimeTypesToFilterOn) {
-                mimeTypeFilter.append('"').append(mimeType).append("\",");
+                mimeTypeFilter.append("'").append(mimeType).append("',");
             }
             mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
             mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
