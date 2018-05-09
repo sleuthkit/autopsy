@@ -24,14 +24,13 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Media content viewer for videos, sounds and images.
  */
-public class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
+class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());
     private AbstractFile lastFile;

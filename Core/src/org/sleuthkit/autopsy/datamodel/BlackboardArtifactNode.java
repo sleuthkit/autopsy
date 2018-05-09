@@ -266,7 +266,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
                     if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                        BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                        BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
                             if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 artifact.getDisplayName();
@@ -332,7 +332,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
-                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
                             NO_DESCR,
@@ -461,7 +461,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
-     *           Sheet.get(Sheet.PROPERTIES)
+     *                 Sheet.get(Sheet.PROPERTIES)
      */
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
@@ -469,8 +469,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
         try {
-            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
-            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getContentTagsByContent(associated));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(associated));
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
         }

@@ -105,7 +105,7 @@ class EvalAccountObj extends EvaluatableObject {
         try {
             List<BlackboardArtifact> finalHits = new ArrayList<BlackboardArtifact>();
 
-            Case case1 = Case.getOpenCase();
+            Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
             List<BlackboardArtifact> artList
                     = sleuthkitCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT);

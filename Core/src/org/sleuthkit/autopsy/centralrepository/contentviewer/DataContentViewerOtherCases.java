@@ -169,7 +169,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     private void showCaseDetails(int selectedRowViewIdx) {
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                             Bundle.DataContentViewerOtherCases_noOpenCase_errMsg(),
@@ -225,7 +225,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         if (0 != otherCasesTable.getSelectedRowCount()) {
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
-            CSVFileChooser.setCurrentDirectory(new File(Case.getOpenCase().getExportDirectory()));
+            CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
             CSVFileChooser.setSelectedFile(new File(fileName));
             CSVFileChooser.setFileFilter(new FileNameExtensionFilter("csv file", "csv"));
 
@@ -434,7 +434,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     private Collection<CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
-            String caseUUID = Case.getOpenCase().getName();
+            String caseUUID = Case.getCurrentCaseThrows().getName();
             EamDb dbManager = EamDb.getInstance();
             Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
                     .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
@@ -491,7 +491,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             if (af != null) {
                 Content dataSource = af.getDataSource();
                 dataSourceName = dataSource.getName();
-                deviceId = Case.getOpenCase().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+                deviceId = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
             }
         } catch (TskException | NoCurrentCaseException ex) {
             // do nothing. 

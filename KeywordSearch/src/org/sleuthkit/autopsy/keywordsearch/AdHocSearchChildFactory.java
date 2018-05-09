@@ -148,7 +148,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
         }
         SleuthkitCase tskCase;
         try {
-            tskCase = Case.getOpenCase().getSleuthkitCase();
+            tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
             return false;

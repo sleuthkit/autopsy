@@ -123,7 +123,7 @@ public class DeleteTagAction extends Action {
 
             try {
                 List<ContentTag> existingTagsList
-                        = Case.getOpenCase().getServices().getTagsManager()
+                        = Case.getCurrentCaseThrows().getServices().getTagsManager()
                         .getContentTagsByContent(file);
 
                 Collection<TagName> tagNamesList

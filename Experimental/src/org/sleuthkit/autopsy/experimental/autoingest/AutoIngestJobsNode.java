@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.io.File;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import org.openide.modules.Places;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -41,8 +39,6 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
-    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
-    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
 
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
@@ -132,7 +128,6 @@ final class AutoIngestJobsNode extends AbstractNode {
             super(Children.LEAF);
             jobStatus = status;
             autoIngestJob = job;
-            super.setName(autoIngestJob.getManifest().getCaseName());
             setName(autoIngestJob.getManifest().getCaseName());
             setDisplayName(autoIngestJob.getManifest().getCaseName());
         }
@@ -193,8 +188,7 @@ final class AutoIngestJobsNode extends AbstractNode {
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-            File f = new File(ADMIN_ACCESS_FILE_PATH);
-            if (f.exists()) {
+            if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                 switch (jobStatus) {
                     case PENDING_JOB:
                         actions.add(new PrioritizationAction.PrioritizeJobAction(autoIngestJob));

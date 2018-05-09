@@ -64,12 +64,8 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
-        try {
-            validateSettings();
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
-        }
+        validateSettings();
+        blackboard = Case.getCurrentCase().getServices().getBlackboard();
     }
 
     @Override

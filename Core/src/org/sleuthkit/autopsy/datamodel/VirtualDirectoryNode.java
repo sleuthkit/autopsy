@@ -106,7 +106,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                     Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_size_desc(),
                     this.content.getSize()));
-            try (SleuthkitCase.CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
+            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
                 ResultSet timeZoneSet = query.getResultSet();
                 if (timeZoneSet.next()) {
                     sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
@@ -117,7 +117,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Failed to get time zone for the following image: " + this.content.getId(), ex);
             }
-            try (SleuthkitCase.CaseDbQuery query = Case.getOpenCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
+            try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
                 ResultSet deviceIdSet = query.getResultSet();
                 if (deviceIdSet.next()) {
                     sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
