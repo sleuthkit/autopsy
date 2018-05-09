@@ -45,9 +45,11 @@ import org.sleuthkit.datamodel.TskData;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
-    private static final String CASE_NAME = "EncryptionDetectionTest";
-    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
+    private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
+    private static final String SQLCIPHER_DETECTION_CASE_NAME = "SQLCipherDetectionTest";
+    
+    private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
+    private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_sqlcipher_test.vhd");
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
@@ -61,24 +63,20 @@ public class EncryptionDetectionTest extends NbTestCase {
     }
 
     @Override
-    public void setUp() {
-        CaseUtils.createCase(CASE_DIRECTORY_PATH, CASE_NAME);
-        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
-    }
-
-    @Override
     public void tearDown() {
         CaseUtils.closeCase();
     }
 
     /**
-     * Test the Encryption Detection module's password protection detection.
+     * Test the Encryption Detection module's SQLCipher encryption detection.
      */
-    public void testPasswordProtection() {
+    public void testSqlCipherEncryption() {
         try {
+            CaseUtils.createCase(SQLCIPHER_DETECTION_CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            IngestUtils.addDataSource(dataSourceProcessor, SQLCIPHER_DETECTION_IMAGE_PATH);
             Case openCase = Case.getCurrentCaseThrows();
-            
+
             /*
              * Create ingest job settings.
              */
@@ -90,28 +88,96 @@ public class EncryptionDetectionTest extends NbTestCase {
             templates.add(template);
             IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
+            /*
+             * Purge specific files to be tested.
+             */
+            FileManager fileManager = openCase.getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("%%", "sqlcipher");
+            assertEquals("Unexpected number of SQLCipher results.", 15, results.size());
+
+            for (AbstractFile file : results) {
+                /*
+                 * Process only non-slack files.
+                 */
+                if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                    /*
+                     * Determine which assertions to use for the file based on
+                     * its name.
+                     */
+                    List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
+                    String[] splitNameArray = file.getName().split("\\.");
+                    if (splitNameArray[0].startsWith("sqlcipher-") && splitNameArray[splitNameArray.length - 1].equals("db")) {
+                        /*
+                         * Check that the SQLCipher database file has one
+                         * TSK_ENCRYPTION_SUSPECTED artifact.
+                         */
+                        int artifactsListSize = artifactsList.size();
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
+                        assertEquals(errorMessage, 1, artifactsListSize);
+
+                        String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
+                        errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
+                        assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.toString(), artifactTypeName);
+                    } else {
+                        /*
+                         * Check that the file has no artifacts.
+                         */
+                        int artifactsListSize = artifactsList.size();
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
+                        assertEquals(errorMessage, 0, artifactsListSize);
+                    }
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
+    /**
+     * Test the Encryption Detection module's password protection detection.
+     */
+    public void testPasswordProtection() {
+        try {
+            CaseUtils.createCase(PASSWORD_DETECTION_CASE_NAME);
             
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
+            String joinedErrors = String.join(System.lineSeparator(), errorMessages);
+            assertEquals(joinedErrors, 0, errorMessages.size());
+            
+            Case openCase = Case.getCurrentCaseThrows();
+
+            /*
+             * Create ingest job settings.
+             */
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
             /*
              * Purge specific files to be tested.
              */
             FileManager fileManager = openCase.getServices().getFileManager();
             List<List<AbstractFile>> allResults = new ArrayList<>(0);
-            
+
             List<AbstractFile> ole2Results = fileManager.findFiles("%%", "ole2");
             assertEquals("Unexpected number of OLE2 results.", 11, ole2Results.size());
-            
+
             List<AbstractFile> ooxmlResults = fileManager.findFiles("%%", "ooxml");
             assertEquals("Unexpected number of OOXML results.", 13, ooxmlResults.size());
-            
+
             List<AbstractFile> pdfResults = fileManager.findFiles("%%", "pdf");
             assertEquals("Unexpected number of PDF results.", 6, pdfResults.size());
-            
+
             List<AbstractFile> mdbResults = fileManager.findFiles("%%", "mdb");
             assertEquals("Unexpected number of MDB results.", 25, mdbResults.size());
-            
+
             List<AbstractFile> accdbResults = fileManager.findFiles("%%", "accdb");
             assertEquals("Unexpected number of ACCDB results.", 10, accdbResults.size());
-            
+
             allResults.add(ole2Results);
             allResults.add(ooxmlResults);
             allResults.add(pdfResults);
@@ -125,8 +191,8 @@ public class EncryptionDetectionTest extends NbTestCase {
                      */
                     if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         /*
-                         * Determine which assertions to use for the file based on
-                         * its name.
+                         * Determine which assertions to use for the file based
+                         * on its name.
                          */
                         boolean fileProtected = file.getName().split("\\.")[0].endsWith("-protected");
                         List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
