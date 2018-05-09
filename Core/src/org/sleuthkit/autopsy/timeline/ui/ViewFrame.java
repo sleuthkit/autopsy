@@ -480,6 +480,7 @@ final public class ViewFrame extends BorderPane {
         Platform.runLater(() -> {
             notificationPane.hide();
             notificationState = NotificationState.Paused;
+            notificationTimer.restart();
             refreshHistorgram();
         });
     }
@@ -505,6 +506,7 @@ final public class ViewFrame extends BorderPane {
                     case Ready:
                         notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"));
                         notificationState = NotificationState.Showing;
+                        notificationTimer.restart();
                         break;
                     case Showing:
                         notificationPane.setText(Bundle.ViewFrame_notification_analysisComplete("x"));
