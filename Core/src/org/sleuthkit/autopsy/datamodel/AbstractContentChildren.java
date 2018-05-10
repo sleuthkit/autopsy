@@ -192,7 +192,6 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(Tags tagsNodeKey) {
-            // RAMAN TBD: pass dsObjID down here
             return tagsNodeKey.new RootNode();
         }
 
@@ -213,7 +212,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(Results r) {
-            // RAMAN TBD: pass dsObjID down here
+            // RAMAN TBD JIRA-3763: pass dsObjID down here
             return new ResultsNode(r.getSleuthkitCase());
         }
 
@@ -241,7 +240,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
-            return ftByMimeTypeItem.new ByMimeTypeNode(/*ftByMimeTypeItem.filteringDataSourceObjId()*/);
+            return ftByMimeTypeItem.new ByMimeTypeNode();
         }
     }
 }

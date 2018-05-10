@@ -39,7 +39,7 @@ public class ResultsNode extends DisplayableItemNode {
     
     public ResultsNode(SleuthkitCase sleuthkitCase, long dsObjId) {
         super(
-                // RAMAN TBD: pass down dsObjId to each of these subnodes
+                // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
                 new RootContentChildren(Arrays.asList(
                     new ExtractedContent(sleuthkitCase),
                     new KeywordHits(sleuthkitCase),

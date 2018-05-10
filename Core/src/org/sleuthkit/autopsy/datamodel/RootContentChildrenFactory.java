@@ -49,7 +49,6 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
     private static final Logger logger = Logger.getLogger(RootContentChildrenFactory.class.getName());
     private final SleuthkitCase tskCase;
     
-
     /**
      * Constructs the child factory for root nodes
      * @param tskCase 
@@ -89,10 +88,6 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
         refresh(true);
     }
     
-   
-    
-    
-     
     /**
      * Creates keys for the top level children.  
      * 

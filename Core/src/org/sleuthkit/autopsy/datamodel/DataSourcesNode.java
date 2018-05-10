@@ -43,8 +43,6 @@ public class DataSourcesNode extends DisplayableItemNode {
 
     public static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
 
-    private final long datasourceObjId;
-    
     // NOTE: The images passed in via argument will be ignored.
     @Deprecated
     public DataSourcesNode(List<Content> images) {
@@ -58,7 +56,6 @@ public class DataSourcesNode extends DisplayableItemNode {
     public DataSourcesNode(long dsObjId) {
         super(new DataSourcesNodeChildren(dsObjId), Lookups.singleton(NAME));
         init();
-        this.datasourceObjId = dsObjId;
     }
     
     private void init() {

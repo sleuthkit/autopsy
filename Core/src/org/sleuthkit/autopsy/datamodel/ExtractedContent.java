@@ -288,7 +288,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //TEST COMMENT
             if (skCase != null) {
                 try {
-                    // RAMAN TBD: filter on datasource obj id
+                    // RAMAN TBD JIRA-3763: filter on datasource obj id
                     List<BlackboardArtifact.Type> types = skCase.getArtifactTypesInUse();
                     types.removeAll(doNotShow);
                     Collections.sort(types,

@@ -76,8 +76,8 @@ public class DataSourceGroupingNode extends DisplayableItemNode {
             return new RootContentChildren(Arrays.asList(
                     new DataSources(dsObjId),
                     new Views(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
-                    new Results(Case.getCurrentCaseThrows().getSleuthkitCase()), // RAMAN TBD: pass down dsObjId
-                    new Tags() ) // RAMAN TBD: pass down dsObjId
+                    new Results(Case.getCurrentCaseThrows().getSleuthkitCase()), // RAMAN TBD JIRA-3763: pass down dsObjId
+                    new Tags() ) // RAMAN TBD JIRA-3762 : pass down dsObjId
             
             );
            
