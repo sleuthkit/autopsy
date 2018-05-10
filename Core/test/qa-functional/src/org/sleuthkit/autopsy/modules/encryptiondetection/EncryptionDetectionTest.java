@@ -33,8 +33,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -42,14 +40,17 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Content;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
     private static final String SQLCIPHER_DETECTION_CASE_NAME = "SQLCipherDetectionTest";
+    private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
     
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_sqlcipher_test.vhd");
+    private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
@@ -80,13 +81,9 @@ public class EncryptionDetectionTest extends NbTestCase {
             /*
              * Create ingest job settings.
              */
-            IngestModuleFactory ingestModuleFactory = new EncryptionDetectionModuleFactory();
-            IngestModuleIngestJobSettings settings = ingestModuleFactory.getDefaultIngestJobSettings();
-            IngestModuleTemplate template = new IngestModuleTemplate(ingestModuleFactory, settings);
-            template.setEnabled(true);
-            List<IngestModuleTemplate> templates = new ArrayList<>();
-            templates.add(template);
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
 
             /*
@@ -224,4 +221,67 @@ public class EncryptionDetectionTest extends NbTestCase {
             Assert.fail(ex);
         }
     }
+
+    /**
+     * Test the Encryption Detection module's detection of veracrypt encrypted
+     * container files and partitions.
+     *
+     * Test passes if the following are true.
+     *
+     * 1. A partition was detected without a file system by checking for the
+     * error. 2. Only 1 data source exsists in the case, to ensure a stale case
+     * did not get used. 3. One volume has a TSK_ENCRYPTION_SUSPECTED artifact
+     * associated with it. 4. A single file named veracrpytContainerFile exists.
+     * 5. The file named veracrpytContainerFile has a TSK_ENCRYPTION_SUSPECTED
+     * artifact associated with it.
+     */
+    public void testVeraCryptSupport() {
+        try {
+            CaseUtils.createCase(VERACRYPT_DETECTION_CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
+            String joinedErrors;
+            if (errorMessages.isEmpty()) {
+                joinedErrors = "Encrypted partition did not cause error, it was expected to";
+            } else {
+                joinedErrors = String.join(System.lineSeparator(), errorMessages);
+            }
+            //there will be 1 expected error regarding the encrypted partition not having a file system
+            assertEquals(joinedErrors, 1, errorMessages.size());
+
+            Case openCase = Case.getCurrentCaseThrows();
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            //image includes an encrypted container file with size greater than 5 mb so default settings detect it
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(VERACRYPT_DETECTION_CASE_NAME, IngestType.ALL_MODULES, templates);
+
+            assertEquals("Expected only one data source to exist in the Case", 1, openCase.getDataSources().size());
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
+            //check that one of the partitions has an encrypted volume
+            int numberOfEncryptedVolumes = 0;
+            for (Content datasource : openCase.getDataSources()) { //data source
+                for (Content volumeSystem : datasource.getChildren()) { //volume system 
+                    for (Content volume : volumeSystem.getChildren()) { //volumes
+                        numberOfEncryptedVolumes += volume.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size();
+                    }
+                }
+            }
+            assertEquals("One volume should exist with an encryption suspsected artifact", 1, numberOfEncryptedVolumes);
+
+            //ensure the encrypyted container file was also detected correctly
+            FileManager fileManager = openCase.getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("veracryptContainerFile");
+            assertEquals("Expected 1 file named veracryptContainerFile to exist in test image", 1, results.size());
+            int numberOfEncryptedContainers = 0;
+            for (AbstractFile file : results) {
+                numberOfEncryptedContainers += file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size();
+            }
+            assertEquals("Encrypted Container file should have one encyption suspected artifact", 1, numberOfEncryptedContainers);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
 }
