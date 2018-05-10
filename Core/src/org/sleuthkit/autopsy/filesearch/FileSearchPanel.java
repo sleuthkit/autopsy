@@ -91,7 +91,6 @@ class FileSearchPanel extends javax.swing.JPanel {
         List<FileSearchFilter> metadataFilters = new ArrayList<>();
         metadataFilters.add(new SizeSearchFilter());
         metadataFilters.add(new MimeTypeFilter());
-        metadataFilters.add(new DataSourceFilter());
         metadataFilters.add(new DateSearchFilter());
         
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
@@ -99,6 +98,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
         
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), new HashSearchFilter()));
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DataSourcePanel.dataSourceCheckBox.text"), new DataSourceFilter()));
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
             fa.setAlignmentX(Component.LEFT_ALIGNMENT);
