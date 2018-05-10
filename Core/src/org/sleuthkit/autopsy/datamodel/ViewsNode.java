@@ -55,6 +55,7 @@ public class ViewsNode extends DisplayableItemNode {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png"); //NON-NLS
     }
 
+    
     @Override
     public boolean isLeafTypeNode() {
         return false;

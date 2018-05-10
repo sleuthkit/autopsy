@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -30,6 +32,7 @@ import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -37,6 +40,7 @@ import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
@@ -48,6 +52,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
@@ -64,7 +69,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
-import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
@@ -73,12 +77,8 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
-import org.sleuthkit.autopsy.datamodel.Reports;
-import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
-import org.sleuthkit.autopsy.datamodel.RootContentChildren;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.Views;
+import org.sleuthkit.autopsy.datamodel.RootContentChildrenFactory;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -106,7 +106,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private RootContentChildren contentChildren;
+    private RootContentChildrenFactory rootChildrenFactory;
+    private Children contentChildren;
 
     /**
      * the constructor
@@ -129,6 +130,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
+        
+        groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
     }
 
     /**
@@ -397,12 +400,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else {
             // if there's at least one image, load the image and open the top component
             final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-            contentChildren = new RootContentChildren(Arrays.asList(
-                    new DataSources(),
-                    new Views(tskCase),
-                    new Results(tskCase),
-                    new Tags(),
-                    new Reports()));
+            
+            rootChildrenFactory = new RootContentChildrenFactory(tskCase);
+            contentChildren = Children.create(rootChildrenFactory, true);     
             Node root = new AbstractNode(contentChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
@@ -443,19 +443,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     TreeView tree = getTree();
 
                     Node results = rootChildren.findChild(ResultsNode.NAME);
-                    tree.expandNode(results);
-                    Children resultsChildren = results.getChildren();
-                    Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
+                    if (!Objects.isNull(results)) {
+                        tree.expandNode(results);
+                        Children resultsChildren = results.getChildren();
+                        Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
 
-                    Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
-                    showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
-                    showRejectedCheckBox.setSelected(false);
+                        Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
+                        if (!Objects.isNull(accounts)) {
+                            showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
+                            showRejectedCheckBox.setSelected(false);
+                        }
+                    }
 
-                    groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
-                    
                     Node views = rootChildren.findChild(ViewsNode.NAME);
-                    Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
-                    tree.collapseNode(views);
+                    if (!Objects.isNull(views)) {
+                        Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
+                        tree.collapseNode(views);
+                    }
                     /*
                      * JIRA-2806: What is this supposed to do? Right now it selects
                      * the data sources node, but the comment seems to indicate
@@ -487,7 +491,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // of changing the selected node fires a handler that tries to make
                     // dataResult active)
                     try {
-                        em.setSelectedNodes(get());
+                        Node[] selections = get();
+                        if (selections != null && selections.length > 0){
+                            em.setSelectedNodes(selections);
+                        }
                     } catch (PropertyVetoException ex) {
                         LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
                     } catch (InterruptedException | ExecutionException ex) {
@@ -752,7 +759,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
          */
         String[] currentLast = backList.peekLast();
         String lastNodeName = null;
-        if (currentLast != null) {
+        if (currentLast != null && currentLast.length > 0) {
             lastNodeName = currentLast[currentLast.length - 1];
         }
 
@@ -796,7 +803,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refresh the content node part of the dir tree safely in the EDT thread
      */
     public void refreshContentTreeSafe() {
-        SwingUtilities.invokeLater(this::refreshTree);
+        SwingUtilities.invokeLater(this::rebuildTree);
     }
 
     /**
@@ -817,18 +824,43 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         setSelectedNode(selectedPath, DataSourcesNode.NAME);
     }
 
-     /**
-     * Refreshes the entire tree
+    /**
+     * Rebuilds the tree
      */
-    private void refreshTree() {
-        Node selectedNode = getSelectedNode();
-        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
+    private void rebuildTree() {
         
-        contentChildren.refreshContentKeys();
-        
-        setSelectedNode(selectedPath, DataSourcesNode.NAME);
+        // refresh all children of the root.
+        rootChildrenFactory.refreshChildren();
+       
+        // Select the first node and reset the selection history
+        // This should happen on the EDT once the tree has been rebuilt.
+        // hence the timer to schedule it 
+        Timer timer = new Timer( 10, (ActionEvent e) -> {
+            selectFirstChildNode();
+            resetHistory();
+        });
+
+        timer.setRepeats( false );
+        timer.start();    
     }
     
+    /**
+     * Selects the first node in the tree.
+     * 
+     */
+    private void selectFirstChildNode () {
+        Children rootChildren = em.getRootContext().getChildren();
+        
+        if (rootChildren.getNodesCount() > 0) {
+            //Node[] ttt = new Node[]{rootChildren.getNodeAt(0)};
+            //Node firstNode = ttt[0];
+            Node firstNode = rootChildren.getNodeAt(0);
+            if (firstNode != null) {
+                final String[] selectedPath = NodeOp.createPath(firstNode, em.getRootContext());
+                setSelectedNode(selectedPath, null);
+            }
+        }
+    }
     /**
      * Set the selected node using a path to a previously selected node.
      *
