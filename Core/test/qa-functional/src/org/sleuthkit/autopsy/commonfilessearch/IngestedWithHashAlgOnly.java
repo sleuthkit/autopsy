@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -62,9 +63,11 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
         super.setUp();
 
         IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
-
+        IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
+        
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(hashLookupTemplate);
+        templates.add(mimeTypeLookupTemplate);
 
         IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAlgOnly.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
 

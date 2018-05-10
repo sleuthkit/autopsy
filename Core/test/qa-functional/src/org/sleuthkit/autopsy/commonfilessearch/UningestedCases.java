@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * Setup:
  *
- * Add images #1, #2, #3, and #4 to case. Do not ingest.
+ * Add images set 1, set 2, set 3, and set 4 to case. Do not ingest.
  *
  */
 public class UningestedCases extends IntraCaseCommonFilesSearchTest {
@@ -93,5 +93,10 @@ public class UningestedCases extends IntraCaseCommonFilesSearchTest {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+    }
+
+    @Override
+    protected String getCaseName() {
+        return "UningestedCasesTests";
     }
 }

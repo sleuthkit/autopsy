@@ -58,7 +58,6 @@ public final class IngestUtils {
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-
         }
     }
 

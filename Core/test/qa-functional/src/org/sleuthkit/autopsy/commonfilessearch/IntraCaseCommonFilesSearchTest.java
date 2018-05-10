@@ -72,10 +72,10 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
 
-    protected final Path IMAGE_PATH_1 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image1_v1.vhd");
-    private final Path IMAGE_PATH_2 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image2_v1.vhd");
-    private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image3_v1.vhd");
-    protected final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "3776", "commonfiles_image4_v1.vhd");
+    protected final Path IMAGE_PATH_1 = Paths.get(this.getDataDir().toString(), "commonfiles_image1_v1.vhd");
+    private final Path IMAGE_PATH_2 = Paths.get(this.getDataDir().toString(), "commonfiles_image2_v1.vhd");
+    private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "commonfiles_image3_v1.vhd");
+    protected final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "commonfiles_image4_v1.vhd");
     
     protected final String IMG = "IMG_6175.jpg";
     protected final String DOC = "BasicStyleGuide.doc";
@@ -96,12 +96,14 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
     @Override
     public void setUp() {
 
-        CaseUtils.createCase(CASE_DIRECTORY_PATH, "IntraCaseCommonFilesSearchTests");
+        CaseUtils.createCase(CASE_DIRECTORY_PATH, this.getCaseName());
+        
+        final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
 
-        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_1);
-        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_2);
-        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_3);
-        IngestUtils.addDataSource(new ImageDSProcessor(), IMAGE_PATH_4);
+        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_1);
+        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_2);
+        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_3);
+        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_4);
 
         this.dataSourceLoader = new DataSourceLoader();
     }

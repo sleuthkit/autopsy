@@ -105,7 +105,9 @@ public class Services implements Closeable {
     @Override
     public void close() throws IOException {
         for (Closeable service : services) {
-            service.close();
+            if(service != null){
+                service.close();
+            }
         }
     }
 
