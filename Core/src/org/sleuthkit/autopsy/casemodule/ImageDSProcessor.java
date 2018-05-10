@@ -72,10 +72,12 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         filtersList.add(allFilter);
         filtersList.add(rawFilter);
         filtersList.add(encaseFilter);
-        filtersList.add(virtualMachineFilter);
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
-        allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
+        if(!System.getProperty("os.name").toLowerCase().contains("mac")){
+            filtersList.add(virtualMachineFilter);
+            allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
+        }
     }
 
     /**
