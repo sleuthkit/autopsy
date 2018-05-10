@@ -825,7 +825,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Rebuilds the tree
+     * Rebuilds the directory tree
      */
     private void rebuildTree() {
         
@@ -835,6 +835,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.
         // hence the timer to schedule it 
+        // TBD JIRA-3838:  need to get rid of this delay hack.
         Timer timer = new Timer( 10, (ActionEvent e) -> {
             selectFirstChildNode();
             resetHistory();
