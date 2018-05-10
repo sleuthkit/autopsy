@@ -427,7 +427,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     notifyObservers(Event.SHUTTING_DOWN);
                     break;
                 default:
-                    SYS_LOGGER.log(Level.WARNING, "Received unsupported control event: {0}", event.getControlEventType());
+                    sysLogger.log(Level.WARNING, "Received unsupported control event: {0}", event.getControlEventType());
                     break;
             }
         }
