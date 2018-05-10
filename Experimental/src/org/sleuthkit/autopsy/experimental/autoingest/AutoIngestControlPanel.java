@@ -852,7 +852,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 case CASE_DELETED:
                     updateExecutor.submit(new UpdateAllJobsTablesTask());
                     break;
-                case PAUSED_BY_REQUEST:
+                case PAUSED_BY_USER_REQUEST:
                     EventQueue.invokeLater(() -> {
                         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.paused"));
                         bnOptions.setEnabled(true);
@@ -880,6 +880,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     break;
                 case JOB_STATUS_UPDATED:
                     updateExecutor.submit(new UpdateRunningJobsTablesTask());
+                    break;
+                case SHUTTING_DOWN:
+                    LifecycleManager.getDefault().exit();
                     break;
                 default:
                     break;

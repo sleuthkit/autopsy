@@ -97,6 +97,7 @@ final class AinStatusNode extends AbstractNode {
         @Messages({"AinStatusNode.hostName.title=Host Name",
             "AinStatusNode.status.title=Status",
             "AinStatusNode.status.running=Running",
+            "AinStatusNode.status.pauseRequested=Pause Requested",
             "AinStatusNode.status.pausedByUser=Paused By User",
             "AinStatusNode.status.pausedForError=Paused Due to System Error",
             "AinStatusNode.status.startingup=Starting Up",
@@ -129,6 +130,9 @@ final class AinStatusNode extends AbstractNode {
                 case PAUSED_DUE_TO_SYSTEM_ERROR:
                     status = Bundle.AinStatusNode_status_pausedForError();
                     break;
+                case PAUSE_REQUESTED:
+                    status = Bundle.AinStatusNode_status_pauseRequested();
+                    break;
                 default:
                     break;
             }
@@ -142,12 +146,11 @@ final class AinStatusNode extends AbstractNode {
             List<Action> actions = new ArrayList<>();
             if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                 if (nodeState.getState() == AutoIngestNodeState.State.PAUSED_BY_REQUEST
-                        || nodeState.getState() == AutoIngestNodeState.State.PAUSED_DUE_TO_SYSTEM_ERROR) {
-                    actions.add(new AutoIngestAdminActions.ResumeAction());
-                } else if (nodeState.getState() == AutoIngestNodeState.State.RUNNING){
-                    actions.add(new AutoIngestAdminActions.PauseAction());
+                        || nodeState.getState() == AutoIngestNodeState.State.PAUSED_DUE_TO_SYSTEM_ERROR
+                        || nodeState.getState() == AutoIngestNodeState.State.RUNNING) {
+                    actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.PauseResumeAction(nodeState));
                 }
-                actions.add(new AutoIngestAdminActions.ShutdownAction());
+                actions.add(new AutoIngestAdminActions.AutoIngestNodeControlAction.ShutdownAction(nodeState));
             }
             return actions.toArray(new Action[actions.size()]);
         }
