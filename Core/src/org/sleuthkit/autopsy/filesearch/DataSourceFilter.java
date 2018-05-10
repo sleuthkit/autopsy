@@ -60,6 +60,7 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
 
     @Override
     public void addActionListener(ActionListener lis) {
+        //Unused by now
     }
 
     @Override

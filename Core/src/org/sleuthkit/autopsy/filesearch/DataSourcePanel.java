@@ -61,6 +61,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
             @Override
             public void mouseDragged(MouseEvent evt) {
+                //Unused by now
             }
 
             @Override
@@ -80,7 +81,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
      * @return The list of data source name
      */
     private List<String> getDataSourceArray() {
-        List<String> dataSourceList = new ArrayList<>();
+        List<String> dsList = new ArrayList<>();
         try {
             Case currentCase = Case.getCurrentCaseThrows();
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
@@ -92,14 +93,14 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 String displayName = dataSourceFullName.getName();
                 dataSourceMap.put(ds.getId(), displayName);  
                 toolTipList.add(dsName);
-                dataSourceList.add(displayName);
+                dsList.add(displayName);
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Unable to get current open case.", ex);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get data source info from database.", ex);
         }
-        return dataSourceList;
+        return dsList;
     }
 
     /**
@@ -128,9 +129,9 @@ public class DataSourcePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Enable the dataSourceList and dataSourceNoteLable if the dataSourceCheckBox is checked.
+     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is checked.
      */
-    void setComponentsEnabled() {
+    final void setComponentsEnabled() {
         boolean enabled = this.isSelected();
         this.dataSourceList.setEnabled(enabled);
         this.dataSourceNoteLabel.setEnabled(enabled);
