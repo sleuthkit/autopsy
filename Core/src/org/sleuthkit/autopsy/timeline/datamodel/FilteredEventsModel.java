@@ -34,6 +34,7 @@ import javafx.collections.SetChangeListener;
 import javax.annotation.concurrent.GuardedBy;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
@@ -42,6 +43,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
@@ -98,7 +100,7 @@ import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
  */
 public final class FilteredEventsModel {
 
-    private static final Logger LOGGER = Logger.getLogger(FilteredEventsModel.class.getName());
+    private static final Logger logger = Logger.getLogger(FilteredEventsModel.class.getName());
 
     /**
      * time range that spans the filtered events
@@ -192,9 +194,18 @@ public final class FilteredEventsModel {
      *
      * @return A read only view of the time range currently in view.
      */
+    @NbBundle.Messages({
+        "FilteredEventsModel.timeRangeProperty.errorTitle=Timeline",
+        "FilteredEventsModel.timeRangeProperty.errorMessage=Error getting spanning interval."})
     synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
         if (requestedTimeRange.get() == null) {
-            requestedTimeRange.set(getSpanningInterval());
+            try {
+                requestedTimeRange.set(getSpanningInterval());
+            } catch (TimelineCacheException timelineCacheException) {
+                MessageNotifyUtil.Notify.error(Bundle.FilteredEventsModel_timeRangeProperty_errorTitle(),
+                        Bundle.FilteredEventsModel_timeRangeProperty_errorMessage());
+                logger.log(Level.SEVERE, "Error getting spanning interval.", timelineCacheException);
+            }
         }
         return requestedTimeRange.getReadOnlyProperty();
     }
@@ -264,11 +275,11 @@ public final class FilteredEventsModel {
         return repo.getBoundingEventsInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter(), tz);
     }
 
-    public SingleEvent getEventById(Long eventID) {
+    public SingleEvent getEventById(Long eventID) throws TimelineCacheException {
         return repo.getEventById(eventID);
     }
 
-    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
+    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) throws TimelineCacheException {
         return repo.getEventsById(eventIDs);
     }
 
@@ -285,10 +296,15 @@ public final class FilteredEventsModel {
     }
 
     public List<Long> getEventIDs(Interval timeRange, Filter filter) throws TskCoreException {
+
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {
-            overlap = getSpanningInterval().overlap(timeRange);
+            try {
+                overlap = getSpanningInterval().overlap(timeRange);
+            } catch (TimelineCacheException timelineCacheException) {
+                throw new TskCoreException("Error getting the spanning interval.", timelineCacheException);
+            }
             intersect = requestedFilter.get().copyOf();
         }
         intersect.getSubFilters().add(filter);
@@ -332,7 +348,7 @@ public final class FilteredEventsModel {
      * @return the smallest interval spanning all the events from the
      *         repository, ignoring any filters or requested ranges
      */
-    public Interval getSpanningInterval() {
+    public Interval getSpanningInterval() throws TimelineCacheException {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000);
     }
 
@@ -413,7 +429,7 @@ public final class FilteredEventsModel {
             Set<Long> updatedEventIDs = repo.deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
             return postTagsDeleted(updatedEventIDs);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
         }
         return false;
     }
@@ -426,7 +442,7 @@ public final class FilteredEventsModel {
             Set<Long> updatedEventIDs = repo.deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
             return postTagsDeleted(updatedEventIDs);
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
         }
         return false;
     }

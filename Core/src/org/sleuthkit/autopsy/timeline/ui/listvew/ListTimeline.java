@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
@@ -77,7 +76,6 @@ import javax.swing.JMenuItem;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -87,6 +85,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ChronoFieldListCell;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -108,7 +107,7 @@ import org.sleuthkit.datamodel.timeline.SingleEvent;
  */
 class ListTimeline extends BorderPane {
 
-    private static final Logger LOGGER = Logger.getLogger(ListTimeline.class.getName());
+    private static final Logger logger = Logger.getLogger(ListTimeline.class.getName());
 
     private static final Image HASH_HIT = new Image("/org/sleuthkit/autopsy/images/hashset_hits.png");  //NON-NLS 
     private static final Image TAG = new Image("/org/sleuthkit/autopsy/images/green-tag-icon-16.png");  //NON-NLS
@@ -193,8 +192,9 @@ class ListTimeline extends BorderPane {
                         .map(CombinedEvent::getRepresentativeEventID)
                         .collect(Collectors.toSet()));
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error selecting events.", ex);
-                new Alert(Alert.AlertType.ERROR, "error selecting events.").showAndWait();
+                logger.log(Level.SEVERE, "Error selecting events.", ex);
+                Notifications.create().owner(getScene().getWindow())
+                        .text("Error selecting events.").showError();
             }
         }
     };
@@ -338,7 +338,7 @@ class ListTimeline extends BorderPane {
      * ListViewPane will provide to its host ViewFrame.
      *
      * @return A List of time navigation controls in the from of JavaFX scene
-     * graph Nodes.
+     *         graph Nodes.
      */
     List<Node> getTimeNavigationControls() {
         return Collections.singletonList(navControls);
@@ -349,7 +349,7 @@ class ListTimeline extends BorderPane {
      * focus it.
      *
      * @param index The index of the item that should be scrolled in to view and
-     * focused.
+     *              focused.
      */
     private void scrollToAndFocus(Integer index) {
         table.requestFocus();
@@ -473,7 +473,7 @@ class ListTimeline extends BorderPane {
                             .forEach(tagNames::add);
 
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -489,7 +489,7 @@ class ListTimeline extends BorderPane {
                                 .map(tag -> tag.getName().getDisplayName())
                                 .forEach(tagNames::add);
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Failed to lookup tags for artifact id " + artifactID, ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
@@ -542,7 +542,7 @@ class ListTimeline extends BorderPane {
                     tooltip.setGraphic(new ImageView(HASH_HIT));
                     setTooltip(tooltip);
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -565,7 +565,7 @@ class ListTimeline extends BorderPane {
          * Constructor
          *
          * @param textSupplier Function that takes a SingleEvent and produces a
-         * String to show in this TableCell.
+         *                     String to show in this TableCell.
          */
         TextEventTableCell(Function<SingleEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
@@ -601,6 +601,7 @@ class ListTimeline extends BorderPane {
             return event;
         }
 
+        @NbBundle.Messages({"EventTableCell.updateItem.errorMessage=Error getting event by id."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             super.updateItem(item, empty);
@@ -608,8 +609,14 @@ class ListTimeline extends BorderPane {
             if (empty || item == null) {
                 event = null;
             } else {
-                //stash the event in the cell for derived classed to use.
-                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
+                try {
+                    //stash the event in the cell for derived classed to use.
+                    event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
+                } catch (TimelineCacheException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.EventTableCell_updateItem_errorMessage()).showError();
+                    logger.log(Level.SEVERE, "Error getting event by id.", ex);
+                }
             }
         }
     }
@@ -631,7 +638,8 @@ class ListTimeline extends BorderPane {
         }
 
         @NbBundle.Messages({
-            "ListChart.errorMsg=There was a problem getting the content for the selected event."})
+            "ListChart.errorMsg=There was a problem getting the content for the selected event.",
+            "EventRow.updateItem.errorMessage=Error getting event by id."})
         @Override
         protected void updateItem(CombinedEvent item, boolean empty) {
             CombinedEvent oldItem = getItem();
@@ -644,7 +652,13 @@ class ListTimeline extends BorderPane {
                 event = null;
             } else {
                 visibleEvents.add(item);
-                event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
+                try {
+                    event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
+                } catch (TimelineCacheException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.EventRow_updateItem_errorMessage()).showError();
+                    logger.log(Level.SEVERE, "Error getting event by id.", ex);
+                }
 
                 setOnContextMenuRequested(contextMenuEvent -> {
                     //make a new context menu on each request in order to include uptodate tag names and hash sets
@@ -682,9 +696,9 @@ class ListTimeline extends BorderPane {
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
                     } catch (NoCurrentCaseException ex) {
                         //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())

@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -39,7 +40,8 @@ public class ZoomToEvents extends Action {
     private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png", 16, 16, true, true); //NOI18N NON-NLS
 
     @NbBundle.Messages({"ZoomToEvents.action.text=Zoom to events",
-        "ZoomToEvents.longText=Zoom out to show the nearest events."})
+        "ZoomToEvents.longText=Zoom out to show the nearest events.",
+        "ZoomToEvents.disabledProperty.errorMessage=Error getting spanning interval."})
     public ZoomToEvents(final TimeLineController controller) {
         super(Bundle.ZoomToEvents_action_text());
         setLongText(Bundle.ZoomToEvents_longText());
@@ -63,8 +65,14 @@ public class ZoomToEvents extends Action {
 
             @Override
             protected boolean computeValue() {
-                //TODO: do a db query to see if using this action will actually result in viewable events
-                return eventsModel.zoomParametersProperty().getValue().getTimeRange().contains(eventsModel.getSpanningInterval());
+                try {
+                    //TODO: do a db query to see if using this action will actually result in viewable events
+                    return eventsModel.getTimeRange().contains(eventsModel.getSpanningInterval());
+                } catch (TimelineCacheException ex) {
+                    new Alert(Alert.AlertType.ERROR, Bundle.ZoomToEvents_disabledProperty_errorMessage()).showAndWait();
+                    logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
+                    return true;
+                }
             }
         });
     }

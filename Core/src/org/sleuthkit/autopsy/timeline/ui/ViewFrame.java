@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -64,6 +65,7 @@ import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import jfxtras.scene.control.ToggleGroupValue;
 import org.controlsfx.control.NotificationPane;
+import org.controlsfx.control.Notifications;
 import org.controlsfx.control.RangeSlider;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.Action;
@@ -87,6 +89,7 @@ import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
 import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
@@ -244,16 +247,25 @@ final public class ViewFrame extends BorderPane {
      * Listen to changes in the range slider selection and forward to the
      * controller. Waits until the user releases thumb to send to controller.
      */
+    @NbBundle.Messages({
+        "ViewFrame.rangeSliderListener.errorMessage=Error responding to range slider."})
     private final InvalidationListener rangeSliderListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable observable) {
             if (rangeSlider.isHighValueChanging() == false
-                    && rangeSlider.isLowValueChanging() == false) {
-                Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
-                if (false == controller.pushTimeRange(new Interval(
-                        (long) (rangeSlider.getLowValue() + minTime),
-                        (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
-                    refreshTimeUI();
+                && rangeSlider.isLowValueChanging() == false) {
+                try {
+                    Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
+                    if (false == controller.pushTimeRange(new Interval(
+                            (long) (rangeSlider.getLowValue() + minTime),
+                            (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
+                        refreshTimeUI();
+                    }
+                } catch (TimelineCacheException timelineCacheException) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.ViewFrame_rangeSliderListener_errorMessage())
+                            .showError();
+                    LOGGER.log(Level.SEVERE, "Error responding to range slider.", timelineCacheException);
                 }
             }
         }
@@ -322,6 +334,7 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.detailsToggle.text=Details",
         "ViewFrame.listToggle.text=List",
         "ViewFrame.zoomMenuButton.text=Zoom in/out to",
+        "ViewFrame.zoomMenuButton.errorMessage=Error pushing time range.",
         "ViewFrame.tagsAddedOrDeleted=Tags have been created and/or deleted.  The view may not be up to date."
     })
     void initialize() {
@@ -349,8 +362,8 @@ final public class ViewFrame extends BorderPane {
         viewModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
         viewModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
         modeSegButton.setToggleGroup(viewModeToggleGroup);
-        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode) ->
-                controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
+        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode)
+                -> controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
         );
 
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
@@ -394,7 +407,16 @@ final public class ViewFrame extends BorderPane {
         zoomMenuButton.getItems().clear();
         for (ZoomRanges zoomRange : ZoomRanges.values()) {
             zoomMenuButton.getItems().add(ActionUtils.createMenuItem(
-                    new Action(zoomRange.getDisplayName(), event -> controller.pushPeriod(zoomRange.getPeriod()))
+                    new Action(zoomRange.getDisplayName(), actionEvent -> {
+                        try {
+                            controller.pushPeriod(zoomRange.getPeriod());
+                        } catch (TimelineCacheException timelineCacheException) {
+                            Notifications.create().owner(getScene().getWindow())
+                                    .text(Bundle.ViewFrame_zoomMenuButton_errorMessage())
+                                    .showError();
+                            LOGGER.log(Level.SEVERE, "Error pushing a time range.", timelineCacheException);
+                        }
+                    })
             ));
         }
         zoomMenuButton.setText(Bundle.ViewFrame_zoomMenuButton_text());
@@ -600,33 +622,42 @@ final public class ViewFrame extends BorderPane {
     /**
      * Refresh the time selection UI to match the current zoom parameters.
      */
+    @NbBundle.Messages({
+        "ViewFrame.refreshTimeUI.errorMessage=Error gettig the spanning interval."})
     private void refreshTimeUI() {
-        RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
-        final long minTime = rangeDivisionInfo.getLowerBound();
-        final long maxTime = rangeDivisionInfo.getUpperBound();
+        try {
+            RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+            final long minTime = rangeDivisionInfo.getLowerBound();
+            final long maxTime = rangeDivisionInfo.getUpperBound();
 
-        long startMillis = filteredEvents.getTimeRange().getStartMillis();
-        long endMillis = filteredEvents.getTimeRange().getEndMillis();
+            long startMillis = filteredEvents.getTimeRange().getStartMillis();
+            long endMillis = filteredEvents.getTimeRange().getEndMillis();
 
-        if (minTime > 0 && maxTime > minTime) {
-            Platform.runLater(() -> {
-                startPicker.localDateTimeProperty().removeListener(startListener);
-                endPicker.localDateTimeProperty().removeListener(endListener);
-                rangeSlider.highValueChangingProperty().removeListener(rangeSliderListener);
-                rangeSlider.lowValueChangingProperty().removeListener(rangeSliderListener);
+            if (minTime > 0 && maxTime > minTime) {
+                Platform.runLater(() -> {
+                    startPicker.localDateTimeProperty().removeListener(startListener);
+                    endPicker.localDateTimeProperty().removeListener(endListener);
+                    rangeSlider.highValueChangingProperty().removeListener(rangeSliderListener);
+                    rangeSlider.lowValueChangingProperty().removeListener(rangeSliderListener);
 
-                rangeSlider.setMax((maxTime - minTime));
+                    rangeSlider.setMax((maxTime - minTime));
 
-                rangeSlider.setLowValue(startMillis - minTime);
-                rangeSlider.setHighValue(endMillis - minTime);
-                startPicker.setLocalDateTime(epochMillisToLocalDateTime(startMillis));
-                endPicker.setLocalDateTime(epochMillisToLocalDateTime(endMillis));
+                    rangeSlider.setLowValue(startMillis - minTime);
+                    rangeSlider.setHighValue(endMillis - minTime);
+                    startPicker.setLocalDateTime(epochMillisToLocalDateTime(startMillis));
+                    endPicker.setLocalDateTime(epochMillisToLocalDateTime(endMillis));
 
-                rangeSlider.highValueChangingProperty().addListener(rangeSliderListener);
-                rangeSlider.lowValueChangingProperty().addListener(rangeSliderListener);
-                startPicker.localDateTimeProperty().addListener(startListener);
-                endPicker.localDateTimeProperty().addListener(endListener);
-            });
+                    rangeSlider.highValueChangingProperty().addListener(rangeSliderListener);
+                    rangeSlider.lowValueChangingProperty().addListener(rangeSliderListener);
+                    startPicker.localDateTimeProperty().addListener(startListener);
+                    endPicker.localDateTimeProperty().addListener(endListener);
+                });
+            }
+        } catch (TimelineCacheException ex) {
+            Notifications.create().owner(getScene().getWindow())
+                    .text(Bundle.ViewFrame_refreshTimeUI_errorMessage())
+                    .showError();
+            LOGGER.log(Level.SEVERE, "Error gettig the spanning interval.", ex);
         }
     }
 
@@ -770,42 +801,60 @@ final public class ViewFrame extends BorderPane {
             this.intervalMapper = intervalMapper;
         }
 
+        @NbBundle.Messages({"ViewFrame.pickerListener.errorMessage=Error responding to date/time picker change."})
         @Override
         public void invalidated(Observable observable) {
             LocalDateTime pickerTime = pickerSupplier.get().getLocalDateTime();
             if (pickerTime != null) {
-                controller.pushTimeRange(intervalMapper.apply(filteredEvents.timeRangeProperty().get(), localDateTimeToEpochMilli(pickerTime)));
+                try {
+                    controller.pushTimeRange(intervalMapper.apply(filteredEvents.getTimeRange(), localDateTimeToEpochMilli(pickerTime)));
+                } catch (TimelineCacheException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.ViewFrame_pickerListener_errorMessage())
+                            .showError();
+                    LOGGER.log(Level.SEVERE, "Error responding to date/time picker change.", ex);
+                }
                 Platform.runLater(ViewFrame.this::refreshTimeUI);
             }
         }
     }
 
     /**
-     * callback that disabled date/times outside the span of the current case.
+     * Callback that disabled date/times outside the span of the current case.
      */
     private class LocalDateDisabler implements Callback<LocalDateTimePicker.LocalDateTimeRange, Void> {
 
+        @NbBundle.Messages({
+            "ViewFrame.localDateDisabler.errorMessage=Error getting spanning interval."})
         @Override
         public Void call(LocalDateTimePicker.LocalDateTimeRange viewedRange) {
+
             startPicker.disabledLocalDateTimes().clear();
             endPicker.disabledLocalDateTimes().clear();
+            try {
+                //all events in the case are contained in this interval
+                Interval spanningInterval = filteredEvents.getSpanningInterval();
+                long spanStartMillis = spanningInterval.getStartMillis();
+                long spaneEndMillis = spanningInterval.getEndMillis();
 
-            //all events in the case are contained in this interval
-            Interval spanningInterval = filteredEvents.getSpanningInterval();
-            long spanStartMillis = spanningInterval.getStartMillis();
-            long spaneEndMillis = spanningInterval.getEndMillis();
-
-            LocalDate rangeStartLocalDate = viewedRange.getStartLocalDateTime().toLocalDate();
-            LocalDate rangeEndLocalDate = viewedRange.getEndLocalDateTime().toLocalDate().plusDays(1);
-            //iterate over days of the displayed range and disable ones not in spanning interval
-            for (LocalDate dt = rangeStartLocalDate; false == dt.isAfter(rangeEndLocalDate); dt = dt.plusDays(1)) {
-                long startOfDay = dt.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-                long endOfDay = dt.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-                //if no part of day is within spanning interval, add that date the list of disabled dates.
-                if (endOfDay < spanStartMillis || startOfDay > spaneEndMillis) {
-                    startPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
-                    endPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
+                LocalDate rangeStartLocalDate = viewedRange.getStartLocalDateTime().toLocalDate();
+                LocalDate rangeEndLocalDate = viewedRange.getEndLocalDateTime().toLocalDate().plusDays(1);
+                //iterate over days of the displayed range and disable ones not in spanning interval
+                for (LocalDate dt = rangeStartLocalDate; false == dt.isAfter(rangeEndLocalDate); dt = dt.plusDays(1)) {
+                    long startOfDay = dt.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+                    long endOfDay = dt.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+                    //if no part of day is within spanning interval, add that date the list of disabled dates.
+                    if (endOfDay < spanStartMillis || startOfDay > spaneEndMillis) {
+                        startPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
+                        endPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
+                    }
                 }
+
+            } catch (TimelineCacheException ex) {
+                Notifications.create().owner(getScene().getWindow())
+                        .text(Bundle.ViewFrame_localDateDisabler_errorMessage())
+                        .showError();
+                LOGGER.log(Level.SEVERE, "Error getting spanning interval.", ex);
             }
             return null;
         }
@@ -827,16 +876,26 @@ final public class ViewFrame extends BorderPane {
             this.picker = picker;
         }
 
+        @NbBundle.Messages({
+            "ViewFrame.dateTimeValidator.errorMessage=Error getting spanning interval."})
         @Override
         public Boolean call(LocalDateTime param) {
             long epochMilli = localDateTimeToEpochMilli(param);
-            if (filteredEvents.getSpanningInterval().contains(epochMilli)) {
-                return true;
-            } else {
-                if (picker.isPickerShowing() == false) {
-                    //if the user typed an in valid date, reset the text box to the selected date.
-                    picker.setDisplayedLocalDateTime(picker.getLocalDateTime());
+            try {
+                if (filteredEvents.getSpanningInterval().contains(epochMilli)) {
+                    return true;
+                } else {
+                    if (picker.isPickerShowing() == false) {
+                        //if the user typed an in valid date, reset the text box to the selected date.
+                        picker.setDisplayedLocalDateTime(picker.getLocalDateTime());
+                    }
+                    return false;
                 }
+            } catch (TimelineCacheException ex) {
+                Notifications.create().owner(getScene().getWindow())
+                        .text(Bundle.ViewFrame_dateTimeValidator_errorMessage())
+                        .showError();
+                LOGGER.log(Level.SEVERE, "Error getting spanning interval.", ex);
                 return false;
             }
         }

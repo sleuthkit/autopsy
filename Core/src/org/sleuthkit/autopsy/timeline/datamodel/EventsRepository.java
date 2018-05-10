@@ -558,7 +558,7 @@ public class EventsRepository {
                 eventManager.reInitializeDB();
                 //grab ids of all files
                 List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"
-                        + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
+                                                                + " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
                 final int numFiles = fileIDs.size();
 
                 insertMACTimeEvents(numFiles, fileIDs);
@@ -692,9 +692,9 @@ public class EventsRepository {
                 for (Map.Entry<FileSystemTypes, Long> timeEntry : timeMap.entrySet()) {
                     if (timeEntry.getValue() > 0) {
                         // if the time is legitimate ( greater than zero ) insert it
-                        eventManager.addEvent(timeEntry.getValue(), timeEntry.getKey(),
+                        eventManager.insertEvent(timeEntry.getValue(), timeEntry.getKey(),
                                 datasourceID, f.getId(), null, uniquePath, medDesc,
-                                shortDesc, known, hashSets.isEmpty() == false, tags.isEmpty() == false);
+                                shortDesc, known, hashSets, tags);
                     }
                 }
             }
@@ -702,14 +702,14 @@ public class EventsRepository {
 
         @Override
         @NbBundle.Messages("msgdlg.problem.text=There was a problem populating the timeline."
-                + "  Not all events may be present or accurate.")
+                           + "  Not all events may be present or accurate.")
         protected void done() {
             super.done();
             try {
                 get();
             } catch (CancellationException ex) {
                 logger.log(Level.WARNING, "Timeline database population was cancelled by the user. " //NON-NLS
-                        + " Not all events may be present or accurate."); // NON-NLS
+                                          + " Not all events may be present or accurate."); // NON-NLS
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.WARNING, "Unexpected exception while populating database.", ex); // NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.msgdlg_problem_text());
@@ -757,7 +757,7 @@ public class EventsRepository {
                 String fullDescription = eventDescription.getFullDescription();
                 String medDescription = eventDescription.getMedDescription();
                 String shortDescription = eventDescription.getShortDescription();
-                eventManager.addEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets.isEmpty() == false, tags.isEmpty() == false);
+                eventManager.insertEvent(eventDescription.getTime(), type, datasourceID, objectID, artifactID, fullDescription, medDescription, shortDescription, null, hashSets, tags);
             }
         }
     }

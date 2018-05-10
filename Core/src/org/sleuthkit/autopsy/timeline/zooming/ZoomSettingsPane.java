@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TitledPane;
@@ -172,7 +172,7 @@ public class ZoomSettingsPane extends TitledPane {
      */
     private static <DriverType, EnumType extends Enum<EnumType> & DisplayNameProvider> void configureSliderListeners(
             Slider slider,
-            Consumer<EnumType> sliderValueConsumer,
+            CheckedConsumer<EnumType> sliderValueConsumer,
             ReadOnlyObjectProperty<DriverType> modelProperty,
             Class<EnumType> enumClass,
             Function<DriverType, Integer> driverValueMapper,
@@ -187,7 +187,11 @@ public class ZoomSettingsPane extends TitledPane {
             if (slider.isValueChanging() == false) {
                 //convert slider value to EnumType and pass to consumer
                 EnumType sliderValueAsEnum = enumClass.getEnumConstants()[Math.round((float) slider.getValue())];
-                sliderValueConsumer.accept(sliderValueAsEnum);
+                try {
+                    sliderValueConsumer.accept(sliderValueAsEnum);
+                } catch (Exception exception) {
+                    new Alert(Alert.AlertType.ERROR, "Error responding to slider value change.").showAndWait();
+                }
             }
         };
         //attach listener
@@ -250,5 +254,16 @@ public class ZoomSettingsPane extends TitledPane {
         public Double fromString(String string) {
             throw new UnsupportedOperationException("This method should not be used. This EnumSliderLabelFormatter is being used in an unintended way.");
         }
+    }
+
+    /**
+     * Functional interface for a consumer that throws an exception.
+     *
+     * @param <T>
+     */
+    @FunctionalInterface
+    private interface CheckedConsumer<T> {
+
+        void accept(T input) throws Exception;
     }
 }

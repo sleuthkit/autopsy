@@ -20,12 +20,8 @@ package org.sleuthkit.autopsy.timeline.datamodel;
 
 /**
  * Exception thown when there is an error loading a cached value.
- *
- * NOTE: This should probably not be a RuntimeException. But the ripple effect
- * of introducing this as a checked exception was spreading extremely far.
- *
  */
-public class TimelineCacheException extends RuntimeException {
+public class TimelineCacheException extends Exception {
 
     public TimelineCacheException(String message, Throwable cause) {
         super(message, cause);

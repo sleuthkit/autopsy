@@ -64,7 +64,6 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -82,22 +81,23 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent.CANCELLED;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.datamodel.EventsRepository;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
+import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -350,10 +350,14 @@ public class TimeLineController {
         });
         filteredEvents = eventsRepository.getEventsModel();
 
-        InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
-                EventTypeZoomLevel.BASE_TYPE,
-                filteredEvents.filterProperty().get(),
-                DescriptionLoD.SHORT);
+        try {
+            InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
+                    EventTypeZoomLevel.BASE_TYPE,
+                    filteredEvents.filterProperty().get(),
+                    DescriptionLoD.SHORT);
+        } catch (TimelineCacheException timelineCacheException) {
+            throw new TskCoreException("Error getting spanning interval.", timelineCacheException);
+        }
         historyManager.advance(InitialZoomState);
 
         //clear the selected events when the view mode changes
@@ -404,16 +408,18 @@ public class TimeLineController {
      * either file or artifact is not null the user will be prompted to choose a
      * derived event and time range to show in the Timeline List View.
      *
-     * @param repoBuilder A Function from Consumer<Worker.State> to
-     * CancellationProgressTask<?>. Ie a function that given a worker state
-     * listener, produces a task with that listener attached. Expected to be a
-     * method reference to either EventsRepository.rebuildRepository() or
-     * EventsRepository.rebuildTags()
+     * @param repoBuilder    A Function from Consumer<Worker.State> to
+     *                       CancellationProgressTask<?>. Ie a function that
+     *                       given a worker state listener, produces a task with
+     *                       that listener attached. Expected to be a method
+     *                       reference to either
+     *                       EventsRepository.rebuildRepository() or
+     *                       EventsRepository.rebuildTags()
      * @param markDBNotStale After the repo is rebuilt should it be marked not
-     * stale
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
-     * @param artifact The BlackboardArtifact to show in the List View.
+     *                       stale
+     * @param file           The AbstractFile from which to choose an event to
+     *                       show in the List View.
+     * @param artifact       The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
@@ -458,7 +464,12 @@ public class TimeLineController {
                         }
                         if (file == null && artifact == null) {
                             SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                            TimeLineController.this.showFullRange();
+                            try {
+                                TimeLineController.this.showFullRange();
+                            } catch (TimelineCacheException timelineCacheException) {
+                                logger.log(Level.SEVERE, "Error showing Timeline ", timelineCacheException);
+                                new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+                            }
                         } else {
 
                             try {
@@ -477,7 +488,7 @@ public class TimeLineController {
                                     }
                                 });
                             } catch (TskCoreException tskCoreException) {
-                                logger.log(Level.SEVERE, "Error showing Timeline " , tskCoreException);
+                                logger.log(Level.SEVERE, "Error showing Timeline ", tskCoreException);
                                 new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
                             }
 
@@ -511,8 +522,8 @@ public class TimeLineController {
      * Rebuild the entire repo in the background, and show the timeline when
      * done.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -524,8 +535,8 @@ public class TimeLineController {
      * Drop the tags table and rebuild it in the background, and show the
      * timeline when done.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -536,7 +547,7 @@ public class TimeLineController {
     /**
      * Show the entire range of the timeline.
      */
-    private boolean showFullRange() {
+    private boolean showFullRange() throws TimelineCacheException {
         synchronized (filteredEvents) {
             return pushTimeRange(filteredEvents.getSpanningInterval());
         }
@@ -547,15 +558,19 @@ public class TimeLineController {
      * ViewInTimelineRequestedEvent in the List View.
      *
      * @param requestEvent Contains the ID of the requested events and the
-     * timerange to show.
+     *                     timerange to show.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void showInListView(ViewInTimelineRequestedEvent requestEvent) throws TskCoreException {
         synchronized (filteredEvents) {
             setViewMode(ViewMode.LIST);
             selectEventIDs(requestEvent.getEventIDs());
-            if (pushTimeRange(requestEvent.getInterval()) == false) {
-                eventbus.post(requestEvent);
+            try {
+                if (pushTimeRange(requestEvent.getInterval()) == false) {
+                    eventbus.post(requestEvent);
+                }
+            } catch (TimelineCacheException ex) {
+                throw new TskCoreException("Error pushing requested timerange.", ex);
             }
         }
     }
@@ -581,8 +596,8 @@ public class TimeLineController {
      * Add the case and ingest listeners, prompt for rebuilding the database if
      * necessary, and show the timeline window.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -610,8 +625,8 @@ public class TimeLineController {
      * confirms, rebuilds the database. Shows the timeline window when the
      * rebuild is done, or immediately if the rebuild is not confirmed.
      *
-     * @param file The AbstractFile from which to choose an event to show in the
-     * List View.
+     * @param file     The AbstractFile from which to choose an event to show in
+     *                 the List View.
      * @param artifact The BlackboardArtifact to show in the List View.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -651,7 +666,7 @@ public class TimeLineController {
      * The potential reasons are not necessarily orthogonal to each other.
      *
      * @return A list of reasons why the user might won't to rebuild the
-     * database.
+     *         database.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     @NbBundle.Messages({"TimeLineController.errorTitle=Timeline error.",
@@ -691,24 +706,24 @@ public class TimeLineController {
      * around the middle of the currently viewed time range.
      *
      * @param period The period of time to show around the current center of the
-     * view.
+     *               view.
      */
-    synchronized public void pushPeriod(ReadablePeriod period) {
+    synchronized public void pushPeriod(ReadablePeriod period) throws TimelineCacheException {
         synchronized (filteredEvents) {
             pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), period));
         }
     }
 
-    synchronized public void pushZoomOutTime() {
-        final Interval timeRange = filteredEvents.timeRangeProperty().get();
+    synchronized public void pushZoomOutTime() throws TimelineCacheException {
+        final Interval timeRange = filteredEvents.getTimeRange();
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().minus(toDurationMillis);
         DateTime end = timeRange.getEnd().plus(toDurationMillis);
         pushTimeRange(new Interval(start, end));
     }
 
-    synchronized public void pushZoomInTime() {
-        final Interval timeRange = filteredEvents.timeRangeProperty().get();
+    synchronized public void pushZoomInTime() throws TimelineCacheException {
+        final Interval timeRange = filteredEvents.getTimeRange();
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
@@ -751,9 +766,9 @@ public class TimeLineController {
      * @param timeRange The Interval to view.
      *
      * @return True if the interval was changed. False if the interval was the
-     * same as the existing one and no change happened.
+     *         same as the existing one and no change happened.
      */
-    synchronized public boolean pushTimeRange(Interval timeRange) {
+    synchronized public boolean pushTimeRange(Interval timeRange) throws TimelineCacheException {
         //clamp timerange to case
         Interval clampedTimeRange;
         if (timeRange == null) {
@@ -787,7 +802,7 @@ public class TimeLineController {
      *
      * @return true if the view actually changed.
      */
-    synchronized public boolean pushTimeUnit(TimeUnits timeUnit) {
+    synchronized public boolean pushTimeUnit(TimeUnits timeUnit) throws TimelineCacheException {
         if (timeUnit == TimeUnits.FOREVER) {
             return showFullRange();
         } else {
@@ -805,7 +820,7 @@ public class TimeLineController {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
-    synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
+    synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) throws TimelineCacheException {
         timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
@@ -851,7 +866,7 @@ public class TimeLineController {
         selectedEventIDs.setAll(eventIDs);
     }
 
-    public void selectTimeAndType(Interval interval, EventType type) {
+    public void selectTimeAndType(Interval interval, EventType type) throws TimelineCacheException {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
         final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { //NON-NLS
@@ -940,7 +955,7 @@ public class TimeLineController {
      * Register the given object to receive events.
      *
      * @param o The object to register. Must implement public methods annotated
-     * with Subscribe.
+     *          with Subscribe.
      */
     synchronized public void registerForEvents(Object o) {
         eventbus.register(o);
