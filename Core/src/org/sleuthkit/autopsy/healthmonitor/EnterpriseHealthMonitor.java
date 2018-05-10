@@ -603,7 +603,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * and enable/disable as needed.
      * @throws HealthMonitorException 
      */
-    final synchronized void updateFromGlobalEnabledStatus() throws HealthMonitorException {
+    synchronized void updateFromGlobalEnabledStatus() throws HealthMonitorException {
         
         boolean previouslyEnabled = monitorIsEnabled();
         
@@ -645,10 +645,8 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         }
         
         boolean currentlyEnabled = getGlobalEnabledStatusFromDB();
-        if( currentlyEnabled == previouslyEnabled) {
-            // Nothing needs to be done
-        } else {
-            if(currentlyEnabled == false) {
+        if( currentlyEnabled != previouslyEnabled) {
+            if( ! currentlyEnabled ) {
                 isEnabled.set(false);
                 deactivateMonitorLocally();
             } else {
@@ -845,7 +843,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * It will delete all current timing data and replace it with randomly generated values.
      * If there is more than one node, the second node's times will trend upwards.
      */
-    final void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
+    void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
         
         if(! isEnabled.get()) {
             throw new HealthMonitorException("Can't populate database - monitor not enabled");
@@ -900,6 +898,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                             break;
                         default:
                             minIndexTimeNanos = baseIndex * 1000 * 1000;
+                            break;
                     }
 
                     long maxIndexTimeOverMin = minIndexTimeNanos * 3;
@@ -1169,12 +1168,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * All times will be in milliseconds.
      */
     static class DatabaseTimingResult {
-        private long timestamp; // Time the metric was recorded
-        private String hostname; // Host that recorded the metric
-        private long count; // Number of metrics collected
-        private double average;   // Average of the durations collected (milliseconds)
-        private double max;   // Maximum value found (milliseconds)
-        private double min;   // Minimum value found (milliseconds)
+        private final long timestamp; // Time the metric was recorded
+        private final String hostname; // Host that recorded the metric
+        private final long count; // Number of metrics collected
+        private final double average;   // Average of the durations collected (milliseconds)
+        private final double max;   // Maximum value found (milliseconds)
+        private final double min;   // Minimum value found (milliseconds)
 
         DatabaseTimingResult(ResultSet resultSet) throws SQLException {
             this.timestamp = resultSet.getLong("timestamp");
