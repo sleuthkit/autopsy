@@ -43,3 +43,4 @@ Autopsy depends on a specific version of The Sleuth Kit.  You need the Java libr
 * Limitations (Updated May 2018) * 
 - Timeline does not work on OS X
 - Video thumbnails are not generated (need to get a consistent version of OpenCV)
+- VHD and VMDK files not supported on OS X

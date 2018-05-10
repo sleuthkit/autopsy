@@ -99,12 +99,12 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
     void refresh(AutoIngestMonitor monitor) {
         outline.setRowSelectionAllowed(false);
         Node[] selectedNodes = explorerManager.getSelectedNodes();
-        AinStatusNode autoIngestNode = new AinStatusNode(monitor);
-        explorerManager.setRootContext(autoIngestNode);
+        AinStatusNode ainStatusNode = new AinStatusNode(monitor);
+        explorerManager.setRootContext(ainStatusNode);
         outline.setRowSelectionAllowed(true);
-        if (selectedNodes.length > 0 && autoIngestNode.getChildren().findChild(selectedNodes[0].getName()) != null && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
+        if (selectedNodes.length > 0 && ainStatusNode.getChildren().findChild(selectedNodes[0].getName()) != null && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
             try {
-                explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
+                explorerManager.setSelectedNodes(new Node[]{ainStatusNode.getChildren().findChild(selectedNodes[0].getName())});
             } catch (PropertyVetoException ignore) {
                 //Unable to select previously selected node
             }
