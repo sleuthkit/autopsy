@@ -101,7 +101,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, Bundle.DirectoryTreeTopComponent_resultsView_title());
+    private final DataResultTopComponent dataResult = new DataResultTopComponent(Bundle.DirectoryTreeTopComponent_resultsView_title());
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
@@ -386,7 +386,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         Case currentCase = null;
         try {
-            currentCase = Case.getOpenCase();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             // No open case.
         }
@@ -550,7 +550,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
          * sources.
          */
         try {
-            Case openCase = Case.getOpenCase();
+            Case openCase = Case.getCurrentCaseThrows();
             return openCase.hasData() == false;
         } catch (NoCurrentCaseException ex) {
             return true;
@@ -643,7 +643,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                  * already closed.
                  */
                 try {
-                    Case currentCase = Case.getOpenCase();
+                    Case currentCase = Case.getCurrentCaseThrows();
                     // We only need to trigger openCoreWindows() when the
                     // first data source is added.
                     if (currentCase.getDataSources().size() == 1) {

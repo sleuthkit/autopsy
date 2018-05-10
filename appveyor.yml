@@ -30,14 +30,14 @@ install:
   - ps: pushd C:\
   - git clone https://github.com/sleuthkit/sleuthkit
   - ps: popd
-services:
-      - postgresql95
 
+services:
+  - postgresql95
 
 build_script:
   - cd %TSK_HOME%
-  - python setupLibs.py
-  - python win32\updateBuildLibs.py -m
+  - python setupDevRepos.py
+  - python win32\updateAndBuildAll.py -m
   - ps: pushd bindings/java
   - ps: ant -version
   - cmd: ant dist-PostgreSQL

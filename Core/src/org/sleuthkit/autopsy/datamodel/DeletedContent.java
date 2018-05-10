@@ -219,7 +219,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         // new file was added
                         // @@@ COULD CHECK If the new file is deleted before notifying...
                         update();
@@ -238,7 +238,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                      * received for a case that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**

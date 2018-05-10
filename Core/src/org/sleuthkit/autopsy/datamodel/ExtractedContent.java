@@ -229,7 +229,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  * may be received for a case that is already closed.
                  */
                 try {
-                    Case.getOpenCase();
+                    Case.getCurrentCaseThrows();
                     /**
                      * Due to some unresolved issues with how cases are closed,
                      * it is possible for the event to have a null oldValue if
@@ -252,7 +252,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                  * may be received for a case that is already closed.
                  */
                 try {
-                    Case.getOpenCase();
+                    Case.getCurrentCaseThrows();
                     refresh(true);
                 } catch (NoCurrentCaseException notUsed) {
                     /**
@@ -423,7 +423,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         /**
                          * Even with the check above, it is still possible that
                          * the case will be closed in a different thread before
@@ -448,7 +448,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
                     } catch (NoCurrentCaseException notUsed) {
                         /**

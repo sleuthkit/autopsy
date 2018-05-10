@@ -198,7 +198,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
 
         java.io.File ioFile;
         try {
-            ioFile = VideoUtils.getTempVideoFile(file);
+            ioFile = VideoUtils.getVideoFileInTempDir(file);
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
@@ -552,7 +552,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             } else if (state.equals(State.READY)) {
                 final File tempVideoFile;
                 try {
-                    tempVideoFile = VideoUtils.getTempVideoFile(currentFile);
+                    tempVideoFile = VideoUtils.getVideoFileInTempDir(currentFile);
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.WARNING, "Exception while getting open case."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);

@@ -46,7 +46,7 @@ class HashDbSearcher {
      * @return a List of all FsContent with the given hash
      */
     static List<AbstractFile> findFilesByMd5(String md5Hash) throws NoCurrentCaseException {
-        final Case currentCase = Case.getOpenCase();
+        final Case currentCase = Case.getCurrentCaseThrows();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.findFilesByMd5(md5Hash);
     }
@@ -123,7 +123,7 @@ class HashDbSearcher {
      * @return true if the search feature is ready.
      */
     static boolean allFilesMd5Hashed() throws NoCurrentCaseException {
-        final Case currentCase = Case.getOpenCase();
+        final Case currentCase = Case.getCurrentCaseThrows();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.allFilesMd5Hashed();
     }
@@ -134,7 +134,7 @@ class HashDbSearcher {
      * @return the number of files with an MD5
      */
     static int countFilesMd5Hashed() throws NoCurrentCaseException {
-        final Case currentCase = Case.getOpenCase();
+        final Case currentCase = Case.getCurrentCaseThrows();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.countFilesMd5Hashed();
     }

@@ -382,7 +382,7 @@ final class LocalDiskPanel extends JPanel {
     }
 
     private static String getDefaultImageWriterFolder() throws NoCurrentCaseException {
-        return Paths.get(Case.getOpenCase().getModuleDirectory(), "Image Writer").toString();
+        return Paths.get(Case.getCurrentCaseThrows().getModuleDirectory(), "Image Writer").toString();
     }
 
     private void setPotentialImageWriterPath(LocalDisk disk) throws NoCurrentCaseException {

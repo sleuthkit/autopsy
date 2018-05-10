@@ -277,7 +277,7 @@ final class DataSourceIngestJob {
             Thread.currentThread().interrupt();
         }
         try {
-            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             this.addIngestModules(firstStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
             this.addIngestModules(fileIngestModuleTemplates, IngestModuleType.FILE_LEVEL, skCase);
             this.addIngestModules(secondStageDataSourceModuleTemplates, IngestModuleType.DATA_SOURCE_LEVEL, skCase);
@@ -415,7 +415,7 @@ final class DataSourceIngestJob {
         List<IngestModuleError> errors = startUpIngestPipelines();
         if (errors.isEmpty()) {
             try {
-                this.ingestJob = Case.getOpenCase().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
+                this.ingestJob = Case.getCurrentCaseThrows().getSleuthkitCase().addIngestJob(dataSource, NetworkUtils.getLocalHostName(), ingestModules, new Date(this.createTime), new Date(0), IngestJobStatusType.STARTED, "");
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Failed to add ingest job to database.", ex);
             }

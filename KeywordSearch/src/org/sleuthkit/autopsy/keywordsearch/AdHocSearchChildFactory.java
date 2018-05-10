@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQueryContent;
+import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.KeywordHitKey;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -66,9 +66,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Responsible for assembling nodes and columns in the right way and performing
  * lazy queries as needed.
  */
-class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
+class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
 
-    private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(AdHocSearchChildFactory.class.getName());
 
     //common properties (superset of all Node properties) to be displayed as columns
     static final List<String> COMMON_PROPERTIES
@@ -82,9 +82,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                             .map(Object::toString))
                     .collect(Collectors.toList());
 
-    private final Collection<QueryRequest> queryRequests;
+    private final Collection<AdHocQueryRequest> queryRequests;
 
-    KeywordSearchResultFactory(Collection<QueryRequest> queryRequests) {
+    AdHocSearchChildFactory(Collection<AdHocQueryRequest> queryRequests) {
         this.queryRequests = queryRequests;
     }
 
@@ -98,7 +98,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     @Override
     protected boolean createKeys(List<KeyValue> toPopulate) {
 
-        for (QueryRequest queryRequest : queryRequests) {
+        for (AdHocQueryRequest queryRequest : queryRequests) {
             /**
              * Check the validity of the requested query.
              */
@@ -148,14 +148,14 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         }
         SleuthkitCase tskCase;
         try {
-            tskCase = Case.getOpenCase().getSleuthkitCase();
+            tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
             return false;
         }
 
         int hitNumber = 0;
-        List<KeyValueQueryContent> tempList = new ArrayList<>();
+        List<KeywordHitKey> tempList = new ArrayList<>();
         for (KeywordHit hit : getOneHitPerObject(queryResults)) {
 
             /**
@@ -203,7 +203,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 hitName = contentName;
             }
             hitNumber++;
-            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, artifact, queryRequest, queryResults));
+            tempList.add(new KeywordHitKey(hitName, properties, hitNumber, hit.getSolrObjectId(), content, artifact, queryRequest, queryResults));
 
         }
 
@@ -253,8 +253,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     protected Node createNodeForKey(KeyValue key) {
         Node resultNode;
 
-        if (key instanceof KeyValueQueryContent) {
-            AdHocQueryResult adHocQueryResult = new AdHocQueryResult((KeyValueQueryContent) key);
+        if (key instanceof KeywordHitKey) {
+            AdHocQueryResult adHocQueryResult = new AdHocQueryResult((KeywordHitKey) key);
 
             /**
              * Place the Content, Artifact and hit results into the lookup for
@@ -262,17 +262,17 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
              */
             ArrayList<Object> lookups = new ArrayList<>();
             lookups.add(adHocQueryResult);
-            if (((KeyValueQueryContent) key).getContent() != null) {
-                lookups.add(((KeyValueQueryContent) key).getContent());
+            if (((KeywordHitKey) key).getContent() != null) {
+                lookups.add(((KeywordHitKey) key).getContent());
             }
-            if (((KeyValueQueryContent) key).getArtifact() != null) {
-                lookups.add(((KeyValueQueryContent) key).getArtifact());
+            if (((KeywordHitKey) key).getArtifact() != null) {
+                lookups.add(((KeywordHitKey) key).getArtifact());
             }
 
             Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.fixed(lookups.toArray()));
 
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            resultNode = new KeywordSearchFilterNode(kvNode);
+            resultNode = new AdHocSearchFilterNode(kvNode);
         } else {
             resultNode = new EmptyNode("This Node Is Empty");
             resultNode.setDisplayName(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.createNodeForKey.noResultsFound.text"));
@@ -298,7 +298,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          *                     which the hit was found.
          * @param results      The query results.
          */
-        AdHocQueryResult(KeyValueQueryContent key) {
+        AdHocQueryResult(KeywordHitKey key) {
             this.solrObjectId = key.getSolrObjectId();
             this.results = key.getHits();
         }
@@ -327,7 +327,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
      * Used to display keyword search results in table. Eventually turned into a
      * node.
      */
-    class KeyValueQueryContent extends KeyValue {
+    class KeywordHitKey extends KeyValue {
 
         private final long solrObjectId;
 
@@ -350,7 +350,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          * @param query        Query used in search
          * @param hits         Full set of search results (for all files! @@@)
          */
-        KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, BlackboardArtifact artifact, KeywordSearchQuery query, QueryResults hits) {
+        KeywordHitKey(String name, Map<String, Object> map, int id, long solrObjectId, Content content, BlackboardArtifact artifact, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
             this.solrObjectId = solrObjectId;
             this.content = content;

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -111,6 +112,14 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.SetNameNode ihsn);
 
+    T visit(Md5Node mn);
+
+    T visit(CommonFilesNode cfn);
+
+    T visit(FileInstanceNode fin);
+
+    T visit(CommonFileChildNodeLoading cfcnl);
+
     /*
      * Tags
      */
@@ -178,6 +187,26 @@ public interface DisplayableItemNodeVisitor<T> {
          * @return
          */
         protected abstract T defaultVisit(DisplayableItemNode c);
+
+        @Override
+        public T visit(FileInstanceNode fin) {
+            return defaultVisit(fin);
+        }
+
+        @Override
+        public T visit(Md5Node mn) {
+            return defaultVisit(mn);
+        }
+
+        @Override
+        public T visit(CommonFilesNode cfn) {
+            return defaultVisit(cfn);
+        }
+
+        @Override
+        public T visit(CommonFileChildNodeLoading cfcnl) {
+            return defaultVisit(cfcnl);
+        }
 
         @Override
         public T visit(DirectoryNode dn) {

@@ -121,7 +121,7 @@ final class ExtractUnallocAction extends AbstractAction {
             }
             Case openCase;
             try {
-                openCase = Case.getOpenCase();
+                openCase = Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException ex) {
                 MessageNotifyUtil.Message.info(Bundle.ExtractAction_noOpenCase_errMsg());
                 return;
@@ -611,7 +611,7 @@ final class ExtractUnallocAction extends AbstractAction {
             this.imageId = img.getId();
             this.imageName = img.getName();
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + 0 + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getOpenCase().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(Case.getCurrentCaseThrows().getExportDirectory() + File.separator + this.fileName);
             this.sizeInBytes = calcSizeInBytes();
         }
 
@@ -633,7 +633,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 this.imageId = 0;
             }
             this.fileName = this.imageName + "-Unalloc-" + this.imageId + "-" + volumeId + ".dat"; //NON-NLS
-            this.fileInstance = new File(Case.getOpenCase().getExportDirectory() + File.separator + this.fileName);
+            this.fileInstance = new File(Case.getCurrentCaseThrows().getExportDirectory() + File.separator + this.fileName);
             this.layoutFiles = getUnallocFiles(volume);
             Collections.sort(layoutFiles, new SortObjId());
             this.sizeInBytes = calcSizeInBytes();

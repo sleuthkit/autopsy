@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.AdHocQueryResult;
+import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -220,7 +220,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
-                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(artifactId);
                     rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
 
                 }

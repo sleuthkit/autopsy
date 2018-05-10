@@ -36,7 +36,6 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
-import org.python.util.PythonObjectInputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -492,22 +491,12 @@ public final class IngestJobSettings {
         String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
         File settingsFile = new File(moduleSettingsFilePath);
         if (settingsFile.exists()) {
-            if (!isPythonModuleSettingsFile(moduleSettingsFilePath)) {
-                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                    settings = (IngestModuleIngestJobSettings) in.readObject();
-                } catch (IOException | ClassNotFoundException ex) {
-                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
-                    logger.log(Level.WARNING, warning, ex);
-                    this.warnings.add(warning);
-                }
-            } else {
-                try (PythonObjectInputStream in = new PythonObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                    settings = (IngestModuleIngestJobSettings) in.readObject();
-                } catch (IOException | ClassNotFoundException exception) {
-                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
-                    logger.log(Level.WARNING, warning, exception);
-                    this.warnings.add(warning);
-                }
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                settings = (IngestModuleIngestJobSettings) in.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS                 
+                logger.log(Level.WARNING, warning, ex);
+                this.warnings.add(warning);
             }
         }
         if (settings == null) {

@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 public class TableFilterNode extends FilterNode {
 
     private final boolean createChildren;
+    private boolean forceUseWrappedDisplayName = false;
     private String columnOrderKey = "NONE";
 
     /**
@@ -41,13 +42,40 @@ public class TableFilterNode extends FilterNode {
      * ensure the individual viewers display only the first layer of child
      * nodes.
      *
-     * @param node           The node to wrap in the filter node.
+     * @param node The node to wrap in the filter node.
      * @param createChildren True if a Children object should be created for the
-     *                       wrapped node.
+     * wrapped node.
      */
     public TableFilterNode(Node node, boolean createChildren) {
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
+    }
+
+    /**
+     * Constructs a filter node that generates children using
+     * TableFilterChildrenWithDescendants. This enables row to have descendants.
+     * 
+     * Enables use of <code>getDisplayName()</code> for children of this node.
+     *
+     * @param node The node to wrap
+     */
+    public TableFilterNode(Node node) {
+        super(node, TableFilterChildrenWithDescendants.createInstance(node, true), Lookups.proxy(node));
+        this.createChildren = true;
+        this.forceUseWrappedDisplayName = false;
+    }
+    
+    /**
+     * To be used in TableFilterChildrenWithDescendants.
+     * 
+     * @param node node to wrap
+     * @param createChildren node has children?
+     * @param forceUseWrappedDisplayName  allow use of custom <code>getDisplayName()</code> .
+     */
+    TableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
+        super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
+        this.createChildren = createChildren;
+        this.forceUseWrappedDisplayName = forceUseWrappedDisplayName;
     }
 
     /**
@@ -56,12 +84,11 @@ public class TableFilterNode extends FilterNode {
      * ensure the individual viewers display only the first layer of child
      * nodes.
      *
-     * @param node           The node to wrap in the filter node.
+     * @param node The node to wrap in the filter node.
      * @param createChildren True if a Children object should be created for the
-     *                       wrapped node.
+     * wrapped node.
      * @param columnOrderKey A key that represents the type of the original
-     *                       wrapped node and what is being displayed under that
-     *                       node.
+     * wrapped node and what is being displayed under that node.
      */
     public TableFilterNode(Node node, boolean createChildren, String columnOrderKey) {
         super(node, TableFilterChildren.createInstance(node, createChildren));
@@ -77,11 +104,17 @@ public class TableFilterNode extends FilterNode {
      */
     @Override
     public String getDisplayName() {
-        if (createChildren) {
+        if (this.forceUseWrappedDisplayName) {
+            return super.getDisplayName();
+        } else if (createChildren) {
             return NbBundle.getMessage(this.getClass(), "TableFilterNode.displayName.text");
         } else {
             return super.getDisplayName();
         }
+    }
+
+    protected String getParentDisplayName() {
+        return super.getDisplayName();
     }
 
     /**
@@ -105,7 +138,7 @@ public class TableFilterNode extends FilterNode {
      * selected.
      *
      * @return The child node selection information, or null if no child should
-     *         be selected.
+     * be selected.
      */
     public NodeSelectionInfo getChildNodeSelectionInfo() {
         /*
@@ -121,10 +154,10 @@ public class TableFilterNode extends FilterNode {
 
     /**
      * @return the column order key, which allows custom column ordering to be
-     *         written into a properties file and be reloaded for future use in
-     *         a table with the same root node or for different cases. This is
-     *         done by DataResultViewerTable. The key should represent what
-     *         kinds of items the table is showing.
+     * written into a properties file and be reloaded for future use in a table
+     * with the same root node or for different cases. This is done by
+     * DataResultViewerTable. The key should represent what kinds of items the
+     * table is showing.
      */
     String getColumnOrderKey() {
         return columnOrderKey;

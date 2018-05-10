@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponentinterfaces;
+package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.util.List;
@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Defines an interface for application specific content viewer
  *
  */
-public interface FileTypeViewer {
+interface FileTypeViewer {
 
     /**
      * Returns list of MIME types supported by this viewer
@@ -45,6 +45,11 @@ public interface FileTypeViewer {
 
     /**
      * Clears the data in the panel
+     *
+     * IMPORTANT IF MAKING THIS PUBLIC: I (RC) am not sure that this method
+     * belongs in this interface. If we are not going to use setFile(null) as a
+     * reset method as in DataContentViewer and DataResultViewer, then this is
+     * fine. Otherwise, it is ambiguous.
      */
     void resetComponent();
 }
