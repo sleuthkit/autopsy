@@ -33,15 +33,6 @@ createConfigDirectories () {
     if [ ! -d "$1" ]; then
       mkdir $1 && infoLog "$1 successfully created" || errorLog "error while creating $1"
     fi
-    if [ ! -d "$2" ]; then
-      mkdir $2 && infoLog "$2 successfully created" || errorLog "error while creating $2"
-    fi
-    if [ ! -d "$3" ]; then
-      mkdir $3 && infoLog "$3 successfully created" || errorLog "error while creating $3"
-    fi
-    if [ ! -d "$4" ]; then
-      mkdir $4 && infoLog "$4 successfully created" || errorLog "error while creating $4"
-    fi
     return 0
 }
 
@@ -71,11 +62,14 @@ showAndReadOptions () {
 
 
 # Show mounted drives and loop until it is valid
-showAndReadOptions
-if [ "$option" -lt "1" ] || [ "$option" -gt "$options_length" ]; then
-  infoLog "Please choose a valid option"
+while true
+do
   showAndReadOptions
-fi
+  if [ "$option" -ge "1" ] && [ "$option" -le "$options_length" ]; then
+    break
+  fi
+  echo "Please choose a valid option"
+done
 
 if [ "$option" != "$options_length" ]; then
   index=$(( $option - 1 ))
@@ -87,8 +81,7 @@ if [ "$option" != "$options_length" ]; then
 
     # Make the directories on the media
     userDirectory="$autopsyConfigDir/userdir"
-    createConfigDirectories $autopsyConfigDir $userDirectory
-
+    createConfigDirectories $autopsyConfigDir && createConfigDirectories $userDirectory
 
     if [ $? -eq 0 ]; then
         sh $AUTOPSY_BIN --userdir $userDirectory 
