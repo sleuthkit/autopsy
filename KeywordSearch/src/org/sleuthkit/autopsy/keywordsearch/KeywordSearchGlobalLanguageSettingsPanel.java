@@ -40,7 +40,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
-
+    
     KeywordSearchGlobalLanguageSettingsPanel() {
         initComponents();
         customizeComponents();
@@ -111,6 +111,9 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
 
+        boolean ocr = KeywordSearchSettings.getOcrOption();
+        enableOcrCheckbox.setSelected(ocr);        
+        
         final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
 
@@ -135,12 +138,15 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
+        
+        boolean ocr = KeywordSearchSettings.getOcrOption();
 
         boolean ingestNotRunning = !IngestManager.getInstance().isIngestRunning() && !IngestManager.getInstance().isIngestRunning();
         //enable / disable checboxes
-        activateScriptsCheckboxes(extractEnabled && ingestNotRunning);
+        activateScriptsCheckboxes(ocr && extractEnabled && ingestNotRunning);
         enableUTF16Checkbox.setEnabled(ingestNotRunning);
         enableUTF8Checkbox.setEnabled(ingestNotRunning);
+        enableOcrCheckbox.setEnabled(ingestNotRunning);
     }
 
     /**
@@ -158,6 +164,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         enableUTF8Checkbox = new javax.swing.JCheckBox();
         enableUTF16Checkbox = new javax.swing.JCheckBox();
         ingestSettingsLabel = new javax.swing.JLabel();
+        enableOcrCheckbox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.languagesLabel.text")); // NOI18N
 
@@ -173,7 +180,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         );
         checkPanelLayout.setVerticalGroup(
             checkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 395, Short.MAX_VALUE)
+            .addGap(0, 378, Short.MAX_VALUE)
         );
 
         langPanel.setViewportView(checkPanel);
@@ -194,22 +201,32 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.ingestSettingsLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(enableOcrCheckbox, org.openide.util.NbBundle.getMessage(KeywordSearchGlobalLanguageSettingsPanel.class, "KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text")); // NOI18N
+        enableOcrCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enableOcrCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ingestSettingsLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ingestSettingsLabel)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(26, 26, 26)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(enableUTF16Checkbox)
-                            .addComponent(enableUTF8Checkbox)))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(enableUTF8Checkbox)
+                            .addComponent(enableOcrCheckbox))))
                 .addContainerGap(255, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -218,13 +235,15 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 .addContainerGap()
                 .addComponent(ingestSettingsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(enableOcrCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(enableUTF16Checkbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(enableUTF8Checkbox)
-                .addGap(18, 18, 18)
-                .addComponent(languagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
+                .addComponent(languagesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 380, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -246,8 +265,17 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
+    private void enableOcrCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableOcrCheckboxActionPerformed
+
+        boolean selected = this.enableOcrCheckbox.isSelected();
+
+        activateScriptsCheckboxes(selected || this.enableOcrCheckbox.isSelected());
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_enableOcrCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel checkPanel;
+    private javax.swing.JCheckBox enableOcrCheckbox;
     private javax.swing.JCheckBox enableUTF16Checkbox;
     private javax.swing.JCheckBox enableUTF8Checkbox;
     private javax.swing.JLabel ingestSettingsLabel;
@@ -261,6 +289,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 Boolean.toString(enableUTF8Checkbox.isSelected()));
         KeywordSearchSettings.setStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
                 Boolean.toString(enableUTF16Checkbox.isSelected()));
+        KeywordSearchSettings.setOcrOption(enableOcrCheckbox.isSelected());
 
         if (toUpdate != null) {
             KeywordSearchSettings.setStringExtractScripts(toUpdate);

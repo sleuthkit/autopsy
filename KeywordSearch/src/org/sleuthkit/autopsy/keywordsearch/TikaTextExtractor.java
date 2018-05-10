@@ -89,8 +89,8 @@ class TikaTextExtractor extends ContentTextExtractor {
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
         
-        // OCR
-        if (TESSERACT_PATH != null) {
+        // configure OCR if it is enabled in KWS settings and installed on the machine
+        if (TESSERACT_PATH != null && KeywordSearchSettings.getOcrOption()) {
             TesseractOCRConfig config = new TesseractOCRConfig();
             String tesseractFolder = TESSERACT_PATH.getParent();
             config.setTesseractPath(tesseractFolder);
