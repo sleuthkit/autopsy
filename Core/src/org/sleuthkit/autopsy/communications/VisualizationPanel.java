@@ -171,7 +171,12 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     public void paint(Graphics graphics) {
                         try {
                             super.paint(graphics);
-                        } catch (NullPointerException ex) { //NOPMD  We can't find the underlying cause in jgraphx
+                        } catch (NullPointerException ex) { //NOPMD  
+                            /* We can't find the underlying cause of the NPE in
+                             * jgraphx, but it doesn't seem to cause any
+                             * noticeable problems, so we are just logging it
+                             * and moving on.
+                             */
                             logger.log(Level.WARNING, "There was a NPE while painting the VisualizationPanel", ex);
                         }
                     }
