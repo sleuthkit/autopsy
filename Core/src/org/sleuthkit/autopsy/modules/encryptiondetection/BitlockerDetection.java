@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.Volume;
  * Addendum class for the Encryption Detection data source module to detect
  * Bitlocker volumes.
  */
-class BitlockerDetection {
+final class BitlockerDetection {
 
     private static final int BITLOCKER_BIOS_PARAMETER_BLOCK_SIZE = 0x54;
     private static final byte[] BITLOCKER_SIGNATURE_BYTES = {'-', 'F', 'V', 'E', '-', 'F', 'S', '-'};
@@ -37,6 +37,12 @@ class BitlockerDetection {
     private static final int BITLOCKER_ADDRESS_SECTORS = 0x13;
     private static final int BITLOCKER_ADDRESS_SECTORS_PER_FAT = 0x16;
     private static final int BITLOCKER_ADDRESS_LARGE_SECTORS = 0x20;
+    
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private BitlockerDetection() {
+    }
 
     /**
      * This method checks if the Volume input has been encrypted with Bitlocker.
@@ -101,6 +107,11 @@ class BitlockerDetection {
                             && sectors == 0 && sectorsPerFat == 0 && largeSectors == 0) {
                         bitlockerVolume = true;
                     }
+                    
+                    break;
+                    
+                default:
+                    // Invalid value. This is not a Bitlocker volume.
             }
         }
 
