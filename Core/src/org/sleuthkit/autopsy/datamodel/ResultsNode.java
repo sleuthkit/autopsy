@@ -23,8 +23,6 @@ import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.datamodel.DataSourcesLayerChildren.SubtreeEnum;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -35,11 +33,13 @@ public class ResultsNode extends DisplayableItemNode {
     @NbBundle.Messages("ResultsNode.name.text=Results")
     public static final String NAME = Bundle.ResultsNode_name_text();
 
-    
-    
     public ResultsNode(SleuthkitCase sleuthkitCase) {
-        super(UserPreferences.groupItemsInTreeByDatasource() ?
-                new DataSourcesLayerChildren(sleuthkitCase, SubtreeEnum.RESULTS) :
+        this(sleuthkitCase, 0);
+    }
+    
+    public ResultsNode(SleuthkitCase sleuthkitCase, long dsObjId) {
+        super(
+                // RAMAN TBD: pass down dsObjId to each of these subnodes
                 new RootContentChildren(Arrays.asList(
                     new ExtractedContent(sleuthkitCase),
                     new KeywordHits(sleuthkitCase),

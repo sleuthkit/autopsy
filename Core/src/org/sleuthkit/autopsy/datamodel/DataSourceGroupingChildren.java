@@ -33,62 +33,29 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Child factory for DataSource node layer in the Results, Views Tags subtrees 
+ * Child factory for Data Source grouping nodes 
+ * A node is created for each data source in the case
  * 
  */
-class DataSourcesLayerChildren extends Children.Keys<DataSource> {
+public class DataSourceGroupingChildren extends Children.Keys<DataSource> {
 
-    private static final Logger logger = Logger.getLogger(DataSourcesLayerChildren.class.getName());
+    private static final Logger logger = Logger.getLogger(DataSourceGroupingChildren.class.getName());
     private final SleuthkitCase sleuthkitCase;
-    private final SubtreeEnum subTree;
+
+  
 
     /**
-     * Subtree in which this DataSourcesLayerChildren exist
-     */
-    public enum SubtreeEnum {
-        VIEWS,
-        RESULTS,
-        TAGS,
-        REPORTS
-    }
-
-    /**
-     * Simple wrapper class to pass Datasource and subtree down to children nodes
+     * Constructs the factory object
      * 
+     * @param tskCase - Case DB 
      */
-    class DataSourceLayerInfo {
-
-        private final DataSource dataSource;
-        private final SubtreeEnum subTree;
-
-        DataSourceLayerInfo(DataSource dataSource, SubtreeEnum subTree) {
-            this.dataSource = dataSource;
-            this.subTree = subTree;
-        }
-
-        DataSource getDataSource() {
-            return this.dataSource;
-        }
-
-        SubtreeEnum getSubtree() {
-            return this.subTree;
-        }
-    }
-
-    /**
-     * Constructs the factory to create optional datasource nodes
-     * 
-     * @param tskCase - Case DB
-     * @param subTree  - subtree under which data source nodes are to be created 
-     */
-    public DataSourcesLayerChildren(SleuthkitCase tskCase, SubtreeEnum subTree) {
-        // super(true);
-        super(false);
-
+    public DataSourceGroupingChildren(SleuthkitCase tskCase) {
         this.sleuthkitCase = tskCase;
-        this.subTree = subTree;
     }
 
+    /**
+     * Listener for handling DATA_SOURCE_ADDED events.
+     */
     private final PropertyChangeListener pcl = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -128,7 +95,7 @@ class DataSourcesLayerChildren extends Children.Keys<DataSource> {
     }
 
     protected Node createNodeForKey(DataSource ds) {
-        return new DataSourceLayerNode(new DataSourceLayerInfo(ds, subTree));
+        return new DataSourceGroupingNode(ds);
     }
 
 }

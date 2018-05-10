@@ -192,21 +192,28 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(Tags tagsNodeKey) {
+            // RAMAN TBD: pass dsObjID down here
             return tagsNodeKey.new RootNode();
         }
 
         @Override
         public AbstractNode visit(DataSources i) {
-            return new DataSourcesNode();
+            return new DataSourcesNode(i.filteringDataSourceObjId());
         }
 
         @Override
+        public AbstractNode visit(DataSourceGrouping datasourceGrouping) {
+            return new DataSourceGroupingNode(datasourceGrouping.getgDataSource());
+        }
+        
+        @Override
         public AbstractNode visit(Views v) {
-            return new ViewsNode(v.getSleuthkitCase());
+            return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(Results r) {
+            // RAMAN TBD: pass dsObjID down here
             return new ResultsNode(r.getSleuthkitCase());
         }
 

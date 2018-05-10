@@ -383,7 +383,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 @Override
                 public void update(Observable o, Object arg) {
                     refresh(true);
-                }
+                }                                                 
             }
 
             @Override

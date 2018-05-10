@@ -61,7 +61,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
-    T visit(DataSourceLayerNode vn);
+    T visit(DataSourceGroupingNode dataSourceGroupingNode);
     
     T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
 
@@ -339,8 +339,8 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(DataSourceLayerNode vn) {
-            return defaultVisit(vn);
+        public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
+            return defaultVisit(dataSourceGroupingNode);
         }
         
         @Override
