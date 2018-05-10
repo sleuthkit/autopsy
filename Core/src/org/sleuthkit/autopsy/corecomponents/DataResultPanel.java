@@ -496,7 +496,28 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Closes this reult view panel. Intended to be called by the parent top
+     * Indicates whether or not this panel can be closed at the time of the
+     * call.
+     *
+     * @return True or false.
+     */
+    public boolean canClose() {
+        /*
+         * If this is the "main" panel, only allow it to be closed when no case
+         * is open or no there are no data sources in the current case.
+         */
+        Case openCase;
+        try {
+            openCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
+        return (!this.isMain) || openCase.hasData() == false;
+    }
+
+    /**
+     * Closes down the component. Intended to be called by the parent top
+>>>>>>> custom-release-may-2018
      * component when it is closed.
      */
     void close() {
@@ -548,7 +569,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                  * single node.
                  */
                 Node[] selectedNodes = explorerManager.getSelectedNodes();
-                if (1 == selectedNodes.length) {
+                if (selectedNodes.length == 1) {
                     contentView.setNode(selectedNodes[0]);
                 } else {
                     contentView.setNode(null);

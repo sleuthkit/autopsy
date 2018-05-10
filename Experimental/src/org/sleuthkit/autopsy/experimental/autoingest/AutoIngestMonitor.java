@@ -25,11 +25,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -38,7 +41,8 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
-
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.Event;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
 /**
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
@@ -56,13 +60,23 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         AutoIngestManager.Event.JOB_STATUS_UPDATED.toString(),
         AutoIngestManager.Event.JOB_COMPLETED.toString(),
         AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
-        AutoIngestManager.Event.JOB_STARTED.toString()}));
+        AutoIngestManager.Event.JOB_STARTED.toString(),
+        AutoIngestManager.Event.RUNNING.toString(),
+        AutoIngestManager.Event.PAUSE_REQUESTED.toString(),
+        AutoIngestManager.Event.PAUSED_BY_USER_REQUEST.toString(),
+        AutoIngestManager.Event.PAUSED_FOR_SYSTEM_ERROR.toString(),
+        AutoIngestManager.Event.STARTING_UP.toString(),
+        AutoIngestManager.Event.SHUTTING_DOWN.toString(),
+        AutoIngestManager.Event.SHUTDOWN.toString(),
+        AutoIngestManager.Event.RESUMED.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
     private final ScheduledThreadPoolExecutor coordSvcQueryExecutor;
     private final Object jobsLock;
     @GuardedBy("jobsLock")
     private JobsSnapshot jobsSnapshot;
+
+    private final Map<String, AutoIngestNodeState> nodeStates = new ConcurrentHashMap<>();
 
     /**
      * Constructs an auto ingest monitor responsible for monitoring and
@@ -94,6 +108,9 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         }
         coordSvcQueryExecutor.scheduleWithFixedDelay(new CoordinationServiceQueryTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
         eventPublisher.addSubscriber(EVENT_LIST, this);
+
+        // Publish an event that asks running nodes to send their state.
+        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent(AutoIngestManager.Event.REPORT_STATE));
     }
 
     /**
@@ -130,6 +147,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             handleCasePrioritizationEvent((AutoIngestCasePrioritizedEvent) event);
         } else if (event instanceof AutoIngestCaseDeletedEvent) {
             handleCaseDeletedEvent((AutoIngestCaseDeletedEvent) event);
+        } else if (event instanceof AutoIngestNodeStateEvent) {
+            handleAutoIngestNodeStateEvent((AutoIngestNodeStateEvent) event);
         }
     }
 
@@ -193,10 +212,30 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     /**
      * Handles a case deletion event.
      *
-     * @param event A job/case prioritization event.
+     * @param event A job/case deletion event.
      */
     private void handleCaseDeletedEvent(AutoIngestCaseDeletedEvent event) {
         coordSvcQueryExecutor.submit(new CoordinationServiceQueryTask());
+    }
+
+    /**
+     * Handles an auto ingest node state change event.
+     *
+     * @param event A node state change event.
+     */
+    private void handleAutoIngestNodeStateEvent(AutoIngestNodeStateEvent event) {
+        AutoIngestNodeState oldNodeState = null;
+        if (event.getEventType() == AutoIngestManager.Event.SHUTDOWN) {
+            // Remove node from collection.
+            oldNodeState = nodeStates.remove(event.getNodeName());
+        } else {
+            // Otherwise either create an entry for the given node name or update
+            // an existing entry in the map.
+            nodeStates.put(event.getNodeName(), new AutoIngestNodeState(event.getNodeName(), event.getEventType()));
+        }
+        setChanged();
+        // Trigger a dashboard refresh.
+        notifyObservers(oldNodeState == null ? nodeStates.get(event.getNodeName()) : oldNodeState);
     }
 
     /**
@@ -210,6 +249,14 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         synchronized (jobsLock) {
             return jobsSnapshot;
         }
+    }
+
+    /**
+     * Gets the current state of known AIN's in the system.
+     * @return 
+     */
+    List<AutoIngestNodeState> getNodeStates() {
+        return nodeStates.values().stream().collect(Collectors.toList());
     }
 
     /**
@@ -480,6 +527,45 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Send the given control event to the given node.
+     *
+     * @param eventType The type of control event to send.
+     * @param nodeName  The name of the node to send it to.
+     */
+    private void sendControlEventToNode(ControlEventType eventType, String nodeName) {
+        new Thread(() -> {
+            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName));
+        }).start();
+    }
+
+    /**
+     * Tell the specified node to pause.
+     *
+     * @param nodeName
+     */
+    void pauseAutoIngestNode(String nodeName) {
+        sendControlEventToNode(ControlEventType.PAUSE, nodeName);
+    }
+
+    /**
+     * Tell the specified node to resume.
+     *
+     * @param nodeName
+     */
+    void resumeAutoIngestNode(String nodeName) {
+        sendControlEventToNode(ControlEventType.RESUME, nodeName);
+    }
+
+    /**
+     * Tell the specified node to shutdown.
+     *
+     * @param nodeName
+     */
+    void shutdownAutoIngestNode(String nodeName) {
+        sendControlEventToNode(ControlEventType.SHUTDOWN, nodeName);
+    }
+
+    /**
      * A task that queries the coordination service for auto ingest manifest
      * node data and converts it to auto ingest jobs for publication top its
      * observers.
@@ -505,8 +591,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A snapshot of the pending jobs queue, running jobs list, and completed
-     * jobs list for an auto ingest cluster.
+     * A snapshot of the pending jobs queue, running jobs list and completed jobs
+     * list for an auto ingest cluster.
      */
     static final class JobsSnapshot {
 
@@ -620,6 +706,66 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             jobSet.add(job);
         }
 
+    }
+
+    /**
+     * Class that represents the state of an AIN for the dashboard.
+     */
+    static final class AutoIngestNodeState {
+
+        /**
+         * The set of AIN states.
+         */
+        enum State {
+            STARTING_UP,
+            SHUTTING_DOWN,
+            RUNNING,
+            PAUSE_REQUESTED,
+            PAUSED_BY_REQUEST,
+            PAUSED_DUE_TO_SYSTEM_ERROR,
+            UNKNOWN
+        }
+
+        private final String nodeName;
+        private final State nodeState;
+
+        AutoIngestNodeState(String name, Event event) {
+            nodeName = name;
+            switch (event) {
+                case STARTING_UP:
+                    nodeState = State.STARTING_UP;
+                    break;
+                case SHUTTING_DOWN:
+                    nodeState = State.SHUTTING_DOWN;
+                    break;
+                case RUNNING:
+                    nodeState = State.RUNNING;
+                    break;
+                case PAUSED_BY_USER_REQUEST:
+                    nodeState = State.PAUSED_BY_REQUEST;
+                    break;
+                case PAUSED_FOR_SYSTEM_ERROR:
+                    nodeState = State.PAUSED_DUE_TO_SYSTEM_ERROR;
+                    break;
+                case RESUMED:
+                    nodeState = State.RUNNING;
+                    break;
+                case PAUSE_REQUESTED:
+                    nodeState = State.PAUSE_REQUESTED;
+                    break;
+                default:
+                    nodeState = State.UNKNOWN;
+                    break;
+            }
+        }
+
+        String getName() {
+            return nodeName;
+        }
+
+        State getState() {
+            return nodeState;
+        }
     }
 
     /**

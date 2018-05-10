@@ -18,14 +18,122 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Cursor;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 final class AutoIngestAdminActions {
-   
+
+    static abstract class AutoIngestNodeControlAction extends AbstractAction {
+
+        private final AutoIngestNodeState nodeState;
+        private final Logger logger = Logger.getLogger(AutoIngestNodeControlAction.class.getName());
+
+        AutoIngestNodeControlAction(AutoIngestNodeState nodeState, String title) {
+            super(title);
+            this.nodeState = nodeState;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (nodeState != null) {
+                final AinStatusDashboardTopComponent tc = (AinStatusDashboardTopComponent) WindowManager.getDefault().findTopComponent(AinStatusDashboardTopComponent.PREFERRED_ID);
+                if (tc != null) {
+                    AinStatusDashboard dashboard = tc.getAinStatusDashboard();
+                    if (dashboard != null) {
+                        dashboard.getNodesStatusPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        EventQueue.invokeLater(() -> {
+                            try {
+                                controlAutoIngestNode(dashboard);
+                            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                                logger.log(Level.WARNING, "Error sending control event to node", ex);
+                            } finally {
+                                dashboard.getNodesStatusPanel().setCursor(Cursor.getDefaultCursor());
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        protected abstract void controlAutoIngestNode(AinStatusDashboard dashboard) throws AutoIngestMonitor.AutoIngestMonitorException;
+
+        AutoIngestNodeState getNodeState() {
+            return nodeState;
+        }
+
+        @NbBundle.Messages({"AutoIngestAdminActions.pause.title=Pause Node",
+            "AutoIngestAdminActions.resume.title=Resume Node"})
+        static final class PauseResumeAction extends AutoIngestNodeControlAction {
+
+            private static final long serialVersionUID = 1L;
+
+            PauseResumeAction(AutoIngestNodeState nodeState) {
+                super(nodeState, nodeState.getState() == AutoIngestNodeState.State.RUNNING
+                        ? Bundle.AutoIngestAdminActions_pause_title() : Bundle.AutoIngestAdminActions_resume_title());
+            }
+
+            @Override
+            public Object clone() throws CloneNotSupportedException {
+                return super.clone(); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            protected void controlAutoIngestNode(AinStatusDashboard dashboard) throws AutoIngestMonitor.AutoIngestMonitorException {
+                if (getNodeState().getState() == AutoIngestNodeState.State.RUNNING) {
+                    dashboard.getMonitor().pauseAutoIngestNode(getNodeState().getName());
+                } else {
+                    dashboard.getMonitor().resumeAutoIngestNode(getNodeState().getName());
+                }
+            }
+        }
+
+        @NbBundle.Messages({"AutoIngestAdminActions.shutdown.title=Shutdown Node",
+            "AutoIngestAdminActions.shutdown.OK=OK", "AutoIngestAdminActions.shutdown.Cancel=Cancel",
+            "AutoIngestAdminActions.shutdown.consequences=This will cancel any currently running job on this host. Exiting while a job is running potentially leaves the case in an inconsistent or corrupted state."})
+        static final class ShutdownAction extends AutoIngestNodeControlAction {
+
+            private static final long serialVersionUID = 1L;
+
+            ShutdownAction(AutoIngestNodeState nodeState) {
+                super(nodeState, Bundle.AutoIngestAdminActions_shutdown_title());
+            }
+
+            @Override
+            public Object clone() throws CloneNotSupportedException {
+                return super.clone(); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            protected void controlAutoIngestNode(AinStatusDashboard dashboard) throws AutoIngestMonitor.AutoIngestMonitorException {
+                Object[] options = {Bundle.AutoIngestAdminActions_shutdown_OK(),
+                    Bundle.AutoIngestAdminActions_shutdown_Cancel()
+                };
+
+                int reply = JOptionPane.showOptionDialog(dashboard.getNodesStatusPanel(),
+                        Bundle.AutoIngestAdminActions_shutdown_consequences(),
+                        NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.ConfirmExitHeader"),
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[JOptionPane.NO_OPTION]);
+
+                if (reply == JOptionPane.OK_OPTION) {
+                    dashboard.getMonitor().shutdownAutoIngestNode(getNodeState().getName());
+                }
+            }
+        }
+    }
+
     @NbBundle.Messages({"AutoIngestAdminActions.progressDialogAction.title=Ingest Progress"})
     static final class ProgressDialogAction extends AbstractAction {
 

@@ -163,8 +163,8 @@ final class CaseEventListener implements PropertyChangeListener {
 
                 try {
                     // Get the remaining tags on the content object
-                    Content content = Case.getOpenCase().getSleuthkitCase().getContentById(contentID);
-                    TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+                    Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(contentID);
+                    TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                     List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
 
                     if (tags.stream()
@@ -244,7 +244,7 @@ final class CaseEventListener implements PropertyChangeListener {
             } else { //BLACKBOARD_ARTIFACT_TAG_DELETED
                 Case openCase;
                 try {
-                    openCase = Case.getOpenCase();
+                    openCase = Case.getCurrentCaseThrows();
                 } catch (NoCurrentCaseException ex) {
                     LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
                     return;
@@ -327,10 +327,10 @@ final class CaseEventListener implements PropertyChangeListener {
              * that are tagged with the given tag name.
              */
             try {
-                TagName tagName = Case.getOpenCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(modifiedTagName);
+                TagName tagName = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(modifiedTagName);
                 //First update the artifacts
                 //Get all BlackboardArtifactTags with this tag name
-                List<BlackboardArtifactTag> artifactTags = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
+                List<BlackboardArtifactTag> artifactTags = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
                 for (BlackboardArtifactTag bbTag : artifactTags) {
                     //start with assumption that none of the other tags applied to this Correlation Attribute will prevent it's status from being changed
                     boolean hasTagWithConflictingKnownStatus = false;
@@ -346,7 +346,7 @@ final class CaseEventListener implements PropertyChangeListener {
                         }
                         //Get the BlackboardArtifact which this BlackboardArtifactTag has been applied to.
                         BlackboardArtifact bbArtifact = bbTag.getArtifact();
-                        TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+                        TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                         List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
                         //get all tags which are on this blackboard artifact
                         for (BlackboardArtifactTag t : tags) {
@@ -374,7 +374,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
                 // Next update the files
 
-                List<ContentTag> fileTags = Case.getOpenCase().getSleuthkitCase().getContentTagsByTagName(tagName);
+                List<ContentTag> fileTags = Case.getCurrentCaseThrows().getSleuthkitCase().getContentTagsByTagName(tagName);
                 //Get all ContentTags with this tag name
                 for (ContentTag contentTag : fileTags) {
                     //start with assumption that none of the other tags applied to this ContentTag will prevent it's status from being changed
@@ -384,7 +384,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     // the status of the file in the central repository
                     if (tagName.getKnownStatus() == TskData.FileKnown.UNKNOWN) {
                         Content content = contentTag.getContent();
-                        TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+                        TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                         List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
                         //get all tags which are on this file
                         for (ContentTag t : tags) {
@@ -436,7 +436,7 @@ final class CaseEventListener implements PropertyChangeListener {
             }
             Case openCase;
             try {
-                openCase = Case.getOpenCase();
+                openCase = Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
                 return;
