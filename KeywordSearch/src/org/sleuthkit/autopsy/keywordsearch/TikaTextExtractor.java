@@ -120,6 +120,8 @@ class TikaTextExtractor extends ContentTextExtractor {
             TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
             String tesseractFolder = TESSERACT_PATH.getParent();
             ocrConfig.setTesseractPath(tesseractFolder);
+            // Tesseract expects language data packs to be in a subdirectory of tesseractFolder, in a folder called "tessdata".
+            // If they are stored somewhere else, use ocrConfig.setTessdataPath(String tessdataPath) to point to them
             ocrConfig.setLanguage("eng");
             parseContext.set(TesseractOCRConfig.class, ocrConfig);
         }
