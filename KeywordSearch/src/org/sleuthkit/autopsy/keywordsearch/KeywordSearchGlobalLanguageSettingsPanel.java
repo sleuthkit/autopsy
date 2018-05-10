@@ -138,12 +138,10 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
-        
-        boolean ocr = KeywordSearchSettings.getOcrOption();
 
         boolean ingestNotRunning = !IngestManager.getInstance().isIngestRunning() && !IngestManager.getInstance().isIngestRunning();
         //enable / disable checboxes
-        activateScriptsCheckboxes(ocr && extractEnabled && ingestNotRunning);
+        activateScriptsCheckboxes(extractEnabled && ingestNotRunning);
         enableUTF16Checkbox.setEnabled(ingestNotRunning);
         enableUTF8Checkbox.setEnabled(ingestNotRunning);
         enableOcrCheckbox.setEnabled(ingestNotRunning);
@@ -266,10 +264,6 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
     private void enableOcrCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableOcrCheckboxActionPerformed
-
-        boolean selected = this.enableOcrCheckbox.isSelected();
-
-        activateScriptsCheckboxes(selected || this.enableOcrCheckbox.isSelected());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_enableOcrCheckboxActionPerformed
 
