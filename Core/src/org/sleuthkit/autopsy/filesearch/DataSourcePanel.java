@@ -133,7 +133,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
     void setComponentsEnabled() {
         boolean enabled = this.isSelected();
         this.dataSourceList.setEnabled(enabled);
-        this.dataSourceNoteLable.setEnabled(enabled);
+        this.dataSourceNoteLabel.setEnabled(enabled);
     }
 
     /**
@@ -148,7 +148,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
         dataSourceCheckBox = new javax.swing.JCheckBox();
-        dataSourceNoteLable = new javax.swing.JLabel();
+        dataSourceNoteLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(150, 150));
         setPreferredSize(new java.awt.Dimension(100, 100));
@@ -168,8 +168,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
             }
         });
 
-        dataSourceNoteLable.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNoteLable, org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.dataSourceNoteLable.text")); // NOI18N
+        dataSourceNoteLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNoteLabel, org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.dataSourceNoteLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -183,7 +183,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(dataSourceNoteLable)
+                        .addComponent(dataSourceNoteLabel)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -194,7 +194,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(dataSourceNoteLable)
+                .addComponent(dataSourceNoteLabel)
                 .addContainerGap())
         );
 
@@ -210,7 +210,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox dataSourceCheckBox;
     private javax.swing.JList<String> dataSourceList;
-    private javax.swing.JLabel dataSourceNoteLable;
+    private javax.swing.JLabel dataSourceNoteLabel;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }
