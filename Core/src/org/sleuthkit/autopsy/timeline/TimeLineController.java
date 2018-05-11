@@ -927,7 +927,7 @@ public class TimeLineController {
      * @param o The object to un-register.
      */
     synchronized public void unRegisterForEvents(Object o) {
-        eventbus.unregister(0);
+        eventbus.unregister(o);
     }
 
     static synchronized public void setTimeZone(TimeZone timeZone) {
@@ -950,7 +950,7 @@ public class TimeLineController {
              * already closed.
              */
             try {
-                Case.getOpenCase();
+                Case.getCurrentCaseThrows();
             } catch (NoCurrentCaseException notUsed) {
                 // Case is closed, do nothing.
                 return;

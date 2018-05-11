@@ -80,10 +80,10 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 public final class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
-    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     private final String title;
     private final Map<String, ETableColumn> columnMap;
     private final Map<Integer, Property<?>> propertiesMap;
@@ -140,7 +140,10 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * Configure the child OutlineView (explorer view) component.
          */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        
         outline = outlineView.getOutline();
+        outline.setRowSelectionAllowed(true);
+        outline.setColumnSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);
         outline.setDragEnabled(false);
@@ -182,7 +185,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
     public String getTitle() {
         return title;
     }
-
+    
     /**
      * Indicates whether a given node is supported as a root node for this
      * tabular viewer.
@@ -253,7 +256,6 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * added/removed events as un-hide/hide, until the table setup is done.
          */
         outlineViewListener.listenToVisibilityChanges(false);
-
         /*
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -322,7 +324,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
                             try {
                                 this.getExplorerManager().setSelectedNodes(new Node[]{childNode});
                             } catch (PropertyVetoException ex) {
-                                logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                                LOGGER.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
                             }
                             break;
                         }

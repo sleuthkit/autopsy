@@ -58,13 +58,12 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * PListViewer - a file viewer for binary plist files.
  *
  */
-public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
+class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private static final String[] MIMETYPES = new String[]{"application/x-bplist"};
@@ -192,7 +191,7 @@ public class PListViewer extends javax.swing.JPanel implements FileTypeViewer, E
 
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) { 
                 JOptionPane.showMessageDialog(this,
                         "Failed to export plist file.",

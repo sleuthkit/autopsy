@@ -264,7 +264,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     protected void addTagProperty(Sheet.Set sheetSet) {
         List<ContentTag> tags = new ArrayList<>();
         try {
-            tags.addAll(Case.getOpenCase().getServices().getTagsManager().getContentTagsByContent(content));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
@@ -296,7 +296,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    private static String getHashSetHitsForFile(AbstractFile file) {
+    public static String getHashSetHitsForFile(AbstractFile file) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {

@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.testutils;
 
 import java.nio.file.Path;
@@ -32,41 +31,69 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.datamodel.Content;
 
+/**
+ * Common image utility methods.
+ */
 public final class IngestUtils {
-    
+
+    /**
+     * IngestUtils constructor. Since this class is not meant to allow for
+     * instantiation, this constructor is 'private'.
+     */
     private IngestUtils() {
     }
-    
+
+    /**
+     * Add a data source for the data source processor.
+     *
+     * @param dataSourceProcessor The data source processor.
+     * @param dataSourcePath      The path to the data source to be added.
+     */
     public static void addDataSource(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
         try {
             DataSourceProcessorRunner.ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
-            List<String> errorMessages = callBack.getErrorMessages();
-            assertEquals(0, errorMessages.size());
+            List<String> callbackErrorMessageList = callBack.getErrorMessages();
+            String errorMessage = String.format("The data source processor callback produced %d error messages.", callbackErrorMessageList.size());
+            assertEquals(errorMessage, 0, callbackErrorMessageList.size());
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-            
-        }        
+
+        }
     }
 
-    public static void runIngestJob(List<Content> datasources, IngestJobSettings ingestJobSettings) {
+    /**
+     * Run an ingest job.
+     *
+     * @param dataSourceList    The list of data sources to process.
+     * @param ingestJobSettings The ingest job settings to use for ingest.
+     */
+    public static void runIngestJob(List<Content> dataSourceList, IngestJobSettings ingestJobSettings) {
         try {
-            List<IngestModuleError> errs = IngestJobRunner.runIngestJob(datasources, ingestJobSettings);
-            for (IngestModuleError err : errs) {
+            List<IngestModuleError> ingestModuleErrorsList = IngestJobRunner.runIngestJob(dataSourceList, ingestJobSettings);
+            for (IngestModuleError err : ingestModuleErrorsList) {
                 System.out.println(String.format("Error: %s: %s.", err.getModuleDisplayName(), err.toString()));
             }
-            assertEquals(0, errs.size());
+            String errorMessage = String.format("The ingest job runner produced %d error messages.", ingestModuleErrorsList.size());
+            assertEquals(errorMessage, 0, ingestModuleErrorsList.size());
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }        
+        }
     }
 
+    /**
+     * Build a new ingest module template based on the given factory.
+     *
+     * @param factory The ingest module factory.
+     *
+     * @return The ingest module template.
+     */
     public static IngestModuleTemplate getIngestModuleTemplate(IngestModuleFactoryAdapter factory) {
         IngestModuleIngestJobSettings settings = factory.getDefaultIngestJobSettings();
         IngestModuleTemplate template = new IngestModuleTemplate(factory, settings);
         template.setEnabled(true);
         return template;
     }
-    
+
 }

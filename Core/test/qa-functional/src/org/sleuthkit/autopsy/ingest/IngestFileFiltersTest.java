@@ -31,7 +31,6 @@ import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
@@ -74,7 +73,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     
     public void testBasicDir() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testBasicDir");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -84,12 +83,12 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet dirFilter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);        
 
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, dirFilter);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
-            FileManager fileManager = openCase.getServices().getFileManager();
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings);
+            FileManager fileManager = currentCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("file.jpg", "dir1");
             String mimeType = results.get(0).getMIMEType();
             assertEquals("image/jpeg", mimeType);
@@ -108,7 +107,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                     assertTrue(errMsg, file.getMIMEType() == null);
                 }
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -117,7 +116,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     
     public void testExtAndDirWithOneRule() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testExtAndDirWithOneRule");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testExtAndDirWithOneRule");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -127,12 +126,12 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, true, rules);
         
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, filesExtDirsFilter);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings); 
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();            
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings); 
+            FileManager fileManager = currentCase.getServices().getFileManager();            
             List<AbstractFile> results = fileManager.findFiles("%%");
             assertEquals(62, results.size());
             for (AbstractFile file : results) {
@@ -145,7 +144,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                     assertTrue(errMsg, file.getMIMEType() == null);
                 }
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -153,7 +152,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     public void testExtAndDirWithTwoRules() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testExtAndDirWithTwoRules");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testExtAndDirWithTwoRules");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -164,12 +163,12 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all files in dir1 and all files with jpg extention.", false, true, rules);        
           
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, filesExtDirsFilter);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings); 
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();           
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings); 
+            FileManager fileManager = currentCase.getServices().getFileManager();           
             List<AbstractFile> results = fileManager.findFiles("%%");  
             assertEquals(62, results.size());
             for (AbstractFile file : results) {               
@@ -190,7 +189,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                     assertTrue(errMsg, file.getMIMEType() == null);                     
                 }
             }
-         } catch (NoCurrentCaseException | TskCoreException ex) {
+         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -198,7 +197,7 @@ public class IngestFileFiltersTest extends NbTestCase {
    
     public void testFullFileNameRule() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testFullFileNameRule");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testFullFileNameRule");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -208,12 +207,12 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet fullNameFilter = new FilesSet("Filter", "Filter to find file.docx.", false, true, rules);
                  
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, fullNameFilter);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings); 
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();           
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings); 
+            FileManager fileManager = currentCase.getServices().getFileManager();           
             List<AbstractFile> results = fileManager.findFiles("%%");
             assertEquals(62, results.size());
             for (AbstractFile file : results) {
@@ -226,7 +225,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                     assertTrue(errMsg, file.getMIMEType() == null);
                 }
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -234,7 +233,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     public void testCarvingWithExtRuleAndUnallocSpace() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testCarvingWithExtRuleAndUnallocSpace");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testCarvingWithExtRuleAndUnallocSpace");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -246,13 +245,13 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, false, rules);
                   
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             templates.add(IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, extensionFilter);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings); 
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings); 
+            FileManager fileManager = currentCase.getServices().getFileManager();
             List<AbstractFile> results = fileManager.findFiles("%%");
             assertEquals(70, results.size()); 
             int carvedJpgGifFiles = 0;
@@ -275,7 +274,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             //Make sure we have carved jpg/gif files
             assertEquals(2, carvedJpgGifFiles);
 
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -283,7 +282,7 @@ public class IngestFileFiltersTest extends NbTestCase {
   
     public void testCarvingNoUnallocatedSpace() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testCarvingNoUnallocatedSpace");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testCarvingNoUnallocatedSpace");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -295,13 +294,13 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, true, rules);        
           
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             templates.add(IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates, extensionFilter);
             try {
-                List<IngestModuleError> errs = IngestJobRunner.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+                List<IngestModuleError> errs = IngestJobRunner.runIngestJob(currentCase.getDataSources(), ingestJobSettings);
                 //Ingest fails because Carving wants unallocated space
                 assertEquals(1, errs.size());
                 assertEquals("PhotoRec Carver", errs.get(0).getModuleDisplayName());
@@ -309,7 +308,7 @@ public class IngestFileFiltersTest extends NbTestCase {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex);
             }        
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -317,7 +316,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     public void testEmbeddedModule() {
         Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testEmbeddedModule");
-        CaseUtils.createCase(casePath);
+        CaseUtils.createCase(casePath, "testEmbeddedModule");
         LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, ZIPFILE_PATH);
         
@@ -330,13 +329,13 @@ public class IngestFileFiltersTest extends NbTestCase {
         FilesSet embeddedFilter = new FilesSet("Filter", "Filter to files with .jpg extension.", false, false, rules);
                   
         try {
-            Case openCase = Case.getOpenCase();
+            Case currentCase = Case.getCurrentCase();
             ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
             templates.add(IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, embeddedFilter);
-            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
-            FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings);
+            FileManager fileManager = currentCase.getServices().getFileManager();
             //get all .jpg files in zip file
             List<AbstractFile> results = fileManager.findFiles("%%");
             assertEquals(39, results.size());
@@ -356,7 +355,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             }
             //Make sure 10 jpg files and 1 zip file have been typed
             assertEquals(11, numTypeJpgFiles);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
