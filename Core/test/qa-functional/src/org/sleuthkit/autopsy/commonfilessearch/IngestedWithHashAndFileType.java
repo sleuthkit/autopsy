@@ -45,16 +45,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Add set 1, set 2, set 3, and set 4 to case and ingest with hash algorithm. 
  */
-public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
+public class IngestedWithHashAndFileType extends IntraCaseCommonFilesSearchTest {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAlgOnly.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileType.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    public IngestedWithHashAlgOnly(String name) {
+    public IngestedWithHashAndFileType(String name) {
         super(name);
     }
 
@@ -69,7 +69,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
         templates.add(hashLookupTemplate);
         templates.add(mimeTypeLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAlgOnly.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileType.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
@@ -115,12 +115,9 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
-        } catch (NoCurrentCaseException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
     }
     
@@ -159,12 +156,9 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
-        } catch (NoCurrentCaseException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
     }
     
@@ -203,12 +197,9 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
-        } catch (NoCurrentCaseException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
     }
 
@@ -467,6 +458,6 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
 
     @Override
     protected String getCaseName() {
-        return "IngestedWithHashAlgOnlyTests";
+        return "IngestedWithHashAndFileTypeTests";
     }
 }
