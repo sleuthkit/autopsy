@@ -211,9 +211,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
-        public AbstractNode visit(Results r) {
-            // RAMAN TBD JIRA-3763: pass dsObjID down here
-            return new ResultsNode(r.getSleuthkitCase());
+        public AbstractNode visit(Results results) {
+            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId() );
         }
 
         @Override

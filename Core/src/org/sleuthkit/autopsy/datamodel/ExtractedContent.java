@@ -288,8 +288,10 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //TEST COMMENT
             if (skCase != null) {
                 try {
-                    // RAMAN TBD JIRA-3763: filter on datasource obj id
-                    List<BlackboardArtifact.Type> types = skCase.getArtifactTypesInUse();
+                    List<BlackboardArtifact.Type> types = (UserPreferences.groupItemsInTreeByDatasource()) ? 
+                            skCase.getArtifactTypesInUseByDataSource(datasourceObjId) :
+                            skCase.getArtifactTypesInUse() ;
+                    
                     types.removeAll(doNotShow);
                     Collections.sort(types,
                             new Comparator<BlackboardArtifact.Type>() {
@@ -352,7 +354,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    "getBlackboardArtifactCount()" method to skCase
             try {
                 this.childCount = UserPreferences.groupItemsInTreeByDatasource() ? 
-                        skCase.getBlackboardArtifactsCount(type.getTypeID(), datasourceObjId) :
+                        skCase.getBlackboardArtifactsCountByDataSource(type.getTypeID(), datasourceObjId) :
                         skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
             } catch (TskException ex) {
                 Logger.getLogger(TypeNode.class.getName())
@@ -477,7 +479,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 try {
                     List<BlackboardArtifact> arts = 
                             UserPreferences.groupItemsInTreeByDatasource() ?
-                            skCase.getBlackboardArtifacts(TSK_ACCOUNT, datasourceObjId) :
+                            skCase.getBlackboardArtifactsByDataSource(type.getTypeID(), datasourceObjId) :
                             skCase.getBlackboardArtifacts(type.getTypeID());
                     list.addAll(arts);
                 } catch (TskException ex) {

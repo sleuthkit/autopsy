@@ -39,14 +39,14 @@ public class ResultsNode extends DisplayableItemNode {
     
     public ResultsNode(SleuthkitCase sleuthkitCase, long dsObjId) {
         super(
-                // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
+                
                 new RootContentChildren(Arrays.asList(
-                    new ExtractedContent(sleuthkitCase),
-                    new KeywordHits(sleuthkitCase),
-                    new HashsetHits(sleuthkitCase),
-                    new EmailExtracted(sleuthkitCase),
-                    new InterestingHits(sleuthkitCase),
-                    new Accounts(sleuthkitCase) )
+                    new ExtractedContent(sleuthkitCase, dsObjId ),
+                    new KeywordHits(sleuthkitCase),  // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
+                    new HashsetHits(sleuthkitCase),  // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
+                    new EmailExtracted(sleuthkitCase), // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
+                    new InterestingHits(sleuthkitCase), // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
+                    new Accounts(sleuthkitCase) ) // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
                 ),
                 Lookups.singleton(NAME));
         setName(NAME);
