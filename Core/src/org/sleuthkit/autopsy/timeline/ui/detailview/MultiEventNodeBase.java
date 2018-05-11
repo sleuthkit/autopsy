@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.timeline.MultiEvent;
  *
  */
 @NbBundle.Messages({"EventBundleNodeBase.toolTip.loading=loading..."})
-public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
+ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
         ParentType, BundleType, ?>> extends EventNodeBase<BundleType> {
 
     private static final Logger logger = Logger.getLogger(MultiEventNodeBase.class.getName());

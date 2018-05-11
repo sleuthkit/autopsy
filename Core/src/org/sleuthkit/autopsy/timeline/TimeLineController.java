@@ -821,14 +821,14 @@ public class TimeLineController {
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) throws TimelineCacheException {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+        Interval overlappingTimeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
-            advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
-        } else if (currentZoom.hasTimeRange(timeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
-            advance(currentZoom.withTimeAndType(timeRange, typeZoom));
-        } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            advance(currentZoom.withTimeRange(timeRange));
+            advance(InitialZoomState.withTimeAndType(overlappingTimeRange, typeZoom));
+        } else if (currentZoom.hasTimeRange(overlappingTimeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
+            advance(currentZoom.withTimeAndType(overlappingTimeRange, typeZoom));
+        } else if (currentZoom.hasTimeRange(overlappingTimeRange) == false) {
+            advance(currentZoom.withTimeRange(overlappingTimeRange));
         } else if (currentZoom.hasTypeZoomLevel(typeZoom) == false) {
             advance(currentZoom.withTypeZoomLevel(typeZoom));
         }

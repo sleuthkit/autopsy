@@ -93,7 +93,6 @@ import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
-import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
@@ -547,7 +546,7 @@ final public class ViewFrame extends BorderPane {
             @Override
             protected Void call() throws Exception {
 
-                updateMessage(ViewFrame_histogramTask_preparing());
+                updateMessage(Bundle.ViewFrame_histogramTask_preparing());
 
                 long max = 0;
                 final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
@@ -560,7 +559,7 @@ final public class ViewFrame extends BorderPane {
 
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage(ViewFrame_histogramTask_resetUI());
+                    updateMessage(Bundle.ViewFrame_histogramTask_resetUI());
 
                 });
 
@@ -577,7 +576,7 @@ final public class ViewFrame extends BorderPane {
 
                     start = end;
 
-                    updateMessage(ViewFrame_histogramTask_queryDb());
+                    updateMessage(Bundle.ViewFrame_histogramTask_queryDb());
                     //query for current range
                     long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                     bins.add(count);
@@ -587,7 +586,7 @@ final public class ViewFrame extends BorderPane {
                     final double fMax = Math.log(max);
                     final ArrayList<Long> fbins = new ArrayList<>(bins);
                     Platform.runLater(() -> {
-                        updateMessage(ViewFrame_histogramTask_updateUI2());
+                        updateMessage(Bundle.ViewFrame_histogramTask_updateUI2());
 
                         histogramBox.getChildren().clear();
 

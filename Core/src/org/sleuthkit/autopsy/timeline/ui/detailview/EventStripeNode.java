@@ -107,7 +107,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    void installActionButtons() {
+    protected void installActionButtons() {
         super.installActionButtons();
         if (chartLane.quickHideFiltersEnabled() && hideButton == null) {
             hideButton = ActionUtils.createButton(newHideAction(), ActionUtils.ActionTextBehavior.HIDE);
@@ -118,7 +118,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    EventNodeBase<?> createChildNode(EventCluster cluster) throws TimelineCacheException {
+    protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TimelineCacheException {
         ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
             SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(cluster);

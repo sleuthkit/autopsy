@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
@@ -96,6 +95,9 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private Set<String> activeQuickHidefilters = new HashSet<>();
 
+    /** listener that triggers chart layout pass */
+    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
+
     boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
@@ -110,7 +112,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return parentChart.getContextMenu(clickEvent);
     }
 
-    EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) throws TimelineCacheException {
+    private EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) throws TimelineCacheException {
         if (event.getEventIDs().size() == 1) {
             return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
         } else if (event instanceof SingleEvent) {
@@ -155,10 +157,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
         return selectedNodes;
     }
-    /**
-     * listener that triggers chart layout pass
-     */
-    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
 
     public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
@@ -353,7 +351,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     /**
      * @return all the nodes that pass the given predicate
      */
-    synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> predicate) {
+    private synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> predicate) {
         //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener
                 = new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
