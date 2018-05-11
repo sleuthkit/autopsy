@@ -145,7 +145,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     artifact.addAttributes(attributes);
                     try {
                         // index the artifact for keyword search
-                        blackboard.publishArtifact(artifact);
+                        blackboard.postArtifact(artifact);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());

@@ -120,7 +120,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                 /*
                  * Index the artifact for keyword search.
                  */
-                blackboard.publishArtifact(artifact);
+                blackboard.postArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }

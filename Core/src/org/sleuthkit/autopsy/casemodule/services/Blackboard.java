@@ -47,7 +47,7 @@ public final class Blackboard implements Closeable {
     }
 
     /**
-     * Indexes the text associated with the an artifact.
+     * Indexes the text associated with an artifact.
      *
      * @param artifact The artifact to be indexed.
      *
@@ -59,7 +59,7 @@ public final class Blackboard implements Closeable {
         }
 
         try {
-            delegate.publishArtifact(artifact);
+            delegate.postArtifact(artifact);
         } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException("Error indexing artifact", ex);
         }

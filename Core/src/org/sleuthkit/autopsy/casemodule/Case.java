@@ -2250,7 +2250,6 @@ public class Case {
     private void close(ProgressIndicator progressIndicator) {
         IngestManager.getInstance().cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
 
-        caseDb.unregisterForEvents(tskEventForwarder);
         /*
          * Stop sending/receiving case events to and from other nodes if this is
          * a multi-user case.
@@ -2287,6 +2286,7 @@ public class Case {
          */
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
+            caseDb.unregisterForEvents(tskEventForwarder);
             caseDb.close();
         }
 

@@ -164,7 +164,7 @@ public class IngestEventsListener {
             try {
                 // index the artifact for keyword search
                 Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-                blackboard.publishArtifact(tifArtifact);
+                blackboard.postArtifact(tifArtifact);
             } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }

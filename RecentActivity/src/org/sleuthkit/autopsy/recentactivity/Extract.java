@@ -127,7 +127,7 @@ abstract class Extract {
         try {
             Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             // index the artifact for keyword search
-            blackboard.publishArtifact(bbart);
+            blackboard.postArtifact(bbart);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());

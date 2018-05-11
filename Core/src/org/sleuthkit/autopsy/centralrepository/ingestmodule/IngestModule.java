@@ -315,7 +315,7 @@ final class IngestModule implements FileIngestModule {
 
             try {
                 // index the artifact for keyword search
-                blackboard.publishArtifact(tifArtifact);
+                blackboard.postArtifact(tifArtifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }

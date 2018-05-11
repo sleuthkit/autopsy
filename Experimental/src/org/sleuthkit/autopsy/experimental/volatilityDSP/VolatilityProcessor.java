@@ -380,7 +380,7 @@ class VolatilityProcessor {
 
                         try {
                             // index the artifact for keyword search
-                            blackboard.publishArtifact(volArtifact);
+                            blackboard.postArtifact(volArtifact);
                         } catch (Blackboard.BlackboardException ex) {
                             errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                             /*

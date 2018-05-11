@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -78,8 +79,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * 1) Indexing an artifact created during while either the file level ingest
      * module pipeline or the first stage data source level ingest module
      * pipeline of an ingest job is running.
-     * 
-     * 2) Indexing a report.  
+     *
+     * 2) Indexing a report.
      *
      * @param content The content to index.
      *
@@ -433,7 +434,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     void handleNewArtifact(Blackboard.ArtifactPublishedEvent event) {
         BlackboardArtifact bba = event.getArtifact();
         try {
-            indexArtifact(bba);
+            index(bba);
         } catch (TskCoreException ex) {
             //TODO: is this the right error handling?
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS

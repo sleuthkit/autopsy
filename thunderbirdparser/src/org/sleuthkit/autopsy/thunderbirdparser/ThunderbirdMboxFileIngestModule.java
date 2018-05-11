@@ -193,7 +193,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.publishArtifact(artifact);
+                    blackboard.postArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
@@ -524,7 +524,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             
             try {
                 // index the artifact for keyword search
-                blackboard.publishArtifact(bbart);
+                blackboard.postArtifact(bbart);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());
