@@ -178,7 +178,7 @@ public interface EamDb {
      * @return List of cases
      */
     List<CorrelationCase> getCases() throws EamDbException;
-
+    
     /**
      * Creates new Data Source in the database
      *
@@ -222,6 +222,17 @@ public interface EamDb {
      * @return List of artifact instances for a given type/value
      */
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException;
+
+    /**
+     * Retrieves eamArtiifact instances from the database that match the given
+     * list of MD5 values;
+     * 
+     * @param correlationCase Case id  to search on
+     * @param values List of ArtifactInstance MD5 values to find matches of.
+     * 
+     * @return List of artifact instances for a given list of MD5 values
+     */
+    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
