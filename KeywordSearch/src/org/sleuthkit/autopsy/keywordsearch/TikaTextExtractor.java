@@ -91,30 +91,18 @@ class TikaTextExtractor extends ContentTextExtractor {
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
         
         // configure OCR if it is enabled in KWS settings and installed on the machine
-        if (TESSERACT_PATH != null && KeywordSearchSettings.getOcrOption()) {
+        if (TESSERACT_PATH != null && KeywordSearchSettings.getOcrOption() && PlatformUtil.isWindowsOS() == true) {
             
             // configure PDFParser. 
-            // NOTE: There are two ways of running OCR on PDFs:
-            // 1. Extracting the inline images and letting Tesseract run on each inline image.
-            // 2. Rendering each PDF page as a single image and running Tesseract on that single image.
-            // https://wiki.apache.org/tika/PDFParser%20%28Apache%20PDFBox%29
             PDFParserConfig pdfConfig = new PDFParserConfig();
             
-            // using option 1
+            // Extracting the inline images and letting Tesseract run on each inline image.
+            // https://wiki.apache.org/tika/PDFParser%20%28Apache%20PDFBox%29
             // https://tika.apache.org/1.7/api/org/apache/tika/parser/pdf/PDFParserConfig.html
             pdfConfig.setExtractInlineImages(true); 
             // Multiple pages within a PDF file might refer to the same underlying image.
-            // Note that uniqueness is determined only by the underlying PDF COSObject id, not by file hash or similar equality metric.
             pdfConfig.setExtractUniqueInlineImagesOnly(true);            
             parseContext.set(PDFParserConfig.class, pdfConfig);
-            
-            /* Option 2:
-            // NOTE: looks like this option is no longer available in Tika versions 1.17 and later
-            // ocrStrategy options: no_ocr (rely on regular text extraction only), ocr_only (don't bother extracting text, just run OCR on each page), 
-            // ocr_and_text (both extract text and run OCR)
-            // https://tika.apache.org/1.16/api/org/apache/tika/parser/pdf/PDFParserConfig.html
-            pdfConfig.setOcrStrategy("ocr_and_text");
-            */
             
             // Configure Tesseract parser to perform OCR
             TesseractOCRConfig ocrConfig = new TesseractOCRConfig();

@@ -130,10 +130,18 @@ class KeywordSearchSettings {
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, key, val);
     }
     
+    /**
+     * Save OCR setting to permanent storage
+     * @param enabled 
+     */
     static void setOcrOption(boolean enabled) {
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, OCR_ENABLED, (enabled ? "true" : "false")); //NON-NLS
     }    
 
+    /**
+     * Get OCR setting from permanent storage
+     * @return 
+     */
     static boolean getOcrOption() {
         if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, OCR_ENABLED)) {
             return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, OCR_ENABLED).equals("true"); //NON-NLS
