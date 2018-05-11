@@ -59,13 +59,14 @@ import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * A Dialog that, given an AbstractFile or BlackBoardArtifact, allows the user
@@ -355,7 +356,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
                 setGraphic(null);
             } else {
                 setText(item.getDisplayName());
-                setGraphic(new ImageView(item.getFXImage()));
+                setGraphic(new ImageView(EventTypeUtils.getImagePath(item)));
             }
         }
     }

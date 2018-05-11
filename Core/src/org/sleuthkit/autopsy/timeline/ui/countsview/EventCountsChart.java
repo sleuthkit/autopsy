@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
-import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
@@ -47,14 +46,15 @@ import org.joda.time.Seconds;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
-import org.sleuthkit.datamodel.timeline.RootEventType;
 
 /**
  * Customized StackedBarChart<String, Number> used to display the event counts
@@ -196,20 +196,22 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         Interval interval = extraValue.getInterval();
         long count = extraValue.getRawCount();
 
-        item.nodeProperty().addListener((Observable o) -> {
+        item.nodeProperty().addListener(observable -> {
             final Node node = item.getNode();
             if (node != null) {
-                node.setStyle("-fx-border-width: 2; -fx-border-color: " + ColorUtilities.getRGBCode(eventType.getSuperType().getColor()) + "; -fx-bar-fill: " + ColorUtilities.getRGBCode(eventType.getColor())); // NON-NLS
+                node.setStyle("-fx-border-width: 2; "
+                              + " -fx-border-color: " + ColorUtilities.getRGBCode(getColor(eventType.getSuperType())) + "; "
+                              + " -fx-bar-fill: " + ColorUtilities.getRGBCode(getColor(eventType))); // NON-NLS
                 node.setCursor(Cursor.HAND);
 
                 final Tooltip tooltip = new Tooltip(Bundle.CountsViewPane_tooltip_text(
                         count, eventType.getDisplayName(),
                         item.getXValue(),
                         interval.getEnd().toString(rangeInfo.getTickFormatter())));
-                tooltip.setGraphic(new ImageView(eventType.getFXImage()));
+                tooltip.setGraphic(new ImageView(getImagePath(eventType)));
                 Tooltip.install(node, tooltip);
 
-                node.setOnMouseEntered(mouseEntered -> node.setEffect(new DropShadow(10, eventType.getColor())));
+                node.setOnMouseEntered(mouseEntered -> node.setEffect(new DropShadow(10, getColor(eventType))));
                 node.setOnMouseExited(mouseExited -> node.setEffect(selectedNodes.contains(node) ? SELECTED_NODE_EFFECT : null));
                 node.setOnMouseClicked(new BarClickHandler(item));
             }
@@ -257,7 +259,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         @Override
         protected Interval adjustInterval(Interval i) {
             //extend range to block bounderies (ie day, month, year)
-            RangeDivisionInfo iInfo = RangeDivisionInfo.getRangeDivisionInfo(i, TimeLineController.getJodaTimeZone() );
+            RangeDivisionInfo iInfo = RangeDivisionInfo.getRangeDivisionInfo(i, TimeLineController.getJodaTimeZone());
             final long lowerBound = iInfo.getLowerBound();
             final long upperBound = iInfo.getUpperBound();
             final DateTime lowerDate = new DateTime(lowerBound, TimeLineController.getJodaTimeZone());
@@ -308,7 +310,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
             SelectIntervalAction() {
                 super(Bundle.Timeline_ui_countsview_menuItem_selectTimeRange());
                 setEventHandler(action -> {
-                    controller.selectTimeAndType(interval, RootEventType.getInstance());
+                    controller.selectTimeAndType(interval, EventType.ROOT_EVEN_TYPE);
                     selectedNodes.clear();
                     for (XYChart.Series<String, Number> s : getData()) {
                         s.getData().forEach((XYChart.Data<String, Number> d) -> {

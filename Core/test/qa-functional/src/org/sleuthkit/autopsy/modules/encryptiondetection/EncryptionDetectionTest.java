@@ -77,7 +77,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testPasswordProtection() {
         try {
-            Case openCase = Case.getOpenCase();
+            Case openCase = Case.getCurrentCaseThrows();
             
             /*
              * Create ingest job settings.

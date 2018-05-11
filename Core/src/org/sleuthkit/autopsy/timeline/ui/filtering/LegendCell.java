@@ -29,7 +29,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
@@ -79,7 +80,7 @@ final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
                 });
 
                 HBox hBox = new HBox(new Rectangle(filter.getEventType().getZoomLevel().ordinal() * 10, 5, CLEAR),
-                        new ImageView(((TypeFilter) item).getFXImage()), rect
+                        new ImageView(EventTypeUtils.getImagePath(((TypeFilter) item).getEventType())), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
                 Platform.runLater(() -> {
@@ -109,8 +110,8 @@ final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
         //only show legend color if filter is of the same zoomlevel as requested in filteredEvents
         if (eventTypeZoom.equals(filter.getEventType().getZoomLevel())) {
             Platform.runLater(() -> {
-                rect.setStroke(filter.getEventType().getSuperType().getColor());
-                rect.setFill(filter.getColor());
+                rect.setStroke(EventTypeUtils.getColor(filter.getEventType().getSuperType()));
+                rect.setFill(EventTypeUtils.getColor(filter.getEventType()));
             });
         } else {
             Platform.runLater(() -> {

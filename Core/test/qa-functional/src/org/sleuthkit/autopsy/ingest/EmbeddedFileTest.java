@@ -61,12 +61,12 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        CaseUtils.createCase(CASE_DIRECTORY_PATH);
+        CaseUtils.createCase(CASE_DIRECTORY_PATH, "EmbeddedFileTest");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
         
         try {
-            openCase = Case.getOpenCase();
+            openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);

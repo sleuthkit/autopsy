@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,7 +77,6 @@ import javax.swing.JMenuItem;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -88,19 +87,19 @@ import org.sleuthkit.autopsy.timeline.ChronoFieldListCell;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.BaseTypes;
 import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.FileSystemTypes;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_ACCESSED;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_CHANGED;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_CREATED;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_ACCESSED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_CHANGED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_CREATED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_SYSTEM;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
@@ -134,22 +133,16 @@ class ListTimeline extends BorderPane {
 
     @FXML
     private HBox navControls;
-
     @FXML
     private ComboBox<ChronoField> scrollInrementComboBox;
-
     @FXML
     private Button firstButton;
-
     @FXML
     private Button previousButton;
-
     @FXML
     private Button nextButton;
-
     @FXML
     private Button lastButton;
-
     @FXML
     private Label eventCountLabel;
     @FXML
@@ -338,7 +331,7 @@ class ListTimeline extends BorderPane {
      * ListViewPane will provide to its host ViewFrame.
      *
      * @return A List of time navigation controls in the from of JavaFX scene
-     * graph Nodes.
+     *         graph Nodes.
      */
     List<Node> getTimeNavigationControls() {
         return Collections.singletonList(navControls);
@@ -349,7 +342,7 @@ class ListTimeline extends BorderPane {
      * focus it.
      *
      * @param index The index of the item that should be scrolled in to view and
-     * focused.
+     *              focused.
      */
     private void scrollToAndFocus(Integer index) {
         table.requestFocus();
@@ -388,38 +381,35 @@ class ListTimeline extends BorderPane {
                 setGraphic(null);
                 setTooltip(null);
             } else {
-                if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
+                if (item.getEventTypes().stream().allMatch(EventType.getFileSystemTypes()::contains)) {
                     String typeString = ""; //NON-NLS
                     VBox toolTipVbox = new VBox(5);
 
-                    for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
+                    for (EventType type : EventType.getFileSystemTypes()) {
                         if (item.getEventTypes().contains(type)) {
-                            switch (type) {
-                                case FILE_MODIFIED:
-                                    typeString += "M"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_ACCESSED:
-                                    typeString += "A"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_CREATED:
-                                    typeString += "B"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_CHANGED:
-                                    typeString += "C"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                default:
-                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name()); //NON-NLS
+                            if (type.equals(FILE_MODIFIED)) {
+                                typeString += "M"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_ACCESSED)) {
+                                typeString += "A"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_CREATED)) {
+                                typeString += "B"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_CHANGED)) {
+                                typeString += "C"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(),
+                                        new ImageView(getImagePath(type))));
                             }
                         } else {
                             typeString += "_"; //NON-NLS
                         }
                     }
                     setText(typeString);
-                    setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
+                    setGraphic(new ImageView(getImagePath(FILE_SYSTEM)));
                     Tooltip tooltip = new Tooltip();
                     tooltip.setGraphic(toolTipVbox);
                     setTooltip(tooltip);
@@ -427,7 +417,7 @@ class ListTimeline extends BorderPane {
                 } else {
                     EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
                     setText(eventType.getDisplayName());
-                    setGraphic(new ImageView(eventType.getFXImage()));
+                    setGraphic(new ImageView(getImagePath(eventType)));
                     setTooltip(new Tooltip(eventType.getDisplayName()));
                 };
             }
@@ -565,7 +555,7 @@ class ListTimeline extends BorderPane {
          * Constructor
          *
          * @param textSupplier Function that takes a SingleEvent and produces a
-         * String to show in this TableCell.
+         *                     String to show in this TableCell.
          */
         TextEventTableCell(Function<SingleEvent, String> textSupplier) {
             this.textSupplier = textSupplier;

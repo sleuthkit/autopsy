@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.experimental.volatilityDSP;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,7 +32,6 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -316,7 +316,7 @@ class VolatilityProcessor {
         "VolatilityProcessor_errorMessage_failedToIndexArtifact=Error indexing artifact from output of {0} plugin"
     })
     private void flagFiles(Set<String> fileSet, String pluginName) throws VolatilityProcessorException {
-        Blackboard blackboard = currentCase.getServices().getBlackboard();
+        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         for (String file : fileSet) {
             if (isCancelled) {
                 return;
@@ -325,7 +325,7 @@ class VolatilityProcessor {
             if (file.isEmpty()) {
                 continue;
             }
-            
+
             File volfile = new File(file);
             String fileName = volfile.getName().trim();
             if (fileName.length() < 1) {
@@ -380,7 +380,7 @@ class VolatilityProcessor {
 
                         try {
                             // index the artifact for keyword search
-                            blackboard.indexArtifact(volArtifact);
+                            blackboard.postArtifact(volArtifact);
                         } catch (Blackboard.BlackboardException ex) {
                             errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                             /*
@@ -468,19 +468,20 @@ class VolatilityProcessor {
         // change slash direction
         path = path.replaceAll("\\\\", "/"); //NON-NLS
         path = path.toLowerCase();
-        
+
         // \??\c:\windows ...
         if ((path.length() > 4) && (path.startsWith("/??/"))) { //NON-NLS
             path = path.substring(4);
         }
-        
+
         // strip C: 
         if (path.contains(":")) { //NON-NLS
             int index = path.indexOf(":");
-            if (index+1 < path.length())
+            if (index + 1 < path.length()) {
                 path = path.substring(index + 1);
+            }
         }
-                
+
         path = path.replaceAll("/systemroot/", "/windows/");
 
         // catches 1 type of file in cmdline
@@ -491,7 +492,7 @@ class VolatilityProcessor {
         if (path.contains("/harddiskvolume")) { //NON-NLS
             // 16 advances beyond harddiskvolume and the number
             int index = path.indexOf("/harddiskvolume"); //NON-NLS
-            if (index+16 < path.length()) {
+            if (index + 16 < path.length()) {
                 path = path.substring(index + 16);
             }
         }
@@ -554,10 +555,10 @@ class VolatilityProcessor {
         // read the first line from the text file
         try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
             String line;
-            while ((line = br.readLine()) != null) {                 
+            while ((line = br.readLine()) != null) {
                 // we skip the Command Line entries because that data
                 // is also in the 0x lines (and is more likely to have a full path there.
-                
+
                 // 0x4a680000     0x5000     0xffff \??\C:\WINDOWS\system32\csrss.exe
                 // 0x7c900000    0xb2000     0xffff C:\WINDOWS\system32\ntdll.dll
                 if (line.startsWith("0x") && line.length() > 33) {
@@ -660,8 +661,7 @@ class VolatilityProcessor {
                 // 0x000000000969a020 notepad.exe        3604   3300 0x16d40340 2018-01-12 14:41:16 UTC+0000  
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
-                }
-                else if (line.length() < 37) {
+                } else if (line.length() < 37) {
                     continue;
                 }
 
@@ -696,8 +696,9 @@ class VolatilityProcessor {
                 }
 
                 // 0x89cfb998 csrss.exe               704    640     14      532      0      0 2017-12-07 14:05:34 UTC+0000
-                if (line.length() < 34)
+                if (line.length() < 34) {
                     continue;
+                }
                 String file_path = line.substring(10, 34);
                 file_path = normalizePath(file_path);
 
@@ -730,7 +731,7 @@ class VolatilityProcessor {
                 if (line.startsWith("0x") == false) { //NON-NLS
                     continue;
                 }
-              
+
                 if (line.length() < 34) {
                     continue;
                 }
@@ -793,23 +794,21 @@ class VolatilityProcessor {
         String line;
         Set<String> fileSet = new HashSet<>();
         try {
-             BufferedReader br = new BufferedReader(new FileReader(PluginFile));
-             // read the first line from the text file
-             while ((line = br.readLine()) != null) {
+            BufferedReader br = new BufferedReader(new FileReader(PluginFile));
+            // read the first line from the text file
+            while ((line = br.readLine()) != null) {
                 String file_path;
                 String TAG = "Binary Path: ";
-                if (line.startsWith(TAG) && line.length() > TAG.length()+1) {
+                if (line.startsWith(TAG) && line.length() > TAG.length() + 1) {
                     if (line.charAt(TAG.length()) == '\"') {
-                        file_path = line.substring(TAG.length()+1);
+                        file_path = line.substring(TAG.length() + 1);
                         if (file_path.contains("\"")) {
                             file_path = file_path.substring(0, file_path.indexOf('\"'));
                         }
-                    }
-                    // Binary Path: -
+                    } // Binary Path: -
                     else if (line.charAt(TAG.length()) == '-') {
                         continue;
-                    }
-                    // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
+                    } // Command line : C:\Windows\System32\svchost.exe -k LocalSystemNetworkRestricted
                     else {
                         file_path = line.substring(TAG.length());
                         if (file_path.contains(" ")) {
@@ -818,21 +817,20 @@ class VolatilityProcessor {
                         // We can't do anything with driver entries
                         if (file_path.startsWith("\\Driver\\")) {
                             continue;
-                        }
-                        else if (file_path.startsWith("\\FileSystem\\")) {
+                        } else if (file_path.startsWith("\\FileSystem\\")) {
                             continue;
                         }
                     }
                     fileSet.add(normalizePath(file_path));
                 }
-             }    
-             br.close();
-        } catch (IOException ex) { 
+            }
+            br.close();
+        } catch (IOException ex) {
             String msg = "Error parsing svcscan output";
             logger.log(Level.SEVERE, msg, ex);
             errorMsgs.add(msg);
-        } 
-        return fileSet;     
+        }
+        return fileSet;
     }
 
     /**

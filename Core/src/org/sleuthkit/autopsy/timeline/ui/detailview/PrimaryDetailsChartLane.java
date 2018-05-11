@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,17 +26,16 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.StrokeLineCap;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import org.sleuthkit.datamodel.timeline.EventCluster;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 
 /**
- * Custom implementation of XYChart to graph events on a horizontal
- * timeline.
+ * Custom implementation of XYChart to graph events on a horizontal timeline.
  *
- * The horizontal DateAxis controls the tick-marks and the horizontal
- * layout of the nodes representing events. The vertical NumberAxis does
- * nothing (although a custom implementation could help with the vertical
- * layout?)
+ * The horizontal DateAxis controls the tick-marks and the horizontal layout of
+ * the nodes representing events. The vertical NumberAxis does nothing (although
+ * a custom implementation could help with the vertical layout?)
  *
  * Series help organize events for the banding by event type, we could add a
  * node to contain each band if we need a place for per band controls.
@@ -79,10 +78,10 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
                 change.getAddedSubList().forEach(addedNode -> {
                     for (EventCluster range : addedNode.getEvent().getClusters()) {
                         double y = dateAxis.getLayoutY() + PROJECTED_LINE_Y_OFFSET;
-                        Line line =
-                                new Line(dateAxis.localToParent(getXForEpochMillis(range.getStartMillis()), 0).getX(), y,
+                        Line line
+                                = new Line(dateAxis.localToParent(getXForEpochMillis(range.getStartMillis()), 0).getX(), y,
                                         dateAxis.localToParent(getXForEpochMillis(range.getEndMillis()), 0).getX(), y);
-                        line.setStroke(addedNode.getEventType().getColor().deriveColor(0, 1, 1, .5));
+                        line.setStroke(getColor(addedNode.getEventType()).deriveColor(0, 1, 1, .5));
                         line.setStrokeWidth(PROJECTED_LINE_STROKE_WIDTH);
                         line.setStrokeLineCap(StrokeLineCap.ROUND);
                         projectionMap.put(range, line);
