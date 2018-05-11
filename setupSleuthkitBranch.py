@@ -1,5 +1,10 @@
-# This python script sets the sleuthkit branch based on the autopsy build branch
-# in appveyor and travis
+# This python script is used to automatically set the branch in The Sleuth Kit repository
+# for use in automated build environments. 
+#
+# Basic idea is that it determines what Autopsy branch is being used and then checksout
+# a corresponding TSK branch.  
+#
+# TSK_HOME environment variable must be set for this to work.
 
 import os
 import sys
@@ -54,6 +59,8 @@ def main():
         sys.exit(1)
         print('Please set TSK_HOME env variable')
 
+    # Get the Autopsy branch being used.  Travis and Appveyor
+    # will tell us where a pull request is directed
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
     if TRAVIS == "true":
@@ -64,18 +71,26 @@ def main():
         cmd=['git','rev-parse','--abbrev-ref','HEAD']
         output = subprocess.check_output(cmd)
         CURRENT_BRANCH=output.strip()
-    #check if sleuthkit has release branch
+        
+    # If we are in an Autopsy release branch, then use the
+    # info in TSKVersion.xml to find the corresponding TSK 
+    # release branch.  For other branches, we don't always
+    # trust that TSKVersion has been updated.
     if CURRENT_BRANCH.startswith('release'):
         version = parseXML('TSKVersion.xml')
         RELEASE_BRANCH = "release-"+version
         gitSleuthkitCheckout(RELEASE_BRANCH)
-    elif CURRENT_BRANCH in getSleuthkitBranchList(): # check sleuthkit has same branch as autopsy
+    # Check if the same branch exists in TSK (develop->develop, custom1->custom1, etc.)
+    elif CURRENT_BRANCH in getSleuthkitBranchList(): 
         gitSleuthkitCheckout(CURRENT_BRANCH)
 
+    # Otherwise, default to develop
     if passed != 0:
         gitSleuthkitCheckout('develop')
+        
     if passed != 0:
-            print('Something gone wrong')
-            sys.exit(1)
+        print('Error checking out a Sleuth Kit branch')
+        sys.exit(1)
+        
 if __name__ == '__main__':
     main()
