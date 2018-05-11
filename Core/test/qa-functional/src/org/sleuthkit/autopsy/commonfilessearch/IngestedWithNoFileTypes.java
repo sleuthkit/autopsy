@@ -19,25 +19,44 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import static junit.framework.Assert.assertTrue;
+import junit.framework.Test;
+import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Ingested w/o mime type info added to DB.
- * 
+ *
  * Setup:
  *
- * Add images set 1, set 2, set 3, and set 4 to case.  Do not run mime type module.
+ * Add images set 1, set 2, set 3, and set 4 to case. Do not run mime type
+ * module.
  */
 public class IngestedWithNoFileTypes extends IntraCaseCommonFilesSearchTest {
+
+    public static Test suite() {
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypes.class).
+                clusters(".*").
+                enableModules(".*");
+        return conf.suite();
+    }
 
     public IngestedWithNoFileTypes(String name) {
         super(name);
@@ -46,13 +65,13 @@ public class IngestedWithNoFileTypes extends IntraCaseCommonFilesSearchTest {
     @Override
     public void setUp() {
         super.setUp();
-        
+
         IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
 
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(hashLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAlgOnly.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileType.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
@@ -67,4 +86,49 @@ public class IngestedWithNoFileTypes extends IntraCaseCommonFilesSearchTest {
         return "IngestedWithNoFileTypes";
     }
 
+    /**
+     * Search using all data sources and filtering for media types. We should
+     * find nothing and no errors should arise.
+     */
+    public void testOne() {
+        try {
+            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+
+            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
+            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+
+            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+
+            assertTrue(files.size() == 0);
+
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+
+    /**
+     * Search using single data source and filtering for doc types. Observe that
+     * nothing is found and that nothing blows up.
+     */
+    public void testTwo() {
+        try {
+            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+            Long third = this.getDataSourceIdByIndex(2, dataSources);
+
+            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, true, false);
+            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+
+            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+
+            assertTrue(files.size() == 0);
+
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
 }
