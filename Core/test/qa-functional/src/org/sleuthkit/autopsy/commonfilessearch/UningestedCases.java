@@ -81,7 +81,7 @@ public class UningestedCases extends IntraCaseCommonFilesSearchTest {
     public void testTwo() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = new Long(1);
+            Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
