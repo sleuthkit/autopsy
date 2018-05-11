@@ -67,6 +67,7 @@
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
               <Connection code="new javax.swing.AbstractListModel&lt;String&gt;() {&#xa;    List&lt;String&gt; strings  = getDataSourceArray();&#xa;    public int getSize() { return strings.size(); }&#xa;    public String getElementAt(int idx) { return strings.get(idx); }&#xa;}" type="code"/>
             </Property>
+            <Property name="enabled" type="boolean" value="false"/>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[0, 200]"/>
             </Property>
@@ -99,6 +100,7 @@
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="DataSourcePanel.dataSourceNoteLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
     </Component>
   </SubComponents>

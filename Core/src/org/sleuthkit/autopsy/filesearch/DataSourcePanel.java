@@ -53,7 +53,6 @@ public class DataSourcePanel extends javax.swing.JPanel {
      */
     public DataSourcePanel() {
         initComponents();
-        setComponentsEnabled();
         this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
         });
@@ -159,6 +158,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
             public int getSize() { return strings.size(); }
             public String getElementAt(int idx) { return strings.get(idx); }
         });
+        dataSourceList.setEnabled(false);
         dataSourceList.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(dataSourceList);
 
@@ -171,6 +171,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
         dataSourceNoteLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceNoteLabel, org.openide.util.NbBundle.getMessage(DataSourcePanel.class, "DataSourcePanel.dataSourceNoteLabel.text")); // NOI18N
+        dataSourceNoteLabel.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
