@@ -220,7 +220,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     public void testTwoA() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = new Long(1);
+            Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -229,9 +229,9 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
@@ -263,7 +263,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     public void testTwoB() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = new Long(1);
+            Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -306,7 +306,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     public void testTwoC() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = new Long(1);
+            Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -348,7 +348,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     public void testThree(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long second = new Long(2);
+            Long second = this.getDataSourceIdByIndex(1, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(second, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -389,7 +389,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     public void testFour(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long last = new Long(4);
+            Long last = this.getDataSourceIdByIndex(3, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(last, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -430,7 +430,7 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
     public void testFive(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long third = new Long(3);
+            Long third = this.getDataSourceIdByIndex(2, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -445,8 +445,8 @@ public class IngestedWithHashAlgOnly extends IntraCaseCommonFilesSearchTest {
             assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
             assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
             
             assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));

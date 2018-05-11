@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -169,5 +170,18 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
         }
 
         return files;
+    }
+    
+    protected Long getDataSourceIdByIndex(int index, Map<Long, String> dataSources){
+        
+        int current = 0;
+        for(Entry<Long, String> dataSource : dataSources.entrySet()){
+            if(current == index){
+                return dataSource.getKey();
+            }
+            current++;
+        }
+        final int size = dataSources.size() - 1;
+        throw new IndexOutOfBoundsException("The value given for index was unreasonable.  Should be between 0 and " + size);
     }
 }
