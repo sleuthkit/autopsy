@@ -39,7 +39,7 @@ final public class EventTypeUtils {
     }
 
     public static String getImagePath(EventType type) {
-        int typeID = type.getTypeID();
+        long typeID = type.getTypeID();
         String imageFileName;
         if (typeID == EventType.FILE_SYSTEM.getTypeID()) {
             imageFileName = "blue-document.png";
