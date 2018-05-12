@@ -16,22 +16,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
+package org.sleuthkit.autopsy.timeline.utils;
 
-import java.util.Optional;
-import java.util.SortedSet;
+import com.google.common.cache.CacheLoader;
 
 /**
- * A interface for groups of events that share some attributes in common.
- * @param <ParentType>
+ * Extension of CacheLoader that delegates the load method to the Function
+ * passed to the constructor.
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
  */
-public interface MultiEvent<ParentType extends MultiEvent<?>> extends DetailViewEvent {
+final public class CacheLoaderImpl<K, V> extends CacheLoader<K, V> {
+
+    private final CheckedFunction<K, V, Exception> func;
+
+    public CacheLoaderImpl(CheckedFunction<K, V, Exception> func) {
+        this.func = func;
+    }
 
     @Override
-    long getEndMillis();
+    public V load(K key) throws Exception {
+        return func.apply(key);
+    }
 
-    Optional<ParentType> getParent();
-
-    @Override
-    SortedSet<EventCluster> getClusters();
 }

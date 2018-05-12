@@ -16,22 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
-
-import java.util.Optional;
-import java.util.SortedSet;
+package org.sleuthkit.autopsy.timeline.utils;
 
 /**
- * A interface for groups of events that share some attributes in common.
- * @param <ParentType>
+ * Functinal interface for a function from I to O that throws an Exception.
+ *
+ * @param <I> Input type.
+ * @param <O> Output type.
+ * @param <X> The type of Exception thrown.
  */
-public interface MultiEvent<ParentType extends MultiEvent<?>> extends DetailViewEvent {
+@FunctionalInterface
+public interface CheckedFunction<I, O, X extends Exception> {
 
-    @Override
-    long getEndMillis();
+    O apply(I input) throws X;
 
-    Optional<ParentType> getParent();
-
-    @Override
-    SortedSet<EventCluster> getClusters();
 }

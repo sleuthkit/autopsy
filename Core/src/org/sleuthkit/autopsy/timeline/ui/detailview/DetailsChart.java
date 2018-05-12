@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 
 /**
@@ -95,6 +96,11 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * object.
      */
     private final DetailsChartLayoutSettings layoutSettings;
+    private final DetailsViewModel detailsViewModel;
+
+    DetailsViewModel getDetailsViewModel() {
+        return detailsViewModel;
+    }
 
     /**
      * The main controller object for this instance of the Timeline UI.
@@ -121,7 +127,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      *                             will be used to keep track of the nodes
      *                             selected in this chart.
      */
-    DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+    DetailsChart(DetailsViewModel detailsViewModel, TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+        this.detailsViewModel = detailsViewModel;
         this.controller = controller;
         this.layoutSettings = new DetailsChartLayoutSettings(controller);
         this.detailsChartDateAxis = detailsChartDateAxis;

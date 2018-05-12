@@ -1,5 +1,5 @@
 /*
- *  Sleuth Kit Data Model
+ * Autopsy Forensic Browser
  *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
+package org.sleuthkit.autopsy.timeline.ui.listvew.datamodel;
 
 import java.util.Collections;
 import java.util.HashMap;

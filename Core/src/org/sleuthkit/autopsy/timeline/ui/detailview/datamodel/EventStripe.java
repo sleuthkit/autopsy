@@ -1,5 +1,5 @@
 /*
- * Sleuth Kit Data Model
+ * Autopsy Forensic Browser
  *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org

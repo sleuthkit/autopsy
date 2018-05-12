@@ -99,6 +99,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         return useQuickHideFilters;
     }
 
+    @Override
     public void clearContextMenu() {
         parentChart.clearContextMenu();
     }
@@ -145,6 +146,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         setCursor(null);
     }
 
+    @Override
     public TimeLineController getController() {
         return controller;
     }
@@ -176,7 +178,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         this.useQuickHideFilters = useQuickHideFilters;
 
         //add a dummy series or the chart is never rendered
-        setData(FXCollections.observableList(Arrays.asList(new Series<DateTime, Y>())));
+        setData(FXCollections.observableList(Arrays.asList(new Series<>())));
 
         Tooltip.install(this, AbstractTimelineChart.getDefaultTooltip());
 

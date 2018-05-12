@@ -206,7 +206,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
                     //setup next for subsequent go through the "do" loop
                     next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.

@@ -322,8 +322,8 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
-                            + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
+                           + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
+                           + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
                 }
 
                 @Override

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -78,7 +79,7 @@ import org.sleuthkit.datamodel.timeline.ZoomParams;
  * grouped EventStripes, etc, etc. The leaves of the trees are EventClusters or
  * SingleEvents.
  */
-public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
+final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
     private final static Logger logger = Logger.getLogger(DetailViewPane.class.getName());
 
@@ -99,6 +100,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * without needing to requery/redraw the view.
      */
     private ZoomParams currentZoomParams;
+    private final DetailsViewModel detailsViewModel;
 
     /**
      * Constructor for a DetailViewPane
@@ -107,10 +109,11 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      */
     public DetailViewPane(TimeLineController controller) {
         super(controller);
+        this.detailsViewModel = new DetailsViewModel(getEventsModel());
         this.selectedEvents = new MappedList<>(getSelectedNodes(), EventNodeBase<?>::getEvent);
 
         //initialize chart;
-        setChart(new DetailsChart(controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
+        setChart(new DetailsChart(detailsViewModel, controller, detailsChartDateAxis, pinnedDateAxis, verticalAxis, getSelectedNodes()));
 
         //bind layout fo axes and spacers
         detailsChartDateAxis.getTickMarks().addListener((Observable observable) -> layoutDateLabels());
@@ -399,7 +402,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
 
             //get the event stripes to be displayed
-            List<EventStripe> eventStripes = eventsModel.getEventStripes();
+            List<EventStripe> eventStripes = detailsViewModel.getEventStripes();
             final int size = eventStripes.size();
             //if there are too many stipes show a confirmation dialog
             if (size > 2000) {
