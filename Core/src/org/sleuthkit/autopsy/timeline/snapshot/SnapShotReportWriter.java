@@ -39,7 +39,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportBranding;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 
 /**
  * Generate and write the Timeline snapshot report to disk.

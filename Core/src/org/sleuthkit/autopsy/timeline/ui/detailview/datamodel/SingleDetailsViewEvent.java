@@ -29,7 +29,7 @@ import org.joda.time.Interval;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * A single event.
@@ -105,7 +105,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
         this.tagged = tagged;
     }
 
-    public SingleDetailsViewEvent(SingleEvent singleEvent) {
+    public SingleDetailsViewEvent(TimelineEvent singleEvent) {
         this(singleEvent.getEventID(),
                 singleEvent.getDataSourceID(),
                 singleEvent.getFileID(),
@@ -121,13 +121,13 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     }
 
     /**
-     * Get a new SingleEvent that is the same as this event, but with the given
-     * parent.
+     * Get a new SingleDetailsViewEvent that is the same as this event, but with
+     * the given parent.
      *
      * @param newParent the parent of the new event object.
      *
-     * @return a new SingleEvent that is the same as this event, but with the
-     *         given parent.
+     * @return a new SingleDetailsViewEvent that is the same as this event, but
+     *         with the given parent.
      */
     public SingleDetailsViewEvent withParent(MultiEvent<?> newParent) {
         SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceID, objID, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), known, hashHit, tagged);

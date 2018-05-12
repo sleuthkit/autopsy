@@ -100,7 +100,7 @@ import static org.sleuthkit.datamodel.timeline.EventType.FILE_CHANGED;
 import static org.sleuthkit.datamodel.timeline.EventType.FILE_CREATED;
 import static org.sleuthkit.datamodel.timeline.EventType.FILE_MODIFIED;
 import static org.sleuthkit.datamodel.timeline.EventType.FILE_SYSTEM;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * The inner component that makes up the List view. Manages the TableView.
@@ -545,19 +545,20 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * TableCell to show text derived from a SingleEvent by the given Function.
+     * TableCell to show text derived from a TimeLineEvent by the given
+     * Function.
      */
     private class TextEventTableCell extends EventTableCell {
 
-        private final Function<SingleEvent, String> textSupplier;
+        private final Function<TimelineEvent, String> textSupplier;
 
         /**
          * Constructor
          *
-         * @param textSupplier Function that takes a SingleEvent and produces a
-         *                     String to show in this TableCell.
+         * @param textSupplier Function that takes a TimeLineEvent and produces
+         *                     a String to show in this TableCell.
          */
-        TextEventTableCell(Function<SingleEvent, String> textSupplier) {
+        TextEventTableCell(Function<TimelineEvent, String> textSupplier) {
             this.textSupplier = textSupplier;
             setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
             setEllipsisString(" ... "); //NON-NLS
@@ -576,18 +577,18 @@ class ListTimeline extends BorderPane {
 
     /**
      * Base class for TableCells that represent a MergedEvent by way of a
-     * representative SingleEvent.
+     * representative TimeLineEvent.
      */
     private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
 
-        private SingleEvent event;
+        private TimelineEvent event;
 
         /**
-         * Get the representative SingleEvent for this cell.
+         * Get the representative TimeLineEvent for this cell.
          *
-         * @return The representative SingleEvent for this cell.
+         * @return The representative TimeLineEvent for this cell.
          */
-        SingleEvent getEvent() {
+        TimelineEvent getEvent() {
             return event;
         }
 
@@ -609,14 +610,14 @@ class ListTimeline extends BorderPane {
      */
     private class EventRow extends TableRow<CombinedEvent> {
 
-        private SingleEvent event;
+        private TimelineEvent event;
 
         /**
-         * Get the representative SingleEvent for this row .
+         * Get the representative TimeLineEvent for this row .
          *
-         * @return The representative SingleEvent for this row .
+         * @return The representative TimeLineEvent for this row .
          */
-        SingleEvent getEvent() {
+        TimelineEvent getEvent() {
             return event;
         }
 
@@ -672,9 +673,9 @@ class ListTimeline extends BorderPane {
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
                     } catch (NoCurrentCaseException ex) {
                         //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a TimeLineEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a TimeLineEvent.", ex); //NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(getScene().getWindow())
@@ -804,5 +805,4 @@ class ListTimeline extends BorderPane {
             disabledProperty().bind(table.getFocusModel().focusedIndexProperty().lessThan(1));
         }
     }
-
 }

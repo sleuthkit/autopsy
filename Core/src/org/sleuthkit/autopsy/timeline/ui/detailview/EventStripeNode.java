@@ -34,7 +34,7 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configu
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * Node used in DetailsChart to represent an EventStripe.
@@ -121,7 +121,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     EventNodeBase<?> createChildNode(EventCluster cluster) {
         ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
-            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
+            TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
             SingleDetailsViewEvent singleDetailEvent = new SingleDetailsViewEvent(singleEvent).withParent(cluster);
             return new SingleEventNode(getChartLane(), singleDetailEvent, this);
         } else {

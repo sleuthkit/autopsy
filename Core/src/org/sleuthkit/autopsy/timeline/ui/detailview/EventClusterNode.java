@@ -55,10 +55,10 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
@@ -256,7 +256,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         ImmutableSet<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.
-            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
+            TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
             SingleDetailsViewEvent singleDetailsEvent = new SingleDetailsViewEvent(singleEvent).withParent(stripe);
             return new SingleEventNode(getChartLane(), singleDetailsEvent, this);
         } else {

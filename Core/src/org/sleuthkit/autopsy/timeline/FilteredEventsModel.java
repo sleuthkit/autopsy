@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -71,8 +72,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.datamodel.timeline.filters.Filter;
@@ -121,7 +121,7 @@ public final class FilteredEventsModel {
     //caches
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
-    private final LoadingCache<Long, SingleEvent> idToEventCache;
+    private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
@@ -140,7 +140,7 @@ public final class FilteredEventsModel {
         eventCountsCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoaderImpl<>(eventManager::countEventsByType));
+                .build(new CacheLoaderImpl<>(this::countEventsByType));
 
         maxCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMaxTime()));
@@ -182,6 +182,27 @@ public final class FilteredEventsModel {
         });
 
         requestedZoomParamters.bind(currentStateProperty);
+    }
+
+    /**
+     * get the count of all events that fit the given zoom params organized by
+     * the EvenType of the level specified in the ZoomParams
+     *
+     * @param params the params that control what events to count and how to
+     *               organize the returned map
+     *
+     * @return a map from event type( of the requested level) to event counts
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    private Map<EventType, Long> countEventsByType(ZoomParams params) throws TskCoreException {
+        if (params.getTimeRange() == null) {
+            return Collections.emptyMap();
+        } else {
+            return eventManager.countEventsByType(params.getTimeRange().getStartMillis() / 1000,
+                    params.getTimeRange().getEndMillis() / 1000,
+                    params.getFilter(), params.getTypeZoomLevel());
+        }
     }
 
     public TimelineManager getEventManager() {
@@ -347,11 +368,11 @@ public final class FilteredEventsModel {
         return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter(), timeZone);
     }
 
-    public SingleEvent getEventById(Long eventID) {
+    public TimelineEvent getEventById(Long eventID) {
         return idToEventCache.getUnchecked(eventID);
     }
 
-    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
+    public Set<TimelineEvent> getEventsById(Collection<Long> eventIDs) {
         return eventIDs.stream()
                 .map(idToEventCache::getUnchecked)
                 .collect(Collectors.toSet());

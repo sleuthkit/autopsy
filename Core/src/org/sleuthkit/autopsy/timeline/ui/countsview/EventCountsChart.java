@@ -53,8 +53,8 @@ import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
  * Customized StackedBarChart<String, Number> used to display the event counts

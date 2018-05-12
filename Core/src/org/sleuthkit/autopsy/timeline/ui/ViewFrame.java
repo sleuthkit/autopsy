@@ -94,7 +94,8 @@ import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
-import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
  * A container for an AbstractTimelineView. Has a Toolbar on top to hold
@@ -106,7 +107,7 @@ import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
  */
 final public class ViewFrame extends BorderPane {
 
-    private static final Logger LOGGER = Logger.getLogger(ViewFrame.class.getName());
+    private static final Logger logger = Logger.getLogger(ViewFrame.class.getName());
 
     private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS

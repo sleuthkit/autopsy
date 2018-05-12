@@ -27,9 +27,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import org.joda.time.Interval;
+import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.IntervalUtils;
 
 /**
  * Represents a set of other events clustered together. All the sub events

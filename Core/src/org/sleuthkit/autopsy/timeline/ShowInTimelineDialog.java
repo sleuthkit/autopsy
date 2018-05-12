@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,13 +60,13 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
+import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.IntervalUtils;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * A Dialog that, given an AbstractFile or BlackBoardArtifact, allows the user
@@ -93,13 +93,13 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
             ChronoField.SECOND_OF_MINUTE);
 
     @FXML
-    private TableView<SingleEvent> eventTable;
+    private TableView<TimelineEvent> eventTable;
 
     @FXML
-    private TableColumn<SingleEvent, EventType> typeColumn;
+    private TableColumn<TimelineEvent, EventType> typeColumn;
 
     @FXML
-    private TableColumn<SingleEvent, Long> dateTimeColumn;
+    private TableColumn<TimelineEvent, Long> dateTimeColumn;
 
     @FXML
     private Spinner<Integer> amountSpinner;
@@ -293,11 +293,11 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     /**
      * Construct this Dialog's "result" from the given event.
      *
-     * @param selectedEvent The SingleEvent to include in the EventInTimeRange
+     * @param selectedEvent The TimeLineEvent to include in the EventInTimeRange
      *
      * @return The EventInTimeRange that is the "result" of this dialog.
      */
-    private ViewInTimelineRequestedEvent makeEventInTimeRange(SingleEvent selectedEvent) {
+    private ViewInTimelineRequestedEvent makeEventInTimeRange(TimelineEvent selectedEvent) {
         Duration selectedDuration = unitComboBox.getSelectionModel().getSelectedItem().getBaseUnit().getDuration().multipliedBy(amountSpinner.getValue());
         Interval range = IntervalUtils.getIntervalAround(Instant.ofEpochMilli(selectedEvent.getStartMillis()), selectedDuration);
         return new ViewInTimelineRequestedEvent(Collections.singleton(selectedEvent.getEventID()), range);
