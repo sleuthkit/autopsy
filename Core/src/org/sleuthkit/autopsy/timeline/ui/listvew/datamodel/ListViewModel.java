@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
 /**
- *
+ * Model for the ListView.
  *
  */
 public class ListViewModel {
@@ -93,7 +93,6 @@ public class ListViewModel {
                                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filter)
                                 + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description";
 
-        sleuthkitCase.acquireSingleUserCaseReadLock();
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
 
@@ -112,11 +111,8 @@ public class ListViewModel {
 
         } catch (SQLException sqlEx) {
             throw new TskCoreException("Failed to execute query for combined events: \n" + querySql, sqlEx); // NON-NLS
-        } finally {
-            sleuthkitCase.releaseSingleUserCaseReadLock();
         }
 
         return combinedEvents;
     }
-
 }

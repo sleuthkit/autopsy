@@ -167,7 +167,6 @@ final public class DetailsViewModel {
         // perform query and map results to AggregateEvent objects
         List<EventCluster> events = new ArrayList<>();
 
-        sleuthkitCase.acquireSingleUserCaseReadLock();
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
             while (resultSet.next()) {
@@ -175,8 +174,6 @@ final public class DetailsViewModel {
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
-        } finally {
-            sleuthkitCase.releaseSingleUserCaseReadLock();
         }
 
         return mergeClustersToStripes(rangeInfo.getPeriodSize().getPeriod(), events);
@@ -276,5 +273,4 @@ final public class DetailsViewModel {
 
         return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
     }
-
 }
