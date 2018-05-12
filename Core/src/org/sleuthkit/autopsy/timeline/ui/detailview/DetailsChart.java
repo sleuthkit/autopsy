@@ -43,12 +43,12 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 
 /**
  * A TimeLineChart that implements the visual aspects of the DetailView
@@ -88,7 +88,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * of events whose roots are in the eventStripes lists
      *
      */
-    private final ObservableList<TimeLineEvent> nestedEvents = FXCollections.observableArrayList();
+    private final ObservableList<DetailViewEvent> nestedEvents = FXCollections.observableArrayList();
 
     /**
      * Aggregates all the settings related to the layout of this chart as one
@@ -212,7 +212,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Get the tree of event stripes flattened into a list
      */
-    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+    public ObservableList<DetailViewEvent> getAllNestedEvents() {
         return nestedEvents;
     }
 

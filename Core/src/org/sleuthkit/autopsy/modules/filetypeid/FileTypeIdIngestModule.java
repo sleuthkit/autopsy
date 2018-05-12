@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.poi.openxml4j.opc.PackageRelationshipTypes;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -39,6 +41,7 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
@@ -94,6 +97,18 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
+
+        try {
+            BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EVENT);
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, "test", System.currentTimeMillis() / 1000));
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EVENT_TYPE, "test", EventType.OTHER.getTypeID()));
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, "test", "Test Description"));
+
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact);
+        } catch (TskCoreException | Blackboard.BlackboardException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
         /**
          * Attempt to detect the file type. Do it within an exception firewall,
          * so that any issues with reading file content or complaints from tika

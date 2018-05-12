@@ -80,17 +80,17 @@ import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  *
  */
-public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPane implements ContextMenuProvider {
+public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackPane implements ContextMenuProvider {
 
     private static final Logger LOGGER = Logger.getLogger(EventNodeBase.class.getName());
 
@@ -499,7 +499,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     private static class PinEventAction extends Action {
 
         @NbBundle.Messages({"PinEventAction.text=Pin"})
-        PinEventAction(TimeLineController controller, TimeLineEvent event) {
+        PinEventAction(TimeLineController controller, DetailViewEvent event) {
             super(Bundle.PinEventAction_text());
             setEventHandler(actionEvent -> controller.pinEvent(event));
             setGraphic(new ImageView(PIN));
@@ -509,7 +509,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
     private static class UnPinEventAction extends Action {
 
         @NbBundle.Messages({"UnPinEventAction.text=Unpin"})
-        UnPinEventAction(TimeLineController controller, TimeLineEvent event) {
+        UnPinEventAction(TimeLineController controller, DetailViewEvent event) {
             super(Bundle.UnPinEventAction_text());
             setEventHandler(actionEvent -> controller.unPinEvent(event));
             setGraphic(new ImageView(UNPIN));

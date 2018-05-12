@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,8 +31,9 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
-import org.sleuthkit.datamodel.timeline.EventCluster;
-import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
@@ -120,8 +121,9 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     EventNodeBase<?> createChildNode(EventCluster cluster) {
         ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
-            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(cluster);
-            return new SingleEventNode(getChartLane(), singleEvent, this);
+            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
+            SingleDetailsViewEvent singleDetailEvent = new SingleDetailsViewEvent(singleEvent).withParent(cluster);
+            return new SingleEventNode(getChartLane(), singleDetailEvent, this);
         } else {
             return new EventClusterNode(getChartLane(), cluster, this);
         }

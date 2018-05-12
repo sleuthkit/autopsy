@@ -34,12 +34,12 @@ import javafx.scene.layout.CornerRadii;
 import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImage;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 
 /**
  *
  */
-final class SingleEventNode extends EventNodeBase<SingleEvent> {
+final class SingleEventNode extends EventNodeBase<SingleDetailsViewEvent> {
 
     private static final Logger LOGGER = Logger.getLogger(SingleEventNode.class.getName());
 
@@ -56,7 +56,7 @@ final class SingleEventNode extends EventNodeBase<SingleEvent> {
         };
     }
 
-    SingleEventNode(DetailsChartLane<?> chart, SingleEvent event, MultiEventNodeBase<?, ?, ?> parent) {
+    SingleEventNode(DetailsChartLane<?> chart, SingleDetailsViewEvent event, MultiEventNodeBase<?, ?, ?> parent) {
         super(event, parent, chart);
         this.descrLabel.setText(event.getFullDescription());
         eventTypeImageView.setImage(getImage(getEventType()));

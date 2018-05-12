@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 
 /**
@@ -70,14 +70,14 @@ final public class EventsTree extends BorderPane {
     private DetailViewPane detailViewPane;
 
     @FXML
-    private TreeView<TimeLineEvent> eventsTree;
+    private TreeView<DetailViewEvent> eventsTree;
 
     @FXML
     private Label eventsTreeLabel;
 
     @FXML
     private ComboBox<TreeComparator> sortByBox;
-    private final ObservableList<TimeLineEvent> selectedEvents = FXCollections.observableArrayList();
+    private final ObservableList<DetailViewEvent> selectedEvents = FXCollections.observableArrayList();
 
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
@@ -87,7 +87,7 @@ final public class EventsTree extends BorderPane {
     public void setDetailViewPane(DetailViewPane detailViewPane) {
         this.detailViewPane = detailViewPane;
 
-        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends TimeLineEvent> change) -> {
+        detailViewPane.getAllNestedEvents().addListener((ListChangeListener.Change<? extends DetailViewEvent> change) -> {
             //on jfx thread
             while (change.next()) {
                 change.getRemoved().forEach(getRoot()::remove);
@@ -134,25 +134,25 @@ final public class EventsTree extends BorderPane {
         eventsTree.setCellFactory(treeView -> new EventTreeCell());
         eventsTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<TimeLineEvent>> change) -> {
+        eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<DetailViewEvent>> change) -> {
             while (change.next()) {
-                change.getRemoved().stream().map(TreeItem<TimeLineEvent>::getValue).forEach(selectedEvents::remove);
-                change.getAddedSubList().stream().map(TreeItem<TimeLineEvent>::getValue).filter(Objects::nonNull).forEach(selectedEvents::add);
+                change.getRemoved().stream().map(TreeItem<DetailViewEvent>::getValue).forEach(selectedEvents::remove);
+                change.getAddedSubList().stream().map(TreeItem<DetailViewEvent>::getValue).filter(Objects::nonNull).forEach(selectedEvents::add);
             }
         });
 
         eventsTreeLabel.setText(Bundle.EventsTree_Label_text());
     }
 
-    public ObservableList<TimeLineEvent> getSelectedEvents() {
+    public ObservableList<DetailViewEvent> getSelectedEvents() {
         return selectedEvents;
     }
 
     /**
-     * A tree cell to display TimeLineEvents. Shows the description, and count,
+     * A tree cell to display DetailViewEvents. Shows the description, and count,
      * as well a a "legend icon" for the event type.
      */
-    private class EventTreeCell extends TreeCell<TimeLineEvent> {
+    private class EventTreeCell extends TreeCell<DetailViewEvent> {
 
         private static final double HIDDEN_MULTIPLIER = .6;
         private final Rectangle rect = new Rectangle(24, 24);
@@ -167,7 +167,7 @@ final public class EventsTree extends BorderPane {
         }
 
         @Override
-        protected void updateItem(TimeLineEvent item, boolean empty) {
+        protected void updateItem(DetailViewEvent item, boolean empty) {
             super.updateItem(item, empty);
             if (empty) {
                 setText(null);
@@ -211,7 +211,7 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, TimeLineEvent item) {
+        private void registerListeners(Collection<? extends DescriptionFilter> filters, DetailViewEvent item) {
             for (DescriptionFilter filter : filters) {
                 if (filter.getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
@@ -228,7 +228,7 @@ final public class EventsTree extends BorderPane {
         }
 
         private void updateHiddenState(EventsTreeItem treeItem) {
-            TimeLineEvent event = treeItem.getValue();
+            DetailViewEvent event = treeItem.getValue();
             hidden.set(event != null && controller.getQuickHideFilters().stream().
                     filter(DescriptionFilter::isActive)
                     .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getDescription(), event.getDescription())));

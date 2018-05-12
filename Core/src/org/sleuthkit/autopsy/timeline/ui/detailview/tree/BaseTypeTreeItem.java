@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * EventTreeItem for base event types (file system, misc, web, ...)
@@ -46,14 +46,14 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    BaseTypeTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
+    BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(event.getEventType().getBaseType(), comparator);
     }
     
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    public void insert(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.get(0);
+    public void insert(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.get(0);
         
         Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
@@ -66,7 +66,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
             descriptionKey = head.getDescription();
-            TimeLineEvent stripe = path.remove(0); //remove head of list if we are going straight to description
+            DetailViewEvent stripe = path.remove(0); //remove head of list if we are going straight to description
             treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
         
@@ -79,8 +79,8 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
     }
     
     @Override
-    void remove(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.get(0);
+    void remove(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.get(0);
         
         EventsTreeItem descTreeItem;
         /*

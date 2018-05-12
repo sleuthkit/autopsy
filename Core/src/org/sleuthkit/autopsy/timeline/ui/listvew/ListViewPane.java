@@ -28,12 +28,12 @@ import javafx.concurrent.Task;
 import javafx.scene.Node;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
-import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.CombinedEvent;
 
 /**
  * An AbstractTimeLineView that uses a TableView to display events.

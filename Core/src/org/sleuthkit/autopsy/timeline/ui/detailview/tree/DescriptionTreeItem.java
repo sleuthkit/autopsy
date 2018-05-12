@@ -25,8 +25,8 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
@@ -46,14 +46,14 @@ class DescriptionTreeItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    DescriptionTreeItem(TimeLineEvent event, Comparator<TreeItem<TimeLineEvent>> comparator) {
+    DescriptionTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(comparator);
         setValue(event);
     }
 
     @Override
-    public void insert(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.remove(0);
+    public void insert(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.remove(0);
 
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
@@ -70,8 +70,8 @@ class DescriptionTreeItem extends EventsTreeItem {
     }
 
     @Override
-    void remove(List<TimeLineEvent> path) {
-        TimeLineEvent head = path.remove(0);
+    void remove(List<DetailViewEvent> path) {
+        DetailViewEvent head = path.remove(0);
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
 
@@ -91,7 +91,7 @@ class DescriptionTreeItem extends EventsTreeItem {
     }
 
     @Override
-    void sort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive) {
+    void sort(Comparator<TreeItem<DetailViewEvent>> comparator, Boolean recursive) {
         setComparator(comparator);
         FXCollections.sort(getChildren(), comparator); //sort children with new comparator
         if (recursive) {
@@ -101,7 +101,7 @@ class DescriptionTreeItem extends EventsTreeItem {
     }
 
     @Override
-    public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
+    public EventsTreeItem findTreeItemForEvent(DetailViewEvent event) {
         if (getValue().getEventType() == event.getEventType()
                 && getValue().getDescription().equals(event.getDescription())) {
             //if this tree item match the given event, return this.
@@ -117,7 +117,7 @@ class DescriptionTreeItem extends EventsTreeItem {
 
         String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
 
-        TreeItem<TimeLineEvent> parent = getParent();
+        TreeItem<DetailViewEvent> parent = getParent();
         if (parent != null && parent.getValue() != null && (parent instanceof DescriptionTreeItem)) {
             //strip off parent description
             text = StringUtils.substringAfter(text, parent.getValue().getDescription());

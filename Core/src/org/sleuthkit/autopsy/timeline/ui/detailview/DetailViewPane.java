@@ -53,15 +53,15 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
 
 /**
@@ -92,7 +92,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * ObservableList of events selected in this detail view. It is
      * automatically mapped from the list of nodes selected in this view.
      */
-    private final MappedList<TimeLineEvent, EventNodeBase<?>> selectedEvents;
+    private final MappedList<DetailViewEvent, EventNodeBase<?>> selectedEvents;
 
     /**
      * Local copy of the zoomParams. Used to backout of a zoomParam change
@@ -138,14 +138,14 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * including EventStripes and any leaf SingleEvents, since, EventClusters
      * contain no interesting non-time related information.
      */
-    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+    public ObservableList<DetailViewEvent> getAllNestedEvents() {
         return getChart().getAllNestedEvents();
     }
 
     /*
      * Get a list of the events that are selected in thes view.
      */
-    public ObservableList<TimeLineEvent> getSelectedEvents() {
+    public ObservableList<DetailViewEvent> getSelectedEvents() {
         return selectedEvents;
     }
 
@@ -154,9 +154,9 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      *
      *
      * @param highlightedEvents the ObservableList of events that should be
-     * highlighted in this view.
+     *                          highlighted in this view.
      */
-    public void setHighLightedEvents(ObservableList<TimeLineEvent> highlightedEvents) {
+    public void setHighLightedEvents(ObservableList<DetailViewEvent> highlightedEvents) {
         highlightedEvents.addListener((Observable observable) -> {
             /*
              * build a predicate that matches events with the same description
@@ -164,7 +164,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
              */
             Predicate<EventNodeBase<?>> highlightPredicate
                     = highlightedEvents.stream() // => events
-                            .map(TimeLineEvent::getDescription)// => event descriptions 
+                            .map(DetailViewEvent::getDescription)// => event descriptions 
                             .map(new Function<String, Predicate<EventNodeBase<?>>>() {
                                 @Override
                                 public Predicate<EventNodeBase<?>> apply(String description) {
@@ -184,7 +184,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     /**
      * Get a new Action that will unhide events with the given description.
      *
-     * @param description the description to unhide
+     * @param description    the description to unhide
      * @param descriptionLoD the description level of detail to match
      *
      * @return a new Action that will unhide events with the given description.
@@ -196,7 +196,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     /**
      * Get a new Action that will hide events with the given description.
      *
-     * @param description the description to hide
+     * @param description    the description to hide
      * @param descriptionLoD the description level of detail to match
      *
      * @return a new Action that will hide events with the given description.

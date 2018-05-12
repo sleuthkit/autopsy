@@ -21,12 +21,22 @@ package org.sleuthkit.autopsy.timeline;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.SetMultimap;
 import com.google.common.eventbus.EventBus;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -42,8 +52,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.joda.time.Period;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
@@ -56,6 +68,9 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.CombinedEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -66,11 +81,10 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.CombinedEvent;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
@@ -144,7 +158,7 @@ public final class FilteredEventsModel {
         eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoaderImpl<>(params -> eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone())));
+                .build(new CacheLoaderImpl<>(params -> getEventStripes(params, TimeLineController.getJodaTimeZone())));
 
         maxCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMaxTime()));
@@ -385,7 +399,7 @@ public final class FilteredEventsModel {
      * @return A List of combined events, sorted by timestamp.
      */
     public List<CombinedEvent> getCombinedEvents() throws TskCoreException {
-        return eventManager.getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
+        return getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
     }
 
     /**
@@ -710,4 +724,253 @@ public final class FilteredEventsModel {
         }
     }
 
+    /**
+     * Get a list of EventStripes, clustered according to the given zoom
+     * paramaters.
+     *
+     * @param params   The ZoomParams that determine the zooming, filtering and
+     *                 clustering.
+     * @param timeZone The time zone to use.
+     *
+     * @return a list of aggregate events within the given timerange, that pass
+     *         the supplied filter, aggregated according to the given event type
+     *         and description zoom levels
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
+     *                                                  querying the db.
+     */
+    public List<EventStripe> getEventStripes(ZoomParams params, DateTimeZone timeZone) throws TskCoreException {
+        //unpack params
+        Interval timeRange = params.getTimeRange();
+        RootFilter filter = params.getFilter();
+        DescriptionLoD descriptionLOD = params.getDescriptionLOD();
+        EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
+
+        long start = timeRange.getStartMillis() / 1000;
+        long end = timeRange.getEndMillis() / 1000;
+
+        //ensure length of querried interval is not 0
+        end = Math.max(end, start + 1);
+
+        //get some info about the time range requested
+        RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(timeRange, timeZone);
+
+        //build dynamic parts of query
+        String descriptionColumn = TimelineManager.getDescriptionColumn(descriptionLOD);
+        final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
+        String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
+        final boolean needsTags = filter.getTagsFilter().isActive();
+        final boolean needsHashSets = filter.getHashHitsFilter().isActive();
+        //compose query string, the new-lines are only for nicer formatting if printing the entire query
+        String query = "SELECT " + eventManager.formatTimeFunction(rangeInfo.getPeriodSize(), timeZone) + " AS interval, " // NON-NLS
+                       + eventManager.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
+                       + eventManager.csvAggFunction("CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
+                       + eventManager.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
+                       + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
+                       + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets) // NON-NLS
+                       + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(filter) // NON-NLS
+                       + " GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
+                       + " ORDER BY min(time)"; // NON-NLS
+
+        // perform query and map results to AggregateEvent objects
+        List<EventCluster> events = new ArrayList<>();
+
+        sleuthkitCase.acquireSingleUserCaseReadLock();
+        try (SleuthkitCase.CaseDbConnection con = sleuthkitCase.getConnection();
+                Statement createStatement = con.createStatement();
+                ResultSet resultSet = createStatement.executeQuery(query)) {
+            while (resultSet.next()) {
+                events.add(eventClusterHelper(resultSet, useSubTypes, descriptionLOD, timeZone));
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Failed to get events with query: " + query, ex); // NON-NLS
+        } finally {
+            sleuthkitCase.releaseSingleUserCaseReadLock();
+        }
+
+        return mergeClustersToStripes(rangeInfo.getPeriodSize().getPeriod(), events);
+    }
+
+    /**
+     * map a single row in a ResultSet to an EventCluster
+     *
+     * @param resultSet      the result set whose current row should be mapped
+     * @param useSubTypes    use the sub_type column if true, else use the
+     *                       base_type column
+     * @param descriptionLOD the description level of detail for this event
+     * @param filter
+     *
+     * @return an AggregateEvent corresponding to the current row in the given
+     *         result set
+     *
+     * @throws SQLException
+     */
+    private EventCluster eventClusterHelper(ResultSet resultSet, boolean useSubTypes, DescriptionLoD descriptionLOD, DateTimeZone timeZone) throws SQLException, TskCoreException {
+        Interval interval = new Interval(resultSet.getLong("minTime") * 1000, resultSet.getLong("maxTime") * 1000, timeZone);// NON-NLS
+        String eventIDsString = resultSet.getString("event_ids");// NON-NLS
+        List<Long> eventIDs = unGroupConcat(eventIDsString, Long::valueOf);
+        String description = resultSet.getString(TimelineManager.getDescriptionColumn(descriptionLOD));
+        int eventTypeID = useSubTypes
+                ? resultSet.getInt("sub_type") //NON-NLS
+                : resultSet.getInt("base_type"); //NON-NLS
+        EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
+                -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
+
+        List<Long> hashHits = unGroupConcat(resultSet.getString("hash_hits"), Long::valueOf); //NON-NLS
+        List<Long> tagged = unGroupConcat(resultSet.getString("taggeds"), Long::valueOf); //NON-NLS
+
+        return new EventCluster(interval, eventType, eventIDs, hashHits, tagged, description, descriptionLOD);
+    }
+
+    /**
+     * Get a representation of all the events, within the given time range, that
+     * pass the given filter, grouped by time and description such that file
+     * system events for the same file, with the same timestamp, are combined
+     * together.
+     *
+     * @param timeRange The Interval that all returned events must be within.
+     * @param filter    The Filter that all returned events must pass.
+     *
+     * @return A List of combined events, sorted by timestamp.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilter filter) throws TskCoreException {
+        Long startTime = timeRange.getStartMillis() / 1000;
+        Long endTime = timeRange.getEndMillis() / 1000;
+
+        if (Objects.equals(startTime, endTime)) {
+            endTime++; //make sure end is at least 1 millisecond after start
+        }
+
+        ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
+        final boolean needsTags = filter.getTagsFilter().isActive();
+        final boolean needsHashSets = filter.getHashHitsFilter().isActive();
+        final String query = "SELECT full_description, time, file_id, "
+                             + eventManager.csvAggFunction("CAST(events.event_id AS VARCHAR)") + " AS eventIDs, "
+                             + eventManager.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
+                             + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets)
+                             + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filter)
+                             + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description";
+
+        sleuthkitCase.acquireSingleUserCaseReadLock();
+        try (SleuthkitCase.CaseDbConnection con = sleuthkitCase.getConnection();
+                Statement stmt = con.createStatement();
+                ResultSet resultSet = stmt.executeQuery(query);) {
+
+            while (resultSet.next()) {
+
+                //make a map from event type to event ID
+                List<Long> eventIDs = unGroupConcat(resultSet.getString("eventIDs"), Long::valueOf);
+                List<EventType> eventTypes = unGroupConcat(resultSet.getString("eventTypes"),
+                        typesString -> eventManager.getEventType(Integer.valueOf(typesString)).orElseThrow(() -> new TskCoreException("Error mapping event type id " + typesString + ".S")));
+                Map<EventType, Long> eventMap = new HashMap<>();
+                for (int i = 0; i < eventIDs.size(); i++) {
+                    eventMap.put(eventTypes.get(i), eventIDs.get(i));
+                }
+                combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000, resultSet.getString("full_description"), resultSet.getLong("file_id"), eventMap));
+            }
+
+        } catch (SQLException sqlEx) {
+            throw new TskCoreException("Failed to execute query for combined events: \n" + query, sqlEx); // NON-NLS
+        } finally {
+            sleuthkitCase.releaseSingleUserCaseReadLock();
+        }
+
+        return combinedEvents;
+    }
+
+    /**
+     * merge the events in the given list if they are within the same period
+     * General algorithm is as follows:
+     *
+     * 1) sort them into a map from (type, description)-> List<aggevent>
+     * 2) for each key in map, merge the events and accumulate them in a list to
+     * return
+     *
+     * @param timeUnitLength
+     * @param preMergedEvents
+     *
+     * @return
+     */
+    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, List<EventCluster> preMergedEvents) {
+
+        //effectively map from type to (map from description to events)
+        Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
+
+        for (EventCluster aggregateEvent : preMergedEvents) {
+            typeMap.computeIfAbsent(aggregateEvent.getEventType(), eventType -> HashMultimap.create())
+                    .put(aggregateEvent.getDescription(), aggregateEvent);
+        }
+        //result list to return
+        ArrayList<EventCluster> aggEvents = new ArrayList<>();
+
+        //For each (type, description) key, merge agg events
+        for (SetMultimap<String, EventCluster> descrMap : typeMap.values()) {
+            //for each description ...
+            for (String descr : descrMap.keySet()) {
+                //run through the sorted events, merging together adjacent events
+                Iterator<EventCluster> iterator = descrMap.get(descr).stream()
+                        .sorted(Comparator.comparing(event -> event.getSpan().getStartMillis()))
+                        .iterator();
+                EventCluster current = iterator.next();
+                while (iterator.hasNext()) {
+                    EventCluster next = iterator.next();
+                    Interval gap = current.getSpan().gap(next.getSpan());
+
+                    //if they overlap or gap is less one quarter timeUnitLength
+                    //TODO: 1/4 factor is arbitrary. review! -jm
+                    if (gap == null || gap.toDuration().getMillis() <= timeUnitLength.toDurationFrom(gap.getStart()).getMillis() / 4) {
+                        //merge them
+                        current = EventCluster.merge(current, next);
+                    } else {
+                        //done merging into current, set next as new current
+                        aggEvents.add(current);
+                        current = next;
+                    }
+                }
+                aggEvents.add(current);
+            }
+        }
+
+        //merge clusters to stripes
+        Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
+
+        for (EventCluster eventCluster : aggEvents) {
+            stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
+                    new EventStripe(eventCluster), EventStripe::merge);
+        }
+
+        return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
+    }
+
+    /**
+     * take the result of a group_concat SQLite operation and split it into a
+     * set of X using the mapper to to convert from string to X If groupConcat
+     * is empty, null, or all whitespace, returns an empty list.
+     *
+     * @param <X>         the type of elements to return
+     * @param groupConcat a string containing the group_concat result ( a comma
+     *                    separated list)
+     * @param mapper      a function from String to X
+     *
+     * @return a Set of X, each element mapped from one element of the original
+     *         comma delimited string
+     */
+    private static <X> List<X> unGroupConcat(String groupConcat, CacheLoaderImpl.CheckedFunction<String, X> mapper) throws TskCoreException {
+        try {
+            if (org.apache.commons.lang3.StringUtils.isBlank(groupConcat)) {
+                return Collections.emptyList();
+            }
+
+            List<X> result = new ArrayList<>();
+            String[] split = groupConcat.split(",");
+            for (String s : split) {
+                result.add(mapper.apply(s));
+            }
+            return result;
+        } catch (Exception exception) {
+            throw new TskCoreException("Error splitting csv string", exception);
+        }
+    }
 }

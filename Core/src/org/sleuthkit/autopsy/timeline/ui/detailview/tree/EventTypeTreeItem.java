@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
@@ -40,13 +40,13 @@ abstract class EventTypeTreeItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<TimeLineEvent>> comparator) {
+    EventTypeTreeItem(EventType eventType, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(comparator);
         this.eventType = eventType;
     }
 
     @Override
-    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
+    void sort(Comparator<TreeItem<DetailViewEvent>> comp, Boolean recursive) {
         setComparator(comp);
         if (recursive) {
             //sort childrens children

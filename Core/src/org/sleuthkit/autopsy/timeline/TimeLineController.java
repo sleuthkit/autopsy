@@ -73,6 +73,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -80,7 +81,6 @@ import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
@@ -325,18 +325,18 @@ public class TimeLineController {
         advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
     }
 
-    private final ObservableSet<TimeLineEvent> pinnedEvents = FXCollections.observableSet();
-    private final ObservableSet<TimeLineEvent> pinnedEventsUnmodifiable = FXCollections.unmodifiableObservableSet(pinnedEvents);
+    private final ObservableSet<DetailViewEvent> pinnedEvents = FXCollections.observableSet();
+    private final ObservableSet<DetailViewEvent> pinnedEventsUnmodifiable = FXCollections.unmodifiableObservableSet(pinnedEvents);
 
-    public void pinEvent(TimeLineEvent event) {
+    public void pinEvent(DetailViewEvent event) {
         pinnedEvents.add(event);
     }
 
-    public void unPinEvent(TimeLineEvent event) {
+    public void unPinEvent(DetailViewEvent event) {
         pinnedEvents.removeIf(event::equals);
     }
 
-    public ObservableSet<TimeLineEvent> getPinnedEvents() {
+    public ObservableSet<DetailViewEvent> getPinnedEvents() {
         return pinnedEventsUnmodifiable;
     }
 

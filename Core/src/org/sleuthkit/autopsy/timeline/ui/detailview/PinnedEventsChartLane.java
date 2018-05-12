@@ -20,12 +20,12 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import javafx.collections.SetChangeListener;
 import javafx.scene.chart.Axis;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 
 /**
  *
  */
-public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent> {
+public final class PinnedEventsChartLane extends DetailsChartLane<DetailViewEvent> {
 
     /**
      *
@@ -34,13 +34,13 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
      * @param verticalAxis   the value of verticalAxis
      * @param selectedNodes1 the value of selectedNodes1
      */
-    PinnedEventsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<TimeLineEvent> verticalAxis) {
+    PinnedEventsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<DetailViewEvent> verticalAxis) {
         super(parentChart, dateAxis, verticalAxis, false);
 
-//        final Series<DateTime, TimeLineEvent> series = new Series<>();
+//        final Series<DateTime, DetailViewEvent> series = new Series<>();
 //        setData(FXCollections.observableArrayList());
 //        getData().add(series);
-        getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
+        getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends DetailViewEvent> change) -> {
             if (change.wasAdded()) {
                 addEvent(change.getElementAdded());
             }
