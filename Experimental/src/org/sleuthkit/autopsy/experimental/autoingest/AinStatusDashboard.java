@@ -52,6 +52,14 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
         autoIngestMonitor.addObserver(this);
     }
 
+    AutoIngestMonitor getMonitor() {
+        return autoIngestMonitor;
+    }
+
+    AinStatusPanel getNodesStatusPanel() {
+        return nodesPanel;
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -143,9 +151,10 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof AutoIngestNodeState)
+        if (arg instanceof AutoIngestNodeState) {
             EventQueue.invokeLater(() -> {
                 refreshTables();
             });
+        }
     }
 }

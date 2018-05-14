@@ -67,6 +67,16 @@
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>
 
+    <target name="clean" depends="suite.clean">
+	<delete includeEmptyDirs="true" failonerror="false">
+		<fileset dir="docs\doxygen-user\user-docs" includes="**/*"/>
+	</delete>
+
+	<delete includeEmptyDirs="true" failonerror="false">
+  		<fileset dir="docs\doxygen\doxygen_docs\api-docs" includes="**/*"/>
+	</delete>
+    </target>
+
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
       version number. -->
@@ -90,7 +100,6 @@
         <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
-        <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
         <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
         <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
         <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
