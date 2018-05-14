@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EVENT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
@@ -200,6 +201,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_EVENT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -227,7 +229,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      */
                 }
             } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                       || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                 /**
                  * This is a stop gap measure until a different way of handling
                  * the closing of cases is worked out. Currently, remote events
@@ -419,7 +421,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          */
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                           || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
