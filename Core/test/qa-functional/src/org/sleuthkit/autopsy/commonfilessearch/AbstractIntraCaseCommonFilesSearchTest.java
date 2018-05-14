@@ -68,7 +68,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * set 4 
  *  - file.dat (empty file)
  */
-public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
+public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase {
 
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
@@ -90,7 +90,7 @@ public abstract class IntraCaseCommonFilesSearchTest extends NbTestCase {
 
     protected DataSourceLoader dataSourceLoader;
 
-    public IntraCaseCommonFilesSearchTest(String name) {
+    public AbstractIntraCaseCommonFilesSearchTest(String name) {
         super(name);
     }
 

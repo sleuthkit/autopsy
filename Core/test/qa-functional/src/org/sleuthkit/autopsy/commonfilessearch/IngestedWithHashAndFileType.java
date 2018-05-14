@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Add set 1, set 2, set 3, and set 4 to case and ingest with hash algorithm. 
  */
-public class IngestedWithHashAndFileType extends IntraCaseCommonFilesSearchTest {
+public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSearchTest {
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileType.class).

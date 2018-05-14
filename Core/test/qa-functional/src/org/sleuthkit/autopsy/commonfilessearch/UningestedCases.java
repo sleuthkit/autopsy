@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not ingest.
  *
  */
-public class UningestedCases extends IntraCaseCommonFilesSearchTest {
+public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(UningestedCases.class).

@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not run mime type
  * module.
  */
-public class IngestedWithNoFileTypes extends IntraCaseCommonFilesSearchTest {
+public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchTest {
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypes.class).
@@ -101,7 +101,7 @@ public class IngestedWithNoFileTypes extends IntraCaseCommonFilesSearchTest {
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(files.size() == 0);
+            assertTrue(files.isEmpty());
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
