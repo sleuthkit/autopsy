@@ -261,9 +261,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * @param nodeStateSnapshot The jobs snapshot.
      */
     void refreshTables() {
-        pendingJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
-        runningJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
-        completedJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
+        pendingJobsPanel.refresh(autoIngestMonitor);
+        runningJobsPanel.refresh(autoIngestMonitor);
+        completedJobsPanel.refresh(autoIngestMonitor);
     }
 
     /**

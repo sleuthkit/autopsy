@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,6 +42,9 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  */
 final class AutoIngestJobsNode extends AbstractNode {
 
+    private final static EventBus refreshChildrenEventBus = new EventBus("AutoIngestJobsNodeEventBus");
+    private final static short REFRESH_EVENT = 1; //
+
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
         "AutoIngestJobsNode.dataSource.text=Data Source",
@@ -55,17 +60,21 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(JobsSnapshot jobsSnapshot, AutoIngestJobStatus status) {
-        super(Children.create(new AutoIngestNodeChildren(jobsSnapshot, status), false));
+    AutoIngestJobsNode(AutoIngestMonitor autoIngestMonitor, AutoIngestJobStatus status) {
+        super(Children.create(new AutoIngestNodeChildren(autoIngestMonitor, status), false));
+    }
+
+    void refresh() {
+        refreshChildrenEventBus.post(REFRESH_EVENT);
     }
 
     /**
      * A ChildFactory for generating JobNodes.
      */
-    static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
+    static final class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private final JobsSnapshot jobsSnapshot;
+        private final AutoIngestMonitor autoIngestMonitor;
 
         /**
          * Create children nodes for the AutoIngestJobsNode which will each
@@ -74,14 +83,16 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status) {
-            jobsSnapshot = snapshot;
+        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status) {
+            autoIngestMonitor = monitor;
             autoIngestJobStatus = status;
+            refreshChildrenEventBus.register(this);
         }
 
         @Override
         protected boolean createKeys(List<AutoIngestJob> list) {
             List<AutoIngestJob> jobs;
+            JobsSnapshot jobsSnapshot = autoIngestMonitor.getJobsSnapshot();
             switch (autoIngestJobStatus) {
                 case PENDING_JOB:
                     jobs = jobsSnapshot.getPendingJobs();
@@ -107,6 +118,13 @@ final class AutoIngestJobsNode extends AbstractNode {
             return new JobNode(key, autoIngestJobStatus);
         }
 
+        @Subscribe
+        private void subscribeToRefresh(short refreshEvent) {
+            if (refreshEvent == REFRESH_EVENT) {
+                refresh(true);
+            }
+        }
+
     }
 
     /**
@@ -130,6 +148,7 @@ final class AutoIngestJobsNode extends AbstractNode {
             autoIngestJob = job;
             setName(autoIngestJob.toString());  //alows job to be uniquely found by name since it will involve a hash of the AutoIngestJob
             setDisplayName(autoIngestJob.getManifest().getCaseName()); //displays user friendly case name as name
+            refreshChildrenEventBus.register(this);
         }
 
         /**
@@ -185,8 +204,16 @@ final class AutoIngestJobsNode extends AbstractNode {
             return s;
         }
 
+        @Subscribe
+        private void subscribeToRefresh(short refreshEvent) {
+            if (refreshEvent == REFRESH_EVENT) {
+                this.setSheet(createSheet());
+            }
+        }
+
         @Override
-        public Action[] getActions(boolean context) {
+        public Action[] getActions(boolean context
+        ) {
             List<Action> actions = new ArrayList<>();
             if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                 switch (jobStatus) {

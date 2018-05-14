@@ -88,7 +88,7 @@ abstract class PrioritizationAction extends AbstractAction {
                     EventQueue.invokeLater(() -> {
                         try {
                             modifyPriority(dashboard.getMonitor());
-                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor());
                         } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                             String errorMessage = getErrorMessage();
                             logger.log(Level.SEVERE, errorMessage, ex);
