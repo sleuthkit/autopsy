@@ -124,7 +124,7 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(files.size() == 0);
+            assertTrue(files.isEmpty());
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
