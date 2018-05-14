@@ -44,8 +44,10 @@ public class DataSourceLoader {
 
     private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
         //try block releases resources - exceptions are handled in done()
-        try (SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL)) {
-            ResultSet resultSet = query.getResultSet();
+        try (
+                SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
+                ResultSet resultSet = query.getResultSet()
+                ) {
             while (resultSet.next()) {
                 Long objectId = resultSet.getLong(1);
                 String dataSourceName = resultSet.getString(2);
