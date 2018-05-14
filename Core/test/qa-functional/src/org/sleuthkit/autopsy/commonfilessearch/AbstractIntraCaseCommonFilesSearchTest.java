@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -112,7 +113,12 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
     @Override
     public void tearDown() {
         CaseUtils.closeCase();
-        CaseUtils.deleteCaseDir();
+        try {
+            CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            //does not represent a failure in the common files search feature
+        }
     }
     
     /**
