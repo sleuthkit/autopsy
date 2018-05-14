@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,7 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
@@ -59,64 +60,67 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A thumbnail viewer for the results view, with paging support.
+ * A thumbnail result viewer, with paging support, that displays the children of
+ * the given root node using an IconView. The paging is intended to reduce
+ * memory footprint by loading no more than two humdred images at a time.
  *
- * The paging is intended to reduce memory footprint by load only up to
- * (currently) 200 images at a time. This works whether or not the underlying
- * content nodes are being lazy loaded or not.
- *
- * TODO (JIRA-2658): Fix DataResultViewer extension point. When this is done,
- * restore implementation of DataResultViewerTable as a DataResultViewer service
- * provider.
+ * Instances of this class should use the explorer manager of an ancestor top
+ * component to connect the lookups of the nodes displayed in the IconView to
+ * the actions global context. The explorer manager can be supplied during
+ * construction, but the typical use case is for the result viewer to find the
+ * ancestor top component's explorer manager at runtime.
  */
-//@ServiceProvider(service = DataResultViewer.class)
-final class DataResultViewerThumbnail extends AbstractDataResultViewer {
+@ServiceProvider(service = DataResultViewer.class)
+public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
-    private int curPage;
-    private int totalPages;
-    private int curPageImages;
-    private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
-    private TableFilterNode tfn;
-    private ThumbnailViewChildren tvc;
+    private TableFilterNode rootNode;
+    private ThumbnailViewChildren rootNodeChildren;
+    private NodeSelectionListener selectionListener;
+    private int currentPage;
+    private int totalPages;
+    private int currentPageImages;
+    private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
 
     /**
-     * Constructs a thumbnail viewer for the results view, with paging support,
-     * that is compatible with node multiple selection actions.
+     * Constructs a thumbnail result viewer, with paging support, that displays
+     * the children of the given root node using an IconView. The viewer should
+     * have an ancestor top component to connect the lookups of the nodes
+     * displayed in the IconView to the actions global context. The explorer
+     * manager will be discovered at runtime.
+     */
+    public DataResultViewerThumbnail() {
+        this(null);
+    }
+
+    /**
+     * Constructs a thumbnail result viewer, with paging support, that displays
+     * the children of the given root node using an IconView. The viewer should
+     * have an ancestor top component to connect the lookups of the nodes
+     * displayed in the IconView to the actions global context.
      *
-     * @param explorerManager The shared ExplorerManager for the result viewers.
+     * @param explorerManager The explorer manager of the ancestor top
+     *                        component.
      */
-    DataResultViewerThumbnail(ExplorerManager explorerManager) {
-        super(explorerManager);
-        initialize();
-    }
-
-    /**
-     * Constructs a thumbnail viewer for the results view, with paging support,
-     * that is NOT compatible with node multiple selection actions.
-     */
-    DataResultViewerThumbnail() {
-        initialize();
-    }
-
-    @NbBundle.Messages({"DataResultViewerThumbnail.thumbnailSizeComboBox.small=Small Thumbnails",
+    @NbBundle.Messages({
+        "DataResultViewerThumbnail.thumbnailSizeComboBox.small=Small Thumbnails",
         "DataResultViewerThumbnail.thumbnailSizeComboBox.medium=Medium Thumbnails",
         "DataResultViewerThumbnail.thumbnailSizeComboBox.large=Large Thumbnails"
     })
-    private void initialize() {
+    public DataResultViewerThumbnail(ExplorerManager explorerManager) {
+        super(explorerManager);
         initComponents();
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        em.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
-        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[]{Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
-                    Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
-                    Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large()}));
+        thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{
+            Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
+            Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
+            Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large()}));
         thumbnailSizeComboBox.setSelectedIndex(1);
-        curPage = -1;
+        currentPage = -1;
         totalPages = 0;
-        curPageImages = 0;
+        currentPageImages = 0;
     }
 
     /**
@@ -297,24 +301,22 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         if (thumbSize != newIconSize) {
             thumbSize = newIconSize;
-            Node root = em.getRootContext();
+            Node root = this.getExplorerManager().getRootContext();
             ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(thumbSize);
-
-           
 
             // Temporarily set the explored context to the root, instead of a child node.
             // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
             // update even though the new and old Node values are identical. This in turn
             // will cause the entire view to update completely. After this we 
             // immediately set the node back to the current child by calling switchPage().        
-            em.setExploredContext(root);
+            this.getExplorerManager().setExploredContext(root);
             switchPage();
         }
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
     private void sortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortButtonActionPerformed
-        List<Node.Property<?>> childProperties = ResultViewerPersistence.getAllChildProperties(em.getRootContext(), 100);
-        SortChooser sortChooser = new SortChooser(childProperties, ResultViewerPersistence.loadSortCriteria(tfn));
+        List<Node.Property<?>> childProperties = ResultViewerPersistence.getAllChildProperties(this.getExplorerManager().getRootContext(), 100);
+        SortChooser sortChooser = new SortChooser(childProperties, ResultViewerPersistence.loadSortCriteria(rootNode));
         DialogDescriptor dialogDescriptor = new DialogDescriptor(sortChooser, sortChooser.getDialogTitle());
         Dialog createDialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
         createDialog.setVisible(true);
@@ -335,8 +337,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 Node.Property<?> prop = childProperties.get(i);
                 String propName = prop.getName();
                 SortCriterion criterion = criteriaMap.get(prop);
-                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, propName);
-                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, propName);
+                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(rootNode, propName);
+                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(rootNode, propName);
 
                 if (criterion != null) {
                     preferences.putBoolean(columnSortOrderKey, criterion.getSortOrder() == SortOrder.ASCENDING);
@@ -346,7 +348,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     preferences.remove(columnSortRankKey);
                 }
             }
-            setNode(tfn); //this is just to force a refresh
+            setNode(rootNode); //this is just to force a refresh
         }
     }//GEN-LAST:event_sortButtonActionPerformed
 
@@ -379,28 +381,31 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        if (tvc != null) {
-            tvc.cancelLoadingThumbnails();
+        if (selectionListener == null) {
+            this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener()); // RJCTODO: remove listener on cleanup
+        }
+        if (rootNodeChildren != null) {
+            rootNodeChildren.cancelLoadingThumbnails();
         }
         try {
             if (givenNode != null) {
-                tfn = (TableFilterNode) givenNode;
+                rootNode = (TableFilterNode) givenNode;
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                tvc = new ThumbnailViewChildren(givenNode,thumbSize);
-                final Node root = new AbstractNode(tvc);
+                rootNodeChildren = new ThumbnailViewChildren(givenNode, thumbSize);
+                final Node root = new AbstractNode(rootNodeChildren);
 
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
-                em.setRootContext(root);
+                this.getExplorerManager().setRootContext(root);
             } else {
-                tfn = null;
-                tvc = null;
+                rootNode = null;
+                rootNodeChildren = null;
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode);
+                this.getExplorerManager().setRootContext(emptyNode);
                 iconView.setBackground(Color.BLACK);
             }
         } finally {
@@ -422,8 +427,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     public void resetComponent() {
         super.resetComponent();
         this.totalPages = 0;
-        this.curPage = -1;
-        curPageImages = 0;
+        this.currentPage = -1;
+        currentPageImages = 0;
         updateControls();
     }
 
@@ -435,15 +440,15 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     private void nextPage() {
-        if (curPage < totalPages) {
-            curPage++;
+        if (currentPage < totalPages) {
+            currentPage++;
             switchPage();
         }
     }
 
     private void previousPage() {
-        if (curPage > 1) {
-            curPage--;
+        if (currentPage > 1) {
+            currentPage--;
             switchPage();
         }
     }
@@ -465,7 +470,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             return;
         }
 
-        curPage = newPage;
+        currentPage = newPage;
         switchPage();
     }
 
@@ -488,10 +493,11 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
-                Node root = em.getRootContext();
-                Node pageNode = root.getChildren().getNodeAt(curPage - 1);
-                em.setExploredContext(pageNode);
-                curPageImages = pageNode.getChildren().getNodesCount();
+                ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
+                Node root = explorerManager.getRootContext();
+                Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
+                explorerManager.setExploredContext(pageNode);
+                currentPageImages = pageNode.getChildren().getNodesCount();
                 return null;
             }
 
@@ -504,15 +510,16 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d =
-                            new NotifyDescriptor.Message(
+                    NotifyDescriptor d
+                            = new NotifyDescriptor.Message(
                                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
                                             ex.getMessage()),
                                     NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                     logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
-                } // catch and ignore if we were cancelled
+                }
                 catch (java.util.concurrent.CancellationException ex) {
+                    // catch and ignore if we were cancelled
                 }
             }
         }.execute();
@@ -534,20 +541,19 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
 
         } else {
-            pageNumLabel.setText(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
-                            Integer.toString(curPage), Integer.toString(totalPages)));
-            final int imagesFrom = (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
-            final int imagesTo = curPageImages + (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
+            pageNumLabel.setText(NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
+                    Integer.toString(currentPage), Integer.toString(totalPages)));
+            final int imagesFrom = (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
+            final int imagesTo = currentPageImages + (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
 
-            pageNextButton.setEnabled(!(curPage == totalPages));
-            pagePrevButton.setEnabled(!(curPage == 1));
+            pageNextButton.setEnabled(!(currentPage == totalPages));
+            pagePrevButton.setEnabled(!(currentPage == 1));
             goToPageField.setEnabled(totalPages > 1);
             sortButton.setEnabled(true);
             thumbnailSizeComboBox.setEnabled(true);
-            if (tfn != null) {
-                String sortString = ResultViewerPersistence.loadSortCriteria(tfn).stream()
+            if (rootNode != null) {
+                String sortString = ResultViewerPersistence.loadSortCriteria(rootNode).stream()
                         .map(SortCriterion::toString)
                         .collect(Collectors.joining(" "));
                 sortString = StringUtils.defaultIfBlank(sortString, "---");
@@ -578,30 +584,30 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             totalPages = root.getChildren().getNodesCount();
 
             if (totalPages == 0) {
-                curPage = -1;
+                currentPage = -1;
                 updateControls();
                 return;
             }
 
-            if (curPage == -1 || curPage > totalPages) {
-                curPage = 1;
+            if (currentPage == -1 || currentPage > totalPages) {
+                currentPage = 1;
             }
 
             //force load the curPage node
-            final Node pageNode = root.getChildren().getNodeAt(curPage - 1);
+            final Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
 
             //em.setSelectedNodes(new Node[]{pageNode});
             if (pageNode != null) {
                 pageNode.addNodeListener(new NodeListener() {
                     @Override
                     public void childrenAdded(NodeMemberEvent nme) {
-                        curPageImages = pageNode.getChildren().getNodesCount();
+                        currentPageImages = pageNode.getChildren().getNodesCount();
                         updateControls();
                     }
 
                     @Override
                     public void childrenRemoved(NodeMemberEvent nme) {
-                        curPageImages = 0;
+                        currentPageImages = 0;
                         updateControls();
                     }
 
@@ -618,7 +624,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     }
                 });
 
-                em.setExploredContext(pageNode);
+                DataResultViewerThumbnail.this.getExplorerManager().setExploredContext(pageNode);
             }
 
             updateControls();
@@ -627,7 +633,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         @Override
         public void childrenRemoved(NodeMemberEvent nme) {
             totalPages = 0;
-            curPage = -1;
+            currentPage = -1;
             updateControls();
         }
 
@@ -640,14 +646,14 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
     }
 
-    private class ExplorerManagerNodeSelectionListener implements PropertyChangeListener {
+    private class NodeSelectionListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
-                    Node[] selectedNodes = em.getSelectedNodes();
+                    Node[] selectedNodes = DataResultViewerThumbnail.this.getExplorerManager().getSelectedNodes();
                     if (selectedNodes.length == 1) {
                         AbstractFile af = selectedNodes[0].getLookup().lookup(AbstractFile.class);
                         if (af == null) {
@@ -670,5 +676,4 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         }
     }
-
 }
