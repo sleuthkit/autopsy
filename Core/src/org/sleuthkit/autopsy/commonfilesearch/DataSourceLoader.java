@@ -29,6 +29,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Encapsulates logic required to create a mapping of data sources in the 
+ * current case to their data source IDs.
+ * 
+ * Intended to be used within the context of a SwingWorker or other background 
+ * thread.
+ */
 public class DataSourceLoader {
 
     private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
@@ -66,6 +73,14 @@ public class DataSourceLoader {
         }
     }
 
+    /**
+     * Get a map of data source Ids to their string names for the current case.
+     * 
+     * @return Map of Long (id) to String (name)
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     * @throws SQLException 
+     */
     public Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
         Map<Long, String> dataSouceMap = new HashMap<>();
 
