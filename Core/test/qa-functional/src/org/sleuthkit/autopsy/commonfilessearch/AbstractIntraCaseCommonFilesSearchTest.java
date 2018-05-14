@@ -97,7 +97,7 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
     @Override
     public void setUp() {
 
-        CaseUtils.createCase(CASE_DIRECTORY_PATH, this.getCaseName());
+        CaseUtils.createCase(this.getCaseName());
         
         final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
 
@@ -112,7 +112,7 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
     @Override
     public void tearDown() {
         CaseUtils.closeCase();
-        CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
+        CaseUtils.deleteCaseDir();
     }
     
     /**
