@@ -78,15 +78,15 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
     private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "commonfiles_image3_v1.vhd");
     protected final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "commonfiles_image4_v1.vhd");
     
-    protected final String IMG = "IMG_6175.jpg";
-    protected final String DOC = "BasicStyleGuide.doc";
-    protected final String PDF = "adsf.pdf";
-    protected final String EMPTY = "file.dat";
+    protected static final String IMG = "IMG_6175.jpg";
+    protected static final String DOC = "BasicStyleGuide.doc";
+    protected static final String PDF = "adsf.pdf";
+    protected static final String EMPTY = "file.dat";
     
-    protected final String SET1 = "commonfiles_image1_v1.vhd";
-    protected final String SET2 = "commonfiles_image2_v1.vhd";
-    protected final String SET3 = "commonfiles_image3_v1.vhd";
-    protected final String SET4 = "commonfiles_image4_v1.vhd";
+    protected static final String SET1 = "commonfiles_image1_v1.vhd";
+    protected static final String SET2 = "commonfiles_image2_v1.vhd";
+    protected static final String SET3 = "commonfiles_image3_v1.vhd";
+    protected static final String SET4 = "commonfiles_image4_v1.vhd";
 
     protected DataSourceLoader dataSourceLoader;
 
@@ -126,11 +126,11 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
 
         for (AbstractFile file : files) {
 
-            Long id = file.getId();
+            Long objectId = file.getId();
 
             String fileName = file.getName();
 
-            String dataSourceName = objectIdToDataSource.get(id);
+            String dataSourceName = objectIdToDataSource.get(objectId);
 
             if (fileName.equals(name) && dataSourceName.equals(dataSource)) {
                 tally++;
