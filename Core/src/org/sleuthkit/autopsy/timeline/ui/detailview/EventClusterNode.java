@@ -50,11 +50,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventCluster;
 import org.sleuthkit.datamodel.timeline.EventStripe;
@@ -241,7 +241,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                         chartNestedEvents.addAll(StripeFlattener.flatten(subNodes));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                     }
-                } catch (TimelineCacheException | InterruptedException | ExecutionException ex) {
+                } catch (TskCoreException | InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
                 }
 
@@ -256,7 +256,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
     }
 
     @Override
-    EventNodeBase<?> createChildNode(EventStripe stripe) throws TimelineCacheException {
+    EventNodeBase<?> createChildNode(EventStripe stripe) throws TskCoreException {
         ImmutableSet<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.

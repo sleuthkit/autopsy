@@ -29,8 +29,9 @@ import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventCluster;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 
@@ -69,10 +70,10 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
                     for (EventStripe stripe : change.getAddedSubList()) {
                         addEvent(stripe);
                     }
-                } catch (TimelineCacheException timelineCacheException) {
+                } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.PrimaryDetailsChartLane_stripeChangeListener_errorMessage()).showError();
-                    logger.log(Level.SEVERE, "Error adding stripe to chart lane.", timelineCacheException);
+                    logger.log(Level.SEVERE, "Error adding stripe to chart lane.", ex);
                 }
                 change.getRemoved().forEach(this::removeEvent);
             }
@@ -81,7 +82,7 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
         for (EventStripe stripe : parentChart.getRootEventStripes()) {
             try {
                 addEvent(stripe);
-            } catch (TimelineCacheException ex) {
+            } catch (TskCoreException ex) {
                 Notifications.create().owner(getScene().getWindow())
                         .text(Bundle.PrimaryDetailsChartLane_stripeChangeListener_errorMessage())
                         .showError();
@@ -105,7 +106,7 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
                         Line line
                                 = new Line(dateAxis.localToParent(getXForEpochMillis(range.getStartMillis()), 0).getX(), y,
                                         dateAxis.localToParent(getXForEpochMillis(range.getEndMillis()), 0).getX(), y);
-                        line.setStroke(addedNode.getEventType().getColor().deriveColor(0, 1, 1, .5));
+                        line.setStroke(getColor(addedNode.getEventType()).deriveColor(0, 1, 1, .5));
                         line.setStrokeWidth(PROJECTED_LINE_STROKE_WIDTH);
                         line.setStrokeLineCap(StrokeLineCap.ROUND);
                         projectionMap.put(range, line);
@@ -133,5 +134,4 @@ public final class PrimaryDetailsChartLane extends DetailsChartLane<EventStripe>
             line.setEndY(getXAxis().getLayoutY() + PROJECTED_LINE_Y_OFFSET);
         }
     }
-
 }

@@ -26,7 +26,7 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -48,7 +48,7 @@ public class ZoomIn extends Action {
         setEventHandler(actionEvent -> {
             try {
                 controller.pushZoomInTime();
-            } catch (TimelineCacheException ex) {
+            } catch (TskCoreException ex) {
                 new Alert(Alert.AlertType.ERROR, Bundle.ZoomIn_errorMessage()).showAndWait();
                 logger.log(Level.SEVERE, "Error zooming in.", ex);
             }

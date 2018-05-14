@@ -70,12 +70,14 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -142,7 +144,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
         sleuthkitCase = chartLane.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chartLane.getController().getEventsModel();
-        eventTypeImageView.setImage(getEventType().getFXImage());
+        eventTypeImageView.setImage(new Image(getImagePath(getEventType())));
 
         if (tlEvent.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
@@ -153,9 +155,9 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         }
 
         if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
-            evtColor = getEventType().getColor();
+            evtColor = getColor(getEventType());
         } else {
-            evtColor = getEventType().getBaseType().getColor();
+            evtColor = getColor(getEventType().getBaseType());
         }
         SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
 
@@ -218,6 +220,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
         setBorder(applied ? SELECTION_BORDER : null);
     }
 
+    @Override
     protected void layoutChildren() {
         super.layoutChildren();
     }
@@ -237,7 +240,7 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     final void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(-10, eventType.getColor()));
+                eventType -> new DropShadow(-10, getColor(eventType)));
         setEffect(showControls ? dropShadow : null);
         installTooltip();
         enableTooltip(showControls);
@@ -319,8 +322,8 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
-                            + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
+                           + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
+                           + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
                 }
 
                 @Override
@@ -463,8 +466,8 @@ public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPan
 
     void showFullDescription(final int size) {
         countLabel.setText((size == 1) ? "" : " (" + size + ")"); // NON-NLS
-        String description = getParentNode().map(pNode ->
-                "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
+        String description = getParentNode().map(pNode
+                -> "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
                 .orElseGet(getEvent()::getDescription);
 
         descrLabel.setText(description);

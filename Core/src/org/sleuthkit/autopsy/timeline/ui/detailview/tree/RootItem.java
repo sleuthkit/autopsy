@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * TreeItem for the root of all the events in the EventsTree.
@@ -69,7 +69,7 @@ class RootItem extends EventsTreeItem {
     @Override
     void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
-        childMap.values().forEach(ti -> ti.sort(comp, true));
+        childMap.values().forEach(treeItem -> treeItem.sort(comp, true));
     }
 
     @Override

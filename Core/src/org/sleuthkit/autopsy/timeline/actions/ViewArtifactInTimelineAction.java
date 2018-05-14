@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.timeline.actions;
 
 import java.awt.event.ActionEvent;
-import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
@@ -31,22 +29,13 @@ import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.ArtifactEventType;
-import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * An action that shows the given artifact in the Timeline List View.
  */
 public final class ViewArtifactInTimelineAction extends AbstractAction {
 
-    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ViewFileInTimelineAction.class.getName());
-
-    private static final Set<ArtifactEventType> ARTIFACT_EVENT_TYPES
-            = EventType.allTypes.stream()
-                    .filter(ArtifactEventType.class::isInstance)
-                    .map(ArtifactEventType.class::cast)
-                    .collect(Collectors.toSet());
 
     private final BlackboardArtifact artifact;
 
@@ -67,22 +56,17 @@ public final class ViewArtifactInTimelineAction extends AbstractAction {
     }
 
     /**
-     * Does the given artifact have a type that Timeline supports, and does it
-     * have a positive timestamp in the supported attribute?
+     * Does the given artifact have a datetime attribute?
      *
      * @param artifact The artifact to test for a supported timestamp
      *
      * @return True if this artifact has a timestamp supported by Timeline.
      */
     public static boolean hasSupportedTimeStamp(BlackboardArtifact artifact) throws TskCoreException {
-        //see if the given artifact is a supported type ...
-        for (ArtifactEventType artEventType : ARTIFACT_EVENT_TYPES) {
-            if (artEventType.getArtifactTypeID() == artifact.getArtifactTypeID()) {
-                //... and has a non-bogus timestamp in the supported attribute
-                BlackboardAttribute attribute = artifact.getAttribute(artEventType.getDateTimeAttributeType());
-                if (null != attribute && attribute.getValueLong() > 0) {
-                    return true;
-                }
+
+        for (BlackboardAttribute attr : artifact.getAttributes()) {
+            if (attr.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                return true;
             }
         }
         return false;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,10 +58,10 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * FXML Controller class for a StackedBarChart<String,Number> based
@@ -81,7 +81,7 @@ import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
  */
 public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, EventCountsChart> {
 
-    private static final Logger LOGGER = Logger.getLogger(CountsViewPane.class.getName());
+    private static final Logger logger = Logger.getLogger(CountsViewPane.class.getName());
 
     private final NumberAxis countAxis = new NumberAxis();
     private final CategoryAxis dateAxis = new CategoryAxis(FXCollections.<String>observableArrayList());
@@ -178,7 +178,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
 
     @Override
     protected boolean hasCustomTimeNavigationControls() {
-      return false;
+        return false;
     }
 
     @Override
@@ -416,8 +416,8 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
                         final String intervalCategory = rangeInfo.formatForTick(interval);
                         final double adjustedCount = activeScale.apply(count);
 
-                        final XYChart.Data<String, Number> dataItem =
-                                new XYChart.Data<>(intervalCategory, adjustedCount,
+                        final XYChart.Data<String, Number> dataItem
+                                = new XYChart.Data<>(intervalCategory, adjustedCount,
                                         new EventCountsChart.ExtraData(interval, eventType, count));
                         Platform.runLater(() -> getSeries(eventType).getData().add(dataItem));
                         maxPerInterval += adjustedCount;

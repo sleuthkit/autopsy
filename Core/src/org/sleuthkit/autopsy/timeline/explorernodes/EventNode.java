@@ -40,10 +40,10 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -65,13 +65,13 @@ public class EventNode extends DisplayableItemNode {
     EventNode(SingleEvent event, AbstractFile file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
     }
 
     EventNode(SingleEvent event, AbstractFile file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
     }
 
     @Override
@@ -235,8 +235,8 @@ public class EventNode extends DisplayableItemNode {
             } else {
                 return new EventNode(eventById, file);
             }
-        } catch (TimelineCacheException timelineCacheException) {
-            throw new TskCoreException("Error getting event by id.", timelineCacheException);
+        } catch (TskCoreException ex) {
+            throw new TskCoreException("Error getting event by id.", ex);
         }
     }
 

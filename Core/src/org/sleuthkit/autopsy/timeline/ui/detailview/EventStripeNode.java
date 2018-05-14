@@ -30,8 +30,8 @@ import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventCluster;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
@@ -55,7 +55,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
      * @param eventStripe the EventStripe represented by this node
      * @param parentNode  the EventClusterNode that is the parent of this node.
      */
-    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) throws TimelineCacheException {
+    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) throws TskCoreException {
         super(chartLane, eventStripe, parentNode);
 
         //setup description label
@@ -118,7 +118,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TimelineCacheException {
+    protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TskCoreException {
         ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
             SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(cluster);

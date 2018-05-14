@@ -26,16 +26,16 @@ import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
  */
 public class ZoomOut extends Action {
 
-    private static Logger logger = Logger.getLogger(ZoomOut.class.getName());
+    final private static Logger logger = Logger.getLogger(ZoomOut.class.getName());
 
     private static final Image MAGNIFIER_OUT = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-out-red.png"); //NOI18N NON-NLS
 
@@ -50,9 +50,9 @@ public class ZoomOut extends Action {
         setEventHandler(actionEvent -> {
             try {
                 controller.pushZoomOutTime();
-            } catch (TimelineCacheException timelineCacheException) {
+            } catch (TskCoreException ex) {
                 new Alert(Alert.AlertType.ERROR, Bundle.ZoomOut_errorMessage()).showAndWait();
-                logger.log(Level.SEVERE, "Error zooming out.", timelineCacheException);
+                logger.log(Level.SEVERE, "Error zooming out.", ex);
             }
         });
 
@@ -68,7 +68,7 @@ public class ZoomOut extends Action {
             protected boolean computeValue() {
                 try {
                     return eventsModel.getTimeRange().contains(eventsModel.getSpanningInterval());
-                } catch (TimelineCacheException ex) {
+                } catch (TskCoreException ex) {
                     new Alert(Alert.AlertType.ERROR, Bundle.ZoomOut_disabledProperty_errorMessage()).showAndWait();
                     logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
                     return true;

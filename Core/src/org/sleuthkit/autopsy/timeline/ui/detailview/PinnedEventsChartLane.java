@@ -24,7 +24,7 @@ import javafx.scene.chart.Axis;
 import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
@@ -49,7 +49,7 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
             if (change.wasAdded()) {
                 try {
                     addEvent(change.getElementAdded());
-                } catch (TimelineCacheException ex) {
+                } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
                         .text( Bundle.PinnedChartLane_pinnedEventsListener_errorMessage()).showError();
                     logger.log(Level.SEVERE, "Error adding pinned event to lane.", ex);
@@ -64,7 +64,7 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
         for (TimeLineEvent event : getController().getPinnedEvents()) {
             try {
                 addEvent(event);
-            } catch (TimelineCacheException ex) {
+            } catch (TskCoreException ex) {
                 Notifications.create().owner(getScene().getWindow())
                         .text(Bundle.PinnedChartLane_pinnedEventsListener_errorMessage())
                         .showError();

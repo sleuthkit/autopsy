@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-17 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,7 +154,7 @@ public final class PromptDialogManager {
      * @return True if they want to continue anyways.
      */
     @NbBundle.Messages({
-        "PromptDialogManager.confirmDuringIngest.headerText=You are trying to update the Timeline DB before ingest has been completed.  The Timeline DB may be incomplete.",
+        "PromptDialogManager.confirmDuringIngest.headerText=Ingest is still going, and the Timeline may be incomplete.",
         "PromptDialogManager.confirmDuringIngest.contentText=Do you want to continue?"})
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     boolean confirmDuringIngest() {
@@ -222,7 +222,7 @@ public final class PromptDialogManager {
         dialog.setHeaderText(Bundle.PromptDialogManager_showTooManyFiles_headerText());
         dialog.showAndWait();
     }
-    
+
     @NbBundle.Messages({
         "PromptDialogManager.showTimeLineDisabledMessage.contentText="
         + "Timeline functionality is not available yet."
@@ -237,5 +237,4 @@ public final class PromptDialogManager {
         dialog.setHeaderText(Bundle.PromptDialogManager_showTimeLineDisabledMessage_headerText());
         dialog.showAndWait();
     }
-
 }

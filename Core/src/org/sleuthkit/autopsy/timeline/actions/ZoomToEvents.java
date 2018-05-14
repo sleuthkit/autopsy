@@ -27,8 +27,7 @@ import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -68,7 +67,7 @@ public class ZoomToEvents extends Action {
                 try {
                     //TODO: do a db query to see if using this action will actually result in viewable events
                     return eventsModel.getTimeRange().contains(eventsModel.getSpanningInterval());
-                } catch (TimelineCacheException ex) {
+                } catch (TskCoreException ex) {
                     new Alert(Alert.AlertType.ERROR, Bundle.ZoomToEvents_disabledProperty_errorMessage()).showAndWait();
                     logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
                     return true;

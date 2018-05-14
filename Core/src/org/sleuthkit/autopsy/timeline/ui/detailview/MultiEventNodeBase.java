@@ -36,7 +36,7 @@ import javafx.scene.layout.Pane;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.MultiEvent;
 
@@ -125,7 +125,7 @@ import org.sleuthkit.datamodel.timeline.MultiEvent;
         super.layoutChildren();
     }
 
-    abstract EventNodeBase<?> createChildNode(ParentType rawChild) throws TimelineCacheException;
+    abstract EventNodeBase<?> createChildNode(ParentType rawChild) throws TskCoreException;
 
     @Override
     abstract EventHandler<MouseEvent> getDoubleClickHandler();

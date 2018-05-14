@@ -51,9 +51,9 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventCluster;
 import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
@@ -112,7 +112,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return parentChart.getContextMenu(clickEvent);
     }
 
-    private EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) throws TimelineCacheException {
+    private EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) throws TskCoreException {
         if (event.getEventIDs().size() == 1) {
             return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
         } else if (event instanceof SingleEvent) {
@@ -307,7 +307,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
      *
      * @param event
      */
-    void addEvent(Y event) throws TimelineCacheException {
+    void addEvent(Y event) throws TskCoreException {
         EventNodeBase<?> eventNode = createNode(this, event);
         eventMap.put(event, eventNode);
         Platform.runLater(() -> {

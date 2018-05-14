@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.datamodel;
+package org.sleuthkit.autopsy.timeline.events;
+
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
  *
  */
-public class MultipleTransactionException extends IllegalStateException {
+public class EventAddedEvent extends AutopsyEvent {
 
-    private static final long serialVersionUID = 1L;
-    private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION = "Cannot have more than one open transaction."; // NON-NLS
-
-    public MultipleTransactionException() {
-        super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTION);
+    public EventAddedEvent(org.sleuthkit.datamodel.TimelineManager.EventAddedEvent event) {
+        super(Case.Events.EVENT_ADDED.name(), null, event.getEvent());
     }
 }

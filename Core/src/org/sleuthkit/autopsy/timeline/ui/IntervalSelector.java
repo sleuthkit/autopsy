@@ -46,7 +46,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Visually represents a 'selected' time range, and allows mouse interactions
@@ -227,7 +227,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
         Interval interval = adjustInterval(start.isBefore(end) ? new Interval(start, end) : new Interval(end, start));
         try {
             controller.pushTimeRange(interval);
-        } catch (TimelineCacheException ex) {
+        } catch (TskCoreException ex) {
             Notifications.create().owner(getScene().getWindow())
                     .text(Bundle.IntervalSelector_zoomToSelectedInterval_errorMessage())
                     .showError();

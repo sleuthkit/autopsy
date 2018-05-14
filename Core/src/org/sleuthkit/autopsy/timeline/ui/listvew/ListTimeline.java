@@ -85,21 +85,20 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ChronoFieldListCell;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.BaseTypes;
 import org.sleuthkit.datamodel.timeline.CombinedEvent;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.FileSystemTypes;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_ACCESSED;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_CHANGED;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_CREATED;
-import static org.sleuthkit.datamodel.timeline.FileSystemTypes.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_ACCESSED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_CHANGED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_CREATED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_MODIFIED;
+import static org.sleuthkit.datamodel.timeline.EventType.FILE_SYSTEM;
 import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
@@ -133,22 +132,16 @@ class ListTimeline extends BorderPane {
 
     @FXML
     private HBox navControls;
-
     @FXML
     private ComboBox<ChronoField> scrollInrementComboBox;
-
     @FXML
     private Button firstButton;
-
     @FXML
     private Button previousButton;
-
     @FXML
     private Button nextButton;
-
     @FXML
     private Button lastButton;
-
     @FXML
     private Label eventCountLabel;
     @FXML
@@ -388,38 +381,35 @@ class ListTimeline extends BorderPane {
                 setGraphic(null);
                 setTooltip(null);
             } else {
-                if (item.getEventTypes().stream().allMatch(eventType -> eventType instanceof FileSystemTypes)) {
+                if (item.getEventTypes().stream().allMatch(EventType.getFileSystemTypes()::contains)) {
                     String typeString = ""; //NON-NLS
                     VBox toolTipVbox = new VBox(5);
 
-                    for (FileSystemTypes type : Arrays.asList(FileSystemTypes.FILE_MODIFIED, FileSystemTypes.FILE_ACCESSED, FileSystemTypes.FILE_CHANGED, FileSystemTypes.FILE_CREATED)) {
+                    for (EventType type : EventType.getFileSystemTypes()) {
                         if (item.getEventTypes().contains(type)) {
-                            switch (type) {
-                                case FILE_MODIFIED:
-                                    typeString += "M"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_ACCESSED:
-                                    typeString += "A"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_CREATED:
-                                    typeString += "B"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                case FILE_CHANGED:
-                                    typeString += "C"; //NON-NLS
-                                    toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(), new ImageView(type.getFXImage())));
-                                    break;
-                                default:
-                                    throw new UnsupportedOperationException("Unknown FileSystemType: " + type.name()); //NON-NLS
+                            if (type.equals(FILE_MODIFIED)) {
+                                typeString += "M"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_modifiedTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_ACCESSED)) {
+                                typeString += "A"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_accessedTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_CREATED)) {
+                                typeString += "B"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_createdTooltip(),
+                                        new ImageView(getImagePath(type))));
+                            } else if (type.equals(FILE_CHANGED)) {
+                                typeString += "C"; //NON-NLS
+                                toolTipVbox.getChildren().add(new Label(Bundle.ListView_EventTypeCell_changedTooltip(),
+                                        new ImageView(getImagePath(type))));
                             }
                         } else {
                             typeString += "_"; //NON-NLS
                         }
                     }
                     setText(typeString);
-                    setGraphic(new ImageView(BaseTypes.FILE_SYSTEM.getFXImage()));
+                    setGraphic(new ImageView(getImagePath(FILE_SYSTEM)));
                     Tooltip tooltip = new Tooltip();
                     tooltip.setGraphic(toolTipVbox);
                     setTooltip(tooltip);
@@ -427,7 +417,7 @@ class ListTimeline extends BorderPane {
                 } else {
                     EventType eventType = Iterables.getOnlyElement(item.getEventTypes());
                     setText(eventType.getDisplayName());
-                    setGraphic(new ImageView(eventType.getFXImage()));
+                    setGraphic(new ImageView(getImagePath(eventType)));
                     setTooltip(new Tooltip(eventType.getDisplayName()));
                 };
             }
@@ -612,7 +602,7 @@ class ListTimeline extends BorderPane {
                 try {
                     //stash the event in the cell for derived classed to use.
                     event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
-                } catch (TimelineCacheException ex) {
+                } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.EventTableCell_updateItem_errorMessage()).showError();
                     logger.log(Level.SEVERE, "Error getting event by id.", ex);
@@ -654,7 +644,7 @@ class ListTimeline extends BorderPane {
                 visibleEvents.add(item);
                 try {
                     event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
-                } catch (TimelineCacheException ex) {
+                } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.EventRow_updateItem_errorMessage()).showError();
                     logger.log(Level.SEVERE, "Error getting event by id.", ex);

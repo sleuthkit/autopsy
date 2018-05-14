@@ -59,9 +59,8 @@ import org.controlsfx.validation.Validator;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -201,7 +200,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         for (Long eventID : eventIDS) {
             try {
                 events.add(eventsModel.getEventById(eventID));
-            } catch (TimelineCacheException ex) {
+            } catch (TskCoreException ex) {
                 throw new TskCoreException("Error getting event by id.", ex);
             }
         }
@@ -366,7 +365,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
                 setGraphic(null);
             } else {
                 setText(item.getDisplayName());
-                setGraphic(new ImageView(item.getFXImage()));
+                setGraphic(new ImageView(EventTypeUtils.getImagePath(item)));
             }
         }
     }

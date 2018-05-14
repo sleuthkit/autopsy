@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
 import java.util.logging.Level;
-import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Cursor;
@@ -50,15 +49,16 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
-import org.sleuthkit.datamodel.timeline.RootEventType;
 
 /**
  * Customized StackedBarChart<String, Number> used to display the event counts
@@ -201,20 +201,22 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         Interval interval = extraValue.getInterval();
         long count = extraValue.getRawCount();
 
-        item.nodeProperty().addListener((Observable o) -> {
+        item.nodeProperty().addListener(observable -> {
             final Node node = item.getNode();
             if (node != null) {
-                node.setStyle("-fx-border-width: 2; -fx-border-color: " + ColorUtilities.getRGBCode(eventType.getSuperType().getColor()) + "; -fx-bar-fill: " + ColorUtilities.getRGBCode(eventType.getColor())); // NON-NLS
+                node.setStyle("-fx-border-width: 2; "
+                              + " -fx-border-color: " + ColorUtilities.getRGBCode(getColor(eventType.getSuperType())) + "; "
+                              + " -fx-bar-fill: " + ColorUtilities.getRGBCode(getColor(eventType))); // NON-NLS
                 node.setCursor(Cursor.HAND);
 
                 final Tooltip tooltip = new Tooltip(Bundle.CountsViewPane_tooltip_text(
                         count, eventType.getDisplayName(),
                         item.getXValue(),
                         interval.getEnd().toString(rangeInfo.getTickFormatter())));
-                tooltip.setGraphic(new ImageView(eventType.getFXImage()));
+                tooltip.setGraphic(new ImageView(getImagePath(eventType)));
                 Tooltip.install(node, tooltip);
 
-                node.setOnMouseEntered(mouseEntered -> node.setEffect(new DropShadow(10, eventType.getColor())));
+                node.setOnMouseEntered(mouseEntered -> node.setEffect(new DropShadow(10, getColor(eventType))));
                 node.setOnMouseExited(mouseExited -> node.setEffect(selectedNodes.contains(node) ? SELECTED_NODE_EFFECT : null));
                 node.setOnMouseClicked(new BarClickHandler(item));
             }
@@ -315,13 +317,13 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 super(Bundle.Timeline_ui_countsview_menuItem_selectTimeRange());
                 setEventHandler(action -> {
                     try {
-                        controller.selectTimeAndType(interval, RootEventType.getInstance());
+                        controller.selectTimeAndType(interval, EventType.ROOT_EVEN_TYPE);
 
-                    } catch (TimelineCacheException timelineCacheException) {
+                    } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
                                 .text(Bundle.SelectIntervalAction_errorMessage())
                                 .showError();
-                        logger.log(Level.SEVERE, "Error selecting interval.", timelineCacheException);
+                        logger.log(Level.SEVERE, "Error selecting interval.", ex);
                     }
                     selectedNodes.clear();
                     for (XYChart.Series<String, Number> s : getData()) {
@@ -345,11 +347,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                     try {
                         controller.selectTimeAndType(filteredEvents.getSpanningInterval(), type);
 
-                    } catch (TimelineCacheException timelineCacheException) {
+                    } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
                                 .text(Bundle.SelectTypeAction_errorMessage())
                                 .showError();
-                        logger.log(Level.SEVERE, "Error selecting type.", timelineCacheException);
+                        logger.log(Level.SEVERE, "Error selecting type.", ex);
                     }
                     selectedNodes.clear();
                     getData().stream().filter(series -> series.getName().equals(type.getDisplayName()))
@@ -369,11 +371,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                     try {
                         controller.selectTimeAndType(interval, type);
 
-                    } catch (TimelineCacheException timelineCacheException) {
+                    } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
                                 .text(Bundle.SelectIntervalAndTypeAction_errorMessage())
                                 .showError();
-                        logger.log(Level.SEVERE, "Error selecting interval and type.", timelineCacheException);
+                        logger.log(Level.SEVERE, "Error selecting interval and type.", ex);
                     }
                     selectedNodes.setAll(node);
                 });
@@ -391,11 +393,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                         if (interval.toDuration().isShorterThan(Seconds.ONE.toStandardDuration()) == false) {
                             controller.pushTimeRange(interval);
                         }
-                    } catch (TimelineCacheException timelineCacheException) {
+                    } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
                                 .text(Bundle.ZoomToIntervalAction_errorMessage())
                                 .showError();
-                        logger.log(Level.SEVERE, "Error zooming to interval.", timelineCacheException);
+                        logger.log(Level.SEVERE, "Error zooming to interval.", ex);
                     }
                 });
             }
@@ -413,11 +415,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 if (e.getButton().equals(MouseButton.PRIMARY)) {
                     try {
                         controller.selectTimeAndType(interval, type);
-                    } catch (TimelineCacheException timelineCacheException) {
+                    } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
                                 .text(Bundle.BarClickHandler_selectTimeAndType_errorMessage())
                                 .showError();
-                        logger.log(Level.SEVERE, "Error selecting time and type.", timelineCacheException);
+                        logger.log(Level.SEVERE, "Error selecting time and type.", ex);
                     }
                     selectedNodes.setAll(node);
                 } else if (e.getButton().equals(MouseButton.SECONDARY)) {
@@ -443,11 +445,11 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 if (interval.toDuration().isLongerThan(Seconds.ONE.toStandardDuration())) {
                     try {
                         controller.pushTimeRange(interval);
-                    } catch (TimelineCacheException timelineCacheException) {
+                    } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
                                 .text(Bundle.BarClickHandler_zoomIn_errorMessage())
                                 .showError();
-                        logger.log(Level.SEVERE, "Error zooming in.", timelineCacheException);
+                        logger.log(Level.SEVERE, "Error zooming in.", ex);
                     }
                 } else {
 
@@ -489,6 +491,5 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         public EventType getEventType() {
             return eventType;
         }
-
     }
 }

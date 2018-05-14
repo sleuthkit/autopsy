@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,6 +63,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import javax.swing.Timer;
 import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import jfxtras.scene.control.ToggleGroupValue;
@@ -73,30 +76,26 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
-import org.sleuthkit.autopsy.timeline.actions.UpdateDB;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimelineCacheException;
-import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
@@ -111,10 +110,17 @@ final public class ViewFrame extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(ViewFrame.class.getName());
 
-    private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); //NON-NLS
     private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
+
+    private NotificationState notificationState = NotificationState.Ready;
+
+    enum NotificationState {
+        Showing,
+        Paused,
+        Ready;
+    }
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
@@ -211,8 +217,6 @@ final public class ViewFrame extends BorderPane {
     private Button snapShotButton;
     @FXML
     private Button refreshButton;
-    @FXML
-    private Button updateDBButton;
 
     /*
      * Default zoom in/out buttons provided by the ViewFrame, some views replace
@@ -260,15 +264,34 @@ final public class ViewFrame extends BorderPane {
                             (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
                         refreshTimeUI();
                     }
-                } catch (TimelineCacheException timelineCacheException) {
+                } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.ViewFrame_rangeSliderListener_errorMessage())
                             .showError();
-                    LOGGER.log(Level.SEVERE, "Error responding to range slider.", timelineCacheException);
+                    LOGGER.log(Level.SEVERE, "Error responding to range slider.", ex);
                 }
             }
         }
     };
+
+    private final Timer notificationTimer = new Timer(30_000, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            Platform.runLater(() -> {
+                switch (notificationState) {
+                    case Ready:
+                        break;
+                    case Showing:
+                        notificationPane.hide();
+                        notificationState = NotificationState.Paused;
+                        break;
+                    case Paused:
+                        notificationState = NotificationState.Ready;
+                        break;
+                }
+            });
+        }
+    });
 
     /**
      * hides the notification pane on any event
@@ -349,6 +372,8 @@ final public class ViewFrame extends BorderPane {
 
         //configure notification pane 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
+
+        notificationPane.setGraphic(new ImageView(WARNING));
         setCenter(notificationPane);
 
         //configure view mode toggle
@@ -369,7 +394,6 @@ final public class ViewFrame extends BorderPane {
         syncViewMode();
 
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
-        ActionUtils.configureButton(new UpdateDB(controller), updateDBButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.ViewFrame_startLabel_text());
@@ -409,11 +433,11 @@ final public class ViewFrame extends BorderPane {
                     new Action(zoomRange.getDisplayName(), actionEvent -> {
                         try {
                             controller.pushPeriod(zoomRange.getPeriod());
-                        } catch (TimelineCacheException timelineCacheException) {
+                        } catch (TskCoreException ex) {
                             Notifications.create().owner(getScene().getWindow())
                                     .text(Bundle.ViewFrame_zoomMenuButton_errorMessage())
                                     .showError();
-                            LOGGER.log(Level.SEVERE, "Error pushing a time range.", timelineCacheException);
+                            LOGGER.log(Level.SEVERE, "Error pushing a time range.", ex);
                         }
                     })
             ));
@@ -432,7 +456,7 @@ final public class ViewFrame extends BorderPane {
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
-
+        notificationTimer.start();
     }
 
     /**
@@ -445,11 +469,20 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        hostedView.setOutOfDate();
+
         Platform.runLater(() -> {
-            if (notificationPane.isShowing() == false) {
-                notificationPane.getActions().setAll(new Refresh());
-                notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted(), new ImageView(INFORMATION));
+            hostedView.setNeedsRefresh();
+            switch (notificationState) {
+                case Paused:
+                    break;
+                case Ready:
+                    notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted());
+                    notificationState = NotificationState.Showing;
+                    break;
+                case Showing:
+                    notificationPane.setText(Bundle.ViewFrame_tagsAddedOrDeleted());
+                    notificationTimer.restart();
+                    break;
             }
         });
     }
@@ -466,50 +499,14 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         Platform.runLater(() -> {
-            if (Bundle.ViewFrame_tagsAddedOrDeleted().equals(notificationPane.getText())) {
-                notificationPane.hide();
-            }
+            notificationPane.hide();
+            notificationState = NotificationState.Paused;
+            notificationTimer.restart();
+            refreshHistorgram();
         });
     }
 
     /**
-     * Handle a DBUpdatedEvent from the events model by refreshing the view.
-     *
-     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
-     * EventBus in order for this handler to be invoked.
-     *
-     * @param event The DBUpdatedEvent to handle.
-     */
-    @Subscribe
-    public void handleDBUpdated(DBUpdatedEvent event) {
-        hostedView.refresh();
-        refreshHistorgram();
-        Platform.runLater(notificationPane::hide);
-    }
-
-    /**
-     * Handle a DataSourceAddedEvent from the events model by showing a
-     * notification.
-     *
-     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
-     * EventBus in order for this handler to be invoked.
-     *
-     * @param event The DataSourceAddedEvent to handle.
-     */
-    @Subscribe
-    @NbBundle.Messages({
-        "# {0} - datasource name",
-        "ViewFrame.notification.newDataSource={0} has been added as a new datasource.  The Timeline DB may be out of date."})
-    public void handlDataSourceAdded(DataSourceAddedEvent event) {
-        Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_newDataSource(event.getDataSource().getName()), new ImageView(WARNING));
-        });
-    }
-
-    /**
-     * Handle a DataSourceAnalysisCompletedEvent from the events modelby showing
-     * a notification.
      *
      * NOTE: This ViewFrame must be registered with the filteredEventsModel's
      * EventBus in order for this handler to be invoked.
@@ -519,14 +516,34 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     @NbBundle.Messages({
         "# {0} - datasource name",
-        "ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline DB may be out of date."})
-    public void handleAnalysisCompleted(DataSourceAnalysisCompletedEvent event) {
+        "ViewFrame.notification.analysisComplete=The event data has changed, the visualization may be out of date."})
+    public void handleEventAdded(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_analysisComplete(event.getDataSource().getName()), new ImageView(WARNING));
+            if (hostedView.needsRefresh() == false) {
+                hostedView.setNeedsRefresh();
+                switch (notificationState) {
+                    case Paused:
+                        break;
+                    case Ready:
+                        notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationState = NotificationState.Showing;
+                        notificationTimer.restart();
+                        break;
+                    case Showing:
+                        notificationPane.setText(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationTimer.restart();
+                        break;
+                }
+            }
         });
     }
 
+    /**
+     * Display the given message in the notificationPane and then autohide it
+     * after 30 seconds.
+     *
+     * @param message The message to display.
+     */
     /**
      * Refresh the Histogram to represent the current state of the DB.
      */
@@ -652,7 +669,7 @@ final public class ViewFrame extends BorderPane {
                     endPicker.localDateTimeProperty().addListener(endListener);
                 });
             }
-        } catch (TimelineCacheException ex) {
+        } catch (TskCoreException ex) {
             Notifications.create().owner(getScene().getWindow())
                     .text(Bundle.ViewFrame_refreshTimeUI_errorMessage())
                     .showError();
@@ -693,7 +710,9 @@ final public class ViewFrame extends BorderPane {
             default:
                 throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
         }
+        notificationPane.getActions().setAll(new Refresh());
         controller.registerForEvents(hostedView);
+        controller.getAutopsyCase().getSleuthkitCase().registerForEvents(this);
 
         viewModeToggleGroup.setValue(newViewMode); //this selects the right toggle automatically
 
@@ -743,6 +762,7 @@ final public class ViewFrame extends BorderPane {
         timeRangeToolBar.getItems().removeAll(this.timeNavigationNodes); //remove old nodes
         this.timeNavigationNodes.setAll(timeNavigationNodes);
         timeRangeToolBar.getItems().addAll(TIME_TOOLBAR_INSERTION_INDEX, timeNavigationNodes);
+
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
@@ -807,7 +827,7 @@ final public class ViewFrame extends BorderPane {
             if (pickerTime != null) {
                 try {
                     controller.pushTimeRange(intervalMapper.apply(filteredEvents.getTimeRange(), localDateTimeToEpochMilli(pickerTime)));
-                } catch (TimelineCacheException ex) {
+                } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.ViewFrame_pickerListener_errorMessage())
                             .showError();
@@ -849,7 +869,7 @@ final public class ViewFrame extends BorderPane {
                     }
                 }
 
-            } catch (TimelineCacheException ex) {
+            } catch (TskCoreException ex) {
                 Notifications.create().owner(getScene().getWindow())
                         .text(Bundle.ViewFrame_localDateDisabler_errorMessage())
                         .showError();
@@ -890,7 +910,7 @@ final public class ViewFrame extends BorderPane {
                     }
                     return false;
                 }
-            } catch (TimelineCacheException ex) {
+            } catch (TskCoreException ex) {
                 Notifications.create().owner(getScene().getWindow())
                         .text(Bundle.ViewFrame_dateTimeValidator_errorMessage())
                         .showError();
@@ -913,7 +933,7 @@ final public class ViewFrame extends BorderPane {
             setLongText(Bundle.ViewFrame_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.postRefreshRequest());
-            disabledProperty().bind(hostedView.outOfDateProperty().not());
+            disabledProperty().bind(hostedView.needsRefreshProperty().not());
         }
     }
 }
