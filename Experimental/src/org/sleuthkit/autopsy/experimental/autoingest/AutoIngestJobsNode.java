@@ -128,8 +128,8 @@ final class AutoIngestJobsNode extends AbstractNode {
             super(Children.LEAF);
             jobStatus = status;
             autoIngestJob = job;
-            setName(autoIngestJob.getManifest().getCaseName());
-            setDisplayName(autoIngestJob.getManifest().getCaseName());
+            setName(autoIngestJob.toString());  //alows job to be uniquely found by name since it will involve a hash of the AutoIngestJob
+            setDisplayName(autoIngestJob.getManifest().getCaseName()); //displays user friendly case name as name
         }
 
         /**
