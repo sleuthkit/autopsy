@@ -39,6 +39,11 @@
         <copy todir="${basedir}/release/Volatility" >
             <fileset dir="${thirdparty.dir}/Volatility"/>
         </copy>
+        
+        <!--Copy Tesseract OCR to release-->
+        <copy todir="${basedir}/release/Tesseract-OCR" >
+            <fileset dir="${thirdparty.dir}/Tesseract-OCR"/>
+        </copy>
             
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
