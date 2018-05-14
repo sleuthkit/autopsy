@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -84,7 +86,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testBitlockerEncryption() {
         try {
-            CaseUtils.createCase(BITLOCKER_CASE_DIRECTORY_PATH, BITLOCKER_CASE_NAME);
+            CaseUtils.createCase(BITLOCKER_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
             Case openCase = Case.getCurrentCaseThrows();

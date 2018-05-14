@@ -62,7 +62,7 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        CaseUtils.createCase(CASE_DIRECTORY_PATH, CASE_NAME);
+        CaseUtils.createCase(CASE_NAME);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
         
@@ -92,7 +92,6 @@ public class EmbeddedFileTest extends NbTestCase {
     @Override
     public void tearDown() {
         CaseUtils.closeCase();
-        CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
     }
     
     public void testEncryption() {
