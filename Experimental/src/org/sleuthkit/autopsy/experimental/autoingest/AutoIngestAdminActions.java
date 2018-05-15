@@ -140,19 +140,20 @@ final class AutoIngestAdminActions {
     static final class ProgressDialogAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        ProgressDialogAction() {
+        ProgressDialogAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_progressDialogAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3734
             final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
             if (tc != null) {
                 AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
                 if (dashboard != null) {
-                    new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true);
+                    IngestProgressSnapshotDialog ingestProgressSnapshotDialog = new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true, job);
                 }
             }
         }

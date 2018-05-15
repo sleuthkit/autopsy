@@ -3050,6 +3050,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 synchronized (jobsLock) {
                     if (currentJob != null) {
                         currentJob.getProcessingStageDetails();
+                        currentJob.setIngestThreadSnapshot(IngestManager.getInstance().getIngestThreadActivitySnapshots());
+                        currentJob.setIngestJobsSnapshot(IngestManager.getInstance().getIngestJobSnapshots());
+                        currentJob.setModuleRuntimesSnapshot(IngestManager.getInstance().getModuleRunTimes());
                         setChanged();
                         notifyObservers(Event.JOB_STATUS_UPDATED);
                         updateCoordinationServiceManifestNode(currentJob);

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -37,6 +38,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestPipeline.PipelineModule;
+import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
+import org.sleuthkit.autopsy.ingest.IngestTasksScheduler.IngestJobTasksSnapshot;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
@@ -51,7 +55,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
  * Encapsulates a data source and the ingest module pipelines used to process
  * it.
  */
-final class DataSourceIngestJob {
+public final class DataSourceIngestJob {
 
     private static final Logger logger = Logger.getLogger(DataSourceIngestJob.class.getName());
 
@@ -1079,71 +1083,90 @@ final class DataSourceIngestJob {
      * @return An ingest job statistics object.
      */
     Snapshot getSnapshot(boolean getIngestTasksSnapshot) {
-        return new Snapshot(getIngestTasksSnapshot);
+        /**
+         * Determine whether file ingest is running at the time of this snapshot
+         * and determine the earliest file ingest level pipeline start time, if
+         * file ingest was started at all.
+         */
+        boolean fileIngestRunning = false;
+        Date fileIngestStartTime = null;
+
+        for (FileIngestPipeline pipeline : this.fileIngestPipelines) {
+            if (pipeline.isRunning()) {
+                fileIngestRunning = true;
+            }
+            Date pipelineStartTime = pipeline.getStartTime();
+            if (null != pipelineStartTime && (null == fileIngestStartTime || pipelineStartTime.before(fileIngestStartTime))) {
+                fileIngestStartTime = pipelineStartTime;
+            }
+        }
+
+        long processedFilesCount = 0;
+        long estimatedFilesToProcessCount = 0;
+        long snapShotTime = new Date().getTime();
+        IngestJobTasksSnapshot tasksSnapshot = null;
+
+        if (getIngestTasksSnapshot) {
+            synchronized (fileIngestProgressLock) {
+                processedFilesCount = this.processedFiles;
+                estimatedFilesToProcessCount = this.estimatedFilesToProcess;
+                snapShotTime = new Date().getTime();
+            }
+            tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(id);
+
+        }
+
+        return new Snapshot(this.dataSource.getName(), id, createTime,
+                getCurrentDataSourceIngestModule(), fileIngestRunning, fileIngestStartTime,
+                cancelled, cancellationReason, cancelledDataSourceIngestModules,
+                processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
     }
 
     /**
      * Stores basic diagnostic statistics for a data source ingest job.
      */
-    final class Snapshot {
+    public static final class Snapshot implements Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         private final String dataSource;
         private final long jobId;
         private final long jobStartTime;
         private final long snapShotTime;
-        private final DataSourceIngestPipeline.PipelineModule dataSourceLevelIngestModule;
-        private boolean fileIngestRunning;
-        private Date fileIngestStartTime;
+        transient private final PipelineModule dataSourceLevelIngestModule;
+        private final boolean fileIngestRunning;
+        private final Date fileIngestStartTime;
         private final long processedFiles;
         private final long estimatedFilesToProcess;
-        private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
-        private final boolean jobCancelled;
-        private final IngestJob.CancellationReason jobCancellationReason;
-        private final List<String> cancelledDataSourceModules;
+        private final IngestJobTasksSnapshot tasksSnapshot;
+        transient private final boolean jobCancelled;
+        transient private final CancellationReason jobCancellationReason;
+        transient private final List<String> cancelledDataSourceModules;
 
         /**
          * Constructs an object to store basic diagnostic statistics for a data
          * source ingest job.
          */
-        Snapshot(boolean getIngestTasksSnapshot) {
-            this.dataSource = DataSourceIngestJob.this.dataSource.getName();
-            this.jobId = DataSourceIngestJob.this.id;
-            this.jobStartTime = DataSourceIngestJob.this.createTime;
-            this.dataSourceLevelIngestModule = DataSourceIngestJob.this.getCurrentDataSourceIngestModule();
+        Snapshot(String dataSourceName, long jobId, long jobStartTime, PipelineModule dataSourceIngestModule,
+                boolean fileIngestRunning, Date fileIngestStartTime,
+                boolean jobCancelled, CancellationReason cancellationReason, List<String> cancelledModules,
+                long processedFiles, long estimatedFilesToProcess,
+                long snapshotTime, IngestJobTasksSnapshot tasksSnapshot) {
+            this.dataSource = dataSourceName;
+            this.jobId = jobId;
+            this.jobStartTime = jobStartTime;
+            this.dataSourceLevelIngestModule = dataSourceIngestModule;
 
-            /**
-             * Determine whether file ingest is running at the time of this
-             * snapshot and determine the earliest file ingest level pipeline
-             * start time, if file ingest was started at all.
-             */
-            for (FileIngestPipeline pipeline : DataSourceIngestJob.this.fileIngestPipelines) {
-                if (pipeline.isRunning()) {
-                    this.fileIngestRunning = true;
-                }
-                Date pipelineStartTime = pipeline.getStartTime();
-                if (null != pipelineStartTime && (null == this.fileIngestStartTime || pipelineStartTime.before(this.fileIngestStartTime))) {
-                    this.fileIngestStartTime = pipelineStartTime;
-                }
-            }
-
-            this.jobCancelled = cancelled;
+            this.fileIngestRunning = fileIngestRunning;
+            this.fileIngestStartTime = fileIngestStartTime;
+            this.jobCancelled = jobCancelled;
             this.jobCancellationReason = cancellationReason;
-            this.cancelledDataSourceModules = new ArrayList<>(DataSourceIngestJob.this.cancelledDataSourceIngestModules);
+            this.cancelledDataSourceModules = cancelledModules;
 
-            if (getIngestTasksSnapshot) {
-                synchronized (DataSourceIngestJob.this.fileIngestProgressLock) {
-                    this.processedFiles = DataSourceIngestJob.this.processedFiles;
-                    this.estimatedFilesToProcess = DataSourceIngestJob.this.estimatedFilesToProcess;
-                    this.snapShotTime = new Date().getTime();
-                }
-                this.tasksSnapshot = DataSourceIngestJob.taskScheduler.getTasksSnapshotForJob(this.jobId);
-
-            } else {
-                this.processedFiles = 0;
-                this.estimatedFilesToProcess = 0;
-                this.snapShotTime = new Date().getTime();
-                this.tasksSnapshot = null;
-            }
+            this.processedFiles = processedFiles;
+            this.estimatedFilesToProcess = estimatedFilesToProcess;
+            this.snapShotTime = snapshotTime;
+            this.tasksSnapshot = tasksSnapshot;
         }
 
         /**
