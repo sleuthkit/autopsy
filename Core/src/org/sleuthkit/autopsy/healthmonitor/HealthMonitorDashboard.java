@@ -42,6 +42,7 @@ import javax.swing.BorderFactory;
 import java.util.Map;
 import javax.swing.BoxLayout;
 import java.awt.GridLayout;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.modules.Places;
@@ -57,7 +58,7 @@ public class HealthMonitorDashboard {
     private final static Logger logger = Logger.getLogger(HealthMonitorDashboard.class.getName());
     
     private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess"; // NON-NLS
-    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(), ADMIN_ACCESS_FILE_NAME).toString();
     
     Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
 
@@ -146,7 +147,7 @@ public class HealthMonitorDashboard {
         
         if(EnterpriseHealthMonitor.monitorIsEnabled()) {
             // Get a copy of the timing data from the database
-            timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase(); 
+            timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase(DateRange.getMaximumTimestampRange()); 
         }
     }
     
@@ -216,7 +217,7 @@ public class HealthMonitorDashboard {
         // Create the combo box for selecting how much data to display
         String[] dateOptionStrings = Arrays.stream(DateRange.values()).map(e -> e.getLabel()).toArray(String[]::new);
         dateComboBox = new JComboBox<>(dateOptionStrings);
-        dateComboBox.setSelectedItem(DateRange.TWO_WEEKS.getLabel());
+        dateComboBox.setSelectedItem(DateRange.ONE_DAY.getLabel());
         
         // Set up the listener on the date combo box
         dateComboBox.addActionListener(new ActionListener() {
@@ -353,14 +354,10 @@ public class HealthMonitorDashboard {
             List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
             if(dateComboBox.getSelectedItem() != null) {
                 DateRange selectedDateRange = DateRange.fromLabel(dateComboBox.getSelectedItem().toString());
-                if(selectedDateRange != DateRange.ALL) {
-                    long threshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
-                    intermediateTimingDataForDisplay = timingData.get(metricName).stream()
-                            .filter(t -> t.getTimestamp() > threshold)
-                            .collect(Collectors.toList());
-                } else {
-                    intermediateTimingDataForDisplay = timingData.get(metricName);
-                }
+                long threshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
+                intermediateTimingDataForDisplay = timingData.get(metricName).stream()
+                        .filter(t -> t.getTimestamp() > threshold)
+                        .collect(Collectors.toList());
             } else {
                 intermediateTimingDataForDisplay = timingData.get(metricName);
             }
@@ -447,14 +444,16 @@ public class HealthMonitorDashboard {
     /**
      * Possible date ranges for the metrics in the UI
      */
-    @NbBundle.Messages({"HealthMonitorDashboard.DateRange.all=All",
+    @NbBundle.Messages({"HealthMonitorDashboard.DateRange.oneMonth=One month",
                         "HealthMonitorDashboard.DateRange.twoWeeks=Two weeks",
-                        "HealthMonitorDashboard.DateRange.oneWeek=One week"})
+                        "HealthMonitorDashboard.DateRange.oneWeek=One week",
+                        "HealthMonitorDashboard.DateRange.oneDay=One day"})
     private enum DateRange {
-        ALL(Bundle.HealthMonitorDashboard_DateRange_all(), 0),
+        ONE_DAY(Bundle.HealthMonitorDashboard_DateRange_oneDay(), 1),
+        ONE_WEEK(Bundle.HealthMonitorDashboard_DateRange_oneWeek(), 7),
         TWO_WEEKS(Bundle.HealthMonitorDashboard_DateRange_twoWeeks(), 14),
-        ONE_WEEK(Bundle.HealthMonitorDashboard_DateRange_oneWeek(), 7);
-        
+        ONE_MONTH(Bundle.HealthMonitorDashboard_DateRange_oneMonth(), 31);
+           
         private final String label;
         private final long numberOfDays;
         private static final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -486,13 +485,28 @@ public class HealthMonitorDashboard {
             }
         }
         
+        /**
+         * Get the maximum range for this enum.
+         * This should be used for querying the database for the timing metrics to display.
+         * @return the maximum range in milliseconds
+         */
+        static long getMaximumTimestampRange() {
+            long maxRange = Long.MIN_VALUE;
+            for (DateRange dateRange : DateRange.values()) {
+                if (dateRange.getTimestampRange() > maxRange) {
+                    maxRange = dateRange.getTimestampRange();
+                }
+            }
+            return maxRange;
+        }
+        
         static DateRange fromLabel(String text) {
             for (DateRange dateRange : DateRange.values()) {
                 if (dateRange.label.equalsIgnoreCase(text)) {
                     return dateRange;
                 }
             }
-            return ALL; // If the comparison failed, return a default
+            return ONE_DAY; // If the comparison failed, return a default
         }
     }
     

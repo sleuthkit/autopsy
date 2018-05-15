@@ -25,12 +25,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -76,7 +75,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private void refresh() {
         try {
-            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
             this.ingestJobs = ingestJobs;
             this.repaint();
@@ -116,7 +115,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
             IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
             if (columnIndex == 0) {
                 try {
-                    SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                     return skCase.getContentById(currIngestJob.getObjectId()).getName();
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Failed to get content from db", ex);

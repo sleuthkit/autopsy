@@ -58,7 +58,7 @@ public final class OpenLogFolderAction implements ActionListener {
                 /*
                  * Open the log directory for the case.
                  */
-                Case currentCase = Case.getOpenCase();
+                Case currentCase = Case.getCurrentCaseThrows();
                 logDir = new File(currentCase.getLogDirectoryPath());
             } catch (NoCurrentCaseException ex) {
                 /*

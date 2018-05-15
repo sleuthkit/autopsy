@@ -131,7 +131,7 @@ final class FileExporter {
     private boolean verifyPrerequisites(List<Content> dataSources) throws FileExportException {
         SleuthkitCase skCase;
         try {
-            skCase = Case.getOpenCase().getSleuthkitCase();
+            skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex) {
             throw new FileExportException("Exception while getting open case.", ex);
         }
@@ -341,7 +341,7 @@ final class FileExporter {
      *                          storage.
      */
     private void exportFile(Long fileId, List<String> ruleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException, NoCurrentCaseException {
-        AbstractFile file = Case.getOpenCase().getSleuthkitCase().getAbstractFileById(fileId);
+        AbstractFile file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileId);
         if (!shouldExportFile(file)) {
             return;
         }

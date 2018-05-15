@@ -58,8 +58,8 @@ public class Tags implements AutopsyVisitableItem {
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     /**
@@ -96,8 +96,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -142,7 +142,7 @@ public class Tags implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
                         tagResults.update();
                     } catch (NoCurrentCaseException notUsed) {
@@ -159,7 +159,7 @@ public class Tags implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         refresh(true);
                         tagResults.update();
                     } catch (NoCurrentCaseException notUsed) {
@@ -196,7 +196,7 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {
-                List<TagName> tagNamesInUse = Case.getOpenCase().getServices().getTagsManager().getTagNamesInUse();
+                List<TagName> tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
                 Collections.sort(tagNamesInUse);
                 keys.addAll(tagNamesInUse);
             } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -243,7 +243,7 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                TagsManager tm = Case.getOpenCase().getServices().getTagsManager();
+                TagsManager tm = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 tagsCount = tm.getContentTagsCountByTagName(tagName);
                 tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
             } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -266,10 +266,10 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
             // See classes derived from DisplayableItemNodeVisitor<AbstractNode>
             // for behavior added using the Visitor pattern.
-            return v.visit(this);
+            return visitor.visit(this);
         }
 
         @Override
@@ -348,7 +348,7 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                tagsCount = Case.getOpenCase().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+                tagsCount = Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(ContentTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get content tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -369,8 +369,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -403,7 +403,7 @@ public class Tags implements AutopsyVisitableItem {
         protected boolean createKeys(List<ContentTag> keys) {
             // Use the content tags bearing the specified tag name as the keys.
             try {
-                keys.addAll(Case.getOpenCase().getServices().getTagsManager().getContentTagsByTagName(tagName));
+                keys.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName));
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
@@ -447,7 +447,7 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                tagsCount = Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+                tagsCount = Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -468,8 +468,8 @@ public class Tags implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
@@ -502,7 +502,7 @@ public class Tags implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
             try {
                 // Use the blackboard artifact tags bearing the specified tag name as the keys.
-                keys.addAll(Case.getOpenCase().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));
+                keys.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }

@@ -153,7 +153,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                 String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
 
                 // try to get the number of matches first
-                Case currentCase = Case.getOpenCase(); // get the most updated case
+                Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
                 long totalMatches = 0;
                 List<AbstractFile> contentList = null;
                 try {

@@ -48,20 +48,20 @@ class TimingMetricGraphPanel extends JPanel {
     
     private final static Logger logger = Logger.getLogger(TimingMetricGraphPanel.class.getName());
     
-    private int padding = 25;
-    private int labelPadding = 25;
-    private Color lineColor = new Color(0x12, 0x20, 0xdb, 180);
-    private Color gridColor = new Color(200, 200, 200, 200);
-    private Color trendLineColor = new Color(150, 10, 10, 200);
+    private final int padding = 25;
+    private final int labelPadding = 25;
+    private final Color lineColor = new Color(0x12, 0x20, 0xdb, 180);
+    private final Color gridColor = new Color(200, 200, 200, 200);
+    private final Color trendLineColor = new Color(150, 10, 10, 200);
     private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
     private static final Stroke NARROW_STROKE = new BasicStroke(1f);
-    private int pointWidth = 4;
-    private int numberYDivisions = 10;
+    private final int pointWidth = 4;
+    private final int numberYDivisions = 10;
     private List<DatabaseTimingResult> timingResults;
-    private String metricName;
-    private boolean doLineGraph;
-    private boolean skipOutliers;
-    private boolean showTrendLine;
+    private final String metricName;
+    private final boolean doLineGraph;
+    private final boolean skipOutliers;
+    private final boolean showTrendLine;
     private String yUnitString;
     private TrendLine trendLine;
     private final long MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -228,7 +228,7 @@ class TimingMetricGraphPanel extends JPanel {
             int y0 = getHeight() - ((i * graphHeight) / numberYDivisions + bottomGraphPadding);
             int y1 = y0;
             
-            if (timingResults.size() > 0) {
+            if ( ! timingResults.isEmpty()) {
                 // Draw the grid line
                 g2.setColor(gridColor);
                 g2.drawLine(leftGraphPadding + 1 + pointWidth, y0, getWidth() - rightGraphPadding, y1);
@@ -236,7 +236,7 @@ class TimingMetricGraphPanel extends JPanel {
                 // Create the label
                 g2.setColor(Color.BLACK);
                 double yValue = minValueOnYAxis + ((maxValueOnYAxis - minValueOnYAxis) * ((i * 1.0) / numberYDivisions));
-                String yLabel = ((int) (yValue * 100 * yLabelScale)) / 100.0 + "";
+                String yLabel = Double.toString(((int) (yValue * 100 * yLabelScale)) / 100.0);
                 FontMetrics fontMetrics = g2.getFontMetrics();
                 labelWidth = fontMetrics.stringWidth(yLabel);
                 g2.drawString(yLabel, x0 - labelWidth - 5, y0 + (fontMetrics.getHeight() / 2) - 3);
@@ -500,7 +500,7 @@ class TimingMetricGraphPanel extends JPanel {
          */
         double getXGivenY(double y) throws HealthMonitorException {
             if (slope != 0.0) {
-                return (y - yInt / slope);
+                return ((y - yInt) / slope);
             } else {
                 throw new HealthMonitorException("Attempted division by zero in trend line calculation");
             }

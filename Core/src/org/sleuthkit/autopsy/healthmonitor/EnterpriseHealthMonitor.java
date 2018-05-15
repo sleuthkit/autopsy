@@ -329,7 +329,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      */
     private void performDatabaseQuery() throws HealthMonitorException {
         try {
-            SleuthkitCase skCase = Case.getOpenCase().getSleuthkitCase();
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Database: getImages query");
             List<Image> images = skCase.getImages();
             
@@ -603,7 +603,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * and enable/disable as needed.
      * @throws HealthMonitorException 
      */
-    final synchronized void updateFromGlobalEnabledStatus() throws HealthMonitorException {
+    synchronized void updateFromGlobalEnabledStatus() throws HealthMonitorException {
         
         boolean previouslyEnabled = monitorIsEnabled();
         
@@ -645,10 +645,8 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         }
         
         boolean currentlyEnabled = getGlobalEnabledStatusFromDB();
-        if( currentlyEnabled == previouslyEnabled) {
-            // Nothing needs to be done
-        } else {
-            if(currentlyEnabled == false) {
+        if( currentlyEnabled != previouslyEnabled) {
+            if( ! currentlyEnabled ) {
                 isEnabled.set(false);
                 deactivateMonitorLocally();
             } else {
@@ -845,7 +843,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * It will delete all current timing data and replace it with randomly generated values.
      * If there is more than one node, the second node's times will trend upwards.
      */
-    final void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
+    void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
         
         if(! isEnabled.get()) {
             throw new HealthMonitorException("Can't populate database - monitor not enabled");
@@ -900,6 +898,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                             break;
                         default:
                             minIndexTimeNanos = baseIndex * 1000 * 1000;
+                            break;
                     }
 
                     long maxIndexTimeOverMin = minIndexTimeNanos * 3;
@@ -988,11 +987,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
-     * Get all timing metrics currently stored in the database.
+     * Get timing metrics currently stored in the database.
+     * @param timeRange Maximum age for returned metrics (in milliseconds)
      * @return A map with metric name mapped to a list of data
      * @throws HealthMonitorException 
      */
-    Map<String, List<DatabaseTimingResult>> getTimingMetricsFromDatabase() throws HealthMonitorException {
+    Map<String, List<DatabaseTimingResult>> getTimingMetricsFromDatabase(long timeRange) throws HealthMonitorException {
         
         // Make sure the monitor is enabled. It could theoretically get disabled after this
         // check but it doesn't seem worth holding a lock to ensure that it doesn't since that
@@ -1000,6 +1000,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         if(! isEnabled.get()) {
             throw new HealthMonitorException("Health Monitor is not enabled");
         }
+        
+        // Calculate the smallest timestamp we should return
+        long minimumTimestamp = System.currentTimeMillis() - timeRange;
 
         try (CoordinationService.Lock lock = getSharedDbLock()) {
             if(lock == null) {
@@ -1014,7 +1017,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             Map<String, List<DatabaseTimingResult>> resultMap = new HashMap<>();
 
             try (Statement statement = conn.createStatement();
-                 ResultSet resultSet = statement.executeQuery("SELECT * FROM timing_data")) {
+                 ResultSet resultSet = statement.executeQuery("SELECT * FROM timing_data WHERE timestamp > " + minimumTimestamp)) {
                 
                 while (resultSet.next()) {
                     String name = resultSet.getString("name");
@@ -1165,12 +1168,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * All times will be in milliseconds.
      */
     static class DatabaseTimingResult {
-        private long timestamp; // Time the metric was recorded
-        private String hostname; // Host that recorded the metric
-        private long count; // Number of metrics collected
-        private double average;   // Average of the durations collected (milliseconds)
-        private double max;   // Maximum value found (milliseconds)
-        private double min;   // Minimum value found (milliseconds)
+        private final long timestamp; // Time the metric was recorded
+        private final String hostname; // Host that recorded the metric
+        private final long count; // Number of metrics collected
+        private final double average;   // Average of the durations collected (milliseconds)
+        private final double max;   // Maximum value found (milliseconds)
+        private final double min;   // Minimum value found (milliseconds)
 
         DatabaseTimingResult(ResultSet resultSet) throws SQLException {
             this.timestamp = resultSet.getLong("timestamp");

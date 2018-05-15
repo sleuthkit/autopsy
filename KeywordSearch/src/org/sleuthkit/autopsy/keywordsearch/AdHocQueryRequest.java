@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Stores data about a search before it is done.
  */
-final class QueryRequest {
+final class AdHocQueryRequest {
 
     private final KeywordSearchQuery query;
     private final String queryString;
@@ -36,7 +36,7 @@ final class QueryRequest {
      * @param id    ID that callers simply increment from 0
      * @param query Query that will be performed.
      */
-    QueryRequest(Map<String, Object> map, int id, KeywordSearchQuery query) {
+    AdHocQueryRequest(Map<String, Object> map, int id, KeywordSearchQuery query) {
         this.queryString = query.getEscapedQueryString();
         this.queryProperties = map;
         this.query = query;

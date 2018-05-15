@@ -63,11 +63,11 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
     @Override
     @NbBundle.Messages("AbstractFsContentNode.noDesc.text=no description")
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
@@ -76,16 +76,16 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
-            ss.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
+            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }
         if (directoryBrowseMode) {
-            ss.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
+            sheetSet.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
 
         // add tags property to the sheet
-        addTagProperty(ss);
+        addTagProperty(sheetSet);
 
-        return s;
+        return sheet;
     }
 
 }

@@ -225,7 +225,7 @@ public final class PromptDialogManager {
     
     @NbBundle.Messages({
         "PromptDialogManager.showTimeLineDisabledMessage.contentText="
-        + "Timeline functionality is not available for Linux yet."
+        + "Timeline functionality is not available yet."
         + "  Timeline will be disabled. ",
         "PromptDialogManager.showTimeLineDisabledMessage.headerText="})
     static void showTimeLineDisabledMessage() {

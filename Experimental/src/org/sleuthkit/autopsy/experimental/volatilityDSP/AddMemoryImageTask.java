@@ -49,6 +49,7 @@ final class AddMemoryImageTask implements Runnable {
     private final DataSourceProcessorCallback callback;
     private volatile VolatilityProcessor volatilityProcessor;
     private volatile boolean isCancelled;
+    private final String profile;  // empty for autodetect
 
     /**
      * Constructs a runnable that adds a memory image to a case database.
@@ -57,6 +58,7 @@ final class AddMemoryImageTask implements Runnable {
      *                        associated with the data source that is intended
      *                        to be unique across multiple cases (e.g., a UUID).
      * @param memoryImagePath Path to the memory image file.
+     * @param profile         Volatility profile to run or empty string to autodetect
      * @param pluginsToRun    The Volatility plugins to run.
      * @param timeZone        The time zone to use when processing dates and
      *                        times for the image, obtained from
@@ -65,9 +67,10 @@ final class AddMemoryImageTask implements Runnable {
      *                        during processing.
      * @param callback        Callback to call when processing is done.
      */
-    AddMemoryImageTask(String deviceId, String memoryImagePath, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddMemoryImageTask(String deviceId, String memoryImagePath, String profile, List<String> pluginsToRun, String timeZone, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.memoryImagePath = memoryImagePath;
+        this.profile = profile;
         this.pluginsToRun = pluginsToRun;
         this.timeZone = timeZone;
         this.callback = callback;
@@ -94,7 +97,7 @@ final class AddMemoryImageTask implements Runnable {
         try {
             Image dataSource = addImageToCase();
             dataSources.add(dataSource);
-            volatilityProcessor = new VolatilityProcessor(memoryImagePath, dataSource, pluginsToRun, progressMonitor);
+            volatilityProcessor = new VolatilityProcessor(memoryImagePath, dataSource, profile, pluginsToRun, progressMonitor);
             volatilityProcessor.run();
         } catch (NoCurrentCaseException | TskCoreException | VolatilityProcessor.VolatilityProcessorException ex) {
             criticalErrorOccurred = true;
@@ -142,7 +145,7 @@ final class AddMemoryImageTask implements Runnable {
     private Image addImageToCase() throws NoCurrentCaseException, TskCoreException {
         progressMonitor.setProgressText(Bundle.AddMemoryImageTask_progressMessage_addingImageFile( memoryImagePath));
 
-        SleuthkitCase caseDatabase = Case.getOpenCase().getSleuthkitCase();
+        SleuthkitCase caseDatabase = Case.getCurrentCaseThrows().getSleuthkitCase();
         caseDatabase.acquireSingleUserCaseWriteLock();
         try {
             /*
