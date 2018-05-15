@@ -44,6 +44,7 @@ import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -236,11 +237,7 @@ public final class FilteredEventsModel {
 
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : eventManager.getDataSourceIDs()) {
-            try {
-                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get datasource by ID.", ex); //NON-NLS
-            }
+            datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
         }
 
         //should this only be tags applied to files or event bearing artifacts?
@@ -387,11 +384,7 @@ public final class FilteredEventsModel {
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {
-            try {
-                overlap = getSpanningInterval().overlap(timeRange);
-            } catch (TskCoreException timelineCacheException) {
-                throw new TskCoreException("Error getting the spanning interval.", timelineCacheException);
-            }
+            overlap = getSpanningInterval().overlap(timeRange);
             intersect = requestedFilter.get().copyOf();
         }
         intersect.getSubFilters().add(filter);
@@ -455,8 +448,12 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or
      *         requested ranges
      */
-    public Long getMinTime() {
-        return minCache.getUnchecked("min"); // NON-NLS
+    public Long getMinTime() throws TskCoreException {
+        try {
+            return minCache.get("min"); // NON-NLS
+        } catch (ExecutionException ex) {
+            throw new TskCoreException("Error getting cached min time.", ex);
+        }
     }
 
     /**
@@ -465,7 +462,11 @@ public final class FilteredEventsModel {
      *         requested ranges
      */
     public Long getMaxTime() throws TskCoreException {
-        return maxCache.getUnchecked("max"); // NON-NLS
+        try {
+            return maxCache.get("max"); // NON-NLS
+        } catch (ExecutionException ex) {
+            throw new TskCoreException("Error getting cached max time.", ex);
+        }
     }
 
     /**
