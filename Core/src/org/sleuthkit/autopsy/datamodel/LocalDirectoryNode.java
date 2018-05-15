@@ -48,14 +48,14 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         "LocalDirectoryNode.createSheet.name.desc=no description",
         "LocalDirectoryNode.createSheet.noDesc=no description"})
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
-        ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
                 Bundle.LocalDirectoryNode_createSheet_name_displayName(),
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
@@ -67,20 +67,20 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
 
         final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
-            ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+            sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        addTagProperty(ss);
+        addTagProperty(sheetSet);
 
-        return s;
+        return sheet;
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

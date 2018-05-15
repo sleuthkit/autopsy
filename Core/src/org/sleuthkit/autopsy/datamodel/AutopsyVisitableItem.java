@@ -32,6 +32,6 @@ public interface AutopsyVisitableItem {
      *
      * @return visitor return value
      */
-    public <T> T accept(AutopsyItemVisitor<T> v);
+    public <T> T accept(AutopsyItemVisitor<T> visitor);
 
 }

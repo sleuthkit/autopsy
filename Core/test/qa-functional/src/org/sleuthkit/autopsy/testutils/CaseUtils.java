@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.testutils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.apache.commons.io.FileUtils;
@@ -30,7 +32,8 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 
 /**
- * Common case utility methods.
+ * Class with common methods for testing related to the creation and elimination
+ * of cases.
  */
 public final class CaseUtils {
 
@@ -42,32 +45,37 @@ public final class CaseUtils {
     }
 
     /**
-     * Create a new case. If the case already exists at the specified path, the
-     * existing case will be removed prior to creation of the new case.
+     * Create a case case directory and case for the given case name.
      *
-     * @param caseDirectoryPath The path to the case data.
-     * @param caseDisplayName   The display name for the case.
+     * @param caseName the name for the case and case directory to have
      */
-    public static void createCase(Path caseDirectoryPath, String caseDisplayName) {
-        //Make sure the test is starting with a clean state. So delete the test directory, if it exists.
-        deleteCaseDir(caseDirectoryPath);
-        assertFalse("Unable to delete existing test directory", caseDirectoryPath.toFile().exists());
-
+    public static void createCase(String caseName) {
+        //Make sure the case is starting with a clean state. So delete the case directory, if it exists.
+        Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
+        File caseDir = new File(caseDirectoryPath.toString());
+        try {
+            deleteCaseDir(caseDir);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+        assertFalse("Unable to delete existing test directory", caseDir.exists());
         // Create the test directory
-        caseDirectoryPath.toFile().mkdirs();
-        assertTrue("Unable to create test directory", caseDirectoryPath.toFile().exists());
+        caseDir.mkdirs();
+        assertTrue("Unable to create test directory", caseDir.exists());
 
         try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(caseDisplayName));
+            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(caseName));
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        assertTrue(caseDirectoryPath.toFile().exists());
+
+        assertTrue(caseDir.exists());
     }
 
     /**
-     * Close the currently opened case.
+     * Close the current case, fails test if case was unable to be closed.
      */
     public static void closeCase() {
         try {
@@ -85,20 +93,22 @@ public final class CaseUtils {
     }
 
     /**
-     * Delete a case at the specified path.
+     * Delete the case directory if it exists, thows exception if unable to
+     * delete case dir to allow the user to determine failure with.
      *
-     * @param caseDirectoryPath The path to the case to be removed.
+     * @param caseDirectory the case directory to delete
+     *
+     * @throws IOException thrown if there was an problem deleting the case
+     *                     directory
      */
-    public static void deleteCaseDir(Path caseDirectoryPath) {
-        if (!caseDirectoryPath.toFile().exists()) {
+    public static void deleteCaseDir(File caseDirectory) throws IOException {
+        if (!caseDirectory.exists()) {
             return;
         }
-        try {
-            FileUtils.deleteDirectory(caseDirectoryPath.toFile());
-        } catch (IOException ex) {
-            //We just want to make sure the case directory doesn't exist when the test starts. It shouldn't cause failure if the case directory couldn't be deleted after a test finished.            
-            System.out.println("INFO: Unable to delete case directory: " + caseDirectoryPath.toString());
-        }
+        //We should determine whether the test fails or passes where this is called
+        //It will usually be a test failure when the case can not be deleted
+        //but sometimes we might be alright if we are unable to delete it.
+        FileUtils.deleteDirectory(caseDirectory);
     }
 
 }

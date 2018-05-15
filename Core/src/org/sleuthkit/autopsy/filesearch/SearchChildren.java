@@ -53,5 +53,4 @@ class SearchChildren extends Children.Keys<AbstractFile> {
             return node;
         }
     }
-
 }
