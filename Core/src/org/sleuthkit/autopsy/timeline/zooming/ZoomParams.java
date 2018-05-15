@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.util.Objects;
 import org.joda.time.Interval;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.timeline.filters.RootFilter;
  * This class encapsulates all the zoom(and filter) parameters into one object
  * for passing around and as a memento of the zoom/filter state.
  */
-public class ZoomParams {
+final public class ZoomParams {
 
 	private final Interval timeRange;
 
@@ -103,7 +103,7 @@ public class ZoomParams {
 		hash = 97 * hash + Objects.hashCode(this.timeRange.getStartMillis());
 		hash = 97 * hash + Objects.hashCode(this.timeRange.getEndMillis());
 		hash = 97 * hash + Objects.hashCode(this.typeZoomLevel);
-		hash = 97 * hash + Objects.hashCode(this.filter.isSelected());
+		hash = 97 * hash + Objects.hashCode(this.filter);
 		hash = 97 * hash + Objects.hashCode(this.descrLOD);
 
 		return hash;

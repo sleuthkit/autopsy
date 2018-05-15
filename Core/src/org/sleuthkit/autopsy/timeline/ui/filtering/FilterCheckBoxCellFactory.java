@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexedCell;
-import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractFXCellFactory;
 
-class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCellFactory<X, X> {
+class FilterCheckBoxCellFactory<X extends FilterModel> extends AbstractFXCellFactory<X, X> {
 
     private final CheckBox checkBox = new CheckBox();
     private SimpleBooleanProperty selectedProperty;

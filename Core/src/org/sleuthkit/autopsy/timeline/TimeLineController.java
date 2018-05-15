@@ -78,8 +78,8 @@ import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
@@ -705,7 +705,7 @@ public class TimeLineController {
      * @param listener The object to un-register.
      */
     synchronized public void unRegisterForEvents(Object listener) {
-        eventbus.unregister(o);
+        eventbus.unregister(listener);
     }
 
     static synchronized public void setTimeZone(TimeZone timeZone) {

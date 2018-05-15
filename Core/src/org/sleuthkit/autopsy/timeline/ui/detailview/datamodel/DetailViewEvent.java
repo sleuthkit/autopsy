@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**

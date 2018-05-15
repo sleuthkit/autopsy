@@ -49,7 +49,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
@@ -148,11 +148,11 @@ final public class DetailsViewModel {
         RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(timeRange, timeZone);
 
         //build dynamic parts of query
-        String descriptionColumn = TimelineManager.getDescriptionColumn(descriptionLOD);
+        String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-        final boolean needsTags = filter.getTagsFilter().isActive();
-        final boolean needsHashSets = filter.getHashHitsFilter().isActive();
+        final boolean needsTags = filter.getTagsFilter().hasSubFilters();
+        final boolean needsHashSets = filter.getHashHitsFilter().hasSubFilters();
         //compose query string, the new-lines are only for nicer formatting if printing the entire query
         String querySql = "SELECT " + eventManager.formatTimeFunction(rangeInfo.getPeriodSize(), timeZone) + " AS interval, " // NON-NLS
                           + eventManager.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
@@ -197,7 +197,7 @@ final public class DetailsViewModel {
         Interval interval = new Interval(resultSet.getLong("minTime") * 1000, resultSet.getLong("maxTime") * 1000, timeZone);// NON-NLS
         String eventIDsString = resultSet.getString("event_ids");// NON-NLS
         List<Long> eventIDs = unGroupConcat(eventIDsString, Long::valueOf);
-        String description = resultSet.getString(TimelineManager.getDescriptionColumn(descriptionLOD));
+        String description = resultSet.getString(eventManager.getDescriptionColumn(descriptionLOD));
         int eventTypeID = useSubTypes
                 ? resultSet.getInt("sub_type") //NON-NLS
                 : resultSet.getInt("base_type"); //NON-NLS

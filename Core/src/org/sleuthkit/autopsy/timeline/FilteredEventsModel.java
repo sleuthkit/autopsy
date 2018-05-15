@@ -64,18 +64,17 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
-import org.sleuthkit.datamodel.timeline.filters.Filter;
 import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
 import org.sleuthkit.datamodel.timeline.filters.HashSetFilter;
 import org.sleuthkit.datamodel.timeline.filters.HideKnownFilter;
@@ -83,6 +82,7 @@ import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
+import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
@@ -390,7 +390,7 @@ public final class FilteredEventsModel {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public List<Long> getEventIDs(Interval timeRange, Filter filter) throws TskCoreException {
+    public List<Long> getEventIDs(Interval timeRange, TimelineFilter filter) throws TskCoreException {
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {

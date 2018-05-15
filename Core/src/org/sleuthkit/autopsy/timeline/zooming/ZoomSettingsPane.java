@@ -35,8 +35,7 @@ import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.DisplayNameProvider;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
 
@@ -170,7 +169,7 @@ public class ZoomSettingsPane extends TitledPane {
      *                            lineup exactly with the Enum value indices to
      *                            use as tick Labels.
      */
-    private static <DriverType, EnumType extends Enum<EnumType> & DisplayNameProvider> void configureSliderListeners(
+    private static <DriverType, EnumType extends Enum<EnumType> > void configureSliderListeners(
             Slider slider,
             Consumer<EnumType> sliderValueConsumer,
             ReadOnlyObjectProperty<DriverType> modelProperty,
@@ -222,7 +221,7 @@ public class ZoomSettingsPane extends TitledPane {
      *
      * @param <EnumType> The type of Enum that this converter works with.
      */
-    static private class EnumSliderLabelFormatter<EnumType extends Enum<EnumType> & DisplayNameProvider> extends StringConverter<Double> {
+    static private class EnumSliderLabelFormatter<EnumType extends Enum<EnumType>> extends StringConverter<Double> {
 
         /**
          * A Type token for the class of Enum that this converter works with.

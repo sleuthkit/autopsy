@@ -40,12 +40,10 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
-import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.Filter;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
 /**
@@ -65,13 +63,13 @@ final public class FilterSetPanel extends BorderPane {
     private Button defaultButton;
 
     @FXML
-    private TreeTableView<Filter> filterTreeTable;
+    private TreeTableView<FilterModel> filterTreeTable;
 
     @FXML
-    private TreeTableColumn<AbstractFilter, AbstractFilter> treeColumn;
+    private TreeTableColumn<FilterModel, FilterModel> treeColumn;
 
     @FXML
-    private TreeTableColumn<AbstractFilter, AbstractFilter> legendColumn;
+    private TreeTableColumn<FilterModel, FilterModel> legendColumn;
 
     @FXML
     private ListView<DescriptionFilter> hiddenDescriptionsListView;
@@ -87,7 +85,7 @@ final public class FilterSetPanel extends BorderPane {
      * map from filter to its expansion state in the ui, used to restore the
      * expansion state as we navigate back and forward in the history
      */
-    private final ObservableMap<Filter, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap<FilterModel, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({

@@ -93,7 +93,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import static org.sleuthkit.datamodel.timeline.EventType.FILE_ACCESSED;
 import static org.sleuthkit.datamodel.timeline.EventType.FILE_CHANGED;

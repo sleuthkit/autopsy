@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +23,12 @@ import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
-import org.sleuthkit.datamodel.timeline.filters.Filter;
+import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  * A TreeItem for a filter.
  */
-final public class FilterTreeItem extends TreeItem<Filter> {
+final public class FilterTreeItem extends TreeItem<FilterModel> {
 
     /**
      * recursively construct a tree of TreeItems to parallel the filter tree of
@@ -40,11 +40,11 @@ final public class FilterTreeItem extends TreeItem<Filter> {
      *                     children of this FilterTreeItem
      * @param expansionMap
      */
-    public FilterTreeItem(Filter filter, ObservableMap<Filter, Boolean> expansionMap) {
+    public FilterTreeItem(FilterModel filter, ObservableMap<FilterModel, Boolean> expansionMap) {
         super(filter);
 
         //listen to changes in the expansion map, and update expansion state of filter object
-        expansionMap.addListener((MapChangeListener.Change<? extends Filter, ? extends Boolean> change) -> {
+        expansionMap.addListener((MapChangeListener.Change<? extends FilterModel, ? extends Boolean> change) -> {
             if (change.getKey().equals(filter)) {
                 setExpanded(expansionMap.get(change.getKey()));
             }
@@ -58,18 +58,17 @@ final public class FilterTreeItem extends TreeItem<Filter> {
         expandedProperty().addListener(expandedProperty -> expansionMap.put(filter, isExpanded()));
 
         //if the filter is a compound filter, add its subfilters to the tree
-        if (filter instanceof CompoundFilter<?>) {
-            final CompoundFilter<?> compoundFilter = (CompoundFilter<?>) filter;
+        if (filter.getFilter() instanceof CompoundFilter<?>) {
+            final CompoundFilter<?> compoundFilter = (CompoundFilter<?>) filter.getFilter();
 
             //add all sub filters
-            compoundFilter.getSubFilters().forEach(subFilter -> getChildren().add(new FilterTreeItem(subFilter, expansionMap)));
-
+            compoundFilter.getSubFilters().forEach((subFilter) -> this.addSubfilter(new FilterModel(subFilter), expansionMap));
             //listen to changes in sub filters and keep tree in sync
-            compoundFilter.getSubFilters().addListener((ListChangeListener.Change<? extends Filter> c) -> {
-                while (c.next()) {
-                    for (Filter subfFilter : c.getAddedSubList()) {
+            compoundFilter.getSubFilters().addListener((ListChangeListener.Change<? extends TimelineFilter> change) -> {
+                while (change.next()) {
+                    for (TimelineFilter subFilter : change.getAddedSubList()) {
                         setExpanded(true); //emphasize new filters by expanding parent to make sure they are visible
-                        getChildren().add(new FilterTreeItem(subfFilter, expansionMap));
+                        addSubfilter(new FilterModel(subFilter), expansionMap);
                     }
                 }
             });
@@ -79,12 +78,50 @@ final public class FilterTreeItem extends TreeItem<Filter> {
              * its subfilters: if a compound filter's active property changes,
              * disable the subfilters if the compound filter is not active.
              */
-            compoundFilter.activeProperty().addListener(activeProperty -> {
-                disableSubFiltersIfNotActive(compoundFilter);
+            filter.activeProperty().addListener(activeProperty -> {
+                disableSubFiltersIfNotActive();
             });
+            disableSubFiltersIfNotActive();
 
-            disableSubFiltersIfNotActive(compoundFilter);
+            //listen to changes in list of subtree items 
+            getChildren().addListener((ListChangeListener.Change<? extends TreeItem<FilterModel>> change) -> {
+                while (change.next()) {
+                    //add a listener to the selected property of each added subfilter
+                    change.getAddedSubList().forEach(addedSubFilter -> {
+
+                        addedSubFilter.getValue().selectedProperty().addListener(selectedProperty -> {
+                            //set this compound filter selected if any of the subfilters are selected.
+                            filter.setSelected(getChildren().parallelStream()
+                                    .map(TreeItem<FilterModel>::getValue)
+                                    .anyMatch(FilterModel::isSelected)
+                            );
+                        });
+                    });
+                }
+            });
         }
+    }
+
+    private void addSubfilter(FilterModel subFilter, ObservableMap<FilterModel, Boolean> expansionMap) {
+        FilterTreeItem filterTreeItem = new FilterTreeItem(subFilter, expansionMap);
+
+        //if a subfilter's selected property changes...
+        subFilter.selectedProperty().addListener(selectedProperty -> {
+            //set this compound filter selected if any of the subfilters are selected.
+            this.getValue().setSelected(getChildren().parallelStream()
+                    .map(TreeItem<FilterModel>::getValue)
+                    .anyMatch(FilterModel::isSelected));
+        });
+        getChildren().add(filterTreeItem);
+    }
+
+    public boolean areAllSubFiltersActiveRecursive() {
+        return getChildren().stream()
+                .allMatch(subFilter -> {
+                    return subFilter.getValue().isActive()
+                           && subFilter.isLeaf()
+                           || ((FilterTreeItem) subFilter).areAllSubFiltersActiveRecursive();
+                });
     }
 
     /**
@@ -92,8 +129,10 @@ final public class FilterTreeItem extends TreeItem<Filter> {
      *
      * @param compoundFilter the compound filter
      */
-    static private void disableSubFiltersIfNotActive(CompoundFilter<?> compoundFilter) {
-        boolean inactive = compoundFilter.isActive() == false;
-        compoundFilter.getSubFilters().forEach(subFilter -> subFilter.setDisabled(inactive));
+    private void disableSubFiltersIfNotActive() {
+        boolean inactive = getValue().isActive() == false;
+        getChildren().stream()
+                .map(TreeItem<FilterModel>::getValue)
+                .forEach(subFilter -> subFilter.setDisabled(inactive));
     }
 }

@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.SortedSet;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**

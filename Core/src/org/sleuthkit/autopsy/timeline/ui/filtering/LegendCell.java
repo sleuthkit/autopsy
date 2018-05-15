@@ -28,19 +28,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
-import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented
  * filter
  */
-final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
+final class LegendCell extends TreeTableCell<FilterModel, FilterModel> {
 
     private static final Color CLEAR = Color.rgb(0, 0, 0, 0);
 
@@ -57,7 +56,7 @@ final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
 
     @Override
     @NbBundle.Messages("Timeline.ui.filtering.promptText=enter filter string")
-    public void updateItem(AbstractFilter item, boolean empty) {
+    public void updateItem(FilterModel item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null) {
             Platform.runLater(() -> {
@@ -67,8 +66,8 @@ final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
         } else {
 
             //TODO: have the filter return an appropriate node, rather than use instanceof
-            if (item instanceof TypeFilter) {
-                TypeFilter filter = (TypeFilter) item;
+            if (item.getFilter() instanceof TypeFilter) {
+                TypeFilter filter = (TypeFilter) item.getFilter();
                 Rectangle rect = new Rectangle(20, 20);
 
                 rect.setArcHeight(5);
@@ -80,7 +79,7 @@ final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
                 });
 
                 HBox hBox = new HBox(new Rectangle(filter.getEventType().getZoomLevel().ordinal() * 10, 5, CLEAR),
-                        new ImageView(EventTypeUtils.getImagePath(((TypeFilter) item).getEventType())), rect
+                        new ImageView(EventTypeUtils.getImagePath(filter.getEventType())), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
                 Platform.runLater(() -> {
@@ -88,11 +87,11 @@ final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
                     setContentDisplay(ContentDisplay.CENTER);
                 });
 
-            } else if (item instanceof TextFilter) {
-                TextFilter f = (TextFilter) item;
+            } else if (item.getFilter() instanceof TextFilter) {
+                TextFilter filter = (TextFilter) item.getFilter();
                 TextField textField = new TextField();
                 textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
-                textField.textProperty().bindBidirectional(f.textProperty());
+                textField.textProperty().bindBidirectional(filter.textProperty());
                 Platform.runLater(() -> {
                     setGraphic(textField);
                 });

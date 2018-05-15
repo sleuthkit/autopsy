@@ -37,7 +37,7 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.MultiEvent;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
 
 /**
  *
@@ -99,15 +99,17 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
         descLOD.set(descriptionLoD);
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;
     }
 
+    @Override
     final String getDescription() {
         return getEvent().getDescription();
     }
 
+    @Override
     final Set<Long> getEventIDs() {
         return getEvent().getEventIDs();
     }
@@ -125,5 +127,6 @@ public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentTy
 
     abstract EventNodeBase<?> createChildNode(ParentType rawChild);
 
+    @Override
     abstract EventHandler<MouseEvent> getDoubleClickHandler();
 }
