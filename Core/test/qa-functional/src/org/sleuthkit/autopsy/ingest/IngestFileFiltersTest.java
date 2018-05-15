@@ -72,8 +72,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
     
     public void testBasicDir() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testBasicDir");
-        CaseUtils.createCase(casePath, "testBasicDir");
+        CaseUtils.createCase("testBasicDir");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -115,8 +114,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
     
     public void testExtAndDirWithOneRule() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testExtAndDirWithOneRule");
-        CaseUtils.createCase(casePath, "testExtAndDirWithOneRule");
+        CaseUtils.createCase("testExtAndDirWithOneRule");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -151,8 +149,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testExtAndDirWithTwoRules() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testExtAndDirWithTwoRules");
-        CaseUtils.createCase(casePath, "testExtAndDirWithTwoRules");
+        CaseUtils.createCase("testExtAndDirWithTwoRules");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -196,8 +193,7 @@ public class IngestFileFiltersTest extends NbTestCase {
    }
    
     public void testFullFileNameRule() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testFullFileNameRule");
-        CaseUtils.createCase(casePath, "testFullFileNameRule");
+        CaseUtils.createCase("testFullFileNameRule");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -232,8 +228,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testCarvingWithExtRuleAndUnallocSpace() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testCarvingWithExtRuleAndUnallocSpace");
-        CaseUtils.createCase(casePath, "testCarvingWithExtRuleAndUnallocSpace");
+        CaseUtils.createCase("testCarvingWithExtRuleAndUnallocSpace");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -281,8 +276,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
   
     public void testCarvingNoUnallocatedSpace() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testCarvingNoUnallocatedSpace");
-        CaseUtils.createCase(casePath, "testCarvingNoUnallocatedSpace");
+        CaseUtils.createCase("testCarvingNoUnallocatedSpace");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -315,8 +309,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     }
 
     public void testEmbeddedModule() {
-        Path casePath = Paths.get(System.getProperty("java.io.tmpdir"), "testEmbeddedModule");
-        CaseUtils.createCase(casePath, "testEmbeddedModule");
+        CaseUtils.createCase("testEmbeddedModule");
         LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, ZIPFILE_PATH);
         
