@@ -44,10 +44,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-<<<<<<< HEAD
 import org.sleuthkit.datamodel.Content;
-=======
->>>>>>> b8ec65adb... Bitlocker detection implemented.
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -61,7 +58,6 @@ public class EncryptionDetectionTest extends NbTestCase {
     
     private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
     private final Path PASSWORD_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
-<<<<<<< HEAD
 
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
     private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
@@ -69,9 +65,6 @@ public class EncryptionDetectionTest extends NbTestCase {
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
   
-=======
-    
->>>>>>> b8ec65adb... Bitlocker detection implemented.
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
                 clusters(".*").
@@ -90,8 +83,6 @@ public class EncryptionDetectionTest extends NbTestCase {
 
     /**
      * Test the Encryption Detection module's volume encryption detection.
-<<<<<<< HEAD
-=======
      */
     public void testBitlockerEncryption() {
         try {
@@ -163,23 +154,14 @@ public class EncryptionDetectionTest extends NbTestCase {
 
     /**
      * Test the Encryption Detection module's password protection detection.
->>>>>>> b8ec65adb... Bitlocker detection implemented.
      */
     public void testBitlockerEncryption() {
         try {
-<<<<<<< HEAD
             CaseUtils.createCase(BITLOCKER_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
             Case openCase = Case.getCurrentCaseThrows();
 
-=======
-            CaseUtils.createCase(PASSWORD_CASE_DIRECTORY_PATH, PASSWORD_CASE_NAME);
-            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_IMAGE_PATH);
-            Case openCase = Case.getCurrentCaseThrows();
-            
->>>>>>> b8ec65adb... Bitlocker detection implemented.
             /*
              * Create ingest job settings.
              */

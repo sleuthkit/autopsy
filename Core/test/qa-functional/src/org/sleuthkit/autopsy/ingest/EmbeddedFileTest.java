@@ -62,11 +62,7 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-<<<<<<< HEAD
         CaseUtils.createCase(CASE_NAME);
-=======
-        CaseUtils.createCase(CASE_DIRECTORY_PATH, CASE_NAME);
->>>>>>> b8ec65adb... Bitlocker detection implemented.
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
         
