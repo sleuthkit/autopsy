@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Component;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -74,8 +75,6 @@ final class AinStatusDashboardTopComponent extends TopComponent {
                 tc.add(nodeTab);
                 tc.open();
             }
-            tc.toFront();
-            tc.requestActive();
         }
     }
 
@@ -115,6 +114,19 @@ final class AinStatusDashboardTopComponent extends TopComponent {
         WindowManager.getDefault().setTopComponentFloating(this, true);
     }
 
+    /**
+     * Get the current AutoIngestDashboard if there is one.
+     *
+     * @return the current AutoIngestDashboard or null if there is not one
+     */
+    AinStatusDashboard getAinStatusDashboard() {
+        for (Component comp : getComponents()) {
+            if (comp instanceof AinStatusDashboard) {
+                return (AinStatusDashboard) comp;
+            }
+        }
+        return null;
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
