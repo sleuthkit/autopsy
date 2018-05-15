@@ -52,11 +52,9 @@ public class EncryptionDetectionTest extends NbTestCase {
 
     private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
     private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
-
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
-    private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
-
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
+    private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
   
     public static Test suite() {
