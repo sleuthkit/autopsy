@@ -19,21 +19,24 @@
 package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.util.function.Function;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TitledPane;
 import javafx.util.StringConverter;
+import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.DisplayNameProvider;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
@@ -47,6 +50,8 @@ import org.sleuthkit.datamodel.timeline.TimeUnits;
  * and description level of detail).
  */
 public class ZoomSettingsPane extends TitledPane {
+
+    private static final Logger logger = Logger.getLogger(ZoomSettingsPane.class.getName());
 
     @FXML
     private Label zoomLabel;
@@ -170,7 +175,8 @@ public class ZoomSettingsPane extends TitledPane {
      *                            lineup exactly with the Enum value indices to
      *                            use as tick Labels.
      */
-    private static <DriverType, EnumType extends Enum<EnumType> & DisplayNameProvider> void configureSliderListeners(
+    @NbBundle.Messages({"ZoomSettingsPane.sliderChange.errorText=Error responding to slider value change."})
+    private <DriverType, EnumType extends Enum<EnumType> & DisplayNameProvider> void configureSliderListeners(
             Slider slider,
             CheckedConsumer<EnumType> sliderValueConsumer,
             ReadOnlyObjectProperty<DriverType> modelProperty,
@@ -189,8 +195,11 @@ public class ZoomSettingsPane extends TitledPane {
                 EnumType sliderValueAsEnum = enumClass.getEnumConstants()[Math.round((float) slider.getValue())];
                 try {
                     sliderValueConsumer.accept(sliderValueAsEnum);
-                } catch (Exception exception) {
-                    new Alert(Alert.AlertType.ERROR, "Error responding to slider value change.").showAndWait();
+                } catch (TskCoreException exception) {
+                    logger.log(Level.SEVERE, "Error responding to slider value change.", exception);
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.ZoomSettingsPane_sliderChange_errorText())
+                            .showError();
                 }
             }
         };
@@ -239,8 +248,8 @@ public class ZoomSettingsPane extends TitledPane {
          */
         private final Function<Integer, Integer> indexAdjsuter;
 
-        EnumSliderLabelFormatter(Class<EnumType> clazz, Function<Integer, Integer> indexMapper) {
-            this.clazz = clazz;
+        EnumSliderLabelFormatter(Class<EnumType> enumClass, Function<Integer, Integer> indexMapper) {
+            this.clazz = enumClass;
             this.indexAdjsuter = indexMapper;
         }
 
@@ -257,13 +266,13 @@ public class ZoomSettingsPane extends TitledPane {
     }
 
     /**
-     * Functional interface for a consumer that throws an exception.
+     * Functional interface for a consumer that throws a TskCoreException.
      *
      * @param <T>
      */
     @FunctionalInterface
     private interface CheckedConsumer<T> {
 
-        void accept(T input) throws Exception;
+        void accept(T input) throws TskCoreException;
     }
 }

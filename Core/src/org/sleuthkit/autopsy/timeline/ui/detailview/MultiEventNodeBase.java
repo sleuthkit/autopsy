@@ -35,19 +35,16 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.MultiEvent;
 
 /**
- *
+ * Base class for nodes that represent multiple events in the Details View.
  */
 @NbBundle.Messages({"EventBundleNodeBase.toolTip.loading=loading..."})
- abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
+abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
         ParentType, BundleType, ?>> extends EventNodeBase<BundleType> {
-
-    private static final Logger logger = Logger.getLogger(MultiEventNodeBase.class.getName());
 
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);

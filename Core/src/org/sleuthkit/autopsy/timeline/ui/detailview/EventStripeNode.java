@@ -29,7 +29,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventCluster;
@@ -40,8 +39,6 @@ import org.sleuthkit.datamodel.timeline.SingleEvent;
  * Node used in DetailsChart to represent an EventStripe.
  */
 final public class EventStripeNode extends MultiEventNodeBase<EventStripe, EventCluster, EventClusterNode> {
-
-    private static final Logger logger = Logger.getLogger(EventStripeNode.class.getName());
 
     /**
      * The button to expand hide stripes with this description, created lazily.

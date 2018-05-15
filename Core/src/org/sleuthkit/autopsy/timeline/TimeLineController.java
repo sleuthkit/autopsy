@@ -80,7 +80,6 @@ import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.IntervalUtils;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
 import org.sleuthkit.datamodel.timeline.ZoomParams;
@@ -715,7 +714,7 @@ public class TimeLineController {
      * @param listener The object to un-register.
      */
     synchronized public void unRegisterForEvents(Object listener) {
-        eventbus.unregister(o);
+        eventbus.unregister(listener);
     }
 
     static synchronized public void setTimeZone(TimeZone timeZone) {
