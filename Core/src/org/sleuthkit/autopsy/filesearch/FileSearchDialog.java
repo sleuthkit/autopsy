@@ -86,3 +86,4 @@ class FileSearchDialog extends javax.swing.JDialog {
     private org.sleuthkit.autopsy.filesearch.FileSearchPanel fileSearchPanel1;
     // End of variables declaration//GEN-END:variables
 }
+

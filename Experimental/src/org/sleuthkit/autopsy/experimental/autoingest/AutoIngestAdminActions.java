@@ -19,8 +19,11 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -266,8 +269,8 @@ final class AutoIngestAdminActions {
             AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
             if (dashboard != null) {
                 /*
-                 * Call setCursor on this to ensure it appears (if there is
-                 * time to see it).
+                 * Call setCursor on this to ensure it appears (if there is time
+                 * to see it).
                  */
                 dashboard.getCompletedJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 EventQueue.invokeLater(() -> {
@@ -360,18 +363,61 @@ final class AutoIngestAdminActions {
         }
     }
 
-    @NbBundle.Messages({"AutoIngestAdminActions.showCaseLogAction.title=Show Case Log"})
+    @NbBundle.Messages({"AutoIngestAdminActions.showCaseLogAction.title=Show Case Log",
+        "AutoIngestAdminActions.showCaseLogActionFailed.title=Unable to display case log",
+        "AutoIngestAdminActions.showCaseLogActionFailed.message=Case log file does not exist",
+        "AutoIngestAdminActions.showCaseLogActionDialog.ok=Okay",
+        "AutoIngestAdminActions.showCaseLogActionDialog.cannotFindLog=Unable to find the selected case log file",
+        "AutoIngestAdminActions.showCaseLogActionDialog.unableToShowLogFile=Unable to show log file"})
     static final class ShowCaseLogAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        ShowCaseLogAction() {
+        ShowCaseLogAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_showCaseLogAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                try {
+                    Path caseDirectoryPath = job.getCaseDirectoryPath();
+                    if (null != caseDirectoryPath) {
+                        Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
+                        if (pathToLog.toFile().exists()) {
+                            Desktop.getDesktop().edit(pathToLog.toFile());
+                        } else {
+                            JOptionPane.showMessageDialog(dashboard, Bundle.AutoIngestAdminActions_showCaseLogActionFailed_message(),
+                                    Bundle.AutoIngestAdminActions_showCaseLogAction_title(), JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        MessageNotifyUtil.Message.warn("The case directory for this job has been deleted.");
+                    }
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
+                    Object[] options = {Bundle.AutoIngestAdminActions_showCaseLogActionDialog_ok()};
+                    JOptionPane.showOptionDialog(dashboard,
+                            Bundle.AutoIngestAdminActions_showCaseLogActionDialog_cannotFindLog(),
+                            Bundle.AutoIngestAdminActions_showCaseLogActionDialog_unableToShowLogFile(),
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.PLAIN_MESSAGE,
+                            null,
+                            options,
+                            options[0]);
+                }
+            }
         }
 
         @Override

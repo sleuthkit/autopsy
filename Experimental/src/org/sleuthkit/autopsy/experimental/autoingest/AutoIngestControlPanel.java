@@ -43,7 +43,6 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -60,6 +59,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -141,7 +141,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
+    private static final Logger sysLogger = AutoIngestSystemLogger.getLogger();
     private static AutoIngestControlPanel instance;
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
@@ -333,7 +333,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                         serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
+                    sysLogger.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
                 }
                 return serviceStatus;
             }
@@ -687,7 +687,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             manager.startUp();
             autoIngestStarted = true;
         } catch (AutoIngestManager.AutoIngestManagerException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
+            sysLogger.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.AutoIngestStartupError"));
             manager = null;
 
@@ -712,7 +712,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
             } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
                 status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
-                SYS_LOGGER.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
+                sysLogger.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
             }
             
             // if the status update is for an existing service who's status hasn't changed - do nothing.       
@@ -1191,7 +1191,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     job.getPriority()}); // PRIORITY 
             }
         } catch (Exception ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
+            sysLogger.log(Level.SEVERE, "Dashboard error refreshing table", ex);
         }
     }
 
@@ -1827,7 +1827,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             try {
                 manager.prioritizeCase(caseName);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
-                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
+                sysLogger.log(Level.SEVERE, "Error prioritizing a case", ex);
                 MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_casePrioritization());
             }
             refreshTables();
@@ -1866,7 +1866,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 }
             }
         } catch (IOException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
+            sysLogger.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
             Object[] options = {org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "DisplayLogDialog.okay")};
             JOptionPane.showOptionDialog(this,
                     org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "DisplayLogDialog.cannotFindLog"),
@@ -1887,7 +1887,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             try {
                 manager.prioritizeJob(manifestFilePath);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
-                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a job", ex);
+                sysLogger.log(Level.SEVERE, "Error prioritizing a job", ex);
                 MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_jobPrioritization());
             }
             refreshTables();
@@ -1934,7 +1934,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             try {
                 manager.deprioritizeCase(caseName);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
-                SYS_LOGGER.log(Level.SEVERE, "Error deprioritizing a case", ex);
+                sysLogger.log(Level.SEVERE, "Error deprioritizing a case", ex);
                 MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_caseDeprioritization());
             }
             refreshTables();
@@ -1953,7 +1953,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             try {
                 manager.deprioritizeJob(manifestFilePath);
             } catch (AutoIngestManager.AutoIngestManagerException ex) {
-                SYS_LOGGER.log(Level.SEVERE, "Error deprioritizing a job", ex);
+                sysLogger.log(Level.SEVERE, "Error deprioritizing a job", ex);
                 MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_errorMessage_jobDeprioritization());
             }
             refreshTables();
