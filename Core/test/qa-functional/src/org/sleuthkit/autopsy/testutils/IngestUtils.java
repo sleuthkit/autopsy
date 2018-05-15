@@ -64,7 +64,8 @@ public final class IngestUtils {
             DataSourceProcessorRunner.ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
             result = callBack.getResult();
             if (result.equals(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS)) {
-                Assert.fail("Critical errors occurred while running the data source processor.");
+                String joinedErrors = String.join(System.lineSeparator(), callBack.getErrorMessages());
+                Assert.fail(String.format("Error(s) occurred while running the data source processor: %s", joinedErrors));
             }
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
