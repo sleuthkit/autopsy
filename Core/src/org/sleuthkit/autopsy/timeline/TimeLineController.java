@@ -705,7 +705,7 @@ public class TimeLineController {
      * @param listener The object to un-register.
      */
     synchronized public void unRegisterForEvents(Object listener) {
-        eventbus.unregister(o);
+        eventbus.unregister(listener);
     }
 
     static synchronized public void setTimeZone(TimeZone timeZone) {
