@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.eventbus.EventBus;
 import java.awt.Dimension;
-import java.beans.PropertyVetoException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
@@ -31,7 +30,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
@@ -168,9 +166,9 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         synchronized (this) {
             outline.setRowSelectionAllowed(false);
             if (explorerManager.getRootContext() instanceof AutoIngestJobsNode) {
-                ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh();
+                ((AutoIngestJobsNode)explorerManager.getRootContext()).refresh();
             } else {
-                explorerManager.setRootContext(new AutoIngestJobsNode(autoIngestMonitor, status));
+                explorerManager.setRootContext(new AutoIngestJobsNode(autoIngestMonitor, status, new EventBus("AutoIngestJobsNodeEventBus")));
             }
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);

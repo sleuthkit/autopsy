@@ -42,8 +42,8 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  */
 final class AutoIngestJobsNode extends AbstractNode {
 
-    private final static EventBus refreshChildrenEventBus = new EventBus("AutoIngestJobsNodeEventBus");
-    private final static short REFRESH_EVENT = 1; //
+    private final static String REFRESH_EVENT = "Refresh_Nodes"; //
+    private final EventBus refreshChildrenEventBus;
 
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
@@ -60,10 +60,14 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(AutoIngestMonitor autoIngestMonitor, AutoIngestJobStatus status) {
-        super(Children.create(new AutoIngestNodeChildren(autoIngestMonitor, status), false));
+    AutoIngestJobsNode(AutoIngestMonitor autoIngestMonitor, AutoIngestJobStatus status, EventBus eventBus) {
+        super(Children.create(new AutoIngestNodeChildren(autoIngestMonitor, status, eventBus), false));
+        refreshChildrenEventBus = eventBus;
     }
 
+    /**
+     * Refresh the contents of the AutoIngestJobsNode and all of its children.
+     */
     void refresh() {
         refreshChildrenEventBus.post(REFRESH_EVENT);
     }
@@ -75,6 +79,8 @@ final class AutoIngestJobsNode extends AbstractNode {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
         private final AutoIngestMonitor autoIngestMonitor;
+        private final EventBus refreshEventBus;
+        private boolean registered = false;
 
         /**
          * Create children nodes for the AutoIngestJobsNode which will each
@@ -83,10 +89,10 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status) {
+        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status, EventBus eventBus) {
             autoIngestMonitor = monitor;
             autoIngestJobStatus = status;
-            refreshChildrenEventBus.register(this);
+            refreshEventBus = eventBus;
         }
 
         @Override
@@ -110,17 +116,30 @@ final class AutoIngestJobsNode extends AbstractNode {
             if (jobs != null && jobs.size() > 0) {
                 list.addAll(jobs);
             }
+            if (!registered) {
+                refreshEventBus.register(this); //register for refreshes
+                registered = true;
+            }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(AutoIngestJob key) {
-            return new JobNode(key, autoIngestJobStatus);
+            JobNode jobNode = new JobNode(key, autoIngestJobStatus);
+            refreshEventBus.register(jobNode);
+            return jobNode;
         }
 
+        /**
+         * Receive events of type String from the EventBus which this class is
+         * registered to, and refresh the children created by this factory if
+         * the event matches the REFRESH_EVENT.
+         *
+         * @param refreshEvent the String which was received
+         */
         @Subscribe
-        private void subscribeToRefresh(short refreshEvent) {
-            if (refreshEvent == REFRESH_EVENT) {
+        private void subscribeToRefresh(String refreshEvent) {
+            if (refreshEvent.equals(REFRESH_EVENT)) {
                 refresh(true);
             }
         }
@@ -148,7 +167,6 @@ final class AutoIngestJobsNode extends AbstractNode {
             autoIngestJob = job;
             setName(autoIngestJob.toString());  //alows job to be uniquely found by name since it will involve a hash of the AutoIngestJob
             setDisplayName(autoIngestJob.getManifest().getCaseName()); //displays user friendly case name as name
-            refreshChildrenEventBus.register(this);
         }
 
         /**
@@ -204,16 +222,22 @@ final class AutoIngestJobsNode extends AbstractNode {
             return s;
         }
 
+        /**
+         * Receive events of type String from the EventBus which this class is
+         * registered to, and refresh the node's properties if the event matches
+         * the REFRESH_EVENT.
+         *
+         * @param refreshEvent the String which was received
+         */
         @Subscribe
-        private void subscribeToRefresh(short refreshEvent) {
-            if (refreshEvent == REFRESH_EVENT) {
+        private void subscribeToRefresh(String refreshEvent) {
+            if (refreshEvent.equals(REFRESH_EVENT)) {
                 this.setSheet(createSheet());
             }
         }
 
         @Override
-        public Action[] getActions(boolean context
-        ) {
+        public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                 switch (jobStatus) {
