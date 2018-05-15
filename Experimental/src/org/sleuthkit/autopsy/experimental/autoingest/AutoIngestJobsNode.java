@@ -208,7 +208,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                     case COMPLETED_JOB:
                         actions.add(new AutoIngestAdminActions.ReprocessJobAction(autoIngestJob));
                         actions.add(new AutoIngestAdminActions.DeleteCaseAction(autoIngestJob));
-                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction());
+                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction(autoIngestJob));
                         break;
                     default:
                 }
