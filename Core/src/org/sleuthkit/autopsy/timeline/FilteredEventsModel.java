@@ -25,13 +25,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -44,6 +44,7 @@ import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
@@ -52,6 +53,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent.DeletedContentTagInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
@@ -234,11 +236,7 @@ public final class FilteredEventsModel {
 
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : eventManager.getDataSourceIDs()) {
-            try {
-                datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to get datasource by ID.", ex); //NON-NLS
-            }
+            datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
         }
 
         //should this only be tags applied to files or event bearing artifacts?
@@ -271,9 +269,18 @@ public final class FilteredEventsModel {
      *
      * @return A read only view of the time range currently in view.
      */
+    @NbBundle.Messages({
+        "FilteredEventsModel.timeRangeProperty.errorTitle=Timeline",
+        "FilteredEventsModel.timeRangeProperty.errorMessage=Error getting spanning interval."})
     synchronized public ReadOnlyObjectProperty<Interval> timeRangeProperty() {
         if (requestedTimeRange.get() == null) {
-            requestedTimeRange.set(getSpanningInterval());
+            try {
+                requestedTimeRange.set(getSpanningInterval());
+            } catch (TskCoreException timelineCacheException) {
+                MessageNotifyUtil.Notify.error(Bundle.FilteredEventsModel_timeRangeProperty_errorTitle(),
+                        Bundle.FilteredEventsModel_timeRangeProperty_errorMessage());
+                logger.log(Level.SEVERE, "Error getting spanning interval.", timelineCacheException);
+            }
         }
         return requestedTimeRange.getReadOnlyProperty();
     }
@@ -343,14 +350,20 @@ public final class FilteredEventsModel {
         return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter(), timeZone);
     }
 
-    public SingleEvent getEventById(Long eventID) {
-        return idToEventCache.getUnchecked(eventID);
+    public SingleEvent getEventById(Long eventID) throws TskCoreException {
+        try {
+            return idToEventCache.get(eventID);
+        } catch (ExecutionException ex) {
+            throw new TskCoreException("Error getting cached event from ID", ex);
+        }
     }
 
-    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) {
-        return eventIDs.stream()
-                .map(idToEventCache::getUnchecked)
-                .collect(Collectors.toSet());
+    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) throws TskCoreException {
+        Set<SingleEvent> events = new HashSet<>();
+        for (Long id : eventIDs) {
+            events.add(getEventById(id));
+        }
+        return events;
     }
 
     /**
@@ -366,6 +379,7 @@ public final class FilteredEventsModel {
     }
 
     public List<Long> getEventIDs(Interval timeRange, Filter filter) throws TskCoreException {
+
         final Interval overlap;
         final RootFilter intersect;
         synchronized (this) {
@@ -398,7 +412,7 @@ public final class FilteredEventsModel {
      *
      * @return
      */
-    public Map<EventType, Long> getEventCounts(Interval timeRange) throws ExecutionException {
+    public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
         final RootFilter filter;
         final EventTypeZoomLevel typeZoom;
@@ -406,14 +420,18 @@ public final class FilteredEventsModel {
             filter = requestedFilter.get();
             typeZoom = requestedTypeZoom.get();
         }
-        return eventCountsCache.get(new ZoomParams(timeRange, typeZoom, filter, null));
+        try {
+            return eventCountsCache.get(new ZoomParams(timeRange, typeZoom, filter, null));
+        } catch (ExecutionException executionException) {
+            throw new TskCoreException("Error getting cached event counts.`1", executionException);
+        }
     }
 
     /**
-     * @return the smallest interval spanning all the events from the
-     *         repository, ignoring any filters or requested ranges
+     * @return The smallest interval spanning all the events from the
+     *         repository, ignoring any filters or requested ranges.
      */
-    public Interval getSpanningInterval() {
+    public Interval getSpanningInterval() throws TskCoreException {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000);
     }
 
@@ -429,8 +447,12 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or
      *         requested ranges
      */
-    public Long getMinTime() {
-        return minCache.getUnchecked("min"); // NON-NLS
+    public Long getMinTime() throws TskCoreException {
+        try {
+            return minCache.get("min"); // NON-NLS
+        } catch (ExecutionException ex) {
+            throw new TskCoreException("Error getting cached min time.", ex);
+        }
     }
 
     /**
@@ -438,8 +460,12 @@ public final class FilteredEventsModel {
      *         event available from the repository, ignoring any filters or
      *         requested ranges
      */
-    public Long getMaxTime() {
-        return maxCache.getUnchecked("max"); // NON-NLS
+    public Long getMaxTime() throws TskCoreException {
+        try {
+            return maxCache.get("max"); // NON-NLS
+        } catch (ExecutionException ex) {
+            throw new TskCoreException("Error getting cached max time.", ex);
+        }
     }
 
     /**
@@ -447,7 +473,7 @@ public final class FilteredEventsModel {
      * @return a list of event clusters at the requested zoom levels that are
      *         within the requested time range and pass the requested filter
      */
-    public List<EventStripe> getEventStripes() {
+    public List<EventStripe> getEventStripes() throws TskCoreException {
         final Interval range;
         final RootFilter filter;
         final EventTypeZoomLevel zoom;
@@ -468,7 +494,7 @@ public final class FilteredEventsModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventStripe> getEventStripes(ZoomParams params) {
+    public List<EventStripe> getEventStripes(ZoomParams params) throws TskCoreException {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {

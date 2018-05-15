@@ -42,7 +42,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class EmbeddedFileTest extends NbTestCase {
 
-    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "EmbeddedFileTest");
+    private static final String CASE_NAME = "EmbeddedFileTest";
+    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"embedded.vhd");
     public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
     private static final int DEEP_FOLDER_COUNT = 25;
@@ -61,7 +62,7 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        CaseUtils.createCase(CASE_DIRECTORY_PATH, "EmbeddedFileTest");
+        CaseUtils.createCase(CASE_NAME);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
         
@@ -91,7 +92,6 @@ public class EmbeddedFileTest extends NbTestCase {
     @Override
     public void tearDown() {
         CaseUtils.closeCase();
-        CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH);
     }
     
     public void testEncryption() {

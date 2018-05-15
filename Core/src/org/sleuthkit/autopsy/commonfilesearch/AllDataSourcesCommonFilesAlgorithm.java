@@ -43,7 +43,7 @@ final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilde
 
     @Override
     protected String buildSqlSelectStatement() {
-        Object[] args = new String[]{SELECT_PREFIX, determineMimeTypeFilter()};
+        Object[] args = new String[] {SELECT_PREFIX, determineMimeTypeFilter()};
         return String.format(WHERE_CLAUSE, args);
     }
 
