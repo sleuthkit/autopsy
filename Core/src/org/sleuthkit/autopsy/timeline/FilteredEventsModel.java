@@ -44,7 +44,6 @@ import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
