@@ -51,13 +51,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public class EncryptionDetectionTest extends NbTestCase {
 
     private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
-    private static final String PASSWORD_CASE_NAME = "testPasswordProtection";
-    
-    private static final Path BITLOCKER_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), BITLOCKER_CASE_NAME);
-    private static final Path PASSWORD_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), PASSWORD_CASE_NAME);
-    
     private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
-    private final Path PASSWORD_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
 
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
     private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
@@ -82,7 +76,7 @@ public class EncryptionDetectionTest extends NbTestCase {
     }
 
     /**
-     * Test the Encryption Detection module's password protection detection.
+     * Test the Encryption Detection module's volume encryption detection.
      */
     public void testBitlockerEncryption() {
         try {
