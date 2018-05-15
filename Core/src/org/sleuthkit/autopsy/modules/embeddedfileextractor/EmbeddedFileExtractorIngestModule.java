@@ -67,7 +67,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * is used to write the extracted (derived) files to local storage.
          */
         try {
-        final Case currentCase = Case.getOpenCase();
+        final Case currentCase = Case.getCurrentCaseThrows();
         moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         } catch (NoCurrentCaseException ex) {

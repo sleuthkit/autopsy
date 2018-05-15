@@ -92,12 +92,13 @@ class FileSearchPanel extends javax.swing.JPanel {
         metadataFilters.add(new SizeSearchFilter());
         metadataFilters.add(new MimeTypeFilter());
         metadataFilters.add(new DateSearchFilter());
+        
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
         
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), new HashSearchFilter()));
-
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DataSourcePanel.dataSourceCheckBox.text"), new DataSourceFilter()));
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
             fa.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -153,7 +154,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                 String pathText = NbBundle.getMessage(this.getClass(), "FileSearchPanel.search.results.pathText");
 
                 // try to get the number of matches first
-                Case currentCase = Case.getOpenCase(); // get the most updated case
+                Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
                 long totalMatches = 0;
                 List<AbstractFile> contentList = null;
                 try {

@@ -68,7 +68,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
         try {
-            tagNames = Case.getOpenCase().getServices().getTagsManager().getTagNamesInUse();
+            tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
             Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
             JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Tag Names Not Found", JOptionPane.ERROR_MESSAGE);

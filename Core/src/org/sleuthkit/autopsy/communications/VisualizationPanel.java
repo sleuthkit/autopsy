@@ -244,11 +244,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         applyLayout(fastOrganicLayout);
     }
 
-    /**
-     *
-     * @param layoutButton the value of layoutButton
-     * @param layout       the value of layout
-     */
     @Override
     public Lookup getLookup() {
         return proxyLookup;
@@ -336,7 +331,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         windowAncestor = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this);
 
         try {
-            commsManager = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager();
+            commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
         } catch (NoCurrentCaseException ex) {

@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -583,37 +584,41 @@ public class Case {
     }
 
     /**
-     * Deprecated. Use getOpenCase() instead.
-     * 
-     * Gets the current case, if there is one, at the time of the call.
+     * Gets the current case. This method should only be called by clients that
+     * can be sure a case is currently open. Some examples of suitable clients
+     * are data source processors, ingest modules, and report modules.
      *
      * @return The current case.
-     *
-     * @throws IllegalStateException if there is no current case.
-     * 
-     * @deprecated. Use getOpenCase() instead.
-    */
-    @Deprecated
+     */
     public static Case getCurrentCase() {
-        /*
-         * Throwing an unchecked exception is a bad idea here.
-         *
-         */
         try {
-            return getOpenCase();
+            return getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
+            /*
+             * Throw a runtime exception, since this is a programming error.
+             */
             throw new IllegalStateException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"), ex);
         }
     }
 
     /**
-     * Gets the current open case, if there is one, at the time of the call.
+     * Gets the current case, if there is one, or throws an exception if there
+     * is no current case. This method should only be called by methods known to
+     * run in threads where it is possible that another thread has closed the
+     * current case. The exception provides some protection from the
+     * consequences of the race condition between the calling thread and a case
+     * closing thread, but it is not fool-proof. Background threads calling this
+     * method should put all operations in an exception firewall with a try and
+     * catch-all block to handle the possibility of bad timing.
      *
-     * @return The open case.
+     * TODO (JIRA-3825): Introduce a reference counting scheme for this get case
+     * method.
      *
-     * @throws NoCurrentCaseException if there is no open case.
+     * @return The current case.
+     *
+     * @throws NoCurrentCaseException if there is no current case.
      */
-    public static Case getOpenCase() throws NoCurrentCaseException {
+    public static Case getCurrentCaseThrows() throws NoCurrentCaseException {
         Case openCase = currentCase;
         if (openCase == null) {
             throw new NoCurrentCaseException(NbBundle.getMessage(Case.class, "Case.getCurCase.exception.noneOpen"));
@@ -1080,6 +1085,7 @@ public class Case {
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
+                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
@@ -1129,6 +1135,7 @@ public class Case {
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
@@ -1565,7 +1572,7 @@ public class Case {
         String normalizedLocalPath;
         try {
             if (localPath.toLowerCase().contains("http:")) {
-		            normalizedLocalPath = localPath;
+                normalizedLocalPath = localPath;
             } else {
                 normalizedLocalPath = Paths.get(localPath).normalize().toString();
             }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,41 +22,58 @@ import java.util.List;
 import org.openide.nodes.Node;
 
 /**
- * The interface for the "top right component" window.
+ * An interface for result view components. A result view component provides
+ * multiple views of the application data represented by a given NetBeans Node.
+ * The differing views of the node are supplied by a collection of result
+ * viewers (implementations of the DataResultViewer interface).
  *
+ * A typical implementation of this interface are the NetBeans TopComponents
+ * (DataResultTopComponents) that use a child result view component
+ * (DataResultPanel) for displaying their result viewers, and are docked into
+ * the upper right hand side (editor mode) of the main application window.
  */
 public interface DataResult {
 
     /**
-     * Sets the "selected" node in this class.
+     * Sets the node for which this result view component should provide
+     * multiple views of the underlying application data.
+     *
+     * @param node The node, may be null. If null, the call to this method is
+     *             equivalent to a call to resetComponent on this result view
+     *             component's result viewers.
      */
-    public void setNode(Node selectedNode);
+    public void setNode(Node node);
 
     /**
-     * Gets the unique TopComponent ID of this class.
+     * Gets the preferred identifier for this result view panel in the window
+     * system.
      *
-     * @return preferredID the unique ID
+     * @return The preferred identifier.
      */
     public String getPreferredID();
 
     /**
-     * Sets the title of this TopComponent
+     * Sets the title of this result view component.
      *
-     * @param title the given title (String)
+     * @param title The title.
      */
     public void setTitle(String title);
 
     /**
-     * Sets the descriptive context text at the top of the pane.
+     * Sets the descriptive text about the source of the nodes displayed in this
+     * result view component.
      *
-     * @param pathText Descriptive text giving context for the current results
+     * @param description The text to display.
      */
     public void setPath(String pathText);
 
     /**
-     * Checks if this is the main (uncloseable) instance of DataResult
+     * Gets whether or not this result view panel is the "main" result view
+     * panel used to view the child nodes of a node selected in the application
+     * tree view (DirectoryTreeTopComponent) that is normally docked into the
+     * left hand side of the main window.
      *
-     * @return true if it is the main instance, otherwise false
+     * @return True or false.
      */
     public boolean isMain();
 

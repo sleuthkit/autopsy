@@ -45,7 +45,7 @@ public class AddBookmarkTagAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Map<String, TagName> tagNamesMap = Case.getOpenCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
+            Map<String, TagName> tagNamesMap = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
             TagName bookmarkTagName = tagNamesMap.get(BOOKMARK);
 
             /*

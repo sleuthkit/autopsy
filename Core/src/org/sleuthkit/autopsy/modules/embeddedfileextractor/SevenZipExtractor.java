@@ -218,7 +218,7 @@ class SevenZipExtractor {
      */
     private ArchiveFormat get7ZipOptions(AbstractFile archiveFile) {
         // try to get the file type from the BB
-        String detectedFormat = null;
+        String detectedFormat;
         detectedFormat = archiveFile.getMIMEType();
 
         if (detectedFormat == null) {
@@ -284,7 +284,7 @@ class SevenZipExtractor {
         //check if already has derived files, skip
         //check if local unpacked dir exists 
         if (archiveFile.hasChildren() && new File(moduleDirAbsolute, EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile)).exists()) {
-            return Case.getOpenCase().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
+            return Case.getCurrentCaseThrows().getServices().getFileManager().findFilesByParentPath(getRootArchiveId(archiveFile), archiveFilePath);
         }
         return new ArrayList<>();
     }
@@ -434,11 +434,11 @@ class SevenZipExtractor {
                     result = item.extractSlow(unpackStream, password);
                 }
                 if (result != ExtractOperationResult.OK) {
-                    logger.log(Level.WARNING, "Extraction of : " + localAbsPath + " encountered error " + result); //NON-NLS
+                    logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", new Object[]{localAbsPath, result}); //NON-NLS
                     return null;
                 }
 
-            } catch (Exception e) {
+            } catch (SevenZipException e) {
                 //could be something unexpected with this file, move on
                 logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
             } finally {
@@ -492,9 +492,9 @@ class SevenZipExtractor {
         final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         //recursion depth check for zip bomb
         final long archiveId = archiveFile.getId();
-        SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr = null;
+        SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr;
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             unpackSuccessful = false;
@@ -717,7 +717,7 @@ class SevenZipExtractor {
             String encryptionType = fullEncryption ? ENCRYPTION_FULL : ENCRYPTION_FILE_LEVEL;
             try {
                 BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
+                artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
 
                 try {
                     // index the artifact for keyword search
@@ -997,7 +997,7 @@ class SevenZipExtractor {
          * files for the entire hierarchy
          */
         void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
-            final FileManager fileManager = Case.getOpenCase().getServices().getFileManager();
+            final FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
             for (UnpackedNode child : rootNode.children) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }

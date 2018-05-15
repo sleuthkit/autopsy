@@ -509,7 +509,7 @@ public final class FilteredEventsModel {
      * @param o The object to un-register.
      */
     synchronized public void unRegisterForEvents(Object o) {
-        eventbus.unregister(0);
+        eventbus.unregister(o);
     }
 
     /**

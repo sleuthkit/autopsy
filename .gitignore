@@ -12,6 +12,7 @@
 /Core/build/
 /Core/dist/
 /Core/nbproject/*
+/Core/test/qa-functional/data/*
 !/Core/nbproject/project.xml
 !/Core/nbproject/project.properties
 
@@ -21,6 +22,8 @@
 /CoreLibs/nbproject/*
 !/CoreLibs/nbproject/project.xml
 !/CoreLibs/nbproject/project.properties
+
+/Core/test/qa-functional/data/
 
 /KeywordSearch/release/
 /KeywordSearch/build/

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.curator.RetryPolicy;
@@ -457,7 +455,8 @@ public final class CoordinationService {
         CASES("cases"),
         MANIFESTS("manifests"),
         CONFIG("config"),
-        CENTRAL_REPO("centralRepository");
+        CENTRAL_REPO("centralRepository"),
+        HEALTH_MONITOR("healthMonitor");
 
         private final String displayName;
 

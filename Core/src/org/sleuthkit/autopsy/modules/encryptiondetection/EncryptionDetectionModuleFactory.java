@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * A factory that creates file ingest modules that detect encryption.
+ * A factory that creates file ingest modules that detect encryption and
+ * password protection.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 @Messages({
@@ -106,11 +107,14 @@ public class EncryptionDetectionModuleFactory implements IngestModuleFactory {
 
     @Override
     public boolean isDataSourceIngestModuleFactory() {
-        return false;
+        return true;
     }
 
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
-        throw new UnsupportedOperationException();
+        if (!(settings instanceof EncryptionDetectionIngestJobSettings)) {
+            throw new IllegalArgumentException("Expected settings argument to be an instance of EncryptionDetectionIngestJobSettings.");
+        }
+        return new EncryptionDetectionDataSourceIngestModule((EncryptionDetectionIngestJobSettings) settings);
     }
 }

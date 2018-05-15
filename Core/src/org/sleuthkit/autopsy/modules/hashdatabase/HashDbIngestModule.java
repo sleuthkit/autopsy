@@ -33,6 +33,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
@@ -90,7 +92,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
     HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
         this.settings = settings;
-        skCase = Case.getOpenCase().getSleuthkitCase();
+        skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
     @Override
@@ -147,7 +149,7 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -182,8 +184,20 @@ public class HashDbIngestModule implements FileIngestModule {
         String md5Hash = file.getMd5Hash();
         if (md5Hash == null || md5Hash.isEmpty()) {
             try {
+                TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Disk Reads: Hash calculation");
                 long calcstart = System.currentTimeMillis();
                 md5Hash = HashUtility.calculateMd5Hash(file);
+                if (file.getSize() > 0) {
+                    // Surprisingly, the hash calculation does not seem to be correlated that
+                    // strongly with file size until the files get large.
+                    // Only normalize if the file size is greater than ~1MB.
+                    if (file.getSize() < 1000000) {
+                        EnterpriseHealthMonitor.submitTimingMetric(metric);
+                    } else {
+                        // In testing, this normalization gave reasonable resuls
+                        EnterpriseHealthMonitor.submitNormalizedTimingMetric(metric, file.getSize() / 500000);
+                    }
+                }
                 file.setMd5Hash(md5Hash);
                 long delta = (System.currentTimeMillis() - calcstart);
                 totals.totalCalctime.addAndGet(delta);

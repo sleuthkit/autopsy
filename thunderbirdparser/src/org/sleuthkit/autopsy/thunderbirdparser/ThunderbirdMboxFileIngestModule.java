@@ -79,7 +79,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         try {
-            fileManager = Case.getOpenCase().getServices().getFileManager();
+            fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             throw new IngestModuleException(Bundle.ThunderbirdMboxFileIngestModule_noOpenCase_errMsg(), ex);
@@ -90,7 +90,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public ProcessResult process(AbstractFile abstractFile) {
 
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
@@ -306,8 +306,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @throws NoCurrentCaseException if there is no open case.
      * @return the temporary folder
      */
-    public static String getTempPath() throws NoCurrentCaseException {
-        String tmpDir = Case.getOpenCase().getTempDirectory() + File.separator
+    static String getTempPath() throws NoCurrentCaseException {
+        String tmpDir = Case.getCurrentCaseThrows().getTempDirectory() + File.separator
                 + "EmailParser"; //NON-NLS
         File dir = new File(tmpDir);
         if (dir.exists() == false) {
@@ -322,8 +322,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @throws NoCurrentCaseException if there is no open case.
      * @return the module output folder
      */
-    public static String getModuleOutputPath() throws NoCurrentCaseException {
-        String outDir = Case.getOpenCase().getModuleDirectory() + File.separator
+    static String getModuleOutputPath() throws NoCurrentCaseException {
+        String outDir = Case.getCurrentCaseThrows().getModuleDirectory() + File.separator
                 + EmailParserModuleFactory.getModuleName();
         File dir = new File(outDir);
         if (dir.exists() == false) {
@@ -338,8 +338,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @throws NoCurrentCaseException if there is no open case.
      * @return the relative path of the module output folder
      */
-    public static String getRelModuleOutputPath() throws NoCurrentCaseException {
-        return Case.getOpenCase().getModuleOutputDirectoryRelativePath() + File.separator
+    static String getRelModuleOutputPath() throws NoCurrentCaseException {
+        return Case.getCurrentCaseThrows().getModuleOutputDirectoryRelativePath() + File.separator
                 + EmailParserModuleFactory.getModuleName();
     }
 
@@ -460,7 +460,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         
         AccountFileInstance senderAccountInstance = null;
 
-        Case openCase = Case.getOpenCase();
+        Case openCase = Case.getCurrentCaseThrows();
         
         if (senderAddressList.size() == 1) {
             senderAddress = senderAddressList.get(0);

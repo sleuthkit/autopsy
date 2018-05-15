@@ -62,15 +62,15 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     private void customizeComponents() {
-        outputViewPane.setComponentPopupMenu(rightClickMenu);
+        outputTextArea.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
                 if (jmi.equals(copyMenuItem)) {
-                    outputViewPane.copy();
+                    outputTextArea.copy();
                 } else if (jmi.equals(selectAllMenuItem)) {
-                    outputViewPane.selectAll();
+                    outputTextArea.selectAll();
                 }
             }
         };
@@ -90,6 +90,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        outputTextArea = new javax.swing.JTextArea();
+        jScrollPane2 = new javax.swing.JScrollPane();
         hexViewerPanel = new javax.swing.JPanel();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
@@ -102,14 +105,6 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         goToPageLabel = new javax.swing.JLabel();
         goToOffsetLabel = new javax.swing.JLabel();
         goToOffsetTextField = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        outputViewPane = new JTextPane(){
-     public boolean getScrollableTracksViewportWidth() {
-     return (getSize().width < 400);
- }};
-        this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white
-        this.outputViewPane.requestFocusInWindow();
-        this.outputViewPane.setCursor(Cursor.getDefaultCursor());
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -117,9 +112,18 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setPreferredSize(new java.awt.Dimension(610, 58));
+        setPreferredSize(new java.awt.Dimension(100, 58));
 
-        hexViewerPanel.setPreferredSize(new java.awt.Dimension(610, 23));
+        jScrollPane3.setPreferredSize(new java.awt.Dimension(300, 33));
+
+        outputTextArea.setEditable(false);
+        outputTextArea.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        outputTextArea.setTabSize(0);
+        outputTextArea.setInheritsPopupMenu(true);
+        jScrollPane3.setViewportView(outputTextArea);
+
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.totalPageLabel.text_1")); // NOI18N
 
@@ -210,7 +214,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 .addComponent(goToOffsetLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(32, Short.MAX_VALUE))
         );
         hexViewerPanelLayout.setVerticalGroup(
             hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -231,31 +235,21 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 .addGap(0, 0, 0))
         );
 
-        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(610, 402));
-
-        outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-        outputViewPane.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        outputViewPane.setMinimumSize(new java.awt.Dimension(600, 20));
-        outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
-        jScrollPane1.setViewportView(outputViewPane);
+        jScrollPane2.setViewportView(hexViewerPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(hexViewerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 701, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(hexViewerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -305,16 +299,16 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         String userSelectedLine;
         try {
             // get the selected line. Extract the current hex offset location.
-            userSelectedLine = outputViewPane.getText().subSequence(
-                    Utilities.getRowStart(outputViewPane, outputViewPane.getCaretPosition()),
-                    Utilities.getRowEnd(outputViewPane, outputViewPane.getCaretPosition()))
+            userSelectedLine = outputTextArea.getText().subSequence(
+                    Utilities.getRowStart(outputTextArea, outputTextArea.getCaretPosition()),
+                    Utilities.getRowEnd(outputTextArea, outputTextArea.getCaretPosition()))
                     .toString();
-            // NOTE: This needs to change if the outputFormat of outputViewPane changes.
+            // NOTE: This needs to change if the outputFormat of outputTextArea changes.
             String hexForUserSelectedLine = userSelectedLine.substring(0, userSelectedLine.indexOf(":"));
 
             return Long.decode(hexForUserSelectedLine) + userInput;
         } catch (BadLocationException | StringIndexOutOfBoundsException | NumberFormatException ex) {
-            // thrown in case the caret location is out of the range of the outputViewPane.
+            // thrown in case the caret location is out of the range of the outputTextArea.
             return -1L;
         }
     }
@@ -336,7 +330,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if (offset >= 0) {
             setDataViewByOffset(offset);
         } else {
-            outputViewPane.setText(NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.setDataView.invalidOffset.negativeOffsetValue"));
+            outputTextArea.setText(NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.setDataView.invalidOffset.negativeOffsetValue"));
         }
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
@@ -348,10 +342,11 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private javax.swing.JLabel goToPageLabel;
     private javax.swing.JTextField goToPageTextField;
     private javax.swing.JPanel hexViewerPanel;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
-    private javax.swing.JTextPane outputViewPane;
+    private javax.swing.JTextArea outputTextArea;
     private javax.swing.JLabel pageLabel;
     private javax.swing.JLabel pageLabel2;
     private javax.swing.JButton prevPageButton;
@@ -434,12 +429,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         // set the output view
         if (errorText == null) {
             int showLength = bytesRead < pageLength ? bytesRead : (int) pageLength;
-            outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset));
+            outputTextArea.setText(DataConversion.byteArrayToHex(data, showLength, offset));
         } else {
-            outputViewPane.setText(errorText);
+            outputTextArea.setText(errorText);
         }
 
-        outputViewPane.setCaretPosition(0);
+        outputTextArea.setCaretPosition(0);
         this.setCursor(null);
     }
 
@@ -488,7 +483,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
-        outputViewPane.setText("");
+        outputTextArea.setText("");
         setComponentsVisibility(false); // hides the components that not needed
     }
 
@@ -541,7 +536,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if (evt.isPopupTrigger()) {
             rightClickMenu.setLocation(evt.getLocationOnScreen());
             rightClickMenu.setVisible(true);
-            copyMenuItem.setEnabled(outputViewPane.getSelectedText() != null);
+            copyMenuItem.setEnabled(outputTextArea.getSelectedText() != null);
         } else {
             rightClickMenu.setVisible(false);
         }

@@ -128,7 +128,7 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
             public void propertyChange(PropertyChangeEvent pce) {
                 if (pce.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                     final Node[] selectedNodes = MessageBrowser.this.tableEM.getSelectedNodes();
-                    messagesResultPanel.setNumMatches(0);
+                    messagesResultPanel.setNumberOfChildNodes(0);
                     messagesResultPanel.setNode(null);
                     messagesResultPanel.setPath("");
                     if (selectedNodes.length > 0) {
