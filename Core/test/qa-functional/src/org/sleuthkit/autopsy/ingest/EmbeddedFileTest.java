@@ -62,16 +62,9 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        CaseUtils.createCase(CASE_NAME);
+        openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
-        
-        try {
-            openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        } 
         
         IngestModuleTemplate embeddedTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
         IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
@@ -91,7 +84,7 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCase();
+        CaseUtils.closeCurrentCase();
     }
     
     public void testEncryption() {

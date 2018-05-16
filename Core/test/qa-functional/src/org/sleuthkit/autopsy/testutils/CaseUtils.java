@@ -30,6 +30,7 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
  * Class with common methods for testing related to the creation and elimination
@@ -40,9 +41,12 @@ public final class CaseUtils {
     /**
      * Create a case case directory and case for the given case name.
      *
-     * @param caseName the name for the case and case directory to have
+     * @param caseName The name for the case and case directory to have
+     *
+     * @return The new case
      */
-    public static void createCase(String caseName) {
+    public static Case createAsCurrentCase(String caseName) {
+        Case currentCase = null;
         //Make sure the case is starting with a clean state. So delete the case directory, if it exists.
         Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
         File caseDir = new File(caseDirectoryPath.toString());
@@ -59,27 +63,42 @@ public final class CaseUtils {
 
         try {
             Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(caseName));
-        } catch (CaseActionException ex) {
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (CaseActionException | NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
 
         assertTrue(caseDir.exists());
+
+        return currentCase;
     }
 
     /**
-     * Close the current case, fails test if case was unable to be closed.
+     * Close and delete the current case. This will fail the test if the case
+     * was unable to be closed.
+     *
+     * Note: This method will skip case deletion if '//DLG:' exists in the class
+     * folder.
      */
-    public static void closeCase() {
+    public static void closeCurrentCase() {
         try {
-            Case.closeCurrentCase();
-            //Seems like we need some time to close the case, so file handler later can delete the case directory.
-            try {
-                Thread.sleep(20000);
-            } catch (Exception ex) {
-
+            if (Case.isCaseOpen()) {
+                String currentCaseDirectory = Case.getCurrentCase().getCaseDirectory();
+                Case.closeCurrentCase();
+                File keepCaseData = new File(".keepCaseData");
+                if (keepCaseData.exists()) {
+                    deleteCaseDir(new File(currentCaseDirectory));
+                }
             }
-        } catch (CaseActionException ex) {
+            System.gc();
+            //DLG: //Seems like we need some time to close the case, so file handler later can delete the case directory.
+            //DLG: try {
+            //DLG:     Thread.sleep(20000);
+            //DLG: } catch (Exception ex) {
+            //DLG: 
+            //DLG: }
+        } catch (CaseActionException | IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -89,9 +108,9 @@ public final class CaseUtils {
      * Delete the case directory if it exists, thows exception if unable to
      * delete case dir to allow the user to determine failure with.
      *
-     * @param caseDirectory the case directory to delete
+     * @param caseDirectory The case directory to delete
      *
-     * @throws IOException thrown if there was an problem deleting the case
+     * @throws IOException Thrown if there was an problem deleting the case
      *                     directory
      */
     public static void deleteCaseDir(File caseDirectory) throws IOException {
@@ -105,6 +124,6 @@ public final class CaseUtils {
      * Private constructor to prevent utility class instantiation.
      */
     private CaseUtils() {
-    }    
-    
+    }
+
 }

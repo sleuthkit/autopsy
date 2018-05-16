@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -78,7 +79,11 @@ public class EncryptionDetectionTest extends NbTestCase {
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCase();
+        File keepCaseData = new File(".keepCaseData");
+        if (keepCaseData.exists()) {
+            System.out.println("!");
+        }
+        CaseUtils.closeCurrentCase();
     }
 
     /**
@@ -86,10 +91,9 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testBitlockerEncryption() {
         try {
-            CaseUtils.createCase(BITLOCKER_CASE_NAME);
+            Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
-            Case openCase = Case.getCurrentCaseThrows();
 
             /*
              * Create ingest job settings.
@@ -146,7 +150,7 @@ public class EncryptionDetectionTest extends NbTestCase {
 
             errorMessage = "Expected to find 'vol2', but no such volume exists.";
             assertEquals(errorMessage, true, vol2Found);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -157,12 +161,9 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testPasswordProtection() {
         try {
-            CaseUtils.createCase(PASSWORD_DETECTION_CASE_NAME);
-
+            Case openCase = CaseUtils.createAsCurrentCase(PASSWORD_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
-
-            Case openCase = Case.getCurrentCaseThrows();    
 
             /*
              * Create ingest job settings.
@@ -235,7 +236,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                     }
                 }
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -256,11 +257,10 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testVeraCryptSupport() {
         try {
-            CaseUtils.createCase(VERACRYPT_DETECTION_CASE_NAME);
+            Case openCase = CaseUtils.createAsCurrentCase(VERACRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
 
-            Case openCase = Case.getCurrentCaseThrows();
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
             //image includes an encrypted container file with size greater than 5 mb so default settings detect it
@@ -289,7 +289,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                 numberOfEncryptedContainers += file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size();
             }
             assertEquals("Encrypted Container file should have one encyption suspected artifact", 1, numberOfEncryptedContainers);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
