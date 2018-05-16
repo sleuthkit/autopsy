@@ -110,7 +110,7 @@ class DropdownToolbar extends javax.swing.JPanel {
             public void actionPerformed(ActionEvent e) {
                 searchMenu.setVisible(false);
             }
-        });        
+        });
         searchMenu.setSize(dropPanel.getPreferredSize().width + 6, dropPanel.getPreferredSize().height + 6);
         searchMenu.add(dropPanel);
         searchMenu.addPopupMenuListener(new PopupMenuListener() {
