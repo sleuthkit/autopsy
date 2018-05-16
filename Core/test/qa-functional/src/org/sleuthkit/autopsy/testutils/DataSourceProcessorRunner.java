@@ -62,6 +62,7 @@ public final class DataSourceProcessorRunner {
         private final Object monitor;
         private final List<String> errorMessages = new ArrayList<>();
         private final List<Content> dataSourceContent = new ArrayList<>();
+        private DataSourceProcessorResult result;
 
         /**
          * Constructs a data source processor "callback" that collects the
@@ -91,6 +92,7 @@ public final class DataSourceProcessorRunner {
         public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errorMessages, List<Content> dataSourceContent) {
             this.errorMessages.addAll(errorMessages);
             this.dataSourceContent.addAll(dataSourceContent);
+            this.result = result;
             synchronized (monitor) {
                 monitor.notify();
             }
@@ -130,6 +132,15 @@ public final class DataSourceProcessorRunner {
          */
         public List<Content> getDataSourceContent() {
             return new ArrayList<>(this.dataSourceContent);
+        }
+        
+        /**
+         * Gets the result of the data source processor run.
+         * 
+         * @return The result.
+         */
+        public DataSourceProcessorResult getResult() {
+            return result;
         }
     }
 

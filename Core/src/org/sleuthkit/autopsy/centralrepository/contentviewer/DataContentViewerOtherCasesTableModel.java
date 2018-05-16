@@ -36,7 +36,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.path=Path",
         "DataContentViewerOtherCasesTableModel.type=Correlation Type",
         "DataContentViewerOtherCasesTableModel.value=Correlation Value",
-        "DataContentViewerOtherCasesTableModel.known=Tagged",
+        "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
     enum TableColumns {
