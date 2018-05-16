@@ -60,8 +60,8 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(AutoIngestMonitor autoIngestMonitor, AutoIngestJobStatus status, EventBus eventBus) {
-        super(Children.create(new AutoIngestNodeChildren(autoIngestMonitor, status, eventBus), false));
+    AutoIngestJobsNode(JobsSnapshot jobsSnapshot, AutoIngestJobStatus status, EventBus eventBus) {
+        super(Children.create(new AutoIngestNodeChildren(jobsSnapshot, status, eventBus), false));
         refreshChildrenEventBus = eventBus;
     }
 
@@ -78,7 +78,7 @@ final class AutoIngestJobsNode extends AbstractNode {
     static final class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private final AutoIngestMonitor autoIngestMonitor;
+        private final JobsSnapshot jobsSnapshot;
         private final RefreshChildrenSubscriber refreshChildrenSubscriber = new RefreshChildrenSubscriber();
         private final EventBus refreshEventBus;
 
@@ -89,8 +89,8 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status, EventBus eventBus) {
-            autoIngestMonitor = monitor;
+        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status, EventBus eventBus) {
+            jobsSnapshot = snapshot;
             autoIngestJobStatus = status;
             refreshEventBus = eventBus;
             refreshChildrenSubscriber.register(refreshEventBus);
@@ -99,7 +99,6 @@ final class AutoIngestJobsNode extends AbstractNode {
         @Override
         protected boolean createKeys(List<AutoIngestJob> list) {
             List<AutoIngestJob> jobs;
-            JobsSnapshot jobsSnapshot = autoIngestMonitor.getJobsSnapshot();
             switch (autoIngestJobStatus) {
                 case PENDING_JOB:
                     jobs = jobsSnapshot.getPendingJobs();
