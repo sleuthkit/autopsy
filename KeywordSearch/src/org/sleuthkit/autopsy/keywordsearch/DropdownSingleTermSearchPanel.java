@@ -218,7 +218,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         copyMenuItem = new javax.swing.JMenuItem();
         pasteMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        jPanel1 = new javax.swing.JPanel();
         keywordTextField = new javax.swing.JTextField();
         searchButton = new javax.swing.JButton();
         exactRadioButton = new javax.swing.JRadioButton();
@@ -240,17 +239,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
 
         keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N
         keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
@@ -460,7 +448,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private javax.swing.JList<String> dataSourceList;
     private javax.swing.JRadioButton exactRadioButton;
     private javax.swing.JLabel jLabel_Note;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField keywordTextField;
     private javax.swing.JMenuItem pasteMenuItem;
