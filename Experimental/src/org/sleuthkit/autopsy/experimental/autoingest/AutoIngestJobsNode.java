@@ -202,13 +202,13 @@ final class AutoIngestJobsNode extends AbstractNode {
                         break;
                     case RUNNING_JOB:
                         actions.add(new AutoIngestAdminActions.ProgressDialogAction());
-                        actions.add(new AutoIngestAdminActions.CancelJobAction());
+                        actions.add(new AutoIngestAdminActions.CancelJobAction(autoIngestJob));
                         actions.add(new AutoIngestAdminActions.CancelModuleAction());
                         break;
                     case COMPLETED_JOB:
-                        actions.add(new AutoIngestAdminActions.ReprocessJobAction());
-                        actions.add(new AutoIngestAdminActions.DeleteCaseAction());
-                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction());
+                        actions.add(new AutoIngestAdminActions.ReprocessJobAction(autoIngestJob));
+                        actions.add(new AutoIngestAdminActions.DeleteCaseAction(autoIngestJob));
+                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction(autoIngestJob));
                         break;
                     default:
                 }
