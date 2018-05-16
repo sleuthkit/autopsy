@@ -209,7 +209,6 @@ final class AutoIngestAdminActions {
                     dashboard.getRunningJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     EventQueue.invokeLater(() -> {
                         dashboard.getMonitor().cancelJob(job);
-                        dashboard.getRunningJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
                         dashboard.getRunningJobsPanel().setCursor(Cursor.getDefaultCursor());
                     });
                 }
@@ -338,7 +337,7 @@ final class AutoIngestAdminActions {
                         dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                         AutoIngestManager.CaseDeletionResult result = dashboard.getMonitor().deleteCase(job);
 
-                        dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                        dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot(), new AutoIngestNodeRefreshEvents.RefreshChildrenEvent());
                         dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         if (AutoIngestManager.CaseDeletionResult.FAILED == result) {
                             JOptionPane.showMessageDialog(dashboard,
