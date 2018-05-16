@@ -97,6 +97,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
 
             @Override
             public void mouseDragged(MouseEvent e) {
+                //Unused by now
             }
 
             @Override
