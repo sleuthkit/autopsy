@@ -66,8 +66,8 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
     private static DropdownSingleTermSearchPanel defaultInstance = null;
-    private Map<Long, String> dataSourceMap = new HashMap<>();
-    private List<String> toolTipList = new ArrayList<>();
+    private final Map<Long, String> dataSourceMap = new HashMap<>();
+    private final List<String> toolTipList = new ArrayList<>();
 
     /**
      * Gets the default instance of a dropdown panel that provides GUI
@@ -90,20 +90,20 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private DropdownSingleTermSearchPanel() {
         initComponents();
         customizeComponents();
-        this.dataSourceList.addListSelectionListener((ListSelectionEvent e) -> {
+        this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange("Ad Hoc Search test1", null, null);
         });
         this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
 
             @Override
-            public void mouseDragged(MouseEvent e) {
+            public void mouseDragged(MouseEvent evt) {
                 //Unused by now
             }
 
             @Override
-            public void mouseMoved(MouseEvent e) {
-                JList<String> DsList = (JList<String>) e.getSource();
-                int index = DsList.locationToIndex(e.getPoint());
+            public void mouseMoved(MouseEvent evt) {
+                JList<String> DsList = (JList<String>) evt.getSource();
+                int index = DsList.locationToIndex(evt.getPoint());
                 if (index > -1) {
                     DsList.setToolTipText(toolTipList.get(index));
                 }
@@ -142,9 +142,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                 keywordTextField.selectAll();
             }
         };
-        JPanel p = new JPanel();
-        p.setToolTipText("new panel");
-        p.add(new JLabel("P panel"));
+ 
         cutMenuItem.addActionListener(actList);
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
@@ -183,18 +181,16 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         "DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]"})
     @Override
     List<KeywordList> getKeywordLists() {
-
         if (regexRadioButton.isSelected()) {
-            if ((keywordTextField.getText() != null)
-                    && (keywordTextField.getText().startsWith("^")
-                    || (keywordTextField.getText().endsWith("$") && !keywordTextField.getText().endsWith("\\$")))) {
+            if ((keywordTextField.getText() != null) && 
+                    (keywordTextField.getText().startsWith("^") || 
+                    (keywordTextField.getText().endsWith("$") && ! keywordTextField.getText().endsWith("\\$")))) {
 
                 KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.title"),
                         NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.text"),
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             }
         }
-
         List<Keyword> keywords = new ArrayList<>();
         keywords.add(new Keyword(keywordTextField.getText(), !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
         List<KeywordList> keywordLists = new ArrayList<>();
@@ -230,7 +226,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         exactRadioButton = new javax.swing.JRadioButton();
         substringRadioButton = new javax.swing.JRadioButton();
         regexRadioButton = new javax.swing.JRadioButton();
-        dataSourcePanel = new javax.swing.JPanel();
         jLabel_Note = new javax.swing.JLabel();
         dataSourceCheckBox = new javax.swing.JCheckBox();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -293,19 +288,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         queryTypeButtonGroup.add(regexRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(regexRadioButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.regexRadioButton.text")); // NOI18N
 
-        dataSourcePanel.setPreferredSize(new java.awt.Dimension(30, 100));
-
-        javax.swing.GroupLayout dataSourcePanelLayout = new javax.swing.GroupLayout(dataSourcePanel);
-        dataSourcePanel.setLayout(dataSourcePanelLayout);
-        dataSourcePanelLayout.setHorizontalGroup(
-            dataSourcePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        dataSourcePanelLayout.setVerticalGroup(
-            dataSourcePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 85, Short.MAX_VALUE)
-        );
-
         jLabel_Note.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jLabel_Note, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSingleTermSearchPanel.jLabel_Note.text")); // NOI18N
 
@@ -331,18 +313,16 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(exactRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(substringRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(regexRadioButton)
-                        .addGap(0, 5, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(exactRadioButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(substringRadioButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(regexRadioButton))
                             .addComponent(dataSourceCheckBox)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(5, 5, 5)
-                        .addComponent(dataSourcePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 10, Short.MAX_VALUE)))
+                        .addGap(0, 5, Short.MAX_VALUE)))
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
@@ -362,12 +342,9 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                     .addComponent(substringRadioButton)
                     .addComponent(regexRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(dataSourcePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(dataSourceCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                .addComponent(dataSourceCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel_Note)
                 .addContainerGap())
@@ -482,7 +459,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JCheckBox dataSourceCheckBox;
     private javax.swing.JList<String> dataSourceList;
-    private javax.swing.JPanel dataSourcePanel;
     private javax.swing.JRadioButton exactRadioButton;
     private javax.swing.JLabel jLabel_Note;
     private javax.swing.JPanel jPanel1;

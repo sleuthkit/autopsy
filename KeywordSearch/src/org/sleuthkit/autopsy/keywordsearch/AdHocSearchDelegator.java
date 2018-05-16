@@ -61,7 +61,7 @@ class AdHocSearchDelegator {
                 KeywordSearchQuery query = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
 
                 //Limit search to a set of data sources
-                if (dataSourceIds.size() > 0) {
+                if (dataSourceIds != null && !dataSourceIds.isEmpty()) {
                     final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, dataSourceIds);
                     query.addFilter(dataSourceFilter);
                 }
