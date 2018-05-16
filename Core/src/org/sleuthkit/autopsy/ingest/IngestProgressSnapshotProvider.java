@@ -31,19 +31,19 @@ public interface IngestProgressSnapshotProvider {
      *
      * @return A list of IngestThreadActivitySnapshot
      */
-    public List<IngestManager.IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots();
+    List<IngestManager.IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots();
 
     /**
      * Get a snapshot of the state of ingest jobs.
      *
      * @return A list of ingest job snapshots.
      */
-    public List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots();
+    List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots();
 
     /**
      * Gets the cumulative run times for the ingest module.
      *
      * @return Map of module name to run time (in milliseconds)
      */
-    public Map<String, Long> getModuleRunTimes();
+    Map<String, Long> getModuleRunTimes();
 }

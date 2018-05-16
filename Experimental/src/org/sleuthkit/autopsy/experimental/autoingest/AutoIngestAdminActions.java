@@ -156,7 +156,7 @@ final class AutoIngestAdminActions {
             if (tc != null) {
                 AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
                 if (dashboard != null) {
-                    IngestProgressSnapshotDialog ingestProgressSnapshotDialog = new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true, job);
+                    new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true, job);
                 }
             }
         }

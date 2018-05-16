@@ -1213,11 +1213,11 @@ public final class DataSourceIngestJob {
             return this.dataSourceLevelIngestModule;
         }
 
-        boolean fileIngestIsRunning() {
+        boolean getFileIngestIsRunning() {
             return this.fileIngestRunning;
         }
 
-        Date fileIngestStartTime() {
+        Date getFileIngestStartTime() {
             return this.fileIngestStartTime;
         }
 
