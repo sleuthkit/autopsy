@@ -334,6 +334,7 @@ final class AutoIngestJobsNode extends AbstractNode {
              *
              * @param refreshEvent - the RefreshChildrenEvent which was received
              */
+            @Subscribe
             private void subscribeToRefreshChildren(AutoIngestNodeRefreshEvents.RefreshChildrenEvent refreshEvent) {
                 //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 if (jobStatus == AutoIngestJobStatus.RUNNING_JOB) {
