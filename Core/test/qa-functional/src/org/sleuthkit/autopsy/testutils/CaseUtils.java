@@ -38,13 +38,6 @@ import org.sleuthkit.autopsy.casemodule.CaseDetails;
 public final class CaseUtils {
 
     /**
-     * CaseUtils constructor. Since this class is not meant to allow for
-     * instantiation, this constructor is 'private'.
-     */
-    private CaseUtils() {
-    }
-
-    /**
      * Create a case case directory and case for the given case name.
      *
      * @param caseName the name for the case and case directory to have
@@ -105,10 +98,13 @@ public final class CaseUtils {
         if (!caseDirectory.exists()) {
             return;
         }
-        //We should determine whether the test fails or passes where this is called
-        //It will usually be a test failure when the case can not be deleted
-        //but sometimes we might be alright if we are unable to delete it.
         FileUtils.deleteDirectory(caseDirectory);
     }
 
+    /**
+     * Private constructor to prevent utility class instantiation.
+     */
+    private CaseUtils() {
+    }    
+    
 }
