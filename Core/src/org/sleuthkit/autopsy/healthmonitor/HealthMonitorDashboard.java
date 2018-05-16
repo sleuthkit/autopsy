@@ -65,6 +65,8 @@ public class HealthMonitorDashboard {
     private JComboBox<String> dateComboBox = null;
     private JComboBox<String> hostComboBox = null;
     private JCheckBox hostCheckBox = null;
+    private JCheckBox showTrendLineCheckBox = null;
+    private JCheckBox skipOutliersCheckBox = null;
     private JPanel graphPanel = null;
     private JDialog dialog = null;
     private final Container parentWindow;
@@ -201,7 +203,9 @@ public class HealthMonitorDashboard {
      * @return the control panel
      */
     @NbBundle.Messages({"HealthMonitorDashboard.createTimingControlPanel.filterByHost=Filter by host",
-                        "HealthMonitorDashboard.createTimingControlPanel.maxDays=Max days to display"})
+                        "HealthMonitorDashboard.createTimingControlPanel.maxDays=Max days to display",
+                        "HealthMonitorDashboard.createTimingControlPanel.skipOutliers=Do not plot outliers",
+                        "HealthMonitorDashboard.createTimingControlPanel.showTrendLine=Show trend line"})
     private JPanel createTimingControlPanel() {
         JPanel timingControlPanel = new JPanel();
         
@@ -252,7 +256,7 @@ public class HealthMonitorDashboard {
             }
         });
         
-        // Create the checkbox
+        // Create the host checkbox
         hostCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_filterByHost());
         hostCheckBox.setSelected(false);
         hostComboBox.setEnabled(false);
@@ -270,6 +274,38 @@ public class HealthMonitorDashboard {
             }
         });
         
+        // Create the checkbox for showing the trend line
+        showTrendLineCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_showTrendLine());
+        showTrendLineCheckBox.setSelected(true);
+        
+        // Set up the listener on the checkbox
+        showTrendLineCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                try {
+                    updateTimingMetricGraphs();
+                } catch (HealthMonitorException ex) {
+                    logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
+                }
+            }
+        });
+        
+        // Create the checkbox for omitting outliers
+        skipOutliersCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_skipOutliers());
+        skipOutliersCheckBox.setSelected(false);
+        
+        // Set up the listener on the checkbox
+        skipOutliersCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                try {
+                    updateTimingMetricGraphs();
+                } catch (HealthMonitorException ex) {
+                    logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
+                }
+            }
+        });
+        
         // Add the date range combo box and label to the panel
         timingControlPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingControlPanel_maxDays()));
         timingControlPanel.add(dateComboBox);
@@ -280,6 +316,18 @@ public class HealthMonitorDashboard {
         // Add the host combo box and checkbox to the panel
         timingControlPanel.add(hostCheckBox);
         timingControlPanel.add(hostComboBox);
+        
+        // Put some space between the elements
+        timingControlPanel.add(Box.createHorizontalStrut(100));
+        
+        // Add the skip outliers checkbox
+        timingControlPanel.add(this.showTrendLineCheckBox);
+        
+        // Put some space between the elements
+        timingControlPanel.add(Box.createHorizontalStrut(100));
+        
+        // Add the skip outliers checkbox
+        timingControlPanel.add(this.skipOutliersCheckBox);
         
         return timingControlPanel;
     }
@@ -324,7 +372,7 @@ public class HealthMonitorDashboard {
             
             // Generate the graph
             TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(intermediateTimingDataForDisplay, 
-                    TimingMetricGraphPanel.TimingMetricType.AVERAGE, hostToDisplay, true, metricName);
+                    hostToDisplay, true, metricName, skipOutliersCheckBox.isSelected(), showTrendLineCheckBox.isSelected());
             singleTimingGraphPanel.setPreferredSize(new Dimension(700,200));
             
             graphPanel.add(singleTimingGraphPanel);

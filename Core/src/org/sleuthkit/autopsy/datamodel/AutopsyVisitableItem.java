@@ -28,7 +28,7 @@ public interface AutopsyVisitableItem {
     /**
      * visitor pattern support
      *
-     * @param v visitor
+     * @param visitor visitor
      *
      * @return visitor return value
      */
