@@ -25,6 +25,8 @@ package org.sleuthkit.autopsy.commonfilesearch;
  */
 public class InterCasePanel extends javax.swing.JPanel {
 
+    private CommonFilesPanel parent;
+    
     /**
      * Creates new form InterCasePanel
      */
@@ -108,4 +110,8 @@ public class InterCasePanel extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> caseComboBox;
     private javax.swing.JRadioButton specificCentralRepoCaseRadio;
     // End of variables declaration//GEN-END:variables
+
+    void setParent(CommonFilesPanel parent) {
+        this.parent = parent;
+    }
 }

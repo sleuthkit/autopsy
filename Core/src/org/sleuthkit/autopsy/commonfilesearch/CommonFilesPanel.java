@@ -74,7 +74,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         initComponents();
         
         this.intraCasePanel.setParent(this);
-        //TODO set parent for intercase panel
+        this.interCasePanel.setParent(this)
         
         this.errorText.setVisible(false);
     }
