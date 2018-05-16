@@ -238,12 +238,13 @@ abstract class CommonFilesMetadataBuilder {
         "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
     })
     protected abstract String buildTabTitle();
-
+  
     @NbBundle.Messages({
         "CommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents",
         "CommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
         "CommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
     })
+
     protected String buildCategorySelectionString() {
         if (!this.filterByDoc && !this.filterByMedia) {
             return Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_all();

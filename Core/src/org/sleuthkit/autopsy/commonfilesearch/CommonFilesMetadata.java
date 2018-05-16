@@ -23,12 +23,11 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Utility and wrapper model around data required for Common Files Search
- * results. Subclass this to implement different selections of files from the
- * case.
+ * Utility and wrapper model around data required for Common Files Search results.
+ * Subclass this to implement different selections of files from the case.
  */
 final class CommonFilesMetadata {
-
+    
     private final Map<String, Md5Metadata> metadata;
 
     /**
@@ -47,7 +46,7 @@ final class CommonFilesMetadata {
      * <code>getMetadata()</code>.
      *
      * @param md5 key
-     * @return
+     * @return 
      */
     Md5Metadata getMetadataForMd5(String md5) {
         return this.metadata.get(md5);
