@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -1084,6 +1085,7 @@ public class Case {
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
+                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
@@ -1133,6 +1135,7 @@ public class Case {
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower

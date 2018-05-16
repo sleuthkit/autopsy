@@ -31,7 +31,6 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -52,8 +51,8 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  */
 @ServiceProviders(value = {
     @ServiceProvider(service = DataSourceProcessor.class),
-    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
-)
+    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)
+})
 @Messages({
     "LocalFilesDSProcessor.logicalEvidenceFilter.desc=Logical Evidence Files (L01)"
 })
@@ -344,15 +343,15 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
         // It should return lowest possible non-zero confidence level and be treated 
         // as the "option of last resort" for auto ingest purposes
 
-        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
         //If there is only 1 file check if it is an L01 file and if it is extract the 
         //contents and replace the paths, if the contents can't be extracted return 0
-        if (localFilePaths.size() == 1) {
-            for (final String path : localFilePaths) {
+        if (filePaths.size() == 1) {
+            for (final String path : filePaths) {
                 if (new File(path).isFile() && LOGICAL_EVIDENCE_FILTER.accept(new File(path))) {
                     try {
                         //if the L01 option was chosen
-                        localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
+                        filePaths = extractLogicalEvidenceFileContents(filePaths);
                     } catch (L01Exception ex) {
                         logger.log(Level.WARNING, "File extension was .l01 but contents of logical evidence file were unable to be extracted", ex);
                         //contents of l01 could not be extracted don't add data source or run ingest
@@ -369,7 +368,8 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
+        List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        run(deviceId, deviceId, filePaths, progressMonitor, callBack);
     }
 
     /**

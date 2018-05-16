@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,12 +25,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Optional;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 
@@ -108,7 +108,7 @@ public class CreditCards {
         Optional<String> getScheme();
     }
 
-    private static final Logger LOGGER = Logger.getLogger(CreditCards.class.getName());
+    private static final Logger logger = Logger.getLogger(CreditCards.class.getName());
 
   
     /**
@@ -166,12 +166,12 @@ public class CreditCards {
                         binRanges.put(Range.closed(binRange.getBINstart(), binRange.getBINend()), binRange);
 
                     } catch (NumberFormatException numberFormatException) {
-                        LOGGER.log(Level.WARNING, "Failed to parse BIN range: " + record.toString(), numberFormatException); //NON-NLS
+                        logger.log(Level.WARNING, "Failed to parse BIN range: " + record.toString(), numberFormatException); //NON-NLS
                     }
                     binsLoaded = true;
                 }
             } catch (IOException ex) {
-                LOGGER.log(Level.WARNING, "Failed to load BIN ranges form ranges.csv", ex); //NON-NLS
+                logger.log(Level.WARNING, "Failed to load BIN ranges form ranges.csv", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn("Credit Card Number Discovery", "There was an error loading Bank Identification Number information.  Accounts will not have their BINs identified.");
             }
         }

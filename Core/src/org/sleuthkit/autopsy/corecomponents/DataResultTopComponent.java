@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,161 +40,217 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Top component which displays results (top-right editor mode by default).
+ * A DataResultTopComponent object is a NetBeans top component that provides
+ * multiple views of the application data represented by a NetBeans Node. It is
+ * a result view component (implements DataResult) that contains a result view
+ * panel (DataResultPanel), which is also a result view component. The result
+ * view panel is a JPanel with a JTabbedPane child component that contains a
+ * collection of result viewers. Each result viewer (implements
+ * DataResultViewer) presents a different view of the current node. Result
+ * viewers are usually JPanels that display the child nodes of the current node
+ * using a NetBeans explorer view child component. The result viewers are either
+ * supplied during construction of the result view top component or provided by
+ * the result viewer extension point (service providers that implement
+ * DataResultViewer).
  *
- * There is a main tc instance that responds to directory tree selections.
- * Others can also create an additional result viewer tc using one of the
- * factory methods, that can be:
+ * Result view top components are typically docked into the upper right hand
+ * side of the main application window (editor mode), and are linked to the
+ * content view in the lower right hand side of the main application window
+ * (output mode) by the result view panel. The panel passes single node
+ * selections in the active result viewer to the content view.
  *
- * - added to top-right corner as an additional, closeable viewer - added to a
- * different, custom mode, - linked to a custom content viewer that responds to
- * selections from this top component.
+ * The "main" result view top component receives its current node as a selection
+ * from the case tree view in the top component (DirectoryTreeYopComponent)
+ * docked into the left hand side of the main application window.
  *
- * For embedding custom data result in other top components window, use
- * DataResultPanel component instead, since we cannot nest top components.
- *
- * Encapsulates the internal DataResultPanel and delegates to it.
- *
- * Implements DataResult interface by delegating to the encapsulated
- * DataResultPanel.
+ * Result view top components are explorer manager providers to connect the
+ * lookups of the nodes displayed in the NetBeans explorer views of the result
+ * viewers to the actions global context.
  */
 @RetainLocation("editor")
-public class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
+public final class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
-    private final ExplorerManager explorerManager = new ExplorerManager();
-    private final DataResultPanel dataResultPanel; //embedded component with all the logic
-    private boolean isMain;
-    private String customModeName;
-
-    //keep track of tcs opened for menu presenters
     private static final List<String> activeComponentIds = Collections.synchronizedList(new ArrayList<String>());
+    private final boolean isMain;
+    private final String customModeName;
+    private final ExplorerManager explorerManager;
+    private final DataResultPanel dataResultPanel;
 
     /**
-     * Create a new data result top component
+     * Creates a result view top component that provides multiple views of the
+     * application data represented by a NetBeans Node. The result view will be
+     * docked into the upper right hand side of the main application window
+     * (editor mode) and will be linked to the content view in the lower right
+     * hand side of the main application window (output mode). Its result
+     * viewers are provided by the result viewer extension point (service
+     * providers that implement DataResultViewer).
      *
-     * @param isMain whether it is the main, application default result viewer,
-     *               there can be only 1 main result viewer
-     * @param title  title of the data result window
+     * @param title          The title for the top component, appears on the top
+     *                       component's tab.
+     * @param description    Descriptive text about the node displayed, appears
+     *                       on the top component's tab
+     * @param node           The node to display.
+     * @param childNodeCount The cardinality of the node's children.
+     *
+     * @return The result view top component.
      */
-    public DataResultTopComponent(boolean isMain, String title) {
-        associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
-        this.dataResultPanel = new DataResultPanel(title, isMain);
-        initComponents();
-        customizeComponent(isMain, title);
+    public static DataResultTopComponent createInstance(String title, String description, Node node, int childNodeCount) {
+        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
+        initInstance(description, node, childNodeCount, resultViewTopComponent);
+        return resultViewTopComponent;
+    }    
+
+    /**
+     * Creates a result view top component that provides multiple views of the
+     * application data represented by a NetBeans Node. The result view will be
+     * docked into the upper right hand side of the main application window
+     * (editor mode) and will be linked to the content view in the lower right
+     * hand side of the main application window (output mode).
+     *
+     * @param title          The title for the top component, appears on the top
+     *                       component's tab.
+     * @param description    Descriptive text about the node displayed, appears
+     *                       on the top component's tab
+     * @param node           The node to display.
+     * @param childNodeCount The cardinality of the node's children.
+     * @param viewers        A collection of result viewers to use instead of
+     *                       the result viewers provided by the results viewer
+     *                       extension point.
+     *
+     * @return The result view top component.
+     */
+    public static DataResultTopComponent createInstance(String title, String description, Node node, int childNodeCount, Collection<DataResultViewer> viewers) {
+        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, viewers, DataContentTopComponent.findInstance());
+        initInstance(description, node, childNodeCount, resultViewTopComponent);
+        return resultViewTopComponent;
     }
 
     /**
-     * Create a new, custom data result top component, in addition to the
-     * application main one
+     * Creates a partially initialized result view top component that provides
+     * multiple views of the application data represented by a NetBeans Node.
+     * The result view will be docked into the upper right hand side of the main
+     * application window (editor mode) and will be linked to the content view
+     * in the lower right hand side of the main application window (output
+     * mode). Its result viewers are provided by the result viewer extension
+     * point (service providers that implement DataResultViewer).
      *
-     * @param name                unique name of the data result window, also
-     *                            used as title
-     * @param mode                custom mode to dock into
-     * @param customContentViewer custom content viewer to send selection events
-     *                            to
+     * IMPORTANT: Initialization MUST be completed by calling initInstance.
+     *
+     * @param title The title for the result view top component, appears on the
+     *              top component's tab.
+     *
+     * @return The partially initialized result view top component.
      */
-    DataResultTopComponent(String name, String mode, DataContentTopComponent customContentViewer) {
+    public static DataResultTopComponent createInstance(String title) {
+        DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
+        return resultViewTopComponent;
+    }
+    
+    /**
+     * Initializes a partially initialized result view top component.
+     *
+     * @param description            Descriptive text about the node displayed,
+     *                               appears on the top component's tab
+     * @param node                   The node to display.
+     * @param childNodeCount         The cardinality of the node's children.
+     * @param resultViewTopComponent The partially initialized result view top
+     *                               component.
+     */
+    public static void initInstance(String description, Node node, int childNodeCount, DataResultTopComponent resultViewTopComponent) {
+        resultViewTopComponent.setNumberOfChildNodes(childNodeCount);
+        resultViewTopComponent.open();
+        resultViewTopComponent.setNode(node);
+        resultViewTopComponent.setPath(description);
+        resultViewTopComponent.requestActive();
+    }
+
+    /**
+     * Creates a result view top component that provides multiple views of the
+     * application data represented by a NetBeans Node. The result view will be
+     * docked into a custom mode and linked to the supplied content view. Its
+     * result viewers are provided by the result viewer extension point (service
+     * providers that implement DataResultViewer).
+     *
+     * @param title                   The title for the top component, appears
+     *                                on the top component's tab.
+     * @param mode                    The NetBeans Window system mode into which
+     *                                this top component should be docked.
+     * @param description             Descriptive text about the node displayed,
+     *                                appears on the top component's tab
+     * @param node                    The node to display.
+     * @param childNodeCount          The cardinality of the node's children.
+     * @param contentViewTopComponent A content view to which this result view
+     *                                will be linked.
+     *
+     * @return The result view top component.
+     */
+    public static DataResultTopComponent createInstance(String title, String mode, String description, Node node, int childNodeCount, DataContentTopComponent contentViewTopComponent) {
+        DataResultTopComponent newDataResult = new DataResultTopComponent(false, title, mode, Collections.emptyList(), contentViewTopComponent);
+        initInstance(description, node, childNodeCount, newDataResult);
+        return newDataResult;
+    }
+
+    /**
+     * Creates a result view top component that provides multiple views of the
+     * application data represented by a NetBeans Node. The result view will be
+     * the "main" result view and will docked into the upper right hand side of
+     * the main application window (editor mode) and will be linked to the
+     * content view in the lower right hand side of the main application window
+     * (output mode). Its result viewers are provided by the result viewer
+     * extension point (service providers that implement DataResultViewer).
+     *
+     * IMPORTANT: The "main" result view top component receives its current node
+     * as a selection from the case tree view in the top component
+     * (DirectoryTreeTopComponent) docked into the left hand side of the main
+     * application window. This constructor is RESERVED for the use of the
+     * DirectoryTreeTopComponent singleton only. DO NOT USE OTHERWISE.
+     *
+     * @param title The title for the top component, appears on the top
+     *              component's tab.
+     */
+    public DataResultTopComponent(String title) {
+        this(true, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
+    }
+
+    /**
+     * Constructs a result view top component that provides multiple views of
+     * the application data represented by a NetBeans Node.
+     *
+     * @param isMain                  Whether or not this is the "main" result
+     *                                view top component.
+     * @param title                   The title for the top component, appears
+     *                                on the top component's tab.
+     * @param mode                    The NetBeans Window system mode into which
+     *                                this top component should be docked. If
+     *                                null, the editor mode will be used by
+     *                                default.
+     * @param viewers                 A collection of result viewers. If empty,
+     *                                the result viewers provided by the results
+     *                                viewer extension point will be used.
+     * @param contentViewTopComponent A content view to which this result view
+     *                                will be linked, possibly null.
+     */
+    private DataResultTopComponent(boolean isMain, String title, String mode, Collection<DataResultViewer> viewers, DataContentTopComponent contentViewTopComponent) {
+        this.isMain = isMain;
+        this.explorerManager = new ExplorerManager();
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         this.customModeName = mode;
-        dataResultPanel = new DataResultPanel(name, customContentViewer);
+        this.dataResultPanel = new DataResultPanel(title, isMain, viewers, contentViewTopComponent);
         initComponents();
-        customizeComponent(isMain, name);
+        customizeComponent(title);
     }
 
-    private void customizeComponent(boolean isMain, String title) {
-        this.isMain = isMain;
-        this.customModeName = null;
-
-        setToolTipText(NbBundle.getMessage(DataResultTopComponent.class, "HINT_NodeTableTopComponent"));
-
-        setTitle(title); // set the title
+    private void customizeComponent(String title) {
+        setToolTipText(NbBundle.getMessage(DataResultTopComponent.class, "HINT_NodeTableTopComponent"));  //NON-NLS
+        setTitle(title);
         setName(title);
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
-
-        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain); // set option to close compoment in GUI
+        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain);
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
         putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
-
         activeComponentIds.add(title);
-    }
-
-    /**
-     * Initialize previously created tc instance with additional data
-     *
-     * @param pathText
-     * @param givenNode
-     * @param totalMatches
-     * @param newDataResult previously created with createInstance()
-     *                      uninitialized instance
-     */
-    public static void initInstance(String pathText, Node givenNode, int totalMatches, DataResultTopComponent newDataResult) {
-        newDataResult.setNumMatches(totalMatches);
-
-        newDataResult.open(); // open it first so the component can be initialized
-
-        // set the tree table view
-        newDataResult.setNode(givenNode);
-        newDataResult.setPath(pathText);
-
-        newDataResult.requestActive();
-    }
-
-    /**
-     * Creates a new non-default DataResult component and initializes it
-     *
-     * @param title        Title of the component window
-     * @param pathText     Descriptive text about the source of the nodes
-     *                     displayed
-     * @param givenNode    The new root node
-     * @param totalMatches Cardinality of root node's children
-     *
-     * @return a new, not default, initialized DataResultTopComponent instance
-     */
-    public static DataResultTopComponent createInstance(String title, String pathText, Node givenNode, int totalMatches) {
-        DataResultTopComponent newDataResult = new DataResultTopComponent(false, title);
-
-        initInstance(pathText, givenNode, totalMatches, newDataResult);
-
-        return newDataResult;
-    }
-
-    /**
-     * Creates a new non-default DataResult component linked with a custom data
-     * content, and initializes it.
-     *
-     *
-     * @param title             Title of the component window
-     * @param mode              custom mode to dock this custom TopComponent to
-     * @param pathText          Descriptive text about the source of the nodes
-     *                          displayed
-     * @param givenNode         The new root node
-     * @param totalMatches      Cardinality of root node's children
-     * @param dataContentWindow a handle to data content top component window to
-     *
-     * @return a new, not default, initialized DataResultTopComponent instance
-     */
-    public static DataResultTopComponent createInstance(String title, final String mode, String pathText, Node givenNode, int totalMatches, DataContentTopComponent dataContentWindow) {
-        DataResultTopComponent newDataResult = new DataResultTopComponent(title, mode, dataContentWindow);
-
-        initInstance(pathText, givenNode, totalMatches, newDataResult);
-        return newDataResult;
-    }
-
-    /**
-     * Creates a new non-default DataResult component. You probably want to use
-     * initInstance after it
-     *
-     * @param title
-     *
-     * @return a new, not default, not fully initialized DataResultTopComponent
-     *         instance
-     */
-    public static DataResultTopComponent createInstance(String title) {
-        final DataResultTopComponent newDataResult = new DataResultTopComponent(false, title);
-
-        return newDataResult;
     }
 
     @Override
@@ -202,37 +259,14 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     }
 
     /**
-     * Get a list with names of active windows ids, e.g. for the menus
+     * Get a listing of the preferred identifiers of all the result view top
+     * components that have been created.
      *
-     * @return
+     * @return The listing.
      */
     public static List<String> getActiveComponentIds() {
         return new ArrayList<>(activeComponentIds);
     }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        org.sleuthkit.autopsy.corecomponents.DataResultPanel dataResultPanelLocal = dataResultPanel;
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataResultPanelLocal, javax.swing.GroupLayout.DEFAULT_SIZE, 967, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dataResultPanelLocal, javax.swing.GroupLayout.DEFAULT_SIZE, 579, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
 
     @Override
     public int getPersistenceType() {
@@ -245,16 +279,6 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public void open() {
-        setCustomMode();
-        super.open(); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public List<DataResultViewer> getViewers() {
-        return dataResultPanel.getViewers();
-    }
-
-    private void setCustomMode() {
         if (customModeName != null) {
             Mode mode = WindowManager.getDefault().findMode(customModeName);
             if (mode != null) {
@@ -264,6 +288,12 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
                 logger.log(Level.WARNING, "Could not find mode: {0}, will dock into the default one", customModeName);//NON-NLS
             }
         }
+        super.open();
+    }
+
+    @Override
+    public List<DataResultViewer> getViewers() {
+        return dataResultPanel.getViewers();
     }
 
     @Override
@@ -290,7 +320,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         } else {
             selectedNode = null;
         }
-        
+
         /*
          * If the selected node of the content viewer is different than that of
          * the result viewer, the content viewer needs to be updated. Otherwise,
@@ -343,29 +373,13 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public boolean canClose() {
-        /*
-         * If this is the results top component in the upper right of the main
-         * window, only allow it to be closed when there's no case opened or no
-         * data sources in the open case.
-         */
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
+        } catch (NoCurrentCaseException unused) {
             return true;
         }
         return (!this.isMain) || openCase.hasData() == false;
-    }
-
-    /**
-     * Resets the tabs based on the selected Node. If the selected node is null
-     * or not supported, disable that tab as well.
-     *
-     * @param selectedNode the selected content Node
-     */
-    public void resetTabs(Node selectedNode) {
-
-        dataResultPanel.resetTabs(selectedNode);
     }
 
     public void setSelectedNodes(Node[] selected) {
@@ -376,7 +390,74 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         return dataResultPanel.getRootNode();
     }
 
-    void setNumMatches(int matches) {
-        this.dataResultPanel.setNumMatches(matches);
+    /**
+     * Sets the cardinality of the current node's children
+     *
+     * @param childNodeCount The cardinality of the node's children.
+     */
+    private void setNumberOfChildNodes(int childNodeCount) {
+        this.dataResultPanel.setNumberOfChildNodes(childNodeCount);
     }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        org.sleuthkit.autopsy.corecomponents.DataResultPanel dataResultPanelLocal = dataResultPanel;
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(dataResultPanelLocal, javax.swing.GroupLayout.DEFAULT_SIZE, 967, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(dataResultPanelLocal, javax.swing.GroupLayout.DEFAULT_SIZE, 579, Short.MAX_VALUE)
+        );
+    }// </editor-fold>//GEN-END:initComponents
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
+
+    /**
+     * Creates a partially initialized result view top component that provides
+     * multiple views of the application data represented by a NetBeans Node.
+     * The result view will be docked into the upper right hand side of the main
+     * application window (editor mode) and will be linked to the content view
+     * in the lower right hand side of the main application window (output
+     * mode). Its result viewers are provided by the result viewer extension
+     * point (service providers that implement DataResultViewer).
+     *
+     * IMPORTANT: Initialization MUST be completed by calling initInstance.
+     *
+     * @param isMain Ignored.
+     * @param title  The title for the top component, appears on the top
+     *               component's tab.
+     *
+     * @deprecated Use an appropriate overload of createIntance instead.
+     */
+    @Deprecated
+    public DataResultTopComponent(boolean isMain, String title) {
+        this(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
+    }
+
+    /**
+     * Sets the node for which this result view component should provide
+     * multiple views of the underlying application data.
+     *
+     * @param node The node, may be null. If null, the call to this method is
+     *             equivalent to a call to resetComponent on this result view
+     *             component's result viewers.
+     *
+     * @deprecated Use setNode instead.
+     */
+    @Deprecated
+    public void resetTabs(Node node) {
+        dataResultPanel.setNode(node);
+    }
+
 }

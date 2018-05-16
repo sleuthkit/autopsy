@@ -188,6 +188,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     EncryptionDetectionModuleFactory.getModuleName(), comment)
             );
 
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                    EncryptionDetectionModuleFactory.getModuleName(), comment));
+
             try {
                 /*
                  * Index the artifact for keyword search.
@@ -208,7 +211,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             StringBuilder detailsSb = new StringBuilder();
             detailsSb.append("File: ").append(file.getParentPath()).append(file.getName());
             if (artifactType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED)) {
-                detailsSb.append("<br/>\n").append("Entropy: ").append(calculatedEntropy);
+                detailsSb.append("<br/>\nEntropy: ").append(calculatedEntropy);
             }
 
             services.postMessage(IngestMessage.createDataMessage(EncryptionDetectionModuleFactory.getModuleName(),

@@ -38,11 +38,24 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 public class EncryptionDetectionTest extends NbTestCase {
+
+    private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
+    private static final String PASSWORD_CASE_NAME = "testPasswordProtection";
+    
+    private static final Path BITLOCKER_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), BITLOCKER_CASE_NAME);
+    private static final Path PASSWORD_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), PASSWORD_CASE_NAME);
+    
+    private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
+    private final Path PASSWORD_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
 
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
     private static final String SQLCIPHER_DETECTION_CASE_NAME = "SQLCipherDetectionTest";
@@ -51,7 +64,7 @@ public class EncryptionDetectionTest extends NbTestCase {
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_sqlcipher_test.vhd");
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
-
+  
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
                 clusters(".*").
@@ -126,6 +139,72 @@ public class EncryptionDetectionTest extends NbTestCase {
                     }
                 }
             }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
+    /**
+     * Test the Encryption Detection module's volume encryption detection.
+     */
+    public void testBitlockerEncryption() {
+        try {
+            CaseUtils.createCase(BITLOCKER_CASE_DIRECTORY_PATH, BITLOCKER_CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
+            IngestModuleFactory ingestModuleFactory = new EncryptionDetectionModuleFactory();
+            IngestModuleIngestJobSettings settings = ingestModuleFactory.getDefaultIngestJobSettings();
+            IngestModuleTemplate template = new IngestModuleTemplate(ingestModuleFactory, settings);
+            template.setEnabled(true);
+            List<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(template);
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(EncryptionDetectionTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
+            /*
+             * Process each volume.
+             */
+            boolean vol2Found = false;
+
+            String errorMessage;
+
+            Image dataSource = (Image) openCase.getDataSources().get(0);
+            List<VolumeSystem> volumeSystems = dataSource.getVolumeSystems();
+            for (VolumeSystem volumeSystem : volumeSystems) {
+                for (Volume volume : volumeSystem.getVolumes()) {
+                    List<BlackboardArtifact> artifactsList = volume.getAllArtifacts();
+
+                    if (volume.getName().equals("vol2")) {
+                        vol2Found = true;
+
+                        errorMessage = String.format("Expected one artifact for '%s', but found %d.",
+                                volume.getName(), artifactsList.size());
+                        assertEquals(errorMessage, 1, artifactsList.size());
+
+                        String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
+                        errorMessage = String.format("Unexpected '%s' artifact for '%s'.",
+                                artifactTypeName, volume.getName());
+                        assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.toString(), artifactTypeName);
+
+                        BlackboardAttribute attribute = artifactsList.get(0).getAttribute(
+                                new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT));
+                        errorMessage = String.format("Expected a TSK_COMMENT attribute for '%s', but found none.",
+                                volume.getName());
+                        assertNotNull(errorMessage, attribute);
+
+                        errorMessage = String.format("Unexpected attribute value: \"%s\"", attribute.getValueString());
+                        assertEquals(errorMessage, "Bitlocker encryption detected.", attribute.getValueString());
+                    } else {
+                        errorMessage = String.format("Expected no artifacts for '%s', but found %d.",
+                                volume.getName(), artifactsList.size());
+                        assertEquals(errorMessage, 0, artifactsList.size());
+                    }
+                }
+            }
+
+            errorMessage = "Expected to find 'vol2', but no such volume exists.";
+            assertEquals(errorMessage, true, vol2Found);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
