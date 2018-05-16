@@ -1,0 +1,42 @@
+# Names should be added to this file with this pattern:
+#
+# For individuals:
+#   Name (email address)
+#
+# For organizations:
+#   Organization (fnmatch pattern)
+#
+# See python fnmatch module documentation for more information.
+
+Google Inc. (*@google.com)
+Kristinn Gudjonsson (kristinn@log2timeline.net)
+Keith Wall (kwallster@gmail.com)
+Eric Mak (ericmak@gmail.com)
+David Nides (david.nides@gmail.com)
+Joachim Metz (joachim.metz@gmail.com)
+Francesco Picasso (francesco.picasso@gmail.com)
+Elizabeth Schweinsberg (bethlogic@gmail.com)
+Oliver Jensen (ojensen5115@gmail.com)
+Dominique Kilman (lexistar97@gmail.com)
+Marc Seguin (segumarc@gmail.com)
+Brian Baskin (brian@thebaskins.com)
+Daniel White (onager@deerpie.com)
+Johan Berggren (jberggren@gmail.com)
+Joaquin Moren Garijo (bastionado@gmail.com)
+Jerome Marty (jahrome11@gmail.com)
+Petter Bjelland (petter.bjelland@gmail.com)
+Marc Leavitt (marc.leavitt@fmr.com)
+Ashley Holtz (ashley.a.holtz@gmail.com)
+Preston Miller (preston.miller@dpmforensics.com)
+Eric John (ej.infotech@gmail.com)
+Georg Lukas (georg@op-co.de)
+Omer Yampel (omeryampel@gmail.com)
+DC3 (dc3.plaso@gmail.com)
+Jason Blanks (jason.blanks@gmail.com)
+Christian Buia (christianbuia@gmail.com)
+Romain Gayon (romaing@google.com)
+Eric (ej.infotech@gmail.com)
+Hilko Bengen (bengen@hilluzination.de)
+Ken Macleod (Kenmacleod2013@gmail.com)
+Jesus Aguilar (jesus@jaguilar.me)
+Vladimir Macko (vlejd@google.com)

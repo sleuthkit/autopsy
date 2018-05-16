@@ -1,0 +1,19 @@
+# Java related artifacts.
+
+name: JavaCacheFiles
+doc: Java Plug-in cache.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.localappdata_low%%\Sun\Java\Deployment\cache\**'
+      - '%%users.homedir%%\AppData\LocalLow\Sun\Java\Deployment\cache\**'
+      - '%%users.homedir%%\Application Data\Sun\Java\Deployment\cache\**'
+  supported_os: [Windows]
+- type: FILE
+  attributes: {paths: ['%%users.homedir%%/Library/Caches/Java/cache/**']}
+  supported_os: [Darwin]
+- type: FILE
+  attributes: {paths: ['%%users.homedir%%/.java/deployment/cache/**']}
+  supported_os: [Linux]
+supported_os: [Windows, Linux, Darwin]
