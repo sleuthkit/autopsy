@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javafx.application.Platform;
@@ -169,7 +170,7 @@ public class ZoomSettingsPane extends TitledPane {
      *                            lineup exactly with the Enum value indices to
      *                            use as tick Labels.
      */
-    private static <DriverType, EnumType extends Enum<EnumType> > void configureSliderListeners(
+    private static <DriverType, EnumType extends Enum<EnumType>> void configureSliderListeners(
             Slider slider,
             Consumer<EnumType> sliderValueConsumer,
             ReadOnlyObjectProperty<DriverType> modelProperty,
@@ -215,9 +216,9 @@ public class ZoomSettingsPane extends TitledPane {
 
     /**
      * StringConverter for the tick Labels of a Slider that is "backed" by an
-     * Enum that extends DisplayNameProvider. Narrows the Slider's Double value
-     * to an Integer and then uses that as the index of the Enum value whose
-     * displayName will be shown as the tick Label
+     * Enum. Narrows the Slider's Double value to an Integer and then uses that
+     * as the index of the Enum value whose displayName will be shown as the
+     * tick Label
      *
      * @param <EnumType> The type of Enum that this converter works with.
      */
@@ -241,8 +242,18 @@ public class ZoomSettingsPane extends TitledPane {
 
         @Override
         public String toString(Double dbl) {
-            //get the displayName of the EnumType whose index is the given dbl after it has been narrowed and then adjusted
-            return clazz.getEnumConstants()[indexAdjsuter.apply(dbl.intValue())].getDisplayName();
+            /* get the displayName of the EnumType whose index is the given dbl
+             * after it has been narrowed and then adjusted. At one point there
+             * was an interface, DisplayNameProvider, but that was inappropriate
+             * to put in TSK only to support these sliders, so now we use
+             * reflection instead.
+             */
+            EnumType enumConstant = clazz.getEnumConstants()[indexAdjsuter.apply(dbl.intValue())];
+            try {
+                return (String) clazz.getMethod("getDisplayName", (Class<?>[]) null).invoke(enumConstant, (Object[]) null);
+            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                return enumConstant.toString();
+            }
         }
 
         @Override

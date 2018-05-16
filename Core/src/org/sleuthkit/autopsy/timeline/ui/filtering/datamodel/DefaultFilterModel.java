@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.timeline.ui.filtering;
+package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -16,11 +16,11 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
  *
  *
  */
-public class FilterModel implements TimelineFilter {
+public class DefaultFilterModel<FilterType extends TimelineFilter> implements FilterModel<FilterType> {
 
-    private final TimelineFilter delegate;
+    private final FilterType delegate;
 
-    public FilterModel(TimelineFilter delegate) {
+    public DefaultFilterModel(FilterType delegate) {
         this.delegate = delegate;
     }
 
@@ -28,34 +28,42 @@ public class FilterModel implements TimelineFilter {
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
     private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
 
+    @Override
     public SimpleBooleanProperty selectedProperty() {
         return selected;
     }
 
+    @Override
     public ObservableBooleanValue disabledProperty() {
         return disabled;
     }
 
+    @Override
     public void setSelected(Boolean act) {
         selected.set(act);
     }
 
+    @Override
     public boolean isSelected() {
         return selected.get();
     }
 
+    @Override
     public void setDisabled(Boolean act) {
         disabled.set(act);
     }
 
+    @Override
     public boolean isDisabled() {
         return disabledProperty().get();
     }
 
+    @Override
     public boolean isActive() {
         return activeProperty().get();
     }
 
+    @Override
     public BooleanBinding activeProperty() {
         return activeProp;
     }
@@ -67,19 +75,21 @@ public class FilterModel implements TimelineFilter {
 
     @Override
     public String getSQLWhere(TimelineManager tm) {
+        //TODO: intercept and prune out inactive filters;
         return delegate.getSQLWhere(tm);
     }
 
     @Override
-    public FilterModel copyOf() {
+    public DefaultFilterModel<FilterType> copyOf() {
         @SuppressWarnings("unchecked")
-        FilterModel copy = new FilterModel(delegate.copyOf());
+        DefaultFilterModel<FilterType> copy = new DefaultFilterModel<>((FilterType) delegate.copyOf());
         copy.setDisabled(isSelected());
         copy.setDisabled(isDisabled());
         return copy;
     }
 
-    public TimelineFilter getFilter() {
+    @Override
+    public FilterType getFilter() {
         return delegate;
     }
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
 import java.util.Arrays;
 import java.util.function.BiPredicate;
 import javafx.scene.control.TreeItem;
@@ -26,15 +27,16 @@ import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionGroup;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  *
  */
-class FilterTreeTableRow extends TreeTableRow<FilterModel> {
+class FilterTreeTableRow extends TreeTableRow<FilterModel<TimelineFilter>> {
 
     @Override
-    protected void updateItem(FilterModel item, boolean empty) {
+    protected void updateItem(FilterModel<TimelineFilter> item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null || empty) {
             setContextMenu(null);
@@ -61,16 +63,16 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel> {
         SELECT(Bundle.Timeline_ui_filtering_menuItem_select(),
                 (treeItem, row) -> false == row.isSelected());
 
-        private final BiPredicate<FilterModel, TreeTableRow<FilterModel>> selectionPredicate;
+        private final BiPredicate<FilterModel<TimelineFilter>, TreeTableRow<FilterModel<TimelineFilter>>> selectionPredicate;
 
         private final String displayName;
 
-        private SelectionAction(String displayName, BiPredicate<FilterModel, TreeTableRow<FilterModel>> predicate) {
+        private SelectionAction(String displayName, BiPredicate<FilterModel<TimelineFilter>, TreeTableRow<FilterModel<TimelineFilter>>> predicate) {
             this.selectionPredicate = predicate;
             this.displayName = displayName;
         }
 
-        public void doSelection(FilterModel treeItem, TreeTableRow<FilterModel> row) {
+        public void doSelection(FilterModel<TimelineFilter> treeItem, TreeTableRow<FilterModel<TimelineFilter>> row) {
             treeItem.setSelected(selectionPredicate.test(treeItem, row));
         }
 
@@ -81,7 +83,7 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel> {
 
     private static final class SelectActionsGroup extends ActionGroup {
 
-        SelectActionsGroup(TreeTableRow<FilterModel> row) {
+        SelectActionsGroup(TreeTableRow<FilterModel<TimelineFilter>> row) {
             super(Bundle.Timeline_ui_filtering_menuItem_select(),
                     new Select(SelectionAction.ALL, row),
                     new Select(SelectionAction.NONE, row),
@@ -93,13 +95,13 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel> {
 
     private static final class Select extends Action {
 
-        public TreeTableRow<FilterModel> getRow() {
+        public TreeTableRow<FilterModel<TimelineFilter>> getRow() {
             return row;
         }
-        private final TreeTableRow<FilterModel> row;
+        private final TreeTableRow<FilterModel<TimelineFilter>> row;
         private final SelectionAction selectionAction;
 
-        Select(SelectionAction strategy, TreeTableRow<FilterModel> row) {
+        Select(SelectionAction strategy, TreeTableRow<FilterModel<TimelineFilter>> row) {
             super(strategy.getDisplayName());
             this.row = row;
             this.selectionAction = strategy;
@@ -108,7 +110,7 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel> {
                     .forEach(this::doSelection));
         }
 
-        private void doSelection(FilterModel treeItem) {
+        private void doSelection(FilterModel<TimelineFilter> treeItem) {
             selectionAction.doSelection(treeItem, getRow());
         }
     }

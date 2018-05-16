@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
@@ -58,8 +57,8 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout
@@ -127,7 +126,8 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         if (useQuickHideFilters) {
             //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
             activeQuickHidefilters = getController().getQuickHideFilters().stream()
-                    .filter(TimelineFilter::isActive)
+                    .filter(FilterModel::isActive)
+                    .map( FilterModel<DescriptionFilter>::getFilter)
                     .map(DescriptionFilter::getDescription)
                     .collect(Collectors.toSet());
         }
@@ -157,9 +157,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
     /**
      * listener that triggers chart layout pass
      */
-    final InvalidationListener layoutInvalidationListener = (Observable o) -> {
-        layoutPlotChildren();
-    };
+    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
 
     public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();

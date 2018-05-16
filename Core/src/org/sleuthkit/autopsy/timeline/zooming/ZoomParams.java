@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.util.Objects;
 import org.joda.time.Interval;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
@@ -30,108 +32,108 @@ import org.sleuthkit.datamodel.timeline.filters.RootFilter;
  */
 final public class ZoomParams {
 
-	private final Interval timeRange;
+    private final Interval timeRange;
 
-	private final EventTypeZoomLevel typeZoomLevel;
+    private final EventTypeZoomLevel typeZoomLevel;
 
-	private final RootFilter filter;
+    private final RootFilterModel filter;
 
-	private final DescriptionLoD descrLOD;
+    private final DescriptionLoD descrLOD;
 
-	public Interval getTimeRange() {
-		return timeRange;
-	}
+    public Interval getTimeRange() {
+        return timeRange;
+    }
 
-	public EventTypeZoomLevel getTypeZoomLevel() {
-		return typeZoomLevel;
-	}
+    public EventTypeZoomLevel getTypeZoomLevel() {
+        return typeZoomLevel;
+    }
 
-	public RootFilter getFilter() {
-		return filter;
-	}
+    public RootFilterModel getFilterModel() {
+        return filter;
+    }
 
-	public DescriptionLoD getDescriptionLOD() {
-		return descrLOD;
-	}
+    public DescriptionLoD getDescriptionLOD() {
+        return descrLOD;
+    }
 
-	public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilter filter, DescriptionLoD descrLOD) {
-		this.timeRange = timeRange;
-		this.typeZoomLevel = zoomLevel;
-		this.filter = filter;
-		this.descrLOD = descrLOD;
-	}
+    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilterModel filter, DescriptionLoD descrLOD) {
+        this.timeRange = timeRange;
+        this.typeZoomLevel = zoomLevel;
+        this.filter = filter;
+        this.descrLOD = descrLOD;
+    }
 
-	public ZoomParams withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
-		return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
-	}
+    public ZoomParams withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
+        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
+    }
 
-	public ZoomParams withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
-		return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
-	}
+    public ZoomParams withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
+        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
+    }
 
-	public ZoomParams withTimeRange(Interval timeRange) {
-		return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
-	}
+    public ZoomParams withTimeRange(Interval timeRange) {
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
+    }
 
-	public ZoomParams withDescrLOD(DescriptionLoD descrLOD) {
-		return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
-	}
+    public ZoomParams withDescrLOD(DescriptionLoD descrLOD) {
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
+    }
 
-	public ZoomParams withFilter(RootFilter filter) {
-		return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
-	}
+    public ZoomParams withFilter(RootFilterModel filter) {
+        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
+    }
 
-	public boolean hasFilter(RootFilter filterSet) {
-		return this.filter.equals(filterSet);
-	}
+    public boolean hasFilter(DefaultFilterModel<RootFilter> filterSet) {
+        return this.filter.equals(filterSet);
+    }
 
-	public boolean hasTypeZoomLevel(EventTypeZoomLevel typeZoom) {
-		return this.typeZoomLevel.equals(typeZoom);
-	}
+    public boolean hasTypeZoomLevel(EventTypeZoomLevel typeZoom) {
+        return this.typeZoomLevel.equals(typeZoom);
+    }
 
-	public boolean hasTimeRange(Interval timeRange) {
-		return this.timeRange == null ? false : this.timeRange.equals(timeRange);
-	}
+    public boolean hasTimeRange(Interval timeRange) {
+        return this.timeRange != null && this.timeRange.equals(timeRange);
+    }
 
-	public boolean hasDescrLOD(DescriptionLoD newLOD) {
-		return this.descrLOD.equals(newLOD);
-	}
+    public boolean hasDescrLOD(DescriptionLoD newLOD) {
+        return this.descrLOD.equals(newLOD);
+    }
 
-	@Override
-	public int hashCode() {
-		int hash = 3;
-		hash = 97 * hash + Objects.hashCode(this.timeRange.getStartMillis());
-		hash = 97 * hash + Objects.hashCode(this.timeRange.getEndMillis());
-		hash = 97 * hash + Objects.hashCode(this.typeZoomLevel);
-		hash = 97 * hash + Objects.hashCode(this.filter);
-		hash = 97 * hash + Objects.hashCode(this.descrLOD);
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.timeRange.getStartMillis());
+        hash = 97 * hash + Objects.hashCode(this.timeRange.getEndMillis());
+        hash = 97 * hash + Objects.hashCode(this.typeZoomLevel);
+        hash = 97 * hash + Objects.hashCode(this.filter);
+        hash = 97 * hash + Objects.hashCode(this.descrLOD);
 
-		return hash;
-	}
+        return hash;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final ZoomParams other = (ZoomParams) obj;
-		if (!Objects.equals(this.timeRange, other.timeRange)) {
-			return false;
-		}
-		if (this.typeZoomLevel != other.typeZoomLevel) {
-			return false;
-		}
-		if (this.filter.equals(other.filter) == false) {
-			return false;
-		}
-		return this.descrLOD == other.descrLOD;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ZoomParams other = (ZoomParams) obj;
+        if (!Objects.equals(this.timeRange, other.timeRange)) {
+            return false;
+        }
+        if (this.typeZoomLevel != other.typeZoomLevel) {
+            return false;
+        }
+        if (this.filter.equals(other.filter) == false) {
+            return false;
+        }
+        return this.descrLOD == other.descrLOD;
+    }
 
-	@Override
-	public String toString() {
-		return "ZoomParams{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter + ", descrLOD=" + descrLOD + '}'; //NON-NLS
-	}
+    @Override
+    public String toString() {
+        return "ZoomParams{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter + ", descrLOD=" + descrLOD + '}'; //NON-NLS
+    }
 }

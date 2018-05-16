@@ -9,8 +9,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
 
 /**
  * An Action that hides, in the given chart, events that have the given
@@ -36,8 +38,8 @@ class HideDescriptionAction extends Action {
              * as the new filter for the given description. Set the (new) filter
              * active.
              */
-            final DescriptionFilter testFilter = new DescriptionFilter(descriptionLoD, description, DescriptionFilter.FilterMode.EXCLUDE);
-            DescriptionFilter descriptionFilter = chart.getController().getQuickHideFilters().stream()
+            final FilterModel<DescriptionFilter> testFilter = new DefaultFilterModel<>(new DescriptionFilter(descriptionLoD, description, DescriptionFilter.FilterMode.EXCLUDE));
+            FilterModel<  DescriptionFilter> descriptionFilter = chart.getController().getQuickHideFilters().stream()
                     .filter(testFilter::equals).findFirst()
                     .orElseGet(() -> {
                         //if the selected state of the filter changes, do chart layout

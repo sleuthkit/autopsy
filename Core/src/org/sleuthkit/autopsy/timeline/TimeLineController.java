@@ -74,6 +74,8 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -84,7 +86,6 @@ import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
@@ -156,9 +157,9 @@ public class TimeLineController {
     private final Case autoCase;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<DescriptionFilter> quickHideFilters = FXCollections.observableArrayList();
+    private final ObservableList<FilterModel<DescriptionFilter>> quickHideFilters = FXCollections.observableArrayList();
 
-    public ObservableList<DescriptionFilter> getQuickHideFilters() {
+    public ObservableList<FilterModel<DescriptionFilter>> getQuickHideFilters() {
         return quickHideFilters;
     }
 
@@ -289,7 +290,7 @@ public class TimeLineController {
          */
         historyManager.currentState().addListener((Observable observable) -> {
             ZoomParams historyManagerParams = historyManager.getCurrentState();
-            filteredEvents.syncTagsFilter(historyManagerParams.getFilter().getTagsFilter());
+            filteredEvents.syncTagsFilter(historyManagerParams.getFilterModel());
             currentParams.set(historyManagerParams);
         });
 
@@ -572,7 +573,7 @@ public class TimeLineController {
         }
     }
 
-    synchronized public void pushFilters(RootFilter filter) {
+    synchronized public void pushFilters(RootFilterModel filter) {
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilter(filter.copyOf()));

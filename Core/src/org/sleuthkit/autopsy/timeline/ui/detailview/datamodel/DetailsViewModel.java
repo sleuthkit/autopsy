@@ -43,13 +43,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import static org.sleuthkit.autopsy.timeline.FilteredEventsModel.unGroupConcat;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
@@ -89,12 +90,12 @@ final public class DetailsViewModel {
      */
     public List<EventStripe> getEventStripes() throws TskCoreException {
         final Interval range;
-        final RootFilter filter;
+        final RootFilterModel filter;
         final EventTypeZoomLevel zoom;
         final DescriptionLoD lod;
         synchronized (this) {
             range = eventsModel.getTimeRange();
-            filter = eventsModel.getFilter();
+            filter = eventsModel.getFilterModel();
             zoom = eventsModel.getEventTypeZoom();
             lod = eventsModel.getDescriptionLOD();
         }
@@ -134,7 +135,7 @@ final public class DetailsViewModel {
     public List<EventStripe> getEventStripes(ZoomParams params, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = params.getTimeRange();
-        RootFilter filter = params.getFilter();
+        RootFilterModel filter = params.getFilterModel();
         DescriptionLoD descriptionLOD = params.getDescriptionLOD();
         EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
 
@@ -160,7 +161,7 @@ final public class DetailsViewModel {
                           + eventManager.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
                           + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets) // NON-NLS
-                          + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(filter) // NON-NLS
+                          + " WHERE time >= " + start + " AND time < " + end + " AND " + filter.getSQLWhere(eventManager) // NON-NLS
                           + " GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                           + " ORDER BY min(time)"; // NON-NLS
 

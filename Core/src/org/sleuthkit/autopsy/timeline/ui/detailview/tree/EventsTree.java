@@ -56,6 +56,7 @@ import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 
 /**
@@ -149,8 +150,8 @@ final public class EventsTree extends BorderPane {
     }
 
     /**
-     * A tree cell to display DetailViewEvents. Shows the description, and count,
-     * as well a a "legend icon" for the event type.
+     * A tree cell to display DetailViewEvents. Shows the description, and
+     * count, as well a a "legend icon" for the event type.
      */
     private class EventTreeCell extends TreeCell<DetailViewEvent> {
 
@@ -187,7 +188,7 @@ final public class EventsTree extends BorderPane {
 
                 if (item != null) {
                     filterStateChangeListener = (filterState) -> updateHiddenState(treeItem);
-                    controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends DescriptionFilter> listChange) -> {
+                    controller.getQuickHideFilters().addListener((ListChangeListener.Change<? extends FilterModel<DescriptionFilter>> listChange) -> {
                         while (listChange.next()) {
                             deRegisterListeners(listChange.getRemoved());
                             registerListeners(listChange.getAddedSubList(), item);
@@ -211,17 +212,17 @@ final public class EventsTree extends BorderPane {
             }
         }
 
-        private void registerListeners(Collection<? extends DescriptionFilter> filters, DetailViewEvent item) {
-            for (DescriptionFilter filter : filters) {
-                if (filter.getDescription().equals(item.getDescription())) {
+        private void registerListeners(Collection<? extends FilterModel<DescriptionFilter>> filters, DetailViewEvent item) {
+            for (FilterModel<DescriptionFilter> filter : filters) {
+                if (filter.getFilter().getDescription().equals(item.getDescription())) {
                     filter.activeProperty().addListener(filterStateChangeListener);
                 }
             }
         }
 
-        private void deRegisterListeners(Collection<? extends DescriptionFilter> filters) {
+        private void deRegisterListeners(Collection<? extends FilterModel<DescriptionFilter>> filters) {
             if (Objects.nonNull(filterStateChangeListener)) {
-                for (DescriptionFilter filter : filters) {
+                for (FilterModel<DescriptionFilter> filter : filters) {
                     filter.activeProperty().removeListener(filterStateChangeListener);
                 }
             }
@@ -230,8 +231,8 @@ final public class EventsTree extends BorderPane {
         private void updateHiddenState(EventsTreeItem treeItem) {
             DetailViewEvent event = treeItem.getValue();
             hidden.set(event != null && controller.getQuickHideFilters().stream().
-                    filter(DescriptionFilter::isActive)
-                    .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getDescription(), event.getDescription())));
+                    filter(FilterModel<DescriptionFilter>::isActive)
+                    .anyMatch(filter -> StringUtils.equalsIgnoreCase(filter.getFilter().getDescription(), event.getDescription())));
             Color color = getColor(treeItem.getEventType());
             if (hidden.get()) {
                 treeItem.setExpanded(false);

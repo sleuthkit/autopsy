@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
@@ -31,15 +32,17 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
+import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented
  * filter
  */
-final class LegendCell extends TreeTableCell<FilterModel, FilterModel> {
+final class LegendCell extends TreeTableCell<FilterModel<TimelineFilter>, FilterModel<TimelineFilter>> {
 
     private static final Color CLEAR = Color.rgb(0, 0, 0, 0);
 
@@ -56,7 +59,7 @@ final class LegendCell extends TreeTableCell<FilterModel, FilterModel> {
 
     @Override
     @NbBundle.Messages("Timeline.ui.filtering.promptText=enter filter string")
-    public void updateItem(FilterModel item, boolean empty) {
+    public void updateItem(FilterModel<TimelineFilter> item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null) {
             Platform.runLater(() -> {
