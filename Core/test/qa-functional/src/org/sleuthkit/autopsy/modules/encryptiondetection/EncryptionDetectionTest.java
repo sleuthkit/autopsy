@@ -160,9 +160,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             CaseUtils.createCase(PASSWORD_DETECTION_CASE_NAME);
 
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
-            String joinedErrors = String.join(System.lineSeparator(), errorMessages);
-            assertEquals(joinedErrors, 0, errorMessages.size());
+            IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
 
             Case openCase = Case.getCurrentCaseThrows();    
 
@@ -260,15 +258,7 @@ public class EncryptionDetectionTest extends NbTestCase {
         try {
             CaseUtils.createCase(VERACRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
-            String joinedErrors;
-            if (errorMessages.isEmpty()) {
-                joinedErrors = "Encrypted partition did not cause error, it was expected to";
-            } else {
-                joinedErrors = String.join(System.lineSeparator(), errorMessages);
-            }
-            //there will be 1 expected error regarding the encrypted partition not having a file system
-            assertEquals(joinedErrors, 1, errorMessages.size());
+            IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
 
             Case openCase = Case.getCurrentCaseThrows();
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
