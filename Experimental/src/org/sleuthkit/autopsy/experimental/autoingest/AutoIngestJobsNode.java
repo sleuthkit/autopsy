@@ -41,7 +41,8 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
-
+    
+    //Event bus is non static so that each instance of this will only listen to events sent to that instance
     private final EventBus refreshChildrenEventBus;
 
     @Messages({
@@ -151,10 +152,11 @@ final class AutoIngestJobsNode extends AbstractNode {
              * and refresh the children created by this factory.
              *
              *
-             * @param refreshEvent the String which was received
+             * @param refreshEvent the AutoIngestRefreshEvent which was received
              */
             @Subscribe
             private void subscribeToRefresh(AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 //RefreshChildrenEvents can change which children are present however
                 //RefreshJobEvents and RefreshCaseEvents can still change the order we want to display them in
                 refresh(true);
@@ -296,28 +298,30 @@ final class AutoIngestJobsNode extends AbstractNode {
             }
 
             /**
-             * Receive events of type String from the EventBus which this class
-             * is registered to, and refresh the node's properties if the event
-             * matches the REFRESH_EVENT.
+             * Receive events of type RefreshJobEvent from the EventBus which
+             * this class is registered to and refresh the nodes properties if
+             * it is the node for the job specified in the event.
              *
-             * @param refreshEvent the String which was received
+             * @param refreshEvent the RefreshJobEvent which was received
              */
             @Subscribe
             private void subscribeToRefreshJob(AutoIngestNodeRefreshEvents.RefreshJobEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 if (getAutoIngestJob().equals(refreshEvent.getJobToRefresh())) {
                     setSheet(createSheet());
                 }
             }
 
             /**
-             * Receive events of type String from the EventBus which this class
-             * is registered to, and refresh the node's properties if the event
-             * matches the REFRESH_EVENT.
+             * Receive events of type RefreshCaseEvent from the EventBus which
+             * this class is registered to and refresh the nodes which have jobs
+             * which are members of case specified in the event.
              *
-             * @param refreshEvent the String which was received
+             * @param refreshEvent the RefreshCaseEvent which was received
              */
             @Subscribe
             private void subscribeToRefreshCase(AutoIngestNodeRefreshEvents.RefreshCaseEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 if (getAutoIngestJob().getManifest().getCaseName().equals(refreshEvent.getCaseToRefresh())) {
                     setSheet(createSheet());
                 }
@@ -331,6 +335,7 @@ final class AutoIngestJobsNode extends AbstractNode {
              * @param refreshEvent - the RefreshChildrenEvent which was received
              */
             private void subscribeToRefreshChildren(AutoIngestNodeRefreshEvents.RefreshChildrenEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 if (jobStatus == AutoIngestJobStatus.RUNNING_JOB) {
                     setSheet(createSheet());
                 }
