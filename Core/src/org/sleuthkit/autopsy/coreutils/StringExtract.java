@@ -351,7 +351,7 @@ public class StringExtract {
         res.reset();
 
         int curOffset = offset;
-        int ch; //character being extracted
+        int curChar; //character being extracted
         int chBytes; //num bytes consumed by current char (1 - 4)
 
         final StringBuilder tempString = new StringBuilder();
@@ -364,7 +364,7 @@ public class StringExtract {
             final int curByte = toUnsignedInt(buff[curOffset]);
             if (curByte <= 0x7F) {
                 chBytes = 1;
-                ch = curByte;
+                curChar = curByte;
             } else if (curByte <= 0xC1) {
                 break;
             } else if (curByte <= 0xDF) {
@@ -374,7 +374,7 @@ public class StringExtract {
                 final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF) {
                     chBytes = 2;
-                    ch = (((curByte & 0x1f) << 6) + (curByte_1 & 0x3f));
+                    curChar = (((curByte & 0x1f) << 6) + (curByte_1 & 0x3f));
                 } else {
                     break;
                 }
@@ -388,7 +388,7 @@ public class StringExtract {
                 if (curByte_1 >= 0xA0 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
+                    curChar = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
@@ -401,7 +401,7 @@ public class StringExtract {
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
+                    curChar = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
@@ -414,7 +414,7 @@ public class StringExtract {
                 if (curByte_1 >= 0x80 && curByte_1 <= 0x9F
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
+                    curChar = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
@@ -427,7 +427,7 @@ public class StringExtract {
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
+                    curChar = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
@@ -442,7 +442,7 @@ public class StringExtract {
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF
                         && curByte_3 >= 0x80 && curByte_3 <= 0xBF) {
                     chBytes = 4;
-                    ch = (((curByte & 0x07) << 18) + ((curByte_1 & 0x3f) << 12) + ((curByte_2 & 0x3f) << 6) + (curByte_3 & 0x3f));
+                    curChar = (((curByte & 0x07) << 18) + ((curByte_1 & 0x3f) << 12) + ((curByte_2 & 0x3f) << 6) + (curByte_3 & 0x3f));
                 } else {
                     break;
                 }
@@ -457,7 +457,7 @@ public class StringExtract {
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF
                         && curByte_3 >= 0x80 && curByte_3 <= 0xBF) {
                     chBytes = 4;
-                    ch = (((curByte & 0x07) << 18) + ((curByte_1 & 0x3f) << 12) + ((curByte_2 & 0x3f) << 6) + (curByte_3 & 0x3f));
+                    curChar = (((curByte & 0x07) << 18) + ((curByte_1 & 0x3f) << 12) + ((curByte_2 & 0x3f) << 6) + (curByte_3 & 0x3f));
                 } else {
                     break;
                 }
@@ -468,12 +468,12 @@ public class StringExtract {
             curOffset += chBytes;
 
             //skip if beyond range
-            if (ch > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
+            if (curChar > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
             //lookup byteVal in the unicode table
-            SCRIPT scriptFound = unicodeTable.getScript(ch);
+            SCRIPT scriptFound = unicodeTable.getScript(curChar);
 
             if (scriptFound == SCRIPT.NONE) {
                 break;
@@ -507,7 +507,7 @@ public class StringExtract {
                     res.numBytes += chBytes;
                     //append the char
                     ++res.numChars;
-                    tempString.append((char) ch);
+                    tempString.append((char) curChar);
                 } else {
                     //bail out
                     break;
