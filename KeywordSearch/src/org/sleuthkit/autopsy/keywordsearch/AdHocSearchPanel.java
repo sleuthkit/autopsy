@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.Set;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.openide.util.NbBundle;
 
@@ -67,6 +68,12 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      * @return
      */
     abstract List<KeywordList> getKeywordLists();
+    
+    /**
+     * Get a set of data source object ids that are selected.
+     * @return A set of selected object ids. 
+     */
+    abstract Set<Long> getDataSourcesSelected();
 
     /**
      * Set the number of files that have been indexed
@@ -119,7 +126,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        man = new AdHocSearchDelegator(keywordLists);
+        man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
 
         if (man.validate()) {
             man.execute();

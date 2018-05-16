@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -111,6 +111,7 @@ class DropdownToolbar extends javax.swing.JPanel {
                 searchMenu.setVisible(false);
             }
         });
+        
         searchMenu.setSize(dropPanel.getPreferredSize().width + 6, dropPanel.getPreferredSize().height + 6);
         searchMenu.add(dropPanel);
         searchMenu.addPopupMenuListener(new PopupMenuListener() {
