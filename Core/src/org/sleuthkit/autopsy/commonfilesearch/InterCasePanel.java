@@ -41,19 +41,19 @@ public class InterCasePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup = new javax.swing.ButtonGroup();
         anCentralRepoCaseRadio = new javax.swing.JRadioButton();
         specificCentralRepoCaseRadio = new javax.swing.JRadioButton();
         caseComboBox = new javax.swing.JComboBox<>();
 
+        buttonGroup.add(anCentralRepoCaseRadio);
         anCentralRepoCaseRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(anCentralRepoCaseRadio, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.anCentralRepoCaseRadio.text")); // NOI18N
-        anCentralRepoCaseRadio.setEnabled(false);
 
+        buttonGroup.add(specificCentralRepoCaseRadio);
         org.openide.awt.Mnemonics.setLocalizedText(specificCentralRepoCaseRadio, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.specificCentralRepoCaseRadio.text")); // NOI18N
-        specificCentralRepoCaseRadio.setEnabled(false);
 
         caseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        caseComboBox.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -85,6 +85,7 @@ public class InterCasePanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton anCentralRepoCaseRadio;
+    private javax.swing.ButtonGroup buttonGroup;
     private javax.swing.JComboBox<String> caseComboBox;
     private javax.swing.JRadioButton specificCentralRepoCaseRadio;
     // End of variables declaration//GEN-END:variables
