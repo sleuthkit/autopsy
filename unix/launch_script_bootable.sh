@@ -6,7 +6,7 @@
 #
 # The basic idea of the script is to let the user pick which external readwrite
 # device to use, ensure that an Autopsy folder exists, and launch Autopsy so that
-# it uses that folder for configuration. 
+# it uses that folder for configuration.
 #
 # To use this script, maintainers should:
 # - Update AUTOPSY_BIN to path where the autopsy script / folder are
@@ -24,14 +24,23 @@ errorLog () {
   exit 1
 }
 
-# Verify we can find the script
-[ -x "$AUTOPSY_BIN" ] && infoLog "Autopsy found" || errorLog "Autopsy binaries not found at $AUTOPSY_BIN. Exiting....."
+Verify we can find the script
+if [[ -x "$AUTOPSY_BIN" ]]; then
+ infoLog "Autopsy found"
+else
+ errorLog "Autopsy binaries not found at $AUTOPSY_BIN. Exiting....."
+fi
 
 
 # Create folders on external drive
 createConfigDirectories () {
     if [ ! -d "$1" ]; then
-      mkdir $1 && infoLog "$1 successfully created" || errorLog "error while creating $1"
+      mkdir $1
+      if [ ! -d "$1" ]; then
+	      errorLog "error while creating $1"
+      else
+        infoLog "$1 successfully created"
+      fi
     fi
     return 0
 }
@@ -43,19 +52,19 @@ options_length=0
 showAndReadOptions () {
   echo "Select a mounted disk to create config directory"
   # Maintainers: Adjust these grep statements based on where your
-  # platform mounts media. 
+  # platform mounts media.
   mnt=( $(mount | grep "media" | grep "rw" | awk '{print $3}') )
 
   # Add option to user to not use mounted media
   length=${#mnt[@]}
   mnt[length]="Do not store on mounted disk"
-  options_length=$(( $length + 1 ))
+  options_length=$(( length + 1 ))
 
   x=1
   for word in "${mnt[@]}"
   do
     echo [$x] "${word}"
-    x=$(($x + 1))
+    x=$((x + 1))
   done
   read option
 }
@@ -72,19 +81,28 @@ do
 done
 
 if [ "$option" != "$options_length" ]; then
-  index=$(( $option - 1 ))
+  index=$(( option - 1 ))
   echo "Autopsy configurations will be stored in" "${mnt[$index]}"". Are you sure? (y/n)"
   read affirmation
   if [ "$affirmation" == "y" ] || [ "$affirmation" == "Y" ]; then
-    [ -d "${mnt[$index]}" ]  && selectedMount=${mnt[$index]} || errorLog "Mount point not found"
-    [ -w "$selectedMount" ] && autopsyConfigDir="${mnt[$index]}/AutopsyConfig" || errorLog "Mount point $selectedMount does not have write permission"
+    if [[ -d "${mnt[$index]}" ]]; then
+      selectedMount=${mnt[$index]}
+    else
+      errorLog "Mount point not found"
+    fi
+
+    if [[ -w "$selectedMount" ]]; then
+      autopsyConfigDir="${mnt[$index]}/AutopsyConfig"
+    else
+      errorLog "Mount point $selectedMount does not have write permission"
+    fi
 
     # Make the directories on the media
     userDirectory="$autopsyConfigDir/userdir"
     createConfigDirectories $autopsyConfigDir && createConfigDirectories $userDirectory
 
     if [ $? -eq 0 ]; then
-        sh $AUTOPSY_BIN --userdir $userDirectory 
+        sh $AUTOPSY_BIN --userdir $userDirectory
     fi
   fi
 else
