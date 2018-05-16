@@ -2,13 +2,9 @@
 
 <Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <NonVisualComponents>
-    <Component class="javax.swing.ButtonGroup" name="dataSourcesButtonGroup">
-    </Component>
     <Component class="javax.swing.ButtonGroup" name="fileTypeFilterButtonGroup">
     </Component>
     <Component class="javax.swing.ButtonGroup" name="interIntraButtonGroup">
-    </Component>
-    <Component class="javax.swing.ButtonGroup" name="caseSelectionButtonGroup">
     </Component>
   </NonVisualComponents>
   <AuxValues>

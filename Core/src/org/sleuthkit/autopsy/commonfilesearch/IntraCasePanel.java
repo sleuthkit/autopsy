@@ -66,10 +66,6 @@ public class IntraCasePanel extends javax.swing.JPanel {
         this.parent = parent;
     }
     
-    public void setDataSourceList(){
-        //TODO
-    }
-    
     public boolean isSingleDataSource(){
         return this.singleDataSource;
     }
@@ -114,7 +110,6 @@ public class IntraCasePanel extends javax.swing.JPanel {
                 //only enable all this stuff if we actually have datasources
                 if (dataSourcesNames.length > 0) {
                     dataSourcesNames = IntraCasePanel.this.dataSourceMap.values().toArray(dataSourcesNames);
-                    //TODO use setter on intra case panel
                     IntraCasePanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
                     IntraCasePanel.this.selectDataSourceComboBox.setModel(IntraCasePanel.this.dataSourcesList);
 

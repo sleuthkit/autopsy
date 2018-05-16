@@ -73,6 +73,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public CommonFilesPanel() {
         initComponents();
         
+        this.intraCasePanel.setParent(this);
+        //TODO set parent for intercase panel
+        
         this.errorText.setVisible(false);
     }
 
@@ -206,10 +209,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        dataSourcesButtonGroup = new javax.swing.ButtonGroup();
         fileTypeFilterButtonGroup = new javax.swing.ButtonGroup();
         interIntraButtonGroup = new javax.swing.ButtonGroup();
-        caseSelectionButtonGroup = new javax.swing.ButtonGroup();
         searchButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         allFileCategoriesRadioButton = new javax.swing.JRadioButton();
@@ -441,10 +442,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allFileCategoriesRadioButton;
     private javax.swing.JButton cancelButton;
-    private javax.swing.ButtonGroup caseSelectionButtonGroup;
     private javax.swing.JLabel categoriesLabel;
     private javax.swing.JLabel commonFilesSearchLabel1;
-    private javax.swing.ButtonGroup dataSourcesButtonGroup;
     private javax.swing.JCheckBox documentsCheckbox;
     private javax.swing.JLabel errorText;
     private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
@@ -457,7 +456,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton selectedFileCategoriesButton;
     // End of variables declaration//GEN-END:variables
 
-    void setSearchButtonEnabled(boolean b) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    void setSearchButtonEnabled(boolean enabled) {
+        this.searchButton.setEnabled(enabled);
     }
 }
