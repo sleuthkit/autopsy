@@ -40,9 +40,9 @@ abstract class ContentNode extends DisplayableItemNode {
     /**
      * Visitor pattern support.
      *
-     * @param v visitor
+     * @param visitor visitor
      *
      * @return visitor's visit return value
      */
-    public abstract <T> T accept(ContentNodeVisitor<T> v);
+    public abstract <T> T accept(ContentNodeVisitor<T> visitor);
 }

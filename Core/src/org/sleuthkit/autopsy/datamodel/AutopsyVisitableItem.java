@@ -28,10 +28,10 @@ public interface AutopsyVisitableItem {
     /**
      * visitor pattern support
      *
-     * @param v visitor
+     * @param visitor visitor
      *
      * @return visitor return value
      */
-    public <T> T accept(AutopsyItemVisitor<T> v);
+    public <T> T accept(AutopsyItemVisitor<T> visitor);
 
 }

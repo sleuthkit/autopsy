@@ -753,7 +753,11 @@ public class Server {
                 org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
             }
         } catch (SolrServerException | HttpSolrServer.RemoteSolrException | IOException ex) {
-            throw new KeywordSearchServiceException(Bundle.Server_deleteCore_exception_msg(coreName), ex);
+            // We will get a RemoteSolrException with cause == null and detailsMessage
+            // == "Already closed" if the core is not loaded. This is not an error in this scenario.
+            if (!ex.getMessage().equals("Already closed")) { // NON-NLS
+                throw new KeywordSearchServiceException(Bundle.Server_deleteCore_exception_msg(coreName), ex);
+            }
         }
     }
 

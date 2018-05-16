@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -136,8 +137,22 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
      *
      * @return The keyword list.
      */
+    @NbBundle.Messages({"DropdownSingleTermSearchPanel.warning.title=Warning",
+    "DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]"})
     @Override
     List<KeywordList> getKeywordLists() {
+        
+        if (regexRadioButton.isSelected()) {
+            if((keywordTextField.getText() != null)  && 
+                    (keywordTextField.getText().startsWith("^") || 
+                    (keywordTextField.getText().endsWith("$") && ! keywordTextField.getText().endsWith("\\$")))) {
+
+                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.title"),
+                        NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.text"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            }
+        }
+        
         List<Keyword> keywords = new ArrayList<>();
         keywords.add(new Keyword(keywordTextField.getText(), !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
         List<KeywordList> keywordLists = new ArrayList<>();
