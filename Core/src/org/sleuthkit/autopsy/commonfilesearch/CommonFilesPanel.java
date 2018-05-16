@@ -290,7 +290,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         commonFilesSearchLabel1.setFocusable(false);
 
         interIntraButtonGroup.add(intraCaseRadio);
-        intraCaseRadio.setSelected(true);
         intraCaseRadio.setLabel(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.intraCaseRadio.label")); // NOI18N
         intraCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -299,6 +298,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         });
 
         interIntraButtonGroup.add(interCaseRadio);
+        interCaseRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(interCaseRadio, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.jRadioButton2.text")); // NOI18N
         interCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
