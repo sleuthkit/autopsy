@@ -18,41 +18,81 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+/**
+ * Class which contains events to identify what should be refreshed in the
+ * AutoIngestJobsNode
+ */
 class AutoIngestNodeRefreshEvents {
-    
+
+    /**
+     * An empty interface for all refresh events to implement.
+     */
     interface AutoIngestRefreshEvent {
-        
+
     }
 
-    static final class RefreshChildrenEvent implements AutoIngestRefreshEvent{
+    /**
+     * An event to denote that the children of the AutoIngestJobsNode should be
+     * refreshed but no specific nodes need their properties refreshed.
+     */
+    static final class RefreshChildrenEvent implements AutoIngestRefreshEvent {
 
+        /**
+         * Constructs a RefreshChildrenEvent.
+         */
         RefreshChildrenEvent() {
 
         }
     }
 
-    static final class RefreshCaseEvent  implements AutoIngestRefreshEvent{
+    /**
+     * An event to denote that all nodes which represent jobs which are part of
+     * the specified case should be refreshed.
+     */
+    static final class RefreshCaseEvent implements AutoIngestRefreshEvent {
 
         private final String caseName;
 
+        /**
+         * Constructs a RefreshCaseEvent.
+         */
         RefreshCaseEvent(String name) {
             caseName = name;
         }
 
+        /**
+         * Get the case name which should have all it's jobs have their node
+         * refreshed.
+         *
+         * @return caseName - the case which contains the jobs which should have
+         *         their nodes refreshed
+         */
         String getCaseToRefresh() {
             return caseName;
         }
 
     }
 
-    static final class RefreshJobEvent implements AutoIngestRefreshEvent{
+    /**
+     * An event to denote that a node for a specific job should be refreshed.
+     */
+    static final class RefreshJobEvent implements AutoIngestRefreshEvent {
 
         private final AutoIngestJob autoIngestJob;
 
+        /**
+         * Constructs a RefreshJobEvent.
+         */
         RefreshJobEvent(AutoIngestJob job) {
             autoIngestJob = job;
         }
 
+        /**
+         * Get the AutoIngestJob which should have it's node refresheds.
+         *
+         * @return autoIngestJob - the AutoIngestJob which should have it's node
+         *         refreshed
+         */
         AutoIngestJob getJobToRefresh() {
             return autoIngestJob;
         }

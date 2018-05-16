@@ -124,29 +124,50 @@ final class AutoIngestJobsNode extends AbstractNode {
             return new JobNode(key, autoIngestJobStatus, refreshEventBus);
         }
 
+        /**
+         * Class which registers with EventBus and causes child nodes which
+         * exist to be refreshed.
+         */
         private class RefreshChildrenSubscriber {
 
+            /**
+             * Construct a RefreshChildrenSubscriber
+             */
             private RefreshChildrenSubscriber() {
             }
 
+            /**
+             * Registers this subscriber with the specified EventBus to receive
+             * events posted to it.
+             *
+             * @param eventBus - the EventBus to register this subscriber to
+             */
             private void register(EventBus eventBus) {
                 eventBus.register(this);
             }
 
             /**
-             * Receive events of type String from the EventBus which this class
-             * is registered to, and refresh the children created by this
-             * factory if the event matches the REFRESH_EVENT.
+             * Receive events which implement the AutoIngestRefreshEvent
+             * interface from the EventBus which this class is registered to,
+             * and refresh the children created by this factory.
+             *
              *
              * @param refreshEvent the String which was received
              */
             @Subscribe
             private void subscribeToRefresh(AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent refreshEvent) {
+                //RefreshChildrenEvents can change which children are present however
+                //RefreshJobEvents and RefreshCaseEvents can still change the order we want to display them in
                 refresh(true);
             }
-            
-            @Subscribe 
-            private void subscribeToIgnoreDeadEvents(DeadEvent ignored){              
+
+            /**
+             * Ignores other events sent over the registered EventBus
+             *
+             * @param ignored the event which is being ignored
+             */
+            @Subscribe
+            private void subscribeToIgnoreDeadEvents(DeadEvent ignored) {
             }
         }
 
@@ -261,11 +282,24 @@ final class AutoIngestJobsNode extends AbstractNode {
             return actions.toArray(new Action[actions.size()]);
         }
 
+        /**
+         * Class which registers with EventBus and causes specific nodes to have
+         * their properties to be refreshed.
+         */
         private class RefreshNodeSubscriber {
 
+            /**
+             * Constructs a RefreshNodeSubscriber
+             */
             private RefreshNodeSubscriber() {
             }
 
+            /**
+             * Registers this subscriber with the specified EventBus to receive
+             * events posted to it.
+             *
+             * @param eventBus - the EventBus to register this subscriber to
+             */
             private void register(EventBus eventBus) {
                 eventBus.register(this);
             }
@@ -297,9 +331,14 @@ final class AutoIngestJobsNode extends AbstractNode {
                     setSheet(createSheet());
                 }
             }
-            
-            @Subscribe 
-            private void subscribeToIgnoreDeadEvents(DeadEvent ignored){              
+
+            /**
+             * Ignores other events sent over the registered EventBus
+             *
+             * @param ignored the event which is being ignored
+             */
+            @Subscribe
+            private void subscribeToIgnoreDeadEvents(DeadEvent ignored) {
             }
         }
     }
