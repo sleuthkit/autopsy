@@ -82,7 +82,7 @@ public class EncryptionDetectionTest extends NbTestCase {
     }
 
     /**
-     * Test the Encryption Detection module's volume encryption detection.
+     * Test the Encryption Detection module's password protection detection.
      */
     public void testBitlockerEncryption() {
         try {
