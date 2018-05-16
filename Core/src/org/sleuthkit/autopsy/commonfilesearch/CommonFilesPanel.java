@@ -402,15 +402,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
-        ((java.awt.CardLayout)this.layoutPanel.getLayout()).first(this.layoutPanel);
-//        this.intraCasePanel.setVisible(true);
-//        this.interCasePanel.setVisible(false);
+        ((java.awt.CardLayout)this.layoutPanel.getLayout()).last(this.layoutPanel);
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
-        ((java.awt.CardLayout)this.layoutPanel.getLayout()).last(this.layoutPanel);
-//        this.intraCasePanel.setVisible(false);
-//        this.interCasePanel.setVisible(true);
+        ((java.awt.CardLayout)this.layoutPanel.getLayout()).first(this.layoutPanel);
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
     private void toggleErrorTextAndSearchBox() {

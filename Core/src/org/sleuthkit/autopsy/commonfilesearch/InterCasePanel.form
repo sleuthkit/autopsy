@@ -59,6 +59,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="InterCasePanel.anCentralRepoCaseRadio.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="anCentralRepoCaseRadioActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JRadioButton" name="specificCentralRepoCaseRadio">
       <Properties>
@@ -69,6 +72,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="InterCasePanel.specificCentralRepoCaseRadio.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="specificCentralRepoCaseRadioActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JComboBox" name="caseComboBox">
       <Properties>
@@ -80,6 +86,7 @@
             <StringItem index="3" value="Item 4"/>
           </StringArray>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>

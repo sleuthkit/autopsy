@@ -49,11 +49,22 @@ public class InterCasePanel extends javax.swing.JPanel {
         buttonGroup.add(anCentralRepoCaseRadio);
         anCentralRepoCaseRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(anCentralRepoCaseRadio, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.anCentralRepoCaseRadio.text")); // NOI18N
+        anCentralRepoCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                anCentralRepoCaseRadioActionPerformed(evt);
+            }
+        });
 
         buttonGroup.add(specificCentralRepoCaseRadio);
         org.openide.awt.Mnemonics.setLocalizedText(specificCentralRepoCaseRadio, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.specificCentralRepoCaseRadio.text")); // NOI18N
+        specificCentralRepoCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                specificCentralRepoCaseRadioActionPerformed(evt);
+            }
+        });
 
         caseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        caseComboBox.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -81,6 +92,14 @@ public class InterCasePanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void specificCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specificCentralRepoCaseRadioActionPerformed
+        this.caseComboBox.setEnabled(true);
+    }//GEN-LAST:event_specificCentralRepoCaseRadioActionPerformed
+
+    private void anCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_anCentralRepoCaseRadioActionPerformed
+        this.caseComboBox.setEnabled(false);
+    }//GEN-LAST:event_anCentralRepoCaseRadioActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
