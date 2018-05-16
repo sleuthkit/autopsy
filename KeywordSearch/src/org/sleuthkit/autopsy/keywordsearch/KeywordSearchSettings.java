@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -132,7 +132,8 @@ class KeywordSearchSettings {
     
     /**
      * Save OCR setting to permanent storage
-     * @param enabled 
+     * 
+     * @param enabled Is OCR enabled?
      */
     static void setOcrOption(boolean enabled) {
         ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, OCR_ENABLED, (enabled ? "true" : "false")); //NON-NLS
@@ -140,7 +141,8 @@ class KeywordSearchSettings {
 
     /**
      * Get OCR setting from permanent storage
-     * @return 
+     * 
+     * @return Is OCR enabled?
      */
     static boolean getOcrOption() {
         if (ModuleSettings.settingExists(PROPERTIES_OPTIONS, OCR_ENABLED)) {
