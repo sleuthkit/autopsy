@@ -42,7 +42,6 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  */
 final class AutoIngestJobsNode extends AbstractNode {
 
-    private final static String REFRESH_EVENT = "Refresh_Nodes"; //
     private final EventBus refreshChildrenEventBus;
 
     @Messages({
@@ -68,8 +67,8 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Refresh the contents of the AutoIngestJobsNode and all of its children.
      */
-    void refresh() {
-        refreshChildrenEventBus.post(REFRESH_EVENT);
+    void refresh(AutoIngestNodeRefreshEvent refreshEvent) {
+        refreshChildrenEventBus.post(refreshEvent);
     }
 
     /**
@@ -141,8 +140,10 @@ final class AutoIngestJobsNode extends AbstractNode {
              * @param refreshEvent the String which was received
              */
             @Subscribe
-            private void subscribeToRefresh(String refreshEvent) {
-                refresh(true);
+            private void subscribeToRefresh(AutoIngestNodeRefreshEvent refreshEvent) {
+                if (refreshEvent.shouldRefreshChildren()) {
+                    refresh(true);
+                }
             }
         }
 
@@ -274,7 +275,7 @@ final class AutoIngestJobsNode extends AbstractNode {
              * @param refreshEvent the String which was received
              */
             @Subscribe
-            private void subscribeToRefresh(String refreshEvent) {
+            private void subscribeToRefresh(AutoIngestNodeRefreshEvent refreshEvent) {
                 setSheet(createSheet());
             }
         }

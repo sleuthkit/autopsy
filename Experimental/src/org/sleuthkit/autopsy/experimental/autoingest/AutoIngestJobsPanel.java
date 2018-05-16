@@ -163,14 +163,22 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * @param jobsSnapshot - the JobsSnapshot which will provide the new
      *                     contents
      */
-    void refresh(JobsSnapshot jobsSnapshot) {
+    void refresh(JobsSnapshot jobsSnapshot, AutoIngestNodeRefreshEvent refreshEvent) {
+        synchronized (this) {
+            if (explorerManager.getRootContext() instanceof AutoIngestJobsNode) {
+                outline.setRowSelectionAllowed(false);
+                ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh(refreshEvent);
+                outline.setRowSelectionAllowed(true);
+                outline.setFocusable(true);
+            }
+
+        }
+    }
+
+    void createAutoIngestJobsNode(JobsSnapshot jobsSnapshot) {
         synchronized (this) {
             outline.setRowSelectionAllowed(false);
-            if (explorerManager.getRootContext() instanceof AutoIngestJobsNode) {
-                ((AutoIngestJobsNode)explorerManager.getRootContext()).refresh();
-            } else {
-                explorerManager.setRootContext(new AutoIngestJobsNode(jobsSnapshot, status, new EventBus("AutoIngestJobsNodeEventBus")));
-            }
+            explorerManager.setRootContext(new AutoIngestJobsNode(jobsSnapshot, status, new EventBus("AutoIngestJobsNodeEventBus")));
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);
         }

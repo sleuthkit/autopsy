@@ -230,6 +230,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         new Thread(() -> {
             try {
                 autoIngestMonitor.startUp();
+                pendingJobsPanel.createAutoIngestJobsNode(autoIngestMonitor.getJobsSnapshot());
+                runningJobsPanel.createAutoIngestJobsNode(autoIngestMonitor.getJobsSnapshot());
+                completedJobsPanel.createAutoIngestJobsNode(autoIngestMonitor.getJobsSnapshot());
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
             }
@@ -261,9 +264,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * @param nodeStateSnapshot The jobs snapshot.
      */
     void refreshTables() {
-        pendingJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
-        runningJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
-        completedJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot());
+        pendingJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
+        runningJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
+        completedJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
     }
 
     /**
