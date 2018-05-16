@@ -79,8 +79,8 @@ final class AutoIngestJobsNode extends AbstractNode {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
         private final AutoIngestMonitor autoIngestMonitor;
+        private final RefreshChildrenSubscriber refreshChildrenSubscriber = new RefreshChildrenSubscriber();
         private final EventBus refreshEventBus;
-        private boolean registered = false;
 
         /**
          * Create children nodes for the AutoIngestJobsNode which will each
@@ -93,6 +93,7 @@ final class AutoIngestJobsNode extends AbstractNode {
             autoIngestMonitor = monitor;
             autoIngestJobStatus = status;
             refreshEventBus = eventBus;
+            refreshChildrenSubscriber.register(refreshEventBus);
         }
 
         @Override
@@ -116,30 +117,32 @@ final class AutoIngestJobsNode extends AbstractNode {
             if (jobs != null && jobs.size() > 0) {
                 list.addAll(jobs);
             }
-            if (!registered) {
-                refreshEventBus.register(this); //register for refreshes
-                registered = true;
-            }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(AutoIngestJob key) {
-            JobNode jobNode = new JobNode(key, autoIngestJobStatus);
-            refreshEventBus.register(jobNode);
-            return jobNode;
+            return new JobNode(key, autoIngestJobStatus, refreshEventBus);
         }
 
-        /**
-         * Receive events of type String from the EventBus which this class is
-         * registered to, and refresh the children created by this factory if
-         * the event matches the REFRESH_EVENT.
-         *
-         * @param refreshEvent the String which was received
-         */
-        @Subscribe
-        private void subscribeToRefresh(String refreshEvent) {
-            if (refreshEvent.equals(REFRESH_EVENT)) {
+        private class RefreshChildrenSubscriber {
+
+            private RefreshChildrenSubscriber() {
+            }
+
+            private void register(EventBus eventBus) {
+                eventBus.register(this);
+            }
+
+            /**
+             * Receive events of type String from the EventBus which this class
+             * is registered to, and refresh the children created by this
+             * factory if the event matches the REFRESH_EVENT.
+             *
+             * @param refreshEvent the String which was received
+             */
+            @Subscribe
+            private void subscribeToRefresh(String refreshEvent) {
                 refresh(true);
             }
         }
@@ -153,6 +156,7 @@ final class AutoIngestJobsNode extends AbstractNode {
 
         private final AutoIngestJob autoIngestJob;
         private final AutoIngestJobStatus jobStatus;
+        private final RefreshNodeSubscriber refreshNodeSubscriber = new RefreshNodeSubscriber();
 
         /**
          * Construct a new JobNode to represent an AutoIngestJob and its status.
@@ -161,12 +165,13 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param status - the current status of the AutoIngestJob being
          *               represented
          */
-        JobNode(AutoIngestJob job, AutoIngestJobStatus status) {
+        JobNode(AutoIngestJob job, AutoIngestJobStatus status, EventBus eventBus) {
             super(Children.LEAF);
             jobStatus = status;
             autoIngestJob = job;
             setName(autoIngestJob.toString());  //alows job to be uniquely found by name since it will involve a hash of the AutoIngestJob
             setDisplayName(autoIngestJob.getManifest().getCaseName()); //displays user friendly case name as name
+            refreshNodeSubscriber.register(eventBus);
         }
 
         /**
@@ -222,20 +227,6 @@ final class AutoIngestJobsNode extends AbstractNode {
             return s;
         }
 
-        /**
-         * Receive events of type String from the EventBus which this class is
-         * registered to, and refresh the node's properties if the event matches
-         * the REFRESH_EVENT.
-         *
-         * @param refreshEvent the String which was received
-         */
-        @Subscribe
-        private void subscribeToRefresh(String refreshEvent) {
-            if (refreshEvent.equals(REFRESH_EVENT)) {
-                this.setSheet(createSheet());
-            }
-        }
-
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
@@ -265,6 +256,28 @@ final class AutoIngestJobsNode extends AbstractNode {
                 }
             }
             return actions.toArray(new Action[actions.size()]);
+        }
+
+        private class RefreshNodeSubscriber {
+
+            private RefreshNodeSubscriber() {
+            }
+
+            private void register(EventBus eventBus) {
+                eventBus.register(this);
+            }
+
+            /**
+             * Receive events of type String from the EventBus which this class
+             * is registered to, and refresh the node's properties if the event
+             * matches the REFRESH_EVENT.
+             *
+             * @param refreshEvent the String which was received
+             */
+            @Subscribe
+            private void subscribeToRefresh(String refreshEvent) {
+                setSheet(createSheet());
+            }
         }
     }
 
