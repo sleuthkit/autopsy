@@ -87,11 +87,12 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
      * Constructs a dropdown panel that provides GUI components that allow a
      * user to do three types of ad hoc single keyword searches.
      */
+    @NbBundle.Messages({"DropdownSingleTermSearchPanel.selected=Ad Hoc Search data source filter is selected"})
     private DropdownSingleTermSearchPanel() {
         initComponents();
         customizeComponents();
         this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
-            firePropertyChange("Ad Hoc Search test1", null, null);
+            firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
         });
         this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
 
@@ -142,7 +143,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                 keywordTextField.selectAll();
             }
         };
- 
         cutMenuItem.addActionListener(actList);
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
@@ -182,7 +182,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     @Override
     List<KeywordList> getKeywordLists() {
         if (regexRadioButton.isSelected()) {
-            if ((keywordTextField.getText() != null) && 
+            if((keywordTextField.getText() != null)  && 
                     (keywordTextField.getText().startsWith("^") || 
                     (keywordTextField.getText().endsWith("$") && ! keywordTextField.getText().endsWith("\\$")))) {
 
@@ -398,7 +398,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         });
 
         setComponentsEnabled();
-        firePropertyChange("Ad Hoc Search Test", null, null);
+        firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
         
     }//GEN-LAST:event_dataSourceCheckBoxActionPerformed
 
@@ -441,6 +441,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
      * Get a set of data source object ids that are selected.
      * @return A set of selected object ids. 
      */
+    @Override
     Set<Long> getDataSourcesSelected() {
         Set<Long> dataSourceObjIdSet = new HashSet<>();
         for (Long key : dataSourceMap.keySet()) {
