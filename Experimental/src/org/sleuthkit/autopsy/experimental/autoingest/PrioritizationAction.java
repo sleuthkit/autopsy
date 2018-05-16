@@ -27,6 +27,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents;
 
 /**
  * Abstract actions which are for the modification of AutoIngestJob or Case
@@ -38,6 +39,7 @@ abstract class PrioritizationAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(PrioritizationAction.class.getName());
     private final AutoIngestJob job;
 
+    
     /**
      * Construct a new Prioritization action for the selected job
      *
@@ -88,7 +90,7 @@ abstract class PrioritizationAction extends AbstractAction {
                     EventQueue.invokeLater(() -> {
                         try {
                             modifyPriority(dashboard.getMonitor());
-                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
+                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot(), getRefreshEvent());
                         } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                             String errorMessage = getErrorMessage();
                             logger.log(Level.SEVERE, errorMessage, ex);
@@ -106,6 +108,8 @@ abstract class PrioritizationAction extends AbstractAction {
     public Object clone() throws CloneNotSupportedException {
         return super.clone(); //To change body of generated methods, choose Tools | Templates.
     }
+
+    abstract AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent();
 
     /**
      * Action to prioritize the specified AutoIngestJob
@@ -138,6 +142,11 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(getJob());
         }
     }
 
@@ -172,6 +181,11 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(getJob());
         }
     }
 
@@ -209,6 +223,11 @@ abstract class PrioritizationAction extends AbstractAction {
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(getJob().getManifest().getCaseName());
+        }
     }
 
     /**
@@ -244,6 +263,11 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(getJob().getManifest().getCaseName());
         }
     }
 }

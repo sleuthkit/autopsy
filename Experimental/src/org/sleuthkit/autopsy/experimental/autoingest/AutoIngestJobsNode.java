@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.eventbus.DeadEvent;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Refresh the contents of the AutoIngestJobsNode and all of its children.
      */
-    void refresh(AutoIngestNodeRefreshEvent refreshEvent) {
+    void refresh(AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent refreshEvent) {
         refreshChildrenEventBus.post(refreshEvent);
     }
 
@@ -140,10 +141,12 @@ final class AutoIngestJobsNode extends AbstractNode {
              * @param refreshEvent the String which was received
              */
             @Subscribe
-            private void subscribeToRefresh(AutoIngestNodeRefreshEvent refreshEvent) {
-                if (refreshEvent.shouldRefreshChildren()) {
-                    refresh(true);
-                }
+            private void subscribeToRefresh(AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent refreshEvent) {
+                refresh(true);
+            }
+            
+            @Subscribe 
+            private void subscribeToIgnoreDeadEvents(DeadEvent ignored){              
             }
         }
 
@@ -275,8 +278,28 @@ final class AutoIngestJobsNode extends AbstractNode {
              * @param refreshEvent the String which was received
              */
             @Subscribe
-            private void subscribeToRefresh(AutoIngestNodeRefreshEvent refreshEvent) {
-                setSheet(createSheet());
+            private void subscribeToRefreshJob(AutoIngestNodeRefreshEvents.RefreshJobEvent refreshEvent) {
+                if (getAutoIngestJob().equals(refreshEvent.getJobToRefresh())) {
+                    setSheet(createSheet());
+                }
+            }
+
+            /**
+             * Receive events of type String from the EventBus which this class
+             * is registered to, and refresh the node's properties if the event
+             * matches the REFRESH_EVENT.
+             *
+             * @param refreshEvent the String which was received
+             */
+            @Subscribe
+            private void subscribeToRefreshCase(AutoIngestNodeRefreshEvents.RefreshCaseEvent refreshEvent) {
+                if (getAutoIngestJob().getManifest().getCaseName().equals(refreshEvent.getCaseToRefresh())) {
+                    setSheet(createSheet());
+                }
+            }
+            
+            @Subscribe 
+            private void subscribeToIgnoreDeadEvents(DeadEvent ignored){              
             }
         }
     }

@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
@@ -163,24 +164,17 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * @param jobsSnapshot - the JobsSnapshot which will provide the new
      *                     contents
      */
-    void refresh(JobsSnapshot jobsSnapshot, AutoIngestNodeRefreshEvent refreshEvent) {
-        synchronized (this) {
-            if (explorerManager.getRootContext() instanceof AutoIngestJobsNode) {
-                outline.setRowSelectionAllowed(false);
-                ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh(refreshEvent);
-                outline.setRowSelectionAllowed(true);
-                outline.setFocusable(true);
-            }
-
-        }
-    }
-
-    void createAutoIngestJobsNode(JobsSnapshot jobsSnapshot) {
+    void refresh(JobsSnapshot jobsSnapshot, AutoIngestRefreshEvent refreshEvent) {
         synchronized (this) {
             outline.setRowSelectionAllowed(false);
-            explorerManager.setRootContext(new AutoIngestJobsNode(jobsSnapshot, status, new EventBus("AutoIngestJobsNodeEventBus")));
+            if (explorerManager.getRootContext() instanceof AutoIngestJobsNode) {
+                ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh(refreshEvent);
+            } else {
+                explorerManager.setRootContext(new AutoIngestJobsNode(jobsSnapshot, status, new EventBus("AutoIngestJobsNodeEventBus")));
+            }
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);
+
         }
     }
 

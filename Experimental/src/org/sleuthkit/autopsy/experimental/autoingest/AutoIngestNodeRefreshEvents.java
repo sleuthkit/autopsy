@@ -18,29 +18,44 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-class AutoIngestNodeRefreshEvent {
-    private final String caseName;
-    AutoIngestJob job;
+class AutoIngestNodeRefreshEvents {
     
-    AutoIngestNodeRefreshEvent(){
-        caseName = "";
-        job = null;
+    interface AutoIngestRefreshEvent {
         
     }
-    
-    AutoIngestNodeRefreshEvent(String name){
-        caseName = name;
-        job = null;
+
+    static final class RefreshChildrenEvent implements AutoIngestRefreshEvent{
+
+        RefreshChildrenEvent() {
+
+        }
     }
-    
-    AutoIngestNodeRefreshEvent(AutoIngestJob autoIngestJob){
-        caseName = "";
-        job = autoIngestJob;
+
+    static final class RefreshCaseEvent  implements AutoIngestRefreshEvent{
+
+        private final String caseName;
+
+        RefreshCaseEvent(String name) {
+            caseName = name;
+        }
+
+        String getCaseToRefresh() {
+            return caseName;
+        }
+
     }
-    
-    boolean shouldRefreshChildren(){
-        return (caseName.isEmpty() && job == null);
+
+    static final class RefreshJobEvent implements AutoIngestRefreshEvent{
+
+        private final AutoIngestJob autoIngestJob;
+
+        RefreshJobEvent(AutoIngestJob job) {
+            autoIngestJob = job;
+        }
+
+        AutoIngestJob getJobToRefresh() {
+            return autoIngestJob;
+        }
     }
-    
-    
+
 }

@@ -39,6 +39,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.RefreshChildrenEvent;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -230,9 +231,6 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         new Thread(() -> {
             try {
                 autoIngestMonitor.startUp();
-                pendingJobsPanel.createAutoIngestJobsNode(autoIngestMonitor.getJobsSnapshot());
-                runningJobsPanel.createAutoIngestJobsNode(autoIngestMonitor.getJobsSnapshot());
-                completedJobsPanel.createAutoIngestJobsNode(autoIngestMonitor.getJobsSnapshot());
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
             }
@@ -264,9 +262,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * @param nodeStateSnapshot The jobs snapshot.
      */
     void refreshTables() {
-        pendingJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
-        runningJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
-        completedJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new AutoIngestNodeRefreshEvent());
+        pendingJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new RefreshChildrenEvent());
+        runningJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new RefreshChildrenEvent());
+        completedJobsPanel.refresh(autoIngestMonitor.getJobsSnapshot(), new RefreshChildrenEvent());
     }
 
     /**
