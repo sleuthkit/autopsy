@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import static java.lang.Byte.toUnsignedInt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
@@ -47,7 +47,7 @@ public class StringExtract {
      * min. number of extracted chars to qualify as string
      */
     public static final int MIN_CHARS_STRING = 4;
-    private StringExtractUnicodeTable unicodeTable;
+    private final StringExtractUnicodeTable unicodeTable;
     /**
      * currently enabled scripts
      */
@@ -120,8 +120,7 @@ public class StringExtract {
      * @param script script to consider for when extracting strings
      */
     public final void setEnabledScript(SCRIPT script) {
-
-        this.enabledScripts = new ArrayList<SCRIPT>();
+        this.enabledScripts = new ArrayList<>();
         this.enabledScripts.add(script);
     }
 
@@ -161,12 +160,8 @@ public class StringExtract {
      * @return true if only Basic Latin/English extraction is set enabled only
      */
     public boolean isExtractionLatinBasicOnly() {
-        if (enabledScripts.size() == 1
-                && enabledScripts.get(0).equals(SCRIPT.LATIN_1)) {
-            return true;
-        } else {
-            return false;
-        }
+        return enabledScripts.size() == 1
+                && enabledScripts.get(0).equals(SCRIPT.LATIN_1);
     }
 
     public static List<SCRIPT> getSupportedScripts() {
@@ -224,7 +219,7 @@ public class StringExtract {
             }
 
             StringExtractResult resWin = null;
-            if (enableUTF8 && enableUTF16) {
+            if (enableUTF8 && resUTF16 != null) {
                 resWin = runUTF16 && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
             } else if (enableUTF16) {
                 resWin = resUTF16;
@@ -232,7 +227,7 @@ public class StringExtract {
                 resWin = resUTF8;
             }
 
-            if (resWin.numChars >= MIN_CHARS_STRING) {
+            if (resWin != null && resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
                 if (startOffset == offset) {
                     //advance start offset where first string starts it hasn't been advanced
@@ -277,26 +272,23 @@ public class StringExtract {
 
         SCRIPT currentScript = SCRIPT.NONE;
 
-        boolean inControl = false;
-
         //while we have 2 byte chunks
-        byte[] b = new byte[2];
         while (curOffset < len - 1) {
-            b[0] = buff[curOffset++];
-            b[1] = buff[curOffset++];
-
+            int msb, lsb;
+            
             if (endianSwap) {
-                byte temp = b[0];
-                b[0] = b[1];
-                b[1] = temp;
+                msb = toUnsignedInt(buff[curOffset++]);
+                lsb = toUnsignedInt(buff[curOffset++]);
+            }
+            else {
+                lsb = toUnsignedInt(buff[curOffset++]);
+                msb = toUnsignedInt(buff[curOffset++]);
             }
 
             //convert the byte sequence to 2 byte char
-            //ByteBuffer bb = ByteBuffer.wrap(b);
-            //int byteVal = bb.getInt();
-            char byteVal = (char) b[1];
+            char byteVal = (char) msb;
             byteVal = (char) (byteVal << 8);
-            byteVal += b[0];
+            byteVal += lsb;
 
             //skip if beyond range
             if (byteVal > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
@@ -359,19 +351,17 @@ public class StringExtract {
         res.reset();
 
         int curOffset = offset;
-        int ch = 0; //character being extracted
+        int ch; //character being extracted
         int chBytes; //num bytes consumed by current char (1 - 4)
 
         final StringBuilder tempString = new StringBuilder();
 
         SCRIPT currentScript = SCRIPT.NONE;
 
-        boolean inControl = false;
-
         //decode and extract a character
         while (curOffset < len) {
             // based on "valid UTF-8 byte sequences" in the Unicode 5.0 book
-            final int curByte = buff[curOffset] & 0xFF; //ensure we are not comparing signed bytes to ints
+            final int curByte = toUnsignedInt(buff[curOffset]);
             if (curByte <= 0x7F) {
                 chBytes = 1;
                 ch = curByte;
@@ -381,7 +371,7 @@ public class StringExtract {
                 if (len - curOffset < 2) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF) {
                     chBytes = 2;
                     ch = (((curByte & 0x1f) << 6) + (curByte_1 & 0x3f));
@@ -392,8 +382,8 @@ public class StringExtract {
                 if (len - curOffset < 3) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
-                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
+                final int curByte_2 = toUnsignedInt(buff[curOffset + 2]);
 
                 if (curByte_1 >= 0xA0 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
@@ -406,8 +396,8 @@ public class StringExtract {
                 if (len - curOffset < 3) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
-                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
+                final int curByte_2 = toUnsignedInt(buff[curOffset + 2]);
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
@@ -419,8 +409,8 @@ public class StringExtract {
                 if (len - curOffset < 3) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
-                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
+                final int curByte_2 = toUnsignedInt(buff[curOffset + 2]);
                 if (curByte_1 >= 0x80 && curByte_1 <= 0x9F
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
@@ -432,8 +422,8 @@ public class StringExtract {
                 if (len - curOffset < 3) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
-                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
+                final int curByte_2 = toUnsignedInt(buff[curOffset + 2]);
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
@@ -445,9 +435,9 @@ public class StringExtract {
                 if (len - curOffset < 4) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
-                final int curByte_2 = buff[curOffset + 2] & 0xFF;
-                final int curByte_3 = buff[curOffset + 3] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
+                final int curByte_2 = toUnsignedInt(buff[curOffset + 2]);
+                final int curByte_3 = toUnsignedInt(buff[curOffset + 3]);
                 if (curByte_1 >= 0x90 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF
                         && curByte_3 >= 0x80 && curByte_3 <= 0xBF) {
@@ -460,9 +450,9 @@ public class StringExtract {
                 if (len - curOffset < 4) {
                     break;
                 }
-                final int curByte_1 = buff[curOffset + 1] & 0xFF;
-                final int curByte_2 = buff[curOffset + 2] & 0xFF;
-                final int curByte_3 = buff[curOffset + 3] & 0xFF;
+                final int curByte_1 = toUnsignedInt(buff[curOffset + 1]);
+                final int curByte_2 = toUnsignedInt(buff[curOffset + 2]);
+                final int curByte_3 = toUnsignedInt(buff[curOffset + 3]);
                 if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
                         && curByte_2 >= 0x80 && curByte_2 <= 0xBF
                         && curByte_3 >= 0x80 && curByte_3 <= 0xBF) {
@@ -559,7 +549,7 @@ public class StringExtract {
         final String NLS = Character.toString(NL);
         boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
         for (int i = offset; i < len; i++) {
-            char curChar = (char) readBuf[i];
+            char curChar = (char) toUnsignedInt(readBuf[i]);
             if (curChar == 0 && singleConsecZero == false) {
                 //preserve the current sequence if max consec. 1 zero char 
                 singleConsecZero = true;
@@ -1182,7 +1172,7 @@ public class StringExtract {
         /**
          * unicode lookup table with 2 byte index and value of script
          */
-        private static final char[] unicodeTable = new char[UNICODE_TABLE_SIZE];
+        private static final char[] UNICODE_TABLE = new char[UNICODE_TABLE_SIZE];
         private static StringExtractUnicodeTable instance = null; //the singleton instance
 
         /**
@@ -1211,7 +1201,7 @@ public class StringExtract {
          * @return the script type corresponding to the value
          */
         public SCRIPT getScript(int value) {
-            char scriptVal = unicodeTable[value];
+            char scriptVal = UNICODE_TABLE[value];
             return SCRIPT_VALUES[scriptVal];
         }
 
@@ -1271,7 +1261,7 @@ public class StringExtract {
                 while (st.hasMoreTokens()) {
                     String tok = st.nextToken();
                     char code = (char) Integer.parseInt(tok);
-                    unicodeTable[tableIndex++] = code;
+                    UNICODE_TABLE[tableIndex++] = code;
                 }
 
                 logger.log(Level.INFO, "initialized, unicode table loaded"); //NON-NLS
