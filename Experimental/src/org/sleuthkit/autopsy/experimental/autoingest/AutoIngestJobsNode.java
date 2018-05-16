@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.google.common.eventbus.DeadEvent;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -161,14 +160,6 @@ final class AutoIngestJobsNode extends AbstractNode {
                 refresh(true);
             }
 
-            /**
-             * Ignores other events sent over the registered EventBus
-             *
-             * @param ignored the event which is being ignored
-             */
-            @Subscribe
-            private void subscribeToIgnoreDeadEvents(DeadEvent ignored) {
-            }
         }
 
     }
@@ -333,13 +324,18 @@ final class AutoIngestJobsNode extends AbstractNode {
             }
 
             /**
-             * Ignores other events sent over the registered EventBus
+             * Refresh the properties of all running jobs anytime a
+             * RefreshChildrenEvent is received so that stages and times stay up
+             * to date.
              *
-             * @param ignored the event which is being ignored
+             * @param refreshEvent - the RefreshChildrenEvent which was received
              */
-            @Subscribe
-            private void subscribeToIgnoreDeadEvents(DeadEvent ignored) {
+            private void subscribeToRefreshChildren(AutoIngestNodeRefreshEvents.RefreshChildrenEvent refreshEvent) {
+                if (jobStatus == AutoIngestJobStatus.RUNNING_JOB) {
+                    setSheet(createSheet());
+                }
             }
+
         }
     }
 
