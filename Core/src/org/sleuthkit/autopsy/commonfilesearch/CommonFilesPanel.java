@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -36,6 +37,8 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -73,10 +76,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     public CommonFilesPanel() {
         initComponents();
         
-        this.intraCasePanel.setParent(this);
-        this.interCasePanel.setParent(this)
-        
         this.errorText.setVisible(false);
+        
+        this.intraCasePanel.setParent(this);
+        this.interCasePanel.setParent(this);
+        
+        this.setupDataSources();
+        this.setupCases();
     }
 
     @NbBundle.Messages({
@@ -199,7 +205,200 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
+    
+    /**
+     * Sets up the data sources dropdown and returns the data sources map for
+     * future usage.
+     *
+     * @return a mapping of data source ids to data source names
+     */
+    @NbBundle.Messages({
+        "CommonFilesPanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
+        "CommonFilesPanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
+        "CommonFilesPanel.setupDataSources.done.exception=Unexpected exception building data sources map.",
+        "CommonFilesPanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
+        "CommonFilesPanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
+        "CommonFilesPanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
+    private void setupDataSources() {
 
+        new SwingWorker<Map<Long, String>, Void>() {
+
+            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
+
+            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
+
+            private void updateUi() {
+                
+                final Map<Long, String> dataSourceMap = CommonFilesPanel.this.intraCasePanel.getDataSourceMap();
+
+                String[] dataSourcesNames = new String[dataSourceMap.size()];
+
+                //only enable all this stuff if we actually have datasources
+                if (dataSourcesNames.length > 0) {
+                    dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
+                    CommonFilesPanel.this.intraCasePanel.setDataModel(new DataSourceComboBoxModel(dataSourcesNames));
+
+                    boolean multipleDataSources = this.caseHasMultipleSources();
+                    CommonFilesPanel.this.intraCasePanel.rigForMultipleDataSources(multipleDataSources);
+
+                    //TODO this should be attached to the intra/inter radio buttons
+                    CommonFilesPanel.this.setSearchButtonEnabled(true);
+                } else {
+                    //TODO error message only?
+//                    MessageNotifyUtil.Message.info(Bundle.IntraCasePanel_setupDataSources_updateUi_noDataSources());
+//                    SwingUtilities.windowForComponent(IntraCasePanel.this.parent).dispose();
+                }
+            }
+
+            private boolean caseHasMultipleSources() {
+                return CommonFilesPanel.this.intraCasePanel.getDataSourceMap().size() >= 2;
+            }
+
+            private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
+                //try block releases resources - exceptions are handled in done()
+                try (
+                        SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
+                        ResultSet resultSet = query.getResultSet()) {
+                    while (resultSet.next()) {
+                        Long objectId = resultSet.getLong(1);
+                        String dataSourceName = resultSet.getString(2);
+                        dataSouceMap.put(objectId, dataSourceName);
+                    }
+                }
+            }
+
+            private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
+                //try block releases resources - exceptions are handled in done()
+                try (
+                        SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
+                        ResultSet resultSet = query.getResultSet()) {
+                    
+                    while (resultSet.next()) {
+                        Long objectId = resultSet.getLong(1);
+                        String dataSourceName = resultSet.getString(2);
+                        File image = new File(dataSourceName);
+                        String dataSourceNameTrimmed = image.getName();
+                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
+                    }
+                }
+            }
+
+            @Override
+            protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
+
+                Map<Long, String> dataSourceMap = new HashMap<>();
+
+                Case currentCase = Case.getCurrentCaseThrows();
+                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+
+                loadLogicalSources(tskDb, dataSourceMap);
+
+                loadImageSources(tskDb, dataSourceMap);
+
+                return dataSourceMap;
+            }
+
+            @Override
+            protected void done() {
+
+                try {
+                    CommonFilesPanel.this.intraCasePanel.setDataSourceMap(this.get());
+
+                    updateUi();
+
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
+                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupDataSources_done_interupted());
+                } catch (ExecutionException ex) {
+                    String errorMessage;
+                    Throwable inner = ex.getCause();
+                    if (inner instanceof TskCoreException) {
+                        LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_tskCoreException();
+                    } else if (inner instanceof NoCurrentCaseException) {
+                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_noCurrentCaseException();
+                    } else if (inner instanceof SQLException) {
+                        LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_sqlException();
+                    } else {
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_exception();
+                    }
+                    MessageNotifyUtil.Message.error(errorMessage);
+                }
+            }
+        }.execute();
+    }
+
+    @NbBundle.Messages({
+        "CommonFilesPanel.setupCases.done.interruptedException=Something went wrong building the Common Files Search dialog box.",
+        "CommonFilesPanel.setupCases.done.exeutionException=Unexpected exception building data sources map."})
+    private void setupCases(){
+        
+        new SwingWorker<Map<Integer, String>, Void>(){
+            
+            private void updateUi(){
+                
+                final Map<Integer, String> caseMap = CommonFilesPanel.this.interCasePanel.getCaseMap();
+                
+                String[] caseNames = new String[caseMap.size()];
+                
+                if(caseNames.length > 0){
+                    caseNames = caseMap.values().toArray(caseNames);
+                    CommonFilesPanel.this.interCasePanel.setCaseList(new DataSourceComboBoxModel(caseNames));
+                    
+                    boolean multipleCases = this.centralRepoHasMultipleCases();
+                    CommonFilesPanel.this.interCasePanel.rigForMultipleCases(multipleCases);
+   
+                    //TODO need something more specific
+                    //InterCasePanel.this.parent.setSearchButtonEnabled(true);                    
+                } else {
+                    //TODO need something more specific
+                }
+                
+            }
+                        
+            private Map<Integer, String> mapDataSources(List<CorrelationDataSource> dataSources) {
+                Map<Integer, String> casemap = new HashMap<>();
+                
+                for (CorrelationDataSource source : dataSources){
+                    casemap.put(source.getCaseID(), source.getName());
+                }
+                
+                return casemap;
+            }
+            
+            @Override
+            protected Map<Integer, String> doInBackground() throws Exception {
+                                
+                List<CorrelationDataSource> dataSources = EamDb.getInstance().getDataSources();
+                
+                Map<Integer, String> caseMap = mapDataSources(dataSources);
+                
+                return caseMap;
+            }
+            
+            @Override
+            protected void done(){
+                try{
+                    CommonFilesPanel.this.interCasePanel.setCaseMap(this.get());
+                    this.updateUi();
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
+                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupCases_done_interruptedException());
+                } catch (ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog.", ex);
+                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupCases_done_exeutionException());
+                }
+            }
+
+            private boolean centralRepoHasMultipleCases() {
+                return CommonFilesPanel.this.interCasePanel.centralRepoHasMultipleCases();
+            }
+            
+        }.execute();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -211,7 +410,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         fileTypeFilterButtonGroup = new javax.swing.ButtonGroup();
         interIntraButtonGroup = new javax.swing.ButtonGroup();
-        interCasePanel1 = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
         searchButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         allFileCategoriesRadioButton = new javax.swing.JRadioButton();
@@ -451,7 +649,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel errorText;
     private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
     private org.sleuthkit.autopsy.commonfilesearch.InterCasePanel interCasePanel;
-    private org.sleuthkit.autopsy.commonfilesearch.InterCasePanel interCasePanel1;
     private javax.swing.JRadioButton interCaseRadio;
     private javax.swing.ButtonGroup interIntraButtonGroup;
     private org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel intraCasePanel;

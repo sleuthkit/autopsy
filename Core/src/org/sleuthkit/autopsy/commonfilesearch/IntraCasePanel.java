@@ -58,8 +58,6 @@ public class IntraCasePanel extends javax.swing.JPanel {
      */
     public IntraCasePanel() {
         initComponents();
-        
-        this.setupDataSources();
     }
     
     public void setParent(CommonFilesPanel parent){
@@ -82,133 +80,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
         return this.dataSourceMap;
     }
     
-    /**
-     * Sets up the data sources dropdown and returns the data sources map for
-     * future usage.
-     *
-     * @return a mapping of data source ids to data source names
-     */
-    @NbBundle.Messages({
-        "IntraCasePanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
-        "IntraCasePanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
-        "IntraCasePanel.setupDataSources.done.exception=Unexpected exception building data sources map.",
-        "IntraCasePanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
-        "IntraCasePanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
-        "IntraCasePanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
-    private void setupDataSources() {
-
-        new SwingWorker<Map<Long, String>, Void>() {
-
-            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
-            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
-            private void updateUi() {
-
-                String[] dataSourcesNames = new String[IntraCasePanel.this.dataSourceMap.size()];
-
-                //only enable all this stuff if we actually have datasources
-                if (dataSourcesNames.length > 0) {
-                    dataSourcesNames = IntraCasePanel.this.dataSourceMap.values().toArray(dataSourcesNames);
-                    IntraCasePanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
-                    IntraCasePanel.this.selectDataSourceComboBox.setModel(IntraCasePanel.this.dataSourcesList);
-
-                    boolean multipleDataSources = this.caseHasMultipleSources();
-                    IntraCasePanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
-                    IntraCasePanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
-
-                    if (!multipleDataSources) {
-                        IntraCasePanel.this.withinDataSourceRadioButton.setSelected(true);
-                        withinDataSourceSelected(true);
-                    }
-
-                    IntraCasePanel.this.parent.setSearchButtonEnabled(true);
-                } else {
-                    MessageNotifyUtil.Message.info(Bundle.IntraCasePanel_setupDataSources_updateUi_noDataSources());
-                    SwingUtilities.windowForComponent(IntraCasePanel.this.parent).dispose();
-                }
-            }
-
-            private boolean caseHasMultipleSources() {
-                return IntraCasePanel.this.dataSourceMap.size() >= 2;
-            }
-
-            private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
-                        ResultSet resultSet = query.getResultSet()) {
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        dataSouceMap.put(objectId, dataSourceName);
-                    }
-                }
-            }
-
-            private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
-                        ResultSet resultSet = query.getResultSet()) {
-                    
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        File image = new File(dataSourceName);
-                        String dataSourceNameTrimmed = image.getName();
-                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
-                    }
-                }
-            }
-
-            @Override
-            protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-
-                Map<Long, String> dataSouceMap = new HashMap<>();
-
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-                loadLogicalSources(tskDb, dataSouceMap);
-
-                loadImageSources(tskDb, dataSouceMap);
-
-                return dataSouceMap;
-            }
-
-            @Override
-            protected void done() {
-
-                try {
-                    IntraCasePanel.this.dataSourceMap = this.get();
-
-                    updateUi();
-
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.IntraCasePanel_setupDataSources_done_interupted());
-                } catch (ExecutionException ex) {
-                    String errorMessage;
-                    Throwable inner = ex.getCause();
-                    if (inner instanceof TskCoreException) {
-                        LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
-                        errorMessage = Bundle.IntraCasePanel_setupDataSources_done_tskCoreException();
-                    } else if (inner instanceof NoCurrentCaseException) {
-                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
-                        errorMessage = Bundle.IntraCasePanel_setupDataSources_done_noCurrentCaseException();
-                    } else if (inner instanceof SQLException) {
-                        LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
-                        errorMessage = Bundle.IntraCasePanel_setupDataSources_done_sqlException();
-                    } else {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
-                        errorMessage = Bundle.IntraCasePanel_setupDataSources_done_exception();
-                    }
-                    MessageNotifyUtil.Message.error(errorMessage);
-                }
-            }
-        }.execute();
-    }
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -309,4 +181,23 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private javax.swing.JComboBox<String> selectDataSourceComboBox;
     private javax.swing.JRadioButton withinDataSourceRadioButton;
     // End of variables declaration//GEN-END:variables
+
+    void setDataModel(DataSourceComboBoxModel dataSourceComboBoxModel) {
+        this.dataSourcesList = dataSourceComboBoxModel;
+        this.selectDataSourceComboBox.setModel(dataSourcesList);
+    }
+
+    void rigForMultipleDataSources(boolean multipleDataSources) {
+        this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
+        this.allDataSourcesRadioButton.setSelected(multipleDataSources);
+        
+        if(!multipleDataSources){
+            this.withinDataSourceRadioButton.setSelected(true);
+            this.withinDataSourceSelected(true);
+        }
+    }
+
+    void setDataSourceMap(Map<Long, String> dataSourceMap) {
+        this.dataSourceMap = dataSourceMap;
+    }
 }

@@ -19,12 +19,36 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import javax.swing.ComboBoxModel;
+import javax.swing.SwingWorker;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+
 /**
  *
  * @author bsweeney
  */
 public class InterCasePanel extends javax.swing.JPanel {
-
+    
+    private static final long serialVersionUID = 1L;
+        
+    private static final Logger LOGGER = Logger.getLogger(InterCasePanel.class.getName());
+    
+    private String selectedCase;
+    private boolean singleCase;
+    
+    private ComboBoxModel<String> casesList = new DataSourceComboBoxModel();
+    private Map<Integer, String> caseMap;
+    
     private CommonFilesPanel parent;
     
     /**
@@ -33,7 +57,21 @@ public class InterCasePanel extends javax.swing.JPanel {
     public InterCasePanel() {
         initComponents();
     }
+    
+    
 
+    private void specificCaseSelected(boolean selected) {
+        this.specificCentralRepoCaseRadio.setEnabled(selected);
+        if (this.specificCentralRepoCaseRadio.isEnabled()) {
+            this.caseComboBox.setSelectedIndex(0);
+            this.singleCase = true;
+        }
+    }
+    
+    void setParent(CommonFilesPanel parent) {
+        this.parent = parent;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -65,7 +103,7 @@ public class InterCasePanel extends javax.swing.JPanel {
             }
         });
 
-        caseComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        caseComboBox.setModel(casesList);
         caseComboBox.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -111,7 +149,30 @@ public class InterCasePanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton specificCentralRepoCaseRadio;
     // End of variables declaration//GEN-END:variables
 
-    void setParent(CommonFilesPanel parent) {
-        this.parent = parent;
+    Map<Integer, String> getCaseMap() {
+        return this.caseMap;
+    }
+
+    void setCaseList(DataSourceComboBoxModel dataSourceComboBoxModel) {
+        this.casesList = dataSourceComboBoxModel;
+        this.caseComboBox.setModel(dataSourceComboBoxModel);
+    }
+
+    void rigForMultipleCases(boolean multipleCases) {
+        this.anCentralRepoCaseRadio.setEnabled(multipleCases);
+        this.anCentralRepoCaseRadio.setEnabled(multipleCases);
+        
+        if(!multipleCases){
+            this.specificCentralRepoCaseRadio.setSelected(true);
+            this.specificCaseSelected(true);
+        }
+    }
+
+    void setCaseMap(Map<Integer, String> caseMap) {
+        this.caseMap = caseMap;
+    }
+
+    boolean centralRepoHasMultipleCases() {
+        return this.caseMap.size() >= 2;
     }
 }
