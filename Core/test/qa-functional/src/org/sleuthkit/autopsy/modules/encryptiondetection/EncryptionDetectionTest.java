@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -51,18 +49,11 @@ import org.sleuthkit.datamodel.VolumeSystem;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
-    private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
-    private static final String PASSWORD_CASE_NAME = "testPasswordProtection";
-    
-    private static final Path BITLOCKER_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), BITLOCKER_CASE_NAME);
-    private static final Path PASSWORD_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), PASSWORD_CASE_NAME);
-    
-    private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
-    private final Path PASSWORD_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
-
+    private static final String BITLOCKER_DETECTION_CASE_NAME = "testBitlockerEncryption";
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
     private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
 
+    private final Path BITLOCKER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
   
@@ -79,10 +70,6 @@ public class EncryptionDetectionTest extends NbTestCase {
 
     @Override
     public void tearDown() {
-        File keepCaseData = new File(".keepCaseData");
-        if (keepCaseData.exists()) {
-            System.out.println("!");
-        }
         CaseUtils.closeCurrentCase();
     }
 
@@ -91,9 +78,9 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testBitlockerEncryption() {
         try {
-            Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_CASE_NAME);
+            Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
+            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_DETECTION_IMAGE_PATH);
 
             /*
              * Create ingest job settings.

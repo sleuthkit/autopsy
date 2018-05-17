@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Scanner;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.apache.commons.io.FileUtils;
@@ -37,6 +38,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
  * of cases.
  */
 public final class CaseUtils {
+
+    private static final String PRESERVE_CASE_DATA_LIST_FILE_NAME = ".preserve";
 
     /**
      * Create a case case directory and case for the given case name.
@@ -78,26 +81,33 @@ public final class CaseUtils {
      * Close and delete the current case. This will fail the test if the case
      * was unable to be closed.
      *
-     * Note: This method will skip case deletion if '//DLG:' exists in the class
-     * folder.
+     * Note: This method will skip case deletion if '.preserve' exists with the
+     * functional test data and includes the current case path.
      */
     public static void closeCurrentCase() {
         try {
             if (Case.isCaseOpen()) {
                 String currentCaseDirectory = Case.getCurrentCase().getCaseDirectory();
                 Case.closeCurrentCase();
-                File keepCaseData = new File(".keepCaseData");
-                if (keepCaseData.exists()) {
+
+                boolean deleteCase = true;
+                File preserveListFile = new File(
+                        CaseUtils.class.getResource(PRESERVE_CASE_DATA_LIST_FILE_NAME).toExternalForm()
+                                .substring(6)); // Use substring to remove "file:\" from path.
+                if (preserveListFile.exists()) {
+                    Scanner scanner = new Scanner(preserveListFile);
+                    while (scanner.hasNext()) {
+                        if (scanner.nextLine().equalsIgnoreCase(currentCaseDirectory)) {
+                            deleteCase = false;
+                            break;
+                        }
+                    }
+                }
+                if (deleteCase) {
                     deleteCaseDir(new File(currentCaseDirectory));
                 }
             }
             System.gc();
-            //DLG: //Seems like we need some time to close the case, so file handler later can delete the case directory.
-            //DLG: try {
-            //DLG:     Thread.sleep(20000);
-            //DLG: } catch (Exception ex) {
-            //DLG: 
-            //DLG: }
         } catch (CaseActionException | IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
