@@ -281,7 +281,7 @@ public final class FilteredEventsModel {
      * @param tagsFilter the tags filter to modify so it is consistent with the
      *                   tags in use in the case
      */
-    public void syncTagsFilter(FilterModel<TagsFilter> tagsFilter) {
+    public void syncTagsFilter(CompountFilterModel<TagNameFilter> tagsFilter) {
         for (TagName tagName : tagNames) {
             tagsFilter.addSubFilter(new TagNameFilter(tagName));
         }

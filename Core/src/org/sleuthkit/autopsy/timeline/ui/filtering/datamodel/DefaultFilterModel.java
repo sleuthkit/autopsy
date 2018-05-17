@@ -75,7 +75,6 @@ public class DefaultFilterModel<FilterType extends TimelineFilter> implements Fi
 
     @Override
     public String getSQLWhere(TimelineManager tm) {
-        //TODO: intercept and prune out inactive filters;
         return delegate.getSQLWhere(tm);
     }
 
