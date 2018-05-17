@@ -91,6 +91,10 @@ public final class CaseUtils {
                 String currentCaseDirectory = Case.getCurrentCase().getCaseDirectory();
                 Case.closeCurrentCase();
 
+                /*
+                 * Look for the current case directory in '.preserved'. If
+                 * found, skip case deletion.
+                 */
                 boolean deleteCase = true;
                 File preserveListFile = new File(
                         CaseUtils.class.getResource(PRESERVE_CASE_DATA_LIST_FILE_NAME).toExternalForm()
