@@ -830,7 +830,7 @@ final class IngestTasksScheduler {
     /**
      * A snapshot of ingest tasks data for an ingest job.
      */
-    public static final class IngestJobTasksSnapshot implements Serializable {
+    static final class IngestJobTasksSnapshot implements Serializable {
 
         private static final long serialVersionUID = 1L;
         private final long jobId;
