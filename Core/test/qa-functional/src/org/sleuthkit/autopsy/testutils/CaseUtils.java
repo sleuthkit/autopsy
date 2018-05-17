@@ -81,8 +81,9 @@ public final class CaseUtils {
      * Close and delete the current case. This will fail the test if the case
      * was unable to be closed.
      *
-     * Note: This method will skip case deletion if '.preserve' exists with the
-     * functional test data and includes the current case path.
+     * Note: This method will skip case deletion if '.preserve' exists in the
+     * 'org.sleuthkit.autopsy.testutils' package and includes the current case
+     * path.
      */
     public static void closeCurrentCase() {
         try {
