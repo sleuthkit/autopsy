@@ -18,7 +18,7 @@ import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 /**
  *
  */
-public class RootFilterModel extends DefaultFilterModel<RootFilter> {
+public class RootFilterModel extends DefaultFilterModel<RootFilter> implements FilterModel<RootFilter> {
 
     public RootFilterModel(RootFilter delegate) {
         super(delegate);

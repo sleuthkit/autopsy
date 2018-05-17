@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 
 /**
@@ -94,6 +95,9 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private Set<String> activeQuickHidefilters = new HashSet<>();
 
+    /** listener that triggers chart layout pass */
+    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
+
     boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
@@ -108,7 +112,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         return parentChart.getContextMenu(clickEvent);
     }
 
-    EventNodeBase<?> createNode(DetailsChartLane<?> chart, DetailViewEvent event) {
+    EventNodeBase<?> createNode(DetailsChartLane<?> chart, DetailViewEvent event) throws TskCoreException {
         if (event.getEventIDs().size() == 1) {
             return new SingleEventNode(this, new SingleDetailsViewEvent(controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs()))), null);
         } else if (event instanceof SingleDetailsViewEvent) {
@@ -154,10 +158,6 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
         return selectedNodes;
     }
-    /**
-     * listener that triggers chart layout pass
-     */
-    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
 
     public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
@@ -308,7 +308,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
      *
      * @param event
      */
-    void addEvent(Y event) {
+    void addEvent(Y event) throws TskCoreException {
         EventNodeBase<?> eventNode = createNode(this, event);
         eventMap.put(event, eventNode);
         Platform.runLater(() -> {
@@ -346,13 +346,13 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
      * @return all the nodes that pass the given predicate
      */
     synchronized Iterable<EventNodeBase<?>> getAllNodes() {
-        return getNodes((x) -> true);
+        return getNodes(dummy -> true);
     }
 
     /**
      * @return all the nodes that pass the given predicate
      */
-    synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
+    private synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> predicate) {
         //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener
                 = new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
@@ -366,7 +366,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
 
         return sortedNodes.stream()
                 .flatMap(stripeFlattener)
-                .filter(p).collect(Collectors.toList());
+                .filter(predicate).collect(Collectors.toList());
     }
 
     /**

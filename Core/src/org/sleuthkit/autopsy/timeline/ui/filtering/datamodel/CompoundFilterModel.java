@@ -11,7 +11,7 @@ import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
- public class CompoundFilterModel extends DefaultFilterModel< CompoundFilter<TimelineFilter>> {
+ public class CompoundFilterModel extends DefaultFilterModel< CompoundFilter<TimelineFilter>> implements CompoundFilterModelI {
 
     private final ObservableList<FilterModel<?>> subFilterModels = FXCollections.observableArrayList();
 
@@ -42,7 +42,8 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
         });
     }
 
-    ObservableList<FilterModel<?>> getSubFilterModels() {
+    @Override
+    public    ObservableList<FilterModel<?>> getSubFilterModels() {
         return subFilterModels;
     }
 }

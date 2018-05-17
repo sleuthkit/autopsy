@@ -26,9 +26,10 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -124,9 +125,8 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      *                   from.
      */
     @NbBundle.Messages({
-        "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."
-    })
-    private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) {
+        "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."})
+    private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) throws TskCoreException {
         this.controller = controller;
 
         //load dialog content fxml
@@ -195,7 +195,16 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         dateTimeColumn.setCellFactory(param -> new DateTimeTableCell<>());
 
         //add events to table
-        eventTable.getItems().setAll(eventIDS.stream().map(controller.getEventsModel()::getEventById).collect(Collectors.toSet()));
+        Set<TimelineEvent> events = new HashSet<>();
+        FilteredEventsModel eventsModel = controller.getEventsModel();
+        for (Long eventID : eventIDS) {
+            try {
+                events.add(eventsModel.getEventById(eventID));
+            } catch (TskCoreException ex) {
+                throw new TskCoreException("Error getting event by id.", ex);
+            }
+        }
+        eventTable.getItems().setAll(events);
         eventTable.setPrefHeight(Math.min(200, 24 * eventTable.getItems().size() + 28));
     }
 

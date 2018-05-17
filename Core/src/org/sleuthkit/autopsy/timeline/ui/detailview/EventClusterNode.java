@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A Node to represent an EventCluster in a DetailsChart
@@ -234,11 +235,15 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                         getChildren().setAll(subNodePane, infoHBox);
                     } else {
                         //display new sub stripes
-                        subNodes.addAll(Lists.transform(newSubStripes, EventClusterNode.this::createChildNode)); //map stripes to nodes
+                        List<EventNodeBase<?>> newSubNodes = new ArrayList<>();
+                        for (EventStripe subStripe : newSubStripes) {//map stripes to nodes
+                            newSubNodes.add(createChildNode(subStripe));
+                        }
+                        subNodes.addAll(newSubNodes);
                         chartNestedEvents.addAll(StripeFlattener.flatten(subNodes));
                         getChildren().setAll(new VBox(infoHBox, subNodePane));
                     }
-                } catch (InterruptedException | ExecutionException ex) {
+                } catch (TskCoreException | InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
                 }
 
@@ -253,7 +258,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
     }
 
     @Override
-    EventNodeBase<?> createChildNode(EventStripe stripe) {
+    EventNodeBase<?> createChildNode(EventStripe stripe) throws TskCoreException {
         ImmutableSet<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.
@@ -268,8 +273,8 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
     @Override
     protected void layoutChildren() {
         double chartX = getChartLane().getXAxis().getDisplayPosition(new DateTime(getStartMillis()));
-        double w = getChartLane().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
-        subNodePane.setPrefWidth(Math.max(1, w));
+        double width = getChartLane().getXAxis().getDisplayPosition(new DateTime(getEndMillis())) - chartX;
+        subNodePane.setPrefWidth(Math.max(1, width));
         super.layoutChildren();
     }
 

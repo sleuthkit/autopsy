@@ -66,10 +66,10 @@ final public class FilterSetPanel extends BorderPane {
     private Button defaultButton;
 
     @FXML
-    private TreeTableView<FilterModel<TimelineFilter>> filterTreeTable;
+    private TreeTableView< FilterModel<TimelineFilter>> filterTreeTable;
 
     @FXML
-    private TreeTableColumn<FilterModel<TimelineFilter>, FilterModel<TimelineFilter>> treeColumn;
+    private TreeTableColumn<FilterModel<  TimelineFilter>, FilterModel<TimelineFilter>> treeColumn;
 
     @FXML
     private TreeTableColumn<FilterModel<TimelineFilter>, FilterModel<TimelineFilter>> legendColumn;

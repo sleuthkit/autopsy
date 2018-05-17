@@ -42,11 +42,11 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
      *                     children of this FilterTreeItem
      * @param expansionMap
      */
-    public FilterTreeItem(FilterModel<?> filter, ObservableMap<FilterModel<?>, Boolean> expansionMap) {
+    public FilterTreeItem(FilterModel<TimelineFilter> filter, ObservableMap<FilterModel<TimelineFilter>, Boolean> expansionMap) {
         super(filter);
 
         //listen to changes in the expansion map, and update expansion state of filter object
-        expansionMap.addListener((MapChangeListener.Change<? extends FilterModel<?>, ? extends Boolean> change) -> {
+        expansionMap.addListener((MapChangeListener.Change<? extends FilterModel<TimelineFilter>, ? extends Boolean> change) -> {
             if (change.getKey().equals(filter)) {
                 setExpanded(expansionMap.get(change.getKey()));
             }
@@ -104,7 +104,7 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
         }
     }
 
-    private void addSubfilter(FilterModel<?> subFilter, ObservableMap<FilterModel<?>, Boolean> expansionMap) {
+    private void addSubfilter(FilterModel<TimelineFilter> subFilter, ObservableMap<FilterModel<TimelineFilter>, Boolean> expansionMap) {
         FilterTreeItem filterTreeItem = new FilterTreeItem(subFilter, expansionMap);
 
         //if a subfilter's selected property changes...

@@ -294,10 +294,14 @@ public class TimeLineController {
             currentParams.set(historyManagerParams);
         });
 
-        InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
-                EventTypeZoomLevel.BASE_TYPE,
-                filteredEvents.filterProperty().get(),
-                DescriptionLoD.SHORT);
+        try {
+            InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
+                    EventTypeZoomLevel.BASE_TYPE,
+                    filteredEvents.filterProperty().get(),
+                    DescriptionLoD.SHORT);
+        } catch (TskCoreException ex) {
+            throw new TskCoreException("Error getting spanning interval.", ex);
+        }
         historyManager.advance(InitialZoomState);
 
         //clear the selected events when the view mode changes
@@ -344,7 +348,7 @@ public class TimeLineController {
     /**
      * Show the entire range of the timeline.
      */
-    private boolean showFullRange() {
+    private boolean showFullRange() throws TskCoreException {
         synchronized (filteredEvents) {
             return pushTimeRange(filteredEvents.getSpanningInterval());
         }
@@ -362,8 +366,12 @@ public class TimeLineController {
         synchronized (filteredEvents) {
             setViewMode(ViewMode.LIST);
             selectEventIDs(requestEvent.getEventIDs());
-            if (pushTimeRange(requestEvent.getInterval()) == false) {
-                eventbus.post(requestEvent);
+            try {
+                if (pushTimeRange(requestEvent.getInterval()) == false) {
+                    eventbus.post(requestEvent);
+                }
+            } catch (TskCoreException ex) {
+                throw new TskCoreException("Error pushing requested timerange.", ex);
             }
         }
     }
@@ -411,12 +419,12 @@ public class TimeLineController {
                         && promptDialogManager.confirmDuringIngest() == false) {
                     return;  //if they cancel, do nothing.
                 }
+                try {
+                    if (file == null && artifact == null) {
+                        SwingUtilities.invokeLater(TimeLineController.this::showWindow);
+                        this.showFullRange();
+                    } else {
 
-                if (file == null && artifact == null) {
-                    SwingUtilities.invokeLater(TimeLineController.this::showWindow);
-                    this.showFullRange();
-                } else {
-                    try {
                         //prompt user to pick specific event and time range
                         ShowInTimelineDialog showInTimelineDilaog = (file == null)
                                 ? new ShowInTimelineDialog(this, artifact)
@@ -431,10 +439,11 @@ public class TimeLineController {
                                 new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
                             }
                         });
-                    } catch (TskCoreException tskCoreException) {
-                        logger.log(Level.SEVERE, "Error showing Timeline ", tskCoreException);
-                        new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
+
                     }
+                } catch (TskCoreException tskCoreException) {
+                    logger.log(Level.SEVERE, "Error showing Timeline ", tskCoreException);
+                    new Alert(Alert.AlertType.ERROR, "There was an error opening Timeline.").showAndWait();
                 }
             }
         });
@@ -447,22 +456,22 @@ public class TimeLineController {
      * @param period The period of time to show around the current center of the
      *               view.
      */
-    synchronized public void pushPeriod(ReadablePeriod period) {
+    synchronized public void pushPeriod(ReadablePeriod period) throws TskCoreException {
         synchronized (filteredEvents) {
             pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), period));
         }
     }
 
-    synchronized public void pushZoomOutTime() {
-        final Interval timeRange = filteredEvents.timeRangeProperty().get();
+    synchronized public void pushZoomOutTime() throws TskCoreException {
+        final Interval timeRange = filteredEvents.getTimeRange();
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().minus(toDurationMillis);
         DateTime end = timeRange.getEnd().plus(toDurationMillis);
         pushTimeRange(new Interval(start, end));
     }
 
-    synchronized public void pushZoomInTime() {
-        final Interval timeRange = filteredEvents.timeRangeProperty().get();
+    synchronized public void pushZoomInTime() throws TskCoreException {
+        final Interval timeRange = filteredEvents.getTimeRange();
         long toDurationMillis = timeRange.toDurationMillis() / 4;
         DateTime start = timeRange.getStart().plus(toDurationMillis);
         DateTime end = timeRange.getEnd().minus(toDurationMillis);
@@ -507,7 +516,7 @@ public class TimeLineController {
      * @return True if the interval was changed. False if the interval was the
      *         same as the existing one and no change happened.
      */
-    synchronized public boolean pushTimeRange(Interval timeRange) {
+    synchronized public boolean pushTimeRange(Interval timeRange) throws TskCoreException {
         //clamp timerange to case
         Interval clampedTimeRange;
         if (timeRange == null) {
@@ -541,7 +550,7 @@ public class TimeLineController {
      *
      * @return true if the view actually changed.
      */
-    synchronized public boolean pushTimeUnit(TimeUnits timeUnit) {
+    synchronized public boolean pushTimeUnit(TimeUnits timeUnit) throws TskCoreException {
         if (timeUnit == TimeUnits.FOREVER) {
             return showFullRange();
         } else {
@@ -559,15 +568,15 @@ public class TimeLineController {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
-    synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) {
-        timeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
+    synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) throws TskCoreException {
+        Interval overlappingTimeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
         ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
         if (currentZoom == null) {
-            advance(InitialZoomState.withTimeAndType(timeRange, typeZoom));
-        } else if (currentZoom.hasTimeRange(timeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
-            advance(currentZoom.withTimeAndType(timeRange, typeZoom));
-        } else if (currentZoom.hasTimeRange(timeRange) == false) {
-            advance(currentZoom.withTimeRange(timeRange));
+            advance(InitialZoomState.withTimeAndType(overlappingTimeRange, typeZoom));
+        } else if (currentZoom.hasTimeRange(overlappingTimeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
+            advance(currentZoom.withTimeAndType(overlappingTimeRange, typeZoom));
+        } else if (currentZoom.hasTimeRange(overlappingTimeRange) == false) {
+            advance(currentZoom.withTimeRange(overlappingTimeRange));
         } else if (currentZoom.hasTypeZoomLevel(typeZoom) == false) {
             advance(currentZoom.withTypeZoomLevel(typeZoom));
         }
@@ -605,7 +614,7 @@ public class TimeLineController {
         selectedEventIDs.setAll(eventIDs);
     }
 
-    public void selectTimeAndType(Interval interval, EventType type) {
+    public void selectTimeAndType(Interval interval, EventType type) throws TskCoreException {
         final Interval timeRange = filteredEvents.getSpanningInterval().overlap(interval);
 
         final LoggedTask<Collection<Long>> selectTimeAndTypeTask = new LoggedTask<Collection<Long>>("Select Time and Type", true) { //NON-NLS

@@ -40,9 +40,9 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -218,20 +218,25 @@ public class EventNode extends DisplayableItemNode {
      *         its lookup.
      */
     public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, NoCurrentCaseException {
-        /*
-         * Look up the event by id and creata an EventNode with the appropriate
-         * data in the lookup.
-         */
-        final TimelineEvent eventById = eventsModel.getEventById(eventID);
 
         SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+        try {
+            /*
+             * Look up the event by id and creata an EventNode with the
+             * appropriate data in the lookup.
+             */
+        final TimelineEvent eventById = eventsModel.getEventById(eventID);
 
-        if (eventById.getArtifactID().isPresent()) {
-            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
-            return new EventNode(eventById, file, blackboardArtifact);
-        } else {
-            return new EventNode(eventById, file);
+            AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+
+            if (eventById.getArtifactID().isPresent()) {
+                BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
+                return new EventNode(eventById, file, blackboardArtifact);
+            } else {
+                return new EventNode(eventById, file);
+            }
+        } catch (TskCoreException ex) {
+            throw new TskCoreException("Error getting event by id.", ex);
         }
     }
 

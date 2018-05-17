@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.BooleanBinding;
@@ -30,13 +30,16 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TitledPane;
 import javafx.util.StringConverter;
+import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimeUnits;
 
@@ -47,6 +50,8 @@ import org.sleuthkit.datamodel.timeline.TimeUnits;
  * and description level of detail).
  */
 public class ZoomSettingsPane extends TitledPane {
+
+    private static final Logger logger = Logger.getLogger(ZoomSettingsPane.class.getName());
 
     @FXML
     private Label zoomLabel;
@@ -170,9 +175,11 @@ public class ZoomSettingsPane extends TitledPane {
      *                            lineup exactly with the Enum value indices to
      *                            use as tick Labels.
      */
-    private static <DriverType, EnumType extends Enum<EnumType>> void configureSliderListeners(
+    @NbBundle.Messages({"ZoomSettingsPane.sliderChange.errorText=Error responding to slider value change."})
+
+    private <DriverType, EnumType extends Enum<EnumType>> void configureSliderListeners(
             Slider slider,
-            Consumer<EnumType> sliderValueConsumer,
+            CheckedConsumer<EnumType> sliderValueConsumer,
             ReadOnlyObjectProperty<DriverType> modelProperty,
             Class<EnumType> enumClass,
             Function<DriverType, Integer> driverValueMapper,
@@ -187,7 +194,14 @@ public class ZoomSettingsPane extends TitledPane {
             if (slider.isValueChanging() == false) {
                 //convert slider value to EnumType and pass to consumer
                 EnumType sliderValueAsEnum = enumClass.getEnumConstants()[Math.round((float) slider.getValue())];
-                sliderValueConsumer.accept(sliderValueAsEnum);
+                try {
+                    sliderValueConsumer.accept(sliderValueAsEnum);
+                } catch (TskCoreException exception) {
+                    logger.log(Level.SEVERE, "Error responding to slider value change.", exception);
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.ZoomSettingsPane_sliderChange_errorText())
+                            .showError();
+                }
             }
         };
         //attach listener
@@ -235,8 +249,8 @@ public class ZoomSettingsPane extends TitledPane {
          */
         private final Function<Integer, Integer> indexAdjsuter;
 
-        EnumSliderLabelFormatter(Class<EnumType> clazz, Function<Integer, Integer> indexMapper) {
-            this.clazz = clazz;
+        EnumSliderLabelFormatter(Class<EnumType> enumClass, Function<Integer, Integer> indexMapper) {
+            this.clazz = enumClass;
             this.indexAdjsuter = indexMapper;
         }
 
@@ -260,5 +274,16 @@ public class ZoomSettingsPane extends TitledPane {
         public Double fromString(String string) {
             throw new UnsupportedOperationException("This method should not be used. This EnumSliderLabelFormatter is being used in an unintended way.");
         }
+    }
+
+    /**
+     * Functional interface for a consumer that throws a TskCoreException.
+     *
+     * @param <T>
+     */
+    @FunctionalInterface
+    private interface CheckedConsumer<T> {
+
+        void accept(T input) throws TskCoreException;
     }
 }
