@@ -33,15 +33,17 @@ import org.openide.util.NbBundle;
 /**
  * A panel that displays ingest task progress snapshots.
  */
-public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
+class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private final JDialog parent;
+    private final IngestProgressSnapshotProvider snapshotProvider;
     private final IngestThreadActivitySnapshotsTableModel threadActivityTableModel;
     private final IngestJobTableModel jobTableModel;
     private final ModuleTableModel moduleTableModel;
 
-    IngestProgressSnapshotPanel(JDialog parent) {
+    IngestProgressSnapshotPanel(JDialog parent, IngestProgressSnapshotProvider snapshotProvider) {
         this.parent = parent;
+        this.snapshotProvider = snapshotProvider;
         threadActivityTableModel = new IngestThreadActivitySnapshotsTableModel();
         jobTableModel = new IngestJobTableModel();
         moduleTableModel = new ModuleTableModel();
@@ -105,7 +107,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         }
 
         private void refresh() {
-            snapshots = IngestManager.getInstance().getIngestThreadActivitySnapshots();
+            snapshots = snapshotProvider.getIngestThreadActivitySnapshots();
             fireTableDataChanged();
         }
 
@@ -187,7 +189,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         }
 
         private void refresh() {
-            jobSnapshots = IngestManager.getInstance().getIngestJobSnapshots();
+            jobSnapshots = snapshotProvider.getIngestJobSnapshots();
             fireTableDataChanged();
         }
 
@@ -299,7 +301,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         }
 
         private void refresh() {
-            Map<String, Long> moduleStatMap = IngestManager.getInstance().getModuleRunTimes();
+            Map<String, Long> moduleStatMap = snapshotProvider.getModuleRunTimes();
             moduleStats.clear();
             totalTime = 0;
             for (String k : moduleStatMap.keySet()) {

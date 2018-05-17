@@ -260,9 +260,9 @@ final class AutoIngestJobsNode extends AbstractNode {
                         actions.add(deprioritizeCaseAction);
                         break;
                     case RUNNING_JOB:
-                        actions.add(new AutoIngestAdminActions.ProgressDialogAction());
+                        actions.add(new AutoIngestAdminActions.ProgressDialogAction(autoIngestJob));
                         actions.add(new AutoIngestAdminActions.CancelJobAction(autoIngestJob));
-                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
+//                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
                         break;
                     case COMPLETED_JOB:
                         actions.add(new AutoIngestAdminActions.ReprocessJobAction(autoIngestJob));

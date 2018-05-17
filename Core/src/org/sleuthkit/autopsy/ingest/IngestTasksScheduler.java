@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -555,7 +556,11 @@ final class IngestTasksScheduler {
      * @return
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
-        return new IngestJobTasksSnapshot(jobId);
+        return new IngestJobTasksSnapshot(jobId, this.dataSourceIngestThreadQueue.countQueuedTasksForJob(jobId),
+                countTasksForJob(this.rootFileTaskQueue, jobId),
+                countTasksForJob(this.pendingFileTaskQueue, jobId),
+                this.fileIngestThreadsQueue.countQueuedTasksForJob(jobId),
+                this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + this.fileIngestThreadsQueue.countRunningTasksForJob(jobId));
     }
 
     /**
@@ -825,8 +830,9 @@ final class IngestTasksScheduler {
     /**
      * A snapshot of ingest tasks data for an ingest job.
      */
-    class IngestJobTasksSnapshot {
+    public static final class IngestJobTasksSnapshot implements Serializable {
 
+        private static final long serialVersionUID = 1L;
         private final long jobId;
         private final long dsQueueSize;
         private final long rootQueueSize;
@@ -839,13 +845,13 @@ final class IngestTasksScheduler {
          *
          * @param jobId The identifier associated with the job.
          */
-        IngestJobTasksSnapshot(long jobId) {
+        IngestJobTasksSnapshot(long jobId, long dsQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, long runningListSize) {
             this.jobId = jobId;
-            this.dsQueueSize = IngestTasksScheduler.this.dataSourceIngestThreadQueue.countQueuedTasksForJob(jobId);
-            this.rootQueueSize = countTasksForJob(IngestTasksScheduler.this.rootFileTaskQueue, jobId);
-            this.dirQueueSize = countTasksForJob(IngestTasksScheduler.this.pendingFileTaskQueue, jobId);
-            this.fileQueueSize = IngestTasksScheduler.this.fileIngestThreadsQueue.countQueuedTasksForJob(jobId);;
-            this.runningListSize = IngestTasksScheduler.this.dataSourceIngestThreadQueue.countRunningTasksForJob(jobId) + IngestTasksScheduler.this.fileIngestThreadsQueue.countRunningTasksForJob(jobId);
+            this.dsQueueSize = dsQueueSize;
+            this.rootQueueSize = rootQueueSize;
+            this.dirQueueSize = dirQueueSize;
+            this.fileQueueSize = fileQueueSize;
+            this.runningListSize = runningListSize;
         }
 
         /**

@@ -188,7 +188,17 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
              */
             AutoIngestJob job = event.getJob();
             jobsSnapshot.removePendingJob(job);
-            jobsSnapshot.addOrReplaceRunningJob(job);
+
+            // Update the state of the existing job in the running jobs table
+            for (AutoIngestJob runningJob : jobsSnapshot.getRunningJobs()) {
+                if (runningJob.equals(job)) {
+                    runningJob.setIngestJobsSnapshot(job.getIngestJobSnapshots());
+                    runningJob.setIngestThreadSnapshot(job.getIngestThreadActivitySnapshots());
+                    runningJob.setModuleRuntimesSnapshot(job.getModuleRunTimes());
+                    runningJob.setProcessingStage(job.getProcessingStage(), job.getProcessingStageStartDate());
+                    runningJob.setProcessingStatus(job.getProcessingStatus());
+                }
+            }
             setChanged();
             notifyObservers(jobsSnapshot);
         }

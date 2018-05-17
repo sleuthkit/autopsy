@@ -355,10 +355,10 @@ public final class IngestJob {
                         dataSourceModule = new DataSourceIngestModuleHandle(dataSourceJobs.get(snapshot.getJobId()), module);
                     }
                 }
-                if (snapshot.fileIngestIsRunning()) {
+                if (snapshot.getFileIngestIsRunning()) {
                     fileIngestRunning = true;
                 }
-                Date childFileIngestStartTime = snapshot.fileIngestStartTime();
+                Date childFileIngestStartTime = snapshot.getFileIngestStartTime();
                 if (null != childFileIngestStartTime && (null == fileIngestStartTime || childFileIngestStartTime.before(fileIngestStartTime))) {
                     fileIngestStartTime = childFileIngestStartTime;
                 }
