@@ -90,6 +90,7 @@ public final class CaseUtils {
             if (Case.isCaseOpen()) {
                 String currentCaseDirectory = Case.getCurrentCase().getCaseDirectory();
                 Case.closeCurrentCase();
+                System.gc();
 
                 /*
                  * Look for the current case directory in '.preserved'. If
@@ -112,7 +113,6 @@ public final class CaseUtils {
                     deleteCaseDir(new File(currentCaseDirectory));
                 }
             }
-            System.gc();
         } catch (CaseActionException | IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
