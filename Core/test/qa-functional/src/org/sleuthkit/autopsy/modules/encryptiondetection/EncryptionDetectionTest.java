@@ -51,11 +51,13 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public class EncryptionDetectionTest extends NbTestCase {
 
     private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
-    private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
+    private static final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
+    private static final String SQLCIPHER_DETECTION_CASE_NAME = "SQLCipherDetectionTest";
+    private static final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_sqlcipher_test.vhd");
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
-    private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
+    private static final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
-    private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
+    private static final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
   
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
@@ -74,18 +76,77 @@ public class EncryptionDetectionTest extends NbTestCase {
     }
 
     /**
-     * Test the Encryption Detection module's volume encryption detection.
+     * Test the Encryption Detection module's SQLCipher encryption detection.
      */
-    public void testBitlockerEncryption() {
+    public void testSqlCipherEncryption() {
         try {
-            CaseUtils.createCase(BITLOCKER_CASE_NAME);
+            CaseUtils.createCase(SQLCIPHER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
+            IngestUtils.addDataSource(dataSourceProcessor, SQLCIPHER_DETECTION_IMAGE_PATH);
             Case openCase = Case.getCurrentCaseThrows();
 
             /*
              * Create ingest job settings.
              */
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
+            /*
+             * Purge specific files to be tested.
+             */
+            FileManager fileManager = openCase.getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("%%", "sqlcipher");
+            assertEquals("Unexpected number of SQLCipher results.", 15, results.size());
+
+            for (AbstractFile file : results) {
+                /*
+                 * Process only non-slack files.
+                 */
+                if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                    /*
+                     * Determine which assertions to use for the file based on
+                     * its name.
+                     */
+                    List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
+                    String[] splitNameArray = file.getName().split("\\.");
+                    if (splitNameArray[0].startsWith("sqlcipher-") && splitNameArray[splitNameArray.length - 1].equals("db")) {
+                        /*
+                         * Check that the SQLCipher database file has one
+                         * TSK_ENCRYPTION_SUSPECTED artifact.
+                         */
+                        int artifactsListSize = artifactsList.size();
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
+                        assertEquals(errorMessage, 1, artifactsListSize);
+
+                        String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
+                        errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
+                        assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.toString(), artifactTypeName);
+                    } else {
+                        /*
+                         * Check that the file has no artifacts.
+                         */
+                        int artifactsListSize = artifactsList.size();
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
+                        assertEquals(errorMessage, 0, artifactsListSize);
+                    }
+                }
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+
+    /**
+     * Test the Encryption Detection module's volume encryption detection.
+     */
+    public void testBitlockerEncryption() {
+        try {
+            CaseUtils.createCase(BITLOCKER_CASE_DIRECTORY_PATH, BITLOCKER_CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
             IngestModuleFactory ingestModuleFactory = new EncryptionDetectionModuleFactory();
             IngestModuleIngestJobSettings settings = ingestModuleFactory.getDefaultIngestJobSettings();
             IngestModuleTemplate template = new IngestModuleTemplate(ingestModuleFactory, settings);
@@ -150,18 +211,17 @@ public class EncryptionDetectionTest extends NbTestCase {
     public void testPasswordProtection() {
         try {
             CaseUtils.createCase(PASSWORD_DETECTION_CASE_NAME);
-
+            
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
             String joinedErrors = String.join(System.lineSeparator(), errorMessages);
             assertEquals(joinedErrors, 0, errorMessages.size());
-
-            Case openCase = Case.getCurrentCaseThrows();    
+            
+            Case openCase = Case.getCurrentCaseThrows();
 
             /*
              * Create ingest job settings.
              */
-
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);

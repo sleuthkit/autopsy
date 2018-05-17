@@ -94,12 +94,11 @@
 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">
         <mkdir dir="${ext.dir}"/>
-        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
-        
+        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
-           </target>
+     </target>
 
      <target name="init" depends="get-deps,harness.init"/>
   

@@ -65,6 +65,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
     private static final int FILE_SIZE_MODULUS = 512;
 
+    private static final String DATABASE_FILE_EXTENSION = "db";
+    private static final int MINIMUM_DATABASE_FILE_SIZE = 65536; //64 KB
+
     private static final String MIME_TYPE_OOXML_PROTECTED = "application/x-ooxml-protected";
     private static final String MIME_TYPE_MSWORD = "application/msword";
     private static final String MIME_TYPE_MSEXCEL = "application/vnd.ms-excel";
@@ -141,8 +144,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                         }
                     } else {
                         if (isFilePasswordProtected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED,
-                                    Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
+                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                         }
                     }
                 }
@@ -182,6 +184,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private IngestModule.ProcessResult flagFile(AbstractFile file, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
         try {
             BlackboardArtifact artifact = file.newArtifact(artifactType);
+            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                    EncryptionDetectionModuleFactory.getModuleName(), comment)
+            );
 
             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EncryptionDetectionModuleFactory.getModuleName(), comment));
@@ -362,18 +367,30 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         /*
          * Qualify the size.
          */
+        boolean fileSizeQualified = false;
+        String fileExtension = file.getNameExtension();
         long contentSize = file.getSize();
-        if (contentSize >= minimumFileSize) {
+        // Database files qualify at 64 KB minimum for SQLCipher detection.
+        if (fileExtension.equalsIgnoreCase(DATABASE_FILE_EXTENSION)) {
+            if (contentSize >= MINIMUM_DATABASE_FILE_SIZE) {
+                fileSizeQualified = true;
+            }
+        } else if (contentSize >= minimumFileSize) {
             if (!fileSizeMultipleEnforced || (contentSize % FILE_SIZE_MODULUS) == 0) {
-                /*
-                 * Qualify the entropy.
-                 */
-                calculatedEntropy = EncryptionDetectionTools.calculateEntropy(file);
-                if (calculatedEntropy >= minimumEntropy) {
-                    possiblyEncrypted = true;
-                }
+                fileSizeQualified = true;
             }
         }
+        
+        if (fileSizeQualified) {
+            /*
+             * Qualify the entropy.
+             */
+            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(file);
+            if (calculatedEntropy >= minimumEntropy) {
+                possiblyEncrypted = true;
+            }
+        }
+        
         return possiblyEncrypted;
     }
 }
