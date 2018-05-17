@@ -37,6 +37,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -210,7 +211,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
      * Sets up the data sources dropdown and returns the data sources map for
      * future usage.
      *
-     * @return a mapping of data source ids to data source names
+     * @return a mapping of data correlationCase ids to data correlationCase names
      */
     @NbBundle.Messages({
         "CommonFilesPanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
@@ -359,11 +360,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 
             }
                         
-            private Map<Integer, String> mapDataSources(List<CorrelationDataSource> dataSources) {
+            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) {
                 Map<Integer, String> casemap = new HashMap<>();
                 
-                for (CorrelationDataSource source : dataSources){
-                    casemap.put(source.getCaseID(), source.getName());
+                for (CorrelationCase correlationCase : cases){
+                    casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
                 }
                 
                 return casemap;
@@ -372,7 +373,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @Override
             protected Map<Integer, String> doInBackground() throws Exception {
                                 
-                List<CorrelationDataSource> dataSources = EamDb.getInstance().getDataSources();
+                List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
                 
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
                 

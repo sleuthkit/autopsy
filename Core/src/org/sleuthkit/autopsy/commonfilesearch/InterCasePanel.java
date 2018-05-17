@@ -57,8 +57,6 @@ public class InterCasePanel extends javax.swing.JPanel {
     public InterCasePanel() {
         initComponents();
     }
-    
-    
 
     private void specificCaseSelected(boolean selected) {
         this.specificCentralRepoCaseRadio.setEnabled(selected);
