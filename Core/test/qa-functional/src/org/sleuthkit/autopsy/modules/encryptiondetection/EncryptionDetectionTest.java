@@ -56,6 +56,8 @@ public class EncryptionDetectionTest extends NbTestCase {
     private final Path BITLOCKER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
+    
+    private boolean testSucceeded;
   
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
@@ -67,10 +69,15 @@ public class EncryptionDetectionTest extends NbTestCase {
     public EncryptionDetectionTest(String name) {
         super(name);
     }
+    
+    @Override
+    public void setUp() {
+        testSucceeded = false;
+    }
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase();
+        CaseUtils.closeCurrentCase(testSucceeded);
     }
 
     /**
@@ -141,6 +148,8 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     /**
@@ -227,6 +236,8 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     /**
@@ -280,6 +291,8 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
 }

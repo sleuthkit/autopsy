@@ -13,7 +13,6 @@
 /Core/dist/
 /Core/nbproject/*
 /Core/test/qa-functional/data/*
-/Core/test/qa-functional/src/org/sleuthkit/autopsy/testutils/.preserve
 !/Core/nbproject/project.xml
 !/Core/nbproject/project.properties
 

@@ -55,6 +55,8 @@ public class IngestFileFiltersTest extends NbTestCase {
     private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
     private final Path ZIPFILE_PATH = Paths.get(this.getDataDir().toString(), "local_files_test.zip");
     
+    private boolean testSucceeded;
+    
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestFileFiltersTest.class).
                 clusters(".*").
@@ -65,10 +67,15 @@ public class IngestFileFiltersTest extends NbTestCase {
     public IngestFileFiltersTest(String name) {
         super(name);
     }
+    
+    @Override
+    public void setUp() {
+        testSucceeded = false;
+    }
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase();
+        CaseUtils.closeCurrentCase(testSucceeded);
     }
     
     public void testBasicDir() {
@@ -110,6 +117,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             Assert.fail(ex);
         }
         
+        testSucceeded = true;
     }
     
     public void testExtAndDirWithOneRule() {
@@ -144,6 +152,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     public void testExtAndDirWithTwoRules() {
@@ -187,6 +197,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
    }
    
     public void testFullFileNameRule() {
@@ -221,6 +233,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     public void testCarvingWithExtRuleAndUnallocSpace() {
@@ -268,6 +282,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
   
     public void testCarvingNoUnallocatedSpace() {
@@ -300,6 +316,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     public void testEmbeddedModule() {
@@ -345,5 +363,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 }
