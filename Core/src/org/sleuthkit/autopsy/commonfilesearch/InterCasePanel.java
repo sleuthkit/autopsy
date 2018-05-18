@@ -187,7 +187,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     }
 
     @NbBundle.Messages({
-        "CommonFilesPanel.showInterCaseErrorMessage.message=Cannot run intercase correlation search: no cases in Central Repository."
+        "InterCasePanel.showInterCaseErrorMessage.message=Cannot run intercase correlation search: no cases in Central Repository."
     })
     boolean areSearchCriteriaMet() {
         if(this.caseMap.isEmpty()){
