@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Scanner;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.apache.commons.io.FileUtils;
@@ -78,37 +77,25 @@ public final class CaseUtils {
     }
 
     /**
-     * Close and delete the current case. This will fail the test if the case
+     * Close the current case. This will fail the test if the case
      * was unable to be closed.
-     *
-     * Note: This method will skip case deletion if '.preserve' exists in the
-     * 'org.sleuthkit.autopsy.testutils' package and includes the current case
-     * path.
+     * 
+     * @param deleteCase Delete the case after closure?
      */
-    public static void closeCurrentCase() {
+    public static void closeCurrentCase(boolean deleteCase) {
         try {
             if (Case.isCaseOpen()) {
                 String currentCaseDirectory = Case.getCurrentCase().getCaseDirectory();
                 Case.closeCurrentCase();
                 System.gc();
-
-                /*
-                 * Look for the current case directory in '.preserved'. If
-                 * found, skip case deletion.
-                 */
-                boolean deleteCase = true;
-                File preserveListFile = new File(
-                        CaseUtils.class.getResource(PRESERVE_CASE_DATA_LIST_FILE_NAME).toExternalForm()
-                                .substring(6)); // Use substring to remove "file:\" from path.
-                if (preserveListFile.exists()) {
-                    Scanner scanner = new Scanner(preserveListFile);
-                    while (scanner.hasNext()) {
-                        if (scanner.nextLine().equalsIgnoreCase(currentCaseDirectory)) {
-                            deleteCase = false;
-                            break;
-                        }
-                    }
+                
+                // Seems like we need some time to close the case, so file handler later can delete the case directory.
+                try {
+                    Thread.sleep(20000);
+                } catch (InterruptedException ex) {
+                    
                 }
+                
                 if (deleteCase) {
                     deleteCaseDir(new File(currentCaseDirectory));
                 }
