@@ -51,11 +51,14 @@ public class InterCasePanel extends javax.swing.JPanel {
     
     private CommonFilesPanel parent;
     
+    private String errorMessage;
+    
     /**
      * Creates new form InterCasePanel
      */
     public InterCasePanel() {
         initComponents();
+        this.errorMessage = "";
     }
 
     private void specificCaseSelected(boolean selected) {
@@ -70,6 +73,10 @@ public class InterCasePanel extends javax.swing.JPanel {
         this.parent = parent;
     }
     
+    String getErrorMessage(){
+        return this.errorMessage;
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -80,16 +87,16 @@ public class InterCasePanel extends javax.swing.JPanel {
     private void initComponents() {
 
         buttonGroup = new javax.swing.ButtonGroup();
-        anCentralRepoCaseRadio = new javax.swing.JRadioButton();
+        anyCentralRepoCaseRadio = new javax.swing.JRadioButton();
         specificCentralRepoCaseRadio = new javax.swing.JRadioButton();
         caseComboBox = new javax.swing.JComboBox<>();
 
-        buttonGroup.add(anCentralRepoCaseRadio);
-        anCentralRepoCaseRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(anCentralRepoCaseRadio, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.anCentralRepoCaseRadio.text")); // NOI18N
-        anCentralRepoCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroup.add(anyCentralRepoCaseRadio);
+        anyCentralRepoCaseRadio.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(anyCentralRepoCaseRadio, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.anyCentralRepoCaseRadio.text")); // NOI18N
+        anyCentralRepoCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                anCentralRepoCaseRadioActionPerformed(evt);
+                anyCentralRepoCaseRadioActionPerformed(evt);
             }
         });
 
@@ -111,7 +118,7 @@ public class InterCasePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(anCentralRepoCaseRadio)
+                    .addComponent(anyCentralRepoCaseRadio)
                     .addComponent(specificCentralRepoCaseRadio)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
@@ -122,7 +129,7 @@ public class InterCasePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(anCentralRepoCaseRadio)
+                .addComponent(anyCentralRepoCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(specificCentralRepoCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -133,15 +140,20 @@ public class InterCasePanel extends javax.swing.JPanel {
 
     private void specificCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specificCentralRepoCaseRadioActionPerformed
         this.caseComboBox.setEnabled(true);
+        if(this.caseComboBox.getSelectedItem() == null){
+            this.caseComboBox.setSelectedIndex(0);
+        }
+        this.parent.handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_specificCentralRepoCaseRadioActionPerformed
 
-    private void anCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_anCentralRepoCaseRadioActionPerformed
+    private void anyCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_anyCentralRepoCaseRadioActionPerformed
         this.caseComboBox.setEnabled(false);
-    }//GEN-LAST:event_anCentralRepoCaseRadioActionPerformed
+        this.parent.handleInterCaseSearchCriteriaChanged();
+    }//GEN-LAST:event_anyCentralRepoCaseRadioActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JRadioButton anCentralRepoCaseRadio;
+    private javax.swing.JRadioButton anyCentralRepoCaseRadio;
     private javax.swing.ButtonGroup buttonGroup;
     private javax.swing.JComboBox<String> caseComboBox;
     private javax.swing.JRadioButton specificCentralRepoCaseRadio;
@@ -157,8 +169,8 @@ public class InterCasePanel extends javax.swing.JPanel {
     }
 
     void rigForMultipleCases(boolean multipleCases) {
-        this.anCentralRepoCaseRadio.setEnabled(multipleCases);
-        this.anCentralRepoCaseRadio.setEnabled(multipleCases);
+        this.anyCentralRepoCaseRadio.setEnabled(multipleCases);
+        this.anyCentralRepoCaseRadio.setEnabled(multipleCases);
         
         if(!multipleCases){
             this.specificCentralRepoCaseRadio.setSelected(true);
@@ -172,5 +184,17 @@ public class InterCasePanel extends javax.swing.JPanel {
 
     boolean centralRepoHasMultipleCases() {
         return this.caseMap.size() >= 2;
+    }
+
+    @NbBundle.Messages({
+        "CommonFilesPanel.showInterCaseErrorMessage.message=Cannot run intercase correlation search: no cases in Central Repository."
+    })
+    boolean areSearchCriteriaMet() {
+        if(this.caseMap.isEmpty()){
+            this.errorMessage = Bundle.CommonFilesPanel_showInterCaseErrorMessage_message();
+            return false;
+        } else {
+            return true;
+        }
     }
 }

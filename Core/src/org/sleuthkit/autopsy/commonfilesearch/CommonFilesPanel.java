@@ -304,7 +304,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 try {
                     CommonFilesPanel.this.intraCasePanel.setDataSourceMap(this.get());
-
                     updateUi();
 
                 } catch (InterruptedException ex) {
@@ -602,11 +601,35 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
         ((java.awt.CardLayout)this.layoutPanel.getLayout()).last(this.layoutPanel);
+        handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_intraCaseRadioActionPerformed
+
+    public void handleIntraCaseSearchCriteriaChanged() {
+        if(this.areIntraCaseSearchCriteriaMet()){
+            this.searchButton.setEnabled(true);
+            this.hideErrorMessages();
+        } else {
+            this.searchButton.setEnabled(false);
+            this.hideErrorMessages();
+            this.showIntraCaseErrorMessage();
+        }
+    }
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
         ((java.awt.CardLayout)this.layoutPanel.getLayout()).first(this.layoutPanel);
+        handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_interCaseRadioActionPerformed
+
+    public void handleInterCaseSearchCriteriaChanged() {
+        if(this.areInterCaseSearchCriteriaMet()){
+            this.searchButton.setEnabled(true);
+            this.hideErrorMessages();
+        } else {
+            this.searchButton.setEnabled(false);
+            this.hideErrorMessages();
+            this.showInterCaseErrorMessage();
+        }
+    }
 
     private void toggleErrorTextAndSearchBox() {
         if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected() && !this.allFileCategoriesRadioButton.isSelected()) {
@@ -662,5 +685,27 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     void setSearchButtonEnabled(boolean enabled) {
         this.searchButton.setEnabled(enabled);
+    }
+
+    private boolean areIntraCaseSearchCriteriaMet() {
+        return this.intraCasePanel.areSearchCriteriaMet();
+    }
+
+    private boolean areInterCaseSearchCriteriaMet() {
+        return this.interCasePanel.areSearchCriteriaMet();
+    }
+
+    private void hideErrorMessages() {
+        this.errorText.setVisible(false);
+    }
+
+    private void showIntraCaseErrorMessage() {
+        this.errorText.setText(Bundle.CommonFilesPanel_showIntraCaseErrorMessage_message());
+        this.errorText.setVisible(true);
+    }
+
+    private void showInterCaseErrorMessage() {
+        this.errorText.setText(this.interCasePanel.getErrorMessage());
+        this.errorText.setVisible(true);
     }
 }

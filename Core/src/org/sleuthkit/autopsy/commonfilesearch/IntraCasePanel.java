@@ -52,12 +52,15 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
     private CommonFilesPanel parent;
+    
+    private String errorMessage;
 
     /**
      * Creates new form IntraCasePanel
      */
     public IntraCasePanel() {
         initComponents();
+        this.errorMessage = "";
     }
     
     public void setParent(CommonFilesPanel parent){
@@ -152,10 +155,12 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
         selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
         singleDataSource = false;
+        this.parent.handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
 
     private void withinDataSourceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withinDataSourceRadioButtonActionPerformed
         withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
+        this.parent.handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
     private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
@@ -199,5 +204,17 @@ public class IntraCasePanel extends javax.swing.JPanel {
 
     void setDataSourceMap(Map<Long, String> dataSourceMap) {
         this.dataSourceMap = dataSourceMap;
+    }
+
+    @NbBundle.Messages({
+        "IntraCasePanel.areSearchCriteriaMet.message=Cannot run intra-case correlation search."
+    })
+    boolean areSearchCriteriaMet() {
+        if(this.dataSourceMap.isEmpty()){
+            this.errorMessage = Bundle.IntraCasePanel_areSearchCriteriaMet_message();
+            return false;
+        } else {
+            return true;
+        }            
     }
 }
