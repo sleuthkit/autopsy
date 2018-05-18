@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,11 +42,11 @@ public class ResultsNode extends DisplayableItemNode {
                 
                 new RootContentChildren(Arrays.asList(
                     new ExtractedContent(sleuthkitCase, dsObjId ),
-                    new KeywordHits(sleuthkitCase),  // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
-                    new HashsetHits(sleuthkitCase),  // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
-                    new EmailExtracted(sleuthkitCase), // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
-                    new InterestingHits(sleuthkitCase), // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
-                    new Accounts(sleuthkitCase) ) // RAMAN TBD JIRA-3763: pass down dsObjId to each of these subnodes
+                    new KeywordHits(sleuthkitCase, dsObjId),  
+                    new HashsetHits(sleuthkitCase, dsObjId),
+                    new EmailExtracted(sleuthkitCase, dsObjId),
+                    new InterestingHits(sleuthkitCase, dsObjId ),
+                    new Accounts(sleuthkitCase, dsObjId) )
                 ),
                 Lookups.singleton(NAME));
         setName(NAME);
