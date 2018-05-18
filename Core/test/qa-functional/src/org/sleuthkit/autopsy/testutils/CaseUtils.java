@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.testutils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
@@ -97,10 +99,9 @@ public final class CaseUtils {
                  * found, skip case deletion.
                  */
                 boolean deleteCase = true;
-                File preserveListFile = new File(
-                        CaseUtils.class.getResource(PRESERVE_CASE_DATA_LIST_FILE_NAME).toExternalForm()
-                                .substring(6)); // Use substring to remove "file:\" from path.
-                if (preserveListFile.exists()) {
+                URL preserveListUrl = CaseUtils.class.getResource(PRESERVE_CASE_DATA_LIST_FILE_NAME);
+                if (preserveListUrl != null) {
+                    File preserveListFile = new File(Paths.get(preserveListUrl.toURI()).toString());
                     Scanner scanner = new Scanner(preserveListFile);
                     while (scanner.hasNext()) {
                         if (scanner.nextLine().equalsIgnoreCase(currentCaseDirectory)) {
@@ -113,7 +114,7 @@ public final class CaseUtils {
                     deleteCaseDir(new File(currentCaseDirectory));
                 }
             }
-        } catch (CaseActionException | IOException ex) {
+        } catch (CaseActionException | IOException | URISyntaxException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
