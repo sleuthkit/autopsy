@@ -120,7 +120,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                             selectedRow, DataContentViewerOtherCasesTableModel.TableColumns.FILE_PATH.ordinal());
                     String comment = (String) tableModel.getValueAt(
                             selectedRow, DataContentViewerOtherCasesTableModel.TableColumns.COMMENT.ordinal());
-                    CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(contentPath, comment);
+                    CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(contentPath, comment, row);
                     centralRepoCommentDialog.display();
                 }
             }

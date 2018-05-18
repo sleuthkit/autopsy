@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -618,7 +618,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -676,7 +676,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -1210,7 +1210,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -2346,6 +2346,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
+                resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),

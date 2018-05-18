@@ -5,11 +5,16 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+
 /**
  *
  * @author dgrove
  */
 public class CentralRepoCommentDialog extends javax.swing.JDialog {
+    
+    private CorrelationAttribute correlationAttribute;
 
     /**
      * Creates new form NewJDialog
@@ -19,11 +24,13 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
         initComponents();
     }*/
     
-    public CentralRepoCommentDialog(String contentPath, String comment) {
+    public CentralRepoCommentDialog(String contentPath, String comment, CorrelationAttribute correlationAttribute) {
         initComponents();
         
         pathLabel.setText(contentPath);
         commentTextArea.setText(comment);
+        
+        this.correlationAttribute = correlationAttribute;
     }
     
     /**
@@ -134,7 +141,9 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        //DLG: Write changes to database!
+        for (CorrelationAttributeInstance attributeInstance : correlationAttribute.getInstances()) {
+            attributeInstance.setComment(commentTextArea.getText());
+        }
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
