@@ -48,6 +48,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoCommentDialog;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -112,6 +113,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                     }
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
+                } else if (jmi.equals(addCommentMenuItem)) {
+                    int selectedRow = otherCasesTable.getSelectedRow();
+                    CorrelationAttribute row = (CorrelationAttribute) tableModel.getRow(selectedRow);
+                    String contentPath = (String) tableModel.getValueAt(
+                            selectedRow, DataContentViewerOtherCasesTableModel.TableColumns.FILE_PATH.ordinal());
+                    String comment = (String) tableModel.getValueAt(
+                            selectedRow, DataContentViewerOtherCasesTableModel.TableColumns.COMMENT.ordinal());
+                    CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(contentPath, comment);
+                    centralRepoCommentDialog.display();
                 }
             }
         };
@@ -120,6 +130,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         selectAllMenuItem.addActionListener(actList);
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
+        addCommentMenuItem.addActionListener(actList);
 
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
@@ -644,6 +655,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
+        addCommentMenuItem = new javax.swing.JMenuItem();
         CSVFileChooser = new javax.swing.JFileChooser();
         otherCasesPanel = new javax.swing.JPanel();
         tableContainerPanel = new javax.swing.JPanel();
@@ -651,6 +663,16 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         otherCasesTable = new javax.swing.JTable();
         tableStatusPanel = new javax.swing.JPanel();
         tableStatusPanelLabel = new javax.swing.JLabel();
+
+        rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
+            }
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {
+            }
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
+                rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.selectAllMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(selectAllMenuItem);
@@ -663,6 +685,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
+
+        org.openide.awt.Mnemonics.setLocalizedText(addCommentMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.addCommentMenuItem.text")); // NOI18N
+        rightClickPopupMenu.add(addCommentMenuItem);
 
         setMinimumSize(new java.awt.Dimension(1500, 10));
         setOpaque(false);
@@ -734,7 +759,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             .addGap(0, 60, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 52, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -746,13 +771,18 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
+        addCommentMenuItem.setVisible(otherCasesTable.getSelectedRowCount() == 1);
+    }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser CSVFileChooser;
+    private javax.swing.JMenuItem addCommentMenuItem;
     private javax.swing.JMenuItem exportToCSVMenuItem;
     private javax.swing.JPanel otherCasesPanel;
     private javax.swing.JTable otherCasesTable;
