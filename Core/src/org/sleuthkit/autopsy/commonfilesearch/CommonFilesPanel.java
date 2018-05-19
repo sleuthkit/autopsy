@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -76,14 +77,34 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.exception=Unexpected Exception loading DataSources."})
     public CommonFilesPanel() {
         initComponents();
-        
+
         this.errorText.setVisible(false);
-        
+
         this.intraCasePanel.setParent(this);
         this.interCasePanel.setParent(this);
-        
+
         this.setupDataSources();
-        this.setupCases();
+
+        if(CommonFilesPanel.isEamDbAvailable()){
+            this.setupCases();            
+        } else{
+            this.disableIntercaseSearch();
+        }        
+    }
+    
+    private void disableIntercaseSearch(){
+        this.intraCaseRadio.setSelected(true);
+        this.interCaseRadio.setEnabled(false);
+    }
+
+    public static boolean isEamDbAvailable() {
+        boolean isEamDbAvailable = false;
+        try {
+            isEamDbAvailable = EamDb.isEnabled() && !EamDb.getInstance().getCases().isEmpty();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.WARNING, "Error accessing EamDb", ex);
+        }
+        return isEamDbAvailable;
     }
 
     @NbBundle.Messages({
@@ -151,8 +172,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     setTitleForSingleSource(dataSourceId);
                 }// else if(false) { 
-                    // TODO, is CR cases, add option chosen CorrelationCase ID lookup
-                 //   builder = new AllDataSourcesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);    
+                // TODO, is CR cases, add option chosen CorrelationCase ID lookup
+                //   builder = new AllDataSourcesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);    
                 //}
 
                 this.tabTitle = builder.buildTabTitle();
@@ -176,10 +197,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
                     DataResultViewerTable table = new DataResultViewerTable();
-                    
+
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
-                                        
+
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
 
                 } catch (InterruptedException ex) {
@@ -206,17 +227,18 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
         }.execute();
     }
-    
+
     /**
      * Sets up the data sources dropdown and returns the data sources map for
      * future usage.
      *
-     * @return a mapping of data correlationCase ids to data correlationCase names
+     * @return a mapping of data correlationCase ids to data correlationCase
+     * names
      */
     @NbBundle.Messages({
         "CommonFilesPanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
-        "CommonFilesPanel.setupDataSources.done.exception=Unexpected exception building data sources map.",
+        "CommonFilesPanel.setupDataSources.done.exception=Unexpected exception loading data sources.",
         "CommonFilesPanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
         "CommonFilesPanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
         "CommonFilesPanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
@@ -229,7 +251,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
 
             private void updateUi() {
-                
+
                 final Map<Long, String> dataSourceMap = CommonFilesPanel.this.intraCasePanel.getDataSourceMap();
 
                 String[] dataSourcesNames = new String[dataSourceMap.size()];
@@ -273,7 +295,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try (
                         SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
                         ResultSet resultSet = query.getResultSet()) {
-                    
+
                     while (resultSet.next()) {
                         Long objectId = resultSet.getLong(1);
                         String dataSourceName = resultSet.getString(2);
@@ -333,56 +355,54 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     @NbBundle.Messages({
         "CommonFilesPanel.setupCases.done.interruptedException=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.setupCases.done.exeutionException=Unexpected exception building data sources map."})
-    private void setupCases(){
-        
-        new SwingWorker<Map<Integer, String>, Void>(){
-            
-            private void updateUi(){
-                
+        "CommonFilesPanel.setupCases.done.exeutionException=Unexpected exception loading cases."})
+    private void setupCases() {
+
+        new SwingWorker<Map<Integer, String>, Void>() {
+
+            private void updateUi() {
+
                 final Map<Integer, String> caseMap = CommonFilesPanel.this.interCasePanel.getCaseMap();
-                
+
                 String[] caseNames = new String[caseMap.size()];
-                
-                if(caseNames.length > 0){
+
+                if (caseNames.length > 0) {
                     caseNames = caseMap.values().toArray(caseNames);
                     CommonFilesPanel.this.interCasePanel.setCaseList(new DataSourceComboBoxModel(caseNames));
-                    
+
                     boolean multipleCases = this.centralRepoHasMultipleCases();
                     CommonFilesPanel.this.interCasePanel.rigForMultipleCases(multipleCases);
-   
-                    //TODO need something more specific
-                    //InterCasePanel.this.parent.setSearchButtonEnabled(true);                    
+
                 } else {
-                    //TODO need something more specific
+                    CommonFilesPanel.this.disableIntercaseSearch();
                 }
-                
             }
-                        
+
             private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) {
                 Map<Integer, String> casemap = new HashMap<>();
-                
-                for (CorrelationCase correlationCase : cases){
+
+                for (CorrelationCase correlationCase : cases) {
                     casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
                 }
-                
+
                 return casemap;
             }
-            
+
             @Override
             protected Map<Integer, String> doInBackground() throws Exception {
-                                
+
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
-                
+
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
-                
+
                 return caseMap;
             }
-            
+
             @Override
-            protected void done(){
-                try{
-                    CommonFilesPanel.this.interCasePanel.setCaseMap(this.get());
+            protected void done() {
+                try {
+                    Map<Integer, String> cases = this.get();
+                    CommonFilesPanel.this.interCasePanel.setCaseMap(cases);
                     this.updateUi();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
@@ -396,9 +416,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             private boolean centralRepoHasMultipleCases() {
                 return CommonFilesPanel.this.interCasePanel.centralRepoHasMultipleCases();
             }
-            
+
         }.execute();
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -616,12 +637,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
-        ((java.awt.CardLayout)this.layoutPanel.getLayout()).last(this.layoutPanel);
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
         handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
     public void handleIntraCaseSearchCriteriaChanged() {
-        if(this.areIntraCaseSearchCriteriaMet()){
+        if (this.areIntraCaseSearchCriteriaMet()) {
             this.searchButton.setEnabled(true);
             this.hideErrorMessages();
         } else {
@@ -632,12 +653,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
-        ((java.awt.CardLayout)this.layoutPanel.getLayout()).first(this.layoutPanel);
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
         handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
     public void handleInterCaseSearchCriteriaChanged() {
-        if(this.areInterCaseSearchCriteriaMet()){
+        if (this.areInterCaseSearchCriteriaMet()) {
             this.searchButton.setEnabled(true);
             this.hideErrorMessages();
         } else {
@@ -675,7 +696,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             this.pictureVideoCheckbox.setEnabled(true);
             this.documentsCheckbox.setEnabled(true);
-                        
+
             this.toggleErrorTextAndSearchBox();
         }
     }
