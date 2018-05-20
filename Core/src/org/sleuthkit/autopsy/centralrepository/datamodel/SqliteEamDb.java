@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -430,7 +431,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of artifact instances for a given list of MD5 values
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
+    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values) throws EamDbException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByCaseValues(correlationCase, values);

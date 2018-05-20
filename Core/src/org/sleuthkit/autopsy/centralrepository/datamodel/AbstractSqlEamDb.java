@@ -647,6 +647,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return artifactInstances;
     }
 
+
     /**
      * Retrieves eamArtiifact instances from the database that match
      * the given list of MD5 values and optionally filters by given case.
@@ -657,7 +658,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return List of artifact instances for a given list of MD5 values
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
+    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values) throws EamDbException {
         CorrelationAttribute.Type aType = CorrelationAttribute.getDefaultCorrelationTypes().get(0); // Files type
         if (aType == null) {
             throw new EamDbException("Correlation Type is null");
@@ -681,8 +682,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 valuesFilter.append("'").append(value).append("',");
             }
             valuesString = valuesFilter.toString().substring(0, valuesFilter.length() - 1);
-        }
 
+        }
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder(9);
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM ");
@@ -697,7 +698,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if (singleCase) {
             sql.append(" AND ");
             sql.append(tableName);
-            sql.append(".case_id = ?");
+            sql.append(".case_id=?");
         }
 
         try {

@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -83,9 +84,9 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
     public CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         CommonFilesMetadata metaData  =  this.findCommonFiles(); 
         Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
-        List<String> values = Arrays.asList((String[]) commonFiles.keySet().toArray()); 
+        Collection<String> values = commonFiles.keySet();
          
-        Map<String, Md5Metadata> interCaseCommonFiles =  metaData.getMetadata();
+        Map<String, Md5Metadata> interCaseCommonFiles =  new HashMap<>();
         try {
             
             Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
@@ -93,9 +94,9 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
             
              
              for (CorrelationAttributeCommonInstance instance : artifactInstances) {
-                //Long objectId =  1L; //TODO, need to retrieve ALL (even count < 2) AbstractFiles from this case to us for objectId for CR matches;
+                
                 String md5 = instance.getValue();
-                String dataSource = instance.getCorrelationDataSource().getName();
+                String dataSource = String.format(instance.getCorrelationCase().getDisplayName(), ": ", instance.getCorrelationDataSource().getName());
 
                 if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                     continue;

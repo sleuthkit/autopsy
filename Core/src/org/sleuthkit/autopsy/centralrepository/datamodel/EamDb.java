@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
@@ -232,7 +233,7 @@ public interface EamDb {
      * 
      * @return List of artifact instances for a given list of MD5 values
      */
-    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException;
+    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values) throws EamDbException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
