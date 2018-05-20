@@ -144,7 +144,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
                 Long dataSourceId = CommonFilesPanel.this.intraCasePanel.getSelectedDataSourceId();
                 Integer caseId = CommonFilesPanel.this.interCasePanel.getSelectedCaseId();
 
