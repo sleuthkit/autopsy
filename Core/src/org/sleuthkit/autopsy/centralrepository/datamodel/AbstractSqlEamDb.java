@@ -657,7 +657,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return List of artifact instances for a given list of MD5 values
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, List<String> values) throws EamDbException {
+    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, CorrelationCase currentCase) throws EamDbException {
         CorrelationAttribute.Type aType = CorrelationAttribute.getDefaultCorrelationTypes().get(0); // Files type
         if (aType == null) {
             throw new EamDbException("Correlation Type is null");
@@ -674,15 +674,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String valuesString = "";
-        StringBuilder valuesFilter = new StringBuilder(values.size());
-        if (!values.isEmpty()) {
-            for (String value : values) {
-                valuesFilter.append("'").append(value).append("',");
-            }
-            valuesString = valuesFilter.toString().substring(0, valuesFilter.length() - 1);
-        }
-
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder(9);
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM ");
@@ -693,7 +684,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append(" LEFT JOIN data_sources ON ");
         sql.append(tableName);
         sql.append(".data_source_id=data_sources.id");
-        sql.append(" WHERE value IN (?)");
+        sql.append(" WHERE value IN (SELECT value FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE ");
+        sql.append(tableName);
+        sql.append(".case_id= ?)");
         if (singleCase) {
             sql.append(" AND ");
             sql.append(tableName);
@@ -702,7 +697,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, valuesString);
+            preparedStatement.setString(1, String.valueOf(currentCase.getID()));
             if (singleCase && correlationCase != null) {
                 preparedStatement.setString(2, String.valueOf(correlationCase.getID()));
             }
