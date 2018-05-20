@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -703,7 +704,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, valuesString);
+            preparedStatement.setArray(1, conn.createArrayOf("text[]", values.toArray(new String[values.size()]))); //Collections.list(values.iterator()).toArray());
             if (singleCase && correlationCase != null) {
                 preparedStatement.setString(2, String.valueOf(correlationCase.getID()));
             }
