@@ -484,6 +484,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         });
 
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
+        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
