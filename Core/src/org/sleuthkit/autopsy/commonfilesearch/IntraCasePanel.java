@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
@@ -44,6 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class IntraCasePanel extends javax.swing.JPanel {
     
     private static final long serialVersionUID = 1L;
+    static final long NO_DATA_SOURCE_SELECTED = -1;
         
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
         
@@ -52,12 +54,15 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
     private CommonFilesPanel parent;
+    
+    private String errorMessage;
 
     /**
      * Creates new form IntraCasePanel
      */
     public IntraCasePanel() {
         initComponents();
+        this.errorMessage = "";
     }
     
     public void setParent(CommonFilesPanel parent){
@@ -80,7 +85,15 @@ public class IntraCasePanel extends javax.swing.JPanel {
         return this.dataSourceMap;
     }
     
-    
+    Long getSelectedDataSourceId(){
+        for(Entry<Long, String> entry : this.dataSourceMap.entrySet()){
+            if(entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())){
+                return entry.getKey();
+            }
+        }
+        
+        return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
+    }    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -127,35 +140,37 @@ public class IntraCasePanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(withinDataSourceRadioButton)
-                    .addComponent(allDataSourcesRadioButton)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(allDataSourcesRadioButton)
+                            .addComponent(withinDataSourceRadioButton)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(27, 27, 27)
                         .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addComponent(allDataSourcesRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(withinDataSourceRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
         selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
         singleDataSource = false;
+        this.parent.handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
 
     private void withinDataSourceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withinDataSourceRadioButtonActionPerformed
         withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
+        this.parent.handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
     private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
@@ -199,5 +214,21 @@ public class IntraCasePanel extends javax.swing.JPanel {
 
     void setDataSourceMap(Map<Long, String> dataSourceMap) {
         this.dataSourceMap = dataSourceMap;
+    }
+
+    @NbBundle.Messages({
+        "IntraCasePanel.areSearchCriteriaMet.message=Cannot run intra-case correlation search."
+    })
+    boolean areSearchCriteriaMet() {
+        if(this.dataSourceMap.isEmpty()){
+            this.errorMessage = Bundle.IntraCasePanel_areSearchCriteriaMet_message();
+            return false;
+        } else {
+            return true;
+        }            
+    }
+
+    String getErrorMessage() {
+        return this.errorMessage;
     }
 }
