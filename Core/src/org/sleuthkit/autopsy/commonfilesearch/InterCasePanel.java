@@ -132,8 +132,7 @@ public class InterCasePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(specificCentralRepoCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(35, Short.MAX_VALUE))
+                .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -190,7 +189,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     })
     boolean areSearchCriteriaMet() {
         if(this.caseMap.isEmpty()){
-            this.errorMessage = Bundle.CommonFilesPanel_showInterCaseErrorMessage_message();
+            this.errorMessage = Bundle.InterCasePanel_showInterCaseErrorMessage_message();
             return false;
         } else {
             return true;

@@ -478,7 +478,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         });
 
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
-        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -513,6 +512,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         commonFilesSearchLabel1.setFocusable(false);
 
         interIntraButtonGroup.add(intraCaseRadio);
+        intraCaseRadio.setSelected(true);
         intraCaseRadio.setLabel(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.intraCaseRadio.label")); // NOI18N
         intraCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -521,7 +521,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         });
 
         interIntraButtonGroup.add(interCaseRadio);
-        interCaseRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(interCaseRadio, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.jRadioButton2.text")); // NOI18N
         interCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -547,25 +546,24 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
+                    .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(categoriesLabel)
+                    .addComponent(commonFilesSearchLabel2)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(categoriesLabel)
-                            .addComponent(commonFilesSearchLabel2)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(6, 6, 6)
+                                .addGap(21, 21, 21)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(21, 21, 21)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(documentsCheckbox)
-                                            .addComponent(pictureVideoCheckbox)))
-                                    .addComponent(allFileCategoriesRadioButton)
-                                    .addComponent(selectedFileCategoriesButton)
-                                    .addComponent(interCaseRadio)
-                                    .addComponent(intraCaseRadio)))
-                            .addComponent(layoutPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 507, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                    .addComponent(documentsCheckbox)
+                                    .addComponent(pictureVideoCheckbox)))
+                            .addComponent(allFileCategoriesRadioButton)
+                            .addComponent(selectedFileCategoriesButton)
+                            .addComponent(interCaseRadio)
+                            .addComponent(intraCaseRadio)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 507, javax.swing.GroupLayout.PREFERRED_SIZE))))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -578,7 +576,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 .addComponent(intraCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(interCaseRadio)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
                 .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(categoriesLabel)
@@ -625,7 +623,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
-        ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
         handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
@@ -641,7 +639,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
-        ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
         handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
@@ -726,7 +724,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     }
 
     private void showIntraCaseErrorMessage() {
-        this.errorText.setText(Bundle.CommonFilesPanel_showIntraCaseErrorMessage_message());
+        this.errorText.setText(this.intraCasePanel.getErrorMessage());
         this.errorText.setVisible(true);
     }
 
