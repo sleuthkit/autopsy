@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
@@ -40,11 +41,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 public class InterCasePanel extends javax.swing.JPanel {
     
     private static final long serialVersionUID = 1L;
+    static final int NO_CASE_SELECTED = -1;
         
     private static final Logger LOGGER = Logger.getLogger(InterCasePanel.class.getName());
-    
-    private String selectedCase;
-    private boolean singleCase;
     
     private ComboBoxModel<String> casesList = new DataSourceComboBoxModel();
     private Map<Integer, String> caseMap;
@@ -65,7 +64,6 @@ public class InterCasePanel extends javax.swing.JPanel {
         this.specificCentralRepoCaseRadio.setEnabled(selected);
         if (this.specificCentralRepoCaseRadio.isEnabled()) {
             this.caseComboBox.setSelectedIndex(0);
-            this.singleCase = true;
         }
     }
     
@@ -182,6 +180,16 @@ public class InterCasePanel extends javax.swing.JPanel {
 
     boolean centralRepoHasMultipleCases() {
         return this.caseMap.size() >= 2;
+    }
+    
+    Integer getSelectedCaseId(){
+        for(Entry<Integer, String> entry : this.caseMap.entrySet()){
+            if(entry.getValue().equals(this.caseComboBox.getSelectedItem())){
+                return entry.getKey();
+            }
+        }
+        
+        return InterCasePanel.NO_CASE_SELECTED;
     }
 
     @NbBundle.Messages({

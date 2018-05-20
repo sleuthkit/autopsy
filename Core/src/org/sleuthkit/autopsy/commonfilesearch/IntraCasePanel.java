@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
@@ -44,6 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class IntraCasePanel extends javax.swing.JPanel {
     
     private static final long serialVersionUID = 1L;
+    static final long NO_DATA_SOURCE_SELECTED = -1;
         
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
         
@@ -83,7 +85,15 @@ public class IntraCasePanel extends javax.swing.JPanel {
         return this.dataSourceMap;
     }
     
-    
+    Long getSelectedDataSourceId(){
+        for(Entry<Long, String> entry : this.dataSourceMap.entrySet()){
+            if(entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())){
+                return entry.getKey();
+            }
+        }
+        
+        return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
+    }    
 
     /**
      * This method is called from within the constructor to initialize the form.

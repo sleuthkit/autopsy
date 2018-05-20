@@ -85,14 +85,14 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         this.setupDataSources();
 
-        if(CommonFilesPanel.isEamDbAvailable()){
-            this.setupCases();            
-        } else{
+        if (CommonFilesPanel.isEamDbAvailable()) {
+            this.setupCases();
+        } else {
             this.disableIntercaseSearch();
-        }        
+        }
     }
-    
-    private void disableIntercaseSearch(){
+
+    private void disableIntercaseSearch() {
         this.intraCaseRadio.setSelected(true);
         this.interCaseRadio.setEnabled(false);
     }
@@ -134,25 +134,23 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
             }
 
-            private Long determineDataSourceId() {
-                Long selectedObjId = CommonFilesPanel.NO_DATA_SOURCE_SELECTED;
-                if (CommonFilesPanel.this.singleDataSource) {
-                    for (Entry<Long, String> dataSource : CommonFilesPanel.this.intraCasePanel.getDataSourceMap().entrySet()) {
-                        if (dataSource.getValue().equals(CommonFilesPanel.this.selectedDataSource)) {
-                            selectedObjId = dataSource.getKey();
-                            break;
-                        }
-                    }
-                }
-                return selectedObjId;
+            private void setTitleForAllCases() {
+
+            }
+
+            private void setTitleForSingleCase() {
+
             }
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
-                Long dataSourceId = determineDataSourceId();
+            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+                Long dataSourceId = CommonFilesPanel.this.intraCasePanel.getSelectedDataSourceId();
+                Integer caseId = CommonFilesPanel.this.interCasePanel.getSelectedCaseId();
 
                 CommonFilesMetadataBuilder builder;
+                CommonFilesMetadata metadata;
+
                 boolean filterByMedia = false;
                 boolean filterByDocuments = false;
                 if (selectedFileCategoriesButton.isSelected()) {
@@ -163,22 +161,30 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         filterByDocuments = true;
                     }
                 }
-                if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                    builder = new AllDataSourcesCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
-                    setTitleForAllDataSources();
+                if (CommonFilesPanel.this.interCaseRadio.isSelected()) {
+                    
+                    builder = new AllDataSourcesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                    
+                    if(caseId == InterCasePanel.NO_CASE_SELECTED){
+                        metadata = ((AllDataSourcesEamDbCommonFilesAlgorithm)builder).findEamDbCommonFiles();
+                    } else {
+                        metadata = ((AllDataSourcesEamDbCommonFilesAlgorithm)builder).findEamDbCommonFiles(CommonFilesPanel.this.interCasePanel.getSelectedCaseId());
+                    }
                 } else {
-                    builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                    if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
+                        builder = new AllDataSourcesCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
-                    setTitleForSingleSource(dataSourceId);
-                }// else if(false) { 
-                // TODO, is CR cases, add option chosen CorrelationCase ID lookup
-                //   builder = new AllDataSourcesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.dataSourceMap, filterByMedia, filterByDocuments);    
-                //}
+                        setTitleForAllDataSources();
+                    } else {
+                        builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
+                        setTitleForSingleSource(dataSourceId);
+                    }
+                    metadata = builder.findCommonFiles();
+                }
+                
                 this.tabTitle = builder.buildTabTitle();
-
-                CommonFilesMetadata metadata = builder.findCommonFiles();
 
                 return metadata;
             }

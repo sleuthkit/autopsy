@@ -19,8 +19,22 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeCommonInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import static org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder.SELECT_PREFIX;
+import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
+import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
@@ -30,6 +44,8 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5) order by md5"; //NON-NLS
 
+    private EamDb dbManager;
+    
     /**
      * Implements the algorithm for getting common files across all data
      * sources.
@@ -38,9 +54,78 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
      * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
-    AllDataSourcesEamDbCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    AllDataSourcesEamDbCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
 
+        dbManager = EamDb.getInstance();
+    }
+    
+    public CommonFilesMetadata findEamDbCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        return this.findEamDbCommonFiles(null);
+    }
+    
+    public CommonFilesMetadata findEamDbCommonFiles(int correlationCaseId) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
+        
+        CorrelationCase cCase = this.getCorrelationCaseFromId(correlationCaseId);
+        
+        return this.findEamDbCommonFiles(cCase);
+    }
+    
+    /**
+     * TODO Refactor, abstract shared code above, call this method via new AllDataSourcesEamDbCommonFilesAlgorithm Class
+     * @param correlationCase Optionally null, otherwise a case, or could be a CR case ID
+     * @return
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     * @throws SQLException
+     * @throws EamDbException 
+     */
+    public CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        CommonFilesMetadata metaData  =  this.findCommonFiles(); 
+        Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
+        List<String> values = Arrays.asList((String[]) commonFiles.keySet().toArray()); 
+         
+        Map<String, Md5Metadata> interCaseCommonFiles =  metaData.getMetadata();
+        try {
+            
+            Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
+                    .collect(Collectors.toList());
+            
+             
+             for (CorrelationAttributeCommonInstance instance : artifactInstances) {
+                //Long objectId =  1L; //TODO, need to retrieve ALL (even count < 2) AbstractFiles from this case to us for objectId for CR matches;
+                String md5 = instance.getValue();
+                String dataSource = instance.getCorrelationDataSource().getName();
+
+                if (md5 == null || HashUtility.isNoDataMd5(md5)) {
+                    continue;
+                }
+                //Builds a 3rd list which contains instances which are in commonFiles map, uses current case objectId
+                if (commonFiles.containsKey(md5)) {
+                    // TODO sloppy, but we don't *have* all the information for the rows in the CR, so what do we do?
+                    Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
+                    if(interCaseCommonFiles.containsKey(md5)) {
+                         //Add to intercase metaData
+                        final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);       
+                        md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                       
+                    } else {
+                        // Create new intercase metadata
+                        final Md5Metadata md5Metadata = commonFiles.get(md5);
+                        md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                        interCaseCommonFiles.put(md5, md5Metadata);
+                    }
+                } else {
+                    // TODO This should never happen. All current case files with potential matches are in comonFiles Map.
+                }
+             }
+            
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+        } 
+        // Builds intercase-only matches metadata
+        return new CommonFilesMetadata(interCaseCommonFiles);
+    
     }
 
     @Override
@@ -54,5 +139,15 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
         final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleEamDb();
         return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
+    }
+
+    private CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException, Exception {
+        //TODO is there a better way???
+        for(CorrelationCase cCase : this.dbManager.getCases()){
+            if(cCase.getID() == correlationCaseId){
+                return cCase;
+            }
+        }
+        throw new Exception("Cannont locate case.");
     }
 }
