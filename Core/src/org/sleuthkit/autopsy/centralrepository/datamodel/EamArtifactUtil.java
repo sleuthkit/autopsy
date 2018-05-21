@@ -232,7 +232,7 @@ public class EamArtifactUtil {
      *
      * @return The new EamArtifact or null if creation failed
      */
-    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
+    public static CorrelationAttribute makeCorrelationAttributeFromContent(Content content) {
 
         if (!(content instanceof AbstractFile)) {
             return null;
@@ -261,10 +261,7 @@ public class EamArtifactUtil {
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
-                    af.getParentPath() + af.getName(),
-                    comment,
-                    knownStatus
-            );
+                    af.getParentPath() + af.getName());
             eamArtifact.addInstance(cei);
             return eamArtifact;
         } catch (TskCoreException | EamDbException | NoCurrentCaseException ex) {
