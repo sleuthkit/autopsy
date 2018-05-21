@@ -550,7 +550,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         "SQLiteViewer.exportTableToCsv.FileName=File name: ",
         "SQLiteViewer.exportTableToCsv.TableName=Table name: "
     })
-    private void exportTableToCsv(File file) {
+    private void exportTableToCsv(File csvFile) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         String csvFileSuffix = "_" + tableName + "_" + TimeStampUtils.createTimeStamp() + ".csv";
         try (
@@ -561,13 +561,13 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
                 logger.log(Level.INFO, String.format("The table %s is empty. (objId=%d)", tableName, sqliteDbFile.getId())); //NON-NLS
             } else {
-                String fileName = file.getName();
+                String fileName = csvFile.getName();
                 if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
-                    file = new File(file.getParentFile(), FilenameUtils.removeExtension(file.getName()) + csvFileSuffix);                    
+                    csvFile = new File(csvFile.getParentFile(), FilenameUtils.removeExtension(csvFile.getName()) + csvFileSuffix);                    
                 } else {
-                    file = new File(file.toString() + csvFileSuffix);
+                    csvFile = new File(csvFile.toString() + csvFileSuffix);
                 }
-                FileOutputStream out = new FileOutputStream(file, false);
+                FileOutputStream out = new FileOutputStream(csvFile, false);
 
                 out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + fileName + "\n").getBytes());
                 out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
@@ -577,30 +577,30 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 for (Map.Entry<String, Object> col : row.entrySet()) {
                     String colName = col.getKey();
                     if (header.length() > 0) {
-                        header.append(",").append(colName);
+                        header.append(',').append(colName);
                     } else {
                         header.append(colName);
                     }
                 }
-                out.write(header.append("\n").toString().getBytes());
+                out.write(header.append('\n').toString().getBytes());
 
                 for (Map<String, Object> maps : currentTableRows) {
                     StringBuffer valueLine = new StringBuffer();
                     for (Object value : maps.values()) {
                         if (valueLine.length() > 0) {
-                            valueLine.append(",").append(value.toString());
+                            valueLine.append(',').append(value.toString());
                         } else {
                             valueLine.append(value.toString());
                         }
                     }
-                    out.write(valueLine.append("\n").toString().getBytes());
+                    out.write(valueLine.append('\n').toString().getBytes());
                 }
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, String.format("Failed to read table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to export table %s to file '%s'", tableName, sqliteDbFile.getName(), file.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Failed to export table %s to file '%s'", tableName, sqliteDbFile.getName(), csvFile.getName()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_exportTableToCsv_write_errText());
         }
     }
