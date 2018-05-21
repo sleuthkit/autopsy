@@ -226,9 +226,6 @@ public class EamArtifactUtil {
      * Does not add the artifact to the database.
      *
      * @param content     The content object
-     * @param knownStatus Unknown, notable, or known
-     * @param comment     The comment for the new artifact (generally used for a
-     *                    tag comment)
      *
      * @return The new EamArtifact or null if creation failed
      */
