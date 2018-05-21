@@ -20,7 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +45,7 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5) order by md5"; //NON-NLS
 
-    private EamDb dbManager;
+    private final EamDb dbManager;
     
     /**
      * Implements the algorithm for getting common files across all data
@@ -61,11 +61,11 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
         dbManager = EamDb.getInstance();
     }
     
-    public CommonFilesMetadata findEamDbCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    CommonFilesMetadata findEamDbCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         return this.findEamDbCommonFiles(null);
     }
     
-    public CommonFilesMetadata findEamDbCommonFiles(int correlationCaseId) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
+    CommonFilesMetadata findEamDbCommonFiles(int correlationCaseId) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
         
         CorrelationCase cCase = this.getCorrelationCaseFromId(correlationCaseId);
         
@@ -73,15 +73,14 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
     }
     
     /**
-     * TODO Refactor, abstract shared code above, call this method via new AllDataSourcesEamDbCommonFilesAlgorithm Class
      * @param correlationCase Optionally null, otherwise a case, or could be a CR case ID
-     * @return
+     * @return CommonFilesMetaData md5s to build Common Files search results.
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
      * @throws EamDbException 
      */
-    public CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    private CommonFilesMetadata findEamDbCommonFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         CommonFilesMetadata metaData  =  this.findCommonFiles(); 
         Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
         Collection<String> values = commonFiles.keySet();
@@ -90,36 +89,8 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
         try {
             
             Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
-                    .collect(Collectors.toList());
-            
-             
-             for (CorrelationAttributeCommonInstance instance : artifactInstances) {
-                
-                String md5 = instance.getValue();
-                String dataSource = String.format("%s: %s", instance.getCorrelationCase().getDisplayName(), instance.getCorrelationDataSource().getName());
-
-                if (md5 == null || HashUtility.isNoDataMd5(md5)) {
-                    continue;
-                }
-                //Builds a 3rd list which contains instances which are in commonFiles map, uses current case objectId
-                if (commonFiles.containsKey(md5)) {
-                    // TODO sloppy, but we don't *have* all the information for the rows in the CR, so what do we do?
-                    Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
-                    if(interCaseCommonFiles.containsKey(md5)) {
-                         //Add to intercase metaData
-                        final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);       
-                        md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
-                       
-                    } else {
-                        // Create new intercase metadata
-                        final Md5Metadata md5Metadata = commonFiles.get(md5);
-                        md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
-                        interCaseCommonFiles.put(md5, md5Metadata);
-                    }
-                } else {
-                    // TODO This should never happen. All current case files with potential matches are in comonFiles Map.
-                }
-             }
+                    .collect(Collectors.toList());    
+            gatherIntercaseResults(artifactInstances, commonFiles, interCaseCommonFiles);
             
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
@@ -127,6 +98,36 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
         // Builds intercase-only matches metadata
         return new CommonFilesMetadata(interCaseCommonFiles);
     
+    }
+
+    private void gatherIntercaseResults(Collection<CorrelationAttributeCommonInstance> artifactInstances, Map<String, Md5Metadata> commonFiles, Map<String, Md5Metadata> interCaseCommonFiles) {
+        for (CorrelationAttributeCommonInstance instance : artifactInstances) {
+            
+            String md5 = instance.getValue();
+            String dataSource = String.format("%s: %s", instance.getCorrelationCase().getDisplayName(), instance.getCorrelationDataSource().getName());
+            
+            if (md5 == null || HashUtility.isNoDataMd5(md5)) {
+                continue;
+            }
+            //Builds a 3rd list which contains instances which are in commonFiles map, uses current case objectId
+            if (commonFiles.containsKey(md5)) {
+                // TODO sloppy, but we don't *have* all the information for the rows in the CR, so what do we do?
+                Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
+                if(interCaseCommonFiles.containsKey(md5)) {
+                    //Add to intercase metaData
+                    final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                    
+                } else {
+                    final List<FileInstanceMetadata> fileInstances = new ArrayList<>();
+                    fileInstances.add(new FileInstanceMetadata(objectId, dataSource));
+                    Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
+                    interCaseCommonFiles.put(md5, md5Metadata);
+                }
+            } else {
+                // TODO This should never happen. All current case files with potential matches are in comonFiles Map.
+            }
+        }
     }
 
     @Override
