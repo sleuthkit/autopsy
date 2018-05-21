@@ -14,7 +14,7 @@ Minimum entropy can be set higher or lower, depending on how many false hits are
 
 The module looks for the following types of encryption:
 <ul>
-<li> Any file that has a entropy above the threshold in the module settings and that fits the file size constraints
+<li> Any file that has an entropy equal to or greater than the threshold in the module settings and that fits the file size constraints
 <li> Password protected Office files, PDF files, and Access database files
 <li> BitLocker volumes
 <li> SQLCipher (uses the minimum entropy from the module settings)
