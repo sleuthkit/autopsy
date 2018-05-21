@@ -575,7 +575,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 }
                 FileOutputStream out = new FileOutputStream(csvFile, false);
 
-                out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + fileName + "\n").getBytes());
+                out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
                 out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
                 // Set up the column names
                 Map<String, Object> row = currentTableRows.get(0);
