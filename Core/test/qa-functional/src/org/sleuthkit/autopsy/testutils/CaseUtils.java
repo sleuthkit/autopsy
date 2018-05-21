@@ -127,5 +127,4 @@ public final class CaseUtils {
      */
     private CaseUtils() {
     }
-
 }
