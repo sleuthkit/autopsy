@@ -273,7 +273,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * @param evt the action event
      */
 
-    @NbBundle.Messages({"SQLiteViewer.csvExport.fileName.empty=Please input a file name for exporting."})
+    @NbBundle.Messages({"SQLiteViewer.csvExport.fileName.empty=Please input a file name for exporting.",
+                        "SQLiteViewer.csvExport.title=Export to csv file"})
     private void exportCsvButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCsvButtonActionPerformed
         Case openCase = Case.getCurrentCase();
         File caseDirectory = new File(openCase.getExportDirectory());        
@@ -289,9 +290,11 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         int choice = fileChooser.showDialog((Component) evt.getSource(), "File"); //TODO
         if (JFileChooser.APPROVE_OPTION == choice) {
             File file = fileChooser.getSelectedFile();
-            if (file == null || file.isFile()) {
+            if (file == null) {
                 JOptionPane.showMessageDialog(this,
-                        Bundle.SQLiteViewer_csvExport_fileName_empty(),"", JOptionPane.WARNING_MESSAGE);
+                        Bundle.SQLiteViewer_csvExport_fileName_empty(),
+                        Bundle.SQLiteViewer_csvExport_title(), 
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             } 
          
@@ -547,10 +550,11 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }
     
     @NbBundle.Messages({"SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.",
-        "SQLiteViewer.exportTableToCsv.FileName=File name: ",
-        "SQLiteViewer.exportTableToCsv.TableName=Table name: "
+                        "SQLiteViewer.exportTableToCsv.emptyTable=Table is empty.",
+                        "SQLiteViewer.exportTableToCsv.FileName=File name: ",
+                        "SQLiteViewer.exportTableToCsv.TableName=Table name: "
     })
-    private void exportTableToCsv(File csvFile) {
+    private void exportTableToCsv(File file) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         String csvFileSuffix = "_" + tableName + "_" + TimeStampUtils.createTimeStamp() + ".csv";
         try (
@@ -560,12 +564,14 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
                 logger.log(Level.INFO, String.format("The table %s is empty. (objId=%d)", tableName, sqliteDbFile.getId())); //NON-NLS
+                MessageNotifyUtil.Message.info(Bundle.SQLiteViewer_exportTableToCsv_emptyTable());
             } else {
-                String fileName = csvFile.getName();
+                String fileName = file.getName();
+                File csvFile;
                 if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
-                    csvFile = new File(csvFile.getParentFile(), FilenameUtils.removeExtension(csvFile.getName()) + csvFileSuffix);                    
+                    csvFile = new File(file.getParentFile(), FilenameUtils.removeExtension(fileName) + csvFileSuffix);                    
                 } else {
-                    csvFile = new File(csvFile.toString() + csvFileSuffix);
+                    csvFile = new File(file.toString() + csvFileSuffix);
                 }
                 FileOutputStream out = new FileOutputStream(csvFile, false);
 
@@ -586,13 +592,13 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                 for (Map<String, Object> maps : currentTableRows) {
                     StringBuffer valueLine = new StringBuffer();
-                    for (Object value : maps.values()) {
+                    maps.values().forEach((value) -> {
                         if (valueLine.length() > 0) {
                             valueLine.append(',').append(value.toString());
                         } else {
                             valueLine.append(value.toString());
                         }
-                    }
+                    });
                     out.write(valueLine.append('\n').toString().getBytes());
                 }
             }
@@ -600,7 +606,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             logger.log(Level.SEVERE, String.format("Failed to read table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to export table %s to file '%s'", tableName, sqliteDbFile.getName(), csvFile.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Failed to export table %s to file '%s'", tableName, file.getName()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_exportTableToCsv_write_errText());
         }
     }
