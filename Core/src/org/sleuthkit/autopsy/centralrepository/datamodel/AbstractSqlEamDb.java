@@ -673,18 +673,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
         List<CorrelationAttributeCommonInstance> artifactInstances = new ArrayList<>();
 
         CorrelationAttributeCommonInstance artifactInstance;
-        PreparedStatement preparedStatement = null; //TODO probably not appropriate for query with variable number of arguments
+        PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String valuesString = "";
-        StringBuilder valuesFilter = new StringBuilder(values.size());
-        if (!values.isEmpty()) {
-            for (String value : values) {
-                valuesFilter.append("'").append(value).append("',");
-            }
-            valuesString = valuesFilter.toString().substring(0, valuesFilter.length() - 1);
-
-        }
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder(9);
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM ");

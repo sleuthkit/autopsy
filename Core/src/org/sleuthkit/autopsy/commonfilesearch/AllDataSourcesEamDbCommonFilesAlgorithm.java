@@ -96,7 +96,7 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
              for (CorrelationAttributeCommonInstance instance : artifactInstances) {
                 
                 String md5 = instance.getValue();
-                String dataSource = String.format(instance.getCorrelationCase().getDisplayName(), ": ", instance.getCorrelationDataSource().getName());
+                String dataSource = String.format("%s: %s", instance.getCorrelationCase().getDisplayName(), instance.getCorrelationDataSource().getName());
 
                 if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                     continue;
