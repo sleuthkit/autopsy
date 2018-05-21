@@ -267,7 +267,11 @@ public class Installer extends ModuleInstall {
             });
         }
     }
-
+    private static void ensureClassifierFolderExists() {
+        File objectDetectionClassifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
+        objectDetectionClassifierDir.mkdir();
+    }
+    
     private static void ensurePythonModulesFolderExists() {
         File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
         pythonModulesDir.mkdir();
@@ -277,6 +281,7 @@ public class Installer extends ModuleInstall {
     public void restored() {
         super.restored();
         ensurePythonModulesFolderExists();
+        ensureClassifierFolderExists();
         initJavaFx();
         for (ModuleInstall mi : packageInstallers) {
             try {

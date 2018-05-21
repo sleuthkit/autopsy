@@ -340,6 +340,10 @@
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
+                <runtime-relative-path>ext/jackcess-2.1.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-2.1.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
             </class-path-extension>
@@ -348,32 +352,36 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
+                <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/curator-framework-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-dbcp2-2.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jgraphx-v3.8.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jgraphx-v3.8.0.jar</binary-origin>
+                <runtime-relative-path>ext/bcprov-jdk15on-1.54.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-jdk15on-1.54.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-compress-1.14.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-compress-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/fontbox-2.0.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/fontbox-2.0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-dbcp2-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jgraphx-v3.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jgraphx-v3.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencv-2413.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-2413.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jython-standalone-2.7.0.jar</runtime-relative-path>
@@ -388,6 +396,14 @@
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/cxf-core-3.0.16.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/cxf-core-3.0.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javax.ws.rs-api-2.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javax.ws.rs-api-2.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/postgresql-9.4.1211.jre7.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/postgresql-9.4.1211.jre7.jar</binary-origin>
             </class-path-extension>
@@ -398,6 +414,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.10.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.10.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.17.jar</runtime-relative-path>
@@ -412,56 +432,16 @@
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/bcprov-jdk15on-1.54.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/bcprov-jdk15on-1.54.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackcess-2.1.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-2.1.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jempbox-1.8.13.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jempbox-1.8.13.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javax.ws.rs-api-2.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javax.ws.rs-api-2.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/cxf-rt-rs-client-3.0.16.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/cxf-rt-rs-client-3.0.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/cxf-core-3.0.16.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/cxf-core-3.0.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-frontend-jaxrs-3.0.16.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cxf-rt-frontend-jaxrs-3.0.16.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-1.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-parsers-1.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/fontbox-2.0.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/fontbox-2.0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/pdfbox-2.0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-tools-2.0.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/pdfbox-tools-2.0.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-parsers-1.17.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-parsers-1.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.8.11.jar</runtime-relative-path>
@@ -484,6 +464,14 @@
                 <binary-origin>release/modules/ext/dd-plist-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jempbox-1.8.13.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jempbox-1.8.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/cxf-rt-rs-client-3.0.16.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/cxf-rt-rs-client-3.0.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
@@ -492,12 +480,20 @@
                 <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jsoup-1.10.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jsoup-1.10.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/pdfbox-2.0.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
