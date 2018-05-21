@@ -673,7 +673,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         List<CorrelationAttributeCommonInstance> artifactInstances = new ArrayList<>();
 
         CorrelationAttributeCommonInstance artifactInstance;
-        PreparedStatement preparedStatement = null;
+        PreparedStatement preparedStatement = null; //TODO probably not appropriate for query with variable number of arguments
         ResultSet resultSet = null;
 
         String valuesString = "";
@@ -695,8 +695,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append(" LEFT JOIN data_sources ON ");
         sql.append(tableName);
         sql.append(".data_source_id=data_sources.id");
-        sql.append(" WHERE value IN (?)");
-        if (singleCase) {
+        sql.append(" WHERE value IN (");
+        
+        for(int i = 0; i < values.size(); i++){
+            sql.append("?,");
+        }
+        sql.deleteCharAt(sql.length() - 1);
+        sql.append(")");
+        
+        if (singleCase && correlationCase != null) {
             sql.append(" AND ");
             sql.append(tableName);
             sql.append(".case_id=?");
@@ -704,9 +711,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setArray(1, conn.createArrayOf("text[]", values.toArray(new String[values.size()]))); //Collections.list(values.iterator()).toArray());
+            int i = 1;
+            for (String value : values){
+                preparedStatement.setString(i, value);
+                i++;
+            }
             if (singleCase && correlationCase != null) {
-                preparedStatement.setString(2, String.valueOf(correlationCase.getID()));
+                preparedStatement.setString(i, String.valueOf(correlationCase.getID()));
             }
 
             resultSet = preparedStatement.executeQuery();
