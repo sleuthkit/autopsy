@@ -248,12 +248,13 @@ abstract class CommonFilesMetadataBuilder {
         "CommonFilesMetadataBuilder.buildTabTitle.titleEamDb=Common Files (Central Repository Source(s), %s)",
     })
     protected abstract String buildTabTitle();
-
+  
     @NbBundle.Messages({
         "CommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents",
         "CommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
         "CommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
     })
+
     protected String buildCategorySelectionString() {
         if (!this.filterByDoc && !this.filterByMedia) {
             return Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_all();
