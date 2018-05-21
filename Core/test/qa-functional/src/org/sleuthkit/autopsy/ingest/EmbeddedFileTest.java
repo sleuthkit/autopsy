@@ -30,7 +30,6 @@ import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
@@ -48,6 +47,8 @@ public class EmbeddedFileTest extends NbTestCase {
     public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
     private static final int DEEP_FOLDER_COUNT = 25;
     private Case openCase;
+    
+    private boolean testSucceeded;
   
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EmbeddedFileTest.class).
@@ -62,6 +63,8 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
+        testSucceeded = false;
+        
         openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
@@ -84,7 +87,7 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase();
+        CaseUtils.closeCurrentCase(testSucceeded);
     }
     
     public void testEncryption() {
@@ -117,6 +120,7 @@ public class EmbeddedFileTest extends NbTestCase {
             Assert.fail(ex);
         }
         
+        testSucceeded = true;
     }
 
     public void testBigFolder() {
@@ -143,6 +147,7 @@ public class EmbeddedFileTest extends NbTestCase {
             Assert.fail(ex);
         }
         
+        testSucceeded = true;
     }
 
     public void testDeepFolder() {
@@ -165,6 +170,7 @@ public class EmbeddedFileTest extends NbTestCase {
             Assert.fail(ex);
         }
         
+        testSucceeded = true;
     }
     
    public void testEmbeddedFile() {
@@ -190,6 +196,7 @@ public class EmbeddedFileTest extends NbTestCase {
             Assert.fail(ex);
         }
         
+        testSucceeded = true;
     }
    
     public void testContent() {
@@ -213,7 +220,9 @@ public class EmbeddedFileTest extends NbTestCase {
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }        
+        }
+        
+        testSucceeded = true;
     }
 
     public void testExtension() {
@@ -225,7 +234,9 @@ public class EmbeddedFileTest extends NbTestCase {
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
-        }       
+        }
+        
+        testSucceeded = true;
     }
     
     private void checkEachFileInDeepFolder(AbstractFile file, StringBuffer dirReached, ArrayList<String> fileReached, int numOfDir) {         
