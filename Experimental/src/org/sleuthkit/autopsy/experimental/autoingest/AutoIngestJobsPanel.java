@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.eventbus.EventBus;
 import java.awt.Dimension;
-import java.beans.PropertyVetoException;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.swing.outline.DefaultOutlineModel;
@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
@@ -163,21 +164,18 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * @param jobsSnapshot - the JobsSnapshot which will provide the new
      *                     contents
      */
-    void refresh(JobsSnapshot jobsSnapshot) {
+    void refresh(JobsSnapshot jobsSnapshot, AutoIngestRefreshEvent refreshEvent) {
         synchronized (this) {
             outline.setRowSelectionAllowed(false);
-            Node[] selectedNodes = explorerManager.getSelectedNodes();
-            AutoIngestJobsNode autoIngestNode = new AutoIngestJobsNode(jobsSnapshot, status);
-            explorerManager.setRootContext(autoIngestNode);
-            outline.setRowSelectionAllowed(true);     
-            if (selectedNodes.length > 0 && autoIngestNode.getChildren().findChild(selectedNodes[0].getName()) != null && outline.isFocusable()) {  //don't allow saved selections of empty nodes to be restored
-                try {
-                    explorerManager.setSelectedNodes(new Node[]{autoIngestNode.getChildren().findChild(selectedNodes[0].getName())});
-                } catch (PropertyVetoException ignore) {
-                    //Unable to select previously selected node
-                }
+            if (explorerManager.getRootContext() instanceof AutoIngestJobsNode) {
+                ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh(refreshEvent);
+            } else {
+                //Make a new AutoIngestJobsNode with it's own EventBus and set it as the root context
+                explorerManager.setRootContext(new AutoIngestJobsNode(jobsSnapshot, status, new EventBus("AutoIngestJobsNodeEventBus")));
             }
+            outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);
+
         }
     }
 

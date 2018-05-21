@@ -19,23 +19,28 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
 final class AutoIngestAdminActions {
 
+    private static final Logger logger = Logger.getLogger(AutoIngestAdminActions.class.getName());
+
     static abstract class AutoIngestNodeControlAction extends AbstractAction {
 
         private final AutoIngestNodeState nodeState;
-        private final Logger logger = Logger.getLogger(AutoIngestNodeControlAction.class.getName());
 
         AutoIngestNodeControlAction(AutoIngestNodeState nodeState, String title) {
             super(title);
@@ -138,19 +143,20 @@ final class AutoIngestAdminActions {
     static final class ProgressDialogAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        ProgressDialogAction() {
+        ProgressDialogAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_progressDialogAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3734
             final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
             if (tc != null) {
                 AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
                 if (dashboard != null) {
-                    new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true);
+                    new IngestProgressSnapshotDialog(dashboard.getTopLevelAncestor(), true, job);
                 }
             }
         }
@@ -165,14 +171,49 @@ final class AutoIngestAdminActions {
     static final class CancelJobAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        CancelJobAction() {
+        CancelJobAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_cancelJobAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3738
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                Object[] options = {
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.CancelJob"),
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DoNotCancelJob")};
+                int reply = JOptionPane.showOptionDialog(dashboard.getRunningJobsPanel(),
+                        NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.CancelJobAreYouSure"),
+                        NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.ConfirmCancellationHeader"),
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[1]);
+                if (reply == 0) {
+                    /*
+                     * Call setCursor on this to ensure it appears (if there is
+                     * time to see it).
+                     */
+                    dashboard.getRunningJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    EventQueue.invokeLater(() -> {
+                        dashboard.getMonitor().cancelJob(job);
+                        dashboard.getRunningJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    });
+                }
+            }
         }
 
         @Override
@@ -201,18 +242,49 @@ final class AutoIngestAdminActions {
         }
     }
 
-    @NbBundle.Messages({"AutoIngestAdminActions.reprocessJobAction.title=Reprocess Job"})
+    @NbBundle.Messages({"AutoIngestAdminActions.reprocessJobAction.title=Reprocess Job",
+        "AutoIngestAdminActions.reprocessJobAction.error=Failed to reprocess job"})
     static final class ReprocessJobAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        ReprocessJobAction() {
+        ReprocessJobAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_reprocessJobAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3739
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                /*
+                 * Call setCursor on this to ensure it appears (if there is time
+                 * to see it).
+                 */
+                dashboard.getCompletedJobsPanel().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                EventQueue.invokeLater(() -> {
+                    try {
+                        dashboard.getMonitor().reprocessJob(job);
+                        dashboard.refreshTables();
+                        dashboard.getCompletedJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                        logger.log(Level.SEVERE, Bundle.AutoIngestAdminActions_reprocessJobAction_error(), ex);
+                        MessageNotifyUtil.Message.error(Bundle.AutoIngestAdminActions_reprocessJobAction_error());
+                    } finally {
+                        dashboard.getCompletedJobsPanel().setCursor(Cursor.getDefaultCursor());
+                    }
+                });
+            }
         }
 
         @Override
@@ -221,18 +293,67 @@ final class AutoIngestAdminActions {
         }
     }
 
-    @NbBundle.Messages({"AutoIngestAdminActions.deleteCaseAction.title=Delete Case"})
+    @NbBundle.Messages({"AutoIngestAdminActions.deleteCaseAction.title=Delete Case",
+        "AutoIngestAdminActions.deleteCaseAction.error=Failed to delete case."})
     static final class DeleteCaseAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        DeleteCaseAction() {
+        DeleteCaseAction(AutoIngestJob selectedJob) {
             super(Bundle.AutoIngestAdminActions_deleteCaseAction_title());
+            this.job = selectedJob;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-3740
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                String caseName = job.getManifest().getCaseName();
+
+                Object[] options = {
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.Delete"),
+                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DoNotDelete")
+                };
+                Object[] msgContent = {org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.DeleteAreYouSure") + "\"" + caseName + "\"?"};
+                int reply = JOptionPane.showOptionDialog(dashboard,
+                        msgContent,
+                        org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.ConfirmDeletionHeader"),
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[JOptionPane.NO_OPTION]);
+                if (reply == JOptionPane.YES_OPTION) {
+                    EventQueue.invokeLater(() -> {
+                        dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        AutoIngestManager.CaseDeletionResult result = dashboard.getMonitor().deleteCase(job);
+
+                        dashboard.getCompletedJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot(), new AutoIngestNodeRefreshEvents.RefreshChildrenEvent());
+                        dashboard.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        if (AutoIngestManager.CaseDeletionResult.FAILED == result) {
+                            JOptionPane.showMessageDialog(dashboard,
+                                    String.format("Could not delete case %s. It may be in use.", caseName),
+                                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        } else if (AutoIngestManager.CaseDeletionResult.PARTIALLY_DELETED == result) {
+                            JOptionPane.showMessageDialog(dashboard,
+                                    String.format("Could not fully delete case %s. See log for details.", caseName),
+                                    org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    });
+                }
+            }
         }
 
         @Override
@@ -241,18 +362,61 @@ final class AutoIngestAdminActions {
         }
     }
 
-    @NbBundle.Messages({"AutoIngestAdminActions.showCaseLogAction.title=Show Case Log"})
+    @NbBundle.Messages({"AutoIngestAdminActions.showCaseLogAction.title=Show Case Log",
+        "AutoIngestAdminActions.showCaseLogActionFailed.title=Unable to display case log",
+        "AutoIngestAdminActions.showCaseLogActionFailed.message=Case log file does not exist",
+        "AutoIngestAdminActions.showCaseLogActionDialog.ok=Okay",
+        "AutoIngestAdminActions.showCaseLogActionDialog.cannotFindLog=Unable to find the selected case log file",
+        "AutoIngestAdminActions.showCaseLogActionDialog.unableToShowLogFile=Unable to show log file"})
     static final class ShowCaseLogAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private final AutoIngestJob job;
 
-        ShowCaseLogAction() {
+        ShowCaseLogAction(AutoIngestJob job) {
             super(Bundle.AutoIngestAdminActions_showCaseLogAction_title());
+            this.job = job;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            //TODO JIRA-
+            if (job == null) {
+                return;
+            }
+
+            final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(AutoIngestDashboardTopComponent.PREFERRED_ID);
+            if (tc == null) {
+                return;
+            }
+
+            AutoIngestDashboard dashboard = tc.getAutoIngestDashboard();
+            if (dashboard != null) {
+                try {
+                    Path caseDirectoryPath = job.getCaseDirectoryPath();
+                    if (null != caseDirectoryPath) {
+                        Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
+                        if (pathToLog.toFile().exists()) {
+                            Desktop.getDesktop().edit(pathToLog.toFile());
+                        } else {
+                            JOptionPane.showMessageDialog(dashboard, Bundle.AutoIngestAdminActions_showCaseLogActionFailed_message(),
+                                    Bundle.AutoIngestAdminActions_showCaseLogAction_title(), JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        MessageNotifyUtil.Message.warn("The case directory for this job has been deleted.");
+                    }
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
+                    Object[] options = {Bundle.AutoIngestAdminActions_showCaseLogActionDialog_ok()};
+                    JOptionPane.showOptionDialog(dashboard,
+                            Bundle.AutoIngestAdminActions_showCaseLogActionDialog_cannotFindLog(),
+                            Bundle.AutoIngestAdminActions_showCaseLogActionDialog_unableToShowLogFile(),
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.PLAIN_MESSAGE,
+                            null,
+                            options,
+                            options[0]);
+                }
+            }
         }
 
         @Override
