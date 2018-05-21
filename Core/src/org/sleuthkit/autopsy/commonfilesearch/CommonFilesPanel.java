@@ -35,7 +35,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
@@ -252,10 +251,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         new SwingWorker<Map<Long, String>, Void>() {
 
-            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
-            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
             private void updateUi() {
 
                 final Map<Long, String> dataSourceMap = CommonFilesPanel.this.intraCasePanel.getDataSourceMap();
@@ -283,48 +278,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 return CommonFilesPanel.this.intraCasePanel.getDataSourceMap().size() >= 2;
             }
 
-            private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
-                        ResultSet resultSet = query.getResultSet()) {
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        dataSouceMap.put(objectId, dataSourceName);
-                    }
-                }
-            }
-
-            private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        SleuthkitCase.CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
-                        ResultSet resultSet = query.getResultSet()) {
-
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        File image = new File(dataSourceName);
-                        String dataSourceNameTrimmed = image.getName();
-                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
-                    }
-                }
-            }
-
             @Override
             protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-
-                Map<Long, String> dataSourceMap = new HashMap<>();
-
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-                loadLogicalSources(tskDb, dataSourceMap);
-
-                loadImageSources(tskDb, dataSourceMap);
-
-                return dataSourceMap;
+                DataSourceLoader loader = new DataSourceLoader();
+                return loader.getDataSourceMap();
             }
 
             @Override
