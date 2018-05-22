@@ -19,20 +19,11 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
-import javax.swing.SwingWorker;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  *
@@ -41,9 +32,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 public class InterCasePanel extends javax.swing.JPanel {
     
     private static final long serialVersionUID = 1L;
+    
     static final int NO_CASE_SELECTED = -1;
-        
-    private static final Logger LOGGER = Logger.getLogger(InterCasePanel.class.getName());
     
     private ComboBoxModel<String> casesList = new DataSourceComboBoxModel();
     private Map<Integer, String> caseMap;
@@ -156,7 +146,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     Map<Integer, String> getCaseMap() {
-        return this.caseMap;
+        return Collections.unmodifiableMap(this.caseMap);
     }
 
     void setCaseList(DataSourceComboBoxModel dataSourceComboBoxModel) {
@@ -175,7 +165,8 @@ public class InterCasePanel extends javax.swing.JPanel {
     }
 
     void setCaseMap(Map<Integer, String> caseMap) {
-        this.caseMap = caseMap;
+        this.caseMap.clear();
+        this.caseMap.putAll(caseMap);
     }
 
     boolean centralRepoHasMultipleCases() {
