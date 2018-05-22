@@ -115,7 +115,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -156,7 +156,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -197,7 +197,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -240,7 +240,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -283,7 +283,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -326,7 +326,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -368,7 +368,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -409,7 +409,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -450,7 +450,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
             
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }

@@ -103,7 +103,7 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
 
             assertTrue(files.isEmpty());
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
         }
     }
@@ -126,7 +126,7 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
 
             assertTrue(files.isEmpty());
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }

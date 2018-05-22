@@ -69,7 +69,7 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -89,7 +89,7 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
