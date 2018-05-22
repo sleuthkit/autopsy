@@ -121,12 +121,12 @@ public class ImageUtils {
         //load opencv libraries
         boolean openCVLoadedTemp;
         try {
-            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
-                System.loadLibrary("opencv_ffmpeg2413_64"); //NON-NLS
-            } else {
-                System.loadLibrary("opencv_ffmpeg2413"); //NON-NLS
-            }
+//            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+//            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
+//                System.loadLibrary("opencv_ffmpeg2413_64"); //NON-NLS
+//            } else {
+//                System.loadLibrary("opencv_ffmpeg2413"); //NON-NLS
+//            }
 
             openCVLoadedTemp = true;
         } catch (UnsatisfiedLinkError e) {

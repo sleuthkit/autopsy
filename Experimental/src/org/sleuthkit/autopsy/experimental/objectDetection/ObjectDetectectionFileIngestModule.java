@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.highgui.Highgui;
@@ -55,7 +56,8 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
-        System.load("C:\\project_code\\autopsy\\thirdparty\\opencv\\lib\\amd64\\opencv_java2413.dll");
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        System.loadLibrary("opencv_java2413");
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         cascades = new HashMap<>();
         if (classifierDir.exists() && classifierDir.isDirectory()) {
@@ -94,7 +96,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                             BlackboardArtifact artifact = file.newArtifact(TSK_OBJECT_DETECTED);
                             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, ObjectDetectionModuleFactory.getModuleName(), cascadeKey));
                             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, ObjectDetectionModuleFactory.getModuleName(), comment));
-                            
+
                             try {
                                 /*
                                  * Index the artifact for keyword search.
