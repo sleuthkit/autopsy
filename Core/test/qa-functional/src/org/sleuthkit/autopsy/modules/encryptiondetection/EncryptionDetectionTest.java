@@ -301,16 +301,16 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testSqlCipherEncryption() {
         try {
-            Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_DETECTION_CASE_NAME);
+            Case openCase = CaseUtils.createAsCurrentCase(SQLCIPHER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_DETECTION_IMAGE_PATH);
+            IngestUtils.addDataSource(dataSourceProcessor, SQLCIPHER_DETECTION_IMAGE_PATH);
 
             /*
              * Create ingest job settings.
              */
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(SQLCIPHER_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
 
             /*
