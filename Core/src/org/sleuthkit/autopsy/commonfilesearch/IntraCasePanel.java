@@ -19,24 +19,11 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.io.File;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
