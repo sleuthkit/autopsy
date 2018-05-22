@@ -1079,6 +1079,100 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
+    
+    /**
+     * //DLG:
+     * @param eamArtifact
+     * @param comment
+     * @throws EamDbException 
+     */
+    @Override
+    public void setAttributeInstanceComment(CorrelationAttribute eamArtifact, String comment) throws EamDbException {
+        if(eamArtifact == null) {
+            throw new EamDbException("Correlation attribute is null");
+        }
+        
+        List<CorrelationAttributeInstance> eamInstances = eamArtifact.getInstances();
+        CorrelationAttributeInstance eamInstance = eamInstances.get(0);
+
+        if(eamInstance.getCorrelationCase() == null) {
+            throw new EamDbException("Correlation case is null");
+        }
+        if(eamInstance.getCorrelationDataSource() == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+        
+        Connection conn = connect();        
+
+        PreparedStatement preparedUpdate = null;
+        PreparedStatement preparedQuery = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+
+        StringBuilder sqlQuery = new StringBuilder();
+        sqlQuery.append("SELECT id FROM ");
+        sqlQuery.append(tableName);
+        sqlQuery.append(" WHERE case_id=(SELECT id FROM cases WHERE case_uid=?) ");
+        sqlQuery.append("AND data_source_id=(SELECT id FROM data_sources WHERE device_id=?) ");
+        sqlQuery.append("AND value=? ");
+        sqlQuery.append("AND file_path=?");
+
+        StringBuilder sqlUpdate = new StringBuilder();
+        sqlUpdate.append("UPDATE ");
+        sqlUpdate.append(tableName);
+        sqlUpdate.append(" SET comment=? ");
+        sqlUpdate.append("WHERE id=?");
+
+        try {
+            preparedQuery = conn.prepareStatement(sqlQuery.toString());
+            preparedQuery.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
+            preparedQuery.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
+            preparedQuery.setString(3, eamArtifact.getCorrelationValue());
+            preparedQuery.setString(4, eamInstance.getFilePath());
+            resultSet = preparedQuery.executeQuery();
+            if (resultSet.next()) {
+                int instance_id = resultSet.getInt("id");
+                preparedUpdate = conn.prepareStatement(sqlUpdate.toString());
+
+                // NOTE: if the user tags the same instance as BAD multiple times,
+                // the comment from the most recent tagging is the one that will
+                // prevail in the DB.
+                if (comment == null || comment.isEmpty()) {
+                    preparedUpdate.setNull(1, Types.INTEGER);
+                } else {
+                    preparedUpdate.setString(1, comment);
+                }
+                preparedUpdate.setInt(2, instance_id);
+
+                preparedUpdate.executeUpdate();
+            } else {
+                // In this case, the user is tagging something that isn't in the database,
+                // which means the case and/or datasource may also not be in the database.
+                // We could improve effiency by keeping a list of all datasources and cases
+                // in the database, but we don't expect the user to be tagging large numbers
+                // of items (that didn't have the CE ingest module run on them) at once.
+                CorrelationCase correlationCaseWithId = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
+                if (null == correlationCaseWithId) {
+                    correlationCaseWithId = newCase(eamInstance.getCorrelationCase());
+                }
+
+                if (null == getDataSource(correlationCaseWithId, eamInstance.getCorrelationDataSource().getDeviceID())) {
+                    newDataSource(eamInstance.getCorrelationDataSource());
+                }
+                eamArtifact.getInstances().get(0).setComment(comment);
+                addArtifact(eamArtifact);
+            }
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting/setting artifact instance comment=" + comment, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedUpdate);
+            EamDbUtil.closePreparedStatement(preparedQuery);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
 
     /**
      * Sets an eamArtifact instance to the given knownStatus. 

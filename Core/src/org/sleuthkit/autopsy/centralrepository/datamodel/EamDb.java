@@ -308,6 +308,14 @@ public interface EamDb {
      * Executes a bulk insert of the cases
      */
     void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException;
+    
+    /**
+     * //DLG:
+     * @param eamArtifact
+     * @param comment
+     * @throws EamDbException 
+     */
+    void setAttributeInstanceComment(CorrelationAttribute eamArtifact, String comment) throws EamDbException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact

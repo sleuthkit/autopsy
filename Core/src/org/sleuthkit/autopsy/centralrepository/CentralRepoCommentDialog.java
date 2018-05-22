@@ -5,8 +5,11 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
  *
@@ -141,9 +144,15 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        for (CorrelationAttributeInstance attributeInstance : correlationAttribute.getInstances()) {
-            attributeInstance.setComment(commentTextArea.getText());
+        EamDb dbManager;
+        
+        try {
+            dbManager = EamDb.getInstance();
+            dbManager.setAttributeInstanceComment(correlationAttribute, commentTextArea.getText());
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex); //DLG:
         }
+        
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
