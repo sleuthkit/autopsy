@@ -88,7 +88,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
 
             CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
@@ -129,7 +129,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
 
             CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
@@ -170,7 +170,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
 
             CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, true);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
@@ -214,7 +214,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
             
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
@@ -257,7 +257,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
             
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
@@ -300,7 +300,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
             
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
@@ -342,7 +342,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Long second = this.getDataSourceIdByIndex(1, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(second, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
             
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
             
@@ -383,7 +383,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Long last = this.getDataSourceIdByIndex(3, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(last, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
             
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
             
@@ -424,7 +424,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             Long third = this.getDataSourceIdByIndex(2, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
             
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
             

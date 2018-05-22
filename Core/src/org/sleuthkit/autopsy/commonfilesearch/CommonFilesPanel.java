@@ -163,12 +163,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                 if (CommonFilesPanel.this.interCaseRadio.isSelected()) {
                     
-                    builder = new AllDataSourcesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
-                    
                     if(caseId == InterCasePanel.NO_CASE_SELECTED){
-                        metadata = ((AllDataSourcesEamDbCommonFilesAlgorithm)builder).findEamDbCommonFiles();
+                        builder = new AllCasesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
                     } else {
-                        metadata = ((AllDataSourcesEamDbCommonFilesAlgorithm)builder).findEamDbCommonFiles(CommonFilesPanel.this.interCasePanel.getSelectedCaseId());
+                        builder = new SingleCaseEamDbCommonFilesAlgorithm(caseId, CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
                     }
                 } else {
                     if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
@@ -180,8 +178,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                         setTitleForSingleSource(dataSourceId);
                     }
-                    metadata = builder.findCommonFiles();
                 }
+                
+                //TODO set title from one method rathe than two (or more) overloads
+                
+                metadata = builder.findFiles();
                 
                 this.tabTitle = builder.buildTabTitle();
 

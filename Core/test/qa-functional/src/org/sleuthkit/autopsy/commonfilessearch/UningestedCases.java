@@ -64,7 +64,7 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
 
             CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
@@ -84,7 +84,7 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
             Long first = this.getDataSourceIdByIndex(0, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);

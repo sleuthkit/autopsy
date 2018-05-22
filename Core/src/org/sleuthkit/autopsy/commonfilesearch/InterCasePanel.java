@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
@@ -48,6 +49,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     public InterCasePanel() {
         initComponents();
         this.errorMessage = "";
+        this.caseMap = new HashMap<>();
     }
 
     private void specificCaseSelected(boolean selected) {
