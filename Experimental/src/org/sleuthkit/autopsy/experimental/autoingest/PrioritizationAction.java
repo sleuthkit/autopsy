@@ -27,7 +27,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents;
 
 /**
  * Abstract actions which are for the modification of AutoIngestJob or Case
@@ -90,7 +89,7 @@ abstract class PrioritizationAction extends AbstractAction {
                     EventQueue.invokeLater(() -> {
                         try {
                             modifyPriority(dashboard.getMonitor());
-                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot(), getRefreshEvent());
+                            dashboard.getPendingJobsPanel().refresh(getRefreshEvent(dashboard.getMonitor()));
                         } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                             String errorMessage = getErrorMessage();
                             logger.log(Level.SEVERE, errorMessage, ex);
@@ -109,7 +108,7 @@ abstract class PrioritizationAction extends AbstractAction {
         return super.clone(); //To change body of generated methods, choose Tools | Templates.
     }
 
-    abstract AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent();
+    abstract AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor);
 
     /**
      * Action to prioritize the specified AutoIngestJob
@@ -145,8 +144,8 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
-            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(getJob());
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor.getJobsSnapshot(), getJob());
         }
     }
 
@@ -184,8 +183,8 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
-            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(getJob());
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor.getJobsSnapshot(), getJob());
         }
     }
 
@@ -225,8 +224,8 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
-            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(getJob().getManifest().getCaseName());
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor.getJobsSnapshot(), getJob().getManifest().getCaseName());
         }
     }
 
@@ -266,8 +265,8 @@ abstract class PrioritizationAction extends AbstractAction {
         }
 
         @Override
-        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent() {
-            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(getJob().getManifest().getCaseName());
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor.getJobsSnapshot(), getJob().getManifest().getCaseName());
         }
     }
 }

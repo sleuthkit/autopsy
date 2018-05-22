@@ -60,8 +60,8 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(JobsSnapshot jobsSnapshot, AutoIngestJobStatus status, EventBus eventBus) {
-        super(Children.create(new AutoIngestNodeChildren(jobsSnapshot, status, eventBus), false));
+    AutoIngestJobsNode(AutoIngestJobStatus status, EventBus eventBus) {
+        super(Children.create(new AutoIngestNodeChildren(status, eventBus), false));
         refreshChildrenEventBus = eventBus;
     }
 
@@ -78,7 +78,7 @@ final class AutoIngestJobsNode extends AbstractNode {
     static final class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private final JobsSnapshot jobsSnapshot;
+        private JobsSnapshot jobsSnapshot;
         private final RefreshChildrenSubscriber refreshChildrenSubscriber = new RefreshChildrenSubscriber();
         private final EventBus refreshEventBus;
 
@@ -89,8 +89,8 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status, EventBus eventBus) {
-            jobsSnapshot = snapshot;
+        AutoIngestNodeChildren(AutoIngestJobStatus status, EventBus eventBus) {
+            jobsSnapshot = new JobsSnapshot();
             autoIngestJobStatus = status;
             refreshEventBus = eventBus;
             refreshChildrenSubscriber.register(refreshEventBus);
@@ -159,6 +159,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                 //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 //RefreshChildrenEvents can change which children are present however
                 //RefreshJobEvents and RefreshCaseEvents can still change the order we want to display them in
+                jobsSnapshot = refreshEvent.getJobsSnapshot();
                 refresh(true);
             }
 
