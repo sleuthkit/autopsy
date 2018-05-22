@@ -666,7 +666,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     private void sendControlEventToNode(ControlEventType eventType, String nodeName) {
         new Thread(() -> {
-            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName));
+            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName, LOCAL_HOST_NAME, System.getProperty("user.name")));
         }).start();
     }
 
