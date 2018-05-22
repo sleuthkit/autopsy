@@ -37,7 +37,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     static final int NO_CASE_SELECTED = -1;
     
     private ComboBoxModel<String> casesList = new DataSourceComboBoxModel();
-    private Map<Integer, String> caseMap;
+    private final Map<Integer, String> caseMap;
     
     private CommonFilesPanel parent;
     
