@@ -26,8 +26,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -54,7 +52,7 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
         try {
             isMultiDataSourceCase = Case.isCaseOpen() && !Case.getCurrentCase().getDataSources().isEmpty();
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            LOGGER.log(Level.WARNING, "Exception determining whether or not CommonFilesSearch should be enabled.", ex);
         }
         
         return super.isEnabled() && Installer.isJavaFxInited() && (isMultiDataSourceCase || isEamDbAvailable);
