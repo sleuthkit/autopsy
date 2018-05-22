@@ -44,6 +44,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -401,7 +402,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
-        if (bbArtifact != null) {
+        if (bbArtifact != null && EamDb.isEnabled()) {
             ret.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, false, false));
         }
 
@@ -539,9 +540,21 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         //  Is supported if this node
         //      has correlatable content (File, BlackboardArtifact) OR
         //      other common files across datasources.
-        return this.file != null
+        
+        EamDb eamDb = null;
+        try {
+            eamDb = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.WARNING, "Non-critical failure: EamDb threw an exception while while testing existance.", ex);
+        }
+        if(eamDb == null){
+            return this.file != null
+                && this.file.getSize() > 0;
+        } else{
+            return this.file != null
                 && this.file.getSize() > 0
                 && !getCorrelationAttributesFromNode(node).isEmpty();
+        }
     }
 
     @Override
