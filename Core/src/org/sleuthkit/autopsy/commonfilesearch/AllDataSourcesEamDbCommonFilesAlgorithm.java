@@ -111,7 +111,8 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
             }
             //Builds a 3rd list which contains instances which are in commonFiles map, uses current case objectId
             if (commonFiles.containsKey(md5)) {
-                // TODO sloppy, but we don't *have* all the information for the rows in the CR, so what do we do?
+                // we don't *have* all the information for the rows in the CR, 
+                //  so we need to consult the present case via the SleuthkitCase object
                 Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
@@ -124,8 +125,6 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
                     Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
-            } else {
-                // TODO This should never happen. All current case files with potential matches are in comonFiles Map.
             }
         }
     }
@@ -144,7 +143,6 @@ public class AllDataSourcesEamDbCommonFilesAlgorithm  extends CommonFilesMetadat
     }
 
     private CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException, Exception {
-        //TODO is there a better way???
         for(CorrelationCase cCase : this.dbManager.getCases()){
             if(cCase.getID() == correlationCaseId){
                 return cCase;
