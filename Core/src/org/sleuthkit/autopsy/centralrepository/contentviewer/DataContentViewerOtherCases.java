@@ -74,6 +74,8 @@ import org.sleuthkit.datamodel.TskData;
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
 public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
 
+    private static final long serialVersionUID = -1L;
+    
     private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
