@@ -185,10 +185,6 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
         try {
             BlackboardArtifact artifact = file.newArtifact(artifactType);
             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                    EncryptionDetectionModuleFactory.getModuleName(), comment)
-            );
-
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EncryptionDetectionModuleFactory.getModuleName(), comment));
 
             try {
