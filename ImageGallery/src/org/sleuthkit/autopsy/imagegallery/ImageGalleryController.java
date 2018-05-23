@@ -657,6 +657,7 @@ public final class ImageGalleryController {
     @NbBundle.Messages({"BulkTask.committingDb.status=committing image/video database",
         "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
+    /* Base abstract class for various methods of copying data into the Image gallery DB */
     abstract static private class BulkTransferTask extends BackgroundTask {
 
         static private final String FILE_EXTENSION_CLAUSE =
@@ -689,6 +690,10 @@ public final class ImageGalleryController {
             this.tskCase = tskCase;
         }
 
+        /**
+         * 
+         * @param success true if the transfer was successful
+         */
         abstract void cleanup(boolean success);
 
         abstract List<AbstractFile> getFiles() throws TskCoreException;
