@@ -699,7 +699,7 @@ public class ImageUtils {
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
             if (VideoUtils.isVideoThumbnailSupported(file)) {
-                if (OPEN_CV_LOADED) {
+                if (FFMPEG_LOADED) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     if (isCancelled()) {
                         return null;
