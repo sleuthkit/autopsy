@@ -89,8 +89,9 @@
 
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
-	      <get src="https://drive.google.com/uc?id=1dLYGctuvRQMmnzfXPppTM_9gB49eLc_g" dest="${test-input}/embedded.vhd" skipexisting="true"/>
+	<get src="https://drive.google.com/uc?id=1dLYGctuvRQMmnzfXPppTM_9gB49eLc_g" dest="${test-input}/embedded.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1JACMDyH4y54ypGzFWl82ZzMQf3qbrioP" dest="${test-input}/encryption_detection_bitlocker_test.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=17sGybvmBGsWWJYo1IWKmO04oG9hKpPi3" dest="${test-input}/encryption_detection_sqlcipher_test.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/filter_test1.img" skipexisting="true"/>	    
         <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/local_files_test.zip" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1BrSiUQ1fzxFS9vIaK4mYKX6qIVp9kRWT" dest="${test-input}/password_detection_test.img" skipexisting="true"/>
@@ -99,12 +100,11 @@
 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">
         <mkdir dir="${ext.dir}"/>
-        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
-        
+        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
-           </target>
+     </target>
 
      <target name="init" depends="get-deps,harness.init"/>
   

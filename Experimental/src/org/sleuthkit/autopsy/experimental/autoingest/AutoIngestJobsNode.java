@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -39,6 +41,9 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
+    
+    //Event bus is non static so that each instance of this will only listen to events sent to that instance
+    private final EventBus refreshChildrenEventBus;
 
     @Messages({
         "AutoIngestJobsNode.caseName.text=Case Name",
@@ -55,17 +60,27 @@ final class AutoIngestJobsNode extends AbstractNode {
     /**
      * Construct a new AutoIngestJobsNode.
      */
-    AutoIngestJobsNode(JobsSnapshot jobsSnapshot, AutoIngestJobStatus status) {
-        super(Children.create(new AutoIngestNodeChildren(jobsSnapshot, status), false));
+    AutoIngestJobsNode(AutoIngestJobStatus status, EventBus eventBus) {
+        super(Children.create(new AutoIngestNodeChildren(status, eventBus), false));
+        refreshChildrenEventBus = eventBus;
+    }
+
+    /**
+     * Refresh the contents of the AutoIngestJobsNode and all of its children.
+     */
+    void refresh(AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent refreshEvent) {
+        refreshChildrenEventBus.post(refreshEvent);
     }
 
     /**
      * A ChildFactory for generating JobNodes.
      */
-    static class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
+    static final class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private final JobsSnapshot jobsSnapshot;
+        private JobsSnapshot jobsSnapshot;
+        private final RefreshChildrenSubscriber refreshChildrenSubscriber = new RefreshChildrenSubscriber();
+        private final EventBus refreshEventBus;
 
         /**
          * Create children nodes for the AutoIngestJobsNode which will each
@@ -74,9 +89,11 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param snapshot the snapshot which contains the AutoIngestJobs
          * @param status   the status of the jobs being displayed
          */
-        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status) {
-            jobsSnapshot = snapshot;
+        AutoIngestNodeChildren(AutoIngestJobStatus status, EventBus eventBus) {
+            jobsSnapshot = new JobsSnapshot();
             autoIngestJobStatus = status;
+            refreshEventBus = eventBus;
+            refreshChildrenSubscriber.register(refreshEventBus);
         }
 
         @Override
@@ -104,7 +121,48 @@ final class AutoIngestJobsNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(AutoIngestJob key) {
-            return new JobNode(key, autoIngestJobStatus);
+            return new JobNode(key, autoIngestJobStatus, refreshEventBus);
+        }
+
+        /**
+         * Class which registers with EventBus and causes child nodes which
+         * exist to be refreshed.
+         */
+        private class RefreshChildrenSubscriber {
+
+            /**
+             * Construct a RefreshChildrenSubscriber
+             */
+            private RefreshChildrenSubscriber() {
+            }
+
+            /**
+             * Registers this subscriber with the specified EventBus to receive
+             * events posted to it.
+             *
+             * @param eventBus - the EventBus to register this subscriber to
+             */
+            private void register(EventBus eventBus) {
+                eventBus.register(this);
+            }
+
+            /**
+             * Receive events which implement the AutoIngestRefreshEvent
+             * interface from the EventBus which this class is registered to,
+             * and refresh the children created by this factory.
+             *
+             *
+             * @param refreshEvent the AutoIngestRefreshEvent which was received
+             */
+            @Subscribe
+            private void subscribeToRefresh(AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
+                //RefreshChildrenEvents can change which children are present however
+                //RefreshJobEvents and RefreshCaseEvents can still change the order we want to display them in
+                jobsSnapshot = refreshEvent.getJobsSnapshot();
+                refresh(true);
+            }
+
         }
 
     }
@@ -116,6 +174,7 @@ final class AutoIngestJobsNode extends AbstractNode {
 
         private final AutoIngestJob autoIngestJob;
         private final AutoIngestJobStatus jobStatus;
+        private final RefreshNodeSubscriber refreshNodeSubscriber = new RefreshNodeSubscriber();
 
         /**
          * Construct a new JobNode to represent an AutoIngestJob and its status.
@@ -124,12 +183,13 @@ final class AutoIngestJobsNode extends AbstractNode {
          * @param status - the current status of the AutoIngestJob being
          *               represented
          */
-        JobNode(AutoIngestJob job, AutoIngestJobStatus status) {
+        JobNode(AutoIngestJob job, AutoIngestJobStatus status, EventBus eventBus) {
             super(Children.LEAF);
             jobStatus = status;
             autoIngestJob = job;
-            setName(autoIngestJob.getManifest().getCaseName());
-            setDisplayName(autoIngestJob.getManifest().getCaseName());
+            setName(autoIngestJob.toString());  //alows job to be uniquely found by name since it will involve a hash of the AutoIngestJob
+            setDisplayName(autoIngestJob.getManifest().getCaseName()); //displays user friendly case name as name
+            refreshNodeSubscriber.register(eventBus);
         }
 
         /**
@@ -201,19 +261,88 @@ final class AutoIngestJobsNode extends AbstractNode {
                         actions.add(deprioritizeCaseAction);
                         break;
                     case RUNNING_JOB:
-                        actions.add(new AutoIngestAdminActions.ProgressDialogAction());
-                        actions.add(new AutoIngestAdminActions.CancelJobAction());
-                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
+                        actions.add(new AutoIngestAdminActions.ProgressDialogAction(autoIngestJob));
+                        actions.add(new AutoIngestAdminActions.CancelJobAction(autoIngestJob));
+//                        actions.add(new AutoIngestAdminActions.CancelModuleAction());
                         break;
                     case COMPLETED_JOB:
-                        actions.add(new AutoIngestAdminActions.ReprocessJobAction());
-                        actions.add(new AutoIngestAdminActions.DeleteCaseAction());
-                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction());
+                        actions.add(new AutoIngestAdminActions.ReprocessJobAction(autoIngestJob));
+                        actions.add(new AutoIngestAdminActions.DeleteCaseAction(autoIngestJob));
+                        actions.add(new AutoIngestAdminActions.ShowCaseLogAction(autoIngestJob));
                         break;
                     default:
                 }
             }
             return actions.toArray(new Action[actions.size()]);
+        }
+
+        /**
+         * Class which registers with EventBus and causes specific nodes to have
+         * their properties to be refreshed.
+         */
+        private class RefreshNodeSubscriber {
+
+            /**
+             * Constructs a RefreshNodeSubscriber
+             */
+            private RefreshNodeSubscriber() {
+            }
+
+            /**
+             * Registers this subscriber with the specified EventBus to receive
+             * events posted to it.
+             *
+             * @param eventBus - the EventBus to register this subscriber to
+             */
+            private void register(EventBus eventBus) {
+                eventBus.register(this);
+            }
+
+            /**
+             * Receive events of type RefreshJobEvent from the EventBus which
+             * this class is registered to and refresh the nodes properties if
+             * it is the node for the job specified in the event.
+             *
+             * @param refreshEvent the RefreshJobEvent which was received
+             */
+            @Subscribe
+            private void subscribeToRefreshJob(AutoIngestNodeRefreshEvents.RefreshJobEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
+                if (getAutoIngestJob().equals(refreshEvent.getJobToRefresh())) {
+                    setSheet(createSheet());
+                }
+            }
+
+            /**
+             * Receive events of type RefreshCaseEvent from the EventBus which
+             * this class is registered to and refresh the nodes which have jobs
+             * which are members of case specified in the event.
+             *
+             * @param refreshEvent the RefreshCaseEvent which was received
+             */
+            @Subscribe
+            private void subscribeToRefreshCase(AutoIngestNodeRefreshEvents.RefreshCaseEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
+                if (getAutoIngestJob().getManifest().getCaseName().equals(refreshEvent.getCaseToRefresh())) {
+                    setSheet(createSheet());
+                }
+            }
+
+            /**
+             * Refresh the properties of all running jobs anytime a
+             * RefreshChildrenEvent is received so that stages and times stay up
+             * to date.
+             *
+             * @param refreshEvent - the RefreshChildrenEvent which was received
+             */
+            @Subscribe
+            private void subscribeToRefreshChildren(AutoIngestNodeRefreshEvents.RefreshChildrenEvent refreshEvent) {
+                //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
+                if (jobStatus == AutoIngestJobStatus.RUNNING_JOB) {
+                    setSheet(createSheet());
+                }
+            }
+
         }
     }
 
