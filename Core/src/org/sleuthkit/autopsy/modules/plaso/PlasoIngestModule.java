@@ -26,20 +26,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-import org.netbeans.api.progress.ProgressHandle;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -61,7 +57,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class PlasoIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(PlasoIngestModule.class.getName());
-    private static final IngestServices services = IngestServices.getInstance();
     private static final String PLASO = "plaso";
     private static final String PLASO64 = "plaso//plaso-20180127-amd64";
     private static final String PLASO32 = "plaso//plaso-20180127-win32";
@@ -100,9 +95,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
-        String imgName = dataSource.getName();
         Image img;
-        
         if (dataSource instanceof Image) {
            img = (Image) dataSource;
         } else {
@@ -126,7 +119,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             return ProcessResult.ERROR;
         }
         
-        Long dataSourceId = dataSource.getId();
         String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
@@ -301,7 +293,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         try {
             abstractFiles= fileManager.findFiles(fileName.toLowerCase(), filePath);
             for (AbstractFile resolvedFile : abstractFiles) {
-                String parentPath = resolvedFile.getParentPath();
                 if (filePath.matches(resolvedFile.getParentPath().toLowerCase())) {
                     return resolvedFile;
                 }
