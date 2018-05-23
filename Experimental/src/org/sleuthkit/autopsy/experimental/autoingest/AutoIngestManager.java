@@ -453,7 +453,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     private void handleRemoteNodeControlEvent(AutoIngestNodeControlEvent event) {
-        if (event.getNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+        if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            sysLogger.log(Level.INFO, "Received {0} event from user {1} on machine {2}", new Object[] {event.getControlEventType().toString(), event.getUserName(), event.getOriginatingNodeName()});
             switch (event.getControlEventType()) {
                 case PAUSE:
                     pause();
