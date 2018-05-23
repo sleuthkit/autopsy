@@ -27,8 +27,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
-  * An factory that creates data source ingest modules that verify the integrity
- * of Expert Witness Format (EWF), i.e., .e01 files .
+  * An factory that creates data source ingest modules that runs plaso 
+  * against an image and saves the storage file to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 
