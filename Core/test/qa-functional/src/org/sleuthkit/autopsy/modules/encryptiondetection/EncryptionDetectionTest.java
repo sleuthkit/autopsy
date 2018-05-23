@@ -81,7 +81,7 @@ public class EncryptionDetectionTest extends NbTestCase {
     public void tearDown() {
         CaseUtils.closeCurrentCase(testSucceeded);
     }
-
+    
     /**
      * Test the Encryption Detection module's volume encryption detection.
      */
