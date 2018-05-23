@@ -33,14 +33,15 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class ObjectDetectionModuleFactory extends IngestModuleFactoryAdapter {
 
-    @Messages({"ObjectDetectionModuleFactory.moduleName.text=Object Detection"})
-    @Override
-    public String getModuleDisplayName() {
-       return getModuleName();
-    }
 
     static String getModuleName() {
          return Bundle.ObjectDetectionModuleFactory_moduleName_text();
+    }
+    
+    @Messages({"ObjectDetectionModuleFactory.moduleName.text=Object Detection"})
+    @Override
+    public String getModuleDisplayName() {
+        return getModuleName();
     }
     
     @Messages({"ObjectDetectionModuleFactory.moduleDescription.text=Use object classifiers to identify objects in pictures."})

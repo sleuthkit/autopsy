@@ -162,10 +162,6 @@
                 <package>org.sleuthkit.autopsy.experimental.configuration</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/opencv-2413.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-2413.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
             </class-path-extension>
