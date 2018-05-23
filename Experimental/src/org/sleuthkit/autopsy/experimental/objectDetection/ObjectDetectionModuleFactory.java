@@ -34,6 +34,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 public class ObjectDetectionModuleFactory extends IngestModuleFactoryAdapter {
 
 
+    /**
+     * Get the name of the Object Detection module
+     * 
+     * @return the name of the Object Detection module
+     */
     static String getModuleName() {
          return Bundle.ObjectDetectionModuleFactory_moduleName_text();
     }

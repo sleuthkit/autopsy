@@ -46,6 +46,9 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJEC
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Data source module to detect objects in images.
+ */
 public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter {
 
     private final static Logger logger = Logger.getLogger(ObjectDetectectionFileIngestModule.class.getName());
@@ -59,6 +62,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
 
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         cascades = new HashMap<>();
+        //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
         if (ImageUtils.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
             for (File classifier : classifierDir.listFiles()) {
                 if (classifier.isFile() && FilenameUtils.getExtension(classifier.getName()).equalsIgnoreCase("xml")) {
@@ -76,15 +80,18 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         }
     }
 
+    
     @Messages({"# {0} - detectionCount", "ObjectDetectionFileIngestModule.classifierDetection.text=Classifier detected {0} object(s)"})
     @Override
     public ProcessResult process(AbstractFile file) {
-        if (ImageUtils.isImageThumbnailSupported(file)) {
-            Mat originalImage = Highgui.imread(file.getLocalPath());
-            MatOfRect detectionRectangles = new MatOfRect();
+        if (ImageUtils.isImageThumbnailSupported(file)) {  //Any image we can create a thumbnail for is one we should apply the classifiers to
+            Mat originalImage = Highgui.imread(file.getLocalPath()); 
+            MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
             for (String cascadeKey : cascades.keySet()) {
+                //apply each classifier to the file
                 cascades.get(cascadeKey).detectMultiScale(originalImage, detectionRectangles);
-                if (!detectionRectangles.empty()) {
+                if (!detectionRectangles.empty()) { 
+                    //if any detections occurred create an artifact for this classifier and file combination
                     try {
                         BlackboardArtifact artifact = file.newArtifact(TSK_OBJECT_DETECTED);
                         artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,

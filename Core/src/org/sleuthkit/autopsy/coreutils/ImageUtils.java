@@ -129,8 +129,8 @@ public class ImageUtils {
                 tempFfmpegLoaded = true;
             } catch (UnsatisfiedLinkError e) {
                 tempFfmpegLoaded = false;
-                LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
-                MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
+                LOGGER.log(Level.SEVERE, "opencv_ffmepeg code library failed to load", e); //NON-NLS
+                MessageNotifyUtil.Notify.show("OpenCV FFMpeg", "OpenCV FFMpeg library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
             }
         }
         FFMPEG_LOADED = tempFfmpegLoaded;
@@ -156,6 +156,12 @@ public class ImageUtils {
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> cacheFileMap.clear());
     }
 
+    /**
+     * Check if the OpenCV library has been loaded, if it has not attempt to
+     * load it, then return true if it is loaded or false if it is not.
+     *
+     * @return - true if the opencv library is loaded or false if it is not
+     */
     public static boolean isOpenCvLoaded() {
         try {
             if (!OPEN_CV_LOADED) {
