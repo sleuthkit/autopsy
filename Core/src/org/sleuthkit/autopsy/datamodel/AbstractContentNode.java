@@ -48,6 +48,8 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      */
     T content;
     private static final Logger logger = Logger.getLogger(AbstractContentNode.class.getName());
+    private static int tempCountQueries = 0;
+    private static int tempCountMapLookups = 0;
 
     /**
      * Handles aspects that depend on the Content object
@@ -110,6 +112,21 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      */
     public static boolean contentHasVisibleContentChildren(Content c){
         if (c != null) {
+            
+            try {
+                tempCountMapLookups++;
+                if( ! c.hasChildren()) {
+                //if( ! Case.getCurrentCaseThrows().getSleuthkitCase().getHasChildren(c.getId())) {
+                    //System.out.println("Map lookups: " + tempCountMapLookups + "   queries: " + tempCountQueries);
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                
+                logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+                return false;
+            }
+            
+            tempCountQueries++;
             String query = "SELECT COUNT(obj_id) AS count FROM "
  			+ " ( SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + c.getId() + " AND type = " 
                         +       TskData.ObjectType.ARTIFACT.getObjectType()
@@ -122,6 +139,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
             
             try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
+                //System.out.println("Map lookups: " + tempCountMapLookups + "   queries: " + tempCountQueries);
                 if(resultSet.next()){
                     return (0 < resultSet.getInt("count"));
                 }
