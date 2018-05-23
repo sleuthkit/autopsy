@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+
 /**
  * Class which contains events to identify what should be refreshed in the
  * AutoIngestJobsNode
@@ -25,23 +27,37 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 class AutoIngestNodeRefreshEvents {
 
     /**
-     * An empty interface for all refresh events to implement.
+     * The base class for all refresh events.
      */
-    interface AutoIngestRefreshEvent {
+    static class AutoIngestRefreshEvent {
 
+        private final JobsSnapshot jobsSnapshot;
+
+        AutoIngestRefreshEvent(JobsSnapshot jobs) {
+            this.jobsSnapshot = jobs;
+        }
+
+        /**
+         * Get the state of the jobs lists when the event was fired.
+         *
+         * @return
+         */
+        JobsSnapshot getJobsSnapshot() {
+            return this.jobsSnapshot;
+        }
     }
 
     /**
      * An event to denote that the children of the AutoIngestJobsNode should be
      * refreshed but no specific nodes need their properties refreshed.
      */
-    static final class RefreshChildrenEvent implements AutoIngestRefreshEvent {
+    static final class RefreshChildrenEvent extends AutoIngestRefreshEvent {
 
         /**
          * Constructs a RefreshChildrenEvent.
          */
-        RefreshChildrenEvent() {
-
+        RefreshChildrenEvent(JobsSnapshot jobs) {
+            super(jobs);
         }
     }
 
@@ -49,14 +65,18 @@ class AutoIngestNodeRefreshEvents {
      * An event to denote that all nodes which represent jobs which are part of
      * the specified case should be refreshed.
      */
-    static final class RefreshCaseEvent implements AutoIngestRefreshEvent {
+    static final class RefreshCaseEvent extends AutoIngestRefreshEvent {
 
         private final String caseName;
 
         /**
-         * Constructs a RefreshCaseEvent.
+         * Contructs a RefreshCaseEvent
+         *
+         * @param jobs The current state of the jobs lists.
+         * @param name The name of the case whose nodes should be refreshed.
          */
-        RefreshCaseEvent(String name) {
+        RefreshCaseEvent(JobsSnapshot jobs, String name) {
+            super(jobs);
             caseName = name;
         }
 
@@ -76,19 +96,23 @@ class AutoIngestNodeRefreshEvents {
     /**
      * An event to denote that a node for a specific job should be refreshed.
      */
-    static final class RefreshJobEvent implements AutoIngestRefreshEvent {
+    static final class RefreshJobEvent extends AutoIngestRefreshEvent {
 
         private final AutoIngestJob autoIngestJob;
 
         /**
          * Constructs a RefreshJobEvent.
+         *
+         * @param jobs The curent state of the jobs lists.
+         * @param job  The job which should be refreshed.
          */
-        RefreshJobEvent(AutoIngestJob job) {
+        RefreshJobEvent(JobsSnapshot jobs, AutoIngestJob job) {
+            super(jobs);
             autoIngestJob = job;
         }
 
         /**
-         * Get the AutoIngestJob which should have it's node refresheds.
+         * Get the AutoIngestJob which should have it's node refreshed.
          *
          * @return autoIngestJob - the AutoIngestJob which should have it's node
          *         refreshed
@@ -97,5 +121,4 @@ class AutoIngestNodeRefreshEvents {
             return autoIngestJob;
         }
     }
-
 }
