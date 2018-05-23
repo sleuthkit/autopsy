@@ -192,7 +192,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(Tags tagsNodeKey) {
-            return tagsNodeKey.new RootNode();
+            return tagsNodeKey.new RootNode(tagsNodeKey.filteringDataSourceObjId());
         }
 
         @Override
