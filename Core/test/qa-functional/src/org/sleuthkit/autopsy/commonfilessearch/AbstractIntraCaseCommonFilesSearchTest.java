@@ -126,7 +126,19 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
      */    
     protected abstract String getCaseName();
 
-    protected boolean fileExists(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
+    /**
+     * Verify that the given file appears a precise number times in the given 
+     * data source.
+     * 
+     * @param files search domain
+     * @param objectIdToDataSource mapping of file ids to data source names
+     * @param name name of file to search for
+     * @param dataSource name of data source where file should appear
+     * @param count number of appearances of the given file
+     * @return true if a file with the given name exists the specified number 
+     *  of times in the given data source
+     */
+    protected boolean verifyFileExistanceAndCount(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
 
         int tally = 0;
 
@@ -146,8 +158,19 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         return tally == count;
     }
 
-    protected boolean fileExists(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
-        return fileExists(files, objectIdToDataSource, name, dataSource, 1);
+    /**
+     * Convenience method which verifies that a file exists within a given data 
+     * source exactly once.
+     * 
+     * @param files search domain
+     * @param objectIdToDataSource mapping of file ids to data source names
+     * @param name name of file to search for
+     * @param dataSource name of data source where file should appear
+     * @return true if a file with the given name exists once in the given data 
+     *  source
+     */
+    protected boolean verifySingularFileExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
+        return verifyFileExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
     }
     
     protected Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
