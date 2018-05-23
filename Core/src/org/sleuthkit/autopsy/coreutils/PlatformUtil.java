@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,6 +117,11 @@ public class PlatformUtil {
         return getUserDirectory().getAbsolutePath() + File.separator + PYTHON_MODULES_SUBDIRECTORY;
     }
 
+    /**
+     * Get root path where the user's object detection classifiers are stored.
+     * 
+     * @return Absolute path to the object detection classifiers root directory. 
+     */
     public static String getObjectDetectionClassifierPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + CLASSIFIERS_SUBDIRECTORY;
     }

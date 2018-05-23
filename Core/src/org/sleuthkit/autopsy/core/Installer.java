@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -206,7 +206,7 @@ public class Installer extends ModuleInstall {
         // Prevent the Autopsy UI from shrinking on high DPI displays
         System.setProperty("sun.java2d.dpiaware", "false");
         System.setProperty("prism.allowhidpi", "false");
-        
+
         // Update existing configuration in case of unsupported settings
         updateConfig();
 
@@ -218,16 +218,16 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
     }
-    
+
     /**
      * If the mode in the configuration file is 'REVIEW' (2, now invalid), this
      * method will set it to 'STANDALONE' (0) and disable auto ingest.
      */
     private void updateConfig() {
         String mode = ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, "AutopsyMode");
-        if(mode != null) {
+        if (mode != null) {
             int ordinal = Integer.parseInt(mode);
-            if(ordinal > 1) {
+            if (ordinal > 1) {
                 UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
                 ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, "JoinAutoModeCluster", Boolean.toString(false));
             }
@@ -267,11 +267,20 @@ public class Installer extends ModuleInstall {
             });
         }
     }
+
+    /**
+     * Make a folder in the config directory for object detection classifiers if one does not
+     * exist.
+     */
     private static void ensureClassifierFolderExists() {
         File objectDetectionClassifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         objectDetectionClassifierDir.mkdir();
     }
-    
+
+    /**
+     * Make a folder in the config directory for Python Modules if one does not
+     * exist.
+     */
     private static void ensurePythonModulesFolderExists() {
         File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
         pythonModulesDir.mkdir();
