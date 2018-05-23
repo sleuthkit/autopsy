@@ -85,6 +85,7 @@
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
 	<get src="https://drive.google.com/uc?id=1dLYGctuvRQMmnzfXPppTM_9gB49eLc_g" dest="${test-input}/embedded.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=17sGybvmBGsWWJYo1IWKmO04oG9hKpPi3" dest="${test-input}/encryption_detection_sqlcipher_test.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1JACMDyH4y54ypGzFWl82ZzMQf3qbrioP" dest="${test-input}/encryption_detection_bitlocker_test.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/filter_test1.img" skipexisting="true"/>	    
         <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/local_files_test.zip" skipexisting="true"/>
