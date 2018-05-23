@@ -309,6 +309,18 @@
                 <package>net.sf.sevenzipjbinding.impl</package>
                 <package>net.sf.sevenzipjbinding.simple</package>
                 <package>net.sf.sevenzipjbinding.simple.impl</package>
+                <package>org.opencv.calib3d</package>
+                <package>org.opencv.contrib</package>
+                <package>org.opencv.core</package>
+                <package>org.opencv.features2d</package>
+                <package>org.opencv.gpu</package>
+                <package>org.opencv.highgui</package>
+                <package>org.opencv.imgproc</package>
+                <package>org.opencv.ml</package>
+                <package>org.opencv.objdetect</package>
+                <package>org.opencv.photo</package>
+                <package>org.opencv.utils</package>
+                <package>org.opencv.video</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>

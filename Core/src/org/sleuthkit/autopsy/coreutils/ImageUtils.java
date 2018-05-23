@@ -96,7 +96,8 @@ public class ImageUtils {
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS = new ArrayList<>();
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
 
-    private static final boolean OPEN_CV_LOADED;
+    private static boolean OPEN_CV_LOADED;
+    private static final boolean FFMPEG_LOADED;
 
     /**
      * Map from tsk object id to Java File object. Used to get the same File for
@@ -117,25 +118,23 @@ public class ImageUtils {
             tempImage = null;
         }
         DEFAULT_THUMBNAIL = tempImage;
-
-        //load opencv libraries
-        boolean openCVLoadedTemp;
-        try {
-//            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-//            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
-//                System.loadLibrary("opencv_ffmpeg2413_64"); //NON-NLS
-//            } else {
-//                System.loadLibrary("opencv_ffmpeg2413"); //NON-NLS
-//            }
-
-            openCVLoadedTemp = true;
-        } catch (UnsatisfiedLinkError e) {
-            openCVLoadedTemp = false;
-            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
-            MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
+        boolean tempFfmpegLoaded = false;
+        if (isOpenCvLoaded()) {
+            try {
+                if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
+                    System.loadLibrary("opencv_ffmpeg2413_64"); //NON-NLS
+                } else {
+                    System.loadLibrary("opencv_ffmpeg2413"); //NON-NLS
+                }
+                tempFfmpegLoaded = true;
+            } catch (UnsatisfiedLinkError e) {
+                tempFfmpegLoaded = false;
+                LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
+                MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
+            }
         }
+        FFMPEG_LOADED = tempFfmpegLoaded;
 
-        OPEN_CV_LOADED = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
         SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
         SUPPORTED_IMAGE_EXTENSIONS.removeIf("db"::equals); // remove db files
@@ -157,6 +156,19 @@ public class ImageUtils {
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> cacheFileMap.clear());
     }
 
+    public static boolean isOpenCvLoaded() {
+        try {
+            if (!OPEN_CV_LOADED) {
+                System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+                OPEN_CV_LOADED = true;
+            }
+        } catch (UnsatisfiedLinkError e) {
+            OPEN_CV_LOADED = false;
+            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
+            MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
+        }
+        return OPEN_CV_LOADED;
+    }
     /**
      * initialized lazily
      */
@@ -165,8 +177,8 @@ public class ImageUtils {
     /**
      * Thread/Executor that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
