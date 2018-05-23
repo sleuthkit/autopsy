@@ -44,7 +44,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -74,7 +73,7 @@ import org.sleuthkit.datamodel.TskData;
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
 public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
-
+    
     private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
