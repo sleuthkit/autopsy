@@ -211,7 +211,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testTwoA() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByIndex(0, dataSources);
+            Long first = this.getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -254,7 +254,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testTwoB() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByIndex(0, dataSources);
+            Long first = this.getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -297,7 +297,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testTwoC() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByIndex(0, dataSources);
+            Long first = this.getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -339,7 +339,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testThree(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long second = this.getDataSourceIdByIndex(1, dataSources);
+            Long second = this.getDataSourceIdByName(SET2, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(second, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -380,7 +380,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testFour(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long last = this.getDataSourceIdByIndex(3, dataSources);
+            Long last = this.getDataSourceIdByName(SET4, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(last, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
@@ -421,7 +421,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testFive(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long third = this.getDataSourceIdByIndex(2, dataSources);
+            Long third = this.getDataSourceIdByName(SET3, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();

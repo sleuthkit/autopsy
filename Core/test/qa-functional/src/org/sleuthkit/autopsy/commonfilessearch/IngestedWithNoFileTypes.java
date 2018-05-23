@@ -115,7 +115,7 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
     public void testTwo() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long third = this.getDataSourceIdByIndex(2, dataSources);
+            Long third = this.getDataSourceIdByName(SET3, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, true, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();

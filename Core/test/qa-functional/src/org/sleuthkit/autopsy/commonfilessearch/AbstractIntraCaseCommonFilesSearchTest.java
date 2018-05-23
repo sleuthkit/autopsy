@@ -81,7 +81,7 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
     
     protected static final String IMG = "IMG_6175.jpg";
     protected static final String DOC = "BasicStyleGuide.doc";
-    protected static final String PDF = "adsf.pdf";
+    protected static final String PDF = "adsf.pdf"; //not a typo - it appears this way in the test image
     protected static final String EMPTY = "file.dat";
     
     protected static final String SET1 = "commonfiles_image1_v1.vhd";
@@ -185,10 +185,10 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         return instanceIdToDataSource;
     }
 
-    protected List<AbstractFile> getFiles(Set<Long> keySet) {
-        List<AbstractFile> files = new ArrayList<>(keySet.size());
+    protected List<AbstractFile> getFiles(Set<Long> objectIds) {
+        List<AbstractFile> files = new ArrayList<>(objectIds.size());
 
-        for (Long id : keySet) {
+        for (Long id : objectIds) {
             try {
                 AbstractFile file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(id);
                 files.add(file);
@@ -201,16 +201,17 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         return files;
     }
     
-    protected Long getDataSourceIdByIndex(int index, Map<Long, String> dataSources){
+    protected Long getDataSourceIdByName(String name, Map<Long, String> dataSources){
         
-        int current = 0;
-        for(Entry<Long, String> dataSource : dataSources.entrySet()){
-            if(current == index){
-                return dataSource.getKey();
+        if(dataSources.containsValue(name)){
+            for(Entry<Long, String> dataSource : dataSources.entrySet()){
+                if(dataSource.getValue().equals(name)){
+                    return dataSource.getKey();
+                }
             }
-            current++;
-        }
-        final int size = dataSources.size() - 1;
-        throw new IndexOutOfBoundsException("The value given for index was unreasonable.  Should be between 0 and " + size);
+        } else {
+            throw new IndexOutOfBoundsException(String.format("Name should be one of: {0}", String.join(",", dataSources.values())));
+        }        
+        return null;
     }
 }
