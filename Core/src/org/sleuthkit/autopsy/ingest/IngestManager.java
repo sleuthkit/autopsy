@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -107,7 +108,7 @@ import org.sleuthkit.datamodel.Content;
  * job progress, and ingest module run times.
  */
 @ThreadSafe
-public class IngestManager {
+public class IngestManager implements IngestProgressSnapshotProvider {
 
     private final static Logger logger = Logger.getLogger(IngestManager.class.getName());
     private final static String INGEST_JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
@@ -756,7 +757,8 @@ public class IngestManager {
      *
      * @return Map of module name to run time (in milliseconds)
      */
-    Map<String, Long> getModuleRunTimes() {
+    @Override
+    public Map<String, Long> getModuleRunTimes() {
         synchronized (ingestModuleRunTimes) {
             Map<String, Long> times = new HashMap<>(ingestModuleRunTimes);
             return times;
@@ -769,7 +771,8 @@ public class IngestManager {
      *
      * @return A collection of ingest manager ingest task snapshots.
      */
-    List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
+    @Override
+    public List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
         return new ArrayList<>(ingestThreadActivitySnapshots.values());
     }
 
@@ -778,7 +781,8 @@ public class IngestManager {
      *
      * @return A list of ingest job state snapshots.
      */
-    List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
+    @Override
+    public List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
@@ -916,7 +920,9 @@ public class IngestManager {
      * running in an ingest thread.
      */
     @Immutable
-    static final class IngestThreadActivitySnapshot {
+    public static final class IngestThreadActivitySnapshot implements Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         private final long threadId;
         private final Date startTime;

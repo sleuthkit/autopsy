@@ -162,12 +162,12 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(DeletedContent dc) {
-            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase());
+            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(FileSize dc) {
-            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase());
+            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
         }
 
         @Override
@@ -192,22 +192,27 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(Tags tagsNodeKey) {
-            return tagsNodeKey.new RootNode();
+            return tagsNodeKey.new RootNode(tagsNodeKey.filteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(DataSources i) {
-            return new DataSourcesNode();
+            return new DataSourcesNode(i.filteringDataSourceObjId());
         }
 
+        @Override
+        public AbstractNode visit(DataSourceGrouping datasourceGrouping) {
+            return new DataSourceGroupingNode(datasourceGrouping.getgDataSource());
+        }
+        
         @Override
         public AbstractNode visit(Views v) {
-            return new ViewsNode(v.getSleuthkitCase());
+            return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
         }
 
         @Override
-        public AbstractNode visit(Results r) {
-            return new ResultsNode(r.getSleuthkitCase());
+        public AbstractNode visit(Results results) {
+            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId() );
         }
 
         @Override

@@ -63,7 +63,7 @@ public interface DataResult {
      * Sets the descriptive text about the source of the nodes displayed in this
      * result view component.
      *
-     * @param description The text to display.
+     * @param pathText The text to display.
      */
     public void setPath(String pathText);
 
