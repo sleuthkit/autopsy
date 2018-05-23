@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +38,8 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -157,6 +161,47 @@ public class TagsManager implements Closeable {
         return caseDb.getTagNamesInUse();
     }
 
+    /**
+     * Selects all of the rows from the tag_names table in the case database for
+     * which there is at least one matching row in the content_tags or
+     * blackboard_artifact_tags tables, for the given datasource object id.
+     *
+     * @return A list, possibly empty, of TagName data transfer objects (DTOs)
+     * for the rows.
+     *
+     * @throws TskCoreException
+     */
+    public List<TagName> getTagNamesInUse(long dsObjId) throws TskCoreException {
+        
+        
+        ArrayList<TagName> tagNames = new ArrayList<>();
+        String queryStr = "SELECT * FROM tag_names "
+		       + "WHERE tag_name_id IN "
+				+ "( SELECT content_tags.tag_name_id as tag_name_id "
+                                    + "FROM content_tags as content_tags, tsk_files as tsk_files"
+                                    + " WHERE content_tags.obj_id = tsk_files.obj_id"
+                                    + " AND tsk_files.data_source_obj_id =  " + dsObjId
+                                + " UNION " 
+                                    + "SELECT artifact_tags.tag_name_id as tag_name_id "
+                                    + " FROM blackboard_artifact_tags as artifact_tags, blackboard_artifacts AS arts "
+                                    + " WHERE artifact_tags.artifact_id = arts.artifact_id"
+                                    + " AND arts.data_source_obj_id =  " + dsObjId
+                                + " )";
+        
+        try (CaseDbQuery query = caseDb.executeQuery(queryStr);) {
+            ResultSet resultSet = query.getResultSet();
+            while (resultSet.next()) {
+                tagNames.add(new TagName(resultSet.getLong("tag_name_id"), resultSet.getString("display_name"),
+                        resultSet.getString("description"), TagName.HTML_COLOR.getColorByName(resultSet.getString("color")),
+                        TskData.FileKnown.valueOf(resultSet.getByte("knownStatus")))); //NON-NLS
+            }
+            return tagNames;
+        } catch (SQLException | TskCoreException ex) {
+            throw new TskCoreException("Failed to get tag names in use for data source objID : " + dsObjId, ex); 
+        }
+        
+    }
+    
     /**
      * Gets a map of tag display names to tag name entries in the case database.
      * It has keys for the display names of the standard tag types, the current
@@ -393,6 +438,46 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets content tags count by tag name, for the given data source
+     *
+     * @param tagName The representation of the desired tag type in the case
+     * database, which can be obtained by calling getTagNames and/or addTagName.
+     * 
+     * @param dsObjId data source object id
+     *
+     * @return A count of the content tags with the specified tag name, and for
+     * the given data source
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     * the case database.
+     */
+    public long getContentTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+
+        if (tagName.getId() == Tag.ID_NOT_SET) {
+            throw new TskCoreException("TagName object is invalid, id not set");
+        }
+       
+        String queryStr = 
+                "SELECT COUNT(*) AS count "
+                + " FROM content_tags as content_tags, tsk_files as tsk_files "
+                + " WHERE content_tags.obj_id = tsk_files.obj_id"
+                + " AND tsk_files.data_source_obj_id = " + dsObjId
+                + " AND content_tags.tag_name_id = " + tagName.getId();
+        
+        try (CaseDbQuery query = caseDb.executeQuery(queryStr);) {
+            ResultSet resultSet = query.getResultSet();
+            if (resultSet.next()) {
+                return resultSet.getLong("count");
+            } else {
+                throw new TskCoreException("Error getting content_tags row count for tag name (tag_name_id = " + tagName.getId() + ")" +  " for dsObjId = " + dsObjId );
+            }
+        } catch (SQLException | TskCoreException ex) {
+            throw new TskCoreException("Failed to get content_tags row count for  tag_name_id = " + tagName.getId() + "data source objID : " + dsObjId, ex);
+        }
+
+    }
+    
+    /**
      * Gets a content tag by tag id.
      *
      * @param tagId The tag id of interest.
@@ -421,6 +506,48 @@ public class TagsManager implements Closeable {
         return caseDb.getContentTagsByTagName(tagName);
     }
 
+     /**
+     * Gets content tags by tag name, for the given data source.
+     *
+     * @param tagName The tag name of interest.
+     * 
+     * @param dsObjId
+     *
+     * @return A list, possibly empty, of the content tags with the specified
+     *         tag name, and for the given data source.
+     *
+     * @throws TskCoreException If there is an error getting the tags from the
+     *                          case database.
+     */
+    public List<ContentTag> getContentTagsByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        
+        if (tagName.getId() == Tag.ID_NOT_SET) {
+            throw new TskCoreException("TagName object is invalid, id not set");
+        }
+       
+        String queryStr = 
+                "SELECT * "
+                + " FROM content_tags as content_tags, tsk_files as tsk_files "
+                + " WHERE content_tags.obj_id = tsk_files.obj_id"
+                + " AND tsk_files.data_source_obj_id = " + dsObjId
+                + " AND content_tags.tag_name_id = " + tagName.getId();
+
+        try (CaseDbQuery query = caseDb.executeQuery(queryStr);) {
+            ResultSet resultSet = query.getResultSet();
+            ArrayList<ContentTag> tags = new ArrayList<>();
+            while (resultSet.next()) {
+                    ContentTag tag = new ContentTag(resultSet.getLong("tag_id"), caseDb.getContentById(resultSet.getLong("obj_id")),
+                                    tagName, resultSet.getString("comment"), resultSet.getLong("begin_byte_offset"), resultSet.getLong("end_byte_offset"));  //NON-NLS
+                    tags.add(tag);
+            }
+            resultSet.close();
+            return tags;
+        } catch (SQLException | TskCoreException ex) {
+            throw new TskCoreException("Failed to get content_tags row count for  tag_name_id = " + tagName.getId() + "data source objID : " + dsObjId, ex);
+        }
+
+    }
+    
     /**
      * Gets content tags count by content.
      *
@@ -523,6 +650,45 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets an artifact tags count by tag name, for the given data source.
+     *
+     * @param tagName The representation of the desired tag type in the case
+     *                database, which can be obtained by calling getTagNames
+     *                and/or addTagName.
+     * @param dsObjId
+     *
+     * @return A count of the artifact tags with the specified tag name, 
+     *         for the given data source.
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     *                          the case database.
+     */
+    public long getBlackboardArtifactTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        if (tagName.getId() == Tag.ID_NOT_SET) {
+            throw new TskCoreException("TagName object is invalid, id not set");
+        }
+
+        String queryStr = "SELECT COUNT(*) AS count "
+                + " FROM blackboard_artifact_tags as artifact_tags, blackboard_artifacts AS arts "
+                + " WHERE artifact_tags.artifact_id = arts.artifact_id"
+                + " AND artifact_tags.tag_name_id = " + tagName.getId()
+                + " AND arts.data_source_obj_id =  " + dsObjId
+                ;
+
+        try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(queryStr);) {
+            ResultSet resultSet = query.getResultSet();
+            if (resultSet.next()) {
+                return resultSet.getLong("count");
+            } else {
+                throw new TskCoreException("Error getting blackboard_artifact_tags row count for tag name (tag_name_id = " + tagName.getId() + ")" + " for dsObjId = " + dsObjId);
+            }
+        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
+            throw new TskCoreException("Failed to get blackboard_artifact_tags row count for  tag_name_id = " + tagName.getId() + "data source objID : " + dsObjId, ex);
+        }
+
+    }
+    
+    /**
      * Gets an artifact tag by tag id.
      *
      * @param tagId The tag id of interest.
@@ -553,6 +719,49 @@ public class TagsManager implements Closeable {
         return caseDb.getBlackboardArtifactTagsByTagName(tagName);
     }
 
+    /**
+     * Gets artifact tags by tag name, for specified data source.
+     *
+     * @param tagName The representation of the desired tag type in the case
+     *                database, which can be obtained by calling getTagNames
+     *                and/or addTagName.
+     * @param dsObjId
+     *
+     * @return A list, possibly empty, of the artifact tags with the specified
+     *         tag name, for the specified data source.
+     *
+     * @throws TskCoreException If there is an error getting the tags from the
+     *                          case database.
+     */
+    public List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        if (tagName.getId() == Tag.ID_NOT_SET) {
+            throw new TskCoreException("TagName object is invalid, id not set");
+        }
+
+        String queryStr = "SELECT * "
+                + " FROM blackboard_artifact_tags as artifact_tags, blackboard_artifacts AS arts "
+                + " WHERE artifact_tags.artifact_id = arts.artifact_id"
+                + " AND artifact_tags.tag_name_id = " + tagName.getId()
+                + " AND arts.data_source_obj_id =  " + dsObjId
+                ;
+
+        try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(queryStr);) {
+            ResultSet resultSet = query.getResultSet();
+            ArrayList<BlackboardArtifactTag> tags = new ArrayList<>();
+            while (resultSet.next()) {
+                    BlackboardArtifact artifact = caseDb.getBlackboardArtifact(resultSet.getLong("artifact_id")); //NON-NLS
+                    Content content = caseDb.getContentById(artifact.getObjectID());
+                    BlackboardArtifactTag tag = new BlackboardArtifactTag(resultSet.getLong("tag_id"),
+                                    artifact, content, tagName, resultSet.getString("comment"));  //NON-NLS
+                    tags.add(tag);
+            }
+            return tags;
+        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
+            throw new TskCoreException("Failed to get blackboard_artifact_tags row count for  tag_name_id = " + tagName.getId() + "data source objID : " + dsObjId, ex);
+        }
+
+    }
+    
     /**
      * Gets artifact tags for a particular artifact.
      *
