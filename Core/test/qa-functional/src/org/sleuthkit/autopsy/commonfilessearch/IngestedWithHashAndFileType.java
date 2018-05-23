@@ -94,25 +94,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
                         
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
         } catch (Exception ex) {
@@ -135,25 +135,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
                         
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
         } catch (Exception ex) {
@@ -176,25 +176,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
             
 
         } catch (Exception ex) {
@@ -211,7 +211,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testTwoA() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByIndex(0, dataSources);
+            Long first = this.getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -220,25 +220,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
@@ -254,7 +254,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testTwoB() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByIndex(0, dataSources);
+            Long first = this.getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -263,25 +263,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
@@ -297,7 +297,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testTwoC() {
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByIndex(0, dataSources);
+            Long first = this.getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -306,25 +306,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
@@ -339,7 +339,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testThree(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long second = this.getDataSourceIdByIndex(1, dataSources);
+            Long second = this.getDataSourceIdByName(SET2, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(second, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -348,25 +348,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
                         
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
             
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
@@ -380,7 +380,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testFour(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long last = this.getDataSourceIdByIndex(3, dataSources);
+            Long last = this.getDataSourceIdByName(SET4, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(last, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -389,25 +389,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 0));            
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));            
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
             
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
@@ -421,7 +421,7 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
     public void testFive(){
         try {
             Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long third = this.getDataSourceIdByIndex(2, dataSources);
+            Long third = this.getDataSourceIdByName(SET3, dataSources);
             
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -430,25 +430,25 @@ public class IngestedWithHashAndFileType extends AbstractIntraCaseCommonFilesSea
             
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
             
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET3, 1));            
-            assertTrue(fileExists(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));            
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(fileExists(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
             
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(fileExists(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
             
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
