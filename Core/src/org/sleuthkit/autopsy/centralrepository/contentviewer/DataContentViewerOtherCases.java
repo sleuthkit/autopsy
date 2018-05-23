@@ -541,19 +541,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         //      has correlatable content (File, BlackboardArtifact) OR
         //      other common files across datasources.
         
-        EamDb eamDb = null;
-        try {
-            eamDb = EamDb.getInstance();
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.WARNING, "Non-critical failure: EamDb threw an exception while while testing existance.", ex);
-        }
-        if(eamDb == null){
-            return this.file != null
-                && this.file.getSize() > 0;
-        } else{
+        if(EamDb.isEnabled()){
             return this.file != null
                 && this.file.getSize() > 0
                 && !getCorrelationAttributesFromNode(node).isEmpty();
+        } else{
+            return this.file != null
+                && this.file.getSize() > 0;
         }
     }
 
