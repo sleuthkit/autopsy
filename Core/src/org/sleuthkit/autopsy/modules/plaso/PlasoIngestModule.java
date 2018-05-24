@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.plaso;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -103,8 +104,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             return ProcessResult.ERROR;                   
         }
 
-        String[] imgFile = img.getPaths();
-
         File log2TimeLineExecutable = locateExecutable(LOG2TIMELINE_EXECUTABLE);
         if (log2TimeLineExecutable == null) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_log2timeline_executable_not_found());
@@ -124,6 +123,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             directory.mkdirs();   
         }
 
+        String[] imgFile = img.getPaths();
         ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(log2TimeLineExecutable, moduleOutputPath, imgFile[0]);
         ProcessBuilder psortCommand = buildPsortCommand(psortExecutable, moduleOutputPath);
 
@@ -145,11 +145,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             String plasoDb = moduleOutputPath + File.separator + "plasodb.db3";
             createPlasoArtifacts(plasoDb);
 
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_error_running(), ex);
             MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
             return ProcessResult.ERROR;
-            }
+        }
  
         return ProcessResult.OK;
     }
