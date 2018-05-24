@@ -60,7 +60,7 @@ public class IngestedWithNoFileTypes extends NbTestCase {
         return conf.suite();
     }
 
-    private IntraCaseUtils utils;
+    private final IntraCaseUtils utils;
     
     public IngestedWithNoFileTypes(String name) {
         super(name);

@@ -74,10 +74,10 @@ class IntraCaseUtils {
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
 
-    final Path IMAGE_PATH_1;
-    final Path IMAGE_PATH_2;
-    final Path IMAGE_PATH_3;
-    final Path IMAGE_PATH_4;
+    final Path imagePath1;
+    final Path imagePath2;
+    final Path imagePath3;
+    final Path imagePath4;
     
     static final String IMG = "IMG_6175.jpg";
     static final String DOC = "BasicStyleGuide.doc";
@@ -94,10 +94,10 @@ class IntraCaseUtils {
     private final String caseName;
     
     IntraCaseUtils(NbTestCase nbTestCase, String caseName){
-        IMAGE_PATH_1 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image1_v1.vhd");
-        IMAGE_PATH_2 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image2_v1.vhd");
-        IMAGE_PATH_3 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image3_v1.vhd");
-        IMAGE_PATH_4 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image4_v1.vhd");
+        imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image1_v1.vhd");
+        imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image2_v1.vhd");
+        imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image3_v1.vhd");
+        imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image4_v1.vhd");
         
         this.dataSourceLoader = new DataSourceLoader();
         
@@ -109,10 +109,10 @@ class IntraCaseUtils {
         
         final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
 
-        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_1);
-        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_2);
-        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_3);
-        IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_4);
+        IngestUtils.addDataSource(imageDSProcessor, imagePath1);
+        IngestUtils.addDataSource(imageDSProcessor, imagePath2);
+        IngestUtils.addDataSource(imageDSProcessor, imagePath3);
+        IngestUtils.addDataSource(imageDSProcessor, imagePath4);
     }
     
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException{
