@@ -101,8 +101,9 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
                 dataSources.forEach((datasource) -> {
                     keys.add(new DataSourceGrouping(tskCase, datasource));
                 });
-
                 list.addAll(keys);
+                
+                list.add(new Reports());
             } else {
 
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
