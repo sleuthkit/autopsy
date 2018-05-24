@@ -24,6 +24,7 @@ import java.util.Map;
 import static junit.framework.Assert.assertEquals;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
+import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -31,6 +32,8 @@ import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
 import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.SET1;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSourceIdByName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -42,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not ingest.
  *
  */
-public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
+public class UningestedCases extends NbTestCase {
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(UningestedCases.class).
@@ -51,8 +54,22 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
         return conf.suite();
     }
 
+    private final IntraCaseUtils utils;
+    
     public UningestedCases(String name) {
         super(name);
+        
+        this.utils = new IntraCaseUtils(this, "UningestedCasesTests");
+    }
+    
+    @Override
+    public void setUp(){
+        this.utils.setUp();
+    }
+    
+    @Override
+    public void tearDown(){
+        this.utils.tearDown();
     }
 
     /**
@@ -61,7 +78,7 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
      */
     public void testOne() {
         try {
-            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
             CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
@@ -80,8 +97,8 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
      */
     public void testTwo() {
         try {
-            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long first = this.getDataSourceIdByName(SET1, dataSources);
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            Long first = getDataSourceIdByName(SET1, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
@@ -93,10 +110,5 @@ public class UningestedCases extends AbstractIntraCaseCommonFilesSearchTest {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-    }
-
-    @Override
-    protected String getCaseName() {
-        return "UningestedCasesTests";
     }
 }
