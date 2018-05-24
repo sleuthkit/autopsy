@@ -40,7 +40,7 @@ abstract class ContentNode extends DisplayableItemNode {
     /**
      * Visitor pattern support.
      *
-     * @param v visitor
+     * @param visitor visitor
      *
      * @return visitor's visit return value
      */
