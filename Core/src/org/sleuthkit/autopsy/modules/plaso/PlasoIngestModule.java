@@ -270,6 +270,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                 }
             }
+            resultSet.close();
             tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_database_error(), ex); //NON-NLS
