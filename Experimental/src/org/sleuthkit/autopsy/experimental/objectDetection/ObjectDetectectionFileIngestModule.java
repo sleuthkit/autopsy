@@ -56,6 +56,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
 
     private final static Logger logger = Logger.getLogger(ObjectDetectectionFileIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private long jobId;
     private Map<String, CascadeClassifier> classifiers;
     private final IngestServices services = IngestServices.getInstance();
     private Blackboard blackboard;
@@ -64,7 +65,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
-
+        jobId = context.getJobId();
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         classifiers = new HashMap<>();
         //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
@@ -77,7 +78,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         } else {
             throw new IngestModule.IngestModuleException("Unable to load classifiers for object detection module.");
         }
-        if (refCounter.incrementAndGet(context.getJobId()) == 1) {
+        if (refCounter.incrementAndGet(jobId) == 1) {
             if (classifiers.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(ObjectDetectionModuleFactory.getModuleName(),
                         Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_subject(),
@@ -138,4 +139,8 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         return IngestModule.ProcessResult.OK;
     }
 
+    @Override
+    public void shutDown() {
+        refCounter.decrementAndGet(jobId);
+    }
 }
