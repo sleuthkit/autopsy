@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
-    
+
     //Event bus is non static so that each instance of this will only listen to events sent to that instance
     private final EventBus refreshChildrenEventBus;
 
@@ -59,9 +59,15 @@ final class AutoIngestJobsNode extends AbstractNode {
 
     /**
      * Construct a new AutoIngestJobsNode.
+     *
+     * @param snapshot the snapshot which contains the AutoIngestJobs
+     * @param status   the status of the jobs being displayed
+     * @param eventBus the event bus which will be used to send and receive
+     *                 refresh events
+     *
      */
-    AutoIngestJobsNode(AutoIngestJobStatus status, EventBus eventBus) {
-        super(Children.create(new AutoIngestNodeChildren(status, eventBus), false));
+    AutoIngestJobsNode(JobsSnapshot jobsSnapshot, AutoIngestJobStatus status, EventBus eventBus) {
+        super(Children.create(new AutoIngestNodeChildren(jobsSnapshot, status, eventBus), false));
         refreshChildrenEventBus = eventBus;
     }
 
@@ -87,10 +93,13 @@ final class AutoIngestJobsNode extends AbstractNode {
          * represent a single AutoIngestJob
          *
          * @param snapshot the snapshot which contains the AutoIngestJobs
-         * @param status   the status of the jobs being displayed
+         * @param status   the status of the jobs being displayed 
+         * @param eventBus the event bus which the class registers to
+         *                 for refresh events
+         *
          */
-        AutoIngestNodeChildren(AutoIngestJobStatus status, EventBus eventBus) {
-            jobsSnapshot = new JobsSnapshot();
+        AutoIngestNodeChildren(JobsSnapshot snapshot, AutoIngestJobStatus status, EventBus eventBus) {
+            jobsSnapshot = snapshot;
             autoIngestJobStatus = status;
             refreshEventBus = eventBus;
             refreshChildrenSubscriber.register(refreshEventBus);
