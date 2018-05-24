@@ -11,6 +11,8 @@ The following need to be done at least once. They do not need to be repeated for
 
 - Install Oracle Java and set JAVA_HOME. 
 -- Linux: Use the instructions here: https://medium.com/coderscorner/installing-oracle-java-8-in-ubuntu-16-10-845507b13343
+          NOTE: You may need to log out and back in again after setting JAVA_HOME before the Autopsy 
+          unix_setup.sh script can see the value. 
 -- OS X: Use The Oracle website: https://www.java.com/
          Set JAVA_HOME with something like: export JAVA_HOME=`/usr/libexec/java_home` in .bash_profile
 

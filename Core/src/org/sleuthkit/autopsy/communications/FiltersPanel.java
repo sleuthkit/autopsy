@@ -253,7 +253,7 @@ final public class FiltersPanel extends JPanel {
                 });
             }
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Communications Visualization Tool opened with no open case.", ex);
+            logger.log(Level.INFO, "Filter update cancelled.  Case is closed.");
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
         }

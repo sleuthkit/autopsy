@@ -74,7 +74,7 @@ import org.sleuthkit.datamodel.TskData;
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
 public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
-
+    
     private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
@@ -412,7 +412,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
-        if (bbArtifact != null) {
+        if (bbArtifact != null && EamDb.isEnabled()) {
             ret.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, false, false));
         }
 
@@ -550,9 +550,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         //  Is supported if this node
         //      has correlatable content (File, BlackboardArtifact) OR
         //      other common files across datasources.
-        return this.file != null
+        
+        if(EamDb.isEnabled()){
+            return this.file != null
                 && this.file.getSize() > 0
                 && !getCorrelationAttributesFromNode(node).isEmpty();
+        } else{
+            return this.file != null
+                && this.file.getSize() > 0;
+        }
     }
 
     @Override
