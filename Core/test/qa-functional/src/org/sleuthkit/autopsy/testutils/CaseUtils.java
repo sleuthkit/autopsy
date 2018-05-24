@@ -38,8 +38,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
  */
 public final class CaseUtils {
 
-    private static final String PRESERVE_CASE_DATA_LIST_FILE_NAME = ".preserve";
-
     /**
      * Create a case case directory and case for the given case name.
      *

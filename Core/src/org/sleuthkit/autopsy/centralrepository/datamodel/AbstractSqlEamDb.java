@@ -39,6 +39,8 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
 
@@ -1023,6 +1025,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 if (bulkArtifactsCount == 0) {
                     return;
                 }
+                
+                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
 
                 for (CorrelationAttribute.Type type : artifactTypes) {
 
@@ -1073,6 +1077,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     bulkPs.executeBatch();
                     bulkArtifacts.get(type.getDbTableName()).clear();
                 }
+                
+                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
 
                 // Reset state
                 bulkArtifactsCount = 0;
