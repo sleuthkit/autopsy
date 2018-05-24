@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -240,13 +239,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         org.sleuthkit.datamodel.Blackboard blackboard;
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
         blackboard = sleuthkitCase.getBlackboard();
-        ResultSet resultSet;
         String connectionString = "jdbc:sqlite:" + plasoDb; //NON-NLS
         String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'TSK_DATETIME', description 'TSK_DESCRIPTION' \n" +
                               "  from log2timeline where source not in ('FILE', 'REG');";
         try {
             SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
-            resultSet = tempdbconnect.executeQry(sqlStatement);
+            ResultSet resultSet = tempdbconnect.executeQry(sqlStatement);
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
@@ -266,8 +264,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                             blackboard.postArtifact(bbart);
                         } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
                             logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
-                        } catch (Exception ex) {
-                            logger.log(Level.INFO, Bundle.PlasoIngestModule_error_posting_artifact() + bbart, ex);
                         }
                     }
                 } catch (TskCoreException ex) {
