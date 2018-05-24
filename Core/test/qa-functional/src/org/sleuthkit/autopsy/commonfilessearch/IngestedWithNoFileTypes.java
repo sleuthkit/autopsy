@@ -26,6 +26,7 @@ import java.util.Map;
 import static junit.framework.Assert.assertTrue;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
+import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -38,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import static org.sleuthkit.autopsy.testutils.IngestUtils.getIngestModuleTemplate;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -49,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not run mime type
  * module.
  */
-public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchTest {
+public class IngestedWithNoFileTypes extends NbTestCase {
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypes.class).
@@ -58,15 +60,19 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
         return conf.suite();
     }
 
+    private IntraCaseUtils utils;
+    
     public IngestedWithNoFileTypes(String name) {
         super(name);
+        
+        this.utils = new IntraCaseUtils(this, "IngestedWithNoFileTypes");
     }
 
     @Override
     public void setUp() {
-        super.setUp();
+        this.utils.setUp();
 
-        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        IngestModuleTemplate hashLookupTemplate = getIngestModuleTemplate(new HashLookupModuleFactory());
 
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(hashLookupTemplate);
@@ -80,10 +86,10 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
             Assert.fail(ex);
         }
     }
-
+    
     @Override
-    protected String getCaseName() {
-        return "IngestedWithNoFileTypes";
+    public void tearDown(){
+        this.utils.tearDown();
     }
 
     /**
@@ -92,14 +98,14 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
      */
     public void testOne() {
         try {
-            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
             CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
 
-            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(files.isEmpty());
 
@@ -114,15 +120,15 @@ public class IngestedWithNoFileTypes extends AbstractIntraCaseCommonFilesSearchT
      */
     public void testTwo() {
         try {
-            Map<Long, String> dataSources = this.dataSourceLoader.getDataSourceMap();
-            Long third = this.getDataSourceIdByName(SET3, dataSources);
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            Long third = IntraCaseUtils.getDataSourceIdByName(IntraCaseUtils.SET3, dataSources);
 
             CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, true, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
 
-            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(files.isEmpty());
 

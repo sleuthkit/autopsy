@@ -22,11 +22,11 @@ package org.sleuthkit.autopsy.commonfilessearch;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -69,36 +69,43 @@ import org.sleuthkit.datamodel.TskCoreException;
  * set 4 
  *  - file.dat (empty file)
  */
-public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase {
-
+class IntraCaseUtils {
+    
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
 
-    protected final Path IMAGE_PATH_1 = Paths.get(this.getDataDir().toString(), "commonfiles_image1_v1.vhd");
-    private final Path IMAGE_PATH_2 = Paths.get(this.getDataDir().toString(), "commonfiles_image2_v1.vhd");
-    private final Path IMAGE_PATH_3 = Paths.get(this.getDataDir().toString(), "commonfiles_image3_v1.vhd");
-    protected final Path IMAGE_PATH_4 = Paths.get(this.getDataDir().toString(), "commonfiles_image4_v1.vhd");
+    final Path IMAGE_PATH_1;
+    final Path IMAGE_PATH_2;
+    final Path IMAGE_PATH_3;
+    final Path IMAGE_PATH_4;
     
-    protected static final String IMG = "IMG_6175.jpg";
-    protected static final String DOC = "BasicStyleGuide.doc";
-    protected static final String PDF = "adsf.pdf"; //not a typo - it appears this way in the test image
-    protected static final String EMPTY = "file.dat";
+    static final String IMG = "IMG_6175.jpg";
+    static final String DOC = "BasicStyleGuide.doc";
+    static final String PDF = "adsf.pdf"; //not a typo - it appears this way in the test image
+    static final String EMPTY = "file.dat";
     
-    protected static final String SET1 = "commonfiles_image1_v1.vhd";
-    protected static final String SET2 = "commonfiles_image2_v1.vhd";
-    protected static final String SET3 = "commonfiles_image3_v1.vhd";
-    protected static final String SET4 = "commonfiles_image4_v1.vhd";
-
-    protected DataSourceLoader dataSourceLoader;
-
-    public AbstractIntraCaseCommonFilesSearchTest(String name) {
-        super(name);
+    static final String SET1 = "commonfiles_image1_v1.vhd";
+    static final String SET2 = "commonfiles_image2_v1.vhd";
+    static final String SET3 = "commonfiles_image3_v1.vhd";
+    static final String SET4 = "commonfiles_image4_v1.vhd";
+    
+    private final DataSourceLoader dataSourceLoader;
+    
+    private final String caseName;
+    
+    IntraCaseUtils(NbTestCase nbTestCase, String caseName){
+        IMAGE_PATH_1 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image1_v1.vhd");
+        IMAGE_PATH_2 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image2_v1.vhd");
+        IMAGE_PATH_3 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image3_v1.vhd");
+        IMAGE_PATH_4 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image4_v1.vhd");
+        
+        this.dataSourceLoader = new DataSourceLoader();
+        
+        this.caseName = caseName;
     }
-
-    @Override
-    public void setUp() {
-
-        CaseUtils.createAsCurrentCase(this.getCaseName());
+    
+    void setUp(){
+        CaseUtils.createAsCurrentCase(this.caseName);
         
         final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
 
@@ -106,12 +113,13 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_2);
         IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_3);
         IngestUtils.addDataSource(imageDSProcessor, IMAGE_PATH_4);
-
-        this.dataSourceLoader = new DataSourceLoader();
     }
-
-    @Override
-    public void tearDown() {
+    
+    Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException{
+        return this.dataSourceLoader.getDataSourceMap();
+    }
+    
+    void tearDown(){
         CaseUtils.closeCurrentCase(false);
         try {
             CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
@@ -121,11 +129,6 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         }
     }
     
-    /**
-     * Override this to provide a string for subclasses to use in CaseUtils.createCase(...)
-     */    
-    protected abstract String getCaseName();
-
     /**
      * Verify that the given file appears a precise number times in the given 
      * data source.
@@ -138,7 +141,7 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
      * @return true if a file with the given name exists the specified number 
      *  of times in the given data source
      */
-    protected boolean verifyFileExistanceAndCount(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
+    static boolean verifyFileExistanceAndCount(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
 
         int tally = 0;
 
@@ -169,11 +172,11 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
      * @return true if a file with the given name exists once in the given data 
      *  source
      */
-    protected boolean verifySingularFileExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
+    static boolean verifySingularFileExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
         return verifyFileExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
     }
     
-    protected Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
+    static Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 
         for (Map.Entry<String, Md5Metadata> entry : metadata.getMetadata().entrySet()) {
@@ -185,7 +188,7 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         return instanceIdToDataSource;
     }
 
-    protected List<AbstractFile> getFiles(Set<Long> objectIds) {
+    static List<AbstractFile> getFiles(Set<Long> objectIds) {
         List<AbstractFile> files = new ArrayList<>(objectIds.size());
 
         for (Long id : objectIds) {
@@ -201,10 +204,10 @@ public abstract class AbstractIntraCaseCommonFilesSearchTest extends NbTestCase 
         return files;
     }
     
-    protected Long getDataSourceIdByName(String name, Map<Long, String> dataSources){
+    static Long getDataSourceIdByName(String name, Map<Long, String> dataSources){
         
         if(dataSources.containsValue(name)){
-            for(Entry<Long, String> dataSource : dataSources.entrySet()){
+            for(Map.Entry<Long, String> dataSource : dataSources.entrySet()){
                 if(dataSource.getValue().equals(name)){
                     return dataSource.getKey();
                 }
