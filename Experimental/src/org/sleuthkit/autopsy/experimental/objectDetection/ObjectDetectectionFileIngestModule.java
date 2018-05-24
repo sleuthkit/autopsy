@@ -38,7 +38,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -53,27 +55,35 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter {
 
     private final static Logger logger = Logger.getLogger(ObjectDetectectionFileIngestModule.class.getName());
-
-    private Map<String, CascadeClassifier> cascades;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private Map<String, CascadeClassifier> classifiers;
     private final IngestServices services = IngestServices.getInstance();
     private Blackboard blackboard;
 
+    @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found",
+        "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
 
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
-        cascades = new HashMap<>();
+        classifiers = new HashMap<>();
         //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
         if (OpenCvLoader.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
             for (File classifier : classifierDir.listFiles()) {
                 if (classifier.isFile() && FilenameUtils.getExtension(classifier.getName()).equalsIgnoreCase("xml")) {
-                    cascades.put(classifier.getName(), new CascadeClassifier(classifier.getAbsolutePath()));
+                    classifiers.put(classifier.getName(), new CascadeClassifier(classifier.getAbsolutePath()));
                 }
             }
         } else {
             throw new IngestModule.IngestModuleException("Unable to load classifiers for object detection module.");
         }
-
+        if (refCounter.incrementAndGet(context.getJobId()) == 1) {
+            if (classifiers.isEmpty()) {
+                services.postMessage(IngestMessage.createWarningMessage(ObjectDetectionModuleFactory.getModuleName(),
+                        Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_subject(),
+                        Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_message(PlatformUtil.getObjectDetectionClassifierPath())));
+            }
+        }
         try {
             blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
@@ -81,47 +91,50 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         }
     }
 
-    
     @Messages({"# {0} - detectionCount", "ObjectDetectionFileIngestModule.classifierDetection.text=Classifier detected {0} object(s)"})
     @Override
     public ProcessResult process(AbstractFile file) {
-        if (ImageUtils.isImageThumbnailSupported(file)) {  //Any image we can create a thumbnail for is one we should apply the classifiers to
-            Mat originalImage = Highgui.imread(file.getLocalPath()); 
-            MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
-            for (String cascadeKey : cascades.keySet()) {
-                //apply each classifier to the file
-                cascades.get(cascadeKey).detectMultiScale(originalImage, detectionRectangles);
-                if (!detectionRectangles.empty()) { 
-                    //if any detections occurred create an artifact for this classifier and file combination
-                    try {
-                        BlackboardArtifact artifact = file.newArtifact(TSK_OBJECT_DETECTED);
-                        artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                                ObjectDetectionModuleFactory.getModuleName(),
-                                cascadeKey));
-                        artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                                ObjectDetectionModuleFactory.getModuleName(),
-                                Bundle.ObjectDetectionFileIngestModule_classifierDetection_text((int) detectionRectangles.size().height)));
-
+        if (!classifiers.isEmpty()) {
+            if (ImageUtils.isImageThumbnailSupported(file)) {  //Any image we can create a thumbnail for is one we should apply the classifiers to
+                Mat originalImage = Highgui.imread(file.getLocalPath());
+                MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
+                for (String classifierKey : classifiers.keySet()) {
+                    //apply each classifier to the file
+                    classifiers.get(classifierKey).detectMultiScale(originalImage, detectionRectangles);
+                    if (!detectionRectangles.empty()) {
+                        //if any detections occurred create an artifact for this classifier and file combination
                         try {
-                            /*
-                             * Index the artifact for keyword search.
-                             */
-                            blackboard.indexArtifact(artifact);
-                        } catch (Blackboard.BlackboardException ex) {
-                            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                        }
+                            BlackboardArtifact artifact = file.newArtifact(TSK_OBJECT_DETECTED);
+                            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                                    ObjectDetectionModuleFactory.getModuleName(),
+                                    classifierKey));
+                            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                                    ObjectDetectionModuleFactory.getModuleName(),
+                                    Bundle.ObjectDetectionFileIngestModule_classifierDetection_text((int) detectionRectangles.size().height)));
 
-                        /*
-                         * Send an event to update the view with the new result.
-                         */
-                        services.fireModuleDataEvent(new ModuleDataEvent(ObjectDetectionModuleFactory.getModuleName(), TSK_OBJECT_DETECTED, Collections.singletonList(artifact)));
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
-                        return IngestModule.ProcessResult.ERROR;
+                            try {
+                                /*
+                                 * Index the artifact for keyword search.
+                                 */
+                                blackboard.indexArtifact(artifact);
+                            } catch (Blackboard.BlackboardException ex) {
+                                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                            }
+
+                            /*
+                             * Send an event to update the view with the new
+                             * result.
+                             */
+                            services.fireModuleDataEvent(new ModuleDataEvent(ObjectDetectionModuleFactory.getModuleName(), TSK_OBJECT_DETECTED, Collections.singletonList(artifact)));
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
+                            return IngestModule.ProcessResult.ERROR;
+                        }
                     }
                 }
             }
         }
+
         return IngestModule.ProcessResult.OK;
     }
 
