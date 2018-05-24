@@ -627,7 +627,12 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
 
         @Override
         public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
-            return -(job.getPriority().compareTo(anotherJob.getPriority()));
+            int comparisonResult = -(job.getPriority().compareTo(anotherJob.getPriority()));
+            if (comparisonResult == 0) {  
+                //if the priority is the same compare with the jobs manifest creation date
+                comparisonResult = -job.compareTo(anotherJob);
+            }
+            return comparisonResult;
         }
 
     }
