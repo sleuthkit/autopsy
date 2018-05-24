@@ -32,6 +32,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -63,7 +64,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         File classifierDir = new File(PlatformUtil.getObjectDetectionClassifierPath());
         cascades = new HashMap<>();
         //Load all classifiers found in PlatformUtil.getObjectDetectionClassifierPath()
-        if (ImageUtils.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
+        if (OpenCvLoader.isOpenCvLoaded() && classifierDir.exists() && classifierDir.isDirectory()) {
             for (File classifier : classifierDir.listFiles()) {
                 if (classifier.isFile() && FilenameUtils.getExtension(classifier.getName()).equalsIgnoreCase("xml")) {
                     cascades.put(classifier.getName(), new CascadeClassifier(classifier.getAbsolutePath()));

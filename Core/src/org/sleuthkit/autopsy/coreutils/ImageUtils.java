@@ -59,10 +59,10 @@ import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.opencv.core.Core;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
@@ -96,7 +96,6 @@ public class ImageUtils {
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS = new ArrayList<>();
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
 
-    private static boolean OPEN_CV_LOADED;
     private static final boolean FFMPEG_LOADED;
 
     /**
@@ -119,7 +118,7 @@ public class ImageUtils {
         }
         DEFAULT_THUMBNAIL = tempImage;
         boolean tempFfmpegLoaded = false;
-        if (isOpenCvLoaded()) {
+        if (OpenCvLoader.isOpenCvLoaded()) {
             try {
                 if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
                     System.loadLibrary("opencv_ffmpeg2413_64"); //NON-NLS
@@ -156,25 +155,6 @@ public class ImageUtils {
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> cacheFileMap.clear());
     }
 
-    /**
-     * Check if the OpenCV library has been loaded, if it has not attempt to
-     * load it, then return true if it is loaded or false if it is not.
-     *
-     * @return - true if the opencv library is loaded or false if it is not
-     */
-    public static boolean isOpenCvLoaded() {
-        try {
-            if (!OPEN_CV_LOADED) {
-                System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-                OPEN_CV_LOADED = true;
-            }
-        } catch (UnsatisfiedLinkError e) {
-            OPEN_CV_LOADED = false;
-            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
-            MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
-        }
-        return OPEN_CV_LOADED;
-    }
     /**
      * initialized lazily
      */

@@ -309,18 +309,6 @@
                 <package>net.sf.sevenzipjbinding.impl</package>
                 <package>net.sf.sevenzipjbinding.simple</package>
                 <package>net.sf.sevenzipjbinding.simple.impl</package>
-                <package>org.opencv.calib3d</package>
-                <package>org.opencv.contrib</package>
-                <package>org.opencv.core</package>
-                <package>org.opencv.features2d</package>
-                <package>org.opencv.gpu</package>
-                <package>org.opencv.highgui</package>
-                <package>org.opencv.imgproc</package>
-                <package>org.opencv.ml</package>
-                <package>org.opencv.objdetect</package>
-                <package>org.opencv.photo</package>
-                <package>org.opencv.utils</package>
-                <package>org.opencv.video</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
@@ -390,10 +378,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jgraphx-v3.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jgraphx-v3.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencv-2413.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-2413.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jython-standalone-2.7.0.jar</runtime-relative-path>
