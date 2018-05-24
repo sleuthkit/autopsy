@@ -61,7 +61,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     private final IngestServices services = IngestServices.getInstance();
     private Blackboard blackboard;
 
-    @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found",
+    @Messages({"ObjectDetectionFileIngestModule.noClassifiersFound.subject=No classifiers found.",
         "# {0} - classifierDir", "ObjectDetectionFileIngestModule.noClassifiersFound.message=No classifiers were found in {0}, object detection will not be executed."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
