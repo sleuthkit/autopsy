@@ -72,12 +72,12 @@ public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuil
         Map<String, Md5Metadata> currentCaseMetadata  =  getMetadataForCurrentCase();
         Collection<String> values = currentCaseMetadata.keySet();
          
-        Map<String, Md5Metadata> interCaseCommonFiles =  new HashMap<>();
+        Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
         try {
             
             Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
                     .collect(Collectors.toList());    
-            gatherIntercaseResults(artifactInstances, currentCaseMetadata, interCaseCommonFiles);
+            interCaseCommonFiles = gatherIntercaseResults(artifactInstances, currentCaseMetadata);
             
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
@@ -87,13 +87,16 @@ public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuil
     }
 
     private Map<String, Md5Metadata> getMetadataForCurrentCase() throws NoCurrentCaseException, TskCoreException, SQLException, Exception {
-        //TODO see how we can clarify this
+        //we need the list of files in the present case so we can compare against the central repo
         CommonFilesMetadata metaData  =  super.findFiles();
         Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
         return commonFiles;
     }
 
-    private void gatherIntercaseResults(Collection<CorrelationAttributeCommonInstance> artifactInstances, Map<String, Md5Metadata> commonFiles, Map<String, Md5Metadata> interCaseCommonFiles) {
+    private Map<String, Md5Metadata> gatherIntercaseResults(Collection<CorrelationAttributeCommonInstance> artifactInstances, Map<String, Md5Metadata> commonFiles) {
+        
+        Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<String, Md5Metadata>();
+        
         for (CorrelationAttributeCommonInstance instance : artifactInstances) {
             
             String md5 = instance.getValue();
@@ -120,6 +123,8 @@ public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuil
                 }
             }
         }
+        
+        return interCaseCommonFiles;
     }
 
     @Override
