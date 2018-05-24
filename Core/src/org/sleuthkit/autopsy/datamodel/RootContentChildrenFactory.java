@@ -82,7 +82,7 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
     }
 
     @Override
-    public void update(Observable o, Object arg) {
+    public void update(Observable observable, Object arg) {
         refresh(true);
     }
     
@@ -98,8 +98,8 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
             if (UserPreferences.groupItemsInTreeByDatasource()) {
                 List<DataSource> dataSources = tskCase.getDataSources();
                 List<DataSourceGrouping> keys = new ArrayList<>();
-                dataSources.forEach((ds) -> {
-                    keys.add(new DataSourceGrouping(tskCase, ds));
+                dataSources.forEach((datasource) -> {
+                    keys.add(new DataSourceGrouping(tskCase, datasource));
                 });
 
                 list.addAll(keys);

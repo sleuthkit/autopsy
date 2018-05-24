@@ -90,12 +90,12 @@ public class DataSourceGroupingChildren extends Children.Keys<DataSource> {
     }
 
     @Override
-    protected Node[] createNodes(DataSource ds) {
-        return new Node[]{createNodeForKey(ds)};
+    protected Node[] createNodes(DataSource datasource) {
+        return new Node[]{createNodeForKey(datasource)};
     }
 
-    protected Node createNodeForKey(DataSource ds) {
-        return new DataSourceGroupingNode(ds);
+    protected Node createNodeForKey(DataSource datasource) {
+        return new DataSourceGroupingNode(datasource);
     }
 
 }

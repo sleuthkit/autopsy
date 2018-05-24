@@ -805,24 +805,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Refreshes changed content nodes
-     */
-    private void refreshDataSourceTree() {
-        Node selectedNode = getSelectedNode();
-        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-        Children rootChildren = em.getRootContext().getChildren();
-        Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
-        if (dataSourcesFilterNode == null) {
-            LOGGER.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
-            return;
-        }
-        Node dataSourcesNode = ((DirectoryTreeFilterNode) dataSourcesFilterNode).getOriginal();
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) dataSourcesNode.getChildren();
-        contentRootChildren.refreshContentKeys();
-        setSelectedNode(selectedPath, DataSourcesNode.NAME);
-    }
-
-    /**
      * Rebuilds the directory tree
      */
     private void rebuildTree() {
@@ -834,7 +816,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // This should happen on the EDT once the tree has been rebuilt.
         // hence the timer to schedule it 
         // TBD JIRA-3838:  need to get rid of this delay hack.
-        Timer timer = new Timer( 10, (ActionEvent e) -> {
+        Timer timer = new Timer( 10, (ActionEvent event) -> {
             selectFirstChildNode();
             resetHistory();
         });
