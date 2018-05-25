@@ -63,7 +63,6 @@ import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -134,11 +133,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
+        Event.CASE_DELETED.toString(),
         Event.JOB_STARTED.toString(),
         Event.REPORT_STATE.toString(),
         ControlEventType.PAUSE.toString(),
         ControlEventType.RESUME.toString(),
-        ControlEventType.SHUTDOWN.toString()}));
+        ControlEventType.SHUTDOWN.toString(),
+        Event.CANCEL_JOB.toString(),
+        Event.REPROCESS_JOB.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -288,6 +290,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     handleRemoteRequestNodeStateEvent();
                 } else if (event instanceof AutoIngestNodeControlEvent) {
                     handleRemoteNodeControlEvent((AutoIngestNodeControlEvent) event);
+                } else if (event instanceof AutoIngestJobCancelEvent) {
+                    handleRemoteJobCancelledEvent((AutoIngestJobCancelEvent) event);
+                } else if (event instanceof AutoIngestJobReprocessEvent) {
+                    handleRemoteJobReprocessEvent((AutoIngestJobReprocessEvent) event);
                 }
             }
         }
@@ -376,6 +382,41 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
+     * Processes a job cancellation request from the dashboard.
+     *
+     * @param event
+     */
+    private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
+        AutoIngestJob job = event.getJob();
+        if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            if (event.getJob().equals(currentJob)) {
+                cancelCurrentJob();
+            }
+        }
+    }
+
+    /**
+     * Process a job reprocess event from a remote host.
+     *
+     * @param event
+     */
+    private void handleRemoteJobReprocessEvent(AutoIngestJobReprocessEvent event) {
+        synchronized (jobsLock) {
+            AutoIngestJob job = event.getJob();
+            if (completedJobs.contains(job)) {
+                // Remove from completed jobs table.
+                completedJobs.remove(job);
+                // Add to pending jobs table and re-sort.
+                pendingJobs.add(job);
+                Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+
+                setChanged();
+                notifyObservers(Event.REPROCESS_JOB);
+            }
+        }
+    }
+
+    /**
      * Processes a job/case prioritization event from another node by triggering
      * an immediate input directory scan.
      *
@@ -412,7 +453,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     private void handleRemoteNodeControlEvent(AutoIngestNodeControlEvent event) {
-        if (event.getNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+        if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            sysLogger.log(Level.INFO, "Received {0} event from user {1} on machine {2}", new Object[] {event.getControlEventType().toString(), event.getUserName(), event.getOriginatingNodeName()});
             switch (event.getControlEventType()) {
                 case PAUSE:
                     pause();
@@ -3011,6 +3053,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 synchronized (jobsLock) {
                     if (currentJob != null) {
                         currentJob.getProcessingStageDetails();
+                        currentJob.setIngestThreadSnapshot(IngestManager.getInstance().getIngestThreadActivitySnapshots());
+                        currentJob.setIngestJobsSnapshot(IngestManager.getInstance().getIngestJobSnapshots());
+                        currentJob.setModuleRuntimesSnapshot(IngestManager.getInstance().getModuleRunTimes());
                         setChanged();
                         notifyObservers(Event.JOB_STATUS_UPDATED);
                         updateCoordinationServiceManifestNode(currentJob);
@@ -3106,7 +3151,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         RUNNING,
         SHUTTING_DOWN,
         SHUTDOWN,
-        REPORT_STATE
+        REPORT_STATE,
+        CANCEL_JOB,
+        REPROCESS_JOB
     }
 
     /**
