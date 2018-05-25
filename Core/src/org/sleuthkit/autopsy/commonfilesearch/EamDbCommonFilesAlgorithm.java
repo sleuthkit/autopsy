@@ -37,24 +37,26 @@ import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventTy
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
- * Provides logic for selecting common files from all data sources and all cases in the Central Repo.
+ * Provides logic for selecting common files from all data sources and all cases
+ * in the Central Repo.
  */
-public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuilder {
+public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5) order by md5"; //NON-NLS
 
     private final EamDb dbManager;
-    
+
     /**
-     * Implements the algorithm for getting common files across all data
-     * sources and all cases.  Can filter on mime types conjoined by logical AND.
+     * Implements the algorithm for getting common files across all data sources
+     * and all cases. Can filter on mime types conjoined by logical AND.
      *
      * @param dataSourceIdMap a map of obj_id to datasource name
-     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
-     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
-     * 
+     * @param filterByMediaMimeType match only on files whose mime types can be
+     * broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be
+     * broadly categorized as document types
+     *
      * @throws EamDbException
      */
     EamDbCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
@@ -62,46 +64,46 @@ public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuil
 
         dbManager = EamDb.getInstance();
     }
-    
+
     @Override
     public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
         return this.findFiles(null);
     }
-    
+
     protected CommonFilesMetadata findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
-        Map<String, Md5Metadata> currentCaseMetadata  =  getMetadataForCurrentCase();
+        Map<String, Md5Metadata> currentCaseMetadata = getMetadataForCurrentCase();
         Collection<String> values = currentCaseMetadata.keySet();
-         
+
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
         try {
-            
+
             Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
-                    .collect(Collectors.toList());    
+                    .collect(Collectors.toList());
             interCaseCommonFiles = gatherIntercaseResults(artifactInstances, currentCaseMetadata);
-            
+
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
-        } 
+        }
         // Builds intercase-only matches metadata
-        return new CommonFilesMetadata(interCaseCommonFiles);    
+        return new CommonFilesMetadata(interCaseCommonFiles);
     }
 
     private Map<String, Md5Metadata> getMetadataForCurrentCase() throws NoCurrentCaseException, TskCoreException, SQLException, Exception {
         //we need the list of files in the present case so we can compare against the central repo
-        CommonFilesMetadata metaData  =  super.findFiles();
-        Map<String, Md5Metadata> commonFiles =  metaData.getMetadata();
+        CommonFilesMetadata metaData = super.findFiles();
+        Map<String, Md5Metadata> commonFiles = metaData.getMetadata();
         return commonFiles;
     }
 
     private Map<String, Md5Metadata> gatherIntercaseResults(Collection<CorrelationAttributeCommonInstance> artifactInstances, Map<String, Md5Metadata> commonFiles) {
-        
+
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<String, Md5Metadata>();
-        
+
         for (CorrelationAttributeCommonInstance instance : artifactInstances) {
-            
+
             String md5 = instance.getValue();
             String dataSource = String.format("%s: %s", instance.getCorrelationCase().getDisplayName(), instance.getCorrelationDataSource().getName());
-            
+
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
             }
@@ -123,7 +125,7 @@ public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuil
                 }
             }
         }
-        
+
         return interCaseCommonFiles;
     }
 
@@ -142,8 +144,8 @@ public abstract class EamDbCommonFilesAlgorithm  extends CommonFilesMetadataBuil
     }
 
     protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException, Exception {
-        for(CorrelationCase cCase : this.dbManager.getCases()){
-            if(cCase.getID() == correlationCaseId){
+        for (CorrelationCase cCase : this.dbManager.getCases()) {
+            if (cCase.getID() == correlationCaseId) {
                 return cCase;
             }
         }
