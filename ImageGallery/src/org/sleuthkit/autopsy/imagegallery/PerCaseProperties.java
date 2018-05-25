@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -199,7 +200,12 @@ class PerCaseProperties {
             try (OutputStream fos = Files.newOutputStream(getPropertyPath(moduleName))) {
                 props.store(fos, "Changed config settings(batch)"); //NON-NLS
             }
-        } catch (IOException e) {
+        }
+        catch (ClosedByInterruptException e) {
+            // not logging exception because this often happens when case is closed and stack does not help with debugging
+            Logger.getLogger(PerCaseProperties.class.getName()).log(Level.WARNING, "Properties not saved because of interrupt"); //NON-NLS
+        }
+        catch (IOException e) {
             Logger.getLogger(PerCaseProperties.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e); //NON-NLS NON-NLS NON-NLS
         }
     }
@@ -225,7 +231,12 @@ class PerCaseProperties {
             try (OutputStream fos = Files.newOutputStream(getPropertyPath(moduleName))) {
                 props.store(fos, "Changed config settings(single)"); //NON-NLS
             }
-        } catch (IOException e) {
+        }
+        catch (ClosedByInterruptException e) {
+            // not logging exception because this often happens when case is closed and stack does not help with debugging
+            Logger.getLogger(PerCaseProperties.class.getName()).log(Level.WARNING, "Property {0} not saved because of interrupt", settingName); //NON-NLS
+        }
+        catch (IOException e) {
             Logger.getLogger(PerCaseProperties.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e); //NON-NLS NON-NLS NON-NLS
         }
     }

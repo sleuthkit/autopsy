@@ -34,21 +34,33 @@ final class AutoIngestNodeControlEvent extends AutopsyEvent implements Serializa
         RESUME,
         SHUTDOWN
     }
-    
+
     private static final long serialVersionUID = 1L;
-    private final String nodeName;
+    private final String targetNodeName;
+    private final String originatingNodeName;
+    private final String userName;
     private final ControlEventType eventType;
 
-    AutoIngestNodeControlEvent(ControlEventType eventType, String nodeName) {
+    AutoIngestNodeControlEvent(ControlEventType eventType, String targetNode, String originatingNode, String userName) {
         super(eventType.toString(), null, null);
         this.eventType = eventType;
-        this.nodeName = nodeName;
+        this.targetNodeName = targetNode;
+        this.originatingNodeName = originatingNode;
+        this.userName = userName;
     }
-    
-    String getNodeName() {
-        return nodeName;
+
+    String getTargetNodeName() {
+        return targetNodeName;
     }
-    
+
+    String getOriginatingNodeName() {
+        return originatingNodeName;
+    }
+
+    String getUserName() {
+        return userName;
+    }
+
     ControlEventType getControlEventType() {
         return eventType;
     }

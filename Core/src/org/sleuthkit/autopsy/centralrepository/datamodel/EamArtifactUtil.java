@@ -226,13 +226,10 @@ public class EamArtifactUtil {
      * Does not add the artifact to the database.
      *
      * @param content     The content object
-     * @param knownStatus Unknown, notable, or known
-     * @param comment     The comment for the new artifact (generally used for a
-     *                    tag comment)
      *
      * @return The new EamArtifact or null if creation failed
      */
-    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
+    public static CorrelationAttribute makeCorrelationAttributeFromContent(Content content) {
 
         if (!(content instanceof AbstractFile)) {
             return null;
@@ -261,10 +258,7 @@ public class EamArtifactUtil {
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
-                    af.getParentPath() + af.getName(),
-                    comment,
-                    knownStatus
-            );
+                    af.getParentPath() + af.getName());
             eamArtifact.addInstance(cei);
             return eamArtifact;
         } catch (TskCoreException | EamDbException | NoCurrentCaseException ex) {
