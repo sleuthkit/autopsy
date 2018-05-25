@@ -431,7 +431,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @NbBundle.Messages("SolrSearchService.indexingError=Unable to index blackboard artifact.")
     @Subscribe
-    void handleNewArtifact(Blackboard.ArtifactPublishedEvent event) {
+    void handleNewArtifact(Blackboard.ArtifactPostedEvent event) {
         BlackboardArtifact bba = event.getArtifact();
         try {
             index(bba);
