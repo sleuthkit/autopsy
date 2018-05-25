@@ -55,13 +55,13 @@ final class IngestModuleFactoryLoader {
             add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
             add(HashLookupModuleFactory.class.getCanonicalName());
             add(FileTypeIdModuleFactory.class.getCanonicalName());
-            add(EncryptionDetectionModuleFactory.class.getCanonicalName());
             add(EmbeddedFileExtractorModuleFactory.class.getCanonicalName());
             add(ExifParserModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
             add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
             add(E01VerifierModuleFactory.class.getCanonicalName());
+            add(EncryptionDetectionModuleFactory.class.getCanonicalName());
             add(InterestingItemsIngestModuleFactory.class.getCanonicalName());
             add(PhotoRecCarverIngestModuleFactory.class.getCanonicalName());
         }
