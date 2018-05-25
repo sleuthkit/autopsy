@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
+import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
@@ -54,6 +55,7 @@ final class IngestModuleFactoryLoader {
             add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
             add(HashLookupModuleFactory.class.getCanonicalName());
             add(FileTypeIdModuleFactory.class.getCanonicalName());
+            add(EncryptionDetectionModuleFactory.class.getCanonicalName());
             add(EmbeddedFileExtractorModuleFactory.class.getCanonicalName());
             add(ExifParserModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
