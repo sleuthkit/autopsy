@@ -677,6 +677,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         List<CorrelationAttributeCommonInstance> artifactInstances = new ArrayList<>();
 
+        //  SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM file_instances LEFT JOIN cases ON file_instances.case_id=cases.id LEFT JOIN data_sources ON file_instances.data_source_id=data_sources.id WHERE value IN (SELECT value FROM file_instances WHERE value IN ("59029becd7f830c0478aeb5e67cc3b20","d2b949c51cf3d5721699a6ea500eeba7","b90c8c8fb1c4687780002704b59585fe") GROUP BY value HAVING COUNT(*) > 1) ORDER BY value
+        
         CorrelationAttributeCommonInstance artifactInstance;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -691,19 +693,21 @@ public abstract class AbstractSqlEamDb implements EamDb {
             sql.append(" LEFT JOIN data_sources ON ");
             sql.append(tableName);
             sql.append(".data_source_id=data_sources.id");
-            sql.append(" WHERE value IN (");
+            sql.append(" WHERE value IN (SELECT value FROM file_instances WHERE value IN (");
 
             for (int i = 0; i < values.size(); i++) {
                 sql.append("?,");
             }
             sql.deleteCharAt(sql.length() - 1);
-            sql.append(")");
+            sql.append(")GROUP BY value HAVING COUNT(*) > 1)  ORDER BY value");
 
             if (singleCase && correlationCase != null) {
                 sql.append(" AND ");
                 sql.append(tableName);
                 sql.append(".case_id=?");
             }
+            
+            sql.append("GROUP BY  value HAVING  COUNT(*) > 1");
 
             try {
                 preparedStatement = conn.prepareStatement(sql.toString());
