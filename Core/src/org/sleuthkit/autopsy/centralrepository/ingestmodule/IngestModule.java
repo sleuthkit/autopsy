@@ -49,6 +49,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -129,7 +131,9 @@ final class IngestModule implements FileIngestModule {
          */
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
+                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Notable artifact query");
                 List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
+                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
                 if (!caseDisplayNamesList.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }

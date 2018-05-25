@@ -29,7 +29,6 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -50,20 +49,17 @@ import org.sleuthkit.datamodel.VolumeSystem;
 
 public class EncryptionDetectionTest extends NbTestCase {
 
-    private static final String BITLOCKER_CASE_NAME = "testBitlockerEncryption";
-    private static final String PASSWORD_CASE_NAME = "testPasswordProtection";
-    
-    private static final Path BITLOCKER_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), BITLOCKER_CASE_NAME);
-    private static final Path PASSWORD_CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), PASSWORD_CASE_NAME);
-    
-    private final Path BITLOCKER_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
-    private final Path PASSWORD_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
-
+    private static final String BITLOCKER_DETECTION_CASE_NAME = "testBitlockerEncryption";
     private static final String PASSWORD_DETECTION_CASE_NAME = "PasswordDetectionTest";
     private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
+    private static final String SQLCIPHER_DETECTION_CASE_NAME = "SQLCipherDetectionTest";
 
+    private final Path BITLOCKER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
+    private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_sqlcipher_test.vhd");
+    
+    private boolean testSucceeded;
   
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
@@ -75,24 +71,28 @@ public class EncryptionDetectionTest extends NbTestCase {
     public EncryptionDetectionTest(String name) {
         super(name);
     }
+    
+    @Override
+    public void setUp() {
+        testSucceeded = false;
+    }
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCase();
+        CaseUtils.closeCurrentCase(testSucceeded);
     }
-
+    
     /**
      * Test the Encryption Detection module's password protection detection.
      */
     public void testBitlockerEncryption() {
         try {
-            CaseUtils.createCase(BITLOCKER_CASE_NAME);
+            Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_IMAGE_PATH);
-            Case openCase = Case.getCurrentCaseThrows();
-
+            IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_DETECTION_IMAGE_PATH);
+            
             /*
-             * Create ingest job settings.
+             * Create ingest job settings and run ingest job.
              */
             IngestModuleFactory ingestModuleFactory = new EncryptionDetectionModuleFactory();
             IngestModuleIngestJobSettings settings = ingestModuleFactory.getDefaultIngestJobSettings();
@@ -146,10 +146,12 @@ public class EncryptionDetectionTest extends NbTestCase {
 
             errorMessage = "Expected to find 'vol2', but no such volume exists.";
             assertEquals(errorMessage, true, vol2Found);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     /**
@@ -157,19 +159,13 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testPasswordProtection() {
         try {
-            CaseUtils.createCase(PASSWORD_DETECTION_CASE_NAME);
-
+            Case openCase = CaseUtils.createAsCurrentCase(PASSWORD_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
-            String joinedErrors = String.join(System.lineSeparator(), errorMessages);
-            assertEquals(joinedErrors, 0, errorMessages.size());
-
-            Case openCase = Case.getCurrentCaseThrows();    
+            IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
 
             /*
              * Create ingest job settings.
              */
-
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
             IngestJobSettings ingestJobSettings = new IngestJobSettings(PASSWORD_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
@@ -237,10 +233,12 @@ public class EncryptionDetectionTest extends NbTestCase {
                     }
                 }
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
     /**
@@ -258,19 +256,10 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testVeraCryptSupport() {
         try {
-            CaseUtils.createCase(VERACRYPT_DETECTION_CASE_NAME);
+            Case openCase = CaseUtils.createAsCurrentCase(VERACRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-            List<String> errorMessages = IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
-            String joinedErrors;
-            if (errorMessages.isEmpty()) {
-                joinedErrors = "Encrypted partition did not cause error, it was expected to";
-            } else {
-                joinedErrors = String.join(System.lineSeparator(), errorMessages);
-            }
-            //there will be 1 expected error regarding the encrypted partition not having a file system
-            assertEquals(joinedErrors, 1, errorMessages.size());
+            IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
 
-            Case openCase = Case.getCurrentCaseThrows();
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
             templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
             //image includes an encrypted container file with size greater than 5 mb so default settings detect it
@@ -299,10 +288,75 @@ public class EncryptionDetectionTest extends NbTestCase {
                 numberOfEncryptedContainers += file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size();
             }
             assertEquals("Encrypted Container file should have one encyption suspected artifact", 1, numberOfEncryptedContainers);
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+        
+        testSucceeded = true;
     }
 
+    /**
+     * Test the Encryption Detection module's SQLCipher encryption detection.
+     */
+    public void testSqlCipherEncryption() {
+        try {
+            Case openCase = CaseUtils.createAsCurrentCase(SQLCIPHER_DETECTION_CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            IngestUtils.addDataSource(dataSourceProcessor, SQLCIPHER_DETECTION_IMAGE_PATH);
+
+            /*
+             * Create ingest job settings.
+             */
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new EncryptionDetectionModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(SQLCIPHER_DETECTION_CASE_NAME, IngestType.FILES_ONLY, templates);
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+
+            /*
+             * Purge specific files to be tested.
+             */
+            FileManager fileManager = openCase.getServices().getFileManager();
+            List<AbstractFile> results = fileManager.findFiles("%%", "sqlcipher");
+            assertEquals("Unexpected number of SQLCipher results.", 15, results.size());
+
+            for (AbstractFile file : results) {
+                /*
+                 * Process only non-slack files.
+                 */
+                if (file.isFile() && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                    /*
+                     * Determine which assertions to use for the file based on
+                     * its name.
+                     */
+                    List<BlackboardArtifact> artifactsList = file.getAllArtifacts();
+                    String[] splitNameArray = file.getName().split("\\.");
+                    if (splitNameArray[0].startsWith("sqlcipher-") && splitNameArray[splitNameArray.length - 1].equals("db")) {
+                        /*
+                         * Check that the SQLCipher database file has one
+                         * TSK_ENCRYPTION_SUSPECTED artifact.
+                         */
+                        int artifactsListSize = artifactsList.size();
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but 1 was expected.", file.getName(), file.getId(), artifactsListSize);
+                        assertEquals(errorMessage, 1, artifactsListSize);
+
+                        String artifactTypeName = artifactsList.get(0).getArtifactTypeName();
+                        errorMessage = String.format("File '%s' (objId=%d) has an unexpected '%s' artifact.", file.getName(), file.getId(), artifactTypeName);
+                        assertEquals(errorMessage, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.toString(), artifactTypeName);
+                    } else {
+                        /*
+                         * Check that the file has no artifacts.
+                         */
+                        int artifactsListSize = artifactsList.size();
+                        String errorMessage = String.format("File '%s' (objId=%d) has %d artifacts, but none were expected.", file.getName(), file.getId(), artifactsListSize);
+                        assertEquals(errorMessage, 0, artifactsListSize);
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }    
+    
 }

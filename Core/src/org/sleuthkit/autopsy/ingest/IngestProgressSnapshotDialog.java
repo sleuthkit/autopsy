@@ -50,12 +50,14 @@ public final class IngestProgressSnapshotDialog extends JDialog {
 
     /**
      * Constructs an instance of the dialog with its own frame. Could be modal.
+     * Uses the given provider as the source of data for the dialog.
      *
      * @param owner         - the owner of this dialog. If this dialog should be
      *                      modal, the owner gets set to non modal.
      * @param shouldBeModal - true if this should be modal, false otherwise.
+     * @param provider      - the provider to use as the source of data.
      */
-    public IngestProgressSnapshotDialog(Container owner, Boolean shouldBeModal) {
+    public IngestProgressSnapshotDialog(Container owner, Boolean shouldBeModal, IngestProgressSnapshotProvider provider) {
         super((Window) owner, TITLE, ModalityType.MODELESS);
         if (shouldBeModal && owner instanceof JDialog) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
             final JDialog pseudoOwner = (JDialog) owner;
@@ -82,12 +84,25 @@ public final class IngestProgressSnapshotDialog extends JDialog {
         this.getRootPane().registerKeyboardAction(e -> {
             this.dispose();
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        add(new IngestProgressSnapshotPanel(this));
+        add(new IngestProgressSnapshotPanel(this, provider));
         pack();
         setResizable(false);
         if (shouldBeModal) { // if called from a modal dialog, become modal, otherwise don't.
             setModal(true);
         }
         setVisible(true);
+    }
+
+    /**
+     * Constructs an instance of the dialog with its own frame. Could be modal.
+     * Uses the internal IngestManager instance as the source of data for the
+     * dialog
+     *
+     * @param owner         - the owner of this dialog. If this dialog should be
+     *                      modal, the owner gets set to non modal.
+     * @param shouldBeModal - true if this should be modal, false otherwise.
+     */
+    public IngestProgressSnapshotDialog(Container owner, Boolean shouldBeModal) {
+        this(owner, shouldBeModal, IngestManager.getInstance());
     }
 }
