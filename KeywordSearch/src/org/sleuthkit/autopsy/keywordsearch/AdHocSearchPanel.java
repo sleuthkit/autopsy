@@ -44,7 +44,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     private final Map<Long, String> dataSourceMap = new HashMap<>();
     private final List<String> toolTipList = new ArrayList<>();
     private List<DataSource> dataSources = new ArrayList<>();
-    private DefaultListModel<String> dataSourceListModel = new DefaultListModel<>();
+    private final DefaultListModel<String> dataSourceListModel = new DefaultListModel<>();
 
     AdHocSearchPanel() {
         initListeners();
