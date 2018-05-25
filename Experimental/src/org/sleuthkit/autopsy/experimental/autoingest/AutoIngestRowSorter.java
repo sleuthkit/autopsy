@@ -37,21 +37,25 @@ class AutoIngestRowSorter<M extends DefaultTableModel> extends TableRowSorter<M>
 
     @Override
     public void toggleSortOrder(int column) {
-            if (!this.getModel().getColumnClass(column).equals(Date.class) && !this.getModel().getColumnClass(column).equals(Integer.class)) {
-                //currently the only Integer column this sorter is being applied to is the Priority column
-                super.toggleSortOrder(column);  //if it isn't a date or Integer column perform the regular sorting
-        } else {  
-            ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>(getSortKeys());
-            if (sortKeys.isEmpty() || sortKeys.get(0).getColumn() != column) {  //sort descending
-                sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
-            } else if (sortKeys.get(0).getSortOrder() == SortOrder.ASCENDING) {
-                sortKeys.removeIf(key -> key.getColumn() == column);
-                sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.DESCENDING));
-            } else {
-                sortKeys.removeIf(key -> key.getColumn() == column);
-                sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.ASCENDING));
-            }
-            setSortKeys(sortKeys);
+        SortOrder firstSort = SortOrder.ASCENDING;
+        SortOrder secondSort = SortOrder.DESCENDING;
+        
+        if (this.getModel().getColumnClass(column).equals(Date.class) || this.getModel().getColumnClass(column).equals(Integer.class)) {
+            firstSort = SortOrder.DESCENDING;
+            secondSort = SortOrder.ASCENDING;
         }
+
+        ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>(getSortKeys());
+        if (sortKeys.isEmpty() || sortKeys.get(0).getSortOrder() == SortOrder.UNSORTED) {
+            sortKeys.removeIf(key -> key.getColumn() == column);
+            sortKeys.add(0, new RowSorter.SortKey(column, firstSort));
+        } else if (sortKeys.get(0).getSortOrder() == firstSort) {
+            sortKeys.removeIf(key -> key.getColumn() == column);
+            sortKeys.add(0, new RowSorter.SortKey(column, secondSort));
+        } else {
+            sortKeys.removeIf(key -> key.getColumn() == column);
+            sortKeys.add(0, new RowSorter.SortKey(column, SortOrder.UNSORTED));
+        }
+        setSortKeys(sortKeys);
     }
 }
