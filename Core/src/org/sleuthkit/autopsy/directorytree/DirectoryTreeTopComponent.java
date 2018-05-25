@@ -807,21 +807,32 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Rebuilds the directory tree
      */
     private void rebuildTree() {
-        
+
         // refresh all children of the root.
         rootChildrenFactory.refreshChildren();
-       
+
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.
-        // hence the timer to schedule it 
-        // TBD JIRA-3838:  need to get rid of this delay hack.
-        Timer timer = new Timer( 10, (ActionEvent event) -> {
-            selectFirstChildNode();
-            resetHistory();
-        });
+        // hence the SwingWorker that does this in the done() method
+        new SwingWorker<Void, Void>() {
 
-        timer.setRepeats( false );
-        timer.start();    
+            @Override
+            protected Void doInBackground() throws Exception {
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    get();
+                    selectFirstChildNode();
+                    resetHistory();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Error selecting tree node.", ex); //NON-NLS
+                } //NON-NLS
+            }
+        }.execute();
     }
     
     /**
@@ -832,8 +843,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children rootChildren = em.getRootContext().getChildren();
         
         if (rootChildren.getNodesCount() > 0) {
-            //Node[] ttt = new Node[]{rootChildren.getNodeAt(0)};
-            //Node firstNode = ttt[0];
             Node firstNode = rootChildren.getNodeAt(0);
             if (firstNode != null) {
                 final String[] selectedPath = NodeOp.createPath(firstNode, em.getRootContext());
