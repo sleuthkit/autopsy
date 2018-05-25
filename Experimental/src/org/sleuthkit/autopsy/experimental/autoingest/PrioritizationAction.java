@@ -38,6 +38,7 @@ abstract class PrioritizationAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(PrioritizationAction.class.getName());
     private final AutoIngestJob job;
 
+    
     /**
      * Construct a new Prioritization action for the selected job
      *
@@ -88,7 +89,7 @@ abstract class PrioritizationAction extends AbstractAction {
                     EventQueue.invokeLater(() -> {
                         try {
                             modifyPriority(dashboard.getMonitor());
-                            dashboard.getPendingJobsPanel().refresh(dashboard.getMonitor().getJobsSnapshot());
+                            dashboard.getPendingJobsPanel().refresh(getRefreshEvent(dashboard.getMonitor()));
                         } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                             String errorMessage = getErrorMessage();
                             logger.log(Level.SEVERE, errorMessage, ex);
@@ -106,6 +107,8 @@ abstract class PrioritizationAction extends AbstractAction {
     public Object clone() throws CloneNotSupportedException {
         return super.clone(); //To change body of generated methods, choose Tools | Templates.
     }
+
+    abstract AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor);
 
     /**
      * Action to prioritize the specified AutoIngestJob
@@ -138,6 +141,11 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor.getJobsSnapshot(), getJob());
         }
     }
 
@@ -172,6 +180,11 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor.getJobsSnapshot(), getJob());
         }
     }
 
@@ -209,6 +222,11 @@ abstract class PrioritizationAction extends AbstractAction {
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
         }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor.getJobsSnapshot(), getJob().getManifest().getCaseName());
+        }
     }
 
     /**
@@ -244,6 +262,11 @@ abstract class PrioritizationAction extends AbstractAction {
         @Override
         public Object clone() throws CloneNotSupportedException {
             return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor.getJobsSnapshot(), getJob().getManifest().getCaseName());
         }
     }
 }

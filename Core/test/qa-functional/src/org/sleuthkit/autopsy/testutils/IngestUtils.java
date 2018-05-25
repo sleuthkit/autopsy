@@ -19,11 +19,11 @@
 package org.sleuthkit.autopsy.testutils;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import static junit.framework.Assert.assertEquals;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
@@ -53,23 +53,24 @@ public final class IngestUtils {
      *                            datasource
      * @param dataSourcePath      the path to the datasource which is being
      *                            added
-     *
-     * @return errorMessages a list of all error messages as strings which
-     *         encountered while processing the data source
      */
-    public static List<String> addDataSource(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
-        List<String> errorMessages = new ArrayList<>();
+    public static void addDataSource(AutoIngestDataSourceProcessor dataSourceProcessor, Path dataSourcePath) {
+        DataSourceProcessorCallback.DataSourceProcessorResult result = null;
         try {
             if (!dataSourcePath.toFile().exists()) {
                 Assert.fail("Data source not found: " + dataSourcePath.toString());
             }
+            
             DataSourceProcessorRunner.ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
-            errorMessages = callBack.getErrorMessages();
+            result = callBack.getResult();
+            if (result.equals(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS)) {
+                String joinedErrors = String.join(System.lineSeparator(), callBack.getErrorMessages());
+                Assert.fail(String.format("Error(s) occurred while running the data source processor: %s", joinedErrors));
+            }
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
-        return errorMessages;
     }
 
     /**
