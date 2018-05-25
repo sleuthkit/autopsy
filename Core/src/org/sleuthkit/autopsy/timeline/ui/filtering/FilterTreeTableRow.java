@@ -33,10 +33,10 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 /**
  *
  */
-class FilterTreeTableRow extends TreeTableRow<FilterModel<TimelineFilter>> {
+class FilterTreeTableRow extends TreeTableRow<FilterModel<?>> {
 
     @Override
-    protected void updateItem(FilterModel<TimelineFilter> item, boolean empty) {
+    protected void updateItem(FilterModel<?> item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null || empty) {
             setContextMenu(null);
@@ -63,16 +63,16 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel<TimelineFilter>> {
         SELECT(Bundle.Timeline_ui_filtering_menuItem_select(),
                 (treeItem, row) -> false == row.isSelected());
 
-        private final BiPredicate<FilterModel<TimelineFilter>, TreeTableRow<FilterModel<TimelineFilter>>> selectionPredicate;
+        private final BiPredicate<FilterModel<?>, TreeTableRow<FilterModel<?>>> selectionPredicate;
 
         private final String displayName;
 
-        private SelectionAction(String displayName, BiPredicate<FilterModel<TimelineFilter>, TreeTableRow<FilterModel<TimelineFilter>>> predicate) {
+        private SelectionAction(String displayName, BiPredicate<FilterModel<?>, TreeTableRow<FilterModel<?>>> predicate) {
             this.selectionPredicate = predicate;
             this.displayName = displayName;
         }
 
-        public void doSelection(FilterModel<TimelineFilter> treeItem, TreeTableRow<FilterModel<TimelineFilter>> row) {
+        public void doSelection(FilterModel<?> treeItem, TreeTableRow<FilterModel<?>> row) {
             treeItem.setSelected(selectionPredicate.test(treeItem, row));
         }
 
@@ -83,7 +83,7 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel<TimelineFilter>> {
 
     private static final class SelectActionsGroup extends ActionGroup {
 
-        SelectActionsGroup(TreeTableRow<FilterModel<TimelineFilter>> row) {
+        SelectActionsGroup(TreeTableRow<FilterModel<?>> row) {
             super(Bundle.Timeline_ui_filtering_menuItem_select(),
                     new Select(SelectionAction.ALL, row),
                     new Select(SelectionAction.NONE, row),
@@ -95,13 +95,13 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel<TimelineFilter>> {
 
     private static final class Select extends Action {
 
-        public TreeTableRow<FilterModel<TimelineFilter>> getRow() {
+        public TreeTableRow<FilterModel<?>> getRow() {
             return row;
         }
-        private final TreeTableRow<FilterModel<TimelineFilter>> row;
+        private final TreeTableRow<FilterModel<?>> row;
         private final SelectionAction selectionAction;
 
-        Select(SelectionAction strategy, TreeTableRow<FilterModel<TimelineFilter>> row) {
+        Select(SelectionAction strategy, TreeTableRow<FilterModel<?>> row) {
             super(strategy.getDisplayName());
             this.row = row;
             this.selectionAction = strategy;
@@ -110,7 +110,7 @@ class FilterTreeTableRow extends TreeTableRow<FilterModel<TimelineFilter>> {
                     .forEach(this::doSelection));
         }
 
-        private void doSelection(FilterModel<TimelineFilter> treeItem) {
+        private void doSelection(FilterModel<?> treeItem) {
             selectionAction.doSelection(treeItem, getRow());
         }
     }

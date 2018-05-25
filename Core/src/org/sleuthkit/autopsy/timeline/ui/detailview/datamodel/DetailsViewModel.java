@@ -53,7 +53,6 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
 /**
  *
@@ -135,7 +134,7 @@ final public class DetailsViewModel {
     public List<EventStripe> getEventStripes(ZoomParams params, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = params.getTimeRange();
-        RootFilterModel filter = params.getFilterModel();
+        RootFilterModel filterModel = params.getFilterModel();
         DescriptionLoD descriptionLOD = params.getDescriptionLOD();
         EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
 
@@ -152,8 +151,8 @@ final public class DetailsViewModel {
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-        final boolean needsTags = filter.getTagsFilter().hasSubFilters();
-        final boolean needsHashSets = filter.getHashHitsFilter().hasSubFilters();
+        final boolean needsTags = filterModel.getTagsFilterModel().getFilter().hasSubFilters();
+        final boolean needsHashSets = filterModel.getHashHitsFilterModel().getFilter().hasSubFilters();
         //compose query string, the new-lines are only for nicer formatting if printing the entire query
         String querySql = "SELECT " + eventManager.formatTimeFunction(rangeInfo.getPeriodSize(), timeZone) + " AS interval, " // NON-NLS
                           + eventManager.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
@@ -161,7 +160,7 @@ final public class DetailsViewModel {
                           + eventManager.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
                           + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets) // NON-NLS
-                          + " WHERE time >= " + start + " AND time < " + end + " AND " + filter.getSQLWhere(eventManager) // NON-NLS
+                          + " WHERE time >= " + start + " AND time < " + end + " AND " + filterModel.getSQLWhere(eventManager) // NON-NLS
                           + " GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                           + " ORDER BY min(time)"; // NON-NLS
 

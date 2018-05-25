@@ -70,13 +70,13 @@ public class ListViewModel {
      * together.
      *
      * @param timeRange The Interval that all returned events must be within.
-     * @param filter    The Filter that all returned events must pass.
+     * @param filterModel    The Filter that all returned events must pass.
      *
      * @return A List of combined events, sorted by timestamp.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterModel filter) throws TskCoreException {
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterModel filterModel) throws TskCoreException {
         Long startTime = timeRange.getStartMillis() / 1000;
         Long endTime = timeRange.getEndMillis() / 1000;
 
@@ -85,13 +85,13 @@ public class ListViewModel {
         }
 
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
-        final boolean needsTags = filter.getTagsFilter().hasSubFilters();
-        final boolean needsHashSets = filter.getHashHitsFilter().hasSubFilters();
+        final boolean needsTags = filterModel.hasActiveTagsFilters();
+        final boolean needsHashSets = filterModel.hasActiveHashFilters();
         final String querySql = "SELECT full_description, time, file_id, "
                                 + eventManager.csvAggFunction("CAST(events.event_id AS VARCHAR)") + " AS eventIDs, "
                                 + eventManager.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
                                 + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets)
-                                + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + filter.getSQLWhere(eventManager)
+                                + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + filterModel.getSQLWhere(eventManager)
                                 + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description";
 
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);

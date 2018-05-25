@@ -58,8 +58,6 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterModel;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
@@ -78,6 +76,7 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
@@ -156,19 +155,18 @@ public final class FilteredEventsModel {
         getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilterModel rootFilter = filterProperty().get();
-            rootFilter.getDataSourcesFilter().addSubFilter(dataSourceFilter);
+            rootFilter.getDataSourcesFilterModel().getFilter().getSubFilters().add(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
             RootFilterModel rootFilter = filterProperty().get();
-            rootFilter.getHashHitsFilter().addSubFilter(hashSetFilter);
+            rootFilter.getHashHitsFilterModel().getFilter().getSubFilters().add(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
             RootFilterModel rootFilter = filterProperty().get();
-            TagsFilter tagsFilter = rootFilter.getTagsFilter();
-            syncTagsFilter(tagsFilter);
+            syncTagsFilter(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());
@@ -280,12 +278,12 @@ public final class FilteredEventsModel {
      * @param tagsFilter the tags filter to modify so it is consistent with the
      *                   tags in use in the case
      */
-    public void syncTagsFilter(CompoundFilterModel<TagNameFilter> tagsFilter) {
+    public void syncTagsFilter(RootFilterModel rootFilter) {
         for (TagName tagName : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(tagName));
+            rootFilter.getTagsFilterModel().getFilter().getSubFilters().add(new TagNameFilter(tagName));
         }
-        for (TagNameFilter filter : tagsFilter.getSubFilters()) {
-            filter.setDisabled(tagNames.contains(filter.getTagName()) == false);
+        for (FilterModel<TagNameFilter> filterModel : rootFilter.getTagsFilterModel().getSubFilterModels()) {
+            filterModel.setDisabled(tagNames.contains(filterModel.getFilter().getTagName()) == false);
         }
     }
 
@@ -390,8 +388,8 @@ public final class FilteredEventsModel {
         }
     }
 
-    public Set<TimelineEvent> getEventsById(Collection<Long> eventIDs) {
-        Set<SingleEvent> events = new HashSet<>();
+    public Set<TimelineEvent> getEventsById(Collection<Long> eventIDs) throws TskCoreException {
+        Set<TimelineEvent> events = new HashSet<>();
         for (Long id : eventIDs) {
             events.add(getEventById(id));
         }

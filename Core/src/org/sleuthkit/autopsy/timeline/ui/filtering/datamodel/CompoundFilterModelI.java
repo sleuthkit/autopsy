@@ -13,6 +13,6 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
  */
 public interface CompoundFilterModelI<SubFilterType extends TimelineFilter> {
 
-    ObservableList<FilterModel<TimelineFilter>> getSubFilterModels();
+        ObservableList<FilterModel<SubFilterType>> getSubFilterModels();
 
 }

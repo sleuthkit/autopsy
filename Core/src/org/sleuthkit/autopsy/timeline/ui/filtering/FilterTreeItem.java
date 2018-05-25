@@ -22,10 +22,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterModelI;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
-import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  * A TreeItem for a filter.
@@ -42,11 +40,11 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
      *                     children of this FilterTreeItem
      * @param expansionMap
      */
-    public FilterTreeItem(FilterModel<TimelineFilter> filter, ObservableMap<FilterModel<TimelineFilter>, Boolean> expansionMap) {
+    public FilterTreeItem(FilterModel<?> filter, ObservableMap<FilterModel< ?>, Boolean> expansionMap) {
         super(filter);
 
         //listen to changes in the expansion map, and update expansion state of filter object
-        expansionMap.addListener((MapChangeListener.Change<? extends FilterModel<TimelineFilter>, ? extends Boolean> change) -> {
+        expansionMap.addListener((MapChangeListener.Change<? extends FilterModel<?>, ? extends Boolean> change) -> {
             if (change.getKey().equals(filter)) {
                 setExpanded(expansionMap.get(change.getKey()));
             }
@@ -60,17 +58,17 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
         expandedProperty().addListener(expandedProperty -> expansionMap.put(filter, isExpanded()));
 
         //if the filter is a compound filter, add its subfilters to the tree
-        if (filter.getFilter() instanceof CompoundFilter<?>) {
-            final CompoundFilter<?> compoundFilter = (CompoundFilter<?>) filter.getFilter();
+        if (filter instanceof CompoundFilterModelI<?>) {
+            final CompoundFilterModelI<?> compoundFilter = (CompoundFilterModelI<?>) filter;
 
             //add all sub filters
-            compoundFilter.getSubFilters().forEach((subFilter) -> this.addSubfilter(new DefaultFilterModel<>(subFilter), expansionMap));
+            compoundFilter.getSubFilterModels().forEach((subFilter) -> this.addSubfilter(subFilter, expansionMap));
             //listen to changes in sub filters and keep tree in sync
-            compoundFilter.getSubFilters().addListener((ListChangeListener.Change<? extends TimelineFilter> change) -> {
+            compoundFilter.getSubFilterModels().addListener((ListChangeListener.Change<? extends FilterModel<?>> change) -> {
                 while (change.next()) {
-                    for (TimelineFilter subFilter : change.getAddedSubList()) {
+                    for (FilterModel<?> subFilter : change.getAddedSubList()) {
                         setExpanded(true); //emphasize new filters by expanding parent to make sure they are visible
-                        addSubfilter(new DefaultFilterModel<>(subFilter), expansionMap);
+                        addSubfilter(subFilter, expansionMap);
                     }
                 }
             });
@@ -104,7 +102,7 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
         }
     }
 
-    private void addSubfilter(FilterModel<TimelineFilter> subFilter, ObservableMap<FilterModel<TimelineFilter>, Boolean> expansionMap) {
+    private void addSubfilter(FilterModel<?> subFilter, ObservableMap<FilterModel<?>, Boolean> expansionMap) {
         FilterTreeItem filterTreeItem = new FilterTreeItem(subFilter, expansionMap);
 
         //if a subfilter's selected property changes...

@@ -178,7 +178,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * filter with the existing root filter.
          */
         final RootFilterModel subClusterFilter = eventsModel.getFilterModel().copyOf();
-        subClusterFilter.getSubFilters().addAll(
+        subClusterFilter.getFilter().getSubFilters().addAll(
                 new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);

@@ -43,7 +43,6 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
@@ -66,13 +65,13 @@ final public class FilterSetPanel extends BorderPane {
     private Button defaultButton;
 
     @FXML
-    private TreeTableView< FilterModel<TimelineFilter>> filterTreeTable;
+    private TreeTableView<FilterModel<?  >> filterTreeTable;
 
     @FXML
-    private TreeTableColumn<FilterModel<  TimelineFilter>, FilterModel<TimelineFilter>> treeColumn;
+    private TreeTableColumn< FilterModel< ?>, FilterModel<?>> treeColumn;
 
     @FXML
-    private TreeTableColumn<FilterModel<TimelineFilter>, FilterModel<TimelineFilter>> legendColumn;
+    private TreeTableColumn<FilterModel<?>, FilterModel<?>> legendColumn;
 
     @FXML
     private ListView<FilterModel<DescriptionFilter>> hiddenDescriptionsListView;
@@ -88,7 +87,7 @@ final public class FilterSetPanel extends BorderPane {
      * map from filter to its expansion state in the ui, used to restore the
      * expansion state as we navigate back and forward in the history
      */
-    private final ObservableMap<FilterModel<TimelineFilter>, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap<  FilterModel<?>, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({
@@ -117,7 +116,7 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
         //type is the only filter expanded initialy
-        expansionMap.put(new DefaultFilterModel<>(controller.getEventsModel().getFilterModel().getTypeFilter()), true);
+        expansionMap.put(controller.getEventsModel().getFilterModel().getTypeFilterModel(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());
@@ -175,7 +174,7 @@ final public class FilterSetPanel extends BorderPane {
     }
 
     private ListCell<FilterModel<DescriptionFilter>> getNewDiscriptionFilterListCell() {
-        final ListCell<FilterModel<DescriptionFilter>> cell = new FilterCheckBoxCellFactory<FilterModel<DescriptionFilter>>().forList();
+        final ListCell<FilterModel<DescriptionFilter>> cell = new FilterCheckBoxCellFactory<  FilterModel<DescriptionFilter>>().forList();
         cell.itemProperty().addListener(itemProperty -> {
             if (cell.getItem() == null) {
                 cell.setContextMenu(null);

@@ -10,9 +10,9 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.filters.UnionFilter;
 
-public class UnionFilterModel extends CompoundFilterModel {
+public class UnionFilterModel<SubFilterType extends TimelineFilter> extends CompoundFilterModel<SubFilterType> {
 
-    public UnionFilterModel(UnionFilter<TimelineFilter> delegate) {
+    public UnionFilterModel(UnionFilter<SubFilterType> delegate) {
         super(delegate);
     }
 
