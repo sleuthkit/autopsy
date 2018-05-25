@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Cursor;
 import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -39,7 +38,6 @@ import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.Timer;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
