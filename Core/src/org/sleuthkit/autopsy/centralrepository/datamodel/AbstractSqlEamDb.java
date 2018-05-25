@@ -699,7 +699,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 sql.append("?,");
             }
             sql.deleteCharAt(sql.length() - 1);
-            sql.append(")GROUP BY value HAVING COUNT(*) > 1)  ORDER BY value");
+            sql.append(") GROUP BY value HAVING COUNT(*) > 1)");
 
             if (singleCase && correlationCase != null) {
                 sql.append(" AND ");
@@ -707,7 +707,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 sql.append(".case_id=?");
             }
             
-            sql.append("GROUP BY  value HAVING  COUNT(*) > 1");
+            sql.append(" ORDER BY value, case_name, file_path");
 
             try {
                 preparedStatement = conn.prepareStatement(sql.toString());
