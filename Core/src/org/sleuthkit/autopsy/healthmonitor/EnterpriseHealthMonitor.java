@@ -28,8 +28,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +40,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
+import java.util.Random;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,7 +48,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
@@ -64,8 +67,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static String MODULE_NAME = "EnterpriseHealthMonitor";
-    private final static String IS_ENABLED_KEY = "is_enabled";
     private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 0);
@@ -80,6 +81,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private final Map<String, TimingInfo> timingInfoMap;
     private static final int CONN_POOL_SIZE = 10;
     private BasicDataSource connectionPool = null;
+    private CaseDbConnectionInfo connectionSettingsInUse = null;
     private String hostName;
     
     private EnterpriseHealthMonitor() throws HealthMonitorException {
@@ -100,22 +102,11 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             logger.log(Level.SEVERE, "Unable to look up host name - falling back to UUID " + hostName, ex);
         }
         
-        // Read from module settings to determine if the module is enabled
-        if (ModuleSettings.settingExists(MODULE_NAME, IS_ENABLED_KEY)) {
-            if(ModuleSettings.getConfigSetting(MODULE_NAME, IS_ENABLED_KEY).equals("true")){
-                isEnabled.set(true);
-                try {
-                    activateMonitor();
-                } catch (HealthMonitorException ex) {
-                    // If we failed to activate it, then disable the monitor
-                    logger.log(Level.SEVERE, "Health monitor activation failed - disabling health monitor");
-                    setEnabled(false);
-                    throw ex;
-                }
-                return;
-            }
-        }
-        isEnabled.set(false);
+        // Read from the database to determine if the module is enabled
+        updateFromGlobalEnabledStatus();
+                
+        // Start the timer for database checks and writes
+        startTimer();
     }
     
     /**
@@ -137,9 +128,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * out of the maps, and sets up the timer for writing to the database.
      * @throws HealthMonitorException 
      */
-    private synchronized void activateMonitor() throws HealthMonitorException {
+    private synchronized void activateMonitorLocally() throws HealthMonitorException {
         
         logger.log(Level.INFO, "Activating Servies Health Monitor");
+        
+        // Make sure there are no left over connections to an old database
+        shutdownConnections();
         
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             throw new HealthMonitorException("Multi user mode is not enabled - can not activate health monitor");
@@ -168,9 +162,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         
         // Clear out any old data
         timingInfoMap.clear();
-        
-        // Start the timer for database writes
-        startTimer();
     }
     
     /**
@@ -180,15 +171,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * and shuts down the connection pool.
      * @throws HealthMonitorException 
      */
-    private synchronized void deactivateMonitor() throws HealthMonitorException {
+    private synchronized void deactivateMonitorLocally() throws HealthMonitorException {
         
         logger.log(Level.INFO, "Deactivating Servies Health Monitor");
-        
+      
         // Clear out the collected data
         timingInfoMap.clear();
-        
-        // Stop the timer
-        stopTimer();
         
         // Shut down the connection pool
         shutdownConnections();
@@ -202,7 +190,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         stopTimer();
         
         healthMonitorOutputTimer = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("health_monitor_timer").build());
-        healthMonitorOutputTimer.scheduleWithFixedDelay(new DatabaseWriteTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
+        healthMonitorOutputTimer.scheduleWithFixedDelay(new PeriodicHealthMonitorTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
     }
     
     /**
@@ -234,15 +222,18 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         }
         
         if(enabled) {
-            getInstance().activateMonitor();
+            getInstance().activateMonitorLocally();
             
-            // If activateMonitor fails, we won't update either of these
-            ModuleSettings.setConfigSetting(MODULE_NAME, IS_ENABLED_KEY, "true");
+            // If activateMonitor fails, we won't update this
+            getInstance().setGlobalEnabledStatusInDB(true);
             isEnabled.set(true);
         } else {
-            ModuleSettings.setConfigSetting(MODULE_NAME, IS_ENABLED_KEY, "false");
+            if(isEnabled.get()) {
+                // If we were enabled before, set the global state to disabled
+                getInstance().setGlobalEnabledStatusInDB(false);
+            }
             isEnabled.set(false);
-            getInstance().deactivateMonitor();
+            getInstance().deactivateMonitorLocally();
         }
     }
     
@@ -460,7 +451,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 String createCommand = "SELECT 1 AS result FROM pg_database WHERE datname='" + DATABASE_NAME + "'"; 
                 rs = statement.executeQuery(createCommand);
                 if(rs.next()) {
-                    logger.log(Level.INFO, "Existing Enterprise Health Monitor database found");
                     return true;
                 }
             } finally {
@@ -501,6 +491,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private void setupConnectionPool() throws HealthMonitorException {
         try {
             CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
+            connectionSettingsInUse = db;
         
             connectionPool = new BasicDataSource();
             connectionPool.setDriverClassName("org.postgresql.Driver");
@@ -599,6 +590,108 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Return whether the health monitor is locally enabled.
+     * This does not query the database.
+     * @return true if it is enabled, false otherwise
+     */
+    static boolean monitorIsEnabled() {
+        return isEnabled.get();
+    }
+    
+    /**
+     * Check whether monitoring should be enabled from the monitor database
+     * and enable/disable as needed.
+     * @throws HealthMonitorException 
+     */
+    synchronized void updateFromGlobalEnabledStatus() throws HealthMonitorException {
+        
+        boolean previouslyEnabled = monitorIsEnabled();
+        
+        // We can't even check the database if multi user settings aren't enabled.
+        if (!UserPreferences.getIsMultiUserModeEnabled()) {
+            isEnabled.set(false);
+
+            if(previouslyEnabled) {
+                deactivateMonitorLocally();
+            }
+            return;
+        }
+        
+        // If the health monitor database doesn't exist or if it is not initialized, 
+        // then monitoring isn't enabled
+        if ((! databaseExists()) || (! databaseIsInitialized())) {
+            isEnabled.set(false);
+            
+            if(previouslyEnabled) {
+                deactivateMonitorLocally();
+            }
+            return;
+        }
+        
+        // If we're currently enabled, check whether the multiuser settings have changed.
+        // If they have, force a reset on the connection pool.
+        if(previouslyEnabled && (connectionSettingsInUse != null)) {
+            try {
+                CaseDbConnectionInfo currentSettings = UserPreferences.getDatabaseConnectionInfo();
+                if(! (connectionSettingsInUse.getUserName().equals(currentSettings.getUserName())
+                        && connectionSettingsInUse.getPassword().equals(currentSettings.getPassword())
+                        && connectionSettingsInUse.getPort().equals(currentSettings.getPort())
+                        && connectionSettingsInUse.getHost().equals(currentSettings.getHost()) )) {
+                    shutdownConnections();
+                }
+            } catch (UserPreferencesException ex) {
+                throw new HealthMonitorException("Error reading database connection info", ex);
+            }
+        }
+        
+        boolean currentlyEnabled = getGlobalEnabledStatusFromDB();
+        if( currentlyEnabled != previouslyEnabled) {
+            if( ! currentlyEnabled ) {
+                isEnabled.set(false);
+                deactivateMonitorLocally();
+            } else {
+                isEnabled.set(true);
+                activateMonitorLocally();
+            }
+        }
+    }
+    
+    /**
+     * Read the enabled status from the database.
+     * Check that the health monitor database exists before calling this.
+     * @return true if the database is enabled, false otherwise
+     * @throws HealthMonitorException 
+     */
+    private boolean getGlobalEnabledStatusFromDB() throws HealthMonitorException {
+        
+        try (Connection conn = connect();
+             Statement statement = conn.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='MONITOR_ENABLED'")) {
+
+            if (resultSet.next()) {
+                return(resultSet.getBoolean("value"));
+            }
+            throw new HealthMonitorException("No enabled status found in database");
+        } catch (SQLException ex) {
+            throw new HealthMonitorException("Error initializing database", ex);
+        }
+    }
+    
+    /**
+     * Set the global enabled status in the database.
+     * @throws HealthMonitorException 
+     */
+    private void setGlobalEnabledStatusInDB(boolean status) throws HealthMonitorException {
+        
+        try (Connection conn = connect();
+             Statement statement = conn.createStatement();) {
+                statement.execute("UPDATE db_info SET value='" + status + "' WHERE name='MONITOR_ENABLED'");
+        } catch (SQLException ex) {
+            throw new HealthMonitorException("Error setting enabled status", ex);
+        }
+    }
+    
+    /**
      * Get the current schema version
      * @return the current schema version
      * @throws HealthMonitorException 
@@ -611,7 +704,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         ResultSet resultSet = null;
         
         try (Statement statement = conn.createStatement()) {
-                        int minorVersion = 0;
+            int minorVersion = 0;
             int majorVersion = 0;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
             if (resultSet.next()) {
@@ -688,6 +781,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            statement.execute("INSERT INTO db_info (name, value) VALUES ('MONITOR_ENABLED', 'true')");
             
             conn.commit();
         } catch (SQLException ex) {
@@ -708,20 +802,24 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     /**
      * The task called by the ScheduledThreadPoolExecutor to handle
-     * the database writes.
+     * the database checks/writes.
      */
-    static final class DatabaseWriteTask implements Runnable {
+    static final class PeriodicHealthMonitorTask implements Runnable {
 
         /**
-         * Write current metric data to the database
+         * Perform all periodic tasks:
+         * - Check if monitoring has been enabled / disabled in the database
+         * - Gather any additional metrics
+         * - Write current metric data to the database
          */
         @Override
         public void run() {
             try {
+                getInstance().updateFromGlobalEnabledStatus();
                 getInstance().gatherTimerBasedMetrics();
                 getInstance().writeCurrentStateToDatabase();
             } catch (HealthMonitorException ex) {
-                logger.log(Level.SEVERE, "Error writing current metrics to database", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
             }
         }
     }
@@ -734,9 +832,217 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             case CURRENT_CASE:
                 if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
                     // When a case is closed, write the current metrics to the database
-                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.DatabaseWriteTask());
+                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.PeriodicHealthMonitorTask());
                 }
                 break;
+        }
+    }
+    
+    /**
+     * Debugging method to generate sample data for the database.
+     * It will delete all current timing data and replace it with randomly generated values.
+     * If there is more than one node, the second node's times will trend upwards.
+     */
+    void populateDatabaseWithSampleData(int nDays, int nNodes, boolean createVerificationData) throws HealthMonitorException {
+        
+        if(! isEnabled.get()) {
+            throw new HealthMonitorException("Can't populate database - monitor not enabled");
+        }
+        
+        // Get the database lock
+        CoordinationService.Lock lock = getSharedDbLock();
+        if(lock == null) {
+            throw new HealthMonitorException("Error getting database lock");
+        }
+        
+        String[] metricNames = {"Disk Reads: Hash calculation", "Database: getImages query", "Solr: Index chunk", "Solr: Connectivity check"}; // NON-NLS 
+        
+        Random rand = new Random();
+        
+        long maxTimestamp = System.currentTimeMillis();
+        long millisPerHour = 1000 * 60 * 60;
+        long minTimestamp = maxTimestamp - (nDays * (millisPerHour * 24));
+        
+        Connection conn = null;
+        try {
+            conn = connect();
+            if(conn == null) {
+                throw new HealthMonitorException("Error getting database connection");
+            }
+            
+            try (Statement statement = conn.createStatement()) {
+
+                statement.execute("DELETE FROM timing_data"); // NON-NLS
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error clearing timing data", ex);
+                return;
+            }
+            
+            
+
+            // Add timing metrics to the database
+            String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
+
+                for(String metricName:metricNames) {
+
+                    long baseIndex = rand.nextInt(900) + 100;
+                    int multiplier = rand.nextInt(5);
+                    long minIndexTimeNanos;
+                    switch(multiplier) {
+                        case 0:
+                            minIndexTimeNanos = baseIndex;
+                            break;
+                        case 1:
+                            minIndexTimeNanos = baseIndex * 1000;
+                            break;
+                        default:
+                            minIndexTimeNanos = baseIndex * 1000 * 1000;
+                            break;
+                    }
+
+                    long maxIndexTimeOverMin = minIndexTimeNanos * 3;
+                    
+                    for(int node = 0;node < nNodes; node++) {
+                
+                        String host = "testHost" + node; // NON-NLS
+                        
+                        double count = 0;
+                        double maxCount = nDays * 24 + 1;
+                        
+                        // Record data every hour, with a small amount of randomness about when it starts
+                        for(long timestamp = minTimestamp + rand.nextInt(1000 * 60 * 55);timestamp < maxTimestamp;timestamp += millisPerHour) {
+
+                            double aveTime;
+
+                            // This creates data that increases in the last couple of days of the simulated
+                            // collection
+                            count++;
+                            double slowNodeMultiplier = 1.0;
+                            if((maxCount - count) <= 3 * 24) {
+                                slowNodeMultiplier += (3 - (maxCount - count) / 24) * 0.33;
+                            }
+
+                            if( ! createVerificationData ) {
+                                // Try to make a reasonable sample data set, with most points in a small range
+                                // but some higher and lower
+                                int outlierVal = rand.nextInt(30);
+                                long randVal = rand.nextLong();
+                                if(randVal < 0) {
+                                    randVal *= -1;
+                                }
+                                if(outlierVal < 2){
+                                    aveTime = minIndexTimeNanos + maxIndexTimeOverMin + randVal % maxIndexTimeOverMin;
+                                } else if(outlierVal == 2){
+                                    aveTime = (minIndexTimeNanos / 2) + randVal % (minIndexTimeNanos / 2);
+                                } else if(outlierVal < 17) {
+                                    aveTime = minIndexTimeNanos + randVal % (maxIndexTimeOverMin / 2);
+                                } else {
+                                    aveTime = minIndexTimeNanos + randVal % maxIndexTimeOverMin;
+                                }
+                                
+                                if(node == 1) {
+                                    aveTime = aveTime * slowNodeMultiplier;
+                                }
+                            } else {
+                                // Create a data set strictly for testing that the display is working
+                                // correctly. The average time will equal the day of the month from
+                                // the timestamp (in milliseconds)
+                                Calendar thisDate = new GregorianCalendar();
+                                thisDate.setTimeInMillis(timestamp);
+                                int day = thisDate.get(Calendar.DAY_OF_MONTH);
+                                aveTime = day * 1000000;
+                            }
+                        
+                        
+                            statement.setString(1, metricName);
+                            statement.setString(2, host);
+                            statement.setLong(3, timestamp);
+                            statement.setLong(4, 0);
+                            statement.setDouble(5, aveTime / 1000000);
+                            statement.setDouble(6, 0);
+                            statement.setDouble(7, 0);
+
+                            statement.execute();
+                        }
+                    }
+                }
+            } catch (SQLException ex) {
+                throw new HealthMonitorException("Error saving metric data to database", ex);
+            }
+        } finally {
+            try {
+                if(conn != null) {
+                        conn.close();
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error closing Connection.", ex);
+            }
+            try {
+                lock.release();
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                throw new HealthMonitorException("Error releasing database lock", ex);
+            }
+        }
+    }
+    
+    /**
+     * Get timing metrics currently stored in the database.
+     * @param timeRange Maximum age for returned metrics (in milliseconds)
+     * @return A map with metric name mapped to a list of data
+     * @throws HealthMonitorException 
+     */
+    Map<String, List<DatabaseTimingResult>> getTimingMetricsFromDatabase(long timeRange) throws HealthMonitorException {
+        
+        // Make sure the monitor is enabled. It could theoretically get disabled after this
+        // check but it doesn't seem worth holding a lock to ensure that it doesn't since that
+        // may slow down ingest.
+        if(! isEnabled.get()) {
+            throw new HealthMonitorException("Health Monitor is not enabled");
+        }
+        
+        // Calculate the smallest timestamp we should return
+        long minimumTimestamp = System.currentTimeMillis() - timeRange;
+
+        try (CoordinationService.Lock lock = getSharedDbLock()) {
+            if(lock == null) {
+                throw new HealthMonitorException("Error getting database lock");
+            }
+            
+            Connection conn = connect();
+            if(conn == null) {
+                throw new HealthMonitorException("Error getting database connection");
+            }    
+
+            Map<String, List<DatabaseTimingResult>> resultMap = new HashMap<>();
+
+            try (Statement statement = conn.createStatement();
+                 ResultSet resultSet = statement.executeQuery("SELECT * FROM timing_data WHERE timestamp > " + minimumTimestamp)) {
+                
+                while (resultSet.next()) {
+                    String name = resultSet.getString("name");
+                    DatabaseTimingResult timingResult = new DatabaseTimingResult(resultSet);
+
+                    if(resultMap.containsKey(name)) {
+                        resultMap.get(name).add(timingResult);
+                    } else {
+                        List<DatabaseTimingResult> resultList = new ArrayList<>();
+                        resultList.add(timingResult);
+                        resultMap.put(name, resultList);
+                    }
+                }
+                return resultMap;
+            } catch (SQLException ex) {
+                throw new HealthMonitorException("Error reading timing metrics from database", ex);
+            } finally {
+                try {
+                    conn.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing Connection.", ex);
+                }
+            }
+        } catch (CoordinationService.CoordinationServiceException ex) {
+            throw new HealthMonitorException("Error getting database lock", ex);
         }
     }
     
@@ -854,6 +1160,76 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
          */
         long getCount() {
             return count;
+        }
+    }
+    
+    /**
+     * Class for retrieving timing metrics from the database to display to the user.
+     * All times will be in milliseconds.
+     */
+    static class DatabaseTimingResult {
+        private final long timestamp; // Time the metric was recorded
+        private final String hostname; // Host that recorded the metric
+        private final long count; // Number of metrics collected
+        private final double average;   // Average of the durations collected (milliseconds)
+        private final double max;   // Maximum value found (milliseconds)
+        private final double min;   // Minimum value found (milliseconds)
+
+        DatabaseTimingResult(ResultSet resultSet) throws SQLException {
+            this.timestamp = resultSet.getLong("timestamp");
+            this.hostname = resultSet.getString("host");
+            this.count = resultSet.getLong("count");
+            this.average = resultSet.getDouble("average");
+            this.max = resultSet.getDouble("max");
+            this.min = resultSet.getDouble("min");
+        }
+ 
+        /**
+         * Get the timestamp for when the metric was recorded
+         * @return 
+         */
+        long getTimestamp() {
+            return timestamp;
+        }
+        
+        /**
+         * Get the average duration
+         * @return average duration (milliseconds)
+         */
+        double getAverage() {
+            return average;
+        }
+        
+        /**
+         * Get the maximum duration
+         * @return maximum duration (milliseconds)
+         */
+        double getMax() {
+            return max;
+        }
+        
+        /**
+         * Get the minimum duration
+         * @return minimum duration (milliseconds)
+         */
+        double getMin() {
+            return min;
+        }
+        
+        /**
+         * Get the total number of metrics collected
+         * @return number of metrics collected
+         */
+        long getCount() {
+            return count;
+        }        
+        
+        /**
+         * Get the name of the host that recorded this metric
+         * @return the host
+         */
+        String getHostName() {
+            return hostname;
         }
     }
 }

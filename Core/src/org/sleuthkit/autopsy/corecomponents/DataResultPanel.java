@@ -734,7 +734,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *
      * @return True or false.
      *
-     * @Deprecated This method has no valid use case.
+     * @deprecated This method has no valid use case.
      */
     @Deprecated
     @Override
