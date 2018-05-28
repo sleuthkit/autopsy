@@ -43,12 +43,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TimeUtilities;
 
 /**
  * Data source ingest module that runs plaso against the image 
@@ -69,6 +72,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String HASHERS = "--hashers";
     private static final String NONE = "none";
     private static final String ALL = "all";
+    private static final String TIME_ZONE_PARM = "-z";
     private IngestJobContext context;
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
@@ -90,11 +94,16 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_bad_imageFile=Cannot find image file name and path",
         "PlasoIngestModule_log2timeline_executable_not_found=Log2timeline Executable Not Found",
         "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found",
-        "PlasoIngestModule_dataSource_not_an_image=Datasource is not an Image."
+        "PlasoIngestModule_dataSource_not_an_image=Datasource is not an Image.",
+        "PlasoIngestModule_running_log2timeline=Running Log2timeline",
+        "PlasoIngestModule_running_psort=Running Psort",
+        "PlasoIngestModule_completed=Plaso Processing Completed",
+        "PlasoIngestModule_has_run=Plaso Plugin has been run.",
     })
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+        statusHelper.switchToIndeterminate();
         Image img;
         if (dataSource instanceof Image) {
            img = (Image) dataSource;
@@ -116,26 +125,30 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
             return ProcessResult.ERROR;
         }
-        
-        String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO).toString();
+        String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis()/1000);
+        currentTime = currentTime.replaceAll(":", "-");
+        String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime).toString();
+//        String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
             directory.mkdirs();   
         }
 
         String[] imgFile = img.getPaths();
-        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(log2TimeLineExecutable, moduleOutputPath, imgFile[0]);
+        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(log2TimeLineExecutable, moduleOutputPath, imgFile[0], img.getTimeZone());
         ProcessBuilder psortCommand = buildPsortCommand(psortExecutable, moduleOutputPath);
 
         logger.log(Level.INFO, Bundle.PlasoIngestModule_startUp_message()); //NON-NLS
 
         try {
+            statusHelper.progress(Bundle.PlasoIngestModule_running_log2timeline());
             ExecUtil.execute(log2TimeLineCommand, new DataSourceIngestModuleProcessTerminator(context));
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_log2timeline_cancelled()); //NON-NLS
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_log2timeline_cancelled());
                 return ProcessResult.OK;
             }
+            statusHelper.progress(Bundle.PlasoIngestModule_running_psort());
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_psort_cancelled()); //NON-NLS
@@ -143,7 +156,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 return ProcessResult.OK;
             }
             String plasoDb = moduleOutputPath + File.separator + "plasodb.db3";
-            createPlasoArtifacts(plasoDb);
+            createPlasoArtifacts(plasoDb, statusHelper);
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_error_running(), ex);
@@ -151,15 +164,19 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             return ProcessResult.ERROR;
         }
  
+        IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA, Bundle.PlasoIngestModule_has_run(), Bundle.PlasoIngestModule_completed() );
+        IngestServices.getInstance().postMessage(message);
         return ProcessResult.OK;
     }
     
-    private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName) {
+    private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName, String timeZone) {
        
         List<String> commandLine = new ArrayList<>();
         commandLine.add("\"" + log2TimeLineExecutable + "\""); //NON-NLS
         commandLine.add(VSS_OPTIONS); //NON-NLS
         commandLine.add(ALL); //NON-NLS
+        commandLine.add(TIME_ZONE_PARM);
+        commandLine.add(timeZone);
         commandLine.add(PARTITIONS);
         commandLine.add(ALL);
         commandLine.add(HASHER_FILE_SIZE_LIMIT);
@@ -235,7 +252,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_error_posting_artifact=Error Posting Artifact  ",
         "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation "
     })
-    private void createPlasoArtifacts(String plasoDb) {
+    private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         org.sleuthkit.datamodel.Blackboard blackboard;
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
         blackboard = sleuthkitCase.getBlackboard();
@@ -251,23 +268,29 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
                     return;
                 }
+                statusHelper.progress(resultSet.getString("filename"));
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Bundle.PlasoIngestModule_event_datetime(), resultSet.getLong("TSK_DATETIME")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, Bundle.PlasoIngestModule_event_description(), resultSet.getString("TSK_DESCRIPTION")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EVENT_TYPE, "PLASO", EventType.CUSTOM_TYPES.getTypeID()));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", EventType.CUSTOM_TYPES.getTypeID()));
                 AbstractFile resolvedFile = getAbstractFile(resultSet.getString("filename"));
-                try {
-                    BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EVENT);
-                    if (bbart != null) {
-                        bbart.addAttributes(bbattributes);
-                        try {
-                            blackboard.postArtifact(bbart);
-                        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
-                            logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+                if (resolvedFile == null) {
+                    logger.log(Level.INFO, "******** File Will Be Skipped ***********");
+                    continue;
+                } else {
+                    try {
+                        BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
+                        if (bbart != null) {
+                            bbart.addAttributes(bbattributes);
+                            try {
+                                blackboard.postArtifact(bbart);
+                            } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+                                logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+                            }
                         }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                 }
             }
             resultSet.close();
@@ -289,6 +312,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         filePath = filePath.toLowerCase() + "/";
         try {
             abstractFiles= fileManager.findFiles(fileName.toLowerCase(), filePath);
+            if (abstractFiles.size() == 1) {
+                return abstractFiles.get(0);
+            }
             for (AbstractFile resolvedFile : abstractFiles) {
                 if (filePath.matches(resolvedFile.getParentPath().toLowerCase())) {
                     return resolvedFile;
