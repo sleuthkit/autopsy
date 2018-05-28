@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.sql.SQLException;
 import java.util.Map;
 import static junit.framework.Assert.assertEquals;
 import junit.framework.Test;
@@ -27,14 +26,12 @@ import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
 import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.SET1;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSourceIdByName;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Test that cases which are created but have not run any ingest modules turn up

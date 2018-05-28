@@ -94,10 +94,10 @@ class IntraCaseUtils {
     private final String caseName;
     
     IntraCaseUtils(NbTestCase nbTestCase, String caseName){
-        imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image1_v1.vhd");
-        imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image2_v1.vhd");
-        imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image3_v1.vhd");
-        imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image4_v1.vhd");
+        this.imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), SET1);
+        this.imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
+        this.imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);
+        this.imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), SET4);
         
         this.dataSourceLoader = new DataSourceLoader();
         
