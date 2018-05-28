@@ -76,7 +76,7 @@ public class IngestedWithNoFileTypes extends NbTestCase {
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(hashLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileType.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithNoFileTypes.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);

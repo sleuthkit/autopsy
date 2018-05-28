@@ -19,19 +19,30 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Map;
 import org.netbeans.junit.NbTestCase;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
+import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 
 /**
  * Utilities for testing intercase correlation feature.
@@ -69,10 +80,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  *      - Hash-C.pdf
  *      - Hash.D-doc
  */
-public class InterCaseUtils {
+class InterCaseUtils {
     
     private static final String CASE_NAME = "InterCaseCommonFilesSearchTest";
-    static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
+    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
+    private static final String CR_DB_NAME = "testcentralrepo.db";
 
     static final String CASE1 = "Case1";
     static final String CASE2 = "Case2";
@@ -103,10 +115,13 @@ public class InterCaseUtils {
     static final String CASE3_DATASET_1 = "c3ds1.vhd";
     static final String CASE3_DATASET_2 = "c3ds2.vhd";
     
-    private final DataSourceLoader dataSourceLoader;
     private final ImageDSProcessor imageDSProcessor;
+        
+    private final IngestJobSettings hashAndFileType;
+    private final IngestJobSettings hashAndNoFileType;
+    private DataSourceLoader dataSourceLoader;
     
-    private Case caseReference;
+    
     
     InterCaseUtils(NbTestCase testCase){
         
@@ -117,33 +132,93 @@ public class InterCaseUtils {
         this.case3DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_1);
         this.case3DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_2);
         
-        this.dataSourceLoader = new DataSourceLoader();
         this.imageDSProcessor = new ImageDSProcessor();
+        
+        final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
+        
+        ArrayList<IngestModuleTemplate> hashAndMimeTemplate = new ArrayList<>(2);
+        hashAndMimeTemplate.add(hashLookupTemplate);
+        hashAndMimeTemplate.add(mimeTypeLookupTemplate);
+        
+        this.hashAndFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
+        
+        ArrayList<IngestModuleTemplate> hashAndNoMimeTemplate = new ArrayList<>(1);
+        hashAndNoMimeTemplate.add(hashLookupTemplate);
+        
+        this.hashAndNoFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
+        
+        this.dataSourceLoader = new DataSourceLoader();
+    }
+        
+    Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException{
+        return this.dataSourceLoader.getDataSourceMap();
+    }
+        
+    IngestJobSettings getIngestSettingsForHashAndFileType(){
+        return this.hashAndFileType;
     }
     
-    void enableCentralRepo(){
+    IngestJobSettings getIngestSettingsForHashAndNoFileType(){
+        return this.hashAndNoFileType;
+    }
+    
+    void enableCentralRepo() throws EamDbException{
+        
+        SqliteEamDbSettings crSettings = new SqliteEamDbSettings();
+        crSettings.setDbName(CR_DB_NAME);
+        crSettings.setDbDirectory(CASE_DIRECTORY_PATH.toString());
+        if(!crSettings.dbDirectoryExists()){
+            crSettings.createDbDirectory();
+        }
+        
         EamDbUtil.setUseCentralRepo(true);
         EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
         EamDbPlatformEnum.saveSelectedPlatform();
     }
     
     /**
-     * Create a case and ingest each with the given settings.  Null settings
+     * Create 3 cases and ingest each with the given settings.  Null settings
      * are permitted but IngestUtils will not be run.
      * 
      * @param ingestJobSettings HashLookup FileType etc...
+     * @param caseReferenceToStore 
      */
-    void createCases(IngestJobSettings ingestJobSettings){
+    Case createCases(IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException{
         
-        try {
-            this.createCase(CASE1, ingestJobSettings, false, new Path[]{});
-            this.createCase(CASE2, ingestJobSettings, false, new Path[]{});
-            this.createCase(CASE3, ingestJobSettings, false, new Path[]{});
-            this.caseReference = this.createCase(CASE4, ingestJobSettings, true, new Path[]{});
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
-            //TODO fail test
-        }        
+        Case currentCase = null;
+        
+        String[] cases = new String[]{
+            CASE1, 
+            CASE2, 
+            CASE3};
+        
+        Path[][] paths = {
+            {this.case1DataSet1Path, this.case1DataSet2Path},
+            {this.case2DataSet1Path, this.case2DataSet2Path},
+            {this.case3DataSet1Path, this.case3DataSet2Path}};
+
+        //iterate over the collecitons above, creating cases, and storing
+        //  just one of them for future reference
+        for(int i = 0; i >= cases.length; i++){
+            String caseName = cases[i];
+            Path[] pathsForCase = paths[i];
+
+            if(caseName.equals(caseReferenceToStore)){
+                //hang onto this caes and dont close it
+                currentCase = this.createCase(caseName, ingestJobSettings, true, pathsForCase);
+            } else {
+                //dont hang onto this case; close it
+                this.createCase(caseName, ingestJobSettings, false, pathsForCase);
+            }
+        }
+        
+        if(currentCase == null) {
+            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of: CASE1, CASE2, CASE3"));
+            return null;
+        } else {
+            return currentCase;
+        }
     }
     
     private Case createCase(String caseName, IngestJobSettings ingestJobSettings, boolean keepAlive, Path... dataSetPaths) throws TskCoreException{
@@ -164,22 +239,12 @@ public class InterCaseUtils {
     }
     
     /**
-     * TODO some more cool verbiage
-     * Could be null if createCases has not yet been run.
-     * @return 
+     * Close the currently open case, delete the case directory,
+     * delete the central repo db.
      */
-    Case getCaseReference() throws Exception{
-        if(this.caseReference == null){
-            throw new Exception("Must run createCases(...) first.");
-        } else {
-            return this.caseReference;
-        }
-    }
-    
-    void tearDown(){
-        //close cases
-        //delete case dirs
-        //delete central repo db
+    void tearDown() throws IOException{
+        CaseUtils.closeCurrentCase(false);
+        CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
     }
     
 }

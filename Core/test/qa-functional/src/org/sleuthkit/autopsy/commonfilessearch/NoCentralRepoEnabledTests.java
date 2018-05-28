@@ -19,9 +19,14 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.io.IOException;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
+import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  *
@@ -31,23 +36,45 @@ import org.netbeans.junit.NbTestCase;
  * 2: No matches If I only search in the current case (existing mode), allowing
  * all data sources: One node for Hash C (3_1_C.jpg, 3_2_C.jpg)
  *
- * @author bsweeney
  */
-public class InterCaseTests extends NbTestCase {
+public class NoCentralRepoEnabledTests extends NbTestCase {
 
+    private final InterCaseUtils utils;
+    private Case currentCase;
+    
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(InterCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    public InterCaseTests(String name) {
+    public NoCentralRepoEnabledTests(String name) {
         super(name);
+        this.utils = new InterCaseUtils(this);
     }
     
     @Override
     public void setUp(){
+        try {
+            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+    
+    @Override
+    public void tearDown(){
+        try {
+            this.utils.tearDown();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
+    
+    void testOne(){
         
     }
 
