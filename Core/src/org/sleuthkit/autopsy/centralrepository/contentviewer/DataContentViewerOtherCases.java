@@ -44,6 +44,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -64,6 +65,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -114,14 +116,18 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
                 } else if (jmi.equals(addCommentMenuItem)) {
-                    int selectedRow = otherCasesTable.getSelectedRow();
-                    CorrelationAttribute row = (CorrelationAttribute) tableModel.getRow(selectedRow);
-                    String contentPath = (String) tableModel.getValueAt(
-                            selectedRow, DataContentViewerOtherCasesTableModel.TableColumns.FILE_PATH.ordinal());
-                    String comment = (String) tableModel.getValueAt(
-                            selectedRow, DataContentViewerOtherCasesTableModel.TableColumns.COMMENT.ordinal());
-                    CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(contentPath, comment, row);
-                    centralRepoCommentDialog.display();
+                    final CorrelationAttribute correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
+                    String comment;
+                    try {
+                        comment = EamDb.getInstance().getAttributeInstanceComment(
+                                correlationAttribute.getCorrelationType(), correlationAttribute.getCorrelationValue());
+                        correlationAttribute.getInstances().get(0).setComment(comment);
+                        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
+                        centralRepoCommentDialog.display();
+                    } catch (EamDbException ex) {
+                        //DLG:
+                        Exceptions.printStackTrace(ex);
+                    }
                 }
             }
         };
@@ -782,9 +788,12 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }// </editor-fold>//GEN-END:initComponents
 
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
-        addCommentMenuItem.setVisible(otherCasesTable.getSelectedRowCount() == 1);
+        if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
+            addCommentMenuItem.setVisible(true);
+        } else {
+            addCommentMenuItem.setVisible(false);
+        }
     }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser CSVFileChooser;

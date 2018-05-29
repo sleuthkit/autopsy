@@ -48,6 +48,8 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
@@ -243,6 +245,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
             actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+        }
+        
+        //DLG: Insert comment here!
+        if (EamDbUtil.useCentralRepo()) {
+            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
 
         return actionsList.toArray(new Action[actionsList.size()]);

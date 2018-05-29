@@ -20,6 +20,7 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
     private CorrelationAttribute correlationAttribute;
 
     /**
+     * //DLG:
      * Creates new form NewJDialog
      */
     /*public CentralRepoCommentDialog(java.awt.Frame parent, boolean modal) {
@@ -27,11 +28,13 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
         initComponents();
     }*/
     
-    public CentralRepoCommentDialog(String contentPath, String comment, CorrelationAttribute correlationAttribute) {
+    public CentralRepoCommentDialog(CorrelationAttribute correlationAttribute) {
         initComponents();
         
-        pathLabel.setText(contentPath);
-        commentTextArea.setText(comment);
+        CorrelationAttributeInstance instance = correlationAttribute.getInstances().get(0);
+        
+        pathLabel.setText(instance.getFilePath());
+        commentTextArea.setText(instance.getComment());
         
         this.correlationAttribute = correlationAttribute;
     }

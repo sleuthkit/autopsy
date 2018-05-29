@@ -316,6 +316,15 @@ public interface EamDb {
      * @throws EamDbException 
      */
     void setAttributeInstanceComment(CorrelationAttribute eamArtifact, String comment) throws EamDbException;
+    
+    /**
+     * //DLG:
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return Number of matching eamArtifacts
+     */
+    String getAttributeInstanceComment(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact

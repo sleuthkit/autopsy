@@ -1181,6 +1181,51 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * //DLG:
+     * @param aType
+     * @param value
+     * @return
+     * @throws EamDbException 
+     */
+    @Override
+    public String getAttributeInstanceComment(CorrelationAttribute.Type attributeType, String value) throws EamDbException {
+        if(attributeType == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+        
+        Connection conn = connect();
+
+        String instanceComment = null;
+
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT comment FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE value=?");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setString(1, value);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                instanceComment = resultSet.getString(1);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return instanceComment;
+    }
+
+    /**
      * Sets an eamArtifact instance to the given knownStatus. 
      * knownStatus should be BAD if the file has been tagged with a notable tag and
      * UNKNOWN otherwise. If eamArtifact
