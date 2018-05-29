@@ -274,7 +274,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      */
 
     @NbBundle.Messages({"SQLiteViewer.csvExport.fileName.empty=Please input a file name for exporting.",
-                        "SQLiteViewer.csvExport.title=Export to csv file"})
+                        "SQLiteViewer.csvExport.title=Export to csv file",
+                        "SQLiteViewer.csvExport.confirm.msg=Do you want to overwrite the existing file?"})
     private void exportCsvButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCsvButtonActionPerformed
         Case openCase = Case.getCurrentCase();
         File caseDirectory = new File(openCase.getExportDirectory());        
@@ -284,11 +285,12 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         //Set a filter to let the filechooser only work for csv files
         FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("*.csv", "csv");
         fileChooser.addChoosableFileFilter(csvFilter);
-        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(csvFilter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        int choice = fileChooser.showDialog((Component) evt.getSource(), "File"); //TODO
+        int choice = fileChooser.showSaveDialog((Component) evt.getSource()); //TODO
         if (JFileChooser.APPROVE_OPTION == choice) {
+            boolean overwrite = false;
             File file = fileChooser.getSelectedFile();
             if (file == null) {
                 JOptionPane.showMessageDialog(this,
@@ -296,9 +298,18 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         Bundle.SQLiteViewer_csvExport_title(), 
                         JOptionPane.WARNING_MESSAGE);
                 return;
-            } 
+            } else if (file.exists() && FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("csv")) {
+                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
+                        Bundle.SQLiteViewer_csvExport_confirm_msg(), 
+                        Bundle.SQLiteViewer_csvExport_title(), 
+                        JOptionPane.YES_NO_OPTION)) {
+                    overwrite = true;
+                } else {
+                    return;
+                }            
+            }
          
-            exportTableToCsv(file);
+            exportTableToCsv(file, overwrite);
         }
     }//GEN-LAST:event_exportCsvButtonActionPerformed
 
@@ -489,9 +500,11 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             prevPageButton.setEnabled(false);
 
             if (numRows > 0) {
+                exportCsvButton.setEnabled(true);
                 nextPageButton.setEnabled(((numRows > ROWS_PER_PAGE)));
                 readTable(tableName, (currPage - 1) * ROWS_PER_PAGE + 1, ROWS_PER_PAGE);
             } else {
+                exportCsvButton.setEnabled(false);
                 nextPageButton.setEnabled(false);
                 selectedTableView.setupTable(Collections.emptyList());
             }
@@ -550,11 +563,10 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }
     
     @NbBundle.Messages({"SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.",
-                        "SQLiteViewer.exportTableToCsv.emptyTable=Table is empty.",
                         "SQLiteViewer.exportTableToCsv.FileName=File name: ",
                         "SQLiteViewer.exportTableToCsv.TableName=Table name: "
     })
-    private void exportTableToCsv(File file) {
+    private void exportTableToCsv(File file, boolean overwrite) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         String csvFileSuffix = "_" + tableName + "_" + TimeStampUtils.createTimeStamp() + ".csv";
         try (
@@ -564,11 +576,12 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
                 logger.log(Level.INFO, String.format("The table %s is empty. (objId=%d)", tableName, sqliteDbFile.getId())); //NON-NLS
-                MessageNotifyUtil.Message.info(Bundle.SQLiteViewer_exportTableToCsv_emptyTable());
             } else {
                 String fileName = file.getName();
                 File csvFile;
-                if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
+                if (overwrite) {
+                    csvFile = file;
+                } else if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
                     csvFile = new File(file.getParentFile(), FilenameUtils.removeExtension(fileName) + csvFileSuffix);                    
                 } else {
                     csvFile = new File(file.toString() + csvFileSuffix);
