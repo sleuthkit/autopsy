@@ -128,7 +128,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis()/1000);
         currentTime = currentTime.replaceAll(":", "-");
         String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime).toString();
-//        String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
             directory.mkdirs();   
@@ -250,15 +249,17 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_exception_adding_artifact=Exception Adding Artifact",
         "PlasoIngestModule_exception_database_error=Error while trying to read into a sqlite db.",
         "PlasoIngestModule_error_posting_artifact=Error Posting Artifact  ",
-        "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation "
+        "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation ",
+        "PlasoIngestModule_abstract_file_not_found=\"******** File Will Be Skipped Not found in Image ***********\"",
+        "PlasoIngestModule_filename_not_found=File name is ==>  "
     })
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         org.sleuthkit.datamodel.Blackboard blackboard;
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
         blackboard = sleuthkitCase.getBlackboard();
         String connectionString = "jdbc:sqlite:" + plasoDb; //NON-NLS
-        String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'TSK_DATETIME', description 'TSK_DESCRIPTION' \n" +
-                              "  from log2timeline where source not in ('FILE', 'REG');";
+        String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'TSK_DATETIME', description 'TSK_DESCRIPTION', source, type, sourcetype \n" +
+                              "  from log2timeline where source not in ('FILE') and sourcetype not in ('UNKNOWN');";
         try {
             SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
             ResultSet resultSet = tempdbconnect.executeQry(sqlStatement);
@@ -272,11 +273,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Bundle.PlasoIngestModule_event_datetime(), resultSet.getLong("TSK_DATETIME")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, Bundle.PlasoIngestModule_event_description(), resultSet.getString("TSK_DESCRIPTION")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", EventType.CUSTOM_TYPES.getTypeID()));
+                long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("TSK_DESCRIPTION"), resultSet.getString("sourcetype")); 
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", eventType));
                 AbstractFile resolvedFile = getAbstractFile(resultSet.getString("filename"));
                 if (resolvedFile == null) {
-                    logger.log(Level.INFO, "******** File Will Be Skipped ***********");
-                    continue;
+                    logger.log(Level.INFO, Bundle.PlasoIngestModule_abstract_file_not_found());
+                    logger.log(Level.INFO, Bundle.PlasoIngestModule_filename_not_found() + resultSet.getString("filename"));
                 } else {
                     try {
                         BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
@@ -324,5 +326,25 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             logger.log(Level.WARNING, Bundle.PlasoIngestModule_exception_find_file(), ex);
         }
         return null;
+    }
+    
+    private long findEventSubtype (String plasoSource, String fileName, String plasoType, String plasoDescription, String sourceType) {
+        
+        if (plasoSource.matches("WEBHIST")) {
+            if (fileName.toLowerCase().contains("cookie") || plasoType.toLowerCase().contains("cookie") || plasoDescription.toLowerCase().contains("cookie")) {
+               return EventType.WEB_COOKIE.getTypeID();
+            }
+            return EventType.WEB_HISTORY.getTypeID();
+        }
+        if (plasoSource.matches("EVT") || plasoSource.matches("LOG")) {
+            return EventType.LOG_ENTRY.getTypeID();
+        }
+        if (plasoSource.matches("REG")) {
+            if (sourceType.toLowerCase().matches("unknown : usb entries") || sourceType.toLowerCase().matches("unknown : usbstor entries")) {
+             return EventType.DEVICES_ATTACHED.getTypeID();
+            }
+            return EventType.REGISTRY.getTypeID();
+        }
+        return EventType.CUSTOM_TYPES.getTypeID();
     }
 }
