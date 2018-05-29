@@ -359,6 +359,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected Map<Integer, String> doInBackground() throws Exception {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
+                dataSources.remove(EamDb.getInstance().getCase(Case.getCurrentCase()));
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
 
                 return caseMap;
