@@ -35,6 +35,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
@@ -356,7 +357,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected Map<Integer, String> doInBackground() throws Exception {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
-
+                dataSources.remove(EamDb.getInstance().getCase(Case.getCurrentCase()));
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
 
                 return caseMap;
