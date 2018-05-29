@@ -343,11 +343,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 }
             }
 
-            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) {
+            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws Exception {
                 Map<Integer, String> casemap = new HashMap<>();
-
+                CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
-                    casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
+                    if(currentCorCase.getID() != correlationCase.getID()) { // if not the current Case
+                        casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
+                    }
                 }
 
                 return casemap;
@@ -357,7 +359,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected Map<Integer, String> doInBackground() throws Exception {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
-                dataSources.remove(EamDb.getInstance().getCase(Case.getCurrentCase()));
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
 
                 return caseMap;
