@@ -190,6 +190,11 @@ class InterCaseUtils {
         if (!crSettings.dbDirectoryExists()) {
             crSettings.createDbDirectory();
         }
+        
+        crSettings.initializeDatabaseSchema();
+        crSettings.insertDefaultDatabaseContent();
+
+        crSettings.saveSettings();
 
         EamDbUtil.setUseCentralRepo(true);
         EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
