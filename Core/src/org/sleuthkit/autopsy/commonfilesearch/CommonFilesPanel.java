@@ -194,6 +194,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected void done() {
                 try {
                     super.done();
+                    progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgress2());
+                    CommonFilesMetadata metadata = get();
 
                     CommonFilesMetadata metadata = get();
 
