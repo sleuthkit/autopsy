@@ -74,10 +74,10 @@ class IntraCaseUtils {
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
 
-    final Path imagePath1;
-    final Path imagePath2;
-    final Path imagePath3;
-    final Path imagePath4;
+    private final Path imagePath1;
+    private final Path imagePath2;
+    private final Path imagePath3;
+    private final Path imagePath4;
     
     static final String IMG = "IMG_6175.jpg";
     static final String DOC = "BasicStyleGuide.doc";
