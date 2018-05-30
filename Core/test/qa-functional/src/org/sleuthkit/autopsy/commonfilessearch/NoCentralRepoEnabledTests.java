@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
@@ -27,6 +29,12 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.SingleCaseEamDbCommonFilesAlgorithm;
 
 /**
  *
@@ -41,7 +49,7 @@ public class NoCentralRepoEnabledTests extends NbTestCase {
 
     private final InterCaseUtils utils;
     private Case currentCase;
-    
+
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledTests.class).
                 clusters(".*").
@@ -53,9 +61,9 @@ public class NoCentralRepoEnabledTests extends NbTestCase {
         super(name);
         this.utils = new InterCaseUtils(this);
     }
-    
+
     @Override
-    public void setUp(){
+    public void setUp() {
         try {
             this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
         } catch (TskCoreException ex) {
@@ -63,9 +71,9 @@ public class NoCentralRepoEnabledTests extends NbTestCase {
             Assert.fail(ex);
         }
     }
-    
+
     @Override
-    public void tearDown(){
+    public void tearDown() {
         try {
             this.utils.tearDown();
         } catch (IOException ex) {
@@ -73,9 +81,19 @@ public class NoCentralRepoEnabledTests extends NbTestCase {
             Assert.fail(ex);
         }
     }
-    
-    void testOne(){
-        
-    }
 
+    public void testOne() {
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+
+            CommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
+
+            CommonFilesMetadata metadata = builder.findFiles();
+
+            assertTrue("Should be no results.", metadata.size() == 0);
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
+    }
 }

@@ -176,6 +176,11 @@ class IntraCaseUtils {
         return verifyFileExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
     }
     
+    /**
+     * TODO
+     * @param metadata
+     * @return 
+     */
     static Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 

@@ -110,6 +110,7 @@ public class IngestedWithNoFileTypes extends NbTestCase {
 
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
     }
 

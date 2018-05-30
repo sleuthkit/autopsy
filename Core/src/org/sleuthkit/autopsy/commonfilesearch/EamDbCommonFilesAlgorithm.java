@@ -76,9 +76,14 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
 
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
         try {
-
-            Collection<CorrelationAttributeCommonInstance> artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
-                    .collect(Collectors.toList());
+            Collection<CorrelationAttributeCommonInstance> artifactInstances;
+            if(this.dbManager == null){
+                artifactInstances = new ArrayList<>(0);
+            } else {
+                artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
+                    .collect(Collectors.toList());                
+            }
+            
             interCaseCommonFiles = gatherIntercaseResults(artifactInstances, currentCaseMetadata);
 
         } catch (EamDbException ex) {
