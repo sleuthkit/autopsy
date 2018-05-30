@@ -42,10 +42,10 @@ import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSour
  * Add images set 1, set 2, set 3, and set 4 to case. Do not ingest.
  *
  */
-public class UningestedCases extends NbTestCase {
+public class UningestedCasesIntraCaseTests extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(UningestedCases.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(UningestedCasesIntraCaseTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
@@ -53,7 +53,7 @@ public class UningestedCases extends NbTestCase {
 
     private final IntraCaseUtils utils;
     
-    public UningestedCases(String name) {
+    public UningestedCasesIntraCaseTests(String name) {
         super(name);
         
         this.utils = new IntraCaseUtils(this, "UningestedCasesTests");

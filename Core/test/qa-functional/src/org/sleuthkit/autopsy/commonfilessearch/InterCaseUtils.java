@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.netbeans.junit.NbTestCase;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -268,8 +269,13 @@ class InterCaseUtils {
      * Close the currently open case, delete the case directory, delete the
      * central repo db.
      */
-    void tearDown() throws IOException {
+    void tearDown() {
         CaseUtils.closeCurrentCase(false);
-        CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
+        try {
+            CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
     }
 }

@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
@@ -29,35 +28,30 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
-import org.sleuthkit.autopsy.commonfilesearch.SingleCaseEamDbCommonFilesAlgorithm;
 
 /**
  *
- * If I use the search all cases option: One node for Hash A (1_1_A.jpg,
- * 1_2_A.jpg, 3_1_A.jpg) If I search for matches only in Case 1: One node for
- * Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg) If I search for matches only in Case
- * 2: No matches If I only search in the current case (existing mode), allowing
- * all data sources: One node for Hash C (3_1_C.jpg, 3_2_C.jpg)
+ * Just make sure nothing explodes when we run the feature in the absence of 
+ * the Central Repo.  This should be considered 'defensive' as it should not be 
+ * possible to even run the feature if the CR is not available.
  *
  */
-public class NoCentralRepoEnabledTests extends NbTestCase {
+public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
 
     private final InterCaseUtils utils;
-    private Case currentCase;
+    private Case currentCase;       //TODO do we need this???
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledInterCaseTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    public NoCentralRepoEnabledTests(String name) {
+    public NoCentralRepoEnabledInterCaseTests(String name) {
         super(name);
         this.utils = new InterCaseUtils(this);
     }
@@ -74,12 +68,7 @@ public class NoCentralRepoEnabledTests extends NbTestCase {
 
     @Override
     public void tearDown() {
-        try {
-            this.utils.tearDown();
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
-        }
+        this.utils.tearDown();
     }
 
     public void testOne() {
