@@ -35,6 +35,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
@@ -342,11 +343,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 }
             }
 
-            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) {
+            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws Exception {
                 Map<Integer, String> casemap = new HashMap<>();
-
+                CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
-                    casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
+                    if(currentCorCase.getID() != correlationCase.getID()) { // if not the current Case
+                        casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
+                    }
                 }
 
                 return casemap;
@@ -356,7 +359,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected Map<Integer, String> doInBackground() throws Exception {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
-
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
 
                 return caseMap;
@@ -502,32 +504,37 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(categoriesLabel)
-                    .addComponent(commonFilesSearchLabel2)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(21, 21, 21)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(documentsCheckbox)
-                                    .addComponent(pictureVideoCheckbox)))
+                                    .addComponent(pictureVideoCheckbox)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(documentsCheckbox)
+                                        .addContainerGap())))
                             .addComponent(allFileCategoriesRadioButton)
                             .addComponent(selectedFileCategoriesButton)
                             .addComponent(interCaseRadio)
                             .addComponent(intraCaseRadio)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(categoriesLabel)
+                            .addComponent(commonFilesSearchLabel2)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(errorText)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(searchButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cancelButton))))))
+                                .addComponent(cancelButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(errorText)))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -630,11 +637,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
     private void manageCheckBoxState() {
 
+        this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
+        this.documentsCheckboxState = this.documentsCheckbox.isSelected();
+        
         if (this.allFileCategoriesRadioButton.isSelected()) {
-
-            this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
-            this.documentsCheckboxState = this.documentsCheckbox.isSelected();
-
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
         }
