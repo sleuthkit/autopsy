@@ -35,13 +35,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -620,7 +624,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -678,7 +682,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -1224,6 +1228,58 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return instanceComment;
     }
+    
+    //DLG:
+    @Override
+    public CorrelationAttribute getCorrelationAttribute(CorrelationAttribute.Type type, CorrelationCase correlationCase,
+            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException {
+        
+        if(type == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+        
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        CorrelationAttribute correlationAttribute = null;
+            
+        try {
+            String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT id, known_status, comment FROM ");
+            sql.append(tableName);
+            sql.append(" WHERE case_id=?");
+            sql.append(" AND data_source_id=?");
+            sql.append(" AND value=?");
+            sql.append(" AND file_path=?");
+            
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setInt(1, correlationCase.getID());
+            preparedStatement.setInt(2, correlationDataSource.getID());
+            preparedStatement.setString(3, value);
+            preparedStatement.setString(4, filePath);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                int id = resultSet.getInt(1);
+                int knownStatus = resultSet.getInt(2);
+                String comment = resultSet.getString(3);
+                
+                correlationAttribute = new CorrelationAttribute(type, value);
+                CorrelationAttributeInstance artifactInstance = new CorrelationAttributeInstance(
+                        id, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte)knownStatus));
+                correlationAttribute.addInstance(artifactInstance);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return correlationAttribute;
+    }
 
     /**
      * Sets an eamArtifact instance to the given knownStatus. 
@@ -1355,7 +1411,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -2493,7 +2549,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
                 resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
+                new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status"))

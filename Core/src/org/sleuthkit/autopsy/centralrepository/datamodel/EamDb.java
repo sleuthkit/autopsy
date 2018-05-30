@@ -25,6 +25,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Main interface for interacting with the database
@@ -325,6 +326,10 @@ public interface EamDb {
      * @return Number of matching eamArtifacts
      */
     String getAttributeInstanceComment(CorrelationAttribute.Type aType, String value) throws EamDbException;
+    
+    //DLG:
+    CorrelationAttribute getCorrelationAttribute(CorrelationAttribute.Type type, CorrelationCase correlationCase,
+            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact

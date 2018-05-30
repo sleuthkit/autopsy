@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -49,6 +50,10 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -219,6 +224,23 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(context)));
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        
+        //DLG: Insert comment here!
+        if (file != null && EamDbUtil.useCentralRepo()) {
+            CorrelationAttribute.Type type;
+            try {
+                type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+                actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(type, correlationCase, file));
+            } catch (EamDbException ex) {
+                //DLG:
+                Exceptions.printStackTrace(ex);
+            } catch (NoCurrentCaseException ex) {
+                //DLG:
+                Exceptions.printStackTrace(ex);
+            }
+        }
 
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
@@ -241,15 +263,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
         }
 
-        //if this artifact has associated content, add the action to view the content in the timeline
-        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        //if the artifact has associated content, add the action to view the content in the timeline
         if (null != file) {
             actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
-        }
-        
-        //DLG: Insert comment here!
-        if (EamDbUtil.useCentralRepo()) {
-            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
 
         return actionsList.toArray(new Action[actionsList.size()]);

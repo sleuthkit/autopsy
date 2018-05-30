@@ -49,6 +49,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
 import org.sleuthkit.autopsy.centralrepository.CentralRepoCommentDialog;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
@@ -116,14 +117,18 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
                 } else if (jmi.equals(addCommentMenuItem)) {
-                    final CorrelationAttribute correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
-                    String comment;
+                    CorrelationAttribute.Type type;
                     try {
-                        comment = EamDb.getInstance().getAttributeInstanceComment(
-                                correlationAttribute.getCorrelationType(), correlationAttribute.getCorrelationValue());
-                        correlationAttribute.getInstances().get(0).setComment(comment);
-                        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
-                        centralRepoCommentDialog.display();
+                        type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+                        CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow());
+                        CorrelationAttributeInstance instance = selectedAttribute.getInstances().get(0);
+                        CorrelationCase correlationCase = instance.getCorrelationCase();
+                        CorrelationDataSource correlationDataSource = instance.getCorrelationDataSource(); //DLG: WRONG!
+                        String value = file.getMd5Hash(); //DLG: WRONG!
+                        String filePath = instance.getFilePath();
+                        AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(
+                                type, correlationCase, correlationDataSource, value, filePath);
+                        action.addEditCentralRepoComment();
                     } catch (EamDbException ex) {
                         //DLG:
                         Exceptions.printStackTrace(ex);
