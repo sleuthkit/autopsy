@@ -19,12 +19,19 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.sql.SQLException;
+import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -55,8 +62,9 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     @Override
     public void setUp(){
         try {
+            this.utils.enableCentralRepo();
             this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
-        } catch (TskCoreException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -65,5 +73,43 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     @Override
     public void tearDown(){
         this.utils.tearDown();
+    }
+    
+    /**
+     * Search All
+     * 
+     * One node for Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg)
+     */
+    public void testOne() {
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            
+            CommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
+            
+            CommonFilesMetadata metadata = builder.findFiles();
+            
+            assertTrue("", metadata.size() != 0);
+            
+            
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex); 
+            Assert.fail(ex);
+        }
+        
+        
+    }
+    
+    /**
+     * Case1
+     */
+    public void testTwo(){
+        
+    }
+    
+    /**
+     * Case2
+     */
+    public void testThree(){
+        
     }
 }
