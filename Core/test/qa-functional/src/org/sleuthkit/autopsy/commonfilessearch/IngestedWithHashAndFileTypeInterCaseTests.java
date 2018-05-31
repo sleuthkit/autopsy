@@ -61,6 +61,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     
     @Override
     public void setUp(){
+        this.utils.clearTestDir();
         try {
             this.utils.enableCentralRepo();
             this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
@@ -97,20 +98,6 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Assert.fail(ex);
         }
         
-        
-    }
-    
-    /**
-     * Case1
-     */
-    public void testTwo(){
-        
-    }
-    
-    /**
-     * Case2
-     */
-    public void testThree(){
         
     }
 }

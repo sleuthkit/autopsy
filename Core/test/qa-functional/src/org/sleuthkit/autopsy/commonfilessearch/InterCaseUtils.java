@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -154,6 +155,17 @@ class InterCaseUtils {
         this.dataSourceLoader = new DataSourceLoader();
     }
 
+    void clearTestDir(){
+        if(CASE_DIRECTORY_PATH.toFile().exists()){
+            try{
+                FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
+            } catch(IOException  ex){
+                Assert.fail(ex);
+            }
+        }
+        CASE_DIRECTORY_PATH.toFile().exists();
+    }
+    
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
         return this.dataSourceLoader.getDataSourceMap();
     }
