@@ -76,19 +76,35 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private IngestJobContext context;
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
-
+    private File log2TimeLineExecutable;
+    private File psortExecutable;
+    
     PlasoIngestModule() {
     }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+        log2TimeLineExecutable = locateExecutable(LOG2TIMELINE_EXECUTABLE);
+        if (this.log2TimeLineExecutable == null) {
+            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_log2timeline_executable_not_found());
+            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
+            throw new IngestModuleException(Bundle.PlasoIngestModule_log2timeline_executable_not_found());
+        }
+        psortExecutable = locateExecutable(PSORT_EXECUTABLE);
+        if (psortExecutable == null) {
+            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_psort_executable_not_found());
+            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
+            throw new IngestModuleException(Bundle.PlasoIngestModule_psort_executable_not_found());
+        }
 
     }
 
     @NbBundle.Messages({
         "PlasoIngestModule_startUp_message=Starting Plaso Run.",
         "PlasoIngestModule_error_running=Error running Plaso, see log file.",
+        "PlasoIngestModule_error_running_log2timeline=Error running log2timeline, see log file.",
+        "PlasoIngestModule_error_running_psort=Error running Psort, see log file.",
         "PlasoIngestModule_log2timeline_cancelled=Log2timeline run was canceled",
         "PlasoIngestModule_psort_cancelled=psort run was canceled",
         "PlasoIngestModule_bad_imageFile=Cannot find image file name and path",
@@ -110,21 +126,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         } else {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_dataSource_not_an_image());
             MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
-            return ProcessResult.ERROR;                   
+            return ProcessResult.OK;                   
         }
 
-        File log2TimeLineExecutable = locateExecutable(LOG2TIMELINE_EXECUTABLE);
-        if (log2TimeLineExecutable == null) {
-            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_log2timeline_executable_not_found());
-            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
-            return ProcessResult.ERROR;
-        }
-        File psortExecutable = locateExecutable(PSORT_EXECUTABLE);
-        if (psortExecutable == null) {
-            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_psort_executable_not_found());
-            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
-            return ProcessResult.ERROR;
-        }
         String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis()/1000);
         currentTime = currentTime.replaceAll(":", "-");
         String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime).toString();
@@ -147,12 +151,24 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_log2timeline_cancelled());
                 return ProcessResult.OK;
             }
+            File plasoFile = new File(moduleOutputPath + File.separator + PLASO);
+            if (!plasoFile.exists()) {
+                logger.log(Level.INFO, Bundle.PlasoIngestModule_error_running_log2timeline()); //NON-NLS
+                MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_log2timeline());
+                return ProcessResult.OK;                
+            }
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort());
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_psort_cancelled()); //NON-NLS
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_psort_cancelled());
                 return ProcessResult.OK;
+            }
+            plasoFile = new File(moduleOutputPath + File.separator + "plasodb.db3");
+            if (!plasoFile.exists()) {
+                logger.log(Level.INFO, Bundle.PlasoIngestModule_error_running_psort()); //NON-NLS
+                MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
+                return ProcessResult.OK;                
             }
             String plasoDb = moduleOutputPath + File.separator + "plasodb.db3";
             createPlasoArtifacts(plasoDb, statusHelper);
