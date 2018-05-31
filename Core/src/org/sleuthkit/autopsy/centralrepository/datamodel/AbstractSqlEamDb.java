@@ -693,18 +693,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
             sql.append(" LEFT JOIN data_sources ON ");
             sql.append(tableName);
             sql.append(".data_source_id=data_sources.id");
-            sql.append(" WHERE value IN (SELECT value FROM ");
-            sql.append(tableName);
-            sql.append(" WHERE value IN (");
-            
-            // Note: PreparedStatement has a limit on ? variable replacement so instead query is built with values appended directly into the string
-            for (String value : values) {
-             sql.append("'");
-             sql.append(value);
-             sql.append("',");
-            }
-  
+            sql.append(" WHERE value IN (SELECT value FROM file_instances WHERE value IN (");
 
+            for (int i = 0; i < values.size(); i++) {
+                sql.append("?,");
+            }
             sql.deleteCharAt(sql.length() - 1);
             sql.append(") GROUP BY value HAVING COUNT(*) > 1)");
 
@@ -714,11 +707,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 sql.append(".case_id=?");
             }
             
-            sql.append(" ORDER BY value, cases.case_name, file_path");
+            sql.append(" ORDER BY value, case_name, file_path");
 
             try {
                 preparedStatement = conn.prepareStatement(sql.toString());
                 int i = 1;
+                for (String value : values) {
+                    preparedStatement.setString(i, value);
+                    i++;
+                }
                 if (singleCase && correlationCase != null) {
                     preparedStatement.setString(i, String.valueOf(correlationCase.getID()));
                 }
