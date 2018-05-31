@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.poi.openxml4j.opc.PackageRelationshipTypes;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -39,7 +38,11 @@ import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFil
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 
@@ -99,10 +102,10 @@ public class FileTypeIdIngestModule implements FileIngestModule {
     public ProcessResult process(AbstractFile file) {
 
         try {
-            BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EVENT);
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, "test", System.currentTimeMillis() / 1000));
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EVENT_TYPE, "test", EventType.OTHER.getTypeID()));
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, "test", "Test Description"));
+            BlackboardArtifact artifact = file.newArtifact(TSK_TL_EVENT);
+            artifact.addAttribute(new BlackboardAttribute(TSK_DATETIME, "test", System.currentTimeMillis() / 1000));
+            artifact.addAttribute(new BlackboardAttribute(TSK_TL_EVENT_TYPE, "test", EventType.OTHER.getTypeID()));
+            artifact.addAttribute(new BlackboardAttribute(TSK_DESCRIPTION, "test", "Test Description"));
 
             Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact);
         } catch (TskCoreException | Blackboard.BlackboardException ex) {

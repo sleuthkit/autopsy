@@ -65,7 +65,7 @@ final public class FilterSetPanel extends BorderPane {
     private Button defaultButton;
 
     @FXML
-    private TreeTableView<FilterModel<?  >> filterTreeTable;
+    private TreeTableView<FilterModel<?>> filterTreeTable;
 
     @FXML
     private TreeTableColumn< FilterModel< ?>, FilterModel<?>> treeColumn;
@@ -87,7 +87,7 @@ final public class FilterSetPanel extends BorderPane {
      * map from filter to its expansion state in the ui, used to restore the
      * expansion state as we navigate back and forward in the history
      */
-    private final ObservableMap<  FilterModel<?>, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap<  TimelineFilter, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({
@@ -116,7 +116,8 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
         //type is the only filter expanded initialy
-        expansionMap.put(controller.getEventsModel().getFilterModel().getTypeFilterModel(), true);
+        expansionMap.put(controller.getEventsModel().getFilterModel().getFilter(), true);
+        expansionMap.put(controller.getEventsModel().getFilterModel().getTypeFilterModel().getFilter(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());
@@ -169,7 +170,7 @@ final public class FilterSetPanel extends BorderPane {
 
     private void applyFilters() {
         Platform.runLater(() -> {
-            controller.pushFilters((RootFilterModel) filterTreeTable.getRoot().getValue());
+            controller.pushFilters(((RootFilterModel) filterTreeTable.getRoot().getValue()));
         });
     }
 

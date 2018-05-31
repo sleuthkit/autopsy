@@ -76,7 +76,6 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
@@ -171,14 +170,14 @@ public final class FilteredEventsModel {
         });
         requestedFilter.set(getDefaultFilter());
 
-        //TODO: use bindings to keep these in sync? -jm
+      
         requestedZoomParamters.addListener((Observable observable) -> {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
             if (zoomParams != null) {
                 synchronized (FilteredEventsModel.this) {
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                    requestedFilter.set(zoomParams.getFilterModel());
+                    requestedFilter.set(zoomParams.getFilterModel().copyOf());
                     requestedTimeRange.set(zoomParams.getTimeRange());
                     requestedLOD.set(zoomParams.getDescriptionLOD());
                 }
@@ -205,7 +204,7 @@ public final class FilteredEventsModel {
         } else {
             return eventManager.countEventsByType(params.getTimeRange().getStartMillis() / 1000,
                     params.getTimeRange().getEndMillis() / 1000,
-                    params.getFilterModel().getActiveSubFiltersRecursive(), params.getTypeZoomLevel());
+                    params.getFilterModel().getActiveFilter(), params.getTypeZoomLevel());
         }
     }
 
@@ -330,19 +329,19 @@ public final class FilteredEventsModel {
      * @return The time range currently in view.
      */
     synchronized public Interval getTimeRange() {
-        return timeRangeProperty().get();
+        return getZoomParamaters().getTimeRange();
     }
 
     synchronized public DescriptionLoD getDescriptionLOD() {
-        return requestedLOD.get();
+        return getZoomParamaters().getDescriptionLOD();
     }
 
     synchronized public RootFilterModel getFilterModel() {
-        return requestedFilter.get();
+        return getZoomParamaters().getFilterModel();
     }
 
     synchronized public EventTypeZoomLevel getEventTypeZoom() {
-        return requestedTypeZoom.get();
+        return getZoomParamaters().getTypeZoomLevel();
     }
 
     /**
@@ -377,7 +376,7 @@ public final class FilteredEventsModel {
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone timeZone) throws TskCoreException {
-        return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), getFilterModel().getActiveSubFiltersRecursive(), timeZone);
+        return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), getFilterModel().getActiveFilter(), timeZone);
     }
 
     public TimelineEvent getEventById(Long eventID) throws TskCoreException {
@@ -414,10 +413,10 @@ public final class FilteredEventsModel {
         final RootFilterModel intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersect = requestedFilter.get().copyOf();
+            intersect = getFilterModel().copyOf();
         }
         intersect.getFilter().getSubFilters().add(filter);
-        return eventManager.getEventIDs(overlap, intersect.getActiveSubFiltersRecursive());
+        return eventManager.getEventIDs(overlap, intersect.getActiveFilter());
     }
 
     /**
@@ -429,14 +428,15 @@ public final class FilteredEventsModel {
      * @param timeRange
      *
      * @return
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
         final RootFilterModel filter;
         final EventTypeZoomLevel typeZoom;
         synchronized (this) {
-            filter = requestedFilter.get();
-            typeZoom = requestedTypeZoom.get();
+            filter = getFilterModel();
+            typeZoom = getEventTypeZoom();
         }
         try {
             return eventCountsCache.get(new ZoomParams(timeRange, typeZoom, filter, null));

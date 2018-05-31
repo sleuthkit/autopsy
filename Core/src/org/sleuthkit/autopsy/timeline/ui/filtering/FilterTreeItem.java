@@ -24,6 +24,7 @@ import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterModelI;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
+import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  * A TreeItem for a filter.
@@ -35,31 +36,29 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
      * the given filter
      *
      *
-     * @param filter       the filter for this item. if f has sub-filters, tree
+     * @param filterModel  the filter for this item. if f has sub-filters, tree
      *                     items will be made for them added added to the
      *                     children of this FilterTreeItem
      * @param expansionMap
      */
-    public FilterTreeItem(FilterModel<?> filter, ObservableMap<FilterModel< ?>, Boolean> expansionMap) {
-        super(filter);
+    public FilterTreeItem(FilterModel<?> filterModel, ObservableMap<TimelineFilter, Boolean> expansionMap) {
+        super(filterModel);
 
         //listen to changes in the expansion map, and update expansion state of filter object
-        expansionMap.addListener((MapChangeListener.Change<? extends FilterModel<?>, ? extends Boolean> change) -> {
-            if (change.getKey().equals(filter)) {
+        expansionMap.addListener((MapChangeListener.Change<? extends TimelineFilter, ? extends Boolean> change) -> {
+            if (change.getKey().equals(filterModel.getFilter())) {
                 setExpanded(expansionMap.get(change.getKey()));
             }
         });
 
-        if (expansionMap.containsKey(filter)) {
-            setExpanded(expansionMap.get(filter));
-        }
+        setExpanded(expansionMap.getOrDefault(filterModel, Boolean.FALSE));
 
         //keep expanion map upto date if user expands/collapses filter
-        expandedProperty().addListener(expandedProperty -> expansionMap.put(filter, isExpanded()));
+        expandedProperty().addListener(expandedProperty -> expansionMap.put(filterModel.getFilter(), isExpanded()));
 
         //if the filter is a compound filter, add its subfilters to the tree
-        if (filter instanceof CompoundFilterModelI<?>) {
-            final CompoundFilterModelI<?> compoundFilter = (CompoundFilterModelI<?>) filter;
+        if (filterModel instanceof CompoundFilterModelI<?>) {
+            final CompoundFilterModelI<?> compoundFilter = (CompoundFilterModelI<?>) filterModel;
 
             //add all sub filters
             compoundFilter.getSubFilterModels().forEach((subFilter) -> this.addSubfilter(subFilter, expansionMap));
@@ -78,7 +77,7 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
              * its subfilters: if a compound filter's active property changes,
              * disable the subfilters if the compound filter is not active.
              */
-            filter.activeProperty().addListener(activeProperty -> {
+            filterModel.activeProperty().addListener(activeProperty -> {
                 disableSubFiltersIfNotActive();
             });
             disableSubFiltersIfNotActive();
@@ -91,7 +90,7 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
 
                         addedSubFilter.getValue().selectedProperty().addListener(selectedProperty -> {
                             //set this compound filter selected if any of the subfilters are selected.
-                            filter.setSelected(getChildren().parallelStream()
+                            filterModel.setSelected(getChildren().parallelStream()
                                     .map(TreeItem<FilterModel<?>>::getValue)
                                     .anyMatch(FilterModel::isSelected)
                             );
@@ -102,7 +101,7 @@ final public class FilterTreeItem extends TreeItem<FilterModel<?>> {
         }
     }
 
-    private void addSubfilter(FilterModel<?> subFilter, ObservableMap<FilterModel<?>, Boolean> expansionMap) {
+    private void addSubfilter(FilterModel<?> subFilter, ObservableMap<TimelineFilter, Boolean> expansionMap) {
         FilterTreeItem filterTreeItem = new FilterTreeItem(subFilter, expansionMap);
 
         //if a subfilter's selected property changes...

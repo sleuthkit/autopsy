@@ -10,9 +10,10 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  *
+ * @param <SubFilterType>
  */
 public interface CompoundFilterModelI<SubFilterType extends TimelineFilter> {
 
-        ObservableList<FilterModel<SubFilterType>> getSubFilterModels();
+    ObservableList<? extends FilterModel< ?extends SubFilterType>> getSubFilterModels();
 
 }

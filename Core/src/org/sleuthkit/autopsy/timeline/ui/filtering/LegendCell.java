@@ -93,9 +93,7 @@ final class LegendCell extends TreeTableCell<FilterModel<?>, FilterModel<?>> {
                 TextField textField = new TextField();
                 textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
                 textField.textProperty().bindBidirectional(filter.textProperty());
-                Platform.runLater(() -> {
-                    setGraphic(textField);
-                });
+                Platform.runLater(() -> setGraphic(textField));
 
             } else {
                 Platform.runLater(() -> {

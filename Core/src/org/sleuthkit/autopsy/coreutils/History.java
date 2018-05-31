@@ -37,7 +37,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * a valid state, and will only be the current state before the first call to
  * advance.
  *
- * @param T the type of objects used to represent the
+ * @param <T> the type of objects used to represent the
  *            current/historical/future states
  */
 @ThreadSafe
@@ -144,7 +144,7 @@ public class History<T> {
      * @throws IllegalArgumentException if newState == null
      */
     synchronized public void advance(T newState) throws IllegalArgumentException {
-        if (newState != null && Objects.equals(currentState.get(), newState) == false) {
+        if (newState != null && newState.equals(currentState.get()) == false) {
             if (currentState.get() != null) {
                 historyStack.push(currentState.get());
             }

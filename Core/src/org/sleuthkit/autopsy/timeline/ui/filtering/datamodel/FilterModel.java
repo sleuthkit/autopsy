@@ -41,4 +41,5 @@ public interface FilterModel<FilterType extends TimelineFilter> {
 
     void setSelected(Boolean act);
 
+    FilterType getActiveFilter();
 }

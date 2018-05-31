@@ -41,6 +41,8 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
@@ -288,11 +290,12 @@ public class TimeLineController {
          * TimeLineController. Do we need to do this with datasource or hash hit
          * filters?
          */
-        historyManager.currentState().addListener((Observable observable) -> {
-            ZoomParams historyManagerParams = historyManager.getCurrentState();
+        historyManager.currentState().addListener((ObservableValue<? extends ZoomParams> observable, ZoomParams oldValue, ZoomParams newValue) -> {
+            ZoomParams historyManagerParams = newValue;
             filteredEvents.syncTagsFilter(historyManagerParams.getFilterModel());
             currentParams.set(historyManagerParams);
         });
+ 
 
         try {
             InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
