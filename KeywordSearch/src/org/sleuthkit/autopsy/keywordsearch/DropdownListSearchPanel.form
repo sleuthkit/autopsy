@@ -215,9 +215,6 @@
       <SubComponents>
         <Component class="javax.swing.JList" name="dataSourceList">
           <Properties>
-            <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-              <Connection code="null" type="code"/>
-            </Property>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[0, 200]"/>
             </Property>
