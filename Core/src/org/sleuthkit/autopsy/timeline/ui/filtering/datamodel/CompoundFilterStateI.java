@@ -12,8 +12,8 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
  *
  * @param <SubFilterType>
  */
-public interface CompoundFilterModelI<SubFilterType extends TimelineFilter> {
+public interface CompoundFilterStateI<SubFilterType extends TimelineFilter> {
 
-    ObservableList<? extends FilterModel< ?extends SubFilterType>> getSubFilterModels();
+    ObservableList<? extends FilterState< ? extends SubFilterType>> getSubFilterStates();
 
 }

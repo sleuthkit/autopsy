@@ -30,11 +30,11 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
  *
  * @param <FilterType>
  */
-public class DefaultFilterModel<FilterType extends TimelineFilter> implements FilterModel<FilterType> {
+public class DefaultFilterState<FilterType extends TimelineFilter> implements FilterState<FilterType> {
 
     private final FilterType delegate;
 
-    public DefaultFilterModel(FilterType delegate) {
+    public DefaultFilterState(FilterType delegate) {
         this.delegate = delegate;
     }
 
@@ -93,9 +93,9 @@ public class DefaultFilterModel<FilterType extends TimelineFilter> implements Fi
     }
 
     @Override
-    public DefaultFilterModel<FilterType> copyOf() {
+    public DefaultFilterState<FilterType> copyOf() {
         @SuppressWarnings("unchecked")
-        DefaultFilterModel<FilterType> copy = new DefaultFilterModel<>((FilterType) delegate.copyOf());
+        DefaultFilterState<FilterType> copy = new DefaultFilterState<>((FilterType) delegate.copyOf());
         copy.setDisabled(isSelected());
         copy.setDisabled(isDisabled());
         return copy;

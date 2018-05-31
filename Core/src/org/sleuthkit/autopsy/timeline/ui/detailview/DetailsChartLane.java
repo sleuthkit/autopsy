@@ -57,9 +57,9 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout
@@ -130,8 +130,8 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         if (useQuickHideFilters) {
             //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
             activeQuickHidefilters = getController().getQuickHideFilters().stream()
-                    .filter(FilterModel::isActive)
-                    .map( FilterModel<DescriptionFilter>::getFilter)
+                    .filter(FilterState::isActive)
+                    .map(FilterState<DescriptionFilter>::getFilter)
                     .map(DescriptionFilter::getDescription)
                     .collect(Collectors.toSet());
         }

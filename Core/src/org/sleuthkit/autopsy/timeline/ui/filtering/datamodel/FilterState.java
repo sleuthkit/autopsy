@@ -13,13 +13,14 @@ import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
 /**
  *
- * @author millm
+ *
+ * @param <FilterType>
  */
-public interface FilterModel<FilterType extends TimelineFilter> {
+public interface FilterState<FilterType extends TimelineFilter> {
 
     BooleanBinding activeProperty();
 
-    DefaultFilterModel<FilterType> copyOf();
+    FilterState<FilterType> copyOf();
 
     ObservableBooleanValue disabledProperty();
 

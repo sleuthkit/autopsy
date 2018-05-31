@@ -24,9 +24,9 @@ import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexedCell;
 import org.sleuthkit.autopsy.timeline.ui.AbstractFXCellFactory;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 
-class FilterCheckBoxCellFactory< X extends FilterModel< ?>> extends AbstractFXCellFactory<X, X> {
+class FilterCheckBoxCellFactory< X extends FilterState< ?>> extends AbstractFXCellFactory<X, X> {
 
     private final CheckBox checkBox = new CheckBox();
     private SimpleBooleanProperty selectedProperty;

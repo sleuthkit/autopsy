@@ -27,88 +27,88 @@ import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
-public class CompoundFilterModel<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
-        extends DefaultFilterModel<C>
-        implements CompoundFilterModelI<SubFilterType> {
-    
-    private final ObservableList<FilterModel<SubFilterType>> subFilterModels = FXCollections.observableArrayList();
-    
-    public CompoundFilterModel(C delegate) {
+public class CompoundFilterState<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
+        extends DefaultFilterState<C>
+        implements CompoundFilterStateI<SubFilterType> {
+
+    private final ObservableList<FilterState<SubFilterType>> subFilterModels = FXCollections.observableArrayList();
+
+    public CompoundFilterState(C delegate) {
         super(delegate);
-        
-        delegate.getSubFilters().forEach(this::addNewSubFilterModel);
+
+        delegate.getSubFilters().forEach(this::addSubFilterState);
         delegate.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
             while (change.next()) {
-                change.getAddedSubList().forEach(CompoundFilterModel.this::addNewSubFilterModel);
+                change.getAddedSubList().forEach(CompoundFilterState.this::addSubFilterState);
             }
         });
-        
+
     }
-    
-    public CompoundFilterModel(C delegate, Collection<FilterModel<SubFilterType>> subFilterModels) {
+
+    public CompoundFilterState(C delegate, Collection<FilterState<SubFilterType>> subFilterStates) {
         super(delegate);
-        
-        subFilterModels.forEach(this::addSubFilterModel);
+
+        subFilterStates.forEach(this::addSubFilterState);
         delegate.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
             while (change.next()) {
-                change.getAddedSubList().forEach(CompoundFilterModel.this::addNewSubFilterModel);
+                change.getAddedSubList().forEach(CompoundFilterState.this::addSubFilterState);
             }
         });
-        
+
     }
-    
+
     @SuppressWarnings("unchecked")
-    private <X extends TimelineFilter, S extends CompoundFilter<X>> void addNewSubFilterModel(SubFilterType subFilter) {
-        
+    private <X extends TimelineFilter, S extends CompoundFilter<X>> void addSubFilterState(SubFilterType subFilter) {
+
         if (subFilter instanceof CompoundFilter<?>) {
-            addSubFilterModel((FilterModel<SubFilterType>) new CompoundFilterModel<>((S) subFilter));
+            addSubFilterState((FilterState<SubFilterType>) new CompoundFilterState<>((S) subFilter));
         } else {
-            addSubFilterModel(new DefaultFilterModel<>(subFilter));
+            addSubFilterState(new DefaultFilterState<>(subFilter));
         }
-        
+
     }
-    
-    private void addSubFilterModel(FilterModel<SubFilterType> newFilterModel) {
+
+    private void addSubFilterState(FilterState<SubFilterType> newFilterModel) {
         subFilterModels.add(newFilterModel);
         newFilterModel.selectedProperty().addListener(selectedProperty -> {
             //set this compound filter model  selected af any of the subfilters are selected.
-            setSelected(getSubFilterModels().parallelStream().anyMatch(FilterModel::isSelected));
+            setSelected(getSubFilterStates().parallelStream().anyMatch(FilterState::isSelected));
         });
     }
-    
+
     @Override
-    public ObservableList<FilterModel<SubFilterType>> getSubFilterModels() {
+    public ObservableList<FilterState<SubFilterType>> getSubFilterStates() {
         return subFilterModels;
     }
-    
+
     @Override
-    public CompoundFilterModel<SubFilterType, C> copyOf() {
-        
+    public CompoundFilterState<SubFilterType, C> copyOf() {
+
         @SuppressWarnings("unchecked")
-        CompoundFilterModel<SubFilterType, C> copy = new CompoundFilterModel<>((C) getFilter().copyOf(),
-                getSubFilterModels().stream().map(FilterModel::copyOf).collect(Collectors.toList())
+        CompoundFilterState<SubFilterType, C> copy = new CompoundFilterState<>((C) getFilter().copyOf(),
+                getSubFilterStates().stream().map(FilterState::copyOf).collect(Collectors.toList())
         );
-        
+
         copy.setSelected(isSelected());
         copy.setDisabled(isDisabled());
         return copy;
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public C getActiveFilter() {
         if (isActive() == false) {
             return null;
         }
-        
-        List<SubFilterType> activeSubFilters = getSubFilterModels().stream()
-                .filter(FilterModel::isActive)
-                .map(FilterModel::getActiveFilter)
+
+        List<SubFilterType> activeSubFilters = getSubFilterStates().stream()
+                .filter(FilterState::isActive)
+                .map(FilterState::getActiveFilter)
                 .collect(Collectors.toList());
         C copy = (C) getFilter().copyOf();
         copy.getSubFilters().clear();
         copy.getSubFilters().addAll(activeSubFilters);
-        
+
         return copy;
     }
 }

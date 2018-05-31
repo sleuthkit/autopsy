@@ -49,7 +49,7 @@ public class ResetFilters extends Action {
 
             @Override
             protected boolean computeValue() {
-                return eventsModel.zoomParametersProperty().getValue().getFilterModel().equals(eventsModel.getDefaultFilter());
+                return eventsModel.zoomParametersProperty().getValue().getFilterState().equals(eventsModel.getDefaultFilter());
             }
         });
         setEventHandler((ActionEvent t) -> {

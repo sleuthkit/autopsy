@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.util.Objects;
 import org.joda.time.Interval;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterModel;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
@@ -36,7 +36,7 @@ final public class ZoomParams {
 
     private final EventTypeZoomLevel typeZoomLevel;
 
-    private final RootFilterModel filter;
+    private final RootFilterState filter;
 
     private final DescriptionLoD descrLOD;
 
@@ -48,7 +48,7 @@ final public class ZoomParams {
         return typeZoomLevel;
     }
 
-    public RootFilterModel getFilterModel() {
+    public RootFilterState getFilterState() {
         return filter;
     }
 
@@ -56,7 +56,7 @@ final public class ZoomParams {
         return descrLOD;
     }
 
-    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilterModel filter, DescriptionLoD descrLOD) {
+    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilterState filter, DescriptionLoD descrLOD) {
         this.timeRange = timeRange;
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
@@ -79,11 +79,11 @@ final public class ZoomParams {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withFilter(RootFilterModel filter) {
+    public ZoomParams withFilterState(RootFilterState filter) {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public boolean hasFilter(DefaultFilterModel<RootFilter> filterSet) {
+    public boolean hasFilterState(DefaultFilterState<RootFilter> filterSet) {
         return this.filter.equals(filterSet);
     }
 

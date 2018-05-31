@@ -31,7 +31,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
  * A TreeTableCell that shows an icon and color corresponding to the represented
  * filter
  */
-final class LegendCell extends TreeTableCell<FilterModel<?>, FilterModel<?>> {
+final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
 
     private static final Color CLEAR = Color.rgb(0, 0, 0, 0);
 
@@ -57,7 +57,7 @@ final class LegendCell extends TreeTableCell<FilterModel<?>, FilterModel<?>> {
 
     @Override
     @NbBundle.Messages("Timeline.ui.filtering.promptText=enter filter string")
-    public void updateItem(FilterModel<?> item, boolean empty) {
+    public void updateItem(FilterState<?> item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null) {
             Platform.runLater(() -> {

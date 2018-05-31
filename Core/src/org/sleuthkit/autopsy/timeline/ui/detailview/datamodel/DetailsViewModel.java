@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import static org.sleuthkit.autopsy.timeline.FilteredEventsModel.unGroupConcat;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -89,7 +89,7 @@ final public class DetailsViewModel {
      */
     public List<EventStripe> getEventStripes() throws TskCoreException {
         final Interval range;
-        final RootFilterModel filter;
+        final RootFilterState filter;
         final EventTypeZoomLevel zoom;
         final DescriptionLoD lod;
         synchronized (this) {
@@ -134,7 +134,7 @@ final public class DetailsViewModel {
     public List<EventStripe> getEventStripes(ZoomParams params, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = params.getTimeRange();
-        RootFilterModel filterModel = params.getFilterModel();
+        RootFilterState filterModel = params.getFilterState();
         DescriptionLoD descriptionLOD = params.getDescriptionLOD();
         EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
 

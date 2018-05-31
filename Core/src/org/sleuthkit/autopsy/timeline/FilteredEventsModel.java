@@ -58,8 +58,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
@@ -88,6 +87,7 @@ import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 
 /**
  * This class acts as the model for a TimelineView
@@ -116,7 +116,7 @@ public final class FilteredEventsModel {
     private final EventBus eventbus = new EventBus("FilteredEventsModel_EventBus"); //NON-NLS
 
     //Filter and zoome state
-    private final ReadOnlyObjectWrapper<RootFilterModel> requestedFilter = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<RootFilterState> requestedFilter = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
@@ -153,18 +153,18 @@ public final class FilteredEventsModel {
 
         getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
-            RootFilterModel rootFilter = filterProperty().get();
+            RootFilterState rootFilter = filterProperty().get();
             rootFilter.getDataSourcesFilterModel().getFilter().getSubFilters().add(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
-            RootFilterModel rootFilter = filterProperty().get();
+            RootFilterState rootFilter = filterProperty().get();
             rootFilter.getHashHitsFilterModel().getFilter().getSubFilters().add(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
-            RootFilterModel rootFilter = filterProperty().get();
+            RootFilterState rootFilter = filterProperty().get();
             syncTagsFilter(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
@@ -177,7 +177,7 @@ public final class FilteredEventsModel {
             if (zoomParams != null) {
                 synchronized (FilteredEventsModel.this) {
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                    requestedFilter.set(zoomParams.getFilterModel().copyOf());
+                    requestedFilter.set(zoomParams.getFilterState() );
                     requestedTimeRange.set(zoomParams.getTimeRange());
                     requestedLOD.set(zoomParams.getDescriptionLOD());
                 }
@@ -204,7 +204,7 @@ public final class FilteredEventsModel {
         } else {
             return eventManager.countEventsByType(params.getTimeRange().getStartMillis() / 1000,
                     params.getTimeRange().getEndMillis() / 1000,
-                    params.getFilterModel().getActiveFilter(), params.getTypeZoomLevel());
+                    params.getFilterState().getActiveFilter(), params.getTypeZoomLevel());
         }
     }
 
@@ -277,11 +277,11 @@ public final class FilteredEventsModel {
      * @param tagsFilter the tags filter to modify so it is consistent with the
      *                   tags in use in the case
      */
-    public void syncTagsFilter(RootFilterModel rootFilter) {
+    public void syncTagsFilter(RootFilterState rootFilter) {
         for (TagName tagName : tagNames) {
             rootFilter.getTagsFilterModel().getFilter().getSubFilters().add(new TagNameFilter(tagName));
         }
-        for (FilterModel<TagNameFilter> filterModel : rootFilter.getTagsFilterModel().getSubFilterModels()) {
+        for (FilterState<TagNameFilter> filterModel : rootFilter.getTagsFilterModel().getSubFilterStates()) {
             filterModel.setDisabled(tagNames.contains(filterModel.getFilter().getTagName()) == false);
         }
     }
@@ -315,7 +315,7 @@ public final class FilteredEventsModel {
         return requestedLOD.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<RootFilterModel> filterProperty() {
+    synchronized public ReadOnlyObjectProperty<RootFilterState> filterProperty() {
         return requestedFilter.getReadOnlyProperty();
     }
 
@@ -336,8 +336,8 @@ public final class FilteredEventsModel {
         return getZoomParamaters().getDescriptionLOD();
     }
 
-    synchronized public RootFilterModel getFilterModel() {
-        return getZoomParamaters().getFilterModel();
+    synchronized public RootFilterState getFilterModel() {
+        return getZoomParamaters().getFilterState();
     }
 
     synchronized public EventTypeZoomLevel getEventTypeZoom() {
@@ -347,7 +347,7 @@ public final class FilteredEventsModel {
     /**
      * @return the default filter used at startup
      */
-    public RootFilterModel getDefaultFilter() {
+    public RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
 
         getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> entry) -> {
@@ -366,7 +366,7 @@ public final class FilteredEventsModel {
             TagNameFilter tagNameFilter = new TagNameFilter(tagName);
             tagsFilter.addSubFilter(tagNameFilter);
         });
-        return new RootFilterModel(new RootFilter(new HideKnownFilter(),
+        return new RootFilterState(new RootFilter(new HideKnownFilter(),
                 tagsFilter,
                 hashHitsFilter,
                 new TextFilter(),
@@ -410,7 +410,7 @@ public final class FilteredEventsModel {
     public List<Long> getEventIDs(Interval timeRange, TimelineFilter filter) throws TskCoreException {
 
         final Interval overlap;
-        final RootFilterModel intersect;
+        final RootFilterState intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
             intersect = getFilterModel().copyOf();
@@ -432,7 +432,7 @@ public final class FilteredEventsModel {
      */
     public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
-        final RootFilterModel filter;
+        final RootFilterState filter;
         final EventTypeZoomLevel typeZoom;
         synchronized (this) {
             filter = getFilterModel();

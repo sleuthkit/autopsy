@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
@@ -177,7 +177,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        final RootFilterModel subClusterFilter = eventsModel.getFilterModel().copyOf();
+        final RootFilterState subClusterFilter = eventsModel.getFilterModel().copyOf();
         subClusterFilter.getFilter().getSubFilters().addAll(
                 new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));

@@ -43,8 +43,8 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterModel;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
@@ -65,16 +65,16 @@ final public class FilterSetPanel extends BorderPane {
     private Button defaultButton;
 
     @FXML
-    private TreeTableView<FilterModel<?>> filterTreeTable;
+    private TreeTableView<FilterState<?>> filterTreeTable;
 
     @FXML
-    private TreeTableColumn< FilterModel< ?>, FilterModel<?>> treeColumn;
+    private TreeTableColumn< FilterState< ?>, FilterState<?>> treeColumn;
 
     @FXML
-    private TreeTableColumn<FilterModel<?>, FilterModel<?>> legendColumn;
+    private TreeTableColumn<FilterState<?>, FilterState<?>> legendColumn;
 
     @FXML
-    private ListView<FilterModel<DescriptionFilter>> hiddenDescriptionsListView;
+    private ListView<FilterState<DescriptionFilter>> hiddenDescriptionsListView;
     @FXML
     private TitledPane hiddenDescriptionsPane;
     @FXML
@@ -170,12 +170,12 @@ final public class FilterSetPanel extends BorderPane {
 
     private void applyFilters() {
         Platform.runLater(() -> {
-            controller.pushFilters(((RootFilterModel) filterTreeTable.getRoot().getValue()));
+            controller.pushFilters(((RootFilterState) filterTreeTable.getRoot().getValue()));
         });
     }
 
-    private ListCell<FilterModel<DescriptionFilter>> getNewDiscriptionFilterListCell() {
-        final ListCell<FilterModel<DescriptionFilter>> cell = new FilterCheckBoxCellFactory<  FilterModel<DescriptionFilter>>().forList();
+    private ListCell<FilterState<DescriptionFilter>> getNewDiscriptionFilterListCell() {
+        final ListCell<FilterState<DescriptionFilter>> cell = new FilterCheckBoxCellFactory<  FilterState<DescriptionFilter>>().forList();
         cell.itemProperty().addListener(itemProperty -> {
             if (cell.getItem() == null) {
                 cell.setContextMenu(null);
@@ -207,7 +207,7 @@ final public class FilterSetPanel extends BorderPane {
 
         private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
 
-        RemoveDescriptionFilterAction(TimeLineController controller, Cell<FilterModel<DescriptionFilter>> cell) {
+        RemoveDescriptionFilterAction(TimeLineController controller, Cell<FilterState<DescriptionFilter>> cell) {
             super(actionEvent -> controller.getQuickHideFilters().remove(cell.getItem()));
             setGraphic(new ImageView(SHOW));
             textProperty().bind(

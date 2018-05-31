@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import static org.sleuthkit.autopsy.timeline.FilteredEventsModel.unGroupConcat;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterModel;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -76,7 +76,7 @@ public class ListViewModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterModel filterModel) throws TskCoreException {
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterState filterModel) throws TskCoreException {
         Long startTime = timeRange.getStartMillis() / 1000;
         Long endTime = timeRange.getEndMillis() / 1000;
 
