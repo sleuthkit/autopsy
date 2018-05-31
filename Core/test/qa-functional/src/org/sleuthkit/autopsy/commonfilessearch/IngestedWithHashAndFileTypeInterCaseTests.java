@@ -82,6 +82,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
+            //this is proabbly not needed and should be pulled out of the constructor if possible
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             CommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
