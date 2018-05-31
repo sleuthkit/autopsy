@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,8 +88,7 @@ import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
  */
 class InterCaseUtils {
 
-    private static final String CASE_NAME = "InterCaseCommonFilesSearchTest";
-    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
+    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "InterCaseCommonFilesSearchTest");
     private static final String CR_DB_NAME = "testcentralrepo.db";
 
     static final String CASE1 = "Case1";
@@ -275,9 +275,15 @@ class InterCaseUtils {
      * central repo db.
      */
     void tearDown() {
+        
         CaseUtils.closeCurrentCase(false);
+        
+        String[] cases  = new String[]{CASE1,CASE2,CASE3};
+        
         try {
-            CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
+            for(String caze : cases){
+                CaseUtils.deleteCaseDir(new File(caze));
+            }
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
