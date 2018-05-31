@@ -18,27 +18,22 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.ComboBoxModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -48,8 +43,6 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -111,6 +104,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
         "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
         "CommonFilesPanel.search.results.pathText=Common Files Search Results",
+        "CommonFilesPanel.search.done.searchProgress1=Gathering Common Files Search Results.",
+        "CommonFilesPanel.search.done.searchProgress2=Generating Common Files Search Results.",
+        "CommonFilesPanel.search.done.searchProgress3=Displaying Common Files Search Results.",
         "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
         "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
@@ -122,7 +118,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         new SwingWorker<CommonFilesMetadata, Void>() {
 
             private String tabTitle;
-
+            private ProgressHandle progress;
+            
             private void setTitleForAllDataSources() {
                 this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
             }
@@ -145,6 +142,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
             protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+                progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgress1());
+                progress.start();
+                progress.switchToIndeterminate();
+                
                 Long dataSourceId = CommonFilesPanel.this.intraCasePanel.getSelectedDataSourceId();
                 Integer caseId = CommonFilesPanel.this.interCasePanel.getSelectedCaseId();
 
@@ -194,7 +195,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected void done() {
                 try {
                     super.done();
-
+                    progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgress2());
                     CommonFilesMetadata metadata = get();
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
@@ -207,9 +208,9 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
-
+                    progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgress3());
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
-
+                    progress.finish();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
                     MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
