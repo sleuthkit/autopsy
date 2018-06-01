@@ -673,7 +673,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if (correlationCase != null) {
             singleCase = true;
         }
-        if (values != null) {
+        if (values == null) {
             values = new ArrayList<String>();
         }
         Connection conn = connect();
@@ -705,8 +705,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
             sql.append(value);
             sql.append("',");
         }
-
-        sql.deleteCharAt(sql.length() - 1);
+        if (values != null) {
+            sql.deleteCharAt(sql.length() - 1);
+        }
         sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
 
         if (singleCase && correlationCase != null) {
