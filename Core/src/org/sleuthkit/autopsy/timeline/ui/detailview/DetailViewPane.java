@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -54,13 +55,14 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
-import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.ZoomParams;
 
 /**
  * Controller class for a DetailsChart based implementation of a timeline view.
@@ -78,7 +80,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
  */
 public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe, EventNodeBase<?>, DetailsChart> {
 
-    private final static Logger LOGGER = Logger.getLogger(DetailViewPane.class.getName());
+    private final static Logger logger = Logger.getLogger(DetailViewPane.class.getName());
 
     private final DateAxis detailsChartDateAxis = new DateAxis();
     private final DateAxis pinnedDateAxis = new DateAxis();
@@ -101,7 +103,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     /**
      * Constructor for a DetailViewPane
      *
-     * @param controller       the Controller to use
+     * @param controller the Controller to use
      */
     public DetailViewPane(TimeLineController controller) {
         super(controller);
@@ -119,10 +121,15 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
             //update selected nodes highlight
             getChart().setHighlightPredicate(getSelectedNodes()::contains);
 
-            //update controllers list of selected event ids when view's selection changes.
-            getController().selectEventIDs(getSelectedNodes().stream()
-                    .flatMap(detailNode -> detailNode.getEventIDs().stream())
-                    .collect(Collectors.toList()));
+            try {
+                //update controllers list of selected event ids when view's selection changes.
+                getController().selectEventIDs(getSelectedNodes().stream()
+                        .flatMap(detailNode -> detailNode.getEventIDs().stream())
+                        .collect(Collectors.toList()));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error selecting nodes.", ex);
+                new Alert(Alert.AlertType.ERROR, "Error selecting nodes").showAndWait();
+            }
         });
     }
 
@@ -147,7 +154,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      *
      *
      * @param highlightedEvents the ObservableList of events that should be
-     *                          highlighted in this view.
+     * highlighted in this view.
      */
     public void setHighLightedEvents(ObservableList<TimeLineEvent> highlightedEvents) {
         highlightedEvents.addListener((Observable observable) -> {
@@ -155,16 +162,16 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
              * build a predicate that matches events with the same description
              * as any of the events in highlightedEvents or which are selected
              */
-            Predicate<EventNodeBase<?>> highlightPredicate =
-                    highlightedEvents.stream() // => events
-                    .map(TimeLineEvent::getDescription)// => event descriptions 
-                    .map(new Function<String, Predicate<EventNodeBase<?>>>() {
-                        @Override
-                        public Predicate<EventNodeBase<?>> apply(String description) {
-                            return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
-                        }
-                    })// => predicates that match strings agains the descriptions of the events in highlightedEvents
-                    .reduce(getSelectedNodes()::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
+            Predicate<EventNodeBase<?>> highlightPredicate
+                    = highlightedEvents.stream() // => events
+                            .map(TimeLineEvent::getDescription)// => event descriptions 
+                            .map(new Function<String, Predicate<EventNodeBase<?>>>() {
+                                @Override
+                                public Predicate<EventNodeBase<?>> apply(String description) {
+                                    return eventNode -> StringUtils.equalsIgnoreCase(eventNode.getDescription(), description);
+                                }
+                            })// => predicates that match strings agains the descriptions of the events in highlightedEvents
+                            .reduce(getSelectedNodes()::contains, Predicate::or); // => predicate that matches an of the descriptions or selected nodes
             getChart().setHighlightPredicate(highlightPredicate); //use this predicate to highlight nodes
         });
     }
@@ -177,7 +184,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     /**
      * Get a new Action that will unhide events with the given description.
      *
-     * @param description    the description to unhide
+     * @param description the description to unhide
      * @param descriptionLoD the description level of detail to match
      *
      * @return a new Action that will unhide events with the given description.
@@ -189,7 +196,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     /**
      * Get a new Action that will hide events with the given description.
      *
-     * @param description    the description to hide
+     * @param description the description to hide
      * @param descriptionLoD the description level of detail to match
      *
      * @return a new Action that will hide events with the given description.

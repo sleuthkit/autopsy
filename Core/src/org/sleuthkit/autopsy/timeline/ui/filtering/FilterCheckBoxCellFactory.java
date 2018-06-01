@@ -23,7 +23,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.IndexedCell;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
+import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractFXCellFactory;
 
 class FilterCheckBoxCellFactory<X extends AbstractFilter> extends AbstractFXCellFactory<X, X> {

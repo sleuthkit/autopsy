@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.timeline.ui;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -60,10 +63,12 @@ import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
+import javax.swing.Timer;
 import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import jfxtras.scene.control.ToggleGroupValue;
 import org.controlsfx.control.NotificationPane;
+import org.controlsfx.control.Notifications;
 import org.controlsfx.control.RangeSlider;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.Action;
@@ -71,31 +76,27 @@ import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
-import org.sleuthkit.autopsy.timeline.actions.UpdateDB;
 import org.sleuthkit.autopsy.timeline.actions.ZoomIn;
 import org.sleuthkit.autopsy.timeline.actions.ZoomOut;
 import org.sleuthkit.autopsy.timeline.actions.ZoomToEvents;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.events.DBUpdatedEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsUpdatedEvent;
-import static org.sleuthkit.autopsy.timeline.ui.Bundle.*;
 import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
  * A container for an AbstractTimelineView. Has a Toolbar on top to hold
@@ -109,10 +110,17 @@ final public class ViewFrame extends BorderPane {
 
     private static final Logger LOGGER = Logger.getLogger(ViewFrame.class.getName());
 
-    private static final Image INFORMATION = new Image("org/sleuthkit/autopsy/timeline/images/information.png", 16, 16, true, true); //NON-NLS
     private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
+
+    private NotificationState notificationState = NotificationState.Ready;
+
+    enum NotificationState {
+        Showing,
+        Paused,
+        Ready;
+    }
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
@@ -209,8 +217,6 @@ final public class ViewFrame extends BorderPane {
     private Button snapShotButton;
     @FXML
     private Button refreshButton;
-    @FXML
-    private Button updateDBButton;
 
     /*
      * Default zoom in/out buttons provided by the ViewFrame, some views replace
@@ -244,20 +250,48 @@ final public class ViewFrame extends BorderPane {
      * Listen to changes in the range slider selection and forward to the
      * controller. Waits until the user releases thumb to send to controller.
      */
+    @NbBundle.Messages({
+        "ViewFrame.rangeSliderListener.errorMessage=Error responding to range slider."})
     private final InvalidationListener rangeSliderListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable observable) {
             if (rangeSlider.isHighValueChanging() == false
-                    && rangeSlider.isLowValueChanging() == false) {
-                Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval()).getLowerBound();
-                if (false == controller.pushTimeRange(new Interval(
-                        (long) (rangeSlider.getLowValue() + minTime),
-                        (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
-                    refreshTimeUI();
+                && rangeSlider.isLowValueChanging() == false) {
+                try {
+                    Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
+                    if (false == controller.pushTimeRange(new Interval(
+                            (long) (rangeSlider.getLowValue() + minTime),
+                            (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
+                        refreshTimeUI();
+                    }
+                } catch (TskCoreException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.ViewFrame_rangeSliderListener_errorMessage())
+                            .showError();
+                    LOGGER.log(Level.SEVERE, "Error responding to range slider.", ex);
                 }
             }
         }
     };
+
+    private final Timer notificationTimer = new Timer(30_000, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            Platform.runLater(() -> {
+                switch (notificationState) {
+                    case Ready:
+                        break;
+                    case Showing:
+                        notificationPane.hide();
+                        notificationState = NotificationState.Paused;
+                        break;
+                    case Paused:
+                        notificationState = NotificationState.Ready;
+                        break;
+                }
+            });
+        }
+    });
 
     /**
      * hides the notification pane on any event
@@ -322,6 +356,7 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.detailsToggle.text=Details",
         "ViewFrame.listToggle.text=List",
         "ViewFrame.zoomMenuButton.text=Zoom in/out to",
+        "ViewFrame.zoomMenuButton.errorMessage=Error pushing time range.",
         "ViewFrame.tagsAddedOrDeleted=Tags have been created and/or deleted.  The view may not be up to date."
     })
     void initialize() {
@@ -337,6 +372,8 @@ final public class ViewFrame extends BorderPane {
 
         //configure notification pane 
         notificationPane.getStyleClass().add(NotificationPane.STYLE_CLASS_DARK);
+
+        notificationPane.setGraphic(new ImageView(WARNING));
         setCenter(notificationPane);
 
         //configure view mode toggle
@@ -349,15 +386,14 @@ final public class ViewFrame extends BorderPane {
         viewModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
         viewModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
         modeSegButton.setToggleGroup(viewModeToggleGroup);
-        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode) ->
-                controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
+        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode)
+                -> controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
         );
 
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
         syncViewMode();
 
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
-        ActionUtils.configureButton(new UpdateDB(controller), updateDBButton);
 
         /////configure start and end pickers
         startLabel.setText(Bundle.ViewFrame_startLabel_text());
@@ -394,7 +430,16 @@ final public class ViewFrame extends BorderPane {
         zoomMenuButton.getItems().clear();
         for (ZoomRanges zoomRange : ZoomRanges.values()) {
             zoomMenuButton.getItems().add(ActionUtils.createMenuItem(
-                    new Action(zoomRange.getDisplayName(), event -> controller.pushPeriod(zoomRange.getPeriod()))
+                    new Action(zoomRange.getDisplayName(), actionEvent -> {
+                        try {
+                            controller.pushPeriod(zoomRange.getPeriod());
+                        } catch (TskCoreException ex) {
+                            Notifications.create().owner(getScene().getWindow())
+                                    .text(Bundle.ViewFrame_zoomMenuButton_errorMessage())
+                                    .showError();
+                            LOGGER.log(Level.SEVERE, "Error pushing a time range.", ex);
+                        }
+                    })
             ));
         }
         zoomMenuButton.setText(Bundle.ViewFrame_zoomMenuButton_text());
@@ -411,7 +456,7 @@ final public class ViewFrame extends BorderPane {
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
-
+        notificationTimer.start();
     }
 
     /**
@@ -424,11 +469,20 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-        hostedView.setOutOfDate();
+
         Platform.runLater(() -> {
-            if (notificationPane.isShowing() == false) {
-                notificationPane.getActions().setAll(new Refresh());
-                notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted(), new ImageView(INFORMATION));
+            hostedView.setNeedsRefresh();
+            switch (notificationState) {
+                case Paused:
+                    break;
+                case Ready:
+                    notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted());
+                    notificationState = NotificationState.Showing;
+                    break;
+                case Showing:
+                    notificationPane.setText(Bundle.ViewFrame_tagsAddedOrDeleted());
+                    notificationTimer.restart();
+                    break;
             }
         });
     }
@@ -445,50 +499,14 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         Platform.runLater(() -> {
-            if (Bundle.ViewFrame_tagsAddedOrDeleted().equals(notificationPane.getText())) {
-                notificationPane.hide();
-            }
+            notificationPane.hide();
+            notificationState = NotificationState.Paused;
+            notificationTimer.restart();
+            refreshHistorgram();
         });
     }
 
     /**
-     * Handle a DBUpdatedEvent from the events model by refreshing the view.
-     *
-     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
-     * EventBus in order for this handler to be invoked.
-     *
-     * @param event The DBUpdatedEvent to handle.
-     */
-    @Subscribe
-    public void handleDBUpdated(DBUpdatedEvent event) {
-        hostedView.refresh();
-        refreshHistorgram();
-        Platform.runLater(notificationPane::hide);
-    }
-
-    /**
-     * Handle a DataSourceAddedEvent from the events model by showing a
-     * notification.
-     *
-     * NOTE: This ViewFrame must be registered with the filteredEventsModel's
-     * EventBus in order for this handler to be invoked.
-     *
-     * @param event The DataSourceAddedEvent to handle.
-     */
-    @Subscribe
-    @NbBundle.Messages({
-        "# {0} - datasource name",
-        "ViewFrame.notification.newDataSource={0} has been added as a new datasource.  The Timeline DB may be out of date."})
-    public void handlDataSourceAdded(DataSourceAddedEvent event) {
-        Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_newDataSource(event.getDataSource().getName()), new ImageView(WARNING));
-        });
-    }
-
-    /**
-     * Handle a DataSourceAnalysisCompletedEvent from the events modelby showing
-     * a notification.
      *
      * NOTE: This ViewFrame must be registered with the filteredEventsModel's
      * EventBus in order for this handler to be invoked.
@@ -498,14 +516,34 @@ final public class ViewFrame extends BorderPane {
     @Subscribe
     @NbBundle.Messages({
         "# {0} - datasource name",
-        "ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline DB may be out of date."})
-    public void handleAnalysisCompleted(DataSourceAnalysisCompletedEvent event) {
+        "ViewFrame.notification.analysisComplete=The event data has changed, the visualization may be out of date."})
+    public void handleEventAdded(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_analysisComplete(event.getDataSource().getName()), new ImageView(WARNING));
+            if (hostedView.needsRefresh() == false) {
+                hostedView.setNeedsRefresh();
+                switch (notificationState) {
+                    case Paused:
+                        break;
+                    case Ready:
+                        notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationState = NotificationState.Showing;
+                        notificationTimer.restart();
+                        break;
+                    case Showing:
+                        notificationPane.setText(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationTimer.restart();
+                        break;
+                }
+            }
         });
     }
 
+    /**
+     * Display the given message in the notificationPane and then autohide it
+     * after 30 seconds.
+     *
+     * @param message The message to display.
+     */
     /**
      * Refresh the Histogram to represent the current state of the DB.
      */
@@ -525,10 +563,10 @@ final public class ViewFrame extends BorderPane {
             @Override
             protected Void call() throws Exception {
 
-                updateMessage(ViewFrame_histogramTask_preparing());
+                updateMessage(Bundle.ViewFrame_histogramTask_preparing());
 
                 long max = 0;
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
+                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
                 Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
@@ -538,7 +576,7 @@ final public class ViewFrame extends BorderPane {
 
                 //clear old data, and reset ranges and series
                 Platform.runLater(() -> {
-                    updateMessage(ViewFrame_histogramTask_resetUI());
+                    updateMessage(Bundle.ViewFrame_histogramTask_resetUI());
 
                 });
 
@@ -555,7 +593,7 @@ final public class ViewFrame extends BorderPane {
 
                     start = end;
 
-                    updateMessage(ViewFrame_histogramTask_queryDb());
+                    updateMessage(Bundle.ViewFrame_histogramTask_queryDb());
                     //query for current range
                     long count = filteredEvents.getEventCounts(interval).values().stream().mapToLong(Long::valueOf).sum();
                     bins.add(count);
@@ -565,7 +603,7 @@ final public class ViewFrame extends BorderPane {
                     final double fMax = Math.log(max);
                     final ArrayList<Long> fbins = new ArrayList<>(bins);
                     Platform.runLater(() -> {
-                        updateMessage(ViewFrame_histogramTask_updateUI2());
+                        updateMessage(Bundle.ViewFrame_histogramTask_updateUI2());
 
                         histogramBox.getChildren().clear();
 
@@ -600,33 +638,42 @@ final public class ViewFrame extends BorderPane {
     /**
      * Refresh the time selection UI to match the current zoom parameters.
      */
+    @NbBundle.Messages({
+        "ViewFrame.refreshTimeUI.errorMessage=Error gettig the spanning interval."})
     private void refreshTimeUI() {
-        RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval());
-        final long minTime = rangeDivisionInfo.getLowerBound();
-        final long maxTime = rangeDivisionInfo.getUpperBound();
+        try {
+            RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+            final long minTime = rangeDivisionInfo.getLowerBound();
+            final long maxTime = rangeDivisionInfo.getUpperBound();
 
-        long startMillis = filteredEvents.getTimeRange().getStartMillis();
-        long endMillis = filteredEvents.getTimeRange().getEndMillis();
+            long startMillis = filteredEvents.getTimeRange().getStartMillis();
+            long endMillis = filteredEvents.getTimeRange().getEndMillis();
 
-        if (minTime > 0 && maxTime > minTime) {
-            Platform.runLater(() -> {
-                startPicker.localDateTimeProperty().removeListener(startListener);
-                endPicker.localDateTimeProperty().removeListener(endListener);
-                rangeSlider.highValueChangingProperty().removeListener(rangeSliderListener);
-                rangeSlider.lowValueChangingProperty().removeListener(rangeSliderListener);
+            if (minTime > 0 && maxTime > minTime) {
+                Platform.runLater(() -> {
+                    startPicker.localDateTimeProperty().removeListener(startListener);
+                    endPicker.localDateTimeProperty().removeListener(endListener);
+                    rangeSlider.highValueChangingProperty().removeListener(rangeSliderListener);
+                    rangeSlider.lowValueChangingProperty().removeListener(rangeSliderListener);
 
-                rangeSlider.setMax((maxTime - minTime));
+                    rangeSlider.setMax((maxTime - minTime));
 
-                rangeSlider.setLowValue(startMillis - minTime);
-                rangeSlider.setHighValue(endMillis - minTime);
-                startPicker.setLocalDateTime(epochMillisToLocalDateTime(startMillis));
-                endPicker.setLocalDateTime(epochMillisToLocalDateTime(endMillis));
+                    rangeSlider.setLowValue(startMillis - minTime);
+                    rangeSlider.setHighValue(endMillis - minTime);
+                    startPicker.setLocalDateTime(epochMillisToLocalDateTime(startMillis));
+                    endPicker.setLocalDateTime(epochMillisToLocalDateTime(endMillis));
 
-                rangeSlider.highValueChangingProperty().addListener(rangeSliderListener);
-                rangeSlider.lowValueChangingProperty().addListener(rangeSliderListener);
-                startPicker.localDateTimeProperty().addListener(startListener);
-                endPicker.localDateTimeProperty().addListener(endListener);
-            });
+                    rangeSlider.highValueChangingProperty().addListener(rangeSliderListener);
+                    rangeSlider.lowValueChangingProperty().addListener(rangeSliderListener);
+                    startPicker.localDateTimeProperty().addListener(startListener);
+                    endPicker.localDateTimeProperty().addListener(endListener);
+                });
+            }
+        } catch (TskCoreException ex) {
+            Notifications.create().owner(getScene().getWindow())
+                    .text(Bundle.ViewFrame_refreshTimeUI_errorMessage())
+                    .showError();
+            LOGGER.log(Level.SEVERE, "Error gettig the spanning interval.", ex);
         }
     }
 
@@ -663,7 +710,9 @@ final public class ViewFrame extends BorderPane {
             default:
                 throw new IllegalArgumentException("Unknown ViewMode: " + newViewMode.toString());//NON-NLS
         }
+        notificationPane.getActions().setAll(new Refresh());
         controller.registerForEvents(hostedView);
+        controller.getAutopsyCase().getSleuthkitCase().registerForEvents(this);
 
         viewModeToggleGroup.setValue(newViewMode); //this selects the right toggle automatically
 
@@ -713,6 +762,7 @@ final public class ViewFrame extends BorderPane {
         timeRangeToolBar.getItems().removeAll(this.timeNavigationNodes); //remove old nodes
         this.timeNavigationNodes.setAll(timeNavigationNodes);
         timeRangeToolBar.getItems().addAll(TIME_TOOLBAR_INSERTION_INDEX, timeNavigationNodes);
+
     }
 
     @NbBundle.Messages("NoEventsDialog.titledPane.text=No Visible Events")
@@ -770,42 +820,60 @@ final public class ViewFrame extends BorderPane {
             this.intervalMapper = intervalMapper;
         }
 
+        @NbBundle.Messages({"ViewFrame.pickerListener.errorMessage=Error responding to date/time picker change."})
         @Override
         public void invalidated(Observable observable) {
             LocalDateTime pickerTime = pickerSupplier.get().getLocalDateTime();
             if (pickerTime != null) {
-                controller.pushTimeRange(intervalMapper.apply(filteredEvents.timeRangeProperty().get(), localDateTimeToEpochMilli(pickerTime)));
+                try {
+                    controller.pushTimeRange(intervalMapper.apply(filteredEvents.getTimeRange(), localDateTimeToEpochMilli(pickerTime)));
+                } catch (TskCoreException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.ViewFrame_pickerListener_errorMessage())
+                            .showError();
+                    LOGGER.log(Level.SEVERE, "Error responding to date/time picker change.", ex);
+                }
                 Platform.runLater(ViewFrame.this::refreshTimeUI);
             }
         }
     }
 
     /**
-     * callback that disabled date/times outside the span of the current case.
+     * Callback that disabled date/times outside the span of the current case.
      */
     private class LocalDateDisabler implements Callback<LocalDateTimePicker.LocalDateTimeRange, Void> {
 
+        @NbBundle.Messages({
+            "ViewFrame.localDateDisabler.errorMessage=Error getting spanning interval."})
         @Override
         public Void call(LocalDateTimePicker.LocalDateTimeRange viewedRange) {
+
             startPicker.disabledLocalDateTimes().clear();
             endPicker.disabledLocalDateTimes().clear();
+            try {
+                //all events in the case are contained in this interval
+                Interval spanningInterval = filteredEvents.getSpanningInterval();
+                long spanStartMillis = spanningInterval.getStartMillis();
+                long spaneEndMillis = spanningInterval.getEndMillis();
 
-            //all events in the case are contained in this interval
-            Interval spanningInterval = filteredEvents.getSpanningInterval();
-            long spanStartMillis = spanningInterval.getStartMillis();
-            long spaneEndMillis = spanningInterval.getEndMillis();
-
-            LocalDate rangeStartLocalDate = viewedRange.getStartLocalDateTime().toLocalDate();
-            LocalDate rangeEndLocalDate = viewedRange.getEndLocalDateTime().toLocalDate().plusDays(1);
-            //iterate over days of the displayed range and disable ones not in spanning interval
-            for (LocalDate dt = rangeStartLocalDate; false == dt.isAfter(rangeEndLocalDate); dt = dt.plusDays(1)) {
-                long startOfDay = dt.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-                long endOfDay = dt.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-                //if no part of day is within spanning interval, add that date the list of disabled dates.
-                if (endOfDay < spanStartMillis || startOfDay > spaneEndMillis) {
-                    startPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
-                    endPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
+                LocalDate rangeStartLocalDate = viewedRange.getStartLocalDateTime().toLocalDate();
+                LocalDate rangeEndLocalDate = viewedRange.getEndLocalDateTime().toLocalDate().plusDays(1);
+                //iterate over days of the displayed range and disable ones not in spanning interval
+                for (LocalDate dt = rangeStartLocalDate; false == dt.isAfter(rangeEndLocalDate); dt = dt.plusDays(1)) {
+                    long startOfDay = dt.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+                    long endOfDay = dt.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
+                    //if no part of day is within spanning interval, add that date the list of disabled dates.
+                    if (endOfDay < spanStartMillis || startOfDay > spaneEndMillis) {
+                        startPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
+                        endPicker.disabledLocalDateTimes().add(dt.atStartOfDay());
+                    }
                 }
+
+            } catch (TskCoreException ex) {
+                Notifications.create().owner(getScene().getWindow())
+                        .text(Bundle.ViewFrame_localDateDisabler_errorMessage())
+                        .showError();
+                LOGGER.log(Level.SEVERE, "Error getting spanning interval.", ex);
             }
             return null;
         }
@@ -827,16 +895,26 @@ final public class ViewFrame extends BorderPane {
             this.picker = picker;
         }
 
+        @NbBundle.Messages({
+            "ViewFrame.dateTimeValidator.errorMessage=Error getting spanning interval."})
         @Override
         public Boolean call(LocalDateTime param) {
             long epochMilli = localDateTimeToEpochMilli(param);
-            if (filteredEvents.getSpanningInterval().contains(epochMilli)) {
-                return true;
-            } else {
-                if (picker.isPickerShowing() == false) {
-                    //if the user typed an in valid date, reset the text box to the selected date.
-                    picker.setDisplayedLocalDateTime(picker.getLocalDateTime());
+            try {
+                if (filteredEvents.getSpanningInterval().contains(epochMilli)) {
+                    return true;
+                } else {
+                    if (picker.isPickerShowing() == false) {
+                        //if the user typed an in valid date, reset the text box to the selected date.
+                        picker.setDisplayedLocalDateTime(picker.getLocalDateTime());
+                    }
+                    return false;
                 }
+            } catch (TskCoreException ex) {
+                Notifications.create().owner(getScene().getWindow())
+                        .text(Bundle.ViewFrame_dateTimeValidator_errorMessage())
+                        .showError();
+                LOGGER.log(Level.SEVERE, "Error getting spanning interval.", ex);
                 return false;
             }
         }
@@ -855,7 +933,7 @@ final public class ViewFrame extends BorderPane {
             setLongText(Bundle.ViewFrame_refresh_longText());
             setGraphic(new ImageView(REFRESH));
             setEventHandler(actionEvent -> filteredEvents.postRefreshRequest());
-            disabledProperty().bind(hostedView.outOfDateProperty().not());
+            disabledProperty().bind(hostedView.needsRefreshProperty().not());
         }
     }
 }

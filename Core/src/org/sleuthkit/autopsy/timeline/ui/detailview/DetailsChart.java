@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,11 +44,11 @@ import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * A TimeLineChart that implements the visual aspects of the DetailView
@@ -76,7 +76,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * a particular description, but it must include be in the selectedNodes
      * (selectedNodes::contains).
      */
-    private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>((x) -> false);
+    private final SimpleObjectProperty<Predicate<EventNodeBase<?>>> highlightPredicate = new SimpleObjectProperty<>(dummy -> false);
 
     /**
      * An ObservableList of the Nodes that are selected in this chart.
@@ -135,10 +135,10 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
          * If the time range is changed, clear the guide line and the interval
          * selector, since they may not be in view any more.
          */
-        eventsModel.timeRangeProperty().addListener(o -> clearTimeBasedUIElements());
+        eventsModel.timeRangeProperty().addListener(observable -> clearTimeBasedUIElements());
 
         //if the view paramaters change, clear the selection
-        eventsModel.zoomParametersProperty().addListener(o -> getSelectedNodes().clear());
+        eventsModel.zoomParametersProperty().addListener(observable -> getSelectedNodes().clear());
     }
 
     /**
@@ -311,8 +311,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         }
 
         @Override
-        protected Interval adjustInterval(Interval i) {
-            return i;
+        protected Interval adjustInterval(Interval interval) {
+            return interval;
         }
 
         @Override

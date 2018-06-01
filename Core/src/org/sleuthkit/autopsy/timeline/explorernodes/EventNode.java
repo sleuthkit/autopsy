@@ -40,15 +40,16 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
  * * Explorer Node for a SingleEvent.
@@ -64,13 +65,13 @@ public class EventNode extends DisplayableItemNode {
     EventNode(SingleEvent event, AbstractFile file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
     }
 
     EventNode(SingleEvent event, AbstractFile file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/timeline/images/" + event.getEventType().getIconBase()); // NON-NLS
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
     }
 
     @Override
@@ -217,20 +218,25 @@ public class EventNode extends DisplayableItemNode {
      *         its lookup.
      */
     public static EventNode createEventNode(final Long eventID, FilteredEventsModel eventsModel) throws TskCoreException, NoCurrentCaseException {
-        /*
-         * Look up the event by id and creata an EventNode with the appropriate
-         * data in the lookup.
-         */
-        final SingleEvent eventById = eventsModel.getEventById(eventID);
 
         SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+        try {
+            /*
+             * Look up the event by id and creata an EventNode with the
+             * appropriate data in the lookup.
+             */
+            final SingleEvent eventById = eventsModel.getEventById(eventID);
 
-        if (eventById.getArtifactID().isPresent()) {
-            BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
-            return new EventNode(eventById, file, blackboardArtifact);
-        } else {
-            return new EventNode(eventById, file);
+            AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+
+            if (eventById.getArtifactID().isPresent()) {
+                BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());
+                return new EventNode(eventById, file, blackboardArtifact);
+            } else {
+                return new EventNode(eventById, file);
+            }
+        } catch (TskCoreException ex) {
+            throw new TskCoreException("Error getting event by id.", ex);
         }
     }
 

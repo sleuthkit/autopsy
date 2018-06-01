@@ -40,7 +40,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -50,6 +49,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
@@ -104,7 +104,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
@@ -191,7 +191,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 /*
                  * Index the artifact for keyword search.
                  */
-                blackboard.indexArtifact(artifact);
+                blackboard.postArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }

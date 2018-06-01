@@ -87,7 +87,16 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                             imgName)));
             return ProcessResult.OK;
         }
-        Image img = (Image) dataSource;
+//        Image img = (Image) dataSource;
+        Image img;
+        if (dataSource instanceof Image) {
+           img = (Image) dataSource;
+        } else {
+            logger.log(Level.INFO, NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.process.notAnImage"));
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.process.notAnImage")));
+            return ProcessResult.OK;                   
+        }
 
         // Skip images that are not E01
         if (img.getType() != TskData.TSK_IMG_TYPE_ENUM.TSK_IMG_TYPE_EWF_EWF) {

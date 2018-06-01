@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  * EventTreeItem for base event types (file system, misc, web, ...)

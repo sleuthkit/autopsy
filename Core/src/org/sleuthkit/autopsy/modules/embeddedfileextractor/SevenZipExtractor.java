@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
+import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
 import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import net.sf.sevenzipjbinding.SevenZip;
@@ -39,13 +40,11 @@ import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
-import net.sf.sevenzipjbinding.ExtractOperationResult;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -58,6 +57,7 @@ import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -150,8 +150,8 @@ class SevenZipExtractor {
             }
         }
         return false;
-    }    
-    
+    }
+
     /**
      * Check if the item inside archive is a potential zipbomb
      *
@@ -494,7 +494,7 @@ class SevenZipExtractor {
         final long archiveId = archiveFile.getId();
         SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr;
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             unpackSuccessful = false;
@@ -721,7 +721,7 @@ class SevenZipExtractor {
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.indexArtifact(artifact);
+                    blackboard.postArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
@@ -1112,8 +1112,8 @@ class SevenZipExtractor {
             }
 
             void addDerivedInfo(long size,
-                    boolean isFile,
-                    long ctime, long crtime, long atime, long mtime, String relLocalPath) {
+                                boolean isFile,
+                                long ctime, long crtime, long atime, long mtime, String relLocalPath) {
                 this.size = size;
                 this.isFile = isFile;
                 this.ctime = ctime;

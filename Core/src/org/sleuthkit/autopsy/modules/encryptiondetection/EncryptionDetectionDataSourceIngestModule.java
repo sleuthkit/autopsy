@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.datamodel.Content;
@@ -35,6 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Image;
@@ -66,7 +66,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         validateSettings();
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard();
     }
 
     @Messages({
@@ -132,7 +132,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                 /*
                  * Index the artifact for keyword search.
                  */
-                blackboard.indexArtifact(artifact);
+                blackboard.postArtifact(artifact);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }

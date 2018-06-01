@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,9 +25,9 @@ import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TreeItem;
 import org.apache.commons.lang3.StringUtils;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * EventsTreeItem for specific event descriptions
@@ -50,7 +50,7 @@ class DescriptionTreeItem extends EventsTreeItem {
         super(comparator);
         setValue(event);
     }
-    
+
     @Override
     public void insert(List<TimeLineEvent> path) {
         TimeLineEvent head = path.remove(0);
@@ -68,13 +68,13 @@ class DescriptionTreeItem extends EventsTreeItem {
             treeItem.insert(path);
         }
     }
-    
+
     @Override
     void remove(List<TimeLineEvent> path) {
         TimeLineEvent head = path.remove(0);
         //strip off parent description
         String substringAfter = StringUtils.substringAfter(head.getDescription(), head.getParentStripe().map(EventStripe::getDescription).orElse(""));
-        
+
         DescriptionTreeItem descTreeItem = childMap.get(substringAfter);
 
         //remove path from child too 
@@ -89,17 +89,17 @@ class DescriptionTreeItem extends EventsTreeItem {
             }
         }
     }
-    
+
     @Override
     void sort(Comparator<TreeItem<TimeLineEvent>> comparator, Boolean recursive) {
         setComparator(comparator);
         FXCollections.sort(getChildren(), comparator); //sort children with new comparator
         if (recursive) {
             //resort children's children
-            childMap.values().forEach(ti -> ti.sort(comparator, true));
+            childMap.values().forEach(treeItem -> treeItem.sort(comparator, true));
         }
     }
-    
+
     @Override
     public EventsTreeItem findTreeItemForEvent(TimeLineEvent event) {
         if (getValue().getEventType() == event.getEventType()
@@ -111,10 +111,10 @@ class DescriptionTreeItem extends EventsTreeItem {
             return super.findTreeItemForEvent(event);
         }
     }
-    
+
     @Override
     String getDisplayText() {
-        
+
         String text = getValue().getDescription() + " (" + getValue().getSize() + ")"; // NON-NLS
 
         TreeItem<TimeLineEvent> parent = getParent();
@@ -124,7 +124,7 @@ class DescriptionTreeItem extends EventsTreeItem {
         }
         return text;
     }
-    
+
     @Override
     EventType getEventType() {
         return getValue().getEventType();

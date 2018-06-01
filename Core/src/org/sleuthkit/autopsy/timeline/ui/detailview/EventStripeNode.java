@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,18 +29,16 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.EventCluster;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
 
 /**
  * Node used in DetailsChart to represent an EventStripe.
  */
 final public class EventStripeNode extends MultiEventNodeBase<EventStripe, EventCluster, EventClusterNode> {
-
-    private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
 
     /**
      * The button to expand hide stripes with this description, created lazily.
@@ -54,7 +52,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
      * @param eventStripe the EventStripe represented by this node
      * @param parentNode  the EventClusterNode that is the parent of this node.
      */
-    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) {
+    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) throws TskCoreException {
         super(chartLane, eventStripe, parentNode);
 
         //setup description label
@@ -106,7 +104,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    void installActionButtons() {
+    protected void installActionButtons() {
         super.installActionButtons();
         if (chartLane.quickHideFiltersEnabled() && hideButton == null) {
             hideButton = ActionUtils.createButton(newHideAction(), ActionUtils.ActionTextBehavior.HIDE);
@@ -117,7 +115,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    EventNodeBase<?> createChildNode(EventCluster cluster) {
+    protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TskCoreException {
         ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
             SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(cluster);

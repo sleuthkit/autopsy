@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,14 +18,21 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import java.util.logging.Level;
 import javafx.collections.SetChangeListener;
 import javafx.scene.chart.Axis;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.controlsfx.control.Notifications;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  *
  */
 public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent> {
+
+    private static final Logger logger = Logger.getLogger(PinnedEventsChartLane.class.getName());
 
     /**
      *
@@ -34,15 +41,19 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
      * @param verticalAxis   the value of verticalAxis
      * @param selectedNodes1 the value of selectedNodes1
      */
+    @NbBundle.Messages({"PinnedChartLane.pinnedEventsListener.errorMessage=Error adding pinned event to lane."})
     PinnedEventsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<TimeLineEvent> verticalAxis) {
         super(parentChart, dateAxis, verticalAxis, false);
 
-//        final Series<DateTime, TimeLineEvent> series = new Series<>();
-//        setData(FXCollections.observableArrayList());
-//        getData().add(series);
         getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
             if (change.wasAdded()) {
-                addEvent(change.getElementAdded());
+                try {
+                    addEvent(change.getElementAdded());
+                } catch (TskCoreException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                        .text( Bundle.PinnedChartLane_pinnedEventsListener_errorMessage()).showError();
+                    logger.log(Level.SEVERE, "Error adding pinned event to lane.", ex);
+                }
             }
             if (change.wasRemoved()) {
                 removeEvent(change.getElementRemoved());
@@ -50,7 +61,16 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
             requestChartLayout();
         });
 
-        getController().getPinnedEvents().stream().forEach(this::addEvent);
+        for (TimeLineEvent event : getController().getPinnedEvents()) {
+            try {
+                addEvent(event);
+            } catch (TskCoreException ex) {
+                Notifications.create().owner(getScene().getWindow())
+                        .text(Bundle.PinnedChartLane_pinnedEventsListener_errorMessage())
+                        .showError();
+                logger.log(Level.SEVERE, "Error adding pinned event to lane.", ex);
+            }
+        }
         requestChartLayout();
     }
 

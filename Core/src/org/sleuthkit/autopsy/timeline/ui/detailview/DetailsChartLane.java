@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
@@ -52,14 +51,15 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
-import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.EventCluster;
+import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout
@@ -95,10 +95,14 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private Set<String> activeQuickHidefilters = new HashSet<>();
 
+    /** listener that triggers chart layout pass */
+    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
+
     boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
 
+    @Override
     public void clearContextMenu() {
         parentChart.clearContextMenu();
     }
@@ -108,7 +112,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return parentChart.getContextMenu(clickEvent);
     }
 
-    EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) {
+    private EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) throws TskCoreException {
         if (event.getEventIDs().size() == 1) {
             return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
         } else if (event instanceof SingleEvent) {
@@ -145,6 +149,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         setCursor(null);
     }
 
+    @Override
     public TimeLineController getController() {
         return controller;
     }
@@ -152,12 +157,6 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
         return selectedNodes;
     }
-    /**
-     * listener that triggers chart layout pass
-     */
-    final InvalidationListener layoutInvalidationListener = (Observable o) -> {
-        layoutPlotChildren();
-    };
 
     public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
@@ -176,7 +175,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         this.useQuickHideFilters = useQuickHideFilters;
 
         //add a dummy series or the chart is never rendered
-        setData(FXCollections.observableList(Arrays.asList(new Series<DateTime, Y>())));
+        setData(FXCollections.observableList(Arrays.asList(new Series<>())));
 
         Tooltip.install(this, AbstractTimelineChart.getDefaultTooltip());
 
@@ -308,7 +307,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
      *
      * @param event
      */
-    void addEvent(Y event) {
+    void addEvent(Y event) throws TskCoreException {
         EventNodeBase<?> eventNode = createNode(this, event);
         eventMap.put(event, eventNode);
         Platform.runLater(() -> {
@@ -346,13 +345,13 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
      * @return all the nodes that pass the given predicate
      */
     synchronized Iterable<EventNodeBase<?>> getAllNodes() {
-        return getNodes((x) -> true);
+        return getNodes(dummy -> true);
     }
 
     /**
      * @return all the nodes that pass the given predicate
      */
-    synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
+    private synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> predicate) {
         //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener
                 = new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
@@ -366,7 +365,7 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
 
         return sortedNodes.stream()
                 .flatMap(stripeFlattener)
-                .filter(p).collect(Collectors.toList());
+                .filter(predicate).collect(Collectors.toList());
     }
 
     /**

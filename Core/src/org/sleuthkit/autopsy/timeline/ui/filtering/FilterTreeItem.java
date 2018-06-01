@@ -22,8 +22,8 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
-import org.sleuthkit.autopsy.timeline.filters.CompoundFilter;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
+import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
+import org.sleuthkit.datamodel.timeline.filters.Filter;
 
 /**
  * A TreeItem for a filter.

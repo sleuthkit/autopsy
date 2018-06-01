@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,17 +42,17 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
-import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
-import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
-import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.filters.Filter;
-import org.sleuthkit.autopsy.timeline.filters.RootFilter;
+import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
+import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.filters.Filter;
+import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
 /**
  * The FXML controller for the filter ui.
  *
- * This also implements TimeLineView since it dynamically updates its
- * filters based on the contents of a FilteredEventsModel
+ * This also implements TimeLineView since it dynamically updates its filters
+ * based on the contents of a FilteredEventsModel
  */
 final public class FilterSetPanel extends BorderPane {
 
@@ -211,8 +211,8 @@ final public class FilterSetPanel extends BorderPane {
             setGraphic(new ImageView(SHOW));
             textProperty().bind(
                     Bindings.when(cell.getItem().selectedProperty())
-                    .then(Bundle.FilterSetPanel_hiddenDescriptionsListView_unhideAndRemove())
-                    .otherwise(Bundle.FilterSetPanel_hiddenDescriptionsListView_remove()));
+                            .then(Bundle.FilterSetPanel_hiddenDescriptionsListView_unhideAndRemove())
+                            .otherwise(Bundle.FilterSetPanel_hiddenDescriptionsListView_remove()));
         }
     }
 }
