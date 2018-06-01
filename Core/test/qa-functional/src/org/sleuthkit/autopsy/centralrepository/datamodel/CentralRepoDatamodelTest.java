@@ -845,7 +845,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         
         // Test getting common instances with expected results
         try {
-            List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null, Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash));
+            List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null, Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash), -1);
             assertTrue("getArtifactInstancesByCaseValues returned " + instances.size() + " results - expected 5", instances.size() == 5);
 
             // This test works because all the instances of this hash were set to the same path
@@ -867,7 +867,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting instances expecting no results because they are not in the case 
         try {
             CorrelationCase badCase = new CorrelationCase("badCaseUuid", "badCaseName");
-            List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(badCase, Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash));
+            List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(badCase, Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash), 0);
             
             assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
         } catch (EamDbException ex) {
@@ -878,7 +878,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 
         // Test getting instances expecting no results because of bad hashes
         try {
-            List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null, Arrays.asList("xyz", "123"));
+            List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null, Arrays.asList("xyz", "123"), -1);
             
             assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
         } catch (EamDbException ex) {
@@ -918,7 +918,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting instances with null value
         // Should just return nothing
         try {
-           List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null, null);
+           List<CorrelationAttributeCommonInstance> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null, null, -1);
             
             assertTrue("getArtifactInstancesByTypeValue returned non-empty list for null value", instances.isEmpty());
         } catch (EamDbException ex) {

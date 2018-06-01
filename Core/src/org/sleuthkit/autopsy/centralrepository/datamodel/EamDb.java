@@ -230,8 +230,10 @@ public interface EamDb {
      * 
      * @param correlationCase Case id  to search on
      * @param values List of ArtifactInstance MD5 values to find matches of.
+     * @param currentCaseId current case
      * 
      * @return List of artifact instances for a given list of MD5 values
+     * //TODO create an overload that omits the case params
      */
     List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException;
 

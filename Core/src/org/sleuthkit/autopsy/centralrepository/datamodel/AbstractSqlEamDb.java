@@ -673,74 +673,76 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if (correlationCase != null) {
             singleCase = true;
         }
-        if (values == null) {
-            values = new ArrayList<String>();
-        }
-        Connection conn = connect();
 
         List<CorrelationAttributeCommonInstance> artifactInstances = new ArrayList<>();
+        
+        if (values != null && !values.isEmpty()) {            
+            
+            //we can skip all this if there is nothing to search for
+            String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+            StringBuilder sql = new StringBuilder(10);
+            sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM ");
+            sql.append(tableName);
+            sql.append(" LEFT JOIN cases ON ");
+            sql.append(tableName);
+            sql.append(".case_id=cases.id");
+            sql.append(" LEFT JOIN data_sources ON ");
+            sql.append(tableName);
+            sql.append(".data_source_id=data_sources.id");
+            sql.append(" WHERE value IN (SELECT value FROM ");
+            sql.append(tableName);
+            sql.append(" WHERE value IN (");
 
-        //  SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM file_instances LEFT JOIN cases ON file_instances.case_id=cases.id LEFT JOIN data_sources ON file_instances.data_source_id=data_sources.id WHERE value IN (SELECT value FROM file_instances WHERE value IN ("59029becd7f830c0478aeb5e67cc3b20","d2b949c51cf3d5721699a6ea500eeba7","b90c8c8fb1c4687780002704b59585fe") GROUP BY value HAVING COUNT(*) > 1) ORDER BY value
-        CorrelationAttributeCommonInstance artifactInstance;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
+            // Note: PreparedStatement has a limit on ? variable replacement so instead query is built with values appended directly into the string
+            for (String value : values) {
+                sql.append("'");
+                sql.append(value);
+                sql.append("',");
+            }
 
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
-        StringBuilder sql = new StringBuilder(10);
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, value FROM ");
-        sql.append(tableName);
-        sql.append(" LEFT JOIN cases ON ");
-        sql.append(tableName);
-        sql.append(".case_id=cases.id");
-        sql.append(" LEFT JOIN data_sources ON ");
-        sql.append(tableName);
-        sql.append(".data_source_id=data_sources.id");
-        sql.append(" WHERE value IN (SELECT value FROM ");
-        sql.append(tableName);
-        sql.append(" WHERE value IN (");
-
-        // Note: PreparedStatement has a limit on ? variable replacement so instead query is built with values appended directly into the string
-        for (String value : values) {
-            sql.append("'");
-            sql.append(value);
-            sql.append("',");
-        }
-        if (values != null) {
             sql.deleteCharAt(sql.length() - 1);
-        }
-        sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
 
-        if (singleCase && correlationCase != null) {
-            sql.append(" AND ");
-            sql.append(tableName);
-            sql.append(".case_id=?");
-            sql.append(" OR ");
-            sql.append(tableName);
-            sql.append(".case_id=?");
+            sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
 
-        }
-
-        sql.append(" ORDER BY value, cases.case_name, file_path");
-
-        try {
-            preparedStatement = conn.prepareStatement(sql.toString());
             if (singleCase && correlationCase != null) {
-                preparedStatement.setInt(1, correlationCase.getID());
-                preparedStatement.setInt(2, currentCaseId);
+                sql.append(" AND ");
+                sql.append(tableName);
+                sql.append(".case_id=?");
+                sql.append(" OR ");
+                sql.append(tableName);
+                sql.append(".case_id=?");
             }
+            
+            //TODO shows extra results - possibly shows matches within current case
 
-            resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                artifactInstance = getCommonEamArtifactInstanceFromResultSet(resultSet);
-                artifactInstances.add(artifactInstance);
+            sql.append(" ORDER BY value, cases.case_name, file_path");
+
+            Connection conn = connect();
+            CorrelationAttributeCommonInstance artifactInstance;
+            PreparedStatement preparedStatement = null;
+            ResultSet resultSet = null;
+
+            try {
+
+                preparedStatement = conn.prepareStatement(sql.toString());
+                if (singleCase && correlationCase != null) {
+                    preparedStatement.setInt(1, correlationCase.getID());
+                    preparedStatement.setInt(2, currentCaseId);
+                }
+
+                resultSet = preparedStatement.executeQuery();
+                while (resultSet.next()) {
+                    artifactInstance = getCommonEamArtifactInstanceFromResultSet(resultSet);
+                    artifactInstances.add(artifactInstance);
+                }
+
+            } catch (SQLException ex) {
+                throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+            } finally {
+                EamDbUtil.closePreparedStatement(preparedStatement);
+                EamDbUtil.closeResultSet(resultSet);
+                EamDbUtil.closeConnection(conn);
             }
-
-        } catch (SQLException ex) {
-            throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
-        } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
-            EamDbUtil.closeResultSet(resultSet);
-            EamDbUtil.closeConnection(conn);
         }
 
         return artifactInstances;
