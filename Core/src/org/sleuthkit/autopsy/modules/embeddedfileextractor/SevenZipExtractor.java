@@ -85,7 +85,7 @@ class SevenZipExtractor {
     private static final long MIN_COMPRESSION_RATIO_SIZE = 500 * 1000000L;
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
     //counts archive depth
-    private ArchiveDepthCountTree archiveDepthCountTree;
+    private volatile ArchiveDepthCountTree archiveDepthCountTree;
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
@@ -150,8 +150,8 @@ class SevenZipExtractor {
             }
         }
         return false;
-    }    
-    
+    }
+
     /**
      * Check if the item inside archive is a potential zipbomb
      *
@@ -460,7 +460,7 @@ class SevenZipExtractor {
      *
      * @param archiveFile file to unpack
      *
-     * @return list of unpacked derived files
+     * @return true if unpacking is complete
      */
     void unpack(AbstractFile archiveFile) {
         unpack(archiveFile, null);
@@ -473,7 +473,7 @@ class SevenZipExtractor {
      * @param archiveFile - file to unpack
      * @param password    - the password to use, null for no password
      *
-     * @return list of unpacked derived files
+     * @return true if unpacking is complete
      */
     @Messages({"SevenZipExtractor.indexError.message=Failed to index encryption detected artifact for keyword search."})
     boolean unpack(AbstractFile archiveFile, String password) {
@@ -580,7 +580,8 @@ class SevenZipExtractor {
 
                 //check if possible zip bomb
                 if (isZipBombArchiveItemCheck(archiveFile, item)) {
-                    continue; //skip the item
+                    unpackSuccessful = false;
+                    return unpackSuccessful;
                 }
                 SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
                 //update progress bar

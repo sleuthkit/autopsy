@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 
 /**
  * A file level ingest module that extracts embedded files from supported
@@ -48,8 +49,10 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     private String moduleDirRelative;
     private String moduleDirAbsolute;
     private MSOfficeEmbeddedContentExtractor officeExtractor;
-    private SevenZipExtractor archiveExtractor;
+    private static SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
+    private long jobId;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     /**
      * Constructs a file level ingest module that extracts embedded files from
@@ -66,10 +69,11 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * case database for extracted (derived) file paths. The absolute path
          * is used to write the extracted (derived) files to local storage.
          */
+        jobId = context.getJobId();
         try {
-        final Case currentCase = Case.getCurrentCaseThrows();
-        moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+            final Case currentCase = Case.getCurrentCaseThrows();
+            moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+            moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_NoOpenCase_errMsg(), ex);
         }
@@ -93,16 +97,17 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
+        if (refCounter.incrementAndGet(jobId) == 1) {
+            /*
+             * Construct a 7Zip file extractor for processing archive files.
+             */
+            try {
+                this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+            } catch (SevenZipNativeInitializationException ex) {
+                throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
+            }
 
-        /*
-         * Construct a 7Zip file extractor for processing archive files.
-         */
-        try {
-            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
-        } catch (SevenZipNativeInitializationException ex) {
-            throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
-
         /*
          * Construct an embedded content extractor for processing Microsoft
          * Office documents.
@@ -112,6 +117,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
+
     }
 
     @Override
@@ -150,6 +156,11 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         return ProcessResult.OK;
     }
 
+    @Override
+    public void shutDown() {
+        refCounter.decrementAndGet(jobId); 
+    }
+    
     /**
      * Creates a unique name for a file by concatentating the file name and the
      * file object id.
