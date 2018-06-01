@@ -228,18 +228,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         
         //DLG: Insert comment here!
         if (file != null && EamDbUtil.useCentralRepo()) {
-            CorrelationAttribute.Type type;
-            try {
-                type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-                actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(type, correlationCase, file));
-            } catch (EamDbException ex) {
-                //DLG:
-                Exceptions.printStackTrace(ex);
-            } catch (NoCurrentCaseException ex) {
-                //DLG:
-                Exceptions.printStackTrace(ex);
-            }
+            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
 
         //if this artifact has a time stamp add the action to view it in the timeline

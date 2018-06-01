@@ -1183,51 +1183,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
-
-    /**
-     * //DLG:
-     * @param aType
-     * @param value
-     * @return
-     * @throws EamDbException 
-     */
-    @Override
-    public String getAttributeInstanceComment(CorrelationAttribute.Type attributeType, String value) throws EamDbException {
-        if(attributeType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-        
-        Connection conn = connect();
-
-        String instanceComment = null;
-
-        CorrelationAttributeInstance artifactInstance;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(attributeType);
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT comment FROM ");
-        sql.append(tableName);
-        sql.append(" WHERE value=?");
-
-        try {
-            preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, value);
-            resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                instanceComment = resultSet.getString(1);
-            }
-        } catch (SQLException ex) {
-            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
-        } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
-            EamDbUtil.closeResultSet(resultSet);
-            EamDbUtil.closeConnection(conn);
-        }
-
-        return instanceComment;
-    }
     
     //DLG:
     @Override
@@ -1411,7 +1366,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT domain_instances.id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append("SELECT ");
+        sql.append(tableName);
+        sql.append(".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);

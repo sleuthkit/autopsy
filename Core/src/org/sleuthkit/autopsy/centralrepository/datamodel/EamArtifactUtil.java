@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -32,6 +35,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  *
@@ -265,6 +269,68 @@ public class EamArtifactUtil {
             LOGGER.log(Level.SEVERE, "Error making correlation attribute.", ex);
             return null;
         }
+    }
+    
+    /**
+     * //DLG:
+     * @param file 
+     */
+    public static CorrelationAttributeInstance getAttributeInstanceForFile(Content content) {
+        
+        CorrelationAttributeInstance instance = null;
+        
+        if (!(content instanceof AbstractFile)) {
+            return null;
+        }
+
+        final AbstractFile af = (AbstractFile) content;
+
+        if (!isValidCentralRepoFile(af)) {
+            return null;
+        }
+        
+        CorrelationAttribute.Type type;
+        CorrelationCase correlationCase;
+        CorrelationDataSource correlationDataSource;
+        String md5;
+        String filePath;
+
+        // We need a hash to make the artifact
+        md5 = af.getMd5Hash();
+        if (md5 == null || md5.isEmpty() || HashUtility.isNoDataMd5(md5)) {
+            return null;
+        }
+        
+        try {
+            Case currentCase = Case.getCurrentCaseThrows();
+            type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            correlationCase = EamDb.getInstance().getCase(currentCase);
+            String deviceId = currentCase.getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
+            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
+            filePath = Paths.get(af.getParentPath(), af.getName()).toString().replace("\\", "/").toLowerCase();
+            //CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow());
+            //CorrelationAttributeInstance instance = selectedAttribute.getInstances().get(0);
+            //CorrelationCase correlationCase = instance.getCorrelationCase();
+            //CorrelationDataSource correlationDataSource = instance.getCorrelationDataSource(); //DLG: WRONG!
+            //String filePath = instance.getFilePath();
+            
+            CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, md5, filePath);
+            instance = correlationAttribute.getInstances().get(0);
+        } catch (EamDbException ex) {
+            //DLG:
+            Exceptions.printStackTrace(ex);
+        } catch (NoCurrentCaseException ex) {
+            //DLG:
+            Exceptions.printStackTrace(ex);
+        } catch (TskCoreException ex) {
+            //DLG:
+            Exceptions.printStackTrace(ex);
+        } catch (TskDataException ex) {
+            //DLG:
+            Exceptions.printStackTrace(ex);
+        }
+        
+        return instance;
     }
 
     /**

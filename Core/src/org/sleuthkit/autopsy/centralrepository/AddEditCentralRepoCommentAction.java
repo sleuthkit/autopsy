@@ -30,13 +30,12 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private CorrelationCase correlationCase;
     private CorrelationDataSource correlationDataSource;
     
-    private AddEditCentralRepoCommentAction(CorrelationAttribute.Type type, CorrelationCase correlationCase, AbstractFile file,
-            String displayName) {
+    private AddEditCentralRepoCommentAction(AbstractFile file, String displayName) {
         
         super(displayName);
         try {
-            this.type = type;
-            this.correlationCase = correlationCase;
+            this.type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            this.correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
             this.correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
             this.value = file.getMd5Hash();
             this.filePath = Paths.get(file.getParentPath(), file.getName()).toString().replace('\\', '/').toLowerCase();
@@ -44,6 +43,9 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
             //DLG:
             Exceptions.printStackTrace(ex);
         } catch (EamDbException ex) {
+            //DLG:
+            Exceptions.printStackTrace(ex);
+        } catch (NoCurrentCaseException ex) {
             //DLG:
             Exceptions.printStackTrace(ex);
         }
@@ -78,9 +80,8 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     }
     
     @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
-    public static AddEditCentralRepoCommentAction createAddEditCentralRepoCommentAction(
-            CorrelationAttribute.Type type, CorrelationCase correlationCase, AbstractFile file) {
-        return new AddEditCentralRepoCommentAction(type, correlationCase, file,
+    public static AddEditCentralRepoCommentAction createAddEditCentralRepoCommentAction(AbstractFile file) {
+        return new AddEditCentralRepoCommentAction(file,
                 Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
     }
     
