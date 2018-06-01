@@ -1,0 +1,148 @@
+Acknowledgements: plaso
+
+Copyright (C) 2012, Log2Timeline maintainers <log2timeline-maintainers@googlegroups.com>
+Please see the AUTHORS file for details on individual authors.
+
+Plaso is a Python rewrite of the log2timeline Perl version.
+
+Plaso is currently developed and maintained by:
+* Daniel White
+* Joachim Metz
+
+Plaso depends on various other projects. So thanks to the authors
+and others involved with these projects:
+* Python and modules
+* libyaml
+* PyInstaller
+* the SleuthKit
+* pytsk
+* Hachoir (not included in binary release)
+
+Thanks to contributors (alphabetically based on last name):
+* Brian Baskin
+  * Parsers
+    * BEncode
+    * Java IDX parser
+* Christian Buia
+  * SCCM
+* Johan Berggren
+  * SQLite plugins
+    * Zeitgeist activity database
+* Petter Bjelland
+  * Parsers
+    * Firefox Cache
+* Ashley Holtz
+  * Parsers
+    * IIS
+    * Adobe ColdFusion
+* Eric John
+  * Parsers
+    * Chrome Preferences
+* Dominique Kilman
+  * Parsers
+    * PCAP
+* Marc Leavitt
+  * Parsers
+    * PL-SQL recall (PLSRecall.dat)
+* Eric Mak
+* Preston Miller
+  *Windows Registry Plugins
+    * SAM Users
+    * Shutdown
+    * USB
+* Joaquin Moreno Garijo
+  * Parsers
+    * ASL
+    * BSM
+    * Cups IPP
+    * Mac AppFirewall
+    * Mac KeyChain
+    * Mac Securityd
+    * mac_wifi.log
+    * utmp
+    * utmpx
+  * SQLite plugins
+    * Skype
+  * Plist plugins
+    * Airport
+    * Apple Account
+    * Install History
+    * Mac User
+    * Software Update
+    * Spotlight
+    * TimeMachine
+* David Nides (@davnads)
+  * Output modules
+    * 4n6time SQLite, with thanks to Eric Wong for assistance
+    * 4n6time MySQL
+  * Parsers
+    * Hachoir (meta data)
+    * OLECF
+    * OMXL
+    * Symantec AV Log
+  * timelib StringToDatetime function
+  * SQLite plugins
+    * Google Drive
+  * Windows Registry plugins
+    * Office MRU
+    * Outlook
+    * Terminal Server Client (RDP)
+    * Typed Paths
+    * Typed URLs
+    * USBStor
+    * Win7 UserAssist
+    * WinRar
+* Patrik Nisen
+  * For providing input for parsing the DestList stream for the automatic
+    destinations OLECF plugin
+* Francesco Picasso
+  * Parsers
+    * PopContest
+    * SELinux
+    * SkyDriveLog
+    * SkyDriveLogErr
+    * XChatLog
+    * XChatScrollBack
+* Jordi Sanchez
+  * For providing:
+    * binplist
+    * object filter
+* Elizabeth Schweinsberg
+  * Parsers
+    * McAfee AV Access Protection Log
+  * Windows Registry plugins
+    * MSIE zones
+* Marc Séguin
+  * Windows Registry plugins
+    * CCleaner
+* Keith Wall
+  * SQLite plugins
+    * Android calls database
+    * Android sms database
+  * updates to the timezone transformation
+
+Test data:
+
+* the contents of the *.exe and *.exe.mui files on bdetogo.raw has been
+  filled with 0-byte values.
+
+Copied with permission from the GRR project: https://github.com/google/grr
+* History
+* index.dat
+* places.sqlite
+
+Copied with permission granted by Jerome Marty.
+* WUAUCLT.EXE-830BCC14.pf
+
+Copied with permission granted by Rob Lee.
+Copyright SANS Institute - Digital Forensics and Incident Response.
+* 1b4dd67f29cb1962.automaticDestinations-ms
+* 5afe4de1b92fc382.customDestinations-ms
+* Catalog1.edb
+* example.lnk
+* MFT
+* nfury_index.dat
+* Ntuser.dat (multiple instances)
+* SysEvent.Evt
+* System.evtx
+* Windows.edb

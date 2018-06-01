@@ -1,0 +1,165 @@
+# Artifacts common to Unix based OSs
+
+name: AllShellConfigs
+doc: Common shell configuration files containing global, users & root settings.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - GlobalShellConfigs
+      - UsersShellConfigs
+      - RootUserShellConfigs
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: AllUsersShellHistory
+doc: Common shell history files for root and users.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - UsersShellHistory
+      - RootUserShellHistory
+labels: [History Files]
+supported_os: [Linux, Darwin]
+---
+name: GlobalShellConfigs
+doc: Unix global shell configuration files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/bashrc'
+      - '/etc/bash.bashrc'
+      - '/etc/kshrc'
+      - '/etc/csh.cshrc'
+      - '/etc/csh.login'
+      - '/etc/csh.logout'
+      - '/etc/profile'
+      - '/etc/zsh/zlogin'
+      - '/etc/zsh/zlogout'
+      - '/etc/zsh/zprofile'
+      - '/etc/zsh/zshenv'
+      - '/etc/zsh/zshrc'
+      - '/etc/zshenv'
+      - '/etc/zshrc'
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: RootUserShellConfigs
+doc: Common unix root shell configuration files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/root/.bashrc'
+      - '/root/.bash_profile'
+      - '/root/.bash_logout'
+      - '/root/.cshrc'
+      - '/root/.ksh'
+      - '/root/.logout'
+      - '/root/.profile'
+      - '/root/.tcsh'
+      - '/root/.zlogin'
+      - '/root/.zlogout'
+      - '/root/.zprofile'
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: RootUserShellHistory
+doc: Common unix root shell history files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/root/.bash_history'
+      - '/root/.sh_history'
+      - '/root/.zhistory'
+      - '/root/.zsh_history'
+labels: [History Files]
+supported_os: [Linux, Darwin]
+---
+name: UnixGroups
+doc: Unix groups file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/group']}
+labels: [Authentication]
+supported_os: [Linux, Darwin]
+---
+name: UnixHostsFile
+doc: Unix hosts file
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/hosts']}
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: UnixPasswd
+doc: Unix /etc/passwd file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/passwd']}
+labels: [Authentication]
+supported_os: [Linux, Darwin]
+---
+name: UnixShadowFile
+doc: Unix /etc/shadow file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/shadow']}
+labels: [Authentication]
+supported_os: [Linux, Darwin]
+---
+name: UnixSudoersConfiguration
+doc: Unix sudoers configuration.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/sudoers']}
+labels: [Authentication, Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: UnixUsersGroups
+doc: Unix users and groups files.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - 'UnixPasswd'
+      - 'UnixShadowFile'
+      - 'UnixGroups'
+labels: [Authentication]
+supported_os: [Linux, Darwin]
+---
+name: UsersShellConfigs
+doc: Common unix user shell configuration files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.homedir%%/.bashrc'
+      - '%%users.homedir%%/.bash_profile'
+      - '%%users.homedir%%/.bash_logout'
+      - '%%users.homedir%%/.cshrc'
+      - '%%users.homedir%%/.ksh'
+      - '%%users.homedir%%/.logout'
+      - '%%users.homedir%%/.profile'
+      - '%%users.homedir%%/.tcsh'
+      - '%%users.homedir%%/.zlogin'
+      - '%%users.homedir%%/.zlogout'
+      - '%%users.homedir%%/.zprofile'
+labels: [Configuration Files]
+supported_os: [Linux, Darwin]
+---
+name: UsersShellHistory
+doc: Common unix user shell history files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/%%users.homedir%%/.bash_history'
+      - '/%%users.homedir%%/.sh_history'
+      - '/%%users.homedir%%/.zhistory'
+      - '/%%users.homedir%%/.zsh_history'
+labels: [History Files]
+supported_os: [Linux, Darwin]
