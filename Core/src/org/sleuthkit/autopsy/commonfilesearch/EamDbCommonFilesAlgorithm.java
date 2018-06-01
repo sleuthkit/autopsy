@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeCommonInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -73,14 +74,16 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
     protected CommonFilesMetadata findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
         Map<String, Md5Metadata> currentCaseMetadata = getMetadataForCurrentCase();
         Collection<String> values = currentCaseMetadata.keySet();
-
+        int currentCaseId;
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
         try {
-            Collection<CorrelationAttributeCommonInstance> artifactInstances;
+            // Need to include current Cases results for specific case comparison
+            currentCaseId = dbManager.getCase(Case.getCurrentCase()).getID();            
+			Collection<CorrelationAttributeCommonInstance> artifactInstances;
             if(this.dbManager == null){
                 artifactInstances = new ArrayList<>(0);
             } else {
-                artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values).stream()
+                artifactInstances = dbManager.getArtifactInstancesByCaseValues(correlationCase, values, currentCaseId).stream()
                     .collect(Collectors.toList());                
             }
             
@@ -102,7 +105,7 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
 
     private Map<String, Md5Metadata> gatherIntercaseResults(Collection<CorrelationAttributeCommonInstance> artifactInstances, Map<String, Md5Metadata> commonFiles) {
 
-        Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<String, Md5Metadata>();
+        Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
 
         for (CorrelationAttributeCommonInstance instance : artifactInstances) {
 

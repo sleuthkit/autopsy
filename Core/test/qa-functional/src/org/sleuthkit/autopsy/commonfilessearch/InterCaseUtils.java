@@ -140,15 +140,18 @@ class InterCaseUtils {
 
         final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
+        final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
 
         ArrayList<IngestModuleTemplate> hashAndMimeTemplate = new ArrayList<>(2);
         hashAndMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(mimeTypeLookupTemplate);
+        hashAndMimeTemplate.add(eamDbTemplate);
 
         this.hashAndFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
 
         ArrayList<IngestModuleTemplate> hashAndNoMimeTemplate = new ArrayList<>(1);
         hashAndNoMimeTemplate.add(hashLookupTemplate);
+        hashAndMimeTemplate.add(eamDbTemplate);
 
         this.hashAndNoFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -431,10 +430,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of artifact instances for a given list of MD5 values
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values) throws EamDbException {
+    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException {
         try {
             acquireSharedLock();
-            return super.getArtifactInstancesByCaseValues(correlationCase, values);
+            return super.getArtifactInstancesByCaseValues(correlationCase, values, currentCaseId);
         } finally {
             releaseSharedLock();
         }
