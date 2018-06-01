@@ -78,6 +78,7 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * View correlation results from other cases
@@ -545,23 +546,33 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
         }
 
-        // make a key to see if the file is already in the hashset
-        CorrelationCase correlationCase = EamDb.getInstance().getCase(autopsyCase);
-        CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, newFile.getDataSource());
+        // make a key to see if the file is already in the map
         String filePath = newFile.getParentPath() + newFile.getName();
-        UniquePathKey uniquePathKey = new UniquePathKey(correlationDataSource.getDeviceID(), filePath);
+        String deviceId;
+        try {
+            deviceId = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId()).getDeviceId();
+        } catch (TskDataException | TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Error getting data source info: " + ex);
+            return;
+        }
+        UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
         
-        
-        // add it to the map if the case version is BAD (just in case the CR one didn't get the update) or if it
-        // is not in the map
-        if (localKnown == TskData.FileKnown.BAD || !artifactInstances.containsKey(uniquePathKey)) {
-            // make sure we grab the comment from the existing CR instance
-            String crComment = "";
-            if (artifactInstances.containsKey(uniquePathKey)) {
-                crComment = artifactInstances.get(uniquePathKey).getComment();
+        // double check that the CR version is BAD if the caseDB version is BAD.
+        if (artifactInstances.containsKey(uniquePathKey)) {
+            if (localKnown == TskData.FileKnown.BAD) {
+                CorrelationAttributeInstance prevInstance = artifactInstances.get(uniquePathKey);
+                prevInstance.setKnownStatus(localKnown);
             }
+        }
+        // add the data from the case DB by pushing data into CorrelationAttributeInstance class
+        else {
+            // NOTE: If we are in here, it is likely because CR is not enabled.  So, we cannot rely
+            // on any of the methods that query the DB.
+            CorrelationCase correlationCase = new CorrelationCase(autopsyCase.getName(), autopsyCase.getDisplayName());
             
-            CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(correlationCase, correlationDataSource, filePath, crComment, localKnown);
+            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, newFile.getDataSource());
+        
+            CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(correlationCase, correlationDataSource, filePath, "", localKnown);
             artifactInstances.put(uniquePathKey, caseDbInstance);
         }
     }
@@ -641,6 +652,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
 
         if (correlationAttributes.isEmpty()) {
+            // @@@ BC: We should have a more descriptive message than this.  Mention that the file didn't have a MD5, etc.
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_isempty());
