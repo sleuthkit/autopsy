@@ -82,6 +82,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * View correlation results from other cases
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 @ServiceProvider(service = DataContentViewer.class, position = 8)
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
