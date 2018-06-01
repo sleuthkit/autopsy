@@ -180,7 +180,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      * Get dataSources
      * @return a list of DataSource
      */
-    public List<DataSource> getDataSources() {
+    public synchronized List<DataSource> getDataSources() {
         return this.dataSources;
     }
 

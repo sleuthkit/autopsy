@@ -212,13 +212,13 @@ class DropdownToolbar extends javax.swing.JPanel {
                         
                         //set the data source list
                         try {
-                            //SleuthkitCase skDb = ((Case)evt.getNewValue()).getSleuthkitCase();
                             dataSources = getDataSourceList();
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Error getting text index info", ex); //NON-NLS
                             disableSearch = true;
                         } catch (NoCurrentCaseException ex) {
-                            Exceptions.printStackTrace(ex);
+                            logger.log(Level.SEVERE, "Exception while getting current case.", ex); //NON-NLS
+                            disableSearch = true;
                         }
                         if (disableSearch) {
                             searchDropButton.setEnabled(false);
