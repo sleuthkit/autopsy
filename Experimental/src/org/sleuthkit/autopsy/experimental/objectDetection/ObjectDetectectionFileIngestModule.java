@@ -19,12 +19,16 @@
 package org.sleuthkit.autopsy.experimental.objectDetection;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
 import org.opencv.highgui.Highgui;
 import org.opencv.objdetect.CascadeClassifier;
@@ -47,6 +51,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -97,7 +102,15 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     public ProcessResult process(AbstractFile file) {
         if (!classifiers.isEmpty()) {
             if (ImageUtils.isImageThumbnailSupported(file)) {  //Any image we can create a thumbnail for is one we should apply the classifiers to
-                Mat originalImage = Highgui.imread(file.getLocalPath());
+                InputStream inputStream = new ReadContentInputStream(file);
+                byte[] imageInMemory;
+                try {
+                    imageInMemory = IOUtils.toByteArray(inputStream);    
+                } catch (IOException ex) {
+                   logger.log(Level.WARNING, "Unable to perform object detection on " + file.getName(), ex);
+                   return IngestModule.ProcessResult.ERROR;
+                }
+                Mat originalImage = Highgui.imdecode(new MatOfByte(imageInMemory), Highgui.IMREAD_GRAYSCALE);
                 MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
                 for (String classifierKey : classifiers.keySet()) {
                     //apply each classifier to the file
