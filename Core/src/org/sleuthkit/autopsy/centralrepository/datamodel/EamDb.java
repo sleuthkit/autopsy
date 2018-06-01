@@ -233,7 +233,7 @@ public interface EamDb {
      * 
      * @return List of artifact instances for a given list of MD5 values
      */
-    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values) throws EamDbException;
+    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
