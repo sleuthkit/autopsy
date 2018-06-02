@@ -23,7 +23,8 @@ import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
- *TODO docs
+ * Algorithm which finds files anywhere in the Central Repo which also occur in
+ * present case.
  */
 public class AllCasesEamDbCommonFilesAlgorithm extends EamDbCommonFilesAlgorithm {
     
