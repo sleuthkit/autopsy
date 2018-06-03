@@ -650,7 +650,22 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Retrieves eamArtiifact instances from the database that match the given
+     * Retrieves eamArtifact instances from the database that match the given
+     * list of MD5 values;
+     * 
+     * @param values MD5s to use as search keys
+     * @return matching files in the form of CorrelationAttributeCommonInstance
+     * @throws EamDbException 
+     */
+    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
+        //passing null and -1 here has the effect of making this case agnostic:
+        //  rather than looking for instances that must appear in a certain case
+        //  we accept instances occur in any case
+        return getArtifactInstancesByCaseValues(null, values, -1);
+    }
+    
+    /**
+     * Retrieves eamArtifact instances from the database that match the given
      * list of MD5 values and optionally filters by given case.
      *
      * Warning: Does not benefit from PreparedStatement caching to since values

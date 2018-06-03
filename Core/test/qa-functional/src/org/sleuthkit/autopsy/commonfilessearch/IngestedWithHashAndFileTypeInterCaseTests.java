@@ -97,7 +97,5 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Exceptions.printStackTrace(ex); 
             Assert.fail(ex);
         }
-        
-        
     }
 }
