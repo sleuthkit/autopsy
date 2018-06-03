@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Utilities for testing intercase correlation feature.
@@ -60,11 +61,11 @@ import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
  * 
  * Case 1
  *  +Data Set 1
- *      - Hash-0.dat [file of size 0]
+ *      - Hash-0.dat    [file of size 0]
  *      - Hash-A.jpg
  *      - Hash-A.pdf
  *  +Data Set2
- *      - Hash-0.dat [file of size -0]
+ *      - Hash-0.dat    [file of size -0]
  *      - Hash-A.jpg
  *      - Hash-A.pdf
  * Case 2
@@ -79,11 +80,11 @@ import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
  *  +Data Set 1
  *      - Hash-A.jpg
  *      - Hash-A.pdf
- *      - Hash-C.jpg
- *      - Hash-C.pdf
+ *      - Hash-C.jpg    [we should never find these!]
+ *      - Hash-C.pdf    [we should never find these!]
  *      - Hash-D.jpg
  *  +Data Set 2
- *      - Hash-C.jpg
+ *      - Hash-C.jpg    [we should never find these!]
  *      - Hash-C.pdf
  *      - Hash.D-doc
  */
@@ -283,6 +284,10 @@ class InterCaseUtils {
             CaseUtils.closeCurrentCase(false);
             return null;
         }
+    }
+    
+    static boolean verifyInstanceExistanceAndCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource, String crCase, int instanceCount){
+        return false;
     }
 
     /**

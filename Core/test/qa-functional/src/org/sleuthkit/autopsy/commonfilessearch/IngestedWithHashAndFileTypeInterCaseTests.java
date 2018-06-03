@@ -90,7 +90,9 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             CommonFilesMetadata metadata = builder.findFiles();
             
-            assertTrue("", metadata.size() != 0);
+            assertTrue("Results should not be empty", metadata.size() != 0);
+            
+            assertTrue("")
             
             
         } catch (Exception ex) {

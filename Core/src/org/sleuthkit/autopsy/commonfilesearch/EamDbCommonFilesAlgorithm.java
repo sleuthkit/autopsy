@@ -43,6 +43,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * in the Central Repo.
  */
 public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
+    //CONSIDER: we should create an interface which specifies the findFiles feature
+    //  instead of an abstract class and then have two abstract classes:
+    //  inter- and intra- which implement the interface and then 4 subclasses
+    //  2 for each abstract class: singlecase/allcase; singledatasource/all datasource
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5) order by md5"; //NON-NLS
 

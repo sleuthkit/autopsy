@@ -133,32 +133,32 @@ class IntraCaseUtils {
      * Verify that the given file appears a precise number times in the given 
      * data source.
      * 
-     * @param files search domain
-     * @param objectIdToDataSource mapping of file ids to data source names
-     * @param name name of file to search for
+     * @param searchDomain search domain
+     * @param objectIdToDataSourceMap mapping of file ids to data source names
+     * @param fileName name of file to search for
      * @param dataSource name of data source where file should appear
-     * @param count number of appearances of the given file
+     * @param instanceCount number of appearances of the given file
      * @return true if a file with the given name exists the specified number 
-     *  of times in the given data source
+     * of times in the given data source
      */
-    static boolean verifyFileExistanceAndCount(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
+    static boolean verifyInstanceExistanceAndCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource, int instanceCount) {
 
         int tally = 0;
 
-        for (AbstractFile file : files) {
+        for (AbstractFile file : searchDomain) {
 
             Long objectId = file.getId();
 
-            String fileName = file.getName();
+            String name = file.getName();
 
-            String dataSourceName = objectIdToDataSource.get(objectId);
+            String dataSourceName = objectIdToDataSourceMap.get(objectId);
 
-            if (fileName.equals(name) && dataSourceName.equals(dataSource)) {
+            if (name.equals(name) && dataSourceName.equals(dataSource)) {
                 tally++;
             }
         }
 
-        return tally == count;
+        return tally == instanceCount;
     }
 
     /**
@@ -172,14 +172,16 @@ class IntraCaseUtils {
      * @return true if a file with the given name exists once in the given data 
      *  source
      */
-    static boolean verifySingularFileExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
-        return verifyFileExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
+    static boolean verifySingularInstanceExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
+        return verifyInstanceExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
     }
     
     /**
-     * TODO
-     * @param metadata
-     * @return 
+     * Create a convenience lookup table mapping file instance object ids to 
+     * the data source they appear in.
+     * 
+     * @param metadata object returned by the code under test 
+     * @return mapping of objectId to data source name
      */
     static Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
