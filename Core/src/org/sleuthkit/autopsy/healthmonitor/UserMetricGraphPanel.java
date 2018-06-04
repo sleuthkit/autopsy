@@ -18,16 +18,12 @@
  */
 package org.sleuthkit.autopsy.healthmonitor;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.RenderingHints;
-import java.awt.Stroke;
 import java.util.Collections;
-import java.util.stream.Collectors;
 import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +36,13 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.logging.Level;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.UserData;
 
 /**
- * Creates graphs using the given users metric data
+ * Creates graphs using the given user metric data
  */
 class UserMetricGraphPanel extends JPanel {
     
@@ -58,22 +53,17 @@ class UserMetricGraphPanel extends JPanel {
     private final Color examinerColor = new Color(0x12, 0x20, 0xdb, 255);
     private final Color autoIngestColor = new Color(0x12, 0x80, 0x20, 255);
     private final Color gridColor = new Color(200, 200, 200, 200);
-    private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
-    private static final Stroke NARROW_STROKE = new BasicStroke(1f);
     private final int pointWidth = 4;
     private final int numberYDivisions = 10;
-    private final boolean doLineGraph = false;
-    private final boolean doBarGraph = true;
     private final List<UserCount> dataToPlot;
     private final String graphLabel;
     private final long dataInterval;
     private final long MILLISECONDS_PER_HOUR = 1000 * 60 * 60;
     private final long MILLISECONDS_PER_DAY = MILLISECONDS_PER_HOUR * 24;
-    private final long NANOSECONDS_PER_MILLISECOND = 1000 * 1000;
     private long maxTimestamp;
     private long minTimestamp;
     private int maxCount;
-    private final int minCount = 0;
+    private final int minCount = 0; // The bottom of the graph will always be zero
 
     @NbBundle.Messages({"UserMetricGraphPanel.constructor.casesOpen=Cases open",
                     "UserMetricGraphPanel.constructor.loggedIn=Users logged in - examiner nodes in blue, auto ingest nodes in green"
@@ -162,58 +152,18 @@ class UserMetricGraphPanel extends JPanel {
                 }
             }
             
-            // Check if this is a new maximum
-            if(doBarGraph) {
-                maxCount = Integer.max(maxCount, openCaseCount.getTotalNodeCount());
-                maxCount = Integer.max(maxCount, loggedInUserCount.getTotalNodeCount());
-            } else {
-                maxCount = Integer.max(maxCount, openCaseCount.getAutoIngestNodeCount());
-                maxCount = Integer.max(maxCount, openCaseCount.getExaminerNodeCount());
-                maxCount = Integer.max(maxCount, loggedInUserCount.getAutoIngestNodeCount());
-                maxCount = Integer.max(maxCount, loggedInUserCount.getExaminerNodeCount());
-            }
-            
+            // Check if this is a new maximum.
+            // Assuming we log all the events, there should never be more cases open than
+            // there are logged in users, but it could happen if we lose data.
+            maxCount = Integer.max(maxCount, openCaseCount.getTotalNodeCount());
+            maxCount = Integer.max(maxCount, loggedInUserCount.getTotalNodeCount());
+
+            // Add the count to be plotted
             if(plotCases) {
                 dataToPlot.add(openCaseCount);
             } else {
                 dataToPlot.add(loggedInUserCount);
             }
-        }
-    }
-    
-    private class UserCount {
-        private final long timestamp;
-        private int examinerCount;
-        private int autoIngestCount;
-        
-        UserCount(long timestamp) {
-            this.timestamp = timestamp;
-            this.examinerCount = 0;
-            this.autoIngestCount = 0;
-        }
-        
-        void addExaminer() {
-            examinerCount++;
-        }
-        
-        void addAutoIngestNode() {
-            autoIngestCount++;
-        }
-        
-        int getExaminerNodeCount() {
-            return examinerCount;
-        }
-        
-        int getAutoIngestNodeCount() {
-            return autoIngestCount;
-        }
-        
-        int getTotalNodeCount() {
-            return examinerCount + autoIngestCount;
-        }
-        
-        long getTimestamp() {
-            return timestamp;
         }
     }
 
@@ -370,101 +320,63 @@ class UserMetricGraphPanel extends JPanel {
         g2.setColor(Color.BLACK);
         g2.drawLine(leftGraphPadding, getHeight() - bottomGraphPadding, leftGraphPadding, topGraphPadding);
         g2.drawLine(leftGraphPadding, getHeight() - bottomGraphPadding, getWidth() - rightGraphPadding, getHeight() - bottomGraphPadding);
-            
-        if(! doBarGraph) {
-            // Create the points to plot
-            List<Point> graphPoints = new ArrayList<>(); 
-            for(UserCount userCount:dataToPlot) {
-                int x1 = (int) ((userCount.getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
-                int y1 = (int) ((maxValueOnYAxis - userCount.getExaminerNodeCount()) * yScale + topGraphPadding);
-                graphPoints.add(new Point(x1, y1));   
+                       
+        // Sort dataToPlot on timestamp
+        Collections.sort(dataToPlot, new Comparator<UserCount>(){
+            @Override
+            public int compare(UserCount o1, UserCount o2){
+                return Long.compare(o1.getTimestamp(), o2.getTimestamp());
             }
-        
-            // Sort the points
-            Collections.sort(graphPoints, new Comparator<Point>() {
-                @Override
-                public int compare(Point o1, Point o2) {
-                    if(o1.getX() > o2.getX()) {
-                        return 1;
-                    } else if (o1.getX() < o2.getX()) {
-                        return -1;
-                    }
-                    return 0;
-                }
-            });
-            
-            // Draw the selected type of graph. If there's only one data point,
-            // draw that single point.
-            g2.setStroke(NARROW_STROKE);
-            g2.setColor(examinerColor);
-            if(doLineGraph && graphPoints.size() > 1) {
-                for (int i = 0; i < graphPoints.size() - 1; i++) {
-                    int x1 = graphPoints.get(i).x;
-                    int y1 = graphPoints.get(i).y;
-                    int x2 = graphPoints.get(i + 1).x;
-                    int y2 = graphPoints.get(i + 1).y;
-                    g2.drawLine(x1, y1, x2, y2);
-                }
+        });
+
+        // Create the bars
+        for(int i = 0;i < dataToPlot.size();i++) {
+            UserCount userCount = dataToPlot.get(i);
+            int x = (int) ((userCount.getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
+            int yTopOfExaminerBox;
+            if(countToGraphPosition.containsKey(userCount.getTotalNodeCount())) {
+                // If we've drawn a grid line for this count, use the recorded value. If we don't do
+                // this, rounding differences lead to the bar graph not quite lining up with the existing grid.
+                yTopOfExaminerBox = countToGraphPosition.get(userCount.getTotalNodeCount());
             } else {
-                for (int i = 0; i < graphPoints.size(); i++) {
-                    int x = graphPoints.get(i).x - pointWidth / 2;
-                    int y = graphPoints.get(i).y - pointWidth / 2;
-                    int ovalW = pointWidth;
-                    int ovalH = pointWidth;
-                    g2.fillOval(x, y, ovalW, ovalH);
-                }
+                yTopOfExaminerBox = (int) ((maxValueOnYAxis - userCount.getTotalNodeCount()) * yScale + topGraphPadding);
             }
-        } else {
-            
-            // Sort dataToPlot on timestamp
-            Collections.sort(dataToPlot, new Comparator<UserCount>(){
-                @Override
-                public int compare(UserCount o1, UserCount o2){
-                    return Long.compare(o1.getTimestamp(), o2.getTimestamp());
-                }
-            });
-            
-            for(int i = 0;i < dataToPlot.size();i++) {
-                UserCount userCount = dataToPlot.get(i);
-                int x = (int) ((userCount.getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
-                int yTopOfExaminerBox;
-                int totalCount = userCount.getExaminerNodeCount() + userCount.getAutoIngestNodeCount();
-                if(countToGraphPosition.containsKey(totalCount)) {
-                    // If we've drawn a grid line for this count, use the recorded value. Otherwise rounding differences
-                    // lead to the bar graph not quite lining up with the existing grid.
-                    yTopOfExaminerBox = countToGraphPosition.get(totalCount);
-                } else {
-                    yTopOfExaminerBox = (int) ((maxValueOnYAxis - userCount.getExaminerNodeCount() 
-                        - userCount.getAutoIngestNodeCount()) * yScale + topGraphPadding);
-                }
                 
-                int width;
-                if(i < dataToPlot.size() - 1) {
-                    width = Integer.max((int)((dataToPlot.get(i + 1).getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding) - x - 1,
-                            1);
-                } else {
-                    width = Integer.max((int)(dataInterval * xScale), 1);
-                }
-                
-                // It's easiest here to draw the rectangle going all the way to the bottom of the graph.
-                // The bottom will be overwritten by the auto ingest box.
-                int heightExaminerBox = (getHeight() - bottomGraphPadding) - yTopOfExaminerBox;
-                
-                g2.setColor(examinerColor);
-                g2.fillRect(x, yTopOfExaminerBox, width, heightExaminerBox);
-                
+            // Calculate the width. If this isn't the last column, set this to one less than
+            // the distance to the next column starting point.
+            int width;
+            if(i < dataToPlot.size() - 1) {
+                width = Integer.max((int)((dataToPlot.get(i + 1).getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding) - x - 1,
+                        1);
+            } else {
+                width = Integer.max((int)(dataInterval * xScale), 1);
+            }
+
+            // The examiner bar goes all the way to the bottom of the graph.
+            // The bottom will be overwritten by the auto ingest bar for displaying
+            // logged in users.
+            int heightExaminerBox = (getHeight() - bottomGraphPadding) - yTopOfExaminerBox;
+
+            // Plot the examiner bar
+            g2.setColor(examinerColor);
+            g2.fillRect(x, yTopOfExaminerBox, width, heightExaminerBox);
+
+            // Check that there is an auto ingest node count before plotting its bar.
+            // For the cases open graph, this will always be empty.
+            if (userCount.getAutoIngestNodeCount() > 0) {
                 int yTopOfAutoIngestBox;
                 if(countToGraphPosition.containsKey(userCount.getAutoIngestNodeCount())) {
+                    // As above, if we've drawn a grid line for this count, use the recorded value. If we don't do
+                    // this, rounding differences lead to the bar graph not quite lining up with the existing grid.
                     yTopOfAutoIngestBox =countToGraphPosition.get(userCount.getAutoIngestNodeCount());
                 } else {
                     yTopOfAutoIngestBox = yTopOfExaminerBox + heightExaminerBox;
                 }
                 int heightAutoIngestBox = (getHeight() - bottomGraphPadding) - yTopOfAutoIngestBox;
-                //int heightAutoIngestBox = (int)(userCount.getAutoIngestNodeCount() * yScale);
-                
+
+                // Plot the auto ingest bar
                 g2.setColor(autoIngestColor);
                 g2.fillRect(x, yTopOfAutoIngestBox, width, heightAutoIngestBox);
-                
             }
         }
         
@@ -479,5 +391,69 @@ class UserMetricGraphPanel extends JPanel {
         g2.drawString(titleStr, positionForMetricNameLabel, padding);
     }
     
-
+    /**
+     * Utility class to keep track of the data to be graphed.
+     * Used for tracking logging in users and open cases.
+     */
+    private class UserCount {
+        private final long timestamp;
+        private int examinerCount;
+        private int autoIngestCount;
+        
+        /**
+         * Create a UserCount object with counts initialized to zero.
+         * @param timestamp 
+         */
+        UserCount(long timestamp) {
+            this.timestamp = timestamp;
+            this.examinerCount = 0;
+            this.autoIngestCount = 0;
+        }
+        
+        /**
+         * Add one examiner node to the count.
+         */
+        void addExaminer() {
+            examinerCount++;
+        }
+        
+        /**
+         * Add one auto ingest node to the count.
+         */
+        void addAutoIngestNode() {
+            autoIngestCount++;
+        }
+        
+        /**
+         * Get the number of examiner nodes.
+         * @return number of examiner nodes
+         */
+        int getExaminerNodeCount() {
+            return examinerCount;
+        }
+        
+        /**
+         * Get the number of auto ingest nodes.
+         * @return number of auto ingest nodes
+         */
+        int getAutoIngestNodeCount() {
+            return autoIngestCount;
+        }
+        
+        /**
+         * Get the total number of nodes
+         * @return the sum of the examiner and auto ingest nodes
+         */
+        int getTotalNodeCount() {
+            return examinerCount + autoIngestCount;
+        }
+        
+        /**
+         * Get the timestamp for this metric
+         * @return the timestamp
+         */
+        long getTimestamp() {
+            return timestamp;
+        }
+    }
 }
