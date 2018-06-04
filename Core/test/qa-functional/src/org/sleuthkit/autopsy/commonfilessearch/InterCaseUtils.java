@@ -25,9 +25,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -51,6 +53,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -287,17 +291,18 @@ class InterCaseUtils {
         }
     }
     
-    static boolean verifyInstanceExistanceAndCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource, String crCase, int instanceCount){
+    static boolean verifyInstanceExistanceAndCount(CommonFilesMetadata searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         int tally = 0;
         
-        for(AbstractFile file : searchDomain){
+        for(Map.Entry<String, Md5Metadata> file : searchDomain.getMetadata().entrySet()){
             
-            Long objectId = file.getId();
+            Collection<FileInstanceMetadata> fileInstances = file.getValue().getMetadata();
             
-            String name = file.getName();
-            
-            String dataSourceString = objectIdToDataSourceMap.get(objectId);
+            for(FileInstanceMetadata fileInstance : fileInstances){
+                
+                
+            }
         }
         
         return false;

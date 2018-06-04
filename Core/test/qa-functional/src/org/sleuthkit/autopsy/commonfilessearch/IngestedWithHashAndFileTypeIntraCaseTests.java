@@ -115,7 +115,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 

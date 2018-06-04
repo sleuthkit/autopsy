@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -116,6 +117,8 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             String md5 = instance.getValue();
             final String correlationCaseDisplayName = instance.getCorrelationCase().getDisplayName();
             String dataSource = String.format("%s: %s", correlationCaseDisplayName, instance.getCorrelationDataSource().getName());
+            String path = instance.getFilePath();
+            File file = new File(path);
 
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
@@ -128,11 +131,11 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource, file), correlationCaseDisplayName);
                     
                 } else {
                     Md5Metadata md5Metadata = new Md5Metadata(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource, file), correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
             }
