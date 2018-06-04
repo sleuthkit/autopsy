@@ -64,7 +64,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
         this.utils.clearTestDir();
         try {
             this.utils.enableCentralRepo();
-            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
+            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE3);
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -92,7 +92,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             assertTrue("Results should not be empty", metadata.size() != 0);
             
-            assertTrue("")
+            //assertTrue("")
             
             
         } catch (Exception ex) {

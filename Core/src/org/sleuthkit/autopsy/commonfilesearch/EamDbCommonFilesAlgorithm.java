@@ -114,7 +114,8 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
         for (CorrelationAttributeCommonInstance instance : artifactInstances) {
 
             String md5 = instance.getValue();
-            String dataSource = String.format("%s: %s", instance.getCorrelationCase().getDisplayName(), instance.getCorrelationDataSource().getName());
+            final String correlationCaseDisplayName = instance.getCorrelationCase().getDisplayName();
+            String dataSource = String.format("%s: %s", correlationCaseDisplayName, instance.getCorrelationDataSource().getName());
 
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
@@ -127,17 +128,19 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
                     
                 } else {
-                    final List<FileInstanceMetadata> fileInstances = new ArrayList<>();
-                    fileInstances.add(new FileInstanceMetadata(objectId, dataSource));
-                    Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
+                    Md5Metadata md5Metadata = new Md5Metadata(md5);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
             }
         }
 
+        //ideally we would do this step via SQL in EamDb.getArtifactInstancesByCaseValues
+        removeEntriesWithinOnlyOneCase(interCaseCommonFiles);
+        
         return interCaseCommonFiles;
     }
 
@@ -162,5 +165,19 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             }
         }
         throw new Exception("Cannot locate case.");
+    }
+
+    private void removeEntriesWithinOnlyOneCase(Map<String, Md5Metadata> interCaseCommonFiles) {
+        Collection<String> toRemove = new ArrayList<>();
+        
+        for(Map.Entry<String, Md5Metadata> entry : interCaseCommonFiles.entrySet()){
+            if(!entry.getValue().isMultiDataSource()){
+                toRemove.add(entry.getKey());
+            }
+        }
+        
+        for(String bogusEntry : toRemove){
+            interCaseCommonFiles.remove(bogusEntry);
+        }
     }
 }

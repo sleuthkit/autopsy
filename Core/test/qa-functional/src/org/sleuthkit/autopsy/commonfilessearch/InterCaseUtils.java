@@ -49,6 +49,7 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -287,8 +288,28 @@ class InterCaseUtils {
     }
     
     static boolean verifyInstanceExistanceAndCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource, String crCase, int instanceCount){
+        
+        int tally = 0;
+        
+        for(AbstractFile file : searchDomain){
+            
+            Long objectId = file.getId();
+            
+            String name = file.getName();
+            
+            String dataSourceString = objectIdToDataSourceMap.get(objectId);
+        }
+        
         return false;
     }
+    
+    static Map<Long, String> mapFileInstancesToDataSource(CommonFilesMetadata metadata){
+        return IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+    }
+    
+//    static List<AbstractFile> getFiles(Set<String> md5s){
+//        
+//    }
 
     /**
      * Close the currently open case, delete the case directory, delete the

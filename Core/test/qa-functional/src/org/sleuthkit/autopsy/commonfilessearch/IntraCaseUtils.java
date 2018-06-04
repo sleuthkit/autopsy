@@ -195,6 +195,7 @@ class IntraCaseUtils {
         return instanceIdToDataSource;
     }
 
+    
     static List<AbstractFile> getFiles(Set<Long> objectIds) {
         List<AbstractFile> files = new ArrayList<>(objectIds.size());
 

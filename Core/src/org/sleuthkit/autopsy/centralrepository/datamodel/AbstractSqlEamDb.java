@@ -728,7 +728,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 sql.append(".case_id=?");
             }
             
-            //TODO shows extra results - possibly shows matches within current case
+            //TODO figure out how to replicate results obtained by functionality 
+            //  seen in EamDbCOmmonFilesAlgorithm.removeEntriesWithinOnlyOneCase
 
             sql.append(" ORDER BY value, cases.case_name, file_path");
 
