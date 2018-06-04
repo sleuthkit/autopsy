@@ -329,6 +329,7 @@ public interface EamDb {
      */
     List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
+    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException;
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
