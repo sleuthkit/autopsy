@@ -24,21 +24,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
-    private String value;
-    private String filePath;
-    private CorrelationAttribute.Type type;
-    private CorrelationCase correlationCase;
-    private CorrelationDataSource correlationDataSource;
+    private CorrelationAttribute correlationAttribute;
+    
+    private AddEditCentralRepoCommentAction(CorrelationAttribute correlationAttribute, String displayName) {
+        super(displayName);
+        this.correlationAttribute = correlationAttribute;
+    }
     
     private AddEditCentralRepoCommentAction(AbstractFile file, String displayName) {
         
         super(displayName);
         try {
-            this.type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            this.correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            this.correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-            this.value = file.getMd5Hash();
-            this.filePath = Paths.get(file.getParentPath(), file.getName()).toString().replace('\\', '/').toLowerCase();
+            CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
+            String value = file.getMd5Hash();
+            String filePath = Paths.get(file.getParentPath(), file.getName()).toString().replace('\\', '/').toLowerCase();
+            
+            correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
         } catch (TskCoreException ex) {
             //DLG:
             Exceptions.printStackTrace(ex);
@@ -51,17 +54,6 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
         }
     }
     
-    private AddEditCentralRepoCommentAction(CorrelationAttribute.Type type, CorrelationCase correlationCase,
-            CorrelationDataSource correlationDataSource, String value, String filePath, String displayName) {
-        
-        super(displayName);
-        this.type = type;
-        this.correlationCase = correlationCase;
-        this.correlationDataSource = correlationDataSource;
-        this.value = value;
-        this.filePath = filePath;
-    }
-    
     @Override
     public void actionPerformed(ActionEvent event) {
         addEditCentralRepoComment();
@@ -69,14 +61,8 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     
     //DLG:
     public void addEditCentralRepoComment() {
-        try {
-            final CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
-            CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
-            centralRepoCommentDialog.display();
-        } catch (EamDbException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        }
+        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
+        centralRepoCommentDialog.display();
     }
     
     @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
@@ -86,9 +72,8 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     }
     
     @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditComment=Add/Edit Comment"})
-    public static AddEditCentralRepoCommentAction createAddEditCommentAction(
-            CorrelationAttribute.Type type, CorrelationCase correlationCase, CorrelationDataSource correlationDataSource, String value, String filePath) {
-        return new AddEditCentralRepoCommentAction(type, correlationCase, correlationDataSource, value, filePath,
+    public static AddEditCentralRepoCommentAction createAddEditCommentAction(CorrelationAttribute correlationAttribute) {
+        return new AddEditCentralRepoCommentAction(correlationAttribute,
                 Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditComment());
     }
 }

@@ -227,7 +227,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         
         //DLG: Insert comment here!
-        if (file != null && EamDbUtil.useCentralRepo()) {
+        if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
             actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
 
