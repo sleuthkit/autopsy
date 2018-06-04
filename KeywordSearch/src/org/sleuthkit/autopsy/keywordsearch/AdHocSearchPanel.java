@@ -154,10 +154,9 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     synchronized List<String> getDataSourceArray() {
         List<String> dsList = new ArrayList<>();
-        List<DataSource> dataS = getDataSources();
         toolTipList.clear();
-        Collections.sort(dataS, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
-        for (DataSource ds : dataS) {
+        Collections.sort(this.dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
+        for (DataSource ds : dataSources) {
             String dsName = ds.getName();
             File dataSourceFullName = new File(dsName);
             String displayName = dataSourceFullName.getName();
@@ -174,14 +173,6 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     synchronized void setDataSources(List<DataSource> dataSources) {
         this.dataSources = dataSources;
-    }
-
-    /**
-     * Get dataSources
-     * @return a list of DataSource
-     */
-    synchronized List<DataSource> getDataSources() {
-        return this.dataSources;
     }
 
     /**
