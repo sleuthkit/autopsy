@@ -383,7 +383,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     /**
      * Update the dataSourceListModel
      */
-    public void updateDataSourceListModel() {
+    void updateDataSourceListModel() {
         getDataSourceListModel().removeAllElements();
         for (String dsName : getDataSourceArray()) {
             getDataSourceListModel().addElement(dsName);

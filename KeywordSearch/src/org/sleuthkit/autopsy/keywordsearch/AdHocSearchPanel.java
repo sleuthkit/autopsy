@@ -172,7 +172,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      * Set dataSources
      * @param dataSources A list of DataSource 
      */
-    public synchronized void setDataSources(List<DataSource> dataSources) {
+    synchronized void setDataSources(List<DataSource> dataSources) {
         this.dataSources = dataSources;
     }
 
@@ -180,7 +180,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      * Get dataSources
      * @return a list of DataSource
      */
-    public synchronized List<DataSource> getDataSources() {
+    synchronized List<DataSource> getDataSources() {
         return this.dataSources;
     }
 

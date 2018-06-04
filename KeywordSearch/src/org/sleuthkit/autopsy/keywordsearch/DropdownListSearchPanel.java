@@ -310,8 +310,8 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(dataSourceCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(manageListsButton)
                     .addComponent(searchAddButton)
@@ -669,7 +669,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
      * Update the dataSourceListModel
      */
     @NbBundle.Messages({"DropdownListSearchPanel.selected=Ad Hoc Search data source filter is selected"})
-    public void updateDataSourceListModel() {
+    void updateDataSourceListModel() {
         getDataSourceListModel().removeAllElements();
         for (String dsName : getDataSourceArray()) {
             getDataSourceListModel().addElement(dsName);
