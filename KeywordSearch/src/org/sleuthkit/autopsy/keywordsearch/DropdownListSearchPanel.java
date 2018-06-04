@@ -82,10 +82,10 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
 
             @Override
             public void mouseMoved(MouseEvent evt) {
-                JList<String> DsList = (JList<String>) evt.getSource();
-                int index = DsList.locationToIndex(evt.getPoint());
+                JList<String> dsList = (JList<String>) evt.getSource();
+                int index = dsList.locationToIndex(evt.getPoint());
                 if (index > -1) {
-                    DsList.setToolTipText(getDataSourceToolTipList().get(index));
+                    dsList.setToolTipText(getDataSourceToolTipList().get(index));
                 }
             }
         });
