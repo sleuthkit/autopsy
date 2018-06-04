@@ -422,11 +422,6 @@ public class HealthMonitorDashboard {
         userMetricPanel.add(userMetricTitle);
         userMetricPanel.add(new JSeparator());  
         
-        System.out.println("#########\nUser data");
-        for(EnterpriseHealthMonitor.UserData d:this.userData) {
-            System.out.println("  " + d.getHostname() + " " + d.getTimestamp() + " " + d.getEventType().toString());
-        }
-        
         // Add the controls
         userMetricPanel.add(createUserControlPanel());
         userMetricPanel.add(new JSeparator());

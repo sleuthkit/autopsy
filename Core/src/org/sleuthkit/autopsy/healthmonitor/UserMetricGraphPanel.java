@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -54,8 +55,8 @@ class UserMetricGraphPanel extends JPanel {
     
     private final int padding = 25;
     private final int labelPadding = 25;
-    private final Color examinerColor = new Color(0x12, 0x20, 0xdb, 180);
-    private final Color autoIngestColor = new Color(0x12, 0x80, 0x20, 180);
+    private final Color examinerColor = new Color(0x12, 0x20, 0xdb, 255);
+    private final Color autoIngestColor = new Color(0x12, 0x80, 0x20, 255);
     private final Color gridColor = new Color(200, 200, 200, 200);
     private static final Stroke GRAPH_STROKE = new BasicStroke(2f);
     private static final Stroke NARROW_STROKE = new BasicStroke(1f);
@@ -64,20 +65,18 @@ class UserMetricGraphPanel extends JPanel {
     private final boolean doLineGraph = false;
     private final boolean doBarGraph = true;
     private final List<UserCount> dataToPlot;
-    private String graphLabel;
+    private final String graphLabel;
     private final long dataInterval;
-    private String yUnitString;
     private final long MILLISECONDS_PER_HOUR = 1000 * 60 * 60;
     private final long MILLISECONDS_PER_DAY = MILLISECONDS_PER_HOUR * 24;
     private final long NANOSECONDS_PER_MILLISECOND = 1000 * 1000;
     private long maxTimestamp;
     private long minTimestamp;
-    private long maxCount;
-    private final long minCount = 0;
+    private int maxCount;
+    private final int minCount = 0;
 
     @NbBundle.Messages({"UserMetricGraphPanel.constructor.casesOpen=Cases open",
-                    "UserMetricGraphPanel.constructor.loggedIn=Users logged in",
-                    "UserMetricGraphPanel.constructor.restOfLabel= - Examiner nodes in blue, auto ingest nodes in green"
+                    "UserMetricGraphPanel.constructor.loggedIn=Users logged in - examiner nodes in blue, auto ingest nodes in green"
                     })
     UserMetricGraphPanel(List<UserData> userResults, long timestampThreshold, boolean plotCases) {
         
@@ -90,7 +89,6 @@ class UserMetricGraphPanel extends JPanel {
         } else {
             graphLabel = Bundle.UserMetricGraphPanel_constructor_loggedIn();
         }
-        graphLabel += Bundle.UserMetricGraphPanel_constructor_restOfLabel();
         
         // Comparator for the set of UserData objects
         Comparator<UserData> sortOnTimestamp = new Comparator<UserData>() {
@@ -121,10 +119,16 @@ class UserMetricGraphPanel extends JPanel {
         // A case is open if the last event was "case open"; closed otherwise
         // A user is logged in if the last event was anything but "log out";logged out otherwise
         dataToPlot = new ArrayList<>();
-        System.out.println("Min timestamp: " + minTimestamp + ", max timestamp: " + maxTimestamp);
         dataInterval = MILLISECONDS_PER_HOUR;
+        maxCount = Integer.MIN_VALUE;
         for (long timestamp = maxTimestamp;timestamp > minTimestamp;timestamp -= dataInterval) {
-            UserCount userCount = new UserCount(timestamp);
+            
+            // Collect both counts so that we can use the same scale in the open case graph and
+            // the logged in users graph
+            UserCount openCaseCount = new UserCount(timestamp);
+            UserCount loggedInUserCount = new UserCount(timestamp);
+            
+            Set<String> openCaseNames = new HashSet<>();
             UserData timestampUserData = UserData.createDummyUserData(timestamp);
             
             for (String hostname:userDataMap.keySet()) {
@@ -132,45 +136,55 @@ class UserMetricGraphPanel extends JPanel {
                 UserData lastRecord = userDataMap.get(hostname).floor(timestampUserData);
                 
                 if (lastRecord != null) {
-                    if (plotCases) {
-                        if (lastRecord.getEventType().caseIsOpen()) {
-                            if(lastRecord.isExaminerNode()) {
-                                userCount.addExaminer();
-                            } else {
-                                userCount.addAutoIngestNode();
-                            }
+
+                    // Update the case count.
+                    if (lastRecord.getEventType().caseIsOpen()) {
+
+                        // Only add each case once regardless of how many users have it open
+                        if ( ! openCaseNames.contains(lastRecord.getCaseName())) {
+
+                            // Store everything as examiner nodes. The graph will represent
+                            // the number of distinct cases open, not anything about the
+                            // nodes that have them open.
+                            openCaseCount.addExaminer();
+                            openCaseNames.add(lastRecord.getCaseName());
                         }
-                    } else {
-                        if (lastRecord.getEventType().userIsLoggedIn()) {
-                            if(lastRecord.isExaminerNode()) {
-                                userCount.addExaminer();
-                            } else {
-                                userCount.addAutoIngestNode();
-                            }
+                    }
+                    
+                    // Update the logged in user count
+                    if (lastRecord.getEventType().userIsLoggedIn()) {
+                        if(lastRecord.isExaminerNode()) {
+                            loggedInUserCount.addExaminer();
+                        } else {
+                            loggedInUserCount.addAutoIngestNode();
                         }
                     }
                 }
             }
             
-            dataToPlot.add(userCount);
-        }
-        
-        // Get the maximum count
-        maxCount = Long.MIN_VALUE;
-        for (UserCount userCount:dataToPlot) {
+            // Check if this is a new maximum
             if(doBarGraph) {
-                maxCount = Long.max(maxCount, userCount.getExaminerNodeCount() + userCount.getAutoIngestNodeCount());
+                maxCount = Integer.max(maxCount, openCaseCount.getTotalNodeCount());
+                maxCount = Integer.max(maxCount, loggedInUserCount.getTotalNodeCount());
             } else {
-                maxCount = Long.max(maxCount, userCount.getAutoIngestNodeCount());
-                maxCount = Long.max(maxCount, userCount.getExaminerNodeCount());
+                maxCount = Integer.max(maxCount, openCaseCount.getAutoIngestNodeCount());
+                maxCount = Integer.max(maxCount, openCaseCount.getExaminerNodeCount());
+                maxCount = Integer.max(maxCount, loggedInUserCount.getAutoIngestNodeCount());
+                maxCount = Integer.max(maxCount, loggedInUserCount.getExaminerNodeCount());
+            }
+            
+            if(plotCases) {
+                dataToPlot.add(openCaseCount);
+            } else {
+                dataToPlot.add(loggedInUserCount);
             }
         }
     }
     
     private class UserCount {
         private final long timestamp;
-        private long examinerCount;
-        private long autoIngestCount;
+        private int examinerCount;
+        private int autoIngestCount;
         
         UserCount(long timestamp) {
             this.timestamp = timestamp;
@@ -186,12 +200,16 @@ class UserMetricGraphPanel extends JPanel {
             autoIngestCount++;
         }
         
-        long getExaminerNodeCount() {
+        int getExaminerNodeCount() {
             return examinerCount;
         }
         
-        long getAutoIngestNodeCount() {
+        int getAutoIngestNodeCount() {
             return autoIngestCount;
+        }
+        
+        int getTotalNodeCount() {
+            return examinerCount + autoIngestCount;
         }
         
         long getTimestamp() {
@@ -218,18 +236,16 @@ class UserMetricGraphPanel extends JPanel {
         
         // Get the max and min timestamps to create the x-axis.
         // We add a small buffer to each side so the data won't overwrite the axes.
-        double maxValueOnXAxis = maxTimestamp + TimeUnit.HOURS.toMillis(2); // Two hour buffer
-        double minValueOnXAxis = minTimestamp - TimeUnit.HOURS.toMillis(2); // Two hour buffer
+        double maxValueOnXAxis = maxTimestamp + TimeUnit.HOURS.toMillis(2); // Two hour buffer (the last bar graph will take up one of the hours)
+        double minValueOnXAxis = minTimestamp - TimeUnit.HOURS.toMillis(1); // One hour buffer
         
         // Get the max and min times to create the y-axis
         // To make the intervals even, make sure the maximum is a multiple of five
         if((maxCount % 5) != 0) {
             maxCount += (5 - (maxCount % 5));
         }
-        double maxValueOnYAxis = maxCount;
-        double minValueOnYAxis = minCount;  
-        //minValueOnYAxis = Math.max(0, minValueOnYAxis - (maxValueOnYAxis * 0.1));
-        //maxValueOnYAxis = maxValueOnYAxis * 1.1;
+        int maxValueOnYAxis = maxCount;
+        int minValueOnYAxis = minCount;
 
         // The graph itself has the following corners:
         // (padding + label padding, padding + font height) -> top left
@@ -261,6 +277,7 @@ class UserMetricGraphPanel extends JPanel {
         // Create hatch marks and grid lines for y axis.
         int labelWidth;
         int positionForMetricNameLabel = 0;
+        Map<Integer, Integer> countToGraphPosition = new HashMap<>();
         for (int i = 0; i < numberYDivisions + 1; i++) {
             int x0 = leftGraphPadding;
             int x1 = pointWidth + leftGraphPadding;
@@ -275,15 +292,19 @@ class UserMetricGraphPanel extends JPanel {
                 // Create the label
                 g2.setColor(Color.BLACK);
                 double yValue = minValueOnYAxis + ((maxValueOnYAxis - minValueOnYAxis) * ((i * 1.0) / numberYDivisions));
-                String yLabel = Double.toString(((int) (yValue * 100)) / 100.0);
-                FontMetrics fontMetrics = g2.getFontMetrics();
-                labelWidth = fontMetrics.stringWidth(yLabel);
-                g2.drawString(yLabel, x0 - labelWidth - 5, y0 + (fontMetrics.getHeight() / 2) - 3);
-                
-                // The nicest looking alignment for this label seems to be left-aligned with the top
-                // y-axis label. Save this position to be used to write the label later.
-                if (i == numberYDivisions) {
-                    positionForMetricNameLabel = x0 - labelWidth - 5;
+                int intermediateLabelVal = (int) (yValue * 100);
+                if ((i == numberYDivisions) || ((intermediateLabelVal % 100) == 0)) {
+                    countToGraphPosition.put(intermediateLabelVal / 100, y0);
+                    String yLabel = Integer.toString(intermediateLabelVal / 100);
+                    FontMetrics fontMetrics = g2.getFontMetrics();
+                    labelWidth = fontMetrics.stringWidth(yLabel);
+                    g2.drawString(yLabel, x0 - labelWidth - 5, y0 + (fontMetrics.getHeight() / 2) - 3);
+                    
+                    // The nicest looking alignment for this label seems to be left-aligned with the top
+                    // y-axis label. Save this position to be used to write the label later.
+                    if (i == numberYDivisions) {
+                        positionForMetricNameLabel = x0 - labelWidth - 5;
+                    }
                 }
             }
             
@@ -356,8 +377,6 @@ class UserMetricGraphPanel extends JPanel {
             for(UserCount userCount:dataToPlot) {
                 int x1 = (int) ((userCount.getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
                 int y1 = (int) ((maxValueOnYAxis - userCount.getExaminerNodeCount()) * yScale + topGraphPadding);
-                //int x1 = (int) ((timingResults.get(i).getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
-                //int y1 = (int) ((maxValueOnYAxis - metricTime) * yScale + topGraphPadding);
                 graphPoints.add(new Point(x1, y1));   
             }
         
@@ -408,8 +427,17 @@ class UserMetricGraphPanel extends JPanel {
             for(int i = 0;i < dataToPlot.size();i++) {
                 UserCount userCount = dataToPlot.get(i);
                 int x = (int) ((userCount.getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding);
-                int yTopOfExaminerBox = (int) ((maxValueOnYAxis - userCount.getExaminerNodeCount() 
+                int yTopOfExaminerBox;
+                int totalCount = userCount.getExaminerNodeCount() + userCount.getAutoIngestNodeCount();
+                if(countToGraphPosition.containsKey(totalCount)) {
+                    // If we've drawn a grid line for this count, use the recorded value. Otherwise rounding differences
+                    // lead to the bar graph not quite lining up with the existing grid.
+                    yTopOfExaminerBox = countToGraphPosition.get(totalCount);
+                } else {
+                    yTopOfExaminerBox = (int) ((maxValueOnYAxis - userCount.getExaminerNodeCount() 
                         - userCount.getAutoIngestNodeCount()) * yScale + topGraphPadding);
+                }
+                
                 int width;
                 if(i < dataToPlot.size() - 1) {
                     width = Integer.max((int)((dataToPlot.get(i + 1).getTimestamp() - minValueOnXAxis) * xScale + leftGraphPadding) - x - 1,
@@ -417,13 +445,22 @@ class UserMetricGraphPanel extends JPanel {
                 } else {
                     width = Integer.max((int)(dataInterval * xScale), 1);
                 }
-                int heightExaminerBox = (int)(userCount.getExaminerNodeCount() * yScale);
+                
+                // It's easiest here to draw the rectangle going all the way to the bottom of the graph.
+                // The bottom will be overwritten by the auto ingest box.
+                int heightExaminerBox = (getHeight() - bottomGraphPadding) - yTopOfExaminerBox;
                 
                 g2.setColor(examinerColor);
                 g2.fillRect(x, yTopOfExaminerBox, width, heightExaminerBox);
                 
-                int yTopOfAutoIngestBox = yTopOfExaminerBox + heightExaminerBox;
-                int heightAutoIngestBox = (int)(userCount.getAutoIngestNodeCount() * yScale);
+                int yTopOfAutoIngestBox;
+                if(countToGraphPosition.containsKey(userCount.getAutoIngestNodeCount())) {
+                    yTopOfAutoIngestBox =countToGraphPosition.get(userCount.getAutoIngestNodeCount());
+                } else {
+                    yTopOfAutoIngestBox = yTopOfExaminerBox + heightExaminerBox;
+                }
+                int heightAutoIngestBox = (getHeight() - bottomGraphPadding) - yTopOfAutoIngestBox;
+                //int heightAutoIngestBox = (int)(userCount.getAutoIngestNodeCount() * yScale);
                 
                 g2.setColor(autoIngestColor);
                 g2.fillRect(x, yTopOfAutoIngestBox, width, heightAutoIngestBox);

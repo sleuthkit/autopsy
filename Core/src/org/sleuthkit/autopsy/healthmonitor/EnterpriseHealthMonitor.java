@@ -183,7 +183,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             }
 
             // Add metrics to the database
-            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner) VALUES (?, ?, ?, ?)";
+            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner, case_name) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement userStatement = conn.prepareStatement(addUserInfoSql)) {
 
                 long msPerDay = 24 * 60 * 60 * 1000;
@@ -195,6 +195,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 userStatement.setLong(2, currentTime - msPerDay * 30);
                 userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
                 userStatement.setBoolean(4, false);
+                userStatement.setString(5, "case1");
                 userStatement.execute();
                 
                 // ain2 has had a case open for two weeks
@@ -202,6 +203,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 userStatement.setLong(2, currentTime - msPerDay * 14);
                 userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
                 userStatement.setBoolean(4, false);
+                userStatement.setString(5, "case1");
                 userStatement.execute();
                 
                 // ain3 has a case open half the time over the last week
@@ -215,6 +217,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                         userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
                     }
                     userStatement.setBoolean(4, false);
+                    userStatement.setString(5, "case2");
                     userStatement.execute();
                     count++;
                 }
@@ -225,24 +228,28 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                     userStatement.setLong(2, i - 5000);
                     userStatement.setInt(3, UserEvent.LOG_ON.getEventValue());
                     userStatement.setBoolean(4, true);
+                    userStatement.setString(5, "");
                     userStatement.execute();
                     
                     userStatement.setString(1, "ex1");
                     userStatement.setLong(2, i);
                     userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
                     userStatement.setBoolean(4, true);
+                    userStatement.setString(5, "case3");
                     userStatement.execute();
                     
                     userStatement.setString(1, "ex1");
                     userStatement.setLong(2, i + msPerHour * 8);
                     userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
                     userStatement.setBoolean(4, true);
+                    userStatement.setString(5, "");
                     userStatement.execute();
                     
                     userStatement.setString(1, "ex1");
                     userStatement.setLong(2, i + msPerHour * 8 + 5000);
                     userStatement.setInt(3, UserEvent.LOG_OFF.getEventValue());
                     userStatement.setBoolean(4, true);
+                    userStatement.setString(5, "");
                     userStatement.execute();
                 }   
                 
@@ -253,24 +260,28 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                         userStatement.setLong(2, i + j * msPerHour);
                         userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
                         userStatement.setBoolean(4, true);
+                        userStatement.setString(5, "case3");
                         userStatement.execute();
                     
                         userStatement.setString(1, "ex2");
                         userStatement.setLong(2, i + j * msPerHour + msPerHour + 5000);
                         userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
                         userStatement.setBoolean(4, true);
+                        userStatement.setString(5, "");
                         userStatement.execute();
 
                         userStatement.setString(1, "ex3");
                         userStatement.setLong(2, i + j * msPerHour - 40000);
                         userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
                         userStatement.setBoolean(4, true);
+                        userStatement.setString(5, "case4");
                         userStatement.execute();
                     
                         userStatement.setString(1, "ex3");
                         userStatement.setLong(2, i + j * msPerHour + msPerHour + 5000 - 40000);
                         userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
                         userStatement.setBoolean(4, true);
+                        userStatement.setString(5, "");
                         userStatement.execute();
                     }
                 }  
@@ -316,7 +327,8 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                     "host text NOT NULL," + 
                     "timestamp bigint NOT NULL," + 
                     "event_type int NOT NULL," + 
-                    "is_examiner BOOLEAN NOT NULL" +
+                    "is_examiner boolean NOT NULL," +
+                    "case_name text NOT NULL" +
                     ")");
             }
             
@@ -607,7 +619,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
 
             // Add metrics to the database
             String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner) VALUES (?, ?, ?, ?)";
+            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner, case_name) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement timingStatement = conn.prepareStatement(addTimingInfoSql);
                  PreparedStatement userStatement = conn.prepareStatement(addUserInfoSql)) {
 
@@ -630,7 +642,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                     userStatement.setLong(2, userInfo.getTimestamp());
                     userStatement.setInt(3, userInfo.getEventType().getEventValue());
                     userStatement.setBoolean(4, userInfo.isExaminerNode());
-                    
+                    userStatement.setString(5, userInfo.getCaseName());
                     userStatement.execute();
                 }
 
@@ -994,7 +1006,8 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 "host text NOT NULL," + 
                 "timestamp bigint NOT NULL," + 
                 "event_type int NOT NULL," + 
-                "is_examiner BOOLEAN NOT NULL" +
+                "is_examiner BOOLEAN NOT NULL," +
+                "case_name text NOT NULL" + 
                 ")");
             
             
@@ -1437,6 +1450,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         private long timestamp;
         private final boolean isExaminer;
         private final String hostname;
+        private String caseName;
         
         /**
          * Create a new UserData object using the given event type
@@ -1448,6 +1462,14 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             this.timestamp = System.currentTimeMillis();
             this.isExaminer = (UserPreferences.SelectedMode.STANDALONE == UserPreferences.getMode());
             this.hostname = "";
+            
+            // If there's a case open, record the name
+            try {
+                this.caseName = Case.getCurrentCaseThrows().getDisplayName();
+            } catch (NoCurrentCaseException ex) {
+                // It's not an error if there's no case open
+                this.caseName = "";
+            }
         }
         
         /**
@@ -1461,6 +1483,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             this.hostname = resultSet.getString("host");
             this.eventType = UserEvent.valueOf(resultSet.getInt("event_type"));
             this.isExaminer = resultSet.getBoolean("is_examiner");
+            this.caseName = resultSet.getString("case_name");
         }
         
         /**
@@ -1505,6 +1528,14 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
          */
         boolean isExaminerNode() {
             return isExaminer;
+        }
+        
+        /**
+         * Get the name of the case for this metric
+         * @return the case name. Will be the empty string if no case was open.
+         */
+        String getCaseName() {
+            return caseName;
         }
     }
     
