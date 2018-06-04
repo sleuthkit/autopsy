@@ -674,7 +674,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             singleCase = true;
         }
         if (values == null) {
-            values = new ArrayList<String>();
+            values = new ArrayList<>();
         }
         Connection conn = connect();
 
@@ -705,19 +705,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
             sql.append(value);
             sql.append("',");
         }
-        if (values != null) {
+        if (values.size() > 0) {
             sql.deleteCharAt(sql.length() - 1);
         }
-        sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
+        
 
         if (singleCase && correlationCase != null) {
-            sql.append(" AND ");
+            sql.append(") AND ");
+            sql.append(tableName);
+            sql.append(".case_id=?)"); // inner select checks for other case results
+            sql.append(" AND (");
             sql.append(tableName);
             sql.append(".case_id=?");
             sql.append(" OR ");
             sql.append(tableName);
-            sql.append(".case_id=?");
+            sql.append(".case_id=?)");
 
+        } else {
+            sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
         }
 
         sql.append(" ORDER BY value, cases.case_name, file_path");
@@ -726,7 +731,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql.toString());
             if (singleCase && correlationCase != null) {
                 preparedStatement.setInt(1, correlationCase.getID());
-                preparedStatement.setInt(2, currentCaseId);
+                preparedStatement.setInt(2, correlationCase.getID());
+                preparedStatement.setInt(3, currentCaseId);
             }
 
             resultSet = preparedStatement.executeQuery();
