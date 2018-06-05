@@ -1,0 +1,55 @@
+# Application artifacts.
+
+name: NodeJSPackageManagerCacheFiles
+doc: Node JS package manager (NPM) cache files
+sources:
+- type: FILE
+  attributes:
+    paths: ['%%users.homedir%%/.npm/*']
+  supported_os: [Darwin, Linux]
+- type: FILE
+  attributes:
+    paths: ['%%users.appdata%%\npm-cache\*']
+    separator: '\'
+  supported_os: [Windows]
+supported_os: [Darwin, Linux, Windows]
+urls: ['https://docs.npmjs.com/cli/cache']
+---
+name: MicrosoftOfficeMRU
+doc: Microsoft Office Most Recently Used
+sources:
+- type: FILE
+  attributes:
+    paths: 
+      - '%%users.homedir%%/Library/Preferences/com.microsoft.office.plist'
+      - '%%users.homedir%%/Library/Containers/com.microsoft.*/Data/Library/Preferences/com.microsoft.*.securebookmarks.plist'
+    separator: '/'
+  supported_os: [Darwin]
+- type: REGISTRY_VALUE
+  attributes:
+    key_value_pairs:
+      - {key: 'HKEY_USERS\%%users.sid%%\Software\Microsoft\Office\*\*\File MRU', value: 'Item *'}
+      - {key: 'HKEY_USERS\%%users.sid%%\Software\Microsoft\Office\*\*\Place MRU', value: 'Item *'}
+  supported_os: [Windows]
+supported_os: [Darwin, Windows]
+urls: ['https://github.com/mac4n6/macMRU-Parser']
+---
+name: WinRARExternalViewer
+doc: Executable run when a file is opened by WinRAR inside an archive.
+sources:
+- type: REGISTRY_VALUE
+  attributes: {key_value_pairs: [{key: 'HKEY_USERS\%%users.sid%%\Software\WinRAR\Viewer\', value: 'ExternalViewer'}]}
+supported_os: [Windows]
+urls:
+- 'http://www.hexacorn.com/blog/2012/09/16/beyond-good-ol-run-key-part-2/'
+- 'http://acritum.com/software/manuals/winrar/html/helpinterfaceviewing.htm'
+---
+name: WinRARAVScan
+doc: Executable run to scan a file when it is opened by WinRAR.
+sources:
+- type: REGISTRY_VALUE
+  attributes: {key_value_pairs: [{key: 'HKEY_USERS\%%users.sid%%\Software\WinRAR\VirusScan\', value: 'Name'}]}
+supported_os: [Windows]
+urls:
+- 'http://www.hexacorn.com/blog/2012/09/16/beyond-good-ol-run-key-part-2/'
+- 'http://acritum.com/software/manuals/winrar/html/helpcommandsvirusscan.htm'
