@@ -38,7 +38,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         this.delegate = delegate;
     }
 
-    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(true);
+    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
     private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
 
