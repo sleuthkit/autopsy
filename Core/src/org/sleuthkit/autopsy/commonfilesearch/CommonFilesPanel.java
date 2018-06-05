@@ -131,14 +131,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
             }
 
-            private void setTitleForAllCases() {
-
-            }
-
-            private void setTitleForSingleCase() {
-
-            }
-
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
             protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
@@ -270,10 +262,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     //TODO this should be attached to the intra/inter radio buttons
                     CommonFilesPanel.this.setSearchButtonEnabled(true);
-                } else {
-                    //TODO error message only?
-//                    MessageNotifyUtil.Message.info(Bundle.IntraCasePanel_setupDataSources_updateUi_noDataSources());
-//                    SwingUtilities.windowForComponent(IntraCasePanel.this.parent).dispose();
                 }
             }
 

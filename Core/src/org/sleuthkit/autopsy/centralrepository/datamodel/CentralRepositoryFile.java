@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TskData;
  * Common Files Search usage which extends CorrelationAttributeInstance
  * by adding the MD5 value to match on for the results table.
  */
-public class CorrelationAttributeCommonInstance extends CorrelationAttributeInstance {
+public class CentralRepositoryFile extends CorrelationAttributeInstance {
 
     private static final long serialVersionUID = 1L;
     
@@ -34,7 +34,7 @@ public class CorrelationAttributeCommonInstance extends CorrelationAttributeInst
      */
     private final String value;
     
-    public CorrelationAttributeCommonInstance(CorrelationCase eamCase, CorrelationDataSource eamDataSource, String filePath, String comment, TskData.FileKnown knownStatus, String value) throws EamDbException {
+    public CentralRepositoryFile(CorrelationCase eamCase, CorrelationDataSource eamDataSource, String filePath, String comment, TskData.FileKnown knownStatus, String value) throws EamDbException {
         super(eamCase, eamDataSource, filePath, comment, knownStatus);
         this.value = value;
     }
