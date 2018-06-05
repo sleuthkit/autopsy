@@ -135,6 +135,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow()); //DLG:
                     AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(selectedAttribute);
                     action.addEditCentralRepoComment();
+                    otherCasesTable.repaint();
                 }
             }
         };
@@ -751,7 +752,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         otherCasesTable.setAutoCreateRowSorter(true);
         otherCasesTable.setModel(tableModel);
         otherCasesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
-        otherCasesTable.setCellSelectionEnabled(false);
         otherCasesTable.setComponentPopupMenu(rightClickPopupMenu);
         otherCasesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         tableScrollPane.setViewportView(otherCasesTable);
