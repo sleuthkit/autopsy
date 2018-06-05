@@ -24,7 +24,7 @@ import java.io.File;
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-final public class FileInstanceMetadata {
+final public class FileInstanceMetadata {   //TODO become abstract or interface
     
     private final Long objectId;
     private final String dataSourceName;

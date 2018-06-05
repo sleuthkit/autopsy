@@ -127,6 +127,8 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             if (commonFiles.containsKey(md5)) {
                 // we don't *have* all the information for the rows in the CR, 
                 //  so we need to consult the present case via the SleuthkitCase object
+                
+                //TODO need to figure out if we have a CR instance or a SK resource and create as appropriate....
                 Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData

@@ -29,20 +29,25 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
  * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ * 
+ * Use this type for files which are in the current case.  Contrast with 
+ * <code>CentralRepositoryFileInstanceNode</code> which should be used when the 
+ * FileInstance was found in some case not presently open in Autopsy, but present 
+ * in the Central Repository.
  */
-public class FileInstanceNode extends FileNode {
+public class SleuthkitCaseFileInstanceNode extends FileNode {
     
     private final String dataSource;
     private final File file;
 
-    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
         this.file = null;
     }
     
-    public FileInstanceNode(AbstractFile fsContent, String dataSource, File file){
+    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String dataSource, File file){
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
@@ -107,9 +112,9 @@ public class FileInstanceNode extends FileNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
+    static private void fillPropertyMap(Map<String, Object> map, SleuthkitCaseFileInstanceNode node) {
 
-        //TODO rather than these ternary operators we should subclass FileInstanceNode or derive an interface
+        //TODO rather than these ternary operators we should subclass SleuthkitCaseFileInstanceNode or derive an interface
         
         map.put(CommonFilePropertyType.File.toString(), node.hasFile() ? node.getFile().getName() : node.getName());
         map.put(CommonFilePropertyType.ParentPath.toString(), node.hasFile() ? node.getFile().getParent() : node.getContent().getParentPath());     //TODO this appears to have a bug

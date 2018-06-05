@@ -114,9 +114,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(CommonFilesNode cfn);
 
-    T visit(FileInstanceNode fin);
+    T visit(SleuthkitCaseFileInstanceNode fin);
 
     T visit(CommonFileChildNodeLoading cfcnl);
+    
+    T visit(CentralRepositoryFileInstanceNode crfin);
 
     /*
      * Tags
@@ -187,7 +189,7 @@ public interface DisplayableItemNodeVisitor<T> {
         protected abstract T defaultVisit(DisplayableItemNode c);
 
         @Override
-        public T visit(FileInstanceNode fin) {
+        public T visit(SleuthkitCaseFileInstanceNode fin) {
             return defaultVisit(fin);
         }
 
@@ -204,6 +206,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(CommonFileChildNodeLoading cfcnl) {
             return defaultVisit(cfcnl);
+        }
+        
+        @Override
+        public T visit(CentralRepositoryFileInstanceNode crfin){
+            return defaultVisit(crfin);
         }
 
         @Override

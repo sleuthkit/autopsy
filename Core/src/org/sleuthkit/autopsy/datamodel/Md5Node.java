@@ -126,7 +126,7 @@ public class Md5Node extends DisplayableItemNode {
     }
 
     /**
-     * Child generator for <code>FileInstanceNode</code> of <code>Md5Node</code>.
+     * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of <code>Md5Node</code>.
      */
     static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> {
 
@@ -143,7 +143,7 @@ public class Md5Node extends DisplayableItemNode {
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
                 AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
                 
-                return new FileInstanceNode(abstractFile, file.getDataSourceName());
+                return new SleuthkitCaseFileInstanceNode(abstractFile, file.getDataSourceName());
             } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
             } catch (TskCoreException ex) {
