@@ -751,6 +751,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         otherCasesTable.setAutoCreateRowSorter(true);
         otherCasesTable.setModel(tableModel);
         otherCasesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
+        otherCasesTable.setCellSelectionEnabled(false);
         otherCasesTable.setComponentPopupMenu(rightClickPopupMenu);
         otherCasesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         tableScrollPane.setViewportView(otherCasesTable);
@@ -808,7 +809,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 60, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 52, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -825,11 +826,17 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }// </editor-fold>//GEN-END:initComponents
 
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
-        if (file.isFile() && EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
-            addCommentMenuItem.setVisible(true);
-        } else {
-            addCommentMenuItem.setVisible(false);
+        boolean addCommentMenuItemVisible = false;
+        
+        if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
+            int rowIndex = otherCasesTable.getSelectedRow();
+            CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(rowIndex);
+            if (selectedAttribute.getCorrelationType().getId() == CorrelationAttribute.FILES_TYPE_ID) {
+                addCommentMenuItemVisible = true;
+            }
         }
+        
+        addCommentMenuItem.setVisible(addCommentMenuItemVisible);
     }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

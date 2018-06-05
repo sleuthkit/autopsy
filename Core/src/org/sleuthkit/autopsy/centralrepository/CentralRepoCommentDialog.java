@@ -150,8 +150,10 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
         EamDb dbManager;
         
         try {
+            String comment = commentTextArea.getText();
             dbManager = EamDb.getInstance();
-            dbManager.setAttributeInstanceComment(correlationAttribute, commentTextArea.getText());
+            dbManager.setAttributeInstanceComment(correlationAttribute, comment);
+            correlationAttribute.getInstances().get(0).setComment(comment);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex); //DLG:
         }
