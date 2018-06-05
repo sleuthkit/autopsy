@@ -484,7 +484,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
             } catch (ParseException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.SEVERE, "Error parsing date of cases from database.", ex); // NON-NLS
             }
             // NON-NLS
 
