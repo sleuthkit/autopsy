@@ -30,7 +30,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeCommonInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -84,7 +84,7 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
         try {
             // Need to include current Cases results for specific case comparison
             currentCaseId = dbManager.getCase(Case.getCurrentCase()).getID();            
-			Collection<CorrelationAttributeCommonInstance> artifactInstances;
+			Collection<CentralRepositoryFile> artifactInstances;
             if(this.dbManager == null){
                 artifactInstances = new ArrayList<>(0);
             } else {
@@ -108,11 +108,11 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
         return commonFiles;
     }
 
-    private Map<String, Md5Metadata> gatherIntercaseResults(Collection<CorrelationAttributeCommonInstance> artifactInstances, Map<String, Md5Metadata> commonFiles) {
+    private Map<String, Md5Metadata> gatherIntercaseResults(Collection<CentralRepositoryFile> artifactInstances, Map<String, Md5Metadata> commonFiles) {
 
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
 
-        for (CorrelationAttributeCommonInstance instance : artifactInstances) {
+        for (CentralRepositoryFile instance : artifactInstances) {
 
             String md5 = instance.getValue();
             final String correlationCaseDisplayName = instance.getCorrelationCase().getDisplayName();

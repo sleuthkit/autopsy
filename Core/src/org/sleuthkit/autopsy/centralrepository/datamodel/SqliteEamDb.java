@@ -430,7 +430,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of artifact instances for a given list of MD5 values
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
+    public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByCaseValues(null, values, -1);
@@ -449,7 +449,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of artifact instances for a given list of MD5 values
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException {
+    public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByCaseValues(correlationCase, values, currentCaseId);

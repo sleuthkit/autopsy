@@ -654,10 +654,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * list of MD5 values;
      * 
      * @param values MD5s to use as search keys
-     * @return matching files in the form of CorrelationAttributeCommonInstance
+     * @return matching files in the form of CentralRepositoryFile
      * @throws EamDbException 
      */
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
+    public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
         //passing null and -1 here has the effect of making this case agnostic:
         //  rather than looking for instances that must appear in a certain case
         //  we accept instances occur in any case
@@ -679,7 +679,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException if EamDb is inaccessible.
      */
     @Override
-    public List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException {
+    public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException {
         CorrelationAttribute.Type aType = CorrelationAttribute.getDefaultCorrelationTypes().get(0); // Files type
         if (aType == null) {
             throw new EamDbException("Correlation Type is null");
@@ -689,7 +689,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             singleCase = true;
         }
 
-        List<CorrelationAttributeCommonInstance> artifactInstances = new ArrayList<>();
+        List<CentralRepositoryFile> artifactInstances = new ArrayList<>();
         
         if (values != null && !values.isEmpty()) {            
             
@@ -734,7 +734,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             sql.append(" ORDER BY value, cases.case_name, file_path");
 
             Connection conn = connect();
-            CorrelationAttributeCommonInstance artifactInstance;
+            CentralRepositoryFile artifactInstance;
             PreparedStatement preparedStatement = null;
             ResultSet resultSet = null;
 
@@ -2487,11 +2487,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws SQLException when an expected column name is not in the resultSet
      */
-    private CorrelationAttributeCommonInstance getCommonEamArtifactInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
+    private CentralRepositoryFile getCommonEamArtifactInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
         if (null == resultSet) {
             return null;
         }
-        CorrelationAttributeCommonInstance eamArtifactInstance = new CorrelationAttributeCommonInstance(
+        CentralRepositoryFile eamArtifactInstance = new CentralRepositoryFile(
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),

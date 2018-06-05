@@ -232,19 +232,19 @@ public interface EamDb {
      * @param values List of ArtifactInstance MD5 values to find matches of.
      * @param currentCaseId current case
      * 
-     * @return matching files in the form of CorrelationAttributeCommonInstance
+     * @return matching files in the form of CentralRepositoryFile
      */
-    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException;
+    List<CentralRepositoryFile> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException;
 
     /**
      * Retrieves eamArtiifact instances from the database that match the given
      * list of MD5 values;
      * 
      * @param values MD5s to use as search keys
-     * @return matching files in the form of CorrelationAttributeCommonInstance
+     * @return matching files in the form of CentralRepositoryFile
      * @throws EamDbException 
      */
-    List<CorrelationAttributeCommonInstance> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException;
+    List<CentralRepositoryFile> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException;
     
     /**
      * Retrieves eamArtifact instances from the database that are associated
