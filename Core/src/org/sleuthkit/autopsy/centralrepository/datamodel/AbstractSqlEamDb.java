@@ -652,10 +652,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Retrieves eamArtifact instances from the database that match the given
      * list of MD5 values;
-     * 
+     *
      * @param values MD5s to use as search keys
      * @return matching files in the form of CentralRepositoryFile
-     * @throws EamDbException 
+     * @throws EamDbException
      */
     public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
         //passing null and -1 here has the effect of making this case agnostic:
@@ -663,7 +663,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         //  we accept instances occur in any case
         return getArtifactInstancesByCaseValues(null, values, -1);
     }
-    
+
     /**
      * Retrieves eamArtifact instances from the database that match the given
      * list of MD5 values and optionally filters by given case.
@@ -688,11 +688,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if (correlationCase != null) {
             singleCase = true;
         }
+        if (values == null) {
+            values = new ArrayList<>();
+        }
 
         List<CentralRepositoryFile> artifactInstances = new ArrayList<>();
-        
-        if (values != null && !values.isEmpty()) {            
-            
+
+        if (values != null && !values.isEmpty()) {
+
             //we can skip all this if there is nothing to search for
             String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
             StringBuilder sql = new StringBuilder(10);
@@ -714,22 +717,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 sql.append(value);
                 sql.append("',");
             }
-
-            sql.deleteCharAt(sql.length() - 1);
-
-            sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
+            if (values.size() > 0) {
+                sql.deleteCharAt(sql.length() - 1);
+            }
 
             if (singleCase && correlationCase != null) {
-                sql.append(" AND ");
+                sql.append(") AND ");
+                sql.append(tableName);
+                sql.append(".case_id=?)"); // inner select checks for other case results
+                sql.append(" AND (");
                 sql.append(tableName);
                 sql.append(".case_id=?");
                 sql.append(" OR ");
                 sql.append(tableName);
-                sql.append(".case_id=?");
+                sql.append(".case_id=?)");
+
+            } else {
+                sql.append(") GROUP BY value HAVING COUNT(*) > 1)"); // 
             }
-            
-            //TODO figure out how to replicate results obtained by functionality 
-            //  seen in EamDbCOmmonFilesAlgorithm.removeEntriesWithinOnlyOneCase
 
             sql.append(" ORDER BY value, cases.case_name, file_path");
 
@@ -737,13 +742,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
             CentralRepositoryFile artifactInstance;
             PreparedStatement preparedStatement = null;
             ResultSet resultSet = null;
-
             try {
-
                 preparedStatement = conn.prepareStatement(sql.toString());
                 if (singleCase && correlationCase != null) {
                     preparedStatement.setInt(1, correlationCase.getID());
-                    preparedStatement.setInt(2, currentCaseId);
+                    preparedStatement.setInt(2, correlationCase.getID());
+                    preparedStatement.setInt(3, currentCaseId);
                 }
 
                 resultSet = preparedStatement.executeQuery();
