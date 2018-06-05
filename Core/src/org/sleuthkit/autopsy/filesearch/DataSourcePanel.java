@@ -65,10 +65,12 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
             @Override
             public void mouseMoved(MouseEvent evt) {
-                JList<String> DsList = (JList<String>) evt.getSource();
-                int index = DsList.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    DsList.setToolTipText(toolTipList.get(index));
+                if (evt.getSource() instanceof JList<?>) {
+                    JList<?> dsList = (JList<?>) evt.getSource();
+                    int index = dsList.locationToIndex(evt.getPoint());
+                    if (index > -1) {
+                        dsList.setToolTipText(toolTipList.get(index));
+                    }
                 }
             }
     });
