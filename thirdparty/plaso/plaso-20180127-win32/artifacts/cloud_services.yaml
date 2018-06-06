@@ -1,0 +1,77 @@
+# Cloud service artifacts.
+
+name: CloudStorageClients
+doc: Multiple cloud storage client artifacts.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - 'DropboxClient'
+      - 'GoogleDriveClient'
+      - 'SkyDriveClient'
+labels: [Cloud Storage]
+supported_os: [Darwin,Linux,Windows]
+---
+name: DropboxClient
+doc: Dropbox cloud storage client artifacts.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.appdata%%\Dropbox\*.db*'
+      - '%%users.localappdata%%\Dropbox\*.db*'
+  supported_os: [Windows]
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.homedir%%/.dropbox/*.db*'
+  supported_os: [Darwin,Linux]
+supported_os: [Darwin,Linux,Windows]
+labels: [Cloud Storage]
+urls: ['http://www.forensicswiki.org/wiki/Dropbox']
+---
+name: GoogleDriveClient
+doc: Google Drive cloud storage client artifacts.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.localappdata%%\Google\Drive\snapshot.db'
+      - '%%users.localappdata%%\Google\Drive\sync_config.db'
+      - '%%users.localappdata%%\Google\Drive\sync_config.log*'
+      - '%%users.localappdata%%\Google\Drive\user_default\snapshot.db'
+      - '%%users.localappdata%%\Google\Drive\user_default\sync_config.db'
+      - '%%users.localappdata%%\Google\Drive\user_default\sync_config.log*'
+  supported_os: [Windows]
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.homedir%%/Library/Application Support/Google/Drive/snapshot.db'
+      - '%%users.homedir%%/Library/Application Support/Google/Drive/sync_config.db'
+      - '%%users.homedir%%/Library/Application Support/Google/Drive/sync_config.log*'
+      - '%%users.homedir%%/Library/Application Support/Google/Drive/user_default/snapshot.db'
+      - '%%users.homedir%%/Library/Application Support/Google/Drive/user_default/sync_config.db'
+      - '%%users.homedir%%/Library/Application Support/Google/Drive/user_default/sync_config.log*'
+  supported_os: [Darwin]
+supported_os: [Darwin,Windows]
+labels: [Cloud Storage]
+urls: ['http://www.forensicswiki.org/wiki/Google_Drive']
+---
+name: SkyDriveClient
+doc: |
+  Microsoft Sky Drive cloud storage client artifacts.
+
+  Note that Sky Drive was renamed to One Drive.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '%%users.localappdata%%\Microsoft\SkyDrive\logs\*.log'
+      - '%%users.localappdata%%\Microsoft\SkyDrive\setup\logs\*.log'
+      - '%%users.localappdata%%\Microsoft\SkyDrive\settings\ApplicationSettings.xml'
+      - '%%users.localappdata%%\Microsoft\SkyDrive\settings\*.dat'
+      - '%%users.localappdata%%\Microsoft\SkyDrive\settings\*.ini'
+  supported_os: [Windows]
+supported_os: [Windows]
+labels: [Cloud Storage]
+urls: ['http://forensicswiki.org/wiki/One_Drive#Sky_Drive_client']
