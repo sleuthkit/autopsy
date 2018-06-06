@@ -118,7 +118,7 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             final String correlationCaseDisplayName = instance.getCorrelationCase().getDisplayName();
             String dataSource = String.format("%s: %s", correlationCaseDisplayName, instance.getCorrelationDataSource().getName());
             String path = instance.getFilePath();
-            File file = new File(path);
+            File filePath = new File(path);
 
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
@@ -128,16 +128,17 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
                 // we don't *have* all the information for the rows in the CR, 
                 //  so we need to consult the present case via the SleuthkitCase object
                 
+                //TODO resume here!!!
                 //TODO need to figure out if we have a CR instance or a SK resource and create as appropriate....
                 Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource, file), correlationCaseDisplayName);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
                     
                 } else {
                     Md5Metadata md5Metadata = new Md5Metadata(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource, file), correlationCaseDisplayName);
+                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
             }

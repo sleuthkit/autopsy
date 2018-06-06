@@ -31,6 +31,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
@@ -42,16 +43,24 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
 
-    private CentralRepositoryFile content;
+    private final CentralRepositoryFile crFile;
     
     //this may not be the same file, but at least it is identical, 
-    //  and we can use this to support certain actions in the tree table and content viewer
-    private AbstractFile md5Reference;
+    //  and we can use this to support certain actions in the tree table and crFile viewer
+    private final AbstractFile md5Reference;
     
     public CentralRepositoryFileInstanceNode(CentralRepositoryFile content, AbstractFile md5Reference) {
         super(Children.LEAF, Lookups.fixed(content, md5Reference));
-        this.content = content;
+        this.crFile = content;
         this.md5Reference = md5Reference;
+    }
+    
+    public CentralRepositoryFile getCentralRepoFile(){
+        return this.crFile;
+    }
+    
+    public Content getContent(){
+        return this.md5Reference;
     }
     
     @Override
@@ -114,10 +123,10 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
      */
     private static void fillPropertyMap(Map<String, Object> map, CentralRepositoryFileInstanceNode node) {
         
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), node.content.getFilePath());
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), node.content.getFilePath());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), node.crFile.getFilePath());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), node.crFile.getFilePath());
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), node.content.getCorrelationDataSource().getName());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), node.crFile.getCorrelationDataSource().getName());
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.MimeType.toString(), "");
     }
     

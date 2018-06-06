@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -38,20 +37,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 public class SleuthkitCaseFileInstanceNode extends FileNode {
     
     private final String dataSource;
-    private final File file;
 
     public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
-        this.file = null;
-    }
-    
-    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String dataSource, File file){
-        super(fsContent);
-        this.content = fsContent;
-        this.dataSource = dataSource;
-        this.file = file;
     }
 
     @Override
@@ -66,14 +56,6 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
 
     String getDataSource() {
         return this.dataSource;
-    }
-    
-    boolean hasFile(){
-        return this.file != null;
-    }
-    
-    File getFile(){
-        return this.file;
     }
 
     @Override
@@ -110,8 +92,8 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, SleuthkitCaseFileInstanceNode node) {
 
-        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.hasFile() ? node.getFile().getName() : node.getName());
-        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.hasFile() ? node.getFile().getParent() : node.getContent().getParentPath());     //TODO this appears to have a bug
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.getName());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.DataSource.toString(), node.getDataSource());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));

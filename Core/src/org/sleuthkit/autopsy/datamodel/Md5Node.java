@@ -31,6 +31,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -40,14 +41,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a common files match - two or more files which appear to be the
- * same file and appear as children of this node.  This node will simply contain
+ * same file and appear as children of this node. This node will simply contain
  * the MD5 of the matched files, the data sources those files were found within,
  * and a count of the instances represented by the md5.
  */
 public class Md5Node extends DisplayableItemNode {
-    
-    private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());    
-    
+
+    private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());
+
     private final String md5Hash;
     private final int commonFileCount;
     private final String dataSources;
@@ -56,7 +57,7 @@ public class Md5Node extends DisplayableItemNode {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true),
                 Lookups.singleton(data.getMd5()));
-        
+
         this.commonFileCount = data.size();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
@@ -126,7 +127,8 @@ public class Md5Node extends DisplayableItemNode {
     }
 
     /**
-     * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of <code>Md5Node</code>.
+     * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
+     * <code>Md5Node</code>.
      */
     static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> {
 
@@ -138,22 +140,31 @@ public class Md5Node extends DisplayableItemNode {
 
         @Override
         protected Node createNodeForKey(FileInstanceMetadata file) {
+
             try {
                 Case currentCase = Case.getCurrentCaseThrows();
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+
                 AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
-                
-                return new SleuthkitCaseFileInstanceNode(abstractFile, file.getDataSourceName());
-            } catch (NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
+
+                //TODO it would be an improvement to utilize some sort of polymorphism 
+                //  (interface with getNode is probably plenty) rather than this conditional
+                if (file.isPresentInCurrentCase()) {
+                    return new SleuthkitCaseFileInstanceNode(abstractFile, file.getDataSourceName());
+                } else {
+                    CentralRepositoryFile crFile = file.getCentralRepoFileInstance();
+                    return new CentralRepositoryFileInstanceNode(crFile, abstractFile);
+                }
+
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{file.getObjectId()}), ex);
             }
+
             return null;
         }
 
         @Override
-        protected boolean createKeys(List<FileInstanceMetadata> list) {            
+        protected boolean createKeys(List<FileInstanceMetadata> list) {
             list.addAll(this.descendants.getMetadata());
             return true;
         }

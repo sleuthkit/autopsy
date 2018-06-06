@@ -20,6 +20,8 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.io.File;
+import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
@@ -28,23 +30,25 @@ final public class FileInstanceMetadata {   //TODO become abstract or interface
     
     private final Long objectId;
     private final String dataSourceName;
-    private final File file;
+    private final CentralRepositoryFile crFile;
     
     /**
      * Create meta data required to find an abstract file and build a FileInstanceNode.
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    FileInstanceMetadata(Long objectId, String dataSourceName) {
+    FileInstanceMetadata (Long objectId, String dataSourceName) {
         this.objectId = objectId;
         this.dataSourceName = dataSourceName;
-        this.file = null;
+        this.crFile = null;
     }
     
-    FileInstanceMetadata(Long objectId, String dataSourceName, File file){
-        this.objectId = objectId;
-        this.dataSourceName = dataSourceName;
-        this.file = file;
+    FileInstanceMetadata (CentralRepositoryFile crFile){
+        //TODO should we actually just take an ID instead of the whole object
+        //  like we've done previously, or is this ok?
+        this.objectId = null;
+        this.dataSourceName = null;
+        this.crFile = crFile;
     }
     
     /**
@@ -61,5 +65,13 @@ final public class FileInstanceMetadata {   //TODO become abstract or interface
      */
     public String getDataSourceName(){
         return this.dataSourceName;
+    }
+
+    public boolean isPresentInCurrentCase() {
+        return this.crFile != null;
+    }
+
+    public CentralRepositoryFile getCentralRepoFileInstance() {
+        return this.crFile;
     }
 }
