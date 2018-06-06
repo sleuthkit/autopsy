@@ -142,9 +142,6 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
                 }
             }
         }
-
-        //ideally we would do this step via SQL in EamDb.getArtifactInstancesByCaseValues
-        removeEntriesWithinOnlyOneCase(interCaseCommonFiles);
         
         return interCaseCommonFiles;
     }
@@ -170,19 +167,5 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             }
         }
         throw new Exception("Cannot locate case.");
-    }
-
-    private void removeEntriesWithinOnlyOneCase(Map<String, Md5Metadata> interCaseCommonFiles) {
-        Collection<String> toRemove = new ArrayList<>();
-        
-        for(Map.Entry<String, Md5Metadata> entry : interCaseCommonFiles.entrySet()){
-            if(!entry.getValue().isMultiDataSource()){
-                toRemove.add(entry.getKey());
-            }
-        }
-        
-        for(String bogusEntry : toRemove){
-            interCaseCommonFiles.remove(bogusEntry);
-        }
     }
 }
