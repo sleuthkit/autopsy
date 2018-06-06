@@ -154,7 +154,6 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
 
     @Override
     protected String buildTabTitle() {
-        //TODO come back to this
         final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleEamDb();
         return String.format(titleTemplate, new Object[]{buildCategorySelectionString});

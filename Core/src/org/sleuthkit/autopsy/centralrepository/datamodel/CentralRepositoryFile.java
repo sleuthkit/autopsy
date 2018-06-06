@@ -41,6 +41,5 @@ public class CentralRepositoryFile extends CorrelationAttributeInstance {
     
     public String getValue() {
         return value;
-    }
-    
+    }    
 }
