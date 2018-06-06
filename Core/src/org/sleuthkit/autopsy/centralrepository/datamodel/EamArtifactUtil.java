@@ -270,68 +270,6 @@ public class EamArtifactUtil {
             return null;
         }
     }
-    
-    /**
-     * //DLG:
-     * @param file 
-     */
-    public static CorrelationAttributeInstance getAttributeInstanceForFile(Content content) {
-        
-        CorrelationAttributeInstance instance = null;
-        
-        if (!(content instanceof AbstractFile)) {
-            return null;
-        }
-
-        final AbstractFile af = (AbstractFile) content;
-
-        if (!isValidCentralRepoFile(af)) {
-            return null;
-        }
-        
-        CorrelationAttribute.Type type;
-        CorrelationCase correlationCase;
-        CorrelationDataSource correlationDataSource;
-        String md5;
-        String filePath;
-
-        // We need a hash to make the artifact
-        md5 = af.getMd5Hash();
-        if (md5 == null || md5.isEmpty() || HashUtility.isNoDataMd5(md5)) {
-            return null;
-        }
-        
-        try {
-            Case currentCase = Case.getCurrentCaseThrows();
-            type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            correlationCase = EamDb.getInstance().getCase(currentCase);
-            String deviceId = currentCase.getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
-            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
-            filePath = Paths.get(af.getParentPath(), af.getName()).toString().replace("\\", "/").toLowerCase();
-            //CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow());
-            //CorrelationAttributeInstance instance = selectedAttribute.getInstances().get(0);
-            //CorrelationCase correlationCase = instance.getCorrelationCase();
-            //CorrelationDataSource correlationDataSource = instance.getCorrelationDataSource(); //DLG: WRONG!
-            //String filePath = instance.getFilePath();
-            
-            CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, md5, filePath);
-            instance = correlationAttribute.getInstances().get(0);
-        } catch (EamDbException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        } catch (NoCurrentCaseException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        } catch (TskCoreException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        } catch (TskDataException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        }
-        
-        return instance;
-    }
 
     /**
      * Check whether the given abstract file should be processed for the central

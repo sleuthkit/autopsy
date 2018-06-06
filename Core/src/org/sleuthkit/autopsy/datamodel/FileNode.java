@@ -30,6 +30,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -154,6 +156,12 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(true)));
+        
+        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
+        AbstractFile file = content;
+        if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
+            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
+        }
 
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));

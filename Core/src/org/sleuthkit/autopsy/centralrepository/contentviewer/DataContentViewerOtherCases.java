@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
@@ -37,33 +35,22 @@ import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
-import javax.swing.GroupLayout;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import static javax.swing.JOptionPane.DEFAULT_OPTION;
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.LayoutStyle;
-import javax.swing.ListSelectionModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.openide.awt.Mnemonics;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
-import org.sleuthkit.autopsy.centralrepository.CentralRepoCommentDialog;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -93,7 +80,7 @@ import org.sleuthkit.datamodel.TskDataException;
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
 public class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
     
-    private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
+    private final static Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
     private final Collection<CorrelationAttribute> correlationAttributes;
@@ -127,12 +114,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     try {
                         saveToCSV();
                     } catch (NoCurrentCaseException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                        logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
                     }
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
                 } else if (jmi.equals(addCommentMenuItem)) {
-                    CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow()); //DLG:
+                    CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow());
                     AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(selectedAttribute);
                     action.addEditCentralRepoComment();
                     otherCasesTable.repaint();
@@ -184,7 +171,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
                         DEFAULT_OPTION, PLAIN_MESSAGE);
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error getting commonality details.", ex);
+                logger.log(Level.SEVERE, "Error getting commonality details.", ex);
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_failed(),
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
@@ -308,7 +295,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
 
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
+            logger.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
         }
     }
 
@@ -399,7 +386,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             try {
                 content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
                 return null;
             }
 
@@ -445,7 +432,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     }
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
 
         } else {
@@ -458,7 +445,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     }
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
         }
 
@@ -481,12 +468,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
+            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
             HashMap<UniquePathKey,CorrelationAttributeInstance> artifactInstances = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 EamDb dbManager = EamDb.getInstance();
                 artifactInstances.putAll(dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
-                        .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                        .filter(artifactInstance -> !artifactInstance.getFilePath().equals(filePath)
+                        || !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                         || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
                         || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
                         .collect(Collectors.toMap(correlationAttr -> new UniquePathKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
@@ -502,13 +491,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
             return artifactInstances;
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
             // do nothing. 
             // @@@ Review this behavior
-            LOGGER.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
         }
 
         return new HashMap<>(0);
@@ -562,7 +551,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         try {
             deviceId = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId()).getDeviceId();
         } catch (TskDataException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Error getting data source info: " + ex);
+            logger.log(Level.WARNING, "Error getting data source info: {0}", ex);
             return;
         }
         UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
@@ -656,7 +645,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     newCeArtifact.addInstance(corAttrInstance);
                     tableModel.addEamArtifact(newCeArtifact);
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error creating correlation attribute", ex);
+                    logger.log(Level.SEVERE, "Error creating correlation attribute", ex);
                 }
             });
         }
@@ -831,7 +820,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
             int rowIndex = otherCasesTable.getSelectedRow();
             CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(rowIndex);
-            if (selectedAttribute.getCorrelationType().getId() == CorrelationAttribute.FILES_TYPE_ID) {
+            if (selectedAttribute.getInstances().get(0).isDatabaseInstance() &&
+                    selectedAttribute.getCorrelationType().getId() == CorrelationAttribute.FILES_TYPE_ID) {
                 addCommentMenuItemVisible = true;
             }
         }

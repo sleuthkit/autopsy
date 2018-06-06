@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Main interface for interacting with the database
@@ -311,14 +310,30 @@ public interface EamDb {
     void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException;
     
     /**
-     * //DLG:
-     * @param eamArtifact
-     * @param comment
-     * @throws EamDbException 
+     * Update a correlation attribute instance in the database with that in the
+     * associated CorrelationAttribute object.
+     *
+     * @param eamArtifact The correlation attribute whose database instance will
+     *                    be updated.
+     *
+     * @throws EamDbException
      */
-    void setAttributeInstanceComment(CorrelationAttribute eamArtifact, String comment) throws EamDbException;
+    void updateAttributeInstanceComment(CorrelationAttribute eamArtifact) throws EamDbException;
     
-    //DLG:
+    /**
+     * Find a correlation attribute in the Central Repository database given the
+     * instance type, case, data source, value, and file path.
+     *
+     * @param type                  The type of instance.
+     * @param correlationCase       The case tied to the instance.
+     * @param correlationDataSource The data source tied to the instance.
+     * @param value                 The value tied to the instance.
+     * @param filePath              The file path tied to the instance.
+     *
+     * @return The correlation attribute if it exists; otherwise null.
+     *
+     * @throws EamDbException
+     */
     CorrelationAttribute getCorrelationAttribute(CorrelationAttribute.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException;
 

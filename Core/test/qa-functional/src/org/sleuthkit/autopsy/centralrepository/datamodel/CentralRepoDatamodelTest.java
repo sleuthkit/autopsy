@@ -61,6 +61,7 @@ public class CentralRepoDatamodelTest extends TestCase {
     private EamOrganization org1;
     private EamOrganization org2;
     CorrelationAttribute.Type fileType;
+    CorrelationAttribute.Type usbDeviceType;
 
     private Map<String, String> propertiesMap = null;
 
@@ -152,6 +153,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Store the file type object for later use
             fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             assertTrue("getCorrelationTypeById(FILES_TYPE_ID) returned null", fileType != null);
+            usbDeviceType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.USBID_TYPE_ID);
+            assertTrue("getCorrelationTypeById(USBID_TYPE_ID) returned null", usbDeviceType != null);
 
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -994,6 +997,25 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("getFrequencyPercentage failed to throw exception for null attribute");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        }
+        
+        // Test updating a correlation attribute instance comment
+        try {
+            CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(
+                    usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
+            Assert.assrt("getCorrelationAttribute returned null", correlationAttribute != null);
+            
+            correlationAttribute.getInstances().get(0).setComment("new comment");
+            EamDb.getInstance().updateAttributeInstanceComment(correlationAttribute);
+            
+            // Get a fresh copy to verify the update.
+            correlationAttribute = EamDb.getInstance().getCorrelationAttribute(
+                    usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
+            assertEquals("updateAttributeInstanceComment did not set comment to \"new comment\".",
+                    "new comment", correlationAttribute.getInstances().get(0).getComment());
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test getting count for dataSource1fromCase1 (includes all types)

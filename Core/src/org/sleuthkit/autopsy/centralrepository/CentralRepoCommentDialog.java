@@ -1,54 +1,70 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository;
 
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
- *
- * @author dgrove
+ * Dialog to allow Central Repository file instance comments to be added and
+ * modified.
  */
 public class CentralRepoCommentDialog extends javax.swing.JDialog {
-    
-    private CorrelationAttribute correlationAttribute;
+
+    private final CorrelationAttribute correlationAttribute;
+    private boolean commentUpdated = false;
 
     /**
-     * //DLG:
-     * Creates new form NewJDialog
+     * Create an instance.
+     *
+     * @param correlationAttribute The correlation attribute to be modified.
      */
-    /*public CentralRepoCommentDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-    }*/
-    
     public CentralRepoCommentDialog(CorrelationAttribute correlationAttribute) {
         initComponents();
-        
+
         CorrelationAttributeInstance instance = correlationAttribute.getInstances().get(0);
-        
+
         pathLabel.setText(instance.getFilePath());
         commentTextArea.setText(instance.getComment());
-        
+
         this.correlationAttribute = correlationAttribute;
     }
-    
+
     /**
      * Display the dialog.
      */
     public void display() {
-        setModal(true);  
+        setModal(true);
         setSize(getPreferredSize());
         setLocationRelativeTo(this.getParent());
         setAlwaysOnTop(false);
         pack();
         setVisible(true);
+    }
+
+    /**
+     * Has the comment been updated?
+     *
+     * @return True if the comment has been updated; otherwise false.
+     */
+    public boolean isCommentUpdated() {
+        return commentUpdated;
     }
 
     /**
@@ -147,17 +163,10 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        EamDb dbManager;
-        
-        try {
-            String comment = commentTextArea.getText();
-            dbManager = EamDb.getInstance();
-            dbManager.setAttributeInstanceComment(correlationAttribute, comment);
-            correlationAttribute.getInstances().get(0).setComment(comment);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex); //DLG:
-        }
-        
+        String comment = commentTextArea.getText();
+        correlationAttribute.getInstances().get(0).setComment(comment);
+        commentUpdated = true;
+
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 

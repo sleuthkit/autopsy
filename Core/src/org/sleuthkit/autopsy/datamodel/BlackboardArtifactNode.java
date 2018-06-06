@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -50,10 +49,6 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -225,8 +220,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(context)));
         AbstractFile file = getLookup().lookup(AbstractFile.class);
-        
-        //DLG: Insert comment here!
+
+        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
         if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
             actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }

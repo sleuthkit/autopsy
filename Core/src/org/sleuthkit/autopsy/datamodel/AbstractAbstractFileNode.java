@@ -30,12 +30,19 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -174,6 +181,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.modeColLbl=Mode",
         "AbstractAbstractFileNode.useridColLbl=UserID",
         "AbstractAbstractFileNode.groupidColLbl=GroupID",
+        "AbstractAbstractFileNode.comment=Comment",
         "AbstractAbstractFileNode.metaAddrColLbl=Meta Addr.",
         "AbstractAbstractFileNode.attrAddrColLbl=Attr. Addr.",
         "AbstractAbstractFileNode.typeDirColLbl=Type(Dir)",
@@ -198,6 +206,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         MODE(AbstractAbstractFileNode_modeColLbl()),
         USER_ID(AbstractAbstractFileNode_useridColLbl()),
         GROUP_ID(AbstractAbstractFileNode_groupidColLbl()),
+        COMMENT(AbstractAbstractFileNode_comment()),
         META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()),
         ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()),
         TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
@@ -241,6 +250,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(MODE.toString(), content.getModesAsString());
         map.put(USER_ID.toString(), content.getUid());
         map.put(GROUP_ID.toString(), content.getGid());
+        map.put(COMMENT.toString(), getCommentFromCentralRepoForFile(content));
         map.put(META_ADDR.toString(), content.getMetaAddr());
         map.put(ATTR_ADDR.toString(), content.getAttrType().getValue() + "-" + content.getAttributeId());
         map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
@@ -258,7 +268,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
-     *           Sheet.get(Sheet.PROPERTIES)
+     *                 Sheet.get(Sheet.PROPERTIES)
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     protected void addTagProperty(Sheet.Set sheetSet) {
@@ -303,5 +313,43 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             logger.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
             return "";
         }
+    }
+
+    /**
+     * Get the Central Repository comment associated with the supplied file.
+     *
+     * @param file The file.
+     *
+     * @return The comment associated with the file if it can be retrieved;
+     *         otherwise an empty string.
+     */
+    private static String getCommentFromCentralRepoForFile(AbstractFile file) {
+        String comment = "";
+
+        if (EamDbUtil.useCentralRepo() && file.isFile()) {
+            try {
+                CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+                CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
+                String value = file.getMd5Hash();
+                String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+
+                CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
+                if (correlationAttribute != null) {
+                    comment = correlationAttribute.getInstances().get(0).getComment();
+                }
+            } catch (TskCoreException ex) {
+                //DLG:
+                Exceptions.printStackTrace(ex);
+            } catch (EamDbException ex) {
+                //DLG:
+                Exceptions.printStackTrace(ex);
+            } catch (NoCurrentCaseException ex) {
+                //DLG:
+                Exceptions.printStackTrace(ex);
+            }
+        }
+
+        return comment;
     }
 }

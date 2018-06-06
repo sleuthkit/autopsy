@@ -61,9 +61,11 @@ import org.openide.nodes.Node.Property;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
@@ -140,7 +142,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * Configure the child OutlineView (explorer view) component.
          */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
-        
+
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
         outline.setColumnSelectionAllowed(true);
@@ -185,7 +187,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
     public String getTitle() {
         return title;
     }
-    
+
     /**
      * Indicates whether a given node is supported as a root node for this
      * tabular viewer.
@@ -246,9 +248,9 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Sets up the Outline view of this tabular result viewer by creating
-     * column headers based on the children of the current root node. The
-     * persisted column order, sorting and visibility is used.
+     * Sets up the Outline view of this tabular result viewer by creating column
+     * headers based on the children of the current root node. The persisted
+     * column order, sorting and visibility is used.
      */
     private void setupTable() {
         /*
@@ -263,15 +265,24 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * use its display name as the header for the column so that the header
          * can change depending on the type of data being displayed.
          *
-         * NOTE: This assumes that the first property is always the one that
+         * Additionally, if the Central Repository is disabled, remove the
+         * column for displaying comments since they must be pulled from the
+         * Central Repository database.
+         *
+         * NOTE: The assumption is the first property is always the one that
          * duplicates getDisplayName(). The current implementation does not
          * allow the first property column to be moved.
          */
         List<Node.Property<?>> props = loadColumnOrder();
-        boolean propsExist = props.isEmpty() == false;
+
+        if (!EamDbUtil.useCentralRepo()) {
+            props.removeIf(property -> property.getDisplayName().equals(
+                    AbstractAbstractFileNode.AbstractFilePropertyType.COMMENT.toString()));
+        }
+
         Node.Property<?> firstProp = null;
-        if (propsExist) {
-            firstProp = props.remove(0);
+        if (!props.isEmpty()) {
+            firstProp = props.remove(AbstractAbstractFileNode.AbstractFilePropertyType.NAME.ordinal());
         }
 
         /*
@@ -342,9 +353,9 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /*
-     * Populates the column map for the child OutlineView of this tabular
-     * result viewer with references to the column objects for use when
-     * loading/storing the visibility info.
+     * Populates the column map for the child OutlineView of this tabular result
+     * viewer with references to the column objects for use when loading/storing
+     * the visibility info.
      */
     private void populateColumnMap() {
         columnMap.clear();
