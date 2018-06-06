@@ -160,7 +160,7 @@ public class HealthMonitorDashboard {
             timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase(DateRange.getMaximumTimestampRange()); 
             
             // Get a copy of the user data from the database
-            userData = EnterpriseHealthMonitor.getInstance().getUserMetricsFromDatabase(DateRange.getMaximumTimestampRange()); 
+            userData = EnterpriseHealthMonitor.getInstance().getUserMetricsFromDatabase(DateRange.getMaximumTimestampRange());
         }
     }
     
@@ -477,8 +477,8 @@ public class HealthMonitorDashboard {
         return userControlPanel;
     }
     
-        /**
-     * Update the timing graphs.
+    /**
+     * Update the user graphs.
      * @throws HealthMonitorException 
      */
     @NbBundle.Messages({"HealthMonitorDashboard.updateUserMetricGraphs.noData=No data to display"})
@@ -494,8 +494,8 @@ public class HealthMonitorDashboard {
         }
 
         // Calculate the minimum timestamp for the graph.
-        // Unlike the timing graphs, we have to pass in the full user data list here to 
-        // use for the graph. This is because even if we're only displaying one day, the
+        // Unlike the timing graphs, we do not filter the list of user metrics here. 
+        // This is because even if we're only displaying one day, the
         // last metric for a host may be that it logged on two days ago, so we would want
         // to show that node as logged on.
         long timestampThreshold;

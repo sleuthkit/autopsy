@@ -67,7 +67,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 1);
     
@@ -168,137 +168,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         // Clear out any old data
         timingInfoMap.clear();
         userInfoList.clear();
-        
-        // TEMP TEMP
-        if(false) {
-                    // Write to the database        
-        try (CoordinationService.Lock lock = getSharedDbLock()) {
-            if(lock == null) {
-                throw new HealthMonitorException("Error getting database lock");
-            }
-            
-            Connection conn = connect();
-            if(conn == null) {
-                throw new HealthMonitorException("Error getting database connection");
-            }
-
-            // Add metrics to the database
-            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner, case_name) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement userStatement = conn.prepareStatement(addUserInfoSql)) {
-
-                long msPerDay = 24 * 60 * 60 * 1000;
-                long msPerHour = 60 * 60 * 1000;
-                long currentTime = System.currentTimeMillis();
-                
-                // ain1 has had a case open for a month
-                userStatement.setString(1, "ain1");
-                userStatement.setLong(2, currentTime - msPerDay * 30);
-                userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
-                userStatement.setBoolean(4, false);
-                userStatement.setString(5, "case1");
-                userStatement.execute();
-                
-                // ain2 has had a case open for two weeks
-                userStatement.setString(1, "ain2");
-                userStatement.setLong(2, currentTime - msPerDay * 14);
-                userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
-                userStatement.setBoolean(4, false);
-                userStatement.setString(5, "case1");
-                userStatement.execute();
-                
-                // ain3 has a case open half the time over the last week
-                int count = 0;
-                for(long i = currentTime - msPerDay * 7;i < currentTime;i += msPerHour * 3) {
-                    userStatement.setString(1, "ain3");
-                    userStatement.setLong(2, i);
-                    if(count % 2 == 0){
-                        userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
-                    } else {
-                        userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
-                    }
-                    userStatement.setBoolean(4, false);
-                    userStatement.setString(5, "case2");
-                    userStatement.execute();
-                    count++;
-                }
-                
-                // ex1 is logged in and has a case open part of the time
-                for(long i = currentTime - msPerDay * 30;i < currentTime;i += msPerDay) {
-                    userStatement.setString(1, "ex1");
-                    userStatement.setLong(2, i - 5000);
-                    userStatement.setInt(3, UserEvent.LOG_ON.getEventValue());
-                    userStatement.setBoolean(4, true);
-                    userStatement.setString(5, "");
-                    userStatement.execute();
-                    
-                    userStatement.setString(1, "ex1");
-                    userStatement.setLong(2, i);
-                    userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
-                    userStatement.setBoolean(4, true);
-                    userStatement.setString(5, "case3");
-                    userStatement.execute();
-                    
-                    userStatement.setString(1, "ex1");
-                    userStatement.setLong(2, i + msPerHour * 8);
-                    userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
-                    userStatement.setBoolean(4, true);
-                    userStatement.setString(5, "");
-                    userStatement.execute();
-                    
-                    userStatement.setString(1, "ex1");
-                    userStatement.setLong(2, i + msPerHour * 8 + 5000);
-                    userStatement.setInt(3, UserEvent.LOG_OFF.getEventValue());
-                    userStatement.setBoolean(4, true);
-                    userStatement.setString(5, "");
-                    userStatement.execute();
-                }   
-                
-                // ex2 and ex3 are always logged in and open and close cases periodically
-                for(long i = currentTime - msPerDay * 9;i < currentTime;i += msPerDay) {
-                    for(long j = 0;j < 10;j+=3){
-                        userStatement.setString(1, "ex2");
-                        userStatement.setLong(2, i + j * msPerHour);
-                        userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
-                        userStatement.setBoolean(4, true);
-                        userStatement.setString(5, "case3");
-                        userStatement.execute();
-                    
-                        userStatement.setString(1, "ex2");
-                        userStatement.setLong(2, i + j * msPerHour + msPerHour + 5000);
-                        userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
-                        userStatement.setBoolean(4, true);
-                        userStatement.setString(5, "");
-                        userStatement.execute();
-
-                        userStatement.setString(1, "ex3");
-                        userStatement.setLong(2, i + j * msPerHour - 40000);
-                        userStatement.setInt(3, UserEvent.CASE_OPEN.getEventValue());
-                        userStatement.setBoolean(4, true);
-                        userStatement.setString(5, "case4");
-                        userStatement.execute();
-                    
-                        userStatement.setString(1, "ex3");
-                        userStatement.setLong(2, i + j * msPerHour + msPerHour + 5000 - 40000);
-                        userStatement.setInt(3, UserEvent.CASE_CLOSE.getEventValue());
-                        userStatement.setBoolean(4, true);
-                        userStatement.setString(5, "");
-                        userStatement.execute();
-                    }
-                }  
-
-            } catch (SQLException ex) {
-                throw new HealthMonitorException("Error saving metric data to database", ex);
-            } finally {
-                try {
-                    conn.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error closing Connection.", ex);
-                }
-            }
-        } catch (CoordinationService.CoordinationServiceException ex) {
-            throw new HealthMonitorException("Error releasing database lock", ex);
-        }
-        }
     }
     
     /**
@@ -1072,9 +941,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                     // Case is closing
                     addUserEvent(UserEvent.CASE_CLOSE);
                     
-                    // Write the current metrics to the database
-                    // TEMP DON'T DO IT
-                    //healthMonitorExecutor.submit(new EnterpriseHealthMonitor.PeriodicHealthMonitorTask());
                 } else if((null == evt.getOldValue()) && (evt.getNewValue() instanceof Case)) {
                     // Case is opening
                     addUserEvent(UserEvent.CASE_OPEN);

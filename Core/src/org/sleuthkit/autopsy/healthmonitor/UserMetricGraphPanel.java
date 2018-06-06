@@ -99,7 +99,6 @@ class UserMetricGraphPanel extends JPanel {
                 resultTreeSet.add(result);
                 userDataMap.put(result.getHostname(), resultTreeSet);
             }
-            // TODO test what happens if two identical timestamps come in for the same host
         }
         
         // Create a list of data points to plot
