@@ -115,7 +115,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private void search() {
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<CommonFilesMetadata, Void>() {
+        new SwingWorker<TableFilterNode, Void>() {
 
             private String tabTitle;
             private ProgressHandle progress;
@@ -133,7 +133,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+            protected TableFilterNode doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
                 progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgress1());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -180,7 +180,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 
                 this.tabTitle = builder.buildTabTitle();
 
-                return metadata;
+                CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
+
+                DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
+
+                TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
+
+                return tableFilterWithDescendantsNode;
             }
 
             @Override
@@ -188,20 +194,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 try {
                     super.done();
                     progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgress2());
-                    CommonFilesMetadata metadata = get();
+                    TableFilterNode tableFilterWithDescendantsNode = get();
 
-                    CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
-
-                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
-
-                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
                     DataResultViewerTable table = new DataResultViewerTable();
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
                     progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgress3());
-                    DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
+                    DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, 0, viewers);
                     progress.finish();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
