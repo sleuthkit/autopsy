@@ -1003,7 +1003,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(
                     usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
-            Assert.assrt("getCorrelationAttribute returned null", correlationAttribute != null);
+            assertNotNull("getCorrelationAttribute returned null", correlationAttribute);
             
             correlationAttribute.getInstances().get(0).setComment("new comment");
             EamDb.getInstance().updateAttributeInstanceComment(correlationAttribute);
