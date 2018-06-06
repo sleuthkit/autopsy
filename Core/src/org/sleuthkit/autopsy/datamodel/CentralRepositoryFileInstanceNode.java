@@ -105,7 +105,14 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         return sheet;        
     }
 
-    private void fillPropertyMap(Map<String, Object> map, CentralRepositoryFileInstanceNode node) {
+    /**
+     * Fill map with CentralRepoFileInstance properties
+     *
+     * @param map map with preserved ordering, where property names/values are
+     * put
+     * @param node The item to get properties for.
+     */
+    private static void fillPropertyMap(Map<String, Object> map, CentralRepositoryFileInstanceNode node) {
         
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), node.content.getFilePath());
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), node.content.getFilePath());
