@@ -82,6 +82,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     PlasoIngestModule() {
     }
 
+    @NbBundle.Messages({
+        "PlasoIngestModule_error_running=Error running Plaso, see log file.",
+        "PlasoIngestModule_log2timeline_executable_not_found=Log2timeline Executable Not Found",
+        "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found",
+    })
+    
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -102,14 +108,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     @NbBundle.Messages({
         "PlasoIngestModule_startUp_message=Starting Plaso Run.",
-        "PlasoIngestModule_error_running=Error running Plaso, see log file.",
         "PlasoIngestModule_error_running_log2timeline=Error running log2timeline, see log file.",
         "PlasoIngestModule_error_running_psort=Error running Psort, see log file.",
         "PlasoIngestModule_log2timeline_cancelled=Log2timeline run was canceled",
         "PlasoIngestModule_psort_cancelled=psort run was canceled",
         "PlasoIngestModule_bad_imageFile=Cannot find image file name and path",
-        "PlasoIngestModule_log2timeline_executable_not_found=Log2timeline Executable Not Found",
-        "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found",
         "PlasoIngestModule_dataSource_not_an_image=Datasource is not an Image.",
         "PlasoIngestModule_running_log2timeline=Running Log2timeline",
         "PlasoIngestModule_running_psort=Running Psort",
@@ -278,40 +281,40 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                               "  from log2timeline where source not in ('FILE') and sourcetype not in ('UNKNOWN');";
         try {
             SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
-            ResultSet resultSet = tempdbconnect.executeQry(sqlStatement);
-            while (resultSet.next()) {
-                if (context.dataSourceIngestIsCancelled()) {
-                    logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
-                    MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
-                    return;
-                }
-                statusHelper.progress(resultSet.getString("filename"));
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Bundle.PlasoIngestModule_event_datetime(), resultSet.getLong("TSK_DATETIME")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, Bundle.PlasoIngestModule_event_description(), resultSet.getString("TSK_DESCRIPTION")));
-                long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("TSK_DESCRIPTION"), resultSet.getString("sourcetype")); 
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", eventType));
-                AbstractFile resolvedFile = getAbstractFile(resultSet.getString("filename"));
-                if (resolvedFile == null) {
-                    logger.log(Level.INFO, Bundle.PlasoIngestModule_abstract_file_not_found());
-                    logger.log(Level.INFO, Bundle.PlasoIngestModule_filename_not_found() + resultSet.getString("filename"));
-                } else {
-                    try {
-                        BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
-                        if (bbart != null) {
-                            bbart.addAttributes(bbattributes);
-                            try {
-                                blackboard.postArtifact(bbart);
-                            } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
-                                logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+            try (ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
+                while (resultSet.next()) {
+                    if (context.dataSourceIngestIsCancelled()) {
+                        logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
+                        MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
+                        return;
+                    }
+                    statusHelper.progress(resultSet.getString("filename"));
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Bundle.PlasoIngestModule_event_datetime(), resultSet.getLong("TSK_DATETIME")));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, Bundle.PlasoIngestModule_event_description(), resultSet.getString("TSK_DESCRIPTION")));
+                    long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("TSK_DESCRIPTION"), resultSet.getString("sourcetype"));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", eventType));
+                    AbstractFile resolvedFile = getAbstractFile(resultSet.getString("filename"));
+                    if (resolvedFile == null) {
+                        logger.log(Level.INFO, Bundle.PlasoIngestModule_abstract_file_not_found());
+                        logger.log(Level.INFO, Bundle.PlasoIngestModule_filename_not_found() + resultSet.getString("filename"));
+                    } else {
+                        try {
+                            BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
+                            if (bbart != null) {
+                                bbart.addAttributes(bbattributes);
+                                try {
+                                    blackboard.postArtifact(bbart);
+                                } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+                                    logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+                                }
                             }
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                         }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                     }
                 }
             }
-            resultSet.close();
             tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_database_error(), ex); //NON-NLS
