@@ -1127,6 +1127,12 @@ class ReportHTML implements TableReportModule {
         }
     }
     
+    /**
+     * Write the case details section of the summary for this report.
+     * 
+     * @return StringBuilder updated html report with case details
+     */
+    
     private StringBuilder writeSummaryCaseDetails(){
         StringBuilder summary = new StringBuilder();
         String caseName = currentCase.getDisplayName();
@@ -1168,6 +1174,12 @@ class ReportHTML implements TableReportModule {
             return summary;
     }
     
+    /**
+     * Write the Image Information section of the summary for this report.
+     * 
+     * @return StringBuilder updated html report with Image Information
+     */
+    
     private StringBuilder writeSummaryImageInfo() {
         StringBuilder summary = new StringBuilder();
         summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.imageInfoHeading"));
@@ -1196,6 +1208,12 @@ class ReportHTML implements TableReportModule {
         summary.append("</div>\n"); //NON-NLS
         return summary;
     }
+    
+    /**
+     * Write the software information section of the summary for this report.
+     * 
+     * @return StringBuilder updated html report with software information
+     */
     
     private StringBuilder writeSummarySoftwareInfo(SleuthkitCase skCase, List<IngestJobInfo> ingestJobs) {
         StringBuilder summary = new StringBuilder();
@@ -1226,6 +1244,12 @@ class ReportHTML implements TableReportModule {
         summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
         return summary;
     }
+    
+    /**
+     * Write the Ingest History section of the summary for this report.
+     * 
+     * @return StringBuilder updated html report with ingest history
+     */
 
     private StringBuilder writeSummaryIngestHistoryInfo(SleuthkitCase skCase, List<IngestJobInfo> ingestJobs) {
         StringBuilder summary = new StringBuilder();
