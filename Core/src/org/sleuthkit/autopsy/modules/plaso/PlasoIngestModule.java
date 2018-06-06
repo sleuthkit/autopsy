@@ -65,19 +65,13 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String PLASO32 = "plaso//plaso-20180127-win32";
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe"; 
     private static final String PSORT_EXECUTABLE = "psort.exe";
-    private static final String VSS_OPTIONS = "--vss-stores";
-    private static final String PARTITIONS = "--partitions";
-    private static final String HASHER_FILE_SIZE_LIMIT = "--hasher_file_size_limit";
-    private static final String ONE = "1";
-    private static final String HASHERS = "--hashers";
-    private static final String NONE = "none";
-    private static final String ALL = "all";
-    private static final String TIME_ZONE_PARM = "-z";
     private IngestJobContext context;
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
     private File log2TimeLineExecutable;
     private File psortExecutable;
+    private Image image;
+    private AbstractFile previousFile = null; // cache used when looking up files in Autopsy DB
     
     PlasoIngestModule() {
     }
@@ -123,15 +117,14 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         statusHelper.switchToIndeterminate();
-        Image img;
-        if (dataSource instanceof Image) {
-           img = (Image) dataSource;
-        } else {
+
+        if (!(dataSource instanceof Image)) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_dataSource_not_an_image());
             MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
             return ProcessResult.OK;                   
         }
-
+        image = (Image)dataSource;
+        
         String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis()/1000);
         currentTime = currentTime.replaceAll(":", "-");
         String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime).toString();
@@ -140,8 +133,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             directory.mkdirs();   
         }
 
-        String[] imgFile = img.getPaths();
-        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(log2TimeLineExecutable, moduleOutputPath, imgFile[0], img.getTimeZone());
+        String[] imgFile = image.getPaths();
+        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(log2TimeLineExecutable, moduleOutputPath, imgFile[0], image.getTimeZone());
         ProcessBuilder psortCommand = buildPsortCommand(psortExecutable, moduleOutputPath);
 
         logger.log(Level.INFO, Bundle.PlasoIngestModule_startUp_message()); //NON-NLS
@@ -190,17 +183,17 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName, String timeZone) {
        
         List<String> commandLine = new ArrayList<>();
-        commandLine.add("\"" + log2TimeLineExecutable + "\""); //NON-NLS
-        commandLine.add(VSS_OPTIONS); //NON-NLS
-        commandLine.add(ALL); //NON-NLS
-        commandLine.add(TIME_ZONE_PARM);
+        commandLine.add("\"" + log2TimeLineExecutable + "\""); //NON-NLS 
+        commandLine.add("--vss-stores"); //NON-NLS
+        commandLine.add("all"); //NON-NLS
+        commandLine.add("-z");
         commandLine.add(timeZone);
-        commandLine.add(PARTITIONS);
-        commandLine.add(ALL);
-        commandLine.add(HASHER_FILE_SIZE_LIMIT);
-        commandLine.add(ONE);
-        commandLine.add(HASHERS);
-        commandLine.add(NONE);
+        commandLine.add("--partitions");
+        commandLine.add("all");
+        commandLine.add("--hasher_file_size_limit");
+        commandLine.add("1");
+        commandLine.add("--hashers");
+        commandLine.add("none");
         commandLine.add(moduleOutputPath + File.separator + PLASO);
         commandLine.add(imageName);
 
@@ -268,16 +261,14 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_exception_adding_artifact=Exception Adding Artifact",
         "PlasoIngestModule_exception_database_error=Error while trying to read into a sqlite db.",
         "PlasoIngestModule_error_posting_artifact=Error Posting Artifact  ",
-        "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation ",
-        "PlasoIngestModule_abstract_file_not_found=\"******** File Will Be Skipped Not found in Image ***********\"",
-        "PlasoIngestModule_filename_not_found=File name is ==>  "
+        "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation "
     })
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         org.sleuthkit.datamodel.Blackboard blackboard;
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
         blackboard = sleuthkitCase.getBlackboard();
         String connectionString = "jdbc:sqlite:" + plasoDb; //NON-NLS
-        String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'TSK_DATETIME', description 'TSK_DESCRIPTION', source, type, sourcetype \n" +
+        String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'epoch_date', description, source, type, sourcetype \n" +
                               "  from log2timeline where source not in ('FILE') and sourcetype not in ('UNKNOWN');";
         try {
             SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
@@ -288,31 +279,45 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                         MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
                         return;
                     }
-                    statusHelper.progress(resultSet.getString("filename"));
-                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Bundle.PlasoIngestModule_event_datetime(), resultSet.getLong("TSK_DATETIME")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, Bundle.PlasoIngestModule_event_description(), resultSet.getString("TSK_DESCRIPTION")));
-                    long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("TSK_DESCRIPTION"), resultSet.getString("sourcetype"));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", eventType));
-                    AbstractFile resolvedFile = getAbstractFile(resultSet.getString("filename"));
-                    if (resolvedFile == null) {
-                        logger.log(Level.INFO, Bundle.PlasoIngestModule_abstract_file_not_found());
-                        logger.log(Level.INFO, Bundle.PlasoIngestModule_filename_not_found() + resultSet.getString("filename"));
-                    } else {
-                        try {
-                            BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
-                            if (bbart != null) {
-                                bbart.addAttributes(bbattributes);
-                                try {
-                                    blackboard.postArtifact(bbart);
-                                } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
-                                    logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
-                                }
-                            }
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
-                        }
+                    
+                    // lots of bad dates
+                    if (resultSet.getString("sourcetype").equals("PE Import Time")) {
+                        continue;
                     }
+                    // bad dates and duplicates with what we have.
+                    // TODO: merge results somehow
+                    else if (resultSet.getString("source").equals("WEBHIST")) {
+                        continue;
+                    }
+                    
+                    statusHelper.progress(resultSet.getString("filename"));
+                    
+                    Content resolvedFile = getAbstractFile(resultSet.getString("filename"));
+                    if (resolvedFile == null) {
+                        logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
+                        resolvedFile = image;
+                    }
+                    
+                    try {
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Bundle.PlasoIngestModule_event_datetime(), resultSet.getLong("epoch_date")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, Bundle.PlasoIngestModule_event_description(), resultSet.getString("description")));
+                        long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, "PLASO", eventType));
+
+                        BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
+                        if (bbart != null) {
+                            bbart.addAttributes(bbattributes);
+                            try {
+                                blackboard.postArtifact(bbart);
+                            } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+                                logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+                            }
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
+                    }
+
                 }
             }
             tempdbconnect.closeConnection();
@@ -325,19 +330,30 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_exception_find_file=Exception finding file."
     })
     private AbstractFile getAbstractFile(String file) {
+        
         List<AbstractFile> abstractFiles;
         File eventFile = new File(file.replaceAll("\\\\", "/"));
-        String fileName = eventFile.getName();
+        String fileName = eventFile.getName().toLowerCase();
         String filePath = eventFile.getParent();
         filePath = filePath.replaceAll("\\\\", "/");
         filePath = filePath.toLowerCase() + "/";
+        
+        // check the cached file
+        if (previousFile != null) {
+            if (previousFile.getName().toLowerCase().equals(fileName) &&
+                    previousFile.getParentPath().toLowerCase().equals(filePath)) {
+                return previousFile;
+            }
+        }
         try {
-            abstractFiles= fileManager.findFiles(fileName.toLowerCase(), filePath);
+            abstractFiles= fileManager.findFiles(fileName, filePath);
             if (abstractFiles.size() == 1) {
                 return abstractFiles.get(0);
             }
             for (AbstractFile resolvedFile : abstractFiles) {
                 if (filePath.matches(resolvedFile.getParentPath().toLowerCase())) {
+                    // cache it for next time
+                    previousFile = resolvedFile;
                     return resolvedFile;
                 }
             }
