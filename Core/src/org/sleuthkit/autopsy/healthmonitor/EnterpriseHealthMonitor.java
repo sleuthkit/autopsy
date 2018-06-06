@@ -903,22 +903,23 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     /**
      * The task called by the ScheduledThreadPoolExecutor to handle
-     * the database checks/writes.
+     * the periodic database update
      */
     static final class PeriodicHealthMonitorTask implements Runnable {
 
-        /**
-         * Perform all periodic tasks:
-         * - Check if monitoring has been enabled / disabled in the database
-         * - Gather any additional metrics
-         * - Write current metric data to the database
-         */
         @Override
         public void run() {
             recordMetrics();
         }
     }
     
+    /**
+     * Perform all periodic tasks:
+     * - Check if monitoring has been enabled / disabled in the database
+     * - Gather any additional metrics
+     * - Write current metric data to the database
+     * Do not run this from a new thread if the case/application is closing.
+     */
     private static void recordMetrics() {
         try {
             getInstance().updateFromGlobalEnabledStatus();
@@ -1179,15 +1180,11 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             if(lock == null) {
                 throw new HealthMonitorException("Error getting database lock");
             }
-            
-            Connection conn = connect();
-            if(conn == null) {
-                throw new HealthMonitorException("Error getting database connection");
-            }    
 
             List<UserData> resultList = new ArrayList<>();
 
-            try (Statement statement = conn.createStatement();
+            try (Connection conn = connect();
+                 Statement statement = conn.createStatement();
                  ResultSet resultSet = statement.executeQuery("SELECT * FROM user_data WHERE timestamp > " + minimumTimestamp)) {
                 
                 while (resultSet.next()) {
@@ -1196,12 +1193,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 return resultList;
             } catch (SQLException ex) {
                 throw new HealthMonitorException("Error reading user metrics from database", ex);
-            } finally {
-                try {
-                    conn.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error closing Connection.", ex);
-                }
             }
         } catch (CoordinationService.CoordinationServiceException ex) {
             throw new HealthMonitorException("Error getting database lock", ex);

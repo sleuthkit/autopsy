@@ -404,7 +404,6 @@ public class HealthMonitorDashboard {
     private JPanel createUserPanel() throws HealthMonitorException {
         // If the monitor isn't enabled, just add a message
         if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
-            //timingMetricPanel.setPreferredSize(new Dimension(400,100));
             JPanel emptyUserMetricPanel = new JPanel();
             emptyUserMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createUserPanel_userMetricsTitle()));
             emptyUserMetricPanel.add(new JLabel(" "));
