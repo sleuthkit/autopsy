@@ -21,9 +21,13 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -38,8 +42,16 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
 
-    public CentralRepositoryFileInstanceNode(CentralRepositoryFile file, AbstractFile md5Reference) {
-        super(Children.LEAF, Lookups.fixed(file, md5Reference));
+    private CentralRepositoryFile content;
+    
+    //this may not be the same file, but at least it is identical, 
+    //  and we can use this to support certain actions in the tree table and content viewer
+    private AbstractFile md5Reference;
+    
+    public CentralRepositoryFileInstanceNode(CentralRepositoryFile content, AbstractFile md5Reference) {
+        super(Children.LEAF, Lookups.fixed(content, md5Reference));
+        this.content = content;
+        this.md5Reference = md5Reference;
     }
     
     @Override
@@ -68,4 +80,69 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         //  of this type and they will need to provide the same key
         return SleuthkitCaseFileInstanceNode.class.getName();
     }
+    
+    @Override
+    protected Sheet createSheet(){
+        Sheet sheet = new Sheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        
+        if(sheetSet == null){
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
+        }
+        
+        Map<String, Object> map = new LinkedHashMap<>();
+        fillPropertyMap(map, this);
+        
+        final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
+        for (CentralRepoFileInstancesPropertyType propType : CentralRepoFileInstancesPropertyType.values()) {
+            final String propString = propType.toString();
+            final Object property = map.get(propString);
+            final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
+            sheetSet.put(nodeProperty);
+        }
+        
+        return sheet;        
+    }
+
+    private void fillPropertyMap(Map<String, Object> map, CentralRepositoryFileInstanceNode node) {
+        
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), node.content.getFilePath());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), node.content.getFilePath());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), node.content.getCorrelationDataSource().getName());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.MimeType.toString(), "");
+    }
+    
+    /**
+     * Encapsulates the columns to be displayed for reach row represented by an 
+     * instance of this object.
+     */
+    @NbBundle.Messages({
+        "CentralRepoFileInstancesPropertyType.fileColLbl=File",
+        "CentralRepoFileInstancesPropertyType.pathColLbl=Parent Path",
+        "CentralRepoFileInstancesPropertyType.hashsetHitsColLbl=Hash Set Hits",
+        "CentralRepoFileInstancesPropertyType.dataSourceColLbl=Data Source",
+        "CentralRepoFileInstancesPropertyType.mimeTypeColLbl=MIME Type"
+    })
+    public enum CentralRepoFileInstancesPropertyType {
+        
+        File(Bundle.CentralRepoFileInstancesPropertyType_fileColLbl()),
+        ParentPath(Bundle.CentralRepoFileInstancesPropertyType_pathColLbl()),
+        HashsetHits(Bundle.CentralRepoFileInstancesPropertyType_hashsetHitsColLbl()),
+        DataSource(Bundle.CentralRepoFileInstancesPropertyType_dataSourceColLbl()),
+        MimeType(Bundle.CentralRepoFileInstancesPropertyType_mimeTypeColLbl());
+
+        final private String displayString;
+
+        private CentralRepoFileInstancesPropertyType(String displayString) {
+            this.displayString = displayString;
+        }
+
+        @Override
+        public String toString() {
+            return displayString;
+        }
+    }
+        
 }

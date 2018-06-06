@@ -53,10 +53,6 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         this.dataSource = dataSource;
         this.file = file;
     }
-    
-    //TODO add constructor with correlation attr instance
-    //TODO override getactions
-    //TODO use constructor overload that consumes a lookup and pass an instance of this (or a subclas of it)
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
@@ -93,7 +89,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
-        for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
+        for (SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType propType : SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.values()) {
             final String propString = propType.toString();
             final Object property = map.get(propString);
             final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
@@ -114,13 +110,11 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, SleuthkitCaseFileInstanceNode node) {
 
-        //TODO rather than these ternary operators we should subclass SleuthkitCaseFileInstanceNode or derive an interface
-        
-        map.put(CommonFilePropertyType.File.toString(), node.hasFile() ? node.getFile().getName() : node.getName());
-        map.put(CommonFilePropertyType.ParentPath.toString(), node.hasFile() ? node.getFile().getParent() : node.getContent().getParentPath());     //TODO this appears to have a bug
-        map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
-        map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
-        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.hasFile() ? node.getFile().getName() : node.getName());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.hasFile() ? node.getFile().getParent() : node.getContent().getParentPath());     //TODO this appears to have a bug
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.DataSource.toString(), node.getDataSource());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }
 
     /**
@@ -128,23 +122,23 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
      * instance of this object.
      */
     @NbBundle.Messages({
-        "CommonFilePropertyType.fileColLbl=File",
-        "CommonFilePropertyType.pathColLbl=Parent Path",
-        "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source",
-        "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
+        "SleuthkitCaseFileInstanceNodePropertyType.fileColLbl=File",
+        "SleuthkitCaseFileInstanceNodePropertyType.pathColLbl=Parent Path",
+        "SleuthkitCaseFileInstanceNodePropertyType.hashsetHitsColLbl=Hash Set Hits",
+        "SleuthkitCaseFileInstanceNodePropertyType.dataSourceColLbl=Data Source",
+        "SleuthkitCaseFileInstanceNodePropertyType.mimeTypeColLbl=MIME Type"
     })
-    public enum CommonFilePropertyType {
+    public enum SleuthkitCaseFileInstanceNodePropertyType {
 
-        File(Bundle.CommonFilePropertyType_fileColLbl()),
-        ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
-        HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
+        File(Bundle.SleuthkitCaseFileInstanceNodePropertyType_fileColLbl()),
+        ParentPath(Bundle.SleuthkitCaseFileInstanceNodePropertyType_pathColLbl()),
+        HashsetHits(Bundle.SleuthkitCaseFileInstanceNodePropertyType_hashsetHitsColLbl()),
+        DataSource(Bundle.SleuthkitCaseFileInstanceNodePropertyType_dataSourceColLbl()),
+        MimeType(Bundle.SleuthkitCaseFileInstanceNodePropertyType_mimeTypeColLbl());
 
         final private String displayString;
 
-        private CommonFilePropertyType(String displayString) {
+        private SleuthkitCaseFileInstanceNodePropertyType(String displayString) {
             this.displayString = displayString;
         }
 
