@@ -35,7 +35,6 @@ import java.util.TreeSet;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import javax.swing.JPanel;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import org.openide.util.NbBundle;
@@ -46,24 +45,22 @@ import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.UserData;
  */
 class UserMetricGraphPanel extends JPanel {
     
-    private final static Logger logger = Logger.getLogger(TimingMetricGraphPanel.class.getName());
-    
-    private final int padding = 25;
-    private final int labelPadding = 25;
+    private static final int padding = 25;
+    private static final int labelPadding = 25;
     private final Color examinerColor = new Color(0x12, 0x20, 0xdb, 255);
     private final Color autoIngestColor = new Color(0x12, 0x80, 0x20, 255);
     private final Color gridColor = new Color(200, 200, 200, 200);
-    private final int pointWidth = 4;
-    private final int numberYDivisions = 10;
+    private static final int pointWidth = 4;
+    private static final int numberYDivisions = 10;
     private final List<UserCount> dataToPlot;
     private final String graphLabel;
     private final long dataInterval;
     private final long MILLISECONDS_PER_HOUR = 1000 * 60 * 60;
     private final long MILLISECONDS_PER_DAY = MILLISECONDS_PER_HOUR * 24;
-    private long maxTimestamp;
-    private long minTimestamp;
+    private final long maxTimestamp;
+    private final long minTimestamp;
     private int maxCount;
-    private final int minCount = 0; // The bottom of the graph will always be zero
+    private static final int minCount = 0; // The bottom of the graph will always be zero
 
     @NbBundle.Messages({"UserMetricGraphPanel.constructor.casesOpen=Cases open",
                     "UserMetricGraphPanel.constructor.loggedIn=Users logged in - examiner nodes in blue, auto ingest nodes in green"
@@ -193,7 +190,7 @@ class UserMetricGraphPanel extends JPanel {
         if((maxCount % 5) != 0) {
             maxCount += (5 - (maxCount % 5));
         }
-        int maxValueOnYAxis = maxCount;
+        int maxValueOnYAxis = Integer.max(maxCount, 5);
         int minValueOnYAxis = minCount;
 
         // The graph itself has the following corners:

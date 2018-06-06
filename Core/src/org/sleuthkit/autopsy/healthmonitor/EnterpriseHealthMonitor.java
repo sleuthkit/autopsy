@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,8 +71,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private static final AtomicBoolean isEnabled = new AtomicBoolean(false);
     private static EnterpriseHealthMonitor instance;
-    
-    private static final String HEALTH_MONITOR_EVENT_THREAD_NAME = "Health-Monitor-Event-Listener-%d";
     
     private ScheduledThreadPoolExecutor healthMonitorOutputTimer;
     private final Map<String, TimingInfo> timingInfoMap;
