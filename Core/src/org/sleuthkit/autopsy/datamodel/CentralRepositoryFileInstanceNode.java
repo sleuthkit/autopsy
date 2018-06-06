@@ -20,10 +20,10 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.Children;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -46,7 +46,8 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
     public Action[] getActions(boolean context){
         List<Action> actionsList = new ArrayList<>();
         
-        //TODO
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
+        //TODO probably can support more than just this
         
         return actionsList.toArray(new Action[actionsList.size()]);
     }
@@ -63,8 +64,8 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        //objects of type FileNode will co-coccur in the treetable with objects
+        //objects of type FileNode will co-occur in the treetable with objects
         //  of this type and they will need to provide the same key
         return SleuthkitCaseFileInstanceNode.class.getName();
-    }    
+    }
 }
