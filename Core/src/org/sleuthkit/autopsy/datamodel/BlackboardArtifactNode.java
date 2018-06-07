@@ -227,12 +227,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
             try {
                 actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-            } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); // NON-NLS
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Could not retrieve data source from file '%s' (objId=%d).", file.getName(), file.getId()), ex); // NON-NLS
+            } catch (AddEditCentralRepoCommentAction.AddEditCentralRepoCommentException ex) {
+                logger.log(Level.SEVERE, String.format(
+                        "An error occurred while trying to create the 'Add/Edit Central Repository Comment' action for file \"%s\" (objId=%d).",
+                        file.getName(), file.getId()), ex);
             }
         }
 

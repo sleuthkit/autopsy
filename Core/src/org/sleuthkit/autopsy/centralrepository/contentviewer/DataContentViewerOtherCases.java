@@ -79,7 +79,7 @@ import org.sleuthkit.datamodel.TskDataException;
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
 public class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
-    
+
     private final static Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
@@ -147,7 +147,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         "DataContentViewerOtherCases.correlatedArtifacts.title=Attribute Frequency",
         "DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get frequency details."})
     /**
-     * Show how common the selected correlationAttributes are with details dialog.
+     * Show how common the selected correlationAttributes are with details
+     * dialog.
      */
     private void showCommonalityDetails() {
         if (correlationAttributes.isEmpty()) {
@@ -438,10 +439,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         } else {
             try {
                 // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
-                if(this.file != null) {
+                if (this.file != null) {
                     String md5 = this.file.getMd5Hash();
-                    if(md5 != null && !md5.isEmpty()) {
-                        ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0),md5));
+                    if (md5 != null && !md5.isEmpty()) {
+                        ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), md5));
                     }
                 }
             } catch (EamDbException ex) {
@@ -453,23 +454,23 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     /**
-     * Query the db for artifact instances from other cases correlated to the
-     * given central repository artifact. Will not show instances from the same
-     * datasource / device
+     * Query the database for artifact instances from other cases correlated to
+     * the given central repository artifact. Instances from the same datasource
+     * / device will also be included.
      *
-     * @param corAttr CorrelationAttribute to query for
+     * @param corAttr        CorrelationAttribute to query for
      * @param dataSourceName Data source to filter results
-     * @param deviceId Device Id to filter results
+     * @param deviceId       Device Id to filter results
      *
-     * @return A collection of correlated artifact instances from other cases
+     * @return A collection of correlated artifact instances
      */
-    private Map<UniquePathKey,CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey, CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
             String filePath = (file.getParentPath() + file.getName()).toLowerCase();
-            HashMap<UniquePathKey,CorrelationAttributeInstance> artifactInstances = new HashMap<>();
+            HashMap<UniquePathKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 EamDb dbManager = EamDb.getInstance();
@@ -482,7 +483,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                 correlationAttr -> correlationAttr)));
             }
 
-            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
+            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
                 List<AbstractFile> caseDbFiles = addCaseDbMatches(corAttr, openCase);
                 for (AbstractFile caseDbFile : caseDbFiles) {
                     addOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
@@ -522,15 +523,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     /**
      * Adds the file to the artifactInstances map if it does not already exist
-     * 
-     * @param autopsyCase 
+     *
+     * @param autopsyCase
      * @param artifactInstances
      * @param newFile
+     *
      * @throws TskCoreException
-     * @throws EamDbException 
+     * @throws EamDbException
      */
-    private void addOrUpdateAttributeInstance(final Case autopsyCase, Map<UniquePathKey,CorrelationAttributeInstance> artifactInstances, AbstractFile newFile) throws TskCoreException, EamDbException {
-        
+    private void addOrUpdateAttributeInstance(final Case autopsyCase, Map<UniquePathKey, CorrelationAttributeInstance> artifactInstances, AbstractFile newFile) throws TskCoreException, EamDbException {
+
         // figure out if the casedb file is known via either hash or tags
         TskData.FileKnown localKnown = newFile.getKnown();
 
@@ -555,22 +557,21 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             return;
         }
         UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
-        
+
         // double check that the CR version is BAD if the caseDB version is BAD.
         if (artifactInstances.containsKey(uniquePathKey)) {
             if (localKnown == TskData.FileKnown.BAD) {
                 CorrelationAttributeInstance prevInstance = artifactInstances.get(uniquePathKey);
                 prevInstance.setKnownStatus(localKnown);
             }
-        }
-        // add the data from the case DB by pushing data into CorrelationAttributeInstance class
+        } // add the data from the case DB by pushing data into CorrelationAttributeInstance class
         else {
             // NOTE: If we are in here, it is likely because CR is not enabled.  So, we cannot rely
             // on any of the methods that query the DB.
             CorrelationCase correlationCase = new CorrelationCase(autopsyCase.getName(), autopsyCase.getDisplayName());
-            
+
             CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, newFile.getDataSource());
-        
+
             CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(correlationCase, correlationDataSource, filePath, "", localKnown);
             artifactInstances.put(uniquePathKey, caseDbInstance);
         }
@@ -582,14 +583,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         //  Is supported if this node
         //      has correlatable content (File, BlackboardArtifact) OR
         //      other common files across datasources.
-        
-        if(EamDb.isEnabled()){
+
+        if (EamDb.isEnabled()) {
             return this.file != null
-                && this.file.getSize() > 0
-                && !getCorrelationAttributesFromNode(node).isEmpty();
-        } else{
+                    && this.file.getSize() > 0
+                    && !getCorrelationAttributesFromNode(node).isEmpty();
+        } else {
             return this.file != null
-                && this.file.getSize() > 0;
+                    && this.file.getSize() > 0;
         }
     }
 
@@ -816,16 +817,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
         boolean addCommentMenuItemVisible = false;
-        
+
         if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
             int rowIndex = otherCasesTable.getSelectedRow();
             CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(rowIndex);
-            if (selectedAttribute.getInstances().get(0).isDatabaseInstance() &&
-                    selectedAttribute.getCorrelationType().getId() == CorrelationAttribute.FILES_TYPE_ID) {
+            if (selectedAttribute.getInstances().get(0).isDatabaseInstance()
+                    && selectedAttribute.getCorrelationType().getId() == CorrelationAttribute.FILES_TYPE_ID) {
                 addCommentMenuItemVisible = true;
             }
         }
-        
+
         addCommentMenuItem.setVisible(addCommentMenuItemVisible);
     }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
@@ -846,7 +847,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Used as a key to ensure we eliminate duplicates from the result set by not overwriting CR correlation instances.
+     * Used as a key to ensure we eliminate duplicates from the result set by
+     * not overwriting CR correlation instances.
      */
     static final class UniquePathKey {
 

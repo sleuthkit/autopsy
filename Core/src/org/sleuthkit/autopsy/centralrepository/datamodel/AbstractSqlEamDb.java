@@ -1108,6 +1108,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         CorrelationAttributeInstance eamInstance = eamArtifact.getInstances().get(0);
 
+        if (eamInstance == null) {
+            throw new EamDbException("Correlation attribute instance is null");
+        }
         if (eamInstance.getCorrelationCase() == null) {
             throw new EamDbException("Correlation case is null");
         }
@@ -1164,6 +1167,18 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         if (type == null) {
             throw new EamDbException("Correlation type is null");
+        }
+        if (correlationCase == null) {
+            throw new EamDbException("Correlation case is null");
+        }
+        if (correlationDataSource == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+        if (value == null) {
+            throw new EamDbException("Correlation value is null");
+        }
+        if (filePath == null) {
+            throw new EamDbException("Correlation file path is null");
         }
 
         Connection conn = connect();

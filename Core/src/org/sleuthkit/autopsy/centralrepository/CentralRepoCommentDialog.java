@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
@@ -25,7 +26,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  * Dialog to allow Central Repository file instance comments to be added and
  * modified.
  */
-public class CentralRepoCommentDialog extends javax.swing.JDialog {
+final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
     private final CorrelationAttribute correlationAttribute;
     private boolean commentUpdated = false;
@@ -34,8 +35,11 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
      * Create an instance.
      *
      * @param correlationAttribute The correlation attribute to be modified.
+     * @param title                The title to assign the dialog.
      */
-    public CentralRepoCommentDialog(CorrelationAttribute correlationAttribute) {
+    CentralRepoCommentDialog(CorrelationAttribute correlationAttribute, String title) {
+        super(WindowManager.getDefault().getMainWindow(), title);
+        
         initComponents();
 
         CorrelationAttributeInstance instance = correlationAttribute.getInstances().get(0);
@@ -49,7 +53,7 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
     /**
      * Display the dialog.
      */
-    public void display() {
+    void display() {
         setModal(true);
         setSize(getPreferredSize());
         setLocationRelativeTo(this.getParent());
@@ -63,7 +67,7 @@ public class CentralRepoCommentDialog extends javax.swing.JDialog {
      *
      * @return True if the comment has been updated; otherwise false.
      */
-    public boolean isCommentUpdated() {
+    boolean isCommentUpdated() {
         return commentUpdated;
     }
 
