@@ -35,6 +35,10 @@ public interface EamDb {
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 1);
 
+    // number of instances to keep in bulk queue before doing an insert.
+    // Update Test code if this changes.  It's hard coded there.
+    static final int DEFAULT_BULK_THRESHHOLD = 1000;  
+    
     /**
      * Get the instance
      *

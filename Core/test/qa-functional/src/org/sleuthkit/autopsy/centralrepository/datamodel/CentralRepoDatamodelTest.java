@@ -51,6 +51,8 @@ public class CentralRepoDatamodelTest extends TestCase {
     private static final String PROPERTIES_FILE = "CentralRepository";
     private static final String CR_DB_NAME = "testcentralrepo.db";
     private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
+    private static final int DEFAULT_BULK_THRESHOLD = 1000; // hard coded from EamDb
+    
     SqliteEamDbSettings dbSettingsSqlite;
 
     private CorrelationCase case1;
@@ -467,7 +469,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // Create the first list, which will have (bulkThreshold / 2) entries
             List<CorrelationAttribute> list1 = new ArrayList<>();
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() / 2; i++) {
+            for (int i = 0; i < DEFAULT_BULK_THRESHOLD / 2; i++) {
                 String value = "bulkInsertValue1_" + String.valueOf(i);
                 String path = "C:\\bulkInsertPath1\\file" + String.valueOf(i);
 
@@ -487,7 +489,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // Make a second list with length equal to bulkThreshold
             List<CorrelationAttribute> list2 = new ArrayList<>();
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold(); i++) {
+            for (int i = 0; i < DEFAULT_BULK_THRESHOLD; i++) {
                 String value = "bulkInsertValue2_" + String.valueOf(i);
                 String path = "C:\\bulkInsertPath2\\file" + String.valueOf(i);
 
@@ -503,7 +505,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // There should now be bulkThreshold artifacts in the database
             long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
-            assertTrue("Artifact count " + count + " does not match bulkThreshold " + dbSettingsSqlite.getBulkThreshold(), count == dbSettingsSqlite.getBulkThreshold());
+            assertTrue("Artifact count " + count + " does not match bulkThreshold " + DEFAULT_BULK_THRESHOLD, count == DEFAULT_BULK_THRESHOLD);
 
             // Now call bulkInsertArtifacts() to insert the rest of queue
             EamDb.getInstance().bulkInsertArtifacts();
@@ -1386,14 +1388,13 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Test updating invalid org
-        // Shouldn't do anything
+        
         try {
             EamOrganization temp = new EamOrganization("invalidOrg");
-            temp.setOrgID(3434);
             EamDb.getInstance().updateOrganization(temp);
+            Assert.fail("updateOrganization worked for invalid ID");
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            // this is the expected behavior  
         }
 
         // Test updating null org
@@ -1431,7 +1432,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             // Make a new org
             EamOrganization inUseOrg = new EamOrganization("inUseOrg");
-            inUseOrg.setOrgID((int) EamDb.getInstance().newOrganization(inUseOrg));
+            inUseOrg = EamDb.getInstance().newOrganization(inUseOrg);
 
             // Make a reference set that uses it
             EamGlobalSet tempSet = new EamGlobalSet(inUseOrg.getOrgID(), "inUseOrgTest", "1.0", TskData.FileKnown.BAD, false, fileType);
@@ -1445,14 +1446,12 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Test deleting non-existent org
-        // Should do nothing
         try {
             EamOrganization temp = new EamOrganization("temp");
-            temp.setOrgID(9876);
             EamDb.getInstance().deleteOrganization(temp);
+            Assert.fail("deleteOrganization failed to throw exception for non-existent organization");
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            // This is the expected behavior
         }
 
         // Test deleting null org
@@ -1610,7 +1609,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Create a list of global file instances. Make enough that the bulk threshold should be hit once.
             Set<EamGlobalFileInstance> instances = new HashSet<>();
             String bulkTestHash = "bulktesthash_";
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
+            for (int i = 0; i < DEFAULT_BULK_THRESHOLD * 1.5; i++) {
                 String hash = bulkTestHash + String.valueOf(i);
                 instances.add(new EamGlobalFileInstance(notableSet2id, hash, TskData.FileKnown.BAD, null));
             }
@@ -1619,7 +1618,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().bulkInsertReferenceTypeEntries(instances, fileType);
 
             // There's no way to get a count of the number of entries in the database, so just do a spot check
-            if (dbSettingsSqlite.getBulkThreshold() > 10) {
+            if (DEFAULT_BULK_THRESHOLD > 10) {
                 String hash = bulkTestHash + "10";
                 assertTrue("Sample bulk insert instance not found", EamDb.getInstance().isFileHashInReferenceSet(hash, notableSet2id));
             }
@@ -2468,7 +2467,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 List<CorrelationCase> cases = new ArrayList<>();
                 String bulkTestUuid = "bulkTestUUID_";
                 String bulkTestName = "bulkTestName_";
-                for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
+                for (int i = 0; i < DEFAULT_BULK_THRESHOLD * 1.5; i++) {
                     String name = bulkTestUuid + String.valueOf(i);
                     String uuid = bulkTestName + String.valueOf(i);
                     cases.add(new CorrelationCase(uuid, name));

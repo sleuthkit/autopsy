@@ -29,7 +29,7 @@ public class EamOrganization {
     private String pocEmail;
     private String pocPhone;
 
-    public EamOrganization(
+    EamOrganization(
             int orgID,
             String name,
             String pocName,
@@ -98,7 +98,7 @@ public class EamOrganization {
     /**
      * @param name the name to set
      */
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 

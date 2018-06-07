@@ -1656,6 +1656,22 @@ abstract class AbstractSqlEamDb implements EamDb {
         return (getOrganizationByID(globalSet.getOrgID()));
     }
 
+    /** 
+     * Tests that an organization passed in as an argument is valid
+     * 
+     * @param org
+     * @throws EamDbException if invalid
+     */
+    private void testArgument(EamOrganization org) throws EamDbException {
+        if(org == null) {
+            throw new EamDbException("Organization is null");
+        }
+        else if (org.getOrgID() == -1) {
+            throw new EamDbException("Organization  has -1 row ID");
+        }
+    }
+    
+    
     /**
      * Update an existing organization.
      *
@@ -1666,9 +1682,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
-        if(updatedOrganization == null) {
-            throw new EamDbException("null updatedOrganization");
-        }
+        testArgument(updatedOrganization);
         
         Connection conn = connect();
         PreparedStatement preparedStatement = null;
@@ -1694,9 +1708,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
     @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
-        if(organizationToDelete == null) {
-            throw new EamDbException("Organization to delete is null");
-        }
+        testArgument(organizationToDelete);
         
         Connection conn = connect();
         PreparedStatement checkIfUsedStatement = null;

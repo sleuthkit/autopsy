@@ -44,7 +44,6 @@ public final class PostgresEamDbSettings {
     private final String DEFAULT_HOST = ""; // NON-NLS
     private final int DEFAULT_PORT = 5432;
     private final String DEFAULT_DBNAME = "central_repository"; // NON-NLS
-    private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_USERNAME = "";
     private final String DEFAULT_PASSWORD = "";
     private final String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
@@ -91,15 +90,15 @@ public final class PostgresEamDbSettings {
         try {
             String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
-                this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
+                this.bulkThreshold = EamDb.DEFAULT_BULK_THRESHHOLD;
             } else {
                 this.bulkThreshold = Integer.parseInt(bulkThresholdString);
                 if (getBulkThreshold() <= 0) {
-                    this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
+                    this.bulkThreshold = EamDb.DEFAULT_BULK_THRESHHOLD;
                 }
             }
         } catch (NumberFormatException ex) {
-            this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
+            this.bulkThreshold = EamDb.DEFAULT_BULK_THRESHHOLD;
         }
 
         userName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
