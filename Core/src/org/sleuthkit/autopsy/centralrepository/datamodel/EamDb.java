@@ -103,7 +103,7 @@ public interface EamDb {
     /**
      * Add a new name/value pair in the db_info table.
      *
-     * @param name Key to set
+     * @param name  Key to set
      * @param value Value to set
      *
      * @throws EamDbException
@@ -124,7 +124,7 @@ public interface EamDb {
     /**
      * Update the value for a name in the name/value db_info table.
      *
-     * @param name Name to find
+     * @param name  Name to find
      * @param value Value to assign to name.
      *
      * @throws EamDbException
@@ -158,7 +158,9 @@ public interface EamDb {
      * Retrieves Central Repo case based on an Autopsy Case
      *
      * @param autopsyCase Autopsy case to find corresponding CR case for
+     *
      * @return CR Case
+     *
      * @throws EamDbException
      */
     CorrelationCase getCase(Case autopsyCase) throws EamDbException;
@@ -189,8 +191,8 @@ public interface EamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
-     * @param correlationCase the current CorrelationCase used for ensuring
-     * uniqueness of DataSource
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
@@ -227,7 +229,7 @@ public interface EamDb {
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
      *
-     * @param aType EamArtifact.Type to search for
+     * @param aType    EamArtifact.Type to search for
      * @param filePath File path to search for
      *
      * @return List of 0 or more EamArtifactInstances
@@ -244,7 +246,7 @@ public interface EamDb {
      * @param value Value to search for
      *
      * @return Number of artifact instances having ArtifactType and
-     * ArtifactValue.
+     *         ArtifactValue.
      */
     Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
@@ -281,11 +283,11 @@ public interface EamDb {
      * associated with the caseDisplayName and dataSource of the given
      * eamArtifact instance.
      *
-     * @param caseUUID Case ID to search for
+     * @param caseUUID     Case ID to search for
      * @param dataSourceID Data source ID to search for
      *
      * @return Number of artifact instances having caseDisplayName and
-     * dataSource
+     *         dataSource
      */
     Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException;
 
@@ -308,10 +310,10 @@ public interface EamDb {
      * Executes a bulk insert of the cases
      */
     void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException;
-    
+
     /**
-     * Update a correlation attribute instance in the database with that in the
-     * associated CorrelationAttribute object.
+     * Update a correlation attribute instance comment in the database with that
+     * in the associated CorrelationAttribute object.
      *
      * @param eamArtifact The correlation attribute whose database instance will
      *                    be updated.
@@ -319,7 +321,7 @@ public interface EamDb {
      * @throws EamDbException
      */
     void updateAttributeInstanceComment(CorrelationAttribute eamArtifact) throws EamDbException;
-    
+
     /**
      * Find a correlation attribute in the Central Repository database given the
      * instance type, case, data source, value, and file path.
@@ -375,7 +377,7 @@ public interface EamDb {
      * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
-     * bad
+     *         bad
      *
      * @throws EamDbException
      */
@@ -385,6 +387,7 @@ public interface EamDb {
      * Remove a reference set and all values contained in it.
      *
      * @param referenceSetID
+     *
      * @throws EamDbException
      */
     public void deleteReferenceSet(int referenceSetID) throws EamDbException;
@@ -397,7 +400,9 @@ public interface EamDb {
      * @param referenceSetID
      * @param referenceSetName
      * @param version
+     *
      * @return true if a matching entry exists in the central repository
+     *
      * @throws EamDbException
      */
     public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws EamDbException;
@@ -409,7 +414,9 @@ public interface EamDb {
      *
      * @param referenceSetName
      * @param version
+     *
      * @return true if a matching set is found
+     *
      * @throws EamDbException
      */
     public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException;
@@ -420,7 +427,9 @@ public interface EamDb {
      *
      * @param hash
      * @param referenceSetID
+     *
      * @return true if the hash is found in the reference set
+     *
      * @throws EamDbException
      */
     public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException;
@@ -431,6 +440,7 @@ public interface EamDb {
      * @param value
      * @param referenceSetID
      * @param correlationTypeID
+     *
      * @return true if the hash is found in the reference set
      */
     public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException;
@@ -480,7 +490,9 @@ public interface EamDb {
      * Get the organization associated with the given reference set.
      *
      * @param referenceSetID ID of the reference set
+     *
      * @return The organization object
+     *
      * @throws EamDbException
      */
     EamOrganization getReferenceSetOrganization(int referenceSetID) throws EamDbException;
@@ -489,7 +501,7 @@ public interface EamDb {
      * Update an existing organization.
      *
      * @param updatedOrganization the values the Organization with the same ID
-     * will be updated to in the database.
+     *                            will be updated to in the database.
      *
      * @throws EamDbException
      */
@@ -530,7 +542,7 @@ public interface EamDb {
      * Get all reference sets
      *
      * @param correlationType Type of sets to return
-     * 
+     *
      * @return List of all reference sets in the central repository
      *
      * @throws EamDbException
@@ -541,7 +553,8 @@ public interface EamDb {
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
-     * @param correlationType Correlation Type that this Reference Instance is
+     * @param correlationType       Correlation Type that this Reference
+     *                              Instance is
      *
      * @throws EamDbException
      */
@@ -551,8 +564,8 @@ public interface EamDb {
      * Insert the bulk collection of Global File Instances
      *
      * @param globalInstances a Set of EamGlobalFileInstances to insert into the
-     * db.
-     * @param contentType the Type of the global instances
+     *                        db.
+     * @param contentType     the Type of the global instances
      *
      * @throws EamDbException
      */
@@ -561,7 +574,7 @@ public interface EamDb {
     /**
      * Get all reference entries having a given correlation type and value
      *
-     * @param aType Type to use for matching
+     * @param aType  Type to use for matching
      * @param aValue Value to use for matching
      *
      * @return List of all global file instances with a type and value
@@ -586,7 +599,7 @@ public interface EamDb {
      * used to correlate artifacts.
      *
      * @return List of EamArtifact.Type's. If none are defined in the database,
-     * the default list will be returned.
+     *         the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -597,7 +610,7 @@ public interface EamDb {
      * artifacts.
      *
      * @return List of enabled EamArtifact.Type's. If none are defined in the
-     * database, the default list will be returned.
+     *         database, the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -608,7 +621,7 @@ public interface EamDb {
      * correlate artifacts.
      *
      * @return List of supported EamArtifact.Type's. If none are defined in the
-     * database, the default list will be returned.
+     *         database, the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -648,8 +661,9 @@ public interface EamDb {
      * (meaning the database is in use).
      *
      * @return the lock, or null if locking is not supported
+     *
      * @throws EamDbException if the coordination service is running but we fail
-     * to get the lock
+     *                        to get the lock
      */
     public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException;
 }
