@@ -1059,10 +1059,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
         undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
         getTree().expandNode(treeNode);
-        try {
-            em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
-        } catch (PropertyVetoException ex) {
-            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        if (this.getSelectedNode().equals(treeNode)) {
+            this.setDirectoryListingActive();
+            this.respondSelection(em.getSelectedNodes(), new Node[]{treeNode});
+        } else {
+            try {
+                em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
+            } catch (PropertyVetoException ex) {
+                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            }
         }
         // Another thread is needed because we have to wait for dataResult to populate
     }
