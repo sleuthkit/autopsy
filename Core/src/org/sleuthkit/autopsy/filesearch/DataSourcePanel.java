@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Subpanel with controls for data source filtering.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataSourcePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(DataSourcePanel.class.getName());

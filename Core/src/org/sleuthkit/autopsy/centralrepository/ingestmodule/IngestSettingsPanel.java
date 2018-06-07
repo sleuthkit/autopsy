@@ -24,6 +24,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 /**
  * Ingest job settings panel for the Correlation Engine module.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     /**
