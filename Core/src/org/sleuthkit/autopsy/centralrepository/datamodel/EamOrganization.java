@@ -84,7 +84,7 @@ public class EamOrganization {
     /**
      * @param orgID the orgID to set
      */
-    public void setOrgID(int orgID) {
+    void setOrgID(int orgID) {
         this.orgID = orgID;
     }
 
@@ -98,7 +98,7 @@ public class EamOrganization {
     /**
      * @param name the name to set
      */
-    public void setName(String name) {
+    void setName(String name) {
         this.name = name;
     }
 

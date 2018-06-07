@@ -35,6 +35,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Settings for the sqlite implementation of the Central Repository database
+ * 
+ * NOTE: This is public scope because the options panel calls it directly to set/get 
  */
 public final class SqliteEamDbSettings {
 
@@ -162,7 +164,7 @@ public final class SqliteEamDbSettings {
      *
      * @return
      */
-    public String getConnectionURL() {
+    String getConnectionURL() {
         StringBuilder url = new StringBuilder();
         url.append(getJDBCBaseURI());
         url.append(getFileNameWithPath());
@@ -439,7 +441,7 @@ public final class SqliteEamDbSettings {
         return result;
     }
 
-    public boolean isChanged() {
+    boolean isChanged() {
         String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
         String dbDirectoryString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
         String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
@@ -474,14 +476,14 @@ public final class SqliteEamDbSettings {
     /**
      * @return the bulkThreshold
      */
-    public int getBulkThreshold() {
+    int getBulkThreshold() {
         return bulkThreshold;
     }
 
     /**
      * @param bulkThreshold the bulkThreshold to set
      */
-    public void setBulkThreshold(int bulkThreshold) throws EamDbException {
+    void setBulkThreshold(int bulkThreshold) throws EamDbException {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
@@ -525,21 +527,21 @@ public final class SqliteEamDbSettings {
     /**
      * @return the DRIVER
      */
-    public String getDriver() {
+    String getDriver() {
         return JDBC_DRIVER;
     }
 
     /**
      * @return the VALIDATION_QUERY
      */
-    public String getValidationQuery() {
+    String getValidationQuery() {
         return VALIDATION_QUERY;
     }
 
     /**
      * @return the JDBC_BASE_URI
      */
-    public String getJDBCBaseURI() {
+    String getJDBCBaseURI() {
         return JDBC_BASE_URI;
     }
 

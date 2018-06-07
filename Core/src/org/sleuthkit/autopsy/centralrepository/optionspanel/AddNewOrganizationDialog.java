@@ -345,7 +345,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
                         tfPocName.getText(),
                         tfPocEmail.getText(),
                         tfPocPhone.getText());
-                newOrg.setOrgID((int)dbManager.newOrganization(newOrg));
+                newOrg = dbManager.newOrganization(newOrg);
             }
             hasChanged = true;
             dispose();

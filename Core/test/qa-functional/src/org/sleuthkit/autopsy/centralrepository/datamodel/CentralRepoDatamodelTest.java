@@ -128,26 +128,26 @@ public class CentralRepoDatamodelTest extends TestCase {
             case2 = EamDb.getInstance().newCase(case2);
             assertTrue("Failed to create test object case2", case2 != null);
 
-            dataSource1fromCase1 = new CorrelationDataSource(case1.getID(), "dataSource1_deviceID", "dataSource1");
+            dataSource1fromCase1 = new CorrelationDataSource(case1, "dataSource1_deviceID", "dataSource1");
             EamDb.getInstance().newDataSource(dataSource1fromCase1);
             dataSource1fromCase1 = EamDb.getInstance().getDataSource(case1, dataSource1fromCase1.getDeviceID());
             assertTrue("Failed to create test object dataSource1fromCase1", dataSource1fromCase1 != null);
 
-            dataSource2fromCase1 = new CorrelationDataSource(case1.getID(), "dataSource2_deviceID", "dataSource2");
+            dataSource2fromCase1 = new CorrelationDataSource(case1, "dataSource2_deviceID", "dataSource2");
             EamDb.getInstance().newDataSource(dataSource2fromCase1);
             dataSource2fromCase1 = EamDb.getInstance().getDataSource(case1, dataSource2fromCase1.getDeviceID());
             assertTrue("Failed to create test object dataSource2fromCase1", dataSource2fromCase1 != null);
 
-            dataSource1fromCase2 = new CorrelationDataSource(case2.getID(), "dataSource3_deviceID", "dataSource3");
+            dataSource1fromCase2 = new CorrelationDataSource(case2, "dataSource3_deviceID", "dataSource3");
             EamDb.getInstance().newDataSource(dataSource1fromCase2);
             dataSource1fromCase2 = EamDb.getInstance().getDataSource(case2, dataSource1fromCase2.getDeviceID());
             assertTrue("Failed to create test object dataSource1fromCase2", dataSource1fromCase2 != null);
 
             org1 = new EamOrganization("org1");
-            org1.setOrgID((int) EamDb.getInstance().newOrganization(org1));
+            org1 = EamDb.getInstance().newOrganization(org1);
 
             org2 = new EamOrganization("org2");
-            org2.setOrgID((int) EamDb.getInstance().newOrganization(org2));
+            org2 = EamDb.getInstance().newOrganization(org2);
 
             // Store the file type object for later use
             fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
@@ -781,7 +781,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test adding instance with invalid data source ID
         try {
-            CorrelationDataSource badDS = new CorrelationDataSource(case1.getID(), "badDSUuid", "badDSName");
+            CorrelationDataSource badDS = new CorrelationDataSource(case1, "badDSUuid", "badDSName");
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, badDS, "badPath");
             failAttr.addInstance(inst);
             EamDb.getInstance().addArtifact(failAttr);
@@ -1283,7 +1283,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding a basic organization
         try {
             orgA = new EamOrganization(orgAname);
-            orgA.setOrgID((int) EamDb.getInstance().newOrganization(orgA));
+            orgA = EamDb.getInstance().newOrganization(orgA);
             assertTrue("Organization ID is still -1 after adding to db", orgA.getOrgID() != -1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -1294,7 +1294,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding an organization with additional fields
         try {
             orgB = new EamOrganization(orgBname, orgBpocName, orgBpocEmail, orgBpocPhone);
-            orgB.setOrgID((int) EamDb.getInstance().newOrganization(orgB));
+            orgB = EamDb.getInstance().newOrganization(orgB);
             assertTrue("Organization ID is still -1 after adding to db", orgB.getOrgID() != -1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -1417,7 +1417,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test deleting existing org that isn't in use
         try {
             EamOrganization orgToDelete = new EamOrganization("deleteThis");
-            orgToDelete.setOrgID((int) EamDb.getInstance().newOrganization(orgToDelete));
+            orgToDelete = EamDb.getInstance().newOrganization(orgToDelete);
             int orgCount = EamDb.getInstance().getOrganizations().size();
 
             EamDb.getInstance().deleteOrganization(orgToDelete);
@@ -2141,7 +2141,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with valid case, name, and ID
         try {
-            dataSourceA = new CorrelationDataSource(case2.getID(), dataSourceAid, dataSourceAname);
+            dataSourceA = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname);
             EamDb.getInstance().newDataSource(dataSourceA);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2151,7 +2151,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with the same case, name, and ID
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), dataSourceAid, dataSourceAname);
+            CorrelationDataSource temp = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname);
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from duplicate data source");
         } catch (EamDbException ex) {
@@ -2160,7 +2160,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with the same name and ID but different case
         try {
-            dataSourceB = new CorrelationDataSource(case1.getID(), dataSourceAid, dataSourceAname);
+            dataSourceB = new CorrelationDataSource(case1, dataSourceAid, dataSourceAname);
             EamDb.getInstance().newDataSource(dataSourceB);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2170,7 +2170,8 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with an invalid case ID
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(5000, "tempID", "tempName");
+            CorrelationCase correlationCase = new CorrelationCase("1", "test");
+            CorrelationDataSource temp = new CorrelationDataSource(correlationCase, "tempID", "tempName");
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from invalid case ID");
         } catch (EamDbException ex) {
@@ -2179,7 +2180,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with null device ID
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), null, "tempName");
+            CorrelationDataSource temp = new CorrelationDataSource(case2, null, "tempName");
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from null device ID");
         } catch (EamDbException ex) {
@@ -2188,7 +2189,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with null name
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), "tempID", null);
+            CorrelationDataSource temp = new CorrelationDataSource(case2, "tempID", null);
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from null name");
         } catch (EamDbException ex) {

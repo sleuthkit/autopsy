@@ -35,6 +35,8 @@ import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
+ * 
+ * NOTE: This is public scope because the options panel calls it directly to set/get
  */
 public final class PostgresEamDbSettings {
 
@@ -139,7 +141,7 @@ public final class PostgresEamDbSettings {
      *
      * @return
      */
-    public String getConnectionURL(boolean usePostgresDb) {
+    String getConnectionURL(boolean usePostgresDb) {
         StringBuilder url = new StringBuilder();
         url.append(getJDBCBaseURI());
         url.append(getHost());
@@ -231,7 +233,7 @@ public final class PostgresEamDbSettings {
      * Use the current settings and the schema version query to test the
      * database schema.
      *
-     * @return true if successfull connection, else false.
+     * @return true if successful connection, else false.
      */
     public boolean verifyDatabaseSchema() {
         Connection conn = getEphemeralConnection(false);
@@ -493,7 +495,7 @@ public final class PostgresEamDbSettings {
         return result;
     }
 
-    public boolean isChanged() {
+    boolean isChanged() {
         String hostString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
         String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
         String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
@@ -568,7 +570,7 @@ public final class PostgresEamDbSettings {
     /**
      * @return the bulkThreshold
      */
-    public int getBulkThreshold() {
+    int getBulkThreshold() {
         return bulkThreshold;
     }
 
@@ -622,21 +624,21 @@ public final class PostgresEamDbSettings {
     /**
      * @return the VALIDATION_QUERY
      */
-    public String getValidationQuery() {
+    String getValidationQuery() {
         return VALIDATION_QUERY;
     }
 
     /**
      * @return the POSTGRES_DRIVER
      */
-    public String getDriver() {
+    String getDriver() {
         return JDBC_DRIVER;
     }
 
     /**
      * @return the JDBC_BASE_URI
      */
-    public String getJDBCBaseURI() {
+    String getJDBCBaseURI() {
         return JDBC_BASE_URI;
     }
 

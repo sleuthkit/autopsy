@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -38,7 +37,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
  * All methods in AbstractSqlEamDb that read or write to the database should
  * be overriden here and use appropriate locking.
  */
-public class SqliteEamDb extends AbstractSqlEamDb {
+class SqliteEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDb.class.getName());
 
@@ -708,7 +707,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
+    public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {
         try{
             acquireExclusiveLock();
             return super.newOrganization(eamOrg);

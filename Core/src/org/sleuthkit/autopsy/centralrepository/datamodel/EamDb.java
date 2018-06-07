@@ -422,11 +422,11 @@ public interface EamDb {
      *
      * @param eamOrg The organization to add
      *
-     * @return the Organization ID of the newly created organization.
+     * @return The organization with the org ID set. 
      *
      * @throws EamDbException
      */
-    long newOrganization(EamOrganization eamOrg) throws EamDbException;
+    EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException;
 
     /**
      * Get all organizations

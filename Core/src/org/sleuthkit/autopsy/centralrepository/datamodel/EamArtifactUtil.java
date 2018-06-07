@@ -76,9 +76,9 @@ public class EamArtifactUtil {
             // have switch based on artifact type
             for (CorrelationAttribute.Type aType : EamDb.getInstance().getDefinedCorrelationTypes()) {
                 if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                    CorrelationAttribute eamArtifact = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
-                    if (eamArtifact != null) {
-                        eamArtifacts.add(eamArtifact);
+                    CorrelationAttribute correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
+                    if (correlationAttribute != null) {
+                        eamArtifacts.add(correlationAttribute);
                     }
                 }
             }

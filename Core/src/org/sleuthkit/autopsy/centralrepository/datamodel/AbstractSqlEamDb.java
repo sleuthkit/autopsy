@@ -46,10 +46,10 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  *
- * SQLite manager implementation
+ * Generic JDBC methods 
  *
  */
-public abstract class AbstractSqlEamDb implements EamDb {
+abstract class AbstractSqlEamDb implements EamDb {
 
     private final static Logger LOGGER = Logger.getLogger(AbstractSqlEamDb.class.getName());
 
@@ -425,6 +425,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+        if (eamDataSource.getCaseID() == -1) {
+            throw new EamDbException("Case ID is -1");
+        }
+        else if (eamDataSource.getID() != -1) {
+            throw new EamDbException("Database ID is already set in object");
+        }
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -1527,19 +1533,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return 0 < badInstances;
     }
 
-    /**
-     * Add a new organization
-     *
-     * @return the Organization ID of the newly created organization.
-     *
-     * @param eamOrg The organization to add
-     *
-     * @throws EamDbException
-     */
+
     @Override
-    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
-        if(eamOrg == null) {
+    public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {
+        if (eamOrg == null) {
             throw new EamDbException("EamOrganization is null");
+        }
+        else if (eamOrg.getOrgID() != -1) { 
+            throw new EamDbException("EamOrganization already has an ID");
         }
         
         Connection conn = connect();
@@ -1558,7 +1559,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
-                return generatedKeys.getLong(1);
+                eamOrg.setOrgID((int)generatedKeys.getLong(1));
+                return eamOrg;
             } else {
                 throw new SQLException("Creating user failed, no ID obtained.");
             }
@@ -2351,6 +2353,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if (null == resultSet) {
             return null;
         }
+        // @@@ We should have data source ID in the previous query instead of passing -1 into the below constructor
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
