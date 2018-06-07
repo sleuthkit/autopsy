@@ -53,7 +53,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.SleuthkitCaseFileInstanceMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -297,9 +297,9 @@ class InterCaseUtils {
         
         for(Map.Entry<String, Md5Metadata> file : searchDomain.getMetadata().entrySet()){
             
-            Collection<FileInstanceMetadata> fileInstances = file.getValue().getMetadata();
+            Collection<SleuthkitCaseFileInstanceMetadata> fileInstances = file.getValue().getMetadata();
             
-            for(FileInstanceMetadata fileInstance : fileInstances){
+            for(SleuthkitCaseFileInstanceMetadata fileInstance : fileInstances){
                 
                 
             }

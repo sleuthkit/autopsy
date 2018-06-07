@@ -111,6 +111,7 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
     private Map<String, Md5Metadata> gatherIntercaseResults(Collection<CentralRepositoryFile> artifactInstances, Map<String, Md5Metadata> commonFiles) {
 
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
+        Map<Long, AbstractFile> cachedFiles = new HashMap<>();
 
         for (CentralRepositoryFile instance : artifactInstances) {
 
@@ -130,15 +131,16 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
                 
                 //TODO resume here!!!
                 //TODO need to figure out if we have a CR instance or a SK resource and create as appropriate....
-                Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getObjectId();
+                Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getIdenticalFileSleuthkitCaseObjectID();
+                
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
                     
                 } else {
                     Md5Metadata md5Metadata = new Md5Metadata(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
             }

@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -172,6 +173,8 @@ public abstract class CommonFilesMetadataBuilder {
 
         SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
+        
+        Map<Long, AbstractFile> fileCache = new HashMap<>();
 
         try (
                 CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement);
@@ -189,11 +192,10 @@ public abstract class CommonFilesMetadataBuilder {
 
                 if (commonFiles.containsKey(md5)) {
                     final Md5Metadata md5Metadata = commonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource));
                 } else {
-                    final List<FileInstanceMetadata> fileInstances = new ArrayList<>();
-                    fileInstances.add(new FileInstanceMetadata(objectId, dataSource));
-                    Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
+                    final Md5Metadata md5Metadata = new Md5Metadata(md5);
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource));
                     commonFiles.put(md5, md5Metadata);
                 }
             }

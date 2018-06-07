@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,8 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNodeGenerator;
+import org.sleuthkit.autopsy.commonfilesearch.SleuthkitCaseFileInstanceMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -130,41 +132,24 @@ public class Md5Node extends DisplayableItemNode {
      * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
      * <code>Md5Node</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> {
+    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceNodeGenerator> {
 
+        private Map<Long, AbstractFile> cachedFiles;
+        
         private final Md5Metadata descendants;
 
         FileInstanceNodeFactory(Md5Metadata descendants) {
             this.descendants = descendants;
+            this.cachedFiles = new HashMap<>();
         }
 
         @Override
-        protected Node createNodeForKey(FileInstanceMetadata file) {
-
-            try {
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-                AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
-
-                //TODO it would be an improvement to utilize some sort of polymorphism 
-                //  (interface with getNode is probably plenty) rather than this conditional
-                if (file.isPresentInCurrentCase()) {
-                    return new SleuthkitCaseFileInstanceNode(abstractFile, file.getDataSourceName());
-                } else {
-                    CentralRepositoryFile crFile = file.getCentralRepoFileInstance();
-                    return new CentralRepositoryFileInstanceNode(crFile, abstractFile);
-                }
-
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{file.getObjectId()}), ex);
-            }
-
-            return null;
+        protected Node createNodeForKey(FileInstanceNodeGenerator file) {
+            return file.generateNode();
         }
 
         @Override
-        protected boolean createKeys(List<FileInstanceMetadata> list) {
+        protected boolean createKeys(List<FileInstanceNodeGenerator> list) {
             list.addAll(this.descendants.getMetadata());
             return true;
         }

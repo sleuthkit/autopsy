@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.SleuthkitCaseFileInstanceMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -187,7 +187,7 @@ class IntraCaseUtils {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 
         for (Map.Entry<String, Md5Metadata> entry : metadata.getMetadata().entrySet()) {
-            for (FileInstanceMetadata md : entry.getValue().getMetadata()) {
+            for (SleuthkitCaseFileInstanceMetadata md : entry.getValue().getMetadata()) {
                 instanceIdToDataSource.put(md.getObjectId(), md.getDataSourceName());
             }
         }
