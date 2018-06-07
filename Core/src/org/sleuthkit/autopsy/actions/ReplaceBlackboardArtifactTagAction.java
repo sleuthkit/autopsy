@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Instances of this Action allow users to replace a tag applied to blackboard
+ * This Action allows users to replace a tag applied to blackboard
  * artifacts, with another tag
  */
 public final class ReplaceBlackboardArtifactTagAction extends ReplaceTagAction<BlackboardArtifactTag> {
@@ -72,7 +72,6 @@ public final class ReplaceBlackboardArtifactTagAction extends ReplaceTagAction<B
     @Override
     protected void replaceTag( BlackboardArtifactTag oldArtifactTag, TagName newTagName) {
         new SwingWorker<Void, Void>() {
-
             
             @Override
             protected Void doInBackground() throws Exception {
@@ -117,10 +116,10 @@ public final class ReplaceBlackboardArtifactTagAction extends ReplaceTagAction<B
    /**
      * Returns list of tags selected by user to replace
      *
-     * @return list of tags
+     * @return a list of tags
      */
     @Override
-    Collection<? extends BlackboardArtifactTag> getSelectedTags() {
+    Collection<? extends BlackboardArtifactTag> getTagsToReplace() {
         return Utilities.actionsGlobalContext().lookupAll(BlackboardArtifactTag.class);
     }
 

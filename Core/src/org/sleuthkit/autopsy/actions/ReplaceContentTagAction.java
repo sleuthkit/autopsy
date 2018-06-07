@@ -111,12 +111,12 @@ public final class ReplaceContentTagAction extends ReplaceTagAction<ContentTag> 
     }
 
     /**
-     * Returns list of tags selected by user to replace
+     * Returns list of content tags selected by user to replace
      *
-     * @return list of tags
+     * @return a list of tags
      */
     @Override
-    Collection<? extends ContentTag> getSelectedTags() {
+    Collection<? extends ContentTag> getTagsToReplace() {
         return Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
     }
 

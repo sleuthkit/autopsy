@@ -24,10 +24,9 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-
 /**
  * Abstract class to define context action to replace a tag with another
- * 
+ *
  * @param <T> tag type
  */
 @NbBundle.Messages({
@@ -51,30 +50,29 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
         return MENU_TEXT;
     }
 
-   
     /**
-     * Method to actually replace the selected  tag with the given new tag
+     * Method to actually replace the selected tag with the given new tag
      *
-     * @param oldTag 
+     * @param oldTag
      * @param newTagName
      */
-    abstract protected void replaceTag(T oldTag, TagName newTagName );
-  
+    abstract protected void replaceTag(T oldTag, TagName newTagName);
+
     /**
      * Returns elected tags which are to be replaced
-     * 
-     * @return 
+     *
+     * @return
      */
-    abstract Collection<? extends T > getSelectedTags();
-    
+    abstract Collection<? extends T> getTagsToReplace();
+
     @Override
     public JMenuItem getPopupPresenter() {
-         return new ReplaceTagMenu();
+        return new ReplaceTagMenu();
     }
-    
-     /**
+
+    /**
      * Instances of this class implement a context menu user interface for
-     * selecting a tag name to replace the tag with 
+     * selecting a tag name to replace the tag with
      */
     private final class ReplaceTagMenu extends JMenu {
 
@@ -82,9 +80,8 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
 
         ReplaceTagMenu() {
             super(getActionDisplayName());
-            
-           // final Collection<? extends T >selectedTags = Utilities.actionsGlobalContext().lookupAll(T.class);
-           final Collection<? extends T >selectedTags = getSelectedTags();
+
+            final Collection<? extends T> selectedTags = getTagsToReplace();
 
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
@@ -95,7 +92,6 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 Logger.getLogger(ReplaceTagMenu.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
 
-           
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                     String tagDisplayName = entry.getKey();
@@ -109,10 +105,10 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                     // Add action to replace the tag
                     tagNameItem.addActionListener((ActionEvent e) -> {
                         selectedTags.forEach((oldtag) -> {
-                            replaceTag(oldtag, entry.getValue() );
+                            replaceTag(oldtag, entry.getValue());
                         });
                     });
-                    
+
                     add(tagNameItem);
                 }
             } else {
@@ -122,7 +118,6 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
             }
 
             addSeparator();
-           
             JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
             newTagMenuItem.addActionListener((ActionEvent e) -> {
                 TagName newTagName = GetTagNameDialog.doDialog();
@@ -133,8 +128,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 }
             });
             add(newTagMenuItem);
-            
+
         }
     }
-
 }
