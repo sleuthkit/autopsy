@@ -475,7 +475,7 @@ class SevenZipExtractor {
      * @return true if unpacking is complete
      */
     @Messages({"SevenZipExtractor.indexError.message=Failed to index encryption detected artifact for keyword search."})
-    boolean unpack(AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> archiveDepthCountTree, String password) {
+    boolean unpack(AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> depthMap, String password) {
         boolean unpackSuccessful = true; //initialized to true change to false if any files fail to extract and
         boolean hasEncrypted = false;
         boolean fullEncryption = true;
@@ -514,10 +514,10 @@ class SevenZipExtractor {
             unpackSuccessful = false;
             return unpackSuccessful;
         }
-        parentAr = archiveDepthCountTree.get(archiveId);
+        parentAr = depthMap.get(archiveId);
         if (parentAr == null) {
             parentAr = new Archive(null, archiveId, 0);
-            parentAr = archiveDepthCountTree.put(archiveId, parentAr);
+            depthMap.put(archiveId, parentAr);
         } else if (parentAr.getDepth() == MAX_DEPTH) {
             String msg = NbBundle.getMessage(SevenZipExtractor.class,
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnMsg.zipBomb", archiveFile.getName());
@@ -668,7 +668,7 @@ class SevenZipExtractor {
                     if (isSevenZipExtractionSupported(unpackedFile)) {
                         Archive child = new Archive(parentAr, unpackedFile.getId(), parentAr.getDepth()+1);
                         parentAr.addChild(child);
-                        archiveDepthCountTree.put(unpackedFile.getId(), child);
+                        depthMap.put(unpackedFile.getId(), child);
                     }
                 }
 
