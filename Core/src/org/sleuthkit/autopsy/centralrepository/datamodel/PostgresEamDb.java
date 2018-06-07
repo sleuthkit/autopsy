@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Central Repository database implementation using Postgres as a
  * backend
  */
-class PostgresEamDb extends AbstractSqlEamDb {
+final class PostgresEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDb.class.getName());
 

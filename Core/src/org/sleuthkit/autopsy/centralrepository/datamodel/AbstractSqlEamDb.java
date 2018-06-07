@@ -59,6 +59,11 @@ abstract class AbstractSqlEamDb implements EamDb {
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
 
+    // number of instances to keep in bulk queue before doing an insert.
+    // Update Test code if this changes.  It's hard coded there.
+    static final int DEFAULT_BULK_THRESHHOLD = 1000;
+    
+    
     /**
      * Connect to the DB and initialize it.
      *

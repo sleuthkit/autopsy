@@ -90,15 +90,15 @@ public final class PostgresEamDbSettings {
         try {
             String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
-                this.bulkThreshold = EamDb.DEFAULT_BULK_THRESHHOLD;
+                this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
             } else {
                 this.bulkThreshold = Integer.parseInt(bulkThresholdString);
                 if (getBulkThreshold() <= 0) {
-                    this.bulkThreshold = EamDb.DEFAULT_BULK_THRESHHOLD;
+                    this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
                 }
             }
         } catch (NumberFormatException ex) {
-            this.bulkThreshold = EamDb.DEFAULT_BULK_THRESHHOLD;
+            this.bulkThreshold = AbstractSqlEamDb.DEFAULT_BULK_THRESHHOLD;
         }
 
         userName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
