@@ -18,21 +18,14 @@
  */
 package org.sleuthkit.autopsy.actions;
 
-import java.awt.event.ActionEvent;
 import java.util.Collection;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
-import javax.swing.AbstractAction;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
-import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -40,22 +33,18 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
- * Instances of this Action allow users to replace a tag applied to a file
- * with another tag
+ * This Action allow users to replace a content tag with another tag
  */
 @NbBundle.Messages({
     "ReplaceContentArtifactTagAction.replaceTag=Replace File Tag"
 })
-public final class ReplaceContentTagAction extends AbstractAction implements Presenter.Popup {
+public final class ReplaceContentTagAction extends ReplaceTagAction<ContentTag> {
 
     private static final Logger logger = Logger.getLogger(ReplaceContentTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
-    private static final String MENU_TEXT = NbBundle.getMessage(ReplaceContentTagAction.class,
-            "ReplaceContentArtifactTagAction.replaceTag");
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -73,19 +62,12 @@ public final class ReplaceContentTagAction extends AbstractAction implements Pre
         super(MENU_TEXT);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent event) {
-    }
-
-    protected String getActionDisplayName() {
-        return MENU_TEXT;
-    }
-
     @NbBundle.Messages({
         "# {0} - old tag name",
         "# {1} - content obj id",
         "ReplaceContentTagAction.replaceTag.alert=Unable to replace tag {0} for {1}."})
-    protected void replaceTag(TagName oldTagName, TagName newTagName, ContentTag oldTag) {
+    @Override
+    protected void replaceTag(ContentTag oldTag, TagName newTagName) {
         new SwingWorker<Void, Void>() {
 
             @Override
@@ -96,23 +78,21 @@ public final class ReplaceContentTagAction extends AbstractAction implements Pre
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Error replacing artifact tag. No open case found.", ex); //NON-NLS
                     Platform.runLater(()
-                            -> new Alert(Alert.AlertType.ERROR, Bundle.ReplaceContentTagAction_replaceTag_alert(oldTagName.getDisplayName(), oldTag.getContent().getName())).show()
+                            -> new Alert(Alert.AlertType.ERROR, Bundle.ReplaceContentTagAction_replaceTag_alert(oldTag.getName().getDisplayName(), oldTag.getContent().getName())).show()
                     );
-                    return null;  
+                    return null;
                 }
 
                 try {
-                    logger.log(Level.INFO, "Replacing tag {0}  with tag {1} for artifact {2}", new Object[]{oldTagName.getDisplayName(), newTagName.getDisplayName(), oldTag.getContent().getName()}); //NON-NLS
-                    
-                   System.out.println("RAMAN: Replacing tag " + oldTagName.getDisplayName() + " with tag " + newTagName.getDisplayName() );
-                   
-                   tagsManager.deleteContentTag(oldTag);
-                   tagsManager.addContentTag(oldTag.getContent(), newTagName);
+                    logger.log(Level.INFO, "Replacing tag {0}  with tag {1} for artifact {2}", new Object[]{oldTag.getName().getDisplayName(), newTagName.getDisplayName(), oldTag.getContent().getName()}); //NON-NLS
+
+                    tagsManager.deleteContentTag(oldTag);
+                    tagsManager.addContentTag(oldTag.getContent(), newTagName);
 
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error replacing artifact tag", tskCoreException); //NON-NLS
                     Platform.runLater(()
-                            -> new Alert(Alert.AlertType.ERROR, Bundle.ReplaceContentTagAction_replaceTag_alert(oldTagName.getDisplayName(), oldTag.getContent().getName())).show()
+                            -> new Alert(Alert.AlertType.ERROR, Bundle.ReplaceContentTagAction_replaceTag_alert(oldTag.getName().getDisplayName(), oldTag.getContent().getName())).show()
                     );
                 }
                 return null;
@@ -130,73 +110,14 @@ public final class ReplaceContentTagAction extends AbstractAction implements Pre
         }.execute();
     }
 
-    @Override
-    public JMenuItem getPopupPresenter() {
-         return new ReplaceContentTagMenu();
-    }
-
     /**
-     * Instances of this class implement a context menu user interface for
-     * selecting a tag name to replace the tag with 
+     * Returns list of tags selected by user to replace
+     *
+     * @return list of tags
      */
-    private final class ReplaceContentTagMenu extends JMenu {
-
-        private static final long serialVersionUID = 1L;
-
-        ReplaceContentTagMenu() {
-            super(getActionDisplayName());
-            
-            final Collection<? extends ContentTag> selectedTags = Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
-
-            // Get the current set of tag names.
-            Map<String, TagName> tagNamesMap = null;
-            try {
-                TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
-                tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-            }
-
-           
-            if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
-                for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
-                    String tagDisplayName = entry.getKey();
-                    String notableString = entry.getValue().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
-                    // for the bookmark tag name only, added shortcut label
-                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
-                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
-                    }
-
-                    // Add action to replace the tag
-                    tagNameItem.addActionListener((ActionEvent e) -> {
-                        selectedTags.forEach((oldtag) -> {
-                            replaceTag(oldtag.getName(), entry.getValue(), oldtag);
-                        });
-                    });
-                    
-                    add(tagNameItem);
-                }
-            } else {
-                JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
-                empty.setEnabled(false);
-                add(empty);
-            }
-
-            addSeparator();
-           
-            JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
-            newTagMenuItem.addActionListener((ActionEvent e) -> {
-                TagName newTagName = GetTagNameDialog.doDialog();
-                if (null != newTagName) {
-                    selectedTags.forEach((oldtag) -> {
-                        replaceTag(oldtag.getName(), newTagName, oldtag);
-                    });
-                }
-            });
-            add(newTagMenuItem);
-            
-        }
+    @Override
+    Collection<? extends ContentTag> getSelectedTags() {
+        return Utilities.actionsGlobalContext().lookupAll(ContentTag.class);
     }
-        
+
 }
