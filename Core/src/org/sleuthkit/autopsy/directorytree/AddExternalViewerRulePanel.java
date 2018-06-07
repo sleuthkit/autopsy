@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 /**
  * Panel found in an AddRuleDialog
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddExternalViewerRulePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(AddExternalViewerRulePanel.class.getName());

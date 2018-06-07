@@ -27,6 +27,10 @@ import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
+/**
+ * Configuration for keyword lists.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class GlobalListSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;

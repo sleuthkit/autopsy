@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
 /**
  * A dashboard for monitoring an automated ingest cluster.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutoIngestDashboard extends JPanel implements Observer {
     
     private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
