@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -31,6 +33,7 @@ import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
 
 /**
  * A file level ingest module that extracts embedded files from supported
@@ -49,9 +52,10 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     private String moduleDirRelative;
     private String moduleDirAbsolute;
     private MSOfficeEmbeddedContentExtractor officeExtractor;
-    private static SevenZipExtractor archiveExtractor;
+    private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
     private long jobId;
+    private static final HashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new HashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     /**
@@ -97,16 +101,16 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
+        try {
+            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+        } catch (SevenZipNativeInitializationException ex) {
+            throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
+        }
         if (refCounter.incrementAndGet(jobId) == 1) {
             /*
-             * Construct a 7Zip file extractor for processing archive files.
+             * Construct a concurrentHashmap to keep track of depth in archives while processing archive files.
              */
-            try {
-                this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
-            } catch (SevenZipNativeInitializationException ex) {
-                throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
-            }
-
+            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
         }
         /*
          * Construct an embedded content extractor for processing Microsoft
@@ -149,7 +153,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * type/format.
          */
         if (archiveExtractor.isSevenZipExtractionSupported(abstractFile)) {
-            archiveExtractor.unpack(abstractFile);
+            archiveExtractor.unpack(abstractFile, mapOfDepthTrees.get(jobId));
         } else if (officeExtractor.isContentExtractionSupported(abstractFile)) {
             officeExtractor.extractEmbeddedContent(abstractFile);
         }
@@ -158,9 +162,11 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
 
     @Override
     public void shutDown() {
-        refCounter.decrementAndGet(jobId); 
+        if (refCounter.decrementAndGet(jobId) == 0) {
+            mapOfDepthTrees.remove(jobId);
+        }
     }
-    
+
     /**
      * Creates a unique name for a file by concatentating the file name and the
      * file object id.

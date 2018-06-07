@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.awt.event.ActionEvent;
 import java.nio.file.Paths;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -125,7 +126,7 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
                 }
                 try {
                     SevenZipExtractor extractor = new SevenZipExtractor(null, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
-                    done = extractor.unpack(archive, password);
+                    done = extractor.unpack(archive, new ConcurrentHashMap<>(), password);
                 } catch (SevenZipNativeInitializationException ex) {
                     IngestServices.getInstance().postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), "Unable to extract file with password", password));
                     logger.log(Level.INFO, "Unable to extract file with password", ex);

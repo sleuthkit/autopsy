@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
@@ -84,8 +85,6 @@ class SevenZipExtractor {
     private static final int MAX_COMPRESSION_RATIO = 600;
     private static final long MIN_COMPRESSION_RATIO_SIZE = 500 * 1000000L;
     private static final long MIN_FREE_DISK_SPACE = 1 * 1000 * 1000000L; //1GB
-    //counts archive depth
-    private volatile ArchiveDepthCountTree archiveDepthCountTree;
 
     private String moduleDirRelative;
     private String moduleDirAbsolute;
@@ -131,7 +130,7 @@ class SevenZipExtractor {
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
-        this.archiveDepthCountTree = new ArchiveDepthCountTree();
+//        this.archiveDepthCountTree = new ArchiveDepthCountTree();
     }
 
     /**
@@ -462,8 +461,8 @@ class SevenZipExtractor {
      *
      * @return true if unpacking is complete
      */
-    void unpack(AbstractFile archiveFile) {
-        unpack(archiveFile, null);
+    void unpack(AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> depthMap) {
+        unpack(archiveFile, depthMap, null);
     }
 
     /**
@@ -476,7 +475,7 @@ class SevenZipExtractor {
      * @return true if unpacking is complete
      */
     @Messages({"SevenZipExtractor.indexError.message=Failed to index encryption detected artifact for keyword search."})
-    boolean unpack(AbstractFile archiveFile, String password) {
+    boolean unpack(AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> archiveDepthCountTree, String password) {
         boolean unpackSuccessful = true; //initialized to true change to false if any files fail to extract and
         boolean hasEncrypted = false;
         boolean fullEncryption = true;
@@ -492,7 +491,7 @@ class SevenZipExtractor {
         final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         //recursion depth check for zip bomb
         final long archiveId = archiveFile.getId();
-        SevenZipExtractor.ArchiveDepthCountTree.Archive parentAr;
+        Archive parentAr;
         try {
             blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
@@ -515,10 +514,10 @@ class SevenZipExtractor {
             unpackSuccessful = false;
             return unpackSuccessful;
         }
-        parentAr = archiveDepthCountTree.findArchive(archiveId);
+        parentAr = archiveDepthCountTree.get(archiveId);
         if (parentAr == null) {
-            parentAr = archiveDepthCountTree.addArchive(null, archiveId);
-
+            parentAr = new Archive(null, archiveId, 0);
+            parentAr = archiveDepthCountTree.put(archiveId, parentAr);
         } else if (parentAr.getDepth() == MAX_DEPTH) {
             String msg = NbBundle.getMessage(SevenZipExtractor.class,
                     "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.warnMsg.zipBomb", archiveFile.getName());
@@ -667,7 +666,9 @@ class SevenZipExtractor {
                         continue;
                     }
                     if (isSevenZipExtractionSupported(unpackedFile)) {
-                        archiveDepthCountTree.addArchive(parentAr, unpackedFile.getId());
+                        Archive child = new Archive(parentAr, unpackedFile.getId(), parentAr.getDepth()+1);
+                        parentAr.addChild(child);
+                        archiveDepthCountTree.put(unpackedFile.getId(), child);
                     }
                 }
 
@@ -1168,72 +1169,39 @@ class SevenZipExtractor {
         }
     }
 
-    /**
-     * Tracks archive hierarchy and archive depth
-     */
-    private static class ArchiveDepthCountTree {
+    static class Archive {
 
-        //keeps all nodes refs for easy search
-        private final List<Archive> archives = new ArrayList<>();
+        private final int depth;
+        private final long objectId;
+        private final Archive parent;
+        private final List<Archive> children;
 
-        /**
-         * Search for previously added parent archive by id
-         *
-         * @param objectId parent archive object id
-         *
-         * @return the archive node or null if not found
-         */
-        Archive findArchive(long objectId) {
-            for (Archive ar : archives) {
-                if (ar.objectId == objectId) {
-                    return ar;
-                }
-            }
+        Archive(Archive parent, long objectId, int depth) {
+            this.parent = parent;
+            this.objectId = objectId;
+            this.children = new ArrayList<>();
+            this.depth = depth;
+        }
 
-            return null;
+        void addChild(Archive child){
+            children.add(child);
+        }
+        
+        long getParentObjectId() {
+            return parent.getObjectId();
+        }
+
+        long getObjectId() {
+            return objectId;
         }
 
         /**
-         * Add a new archive to track of depth
+         * get archive depth of this archive
          *
-         * @param parent   parent archive or null
-         * @param objectId object id of the new archive
-         *
-         * @return the archive added
+         * @return
          */
-        Archive addArchive(Archive parent, long objectId) {
-            Archive child = new Archive(parent, objectId);
-            archives.add(child);
-            return child;
-        }
-
-        private static class Archive {
-
-            int depth;
-            long objectId;
-            Archive parent;
-            List<Archive> children;
-
-            Archive(Archive parent, long objectId) {
-                this.parent = parent;
-                this.objectId = objectId;
-                children = new ArrayList<>();
-                if (parent != null) {
-                    parent.children.add(this);
-                    this.depth = parent.depth + 1;
-                } else {
-                    this.depth = 0;
-                }
-            }
-
-            /**
-             * get archive depth of this archive
-             *
-             * @return
-             */
-            int getDepth() {
-                return depth;
-            }
+        int getDepth() {
+            return depth;
         }
     }
 
