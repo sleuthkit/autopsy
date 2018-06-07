@@ -42,7 +42,14 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
         super(menuText);
     }
 
+    /**
+     * Subclasses of replaceTagAction should not override actionPerformed, 
+     * but instead override replaceTag.
+     * 
+     * @param event 
+     */
     @Override
+    @SuppressWarnings("NoopMethodInAbstractClass")
     public void actionPerformed(ActionEvent event) {
     }
 
@@ -103,7 +110,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                     }
 
                     // Add action to replace the tag
-                    tagNameItem.addActionListener((ActionEvent e) -> {
+                    tagNameItem.addActionListener((ActionEvent event) -> {
                         selectedTags.forEach((oldtag) -> {
                             replaceTag(oldtag, entry.getValue());
                         });
@@ -119,7 +126,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
 
             addSeparator();
             JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
-            newTagMenuItem.addActionListener((ActionEvent e) -> {
+            newTagMenuItem.addActionListener((ActionEvent event) -> {
                 TagName newTagName = GetTagNameDialog.doDialog();
                 if (null != newTagName) {
                     selectedTags.forEach((oldtag) -> {
