@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import java.util.Collections;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
+import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
 import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
@@ -36,7 +38,7 @@ import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 
 /**
  */
-public class RootFilterState extends DefaultFilterState<RootFilter> implements CompoundFilterStateI< TimelineFilter> {
+public class RootFilterState implements FilterState<RootFilter>, CompoundFilterState< TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<TypeFilter, TypeFilter> typeFilterModel;
     private final DefaultFilterState<HideKnownFilter> knownFilterModel;
@@ -45,16 +47,20 @@ public class RootFilterState extends DefaultFilterState<RootFilter> implements C
     private final CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterModel;
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterModel;
 
+    private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
+    private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
+
     private final ObservableList<   FilterState< ?>> subFilterModels = FXCollections.observableArrayList();
+    private final RootFilter delegate;
 
     public RootFilterState(RootFilter delegate) {
         this(delegate,
-                new CompoundFilterState<>(delegate.getTypeFilter()),
+                new CompoundFilterStateImpl<>(delegate.getTypeFilter()),
                 new DefaultFilterState<>(delegate.getKnownFilter()),
                 new DefaultFilterState<>(delegate.getTextFilter()),
-                new CompoundFilterState<>(delegate.getTagsFilter()),
-                new CompoundFilterState<>(delegate.getHashHitsFilter()),
-                new CompoundFilterState<>(delegate.getDataSourcesFilter())
+                new CompoundFilterStateImpl<>(delegate.getTagsFilter()),
+                new CompoundFilterStateImpl<>(delegate.getHashHitsFilter()),
+                new CompoundFilterStateImpl<>(delegate.getDataSourcesFilter())
         );
     }
 
@@ -65,7 +71,7 @@ public class RootFilterState extends DefaultFilterState<RootFilter> implements C
                             CompoundFilterState<TagNameFilter, TagsFilter> tagsFilterModel,
                             CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterModel,
                             CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterModel) {
-        super(delegate);
+        this.delegate = delegate;
         this.typeFilterModel = typeFilterModel;
         this.knownFilterModel = knownFilterModel;
         this.textFilterModel = textFilterModel;
@@ -124,16 +130,15 @@ public class RootFilterState extends DefaultFilterState<RootFilter> implements C
                 textFilterModel.getActiveFilter(), activeOrNullCompound,
                 dataSourcesFilterModel.getActiveFilter(),
                 Collections.emptySet());
-
     }
 
-
-
+    @SuppressWarnings("rawtypes")
     public boolean hasActiveHashFilters() {
         return hashHitsFilterModel.isActive()
                && hashHitsFilterModel.getSubFilterStates().stream().anyMatch(FilterState::isActive);
     }
 
+    @SuppressWarnings("rawtypes")
     public boolean hasActiveTagsFilters() {
         return tagsFilterModel.isActive()
                && tagsFilterModel.getSubFilterStates().stream().anyMatch(FilterState::isActive);
@@ -168,4 +173,58 @@ public class RootFilterState extends DefaultFilterState<RootFilter> implements C
         return subFilterModels;
     }
 
+    @Override
+    public ReadOnlyBooleanProperty activeProperty() {
+        return ALWAYS_TRUE;
+    }
+
+    @Override
+    public ReadOnlyBooleanProperty disabledProperty() {
+        return ALWAYS_FALSE;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "Root";
+    }
+
+    @Override
+    public RootFilter getFilter() {
+        return delegate;
+    }
+
+    @Override
+    public String getSQLWhere(TimelineManager timelineManager) {
+        return getActiveFilter().getSQLWhere(timelineManager);
+    }
+
+    @Override
+    public boolean isActive() {
+        return true;
+    }
+
+    @Override
+    public boolean isDisabled() {
+        return false;
+    }
+
+    @Override
+    public boolean isSelected() {
+        return true;
+    }
+
+    @Override
+    public ReadOnlyBooleanProperty selectedProperty() {
+        return ALWAYS_TRUE;
+    }
+
+    @Override
+    public void setDisabled(Boolean act) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setSelected(Boolean act) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

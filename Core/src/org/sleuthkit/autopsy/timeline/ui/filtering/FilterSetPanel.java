@@ -22,6 +22,8 @@ import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
@@ -84,10 +86,10 @@ final public class FilterSetPanel extends BorderPane {
     private final TimeLineController controller;
 
     /**
-     * map from filter to its expansion state in the ui, used to restore the
+     * Map from filter to its expansion state in the ui, used to restore the
      * expansion state as we navigate back and forward in the history
      */
-    private final ObservableMap<  TimelineFilter, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap< TimelineFilter, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({
@@ -116,14 +118,14 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
         //type is the only filter expanded initialy
-        expansionMap.put(controller.getEventsModel().getFilterModel().getFilter(), true);
-        expansionMap.put(controller.getEventsModel().getFilterModel().getTypeFilterModel().getFilter(), true);
+        expansionMap.put(controller.getEventsModel().getFilterState().getFilter(), true);
+        expansionMap.put(controller.getEventsModel().getFilterState().getTypeFilterModel().getFilter(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());
         this.filteredEvents.timeRangeProperty().addListener((Observable observable2) -> applyFilters());
 
-        this.filteredEvents.filterProperty().addListener((Observable o) -> refresh());
+        this.filteredEvents.filterProperty().addListener((observable, oldValue, newValue) -> refresh());
         refresh();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
@@ -164,7 +166,7 @@ final public class FilterSetPanel extends BorderPane {
 
     private void refresh() {
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilterModel().copyOf(), expansionMap));
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilterState().copyOf(), expansionMap));
         });
     }
 

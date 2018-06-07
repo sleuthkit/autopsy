@@ -24,7 +24,6 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
 /**
  * This class encapsulates all the zoom(and filter) parameters into one object
@@ -83,7 +82,7 @@ final public class ZoomParams {
         return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public boolean hasFilterState(DefaultFilterState<RootFilter> filterSet) {
+    public boolean hasFilterState(RootFilterState filterSet) {
         return this.filter.equals(filterSet);
     }
 

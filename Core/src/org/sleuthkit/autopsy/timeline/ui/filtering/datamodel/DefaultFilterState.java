@@ -20,8 +20,9 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ObservableBooleanValue;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
@@ -43,12 +44,12 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
 
     @Override
-    public SimpleBooleanProperty selectedProperty() {
+    public BooleanProperty selectedProperty() {
         return selected;
     }
 
     @Override
-    public ObservableBooleanValue disabledProperty() {
+    public BooleanProperty disabledProperty() {
         return disabled;
     }
 
@@ -78,7 +79,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     }
 
     @Override
-    public BooleanBinding activeProperty() {
+    public BooleanExpression activeProperty() {
         return activeProp;
     }
 

@@ -116,6 +116,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Constructor
      *
+     * @param detailsViewModel     The DetailsViewModel to use for this chart.
      * @param controller           The TimeLineController for this chart.
      * @param detailsChartDateAxis The DateAxis to use in this chart.
      * @param pinnedDateAxis       The DateAxis to use for the pinned lane. It

@@ -60,7 +60,7 @@ public class ListViewModel {
      * @return A List of combined events, sorted by timestamp.
      */
     public List<CombinedEvent> getCombinedEvents() throws TskCoreException {
-        return getCombinedEvents(eventsModel.getTimeRange(), eventsModel.getFilterModel());
+        return getCombinedEvents(eventsModel.getTimeRange(), eventsModel.getFilterState());
     }
 
     /**

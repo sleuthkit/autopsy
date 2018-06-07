@@ -94,7 +94,7 @@ final public class DetailsViewModel {
         final DescriptionLoD lod;
         synchronized (this) {
             range = eventsModel.getTimeRange();
-            filter = eventsModel.getFilterModel();
+            filter = eventsModel.getFilterState();
             zoom = eventsModel.getEventTypeZoom();
             lod = eventsModel.getDescriptionLOD();
         }
@@ -151,8 +151,8 @@ final public class DetailsViewModel {
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-        final boolean needsTags = filterModel.getTagsFilterModel().getFilter().hasSubFilters();
-        final boolean needsHashSets = filterModel.getHashHitsFilterModel().getFilter().hasSubFilters();
+        final boolean needsTags = filterModel.hasActiveTagsFilters();
+        final boolean needsHashSets = filterModel.hasActiveHashFilters();
         //compose query string, the new-lines are only for nicer formatting if printing the entire query
         String querySql = "SELECT " + eventManager.formatTimeFunction(rangeInfo.getPeriodSize(), timeZone) + " AS interval, " // NON-NLS
                           + eventManager.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS

@@ -177,7 +177,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        final RootFilterState subClusterFilter = eventsModel.getFilterModel().copyOf();
+        final RootFilterState subClusterFilter = eventsModel.getFilterState().copyOf();
         subClusterFilter.getFilter().getSubFilters().addAll(
                 new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));

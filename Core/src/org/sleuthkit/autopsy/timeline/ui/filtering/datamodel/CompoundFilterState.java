@@ -18,97 +18,24 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
-public class CompoundFilterState<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
-        extends DefaultFilterState<C>
-        implements CompoundFilterStateI<SubFilterType> {
+/**
+ *
+ * * A CompoundFilter uses listeners to enforce the following relationships
+ * between it and its sub-filters: if all of a compound filter's sub-filters
+ * become un-selected, un-select the compound filter.
+ *
+ * @param <SubFilterType>
+ * @param <C>
+ */
+public interface CompoundFilterState<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>> extends FilterState<C> {
 
-    private final ObservableList<FilterState<SubFilterType>> subFilterModels = FXCollections.observableArrayList();
-
-    public CompoundFilterState(C delegate) {
-        super(delegate);
-
-        delegate.getSubFilters().forEach(this::addSubFilterState);
-        delegate.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(CompoundFilterState.this::addSubFilterState);
-            }
-        });
-
-    }
-
-    public CompoundFilterState(C delegate, Collection<FilterState<SubFilterType>> subFilterStates) {
-        super(delegate);
-
-        subFilterStates.forEach(this::addSubFilterState);
-        delegate.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(CompoundFilterState.this::addSubFilterState);
-            }
-        });
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private <X extends TimelineFilter, S extends CompoundFilter<X>> void addSubFilterState(SubFilterType subFilter) {
-
-        if (subFilter instanceof CompoundFilter<?>) {
-            addSubFilterState((FilterState<SubFilterType>) new CompoundFilterState<>((S) subFilter));
-        } else {
-            addSubFilterState(new DefaultFilterState<>(subFilter));
-        }
-
-    }
-
-    private void addSubFilterState(FilterState<SubFilterType> newFilterModel) {
-        subFilterModels.add(newFilterModel);
-        newFilterModel.selectedProperty().addListener(selectedProperty -> {
-            //set this compound filter model  selected af any of the subfilters are selected.
-            setSelected(getSubFilterStates().parallelStream().anyMatch(FilterState::isSelected));
-        });
-    }
+    ObservableList<? extends FilterState< ? extends SubFilterType>> getSubFilterStates();
 
     @Override
-    public ObservableList<FilterState<SubFilterType>> getSubFilterStates() {
-        return subFilterModels;
-    }
+    public CompoundFilterState<SubFilterType, C> copyOf();
 
-    @Override
-    public CompoundFilterState<SubFilterType, C> copyOf() {
-
-        @SuppressWarnings("unchecked")
-        CompoundFilterState<SubFilterType, C> copy = new CompoundFilterState<>((C) getFilter().copyOf(),
-                getSubFilterStates().stream().map(FilterState::copyOf).collect(Collectors.toList())
-        );
-
-        copy.setSelected(isSelected());
-        copy.setDisabled(isDisabled());
-        return copy;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public C getActiveFilter() {
-        if (isActive() == false) {
-            return null;
-        }
-
-        List<SubFilterType> activeSubFilters = getSubFilterStates().stream()
-                .filter(FilterState::isActive)
-                .map(FilterState::getActiveFilter)
-                .collect(Collectors.toList());
-        C copy = (C) getFilter().copyOf();
-        copy.getSubFilters().clear();
-        copy.getSubFilters().addAll(activeSubFilters);
-
-        return copy;
-    }
 }

@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
@@ -87,7 +88,6 @@ import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 
 /**
  * This class acts as the model for a TimelineView
@@ -170,14 +170,13 @@ public final class FilteredEventsModel {
         });
         requestedFilter.set(getDefaultFilter());
 
-      
         requestedZoomParamters.addListener((Observable observable) -> {
             final ZoomParams zoomParams = requestedZoomParamters.get();
 
             if (zoomParams != null) {
                 synchronized (FilteredEventsModel.this) {
                     requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                    requestedFilter.set(zoomParams.getFilterState() );
+                    requestedFilter.set(zoomParams.getFilterState());
                     requestedTimeRange.set(zoomParams.getTimeRange());
                     requestedLOD.set(zoomParams.getDescriptionLOD());
                 }
@@ -274,21 +273,18 @@ public final class FilteredEventsModel {
      * for tags that are not in use in the case, and add new filters for tags
      * that don't have them. New filters are selected by default.
      *
-     * @param tagsFilter the tags filter to modify so it is consistent with the
+     * @param rootFilter the filter state to modify so it is consistent with the
      *                   tags in use in the case
      */
     public void syncTagsFilter(RootFilterState rootFilter) {
         for (TagName tagName : tagNames) {
-            rootFilter.getTagsFilterModel().getFilter().getSubFilters().add(new TagNameFilter(tagName));
+            rootFilter.getTagsFilterModel().getFilter().addSubFilter(new TagNameFilter(tagName));
         }
-        for (FilterState<TagNameFilter> filterModel : rootFilter.getTagsFilterModel().getSubFilterStates()) {
-            filterModel.setDisabled(tagNames.contains(filterModel.getFilter().getTagName()) == false);
+        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterModel().getSubFilterStates()) {
+            filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
     }
-
-    public boolean areFiltersEquivalent(RootFilter filter1, RootFilter filter2) {
-        return eventManager.getSQLWhere(filter1).equals(eventManager.getSQLWhere(filter2));
-    }
+  
 
     /**
      * Get a read only view of the time range currently in view.
@@ -336,7 +332,7 @@ public final class FilteredEventsModel {
         return getZoomParamaters().getDescriptionLOD();
     }
 
-    synchronized public RootFilterState getFilterModel() {
+    synchronized public RootFilterState getFilterState() {
         return getZoomParamaters().getFilterState();
     }
 
@@ -376,7 +372,7 @@ public final class FilteredEventsModel {
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone timeZone) throws TskCoreException {
-        return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), getFilterModel().getActiveFilter(), timeZone);
+        return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), getFilterState().getActiveFilter(), timeZone);
     }
 
     public TimelineEvent getEventById(Long eventID) throws TskCoreException {
@@ -413,7 +409,7 @@ public final class FilteredEventsModel {
         final RootFilterState intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersect = getFilterModel().copyOf();
+            intersect = getFilterState().copyOf();
         }
         intersect.getFilter().getSubFilters().add(filter);
         return eventManager.getEventIDs(overlap, intersect.getActiveFilter());
@@ -428,6 +424,7 @@ public final class FilteredEventsModel {
      * @param timeRange
      *
      * @return
+     *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
@@ -435,7 +432,7 @@ public final class FilteredEventsModel {
         final RootFilterState filter;
         final EventTypeZoomLevel typeZoom;
         synchronized (this) {
-            filter = getFilterModel();
+            filter = getFilterState();
             typeZoom = getEventTypeZoom();
         }
         try {
