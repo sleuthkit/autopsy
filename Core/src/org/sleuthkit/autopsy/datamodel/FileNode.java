@@ -26,11 +26,14 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -160,7 +163,15 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
         AbstractFile file = content;
         if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
-            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
+            try {
+                actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); // NON-NLS
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Could not retrieve data source from file '%s' (objId=%d).", file.getName(), file.getId()), ex); // NON-NLS
+            }
         }
 
         if (!this.getDirectoryBrowseMode()) {

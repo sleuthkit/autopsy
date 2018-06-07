@@ -85,7 +85,10 @@ public class CorrelationDataSource implements Serializable {
             throw new EamDbException("Error getting data source info: " + ex.getMessage());
         }
         
-        CorrelationDataSource correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
+        CorrelationDataSource correlationDataSource = null;
+        if (EamDbUtil.useCentralRepo()) {
+            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
+        }
         if (correlationDataSource == null) {
             correlationDataSource = new CorrelationDataSource(correlationCase.getID(), deviceId, dataSource.getName());
         }

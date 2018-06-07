@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
@@ -30,6 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -39,6 +41,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
+    private static final Logger logger = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
+    
     private boolean addToDatabase;
     private CorrelationAttribute correlationAttribute;
 
@@ -60,30 +64,19 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      *                    is derived.
      * @param displayName The text for the menu item.
      */
-    private AddEditCentralRepoCommentAction(AbstractFile file, String displayName) {
+    private AddEditCentralRepoCommentAction(AbstractFile file, String displayName) throws EamDbException, NoCurrentCaseException, TskCoreException {
 
         super(displayName);
-        try {
-            CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-            String value = file.getMd5Hash();
-            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+        CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+        CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+        CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
+        String value = file.getMd5Hash();
+        String filePath = (file.getParentPath() + file.getName()).toLowerCase();
 
-            correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
-            if (correlationAttribute == null) {
-                addToDatabase = true;
-                correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
-            }
-        } catch (TskCoreException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        } catch (EamDbException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
-        } catch (NoCurrentCaseException ex) {
-            //DLG:
-            Exceptions.printStackTrace(ex);
+        correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
+        if (correlationAttribute == null) {
+            addToDatabase = true;
+            correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
         }
     }
 
@@ -114,7 +107,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                     dbManager.updateAttributeInstanceComment(correlationAttribute);
                 }
             } catch (EamDbException ex) {
-                Exceptions.printStackTrace(ex); //DLG:
+                logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             }
         }
     }
@@ -127,9 +120,15 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      *             derived.
      *
      * @return The instance.
+     * 
+     * @throws EamDbException
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
      */
     @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
-    public static AddEditCentralRepoCommentAction createAddEditCentralRepoCommentAction(AbstractFile file) {
+    public static AddEditCentralRepoCommentAction createAddEditCentralRepoCommentAction(AbstractFile file)
+            throws EamDbException, NoCurrentCaseException, TskCoreException {
+        
         return new AddEditCentralRepoCommentAction(file,
                 Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
     }
@@ -144,6 +143,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditComment=Add/Edit Comment"})
     public static AddEditCentralRepoCommentAction createAddEditCommentAction(CorrelationAttribute correlationAttribute) {
+        
         return new AddEditCentralRepoCommentAction(correlationAttribute,
                 Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditComment());
     }
