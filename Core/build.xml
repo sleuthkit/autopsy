@@ -96,6 +96,10 @@
         <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/local_files_test.zip" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1BrSiUQ1fzxFS9vIaK4mYKX6qIVp9kRWT" dest="${test-input}/password_detection_test.img" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1HD8s4rculgHV1qZT5g80Kg7j4m1qccrN" dest="${test-input}/veracrypt_detection_test.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1O5D09fFCFpXZqw0uLEs8kVLtfYTxqXAd" dest="${test-input}/commonfiles_image1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1rMP1QTI0LdppzdypbG-4BDwkKcR3tHXc" dest="${test-input}/commonfiles_image2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1OdwyJ2lru55ZPdvwzj3pq6sXIys27i4x" dest="${test-input}/commonfiles_image3_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1GoF2x0km5AyFvE926ttN20lrMX1oLN7E" dest="${test-input}/commonfiles_image4_v1.vhd" skipexisting="true"/>
     </target>
 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">
