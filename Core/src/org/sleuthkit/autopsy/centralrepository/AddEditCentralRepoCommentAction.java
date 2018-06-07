@@ -67,13 +67,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private AddEditCentralRepoCommentAction(AbstractFile file, String displayName) throws EamDbException, NoCurrentCaseException, TskCoreException {
 
         super(displayName);
-        CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-        CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-        CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-        String value = file.getMd5Hash();
-        String filePath = (file.getParentPath() + file.getName()).toLowerCase();
-
-        correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
+        correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
         if (correlationAttribute == null) {
             addToDatabase = true;
             correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
