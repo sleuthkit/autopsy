@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -53,15 +54,32 @@ public class Md5Node extends DisplayableItemNode {
     private final String dataSources;
 
     public Md5Node(Md5Metadata data) {
-        super(Children.create(
-                new FileInstanceNodeFactory(data), true),
-                Lookups.singleton(data.getMd5()));
-        
+        super(Children.createLazy(new Md5ChildCallable(data)), Lookups.singleton(data.getMd5()));
         this.commonFileCount = data.size();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
 
         this.setDisplayName(this.md5Hash);
+    }
+    
+    private static class Md5ChildCallable implements Callable<Children> {
+        private final Md5Metadata key;
+        private Md5ChildCallable(Md5Metadata key) {
+            this.key = key;
+        }
+        @Override
+        public Children call() throws Exception {
+            //Check, somehow, that your key has children,
+            //e.g., create "hasChildren" on the object
+            //to look in the database to see whether
+            //the object has children;
+            //if it doesn't have children, return a leaf:
+            if (key.getMetadata().isEmpty()) {
+                return Children.LEAF;
+            } else {
+                return Children.create(new FileInstanceNodeFactory(key), true);
+            }
+        }
     }
 
     int getCommonFileCount() {
