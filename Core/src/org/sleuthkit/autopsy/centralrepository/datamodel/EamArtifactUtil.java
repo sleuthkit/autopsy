@@ -237,7 +237,7 @@ public class EamArtifactUtil {
 
         final AbstractFile af = (AbstractFile) content;
 
-        if (!isValidCentralRepoFile(af)) {
+        if (!isSupportedAbstractFileType(af)) {
             return null;
         }
 
@@ -276,12 +276,8 @@ public class EamArtifactUtil {
      * @return true if the file should be added to the central repo, false
      *         otherwise
      */
-    public static boolean isValidCentralRepoFile(AbstractFile af) {
+    public static boolean isSupportedAbstractFileType(AbstractFile af) {
         if (af == null) {
-            return false;
-        }
-
-        if (af.getKnown() == TskData.FileKnown.KNOWN) {
             return false;
         }
 
