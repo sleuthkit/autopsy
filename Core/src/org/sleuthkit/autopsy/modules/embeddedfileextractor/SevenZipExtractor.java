@@ -457,7 +457,7 @@ class SevenZipExtractor {
      *
      * @param archiveFile file to unpack
      * @param depthMap    - a concurrent hashmap which keeps track of the depth
-     *                    of all nested archives
+     *                    of all nested archives, key of objectID
      *
      * @return true if unpacking is complete
      */
@@ -471,7 +471,7 @@ class SevenZipExtractor {
      *
      * @param archiveFile - file to unpack
      * @param depthMap    - a concurrent hashmap which keeps track of the depth
-     *                    of all nested archives
+     *                    of all nested archives, key of objectID
      * @param password    - the password to use, null for no password
      *
      * @return true if unpacking is complete
