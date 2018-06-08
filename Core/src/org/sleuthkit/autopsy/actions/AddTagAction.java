@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -83,7 +85,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
      */
     // @@@ This user interface has some significant usability issues and needs
     // to be reworked.
-    private class TagMenu extends JMenu {
+    private final class TagMenu extends JMenu {
 
         private static final long serialVersionUID = 1L;
 
@@ -92,6 +94,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
+            List<String> standardTagNames = TagsManager.getStandardTagNames();
             try {
                 TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
@@ -106,6 +109,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
             // a tag with the associated tag name.
+            List<JMenuItem> standardTagMenuitems = new ArrayList<>();
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                     String tagDisplayName = entry.getKey();
@@ -119,7 +123,13 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                     tagNameItem.addActionListener((ActionEvent e) -> {
                         getAndAddTag(entry.getKey(), entry.getValue(), NO_COMMENT);
                     });
-                    quickTagMenu.add(tagNameItem);
+                    
+                     // Show custom tags before predefined tags in the menu
+                    if (standardTagNames.contains(tagDisplayName)) {
+                        standardTagMenuitems.add(tagNameItem);
+                    } else {
+                        quickTagMenu.add(tagNameItem);
+                    }
                 }
             } else {
                 JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
@@ -127,8 +137,15 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 quickTagMenu.add(empty);
             }
 
+            if (quickTagMenu.getItemCount() > 0) {
+                quickTagMenu.addSeparator();
+            }
+            standardTagMenuitems.forEach((menuItem) -> {
+                quickTagMenu.add(menuItem);
+            });
+            
             quickTagMenu.addSeparator();
-
+             
             // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
             // Selecting this item initiates a dialog that can be used to create
             // or select a tag name and adds a tag with the resulting name.

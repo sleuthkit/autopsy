@@ -6,7 +6,9 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -92,6 +94,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
 
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
+            List<String> standardTagNames = TagsManager.getStandardTagNames();
             try {
                 TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
@@ -99,6 +102,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 Logger.getLogger(ReplaceTagMenu.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
 
+            List<JMenuItem> standardTagMenuitems = new ArrayList<>();
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                     String tagDisplayName = entry.getKey();
@@ -116,7 +120,12 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                         });
                     });
 
-                    add(tagNameItem);
+                    // Show custom tags before predefined tags in the menu
+                    if (standardTagNames.contains(tagDisplayName)) {
+                        standardTagMenuitems.add(tagNameItem);
+                    } else {
+                        add(tagNameItem);
+                    }
                 }
             } else {
                 JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
@@ -124,6 +133,14 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 add(empty);
             }
 
+            // 
+            if (this.getItemCount() > 0) {
+                addSeparator();
+            }
+            standardTagMenuitems.forEach((menuItem) -> {
+                add(menuItem);
+            });
+             
             addSeparator();
             JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
             newTagMenuItem.addActionListener((ActionEvent event) -> {
