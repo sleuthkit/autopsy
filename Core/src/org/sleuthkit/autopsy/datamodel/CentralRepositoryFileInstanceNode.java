@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -51,7 +52,9 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
     
     public CentralRepositoryFileInstanceNode(CentralRepositoryFile content, AbstractFile md5Reference) {
         super(Children.LEAF, Lookups.fixed(content));
+
         this.crFile = content;
+        this.setDisplayName(new File(this.crFile.getFilePath()).getName());
         this.md5Reference = md5Reference;
     }
     
@@ -123,10 +126,18 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
      */
     private static void fillPropertyMap(Map<String, Object> map, CentralRepositoryFileInstanceNode node) {
         
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), node.crFile.getFilePath());
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), node.crFile.getFilePath());
+        final CentralRepositoryFile centralRepoFile = node.getCentralRepoFile();
+        
+        final String fullPath = centralRepoFile.getFilePath();
+        final File file = new File(fullPath);
+        
+        final String name = file.getName();
+        final String parent = file.getParent();
+        
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), name);
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), parent);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), node.crFile.getCorrelationDataSource().getName());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), centralRepoFile.getCorrelationDataSource().getName());
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.MimeType.toString(), "");
     }
     
