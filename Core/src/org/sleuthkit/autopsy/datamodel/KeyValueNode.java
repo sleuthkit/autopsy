@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -107,17 +109,21 @@ public class KeyValueNode extends AbstractNode {
      *
      * @return actions
      */
+    @Messages({
+        "KeyValueNode.menuItemText.viewFileInDir=View Source File in Directory"
+    })
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(popup)));
-        //if this artifact has associated content, add the action to view the content in the timeline
+        List<Action> actionsList = new ArrayList<>();
+        actionsList.addAll(Arrays.asList(super.getActions(popup)));
+        // If this artifact has associated content, add the actions.
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-            actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+            actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+            actionsList.add(new ViewContextAction(Bundle.KeyValueNode_menuItemText_viewFileInDir(), file));
         }
-        actions.add(null); // creates a menu separator
+        actionsList.add(null); // creates a menu separator
 
-        return actions.toArray(new Action[actions.size()]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 }
