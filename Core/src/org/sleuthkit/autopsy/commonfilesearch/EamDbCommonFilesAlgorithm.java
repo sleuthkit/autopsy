@@ -24,10 +24,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
@@ -36,6 +38,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import static org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder.SELECT_PREFIX;
 import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -126,22 +129,28 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             }
             //Builds a 3rd list which contains instances which are in currentCaseMetadata map, uses current case objectId
             if (commonFiles.containsKey(md5)) {
-                // we don't *have* all the information for the rows in the CR, 
-                //  so we need to consult the present case via the SleuthkitCase object
-                
-                //TODO resume here!!!
-                //TODO need to figure out if we have a CR instance or a SK resource and create as appropriate....
-                Long objectId = commonFiles.get(md5).getMetadata().iterator().next().getIdenticalFileSleuthkitCaseObjectID();
-                
-                if(interCaseCommonFiles.containsKey(md5)) {
-                    //Add to intercase metaData
-                    final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
+                try {
+                    // we don't *have* all the information for the rows in the CR,
+                    //  so we need to consult the present case via the SleuthkitCase object
                     
-                } else {
-                    Md5Metadata md5Metadata = new Md5Metadata(md5);
-                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, dataSource), correlationCaseDisplayName);
-                    interCaseCommonFiles.put(md5, md5Metadata);
+                    //TODO resume here!!!
+                    //TODO need to figure out if we have a CR instance or a SK resource and create as appropriate....
+                    final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = commonFiles.get(md5).getMetadata().iterator();
+                    
+                    FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, instance, cachedFiles);
+                    
+                    if(interCaseCommonFiles.containsKey(md5)) {
+                        //Add to intercase metaData
+                        final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
+                        md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
+                        
+                    } else {
+                        Md5Metadata md5Metadata = new Md5Metadata(md5);
+                        md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
+                        interCaseCommonFiles.put(md5, md5Metadata);
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
                 }
             }
         }

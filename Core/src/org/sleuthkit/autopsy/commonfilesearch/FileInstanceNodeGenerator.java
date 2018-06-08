@@ -19,6 +19,9 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
@@ -43,16 +46,16 @@ public abstract class FileInstanceNodeGenerator {
     protected Long abstractFileReference;
     protected Map<Long, AbstractFile> cachedFiles;
     private String dataSource;
-    
-    public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource){
+
+    public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource) {
         this.abstractFileReference = abstractFileReference;
         this.cachedFiles = cachedFiles;
         this.dataSource = dataSource;
     }
-    
+
     /**
      * Grab a cached instance of the AbstractFile or grab one from the
-     * SleuthkitCase.  Use this in implementations of <code>generateNode</code>.
+     * SleuthkitCase. Use this in implementations of <code>generateNode</code>.
      *
      * @param objectId
      * @param cachedFiles
@@ -70,24 +73,24 @@ public abstract class FileInstanceNodeGenerator {
     }
 
     private static AbstractFile loadFileFromSleuthkitCase(Long objectId) {
-        
+
         Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
-                        
+
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
             AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", objectId)).get(0);
 
             return abstractFile;
-            
+
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{objectId}), ex);
             return null;
         }
     }
-    
-    private static AbstractFile lookupOrCreateAbstractFile(Long objectId, Map<Long, AbstractFile> cachedFiles){
+
+    private static AbstractFile lookupOrCreateAbstractFile(Long objectId, Map<Long, AbstractFile> cachedFiles) {
         if (cachedFiles.containsKey(objectId)) {
             return cachedFiles.get(objectId);
         } else {
@@ -104,29 +107,74 @@ public abstract class FileInstanceNodeGenerator {
      * @return child row node
      */
     public abstract DisplayableItemNode generateNode();
+
+    /**
+     * 
+     * @param dataSource 
+     */
+    protected void setDataSource(String dataSource){
+        this.dataSource = dataSource;
+    }
     
     /**
      * Get string name of the data source where this instance appears.
-     * 
-     * @return 
+     *
+     * @return
      */
-    public String getDataSource(){
-       
+    public String getDataSource() {
+
         /**
          * Even though we could get this from the CR record or the AbstractFile,
-         * we want to avoid getting it from the AbstractFile because it would be an
-         * extra database roundtrip.
+         * we want to avoid getting it from the AbstractFile because it would be
+         * an extra database roundtrip.
          */
         return this.dataSource;
     }
-    
-    public Long getIdenticalFileSleuthkitCaseObjectID(){
+
+    public Long getIdenticalFileSleuthkitCaseObjectID() {
         return this.abstractFileReference;
     }
-    
-    public static FileInstanceNodeGenerator createInstance(Long objectId, CentralRepositoryFile instance, Map<Long, AbstractFile> cachedFiles){
-        AbstractFile referenceFile = FileInstanceNodeGenerator.lookupOrCreateAbstractFile(objectId, cachedFiles);
+
+    public static FileInstanceNodeGenerator createInstance(Iterator<FileInstanceNodeGenerator> identicalFileNodeGeneratorIterator, CentralRepositoryFile instance, Map<Long, AbstractFile> cachedFiles) throws Exception {
+
+        Long arbitraryIdenticalAbstractFileId = null;
         
+        while (identicalFileNodeGeneratorIterator.hasNext()) {
+            
+            FileInstanceNodeGenerator identicalFileNodeGenerator = identicalFileNodeGeneratorIterator.next();
+            
+            final Long identicalFileSleuthkitCaseObjectID = identicalFileNodeGenerator.getIdenticalFileSleuthkitCaseObjectID();
+
+            final AbstractFile referenceFile = FileInstanceNodeGenerator.lookupOrCreateAbstractFile(identicalFileSleuthkitCaseObjectID, cachedFiles);
+            final Long referenceFileId = referenceFile.getId();
+            arbitraryIdenticalAbstractFileId = referenceFileId;
+
+            final String referenceFileDataSource = identicalFileNodeGenerator.getDataSource();
+
+            final String referenceCase = Case.getCurrentCase().getDisplayName();
+
+            final String referencePath = Paths.get(referenceFile.getParentPath(), referenceFile.getName()).toString();
+
+            final String instanceDataSource = instance.getCorrelationDataSource().getName();
+
+            final String instanceCase = instance.getCorrelationCase().getDisplayName();
+
+            final String instancePath = instance.getFilePath();
+            
+            final boolean sameDataSource = referenceFileDataSource.equals(instanceDataSource);
+            final boolean sameCase = referenceCase.equals(instanceCase);
+            final boolean samePathAndName = referencePath.equals(instancePath);
+            
+            if(sameDataSource && sameCase && samePathAndName){
+                return new SleuthkitCaseFileInstanceMetadata(referenceFile.getId(), cachedFiles, instanceDataSource);
+            }
+        }
         
+        if(arbitraryIdenticalAbstractFileId != null){
+            return new CentralRepositoryCaseFileInstanceMetadata(instance, arbitraryIdenticalAbstractFileId, cachedFiles);
+        } else {
+            throw new Exception("Unable to get instance.");
+        }
+
     }
 }

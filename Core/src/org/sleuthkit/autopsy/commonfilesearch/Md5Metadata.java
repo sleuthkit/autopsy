@@ -52,7 +52,7 @@ final public class Md5Metadata {
         this.fileInstances.add(metadata);
     }
     
-    void addFileInstanceMetadata(SleuthkitCaseFileInstanceMetadata metadata, String caseName){
+    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata, String caseName){
         this.fileInstances.add(metadata);
     }
     
