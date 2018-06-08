@@ -190,7 +190,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         stopTimer();
         
         healthMonitorOutputTimer = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("health_monitor_timer").build());
-        healthMonitorOutputTimer.scheduleWithFixedDelay(new PeriodicHealthMonitorTask(), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
+        healthMonitorOutputTimer.scheduleWithFixedDelay(new PeriodicHealthMonitorTask(false), DATABASE_WRITE_INTERVAL, DATABASE_WRITE_INTERVAL, TimeUnit.MINUTES);
     }
     
     /**
@@ -356,11 +356,16 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     /**
      * Collect metrics at a scheduled time.
+     * @param caseIsClosing True if this was triggered from a case closed event
      * @throws HealthMonitorException 
      */
-    private void gatherTimerBasedMetrics() throws HealthMonitorException {
-        // Time a database query
-        performDatabaseQuery();
+    private void gatherTimerBasedMetrics(boolean caseIsClosing) throws HealthMonitorException {
+        // Time a database query. If this was triggered from a case close event 
+        // it will fail - since we're on a new thread the case database will
+        // be in the process of closing. In that case, skip collecting the metric.
+        if( ! caseIsClosing) {
+            performDatabaseQuery();
+        }
     }
     
     /**
@@ -806,17 +811,23 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      */
     static final class PeriodicHealthMonitorTask implements Runnable {
 
+        boolean caseIsClosing;
+        
+        PeriodicHealthMonitorTask(boolean caseIsClosing) {
+            this.caseIsClosing = caseIsClosing;
+        }
+        
         /**
          * Perform all periodic tasks:
          * - Check if monitoring has been enabled / disabled in the database
-         * - Gather any additional metrics
+         * - Calculate any final metrics
          * - Write current metric data to the database
          */
         @Override
         public void run() {
             try {
                 getInstance().updateFromGlobalEnabledStatus();
-                getInstance().gatherTimerBasedMetrics();
+                getInstance().gatherTimerBasedMetrics(caseIsClosing);
                 getInstance().writeCurrentStateToDatabase();
             } catch (HealthMonitorException ex) {
                 logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
@@ -832,7 +843,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             case CURRENT_CASE:
                 if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
                     // When a case is closed, write the current metrics to the database
-                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.PeriodicHealthMonitorTask());
+                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.PeriodicHealthMonitorTask(true));
                 }
                 break;
         }
