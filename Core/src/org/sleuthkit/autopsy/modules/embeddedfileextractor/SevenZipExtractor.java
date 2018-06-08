@@ -1210,6 +1210,7 @@ class SevenZipExtractor {
      */
     static class Archive {
 
+        //depth will be 0 for the root archive unpack was called on, and increase as unpack recurses down through archives contained within
         private final int depth;
         private final long objectId;
         private final List<Archive> children;
@@ -1218,7 +1219,10 @@ class SevenZipExtractor {
          * Create a new Archive object.
          *
          * @param objectId the unique object id of the archive object
-         * @param depth    the depth in the archive structure
+         * @param depth    the depth in the archive structure - 0 will be the
+         *                 root archive unpack was called on, and it will
+         *                 increase as unpack recurses down through archives
+         *                 contained within
          */
         Archive(long objectId, int depth) {
             this.objectId = objectId;
@@ -1248,8 +1252,9 @@ class SevenZipExtractor {
         /**
          * Get archive depth of this archive
          *
-         * @return depth - an integer representing how many layers of archives
-         *         this archive is inside.
+         * @return depth - an integer representing that represents how many
+         *         times the upack method has been recursed from the root
+         *         archive unpack was called on
          */
         int getDepth() {
             return depth;
