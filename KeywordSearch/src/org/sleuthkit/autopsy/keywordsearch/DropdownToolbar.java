@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * panel and dropdown single keyword search panel. Displayed in the upper right
  * hand corner of the application by default.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class DropdownToolbar extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
