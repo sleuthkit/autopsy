@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Provides logic for selecting common files from a single data source.
  */
-final class SingleDataSource extends CommonFilesMetadataBuilder {
+final public class SingleDataSource extends CommonFilesMetadataBuilder {
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(*) > 1) order by md5"; //NON-NLS
     private final Long selectedDataSourceId;
@@ -35,10 +35,12 @@ final class SingleDataSource extends CommonFilesMetadataBuilder {
      * once in the given data source
      * @param dataSourceId data source id for which common files must appear at least once
      * @param dataSourceIdMap a map of obj_id to datasource name
-     * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
-     * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
+     * @param filterByMediaMimeType match only on files whose mime types can be
+     * broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be
+     * broadly categorized as document types
      */
-    SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    public SingleDataSource(Long dataSourceId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         this.selectedDataSourceId = dataSourceId;
         this.dataSourceName = dataSourceIdMap.get(this.selectedDataSourceId);

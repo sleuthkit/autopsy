@@ -44,6 +44,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import org.controlsfx.control.PopOver;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
@@ -144,7 +145,13 @@ public class Toolbar extends ToolBar {
              *
              * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
              */
-            LOGGER.log(Level.WARNING, "Could not create Follow Up tag menu item", ex); //NON-NLS
+            if (Case.isCaseOpen()) {
+                LOGGER.log(Level.WARNING, "Could not create Follow Up tag menu item", ex); //NON-NLS
+            }
+            else {
+                // don't add stack trace to log because it makes looking for real errors harder
+                LOGGER.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
+            }
         }
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
