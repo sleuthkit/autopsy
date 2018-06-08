@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
@@ -31,19 +33,30 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
+import javax.swing.GroupLayout;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import static javax.swing.JOptionPane.DEFAULT_OPTION;
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.LayoutStyle;
+import javax.swing.ListSelectionModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.openide.awt.Mnemonics;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -65,14 +78,16 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * View correlation results from other cases
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 @ServiceProvider(service = DataContentViewer.class, position = 8)
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
-public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
+public class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
     
     private static final long serialVersionUID = -1L;
     
@@ -453,12 +468,12 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @return A collection of correlated artifact instances from other cases
      */
-    private Map<ArtifactKey, CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey,CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
-            HashMap<ArtifactKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
+            HashMap<UniquePathKey,CorrelationAttributeInstance> artifactInstances = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 EamDb dbManager = EamDb.getInstance();
@@ -466,8 +481,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                         || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
                         || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                        .collect(Collectors.toMap(
-                                correlationAttr -> new ArtifactKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
+                        .collect(Collectors.toMap(correlationAttr -> new UniquePathKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
                                 correlationAttr -> correlationAttr)));
             }
 
@@ -509,29 +523,59 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     }
 
-    private void addOrUpdateAttributeInstance(final Case openCase, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, AbstractFile caseDbFile) throws TskCoreException, EamDbException {
-        CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
-        CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, caseDbFile.getDataSource());
-        String filePath = caseDbFile.getParentPath() + caseDbFile.getName();
-        ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
-        CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(caze, dataSource, filePath, "", caseDbFile.getKnown());
-        TskData.FileKnown knownStatus = caseDbInstance.getKnownStatus();
-        // If not known, check Tags for known and set
-        TskData.FileKnown knownBad = TskData.FileKnown.BAD;
-        if (!knownStatus.equals(knownBad)) {
-            List<ContentTag> fileMatchTags = openCase.getServices().getTagsManager().getContentTagsByContent(caseDbFile);
+    /**
+     * Adds the file to the artifactInstances map if it does not already exist
+     * 
+     * @param autopsyCase 
+     * @param artifactInstances
+     * @param newFile
+     * @throws TskCoreException
+     * @throws EamDbException 
+     */
+    private void addOrUpdateAttributeInstance(final Case autopsyCase, Map<UniquePathKey,CorrelationAttributeInstance> artifactInstances, AbstractFile newFile) throws TskCoreException, EamDbException {
+        
+        // figure out if the casedb file is known via either hash or tags
+        TskData.FileKnown localKnown = newFile.getKnown();
+
+        if (localKnown != TskData.FileKnown.BAD) {
+            List<ContentTag> fileMatchTags = autopsyCase.getServices().getTagsManager().getContentTagsByContent(newFile);
             for (ContentTag tag : fileMatchTags) {
                 TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
-                if (tagKnownStatus.equals(knownBad)) {
-                    caseDbInstance.setKnownStatus(knownBad);
+                if (tagKnownStatus.equals(TskData.FileKnown.BAD)) {
+                    localKnown = TskData.FileKnown.BAD;
                     break;
                 }
             }
         }
 
-        // If known, or not in CR, add
-        if (caseDbInstance.getKnownStatus().equals(knownBad) || !artifactInstances.containsKey(instKey)) {
-            artifactInstances.put(instKey, caseDbInstance);
+        // make a key to see if the file is already in the map
+        String filePath = newFile.getParentPath() + newFile.getName();
+        String deviceId;
+        try {
+            deviceId = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId()).getDeviceId();
+        } catch (TskDataException | TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Error getting data source info: " + ex);
+            return;
+        }
+        UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
+        
+        // double check that the CR version is BAD if the caseDB version is BAD.
+        if (artifactInstances.containsKey(uniquePathKey)) {
+            if (localKnown == TskData.FileKnown.BAD) {
+                CorrelationAttributeInstance prevInstance = artifactInstances.get(uniquePathKey);
+                prevInstance.setKnownStatus(localKnown);
+            }
+        }
+        // add the data from the case DB by pushing data into CorrelationAttributeInstance class
+        else {
+            // NOTE: If we are in here, it is likely because CR is not enabled.  So, we cannot rely
+            // on any of the methods that query the DB.
+            CorrelationCase correlationCase = new CorrelationCase(autopsyCase.getName(), autopsyCase.getDisplayName());
+            
+            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, newFile.getDataSource());
+        
+            CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(correlationCase, correlationDataSource, filePath, "", localKnown);
+            artifactInstances.put(uniquePathKey, caseDbInstance);
         }
     }
 
@@ -590,7 +634,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
         for (CorrelationAttribute corAttr : correlationAttributes) {
-            Map<ArtifactKey, CorrelationAttributeInstance> corAttrInstances = new HashMap<>(0);
+            Map<UniquePathKey, CorrelationAttributeInstance> corAttrInstances = new HashMap<>(0);
 
             // get correlation and reference set instances from DB
             corAttrInstances.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
@@ -610,6 +654,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         }
 
         if (correlationAttributes.isEmpty()) {
+            // @@@ BC: We should have a more descriptive message than this.  Mention that the file didn't have a MD5, etc.
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_isempty());
@@ -647,131 +692,170 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        rightClickPopupMenu = new javax.swing.JPopupMenu();
-        selectAllMenuItem = new javax.swing.JMenuItem();
-        exportToCSVMenuItem = new javax.swing.JMenuItem();
-        showCaseDetailsMenuItem = new javax.swing.JMenuItem();
-        showCommonalityMenuItem = new javax.swing.JMenuItem();
-        CSVFileChooser = new javax.swing.JFileChooser();
-        otherCasesPanel = new javax.swing.JPanel();
-        tableContainerPanel = new javax.swing.JPanel();
-        tableScrollPane = new javax.swing.JScrollPane();
-        otherCasesTable = new javax.swing.JTable();
-        tableStatusPanel = new javax.swing.JPanel();
-        tableStatusPanelLabel = new javax.swing.JLabel();
+        rightClickPopupMenu = new JPopupMenu();
+        selectAllMenuItem = new JMenuItem();
+        exportToCSVMenuItem = new JMenuItem();
+        showCaseDetailsMenuItem = new JMenuItem();
+        showCommonalityMenuItem = new JMenuItem();
+        CSVFileChooser = new JFileChooser();
+        otherCasesPanel = new JPanel();
+        tableContainerPanel = new JPanel();
+        tableScrollPane = new JScrollPane();
+        otherCasesTable = new JTable();
+        tableStatusPanel = new JPanel();
+        tableStatusPanelLabel = new JLabel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.selectAllMenuItem.text")); // NOI18N
+        Mnemonics.setLocalizedText(selectAllMenuItem, NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.selectAllMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(selectAllMenuItem);
 
-        org.openide.awt.Mnemonics.setLocalizedText(exportToCSVMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.exportToCSVMenuItem.text")); // NOI18N
+        Mnemonics.setLocalizedText(exportToCSVMenuItem, NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.exportToCSVMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(exportToCSVMenuItem);
 
-        org.openide.awt.Mnemonics.setLocalizedText(showCaseDetailsMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCaseDetailsMenuItem.text")); // NOI18N
+        Mnemonics.setLocalizedText(showCaseDetailsMenuItem, NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCaseDetailsMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCaseDetailsMenuItem);
 
-        org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
+        Mnemonics.setLocalizedText(showCommonalityMenuItem, NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(1500, 10));
+        setMinimumSize(new Dimension(1500, 10));
         setOpaque(false);
-        setPreferredSize(new java.awt.Dimension(1500, 44));
+        setPreferredSize(new Dimension(1500, 44));
 
-        otherCasesPanel.setPreferredSize(new java.awt.Dimension(1500, 144));
+        otherCasesPanel.setPreferredSize(new Dimension(1500, 144));
 
-        tableContainerPanel.setPreferredSize(new java.awt.Dimension(1500, 63));
+        tableContainerPanel.setPreferredSize(new Dimension(1500, 63));
 
-        tableScrollPane.setPreferredSize(new java.awt.Dimension(1500, 30));
+        tableScrollPane.setPreferredSize(new Dimension(1500, 30));
 
         otherCasesTable.setAutoCreateRowSorter(true);
         otherCasesTable.setModel(tableModel);
-        otherCasesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
+        otherCasesTable.setToolTipText(NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
         otherCasesTable.setComponentPopupMenu(rightClickPopupMenu);
-        otherCasesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        otherCasesTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         tableScrollPane.setViewportView(otherCasesTable);
 
-        tableStatusPanel.setPreferredSize(new java.awt.Dimension(1500, 16));
+        tableStatusPanel.setPreferredSize(new Dimension(1500, 16));
 
-        tableStatusPanelLabel.setForeground(new java.awt.Color(255, 0, 51));
+        tableStatusPanelLabel.setForeground(new Color(255, 0, 51));
 
-        javax.swing.GroupLayout tableStatusPanelLayout = new javax.swing.GroupLayout(tableStatusPanel);
+        GroupLayout tableStatusPanelLayout = new GroupLayout(tableStatusPanel);
         tableStatusPanel.setLayout(tableStatusPanelLayout);
-        tableStatusPanelLayout.setHorizontalGroup(
-            tableStatusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        tableStatusPanelLayout.setHorizontalGroup(tableStatusPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGap(0, 0, Short.MAX_VALUE)
-            .addGroup(tableStatusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(tableStatusPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(tableStatusPanelLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 780, Short.MAX_VALUE)
+                    .addComponent(tableStatusPanelLabel, GroupLayout.DEFAULT_SIZE, 780, Short.MAX_VALUE)
                     .addContainerGap()))
         );
-        tableStatusPanelLayout.setVerticalGroup(
-            tableStatusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        tableStatusPanelLayout.setVerticalGroup(tableStatusPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGap(0, 16, Short.MAX_VALUE)
-            .addGroup(tableStatusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(tableStatusPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(tableStatusPanelLayout.createSequentialGroup()
-                    .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tableStatusPanelLabel, GroupLayout.PREFERRED_SIZE, 16, GroupLayout.PREFERRED_SIZE)
                     .addGap(0, 0, Short.MAX_VALUE)))
         );
 
-        javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
+        GroupLayout tableContainerPanelLayout = new GroupLayout(tableContainerPanel);
         tableContainerPanel.setLayout(tableContainerPanelLayout);
-        tableContainerPanelLayout.setHorizontalGroup(
-            tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tableScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(tableStatusPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        tableContainerPanelLayout.setHorizontalGroup(tableContainerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addComponent(tableScrollPane, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(tableStatusPanel, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        tableContainerPanelLayout.setVerticalGroup(
-            tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        tableContainerPanelLayout.setVerticalGroup(tableContainerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tableStatusPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tableScrollPane, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tableStatusPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        javax.swing.GroupLayout otherCasesPanelLayout = new javax.swing.GroupLayout(otherCasesPanel);
+        GroupLayout otherCasesPanelLayout = new GroupLayout(otherCasesPanel);
         otherCasesPanel.setLayout(otherCasesPanelLayout);
-        otherCasesPanelLayout.setHorizontalGroup(
-            otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        otherCasesPanelLayout.setHorizontalGroup(otherCasesPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGap(0, 1500, Short.MAX_VALUE)
-            .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(tableContainerPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(otherCasesPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(tableContainerPanel, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        otherCasesPanelLayout.setVerticalGroup(
-            otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        otherCasesPanelLayout.setVerticalGroup(otherCasesPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGap(0, 60, Short.MAX_VALUE)
-            .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(otherCasesPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addComponent(otherCasesPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addComponent(otherCasesPanel, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JFileChooser CSVFileChooser;
-    private javax.swing.JMenuItem exportToCSVMenuItem;
-    private javax.swing.JPanel otherCasesPanel;
-    private javax.swing.JTable otherCasesTable;
-    private javax.swing.JPopupMenu rightClickPopupMenu;
-    private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JMenuItem showCaseDetailsMenuItem;
-    private javax.swing.JMenuItem showCommonalityMenuItem;
-    private javax.swing.JPanel tableContainerPanel;
-    private javax.swing.JScrollPane tableScrollPane;
-    private javax.swing.JPanel tableStatusPanel;
-    private javax.swing.JLabel tableStatusPanelLabel;
+    private JFileChooser CSVFileChooser;
+    private JMenuItem exportToCSVMenuItem;
+    private JPanel otherCasesPanel;
+    private JTable otherCasesTable;
+    private JPopupMenu rightClickPopupMenu;
+    private JMenuItem selectAllMenuItem;
+    private JMenuItem showCaseDetailsMenuItem;
+    private JMenuItem showCommonalityMenuItem;
+    private JPanel tableContainerPanel;
+    private JScrollPane tableScrollPane;
+    private JPanel tableStatusPanel;
+    private JLabel tableStatusPanelLabel;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Used as a key to ensure we eliminate duplicates from the result set by not overwriting CR correlation instances.
+     */
+    static final class UniquePathKey {
+
+        private final String dataSourceID;
+        private final String filePath;
+
+        UniquePathKey(String theDataSource, String theFilePath) {
+            super();
+            dataSourceID = theDataSource;
+            filePath = theFilePath.toLowerCase();
+        }
+
+        /**
+         *
+         * @return the dataSourceID device ID
+         */
+        String getDataSourceID() {
+            return dataSourceID;
+        }
+
+        /**
+         *
+         * @return the filPath including the filename and extension.
+         */
+        String getFilePath() {
+            return filePath;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof UniquePathKey) {
+                return ((UniquePathKey) other).getDataSourceID().equals(dataSourceID) && ((UniquePathKey) other).getFilePath().equals(filePath);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            //int hash = 7;
+            //hash = 67 * hash + this.dataSourceID.hashCode();
+            //hash = 67 * hash + this.filePath.hashCode();
+            return Objects.hash(dataSourceID, filePath);
+        }
+    }
 
 }

@@ -373,7 +373,7 @@ class TimingMetricGraphPanel extends JPanel {
                 }
             } else if (y0value > maxValueOnYAxis) {
                 try {
-                    y0value = minValueOnYAxis;
+                    y0value = maxValueOnYAxis;
                     x0value = trendLine.getXGivenY(y0value);
                 } catch (HealthMonitorException ex) {
                     // The exception is caused by a slope of zero on the trend line, which 
