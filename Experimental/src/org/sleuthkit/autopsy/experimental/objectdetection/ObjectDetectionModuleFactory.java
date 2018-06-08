@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.objectDetection;
+package org.sleuthkit.autopsy.experimental.objectdetection;
 
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
