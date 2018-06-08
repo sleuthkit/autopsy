@@ -50,7 +50,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
     private final AbstractFile md5Reference;
     
     public CentralRepositoryFileInstanceNode(CentralRepositoryFile content, AbstractFile md5Reference) {
-        super(Children.LEAF, Lookups.fixed(content, md5Reference));
+        super(Children.LEAF, Lookups.fixed(content));
         this.crFile = content;
         this.md5Reference = md5Reference;
     }
