@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.openide.util.NbBundle;
  * class and extended classes model the user's intentions, not necessarily how
  * the search manager and 3rd party tools actually perform the search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 abstract class AdHocSearchPanel extends javax.swing.JPanel {
 
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
@@ -48,7 +49,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                         Object newValue = evt.getNewValue();
 
                         if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                            int newFilesIndexed = ((Integer) newValue).intValue();
+                            int newFilesIndexed = ((Integer) newValue);
                             filesIndexed = newFilesIndexed;
                             postFilesIndexedChange();
                         }
@@ -110,8 +111,6 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
             }
         }
 
-        AdHocSearchDelegator man = null;
-
         final List<KeywordList> keywordLists = getKeywordLists();
         if (keywordLists.isEmpty()) {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
@@ -119,7 +118,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        man = new AdHocSearchDelegator(keywordLists);
+        AdHocSearchDelegator man = new AdHocSearchDelegator(keywordLists);
 
         if (man.validate()) {
             man.execute();

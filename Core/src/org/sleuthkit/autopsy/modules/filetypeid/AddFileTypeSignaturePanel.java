@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 /**
  * Panel for creating a file type signature to be added to a file type.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddFileTypeSignaturePanel extends javax.swing.JPanel {
 
     private static final String RAW_SIGNATURE_TYPE_COMBO_BOX_ITEM = NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.signatureComboBox.rawItem");
