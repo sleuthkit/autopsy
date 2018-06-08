@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
- /*
- * FileSearchPanel.java
- *
- * Created on Mar 5, 2012, 1:51:50 PM
  */
 package org.sleuthkit.autopsy.filesearch;
 
@@ -56,6 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * FileSearchPanel that present search options
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class FileSearchPanel extends javax.swing.JPanel {
 
     private final List<FilterArea> filterAreas = new ArrayList<>();

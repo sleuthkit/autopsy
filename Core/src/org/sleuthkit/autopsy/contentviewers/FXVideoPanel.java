@@ -76,6 +76,7 @@ import org.sleuthkit.datamodel.TskData;
 @ServiceProviders(value = {
     @ServiceProvider(service = FrameCapture.class)
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class FXVideoPanel extends MediaViewVideoPanel {
 
     // Refer to https://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html
