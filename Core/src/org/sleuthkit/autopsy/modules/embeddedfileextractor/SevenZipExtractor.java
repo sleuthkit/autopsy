@@ -518,7 +518,7 @@ class SevenZipExtractor {
         }
         parentAr = depthMap.get(archiveId);
         if (parentAr == null) {
-            parentAr = new Archive(null, archiveId, 0);
+            parentAr = new Archive(archiveId, 0);
             depthMap.put(archiveId, parentAr);
         } else if (parentAr.getDepth() == MAX_DEPTH) {
             String msg = NbBundle.getMessage(SevenZipExtractor.class,
@@ -668,7 +668,7 @@ class SevenZipExtractor {
                         continue;
                     }
                     if (isSevenZipExtractionSupported(unpackedFile)) {
-                        Archive child = new Archive(parentAr, unpackedFile.getId(), parentAr.getDepth() + 1);
+                        Archive child = new Archive(unpackedFile.getId(), parentAr.getDepth() + 1);
                         parentAr.addChild(child);
                         depthMap.put(unpackedFile.getId(), child);
                     }
@@ -1072,7 +1072,7 @@ class SevenZipExtractor {
 
             private String fileName;
             private AbstractFile file;
-            private List<UnpackedNode> children = new ArrayList<>();
+            private final List<UnpackedNode> children = new ArrayList<>();
             private String localRelPath = "";
             private long size;
             private long ctime, crtime, atime, mtime;
@@ -1208,11 +1208,9 @@ class SevenZipExtractor {
 
         private final int depth;
         private final long objectId;
-        private final Archive parent;
         private final List<Archive> children;
 
-        Archive(Archive parent, long objectId, int depth) {
-            this.parent = parent;
+        Archive(long objectId, int depth) {
             this.objectId = objectId;
             this.children = new ArrayList<>();
             this.depth = depth;
@@ -1226,16 +1224,6 @@ class SevenZipExtractor {
          */
         void addChild(Archive child) {
             children.add(child);
-        }
-
-        /**
-         * Get the object id of the parent of this archive.
-         *
-         * @return parent.objectId - the unique objectId of this archives parent
-         *         archive
-         */
-        long getParentObjectId() {
-            return parent.getObjectId();
         }
 
         /**
