@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
-public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
+final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
 
     private CentralRepositoryFile crFile;
     

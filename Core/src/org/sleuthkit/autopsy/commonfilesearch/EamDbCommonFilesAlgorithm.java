@@ -120,9 +120,6 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
 
             String md5 = instance.getValue();
             final String correlationCaseDisplayName = instance.getCorrelationCase().getDisplayName();
-            String dataSource = String.format("%s: %s", correlationCaseDisplayName, instance.getCorrelationDataSource().getName());
-            String path = instance.getFilePath();
-            File filePath = new File(path);
 
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;

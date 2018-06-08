@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGenerator {   //TODO become abstract or interface
+final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
     
     /**
      * Create meta data required to find an abstract file and build a FileInstanceNode.
