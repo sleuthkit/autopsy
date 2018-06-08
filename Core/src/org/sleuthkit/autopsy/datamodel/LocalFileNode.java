@@ -32,8 +32,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -98,20 +96,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-
         actionsList.addAll(Arrays.asList(super.getActions(true)));
-        
-        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
-        AbstractFile file = content;
-        if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
-            try {
-                actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-            } catch (AddEditCentralRepoCommentAction.AddEditCentralRepoCommentException ex) {
-                logger.log(Level.SEVERE, String.format(
-                        "An error occurred while trying to create the 'Add/Edit Central Repository Comment' action for file \"%s\" (objId=%d).",
-                        file.getName(), file.getId()), ex);
-            }
-        }
         
         actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
         actionsList.add(null); // creates a menu separator
