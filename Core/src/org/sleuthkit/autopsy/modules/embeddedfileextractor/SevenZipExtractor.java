@@ -74,7 +74,6 @@ class SevenZipExtractor {
     private IngestServices services = IngestServices.getInstance();
     private final IngestJobContext context;
     private final FileTypeDetector fileTypeDetector;
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // NON-NLS
     //encryption type strings
     private static final String ENCRYPTION_FILE_LEVEL = NbBundle.getMessage(EmbeddedFileExtractorIngestModule.class,
             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.encryptionFileLevel");
@@ -130,7 +129,6 @@ class SevenZipExtractor {
         this.fileTypeDetector = fileTypeDetector;
         this.moduleDirRelative = moduleDirRelative;
         this.moduleDirAbsolute = moduleDirAbsolute;
-//        this.archiveDepthCountTree = new ArchiveDepthCountTree();
     }
 
     /**
@@ -458,6 +456,8 @@ class SevenZipExtractor {
      * Unpack the file to local folder and return a list of derived files
      *
      * @param archiveFile file to unpack
+     * @param depthMap    - a concurrent hashmap which keeps track of the depth
+     *                    of all nested archives
      *
      * @return true if unpacking is complete
      */
@@ -470,6 +470,8 @@ class SevenZipExtractor {
      * the password if specified.
      *
      * @param archiveFile - file to unpack
+     * @param depthMap    - a concurrent hashmap which keeps track of the depth
+     *                    of all nested archives
      * @param password    - the password to use, null for no password
      *
      * @return true if unpacking is complete
@@ -666,7 +668,7 @@ class SevenZipExtractor {
                         continue;
                     }
                     if (isSevenZipExtractionSupported(unpackedFile)) {
-                        Archive child = new Archive(parentAr, unpackedFile.getId(), parentAr.getDepth()+1);
+                        Archive child = new Archive(parentAr, unpackedFile.getId(), parentAr.getDepth() + 1);
                         parentAr.addChild(child);
                         depthMap.put(unpackedFile.getId(), child);
                     }
@@ -910,7 +912,7 @@ class SevenZipExtractor {
             this.rootNode = new UnpackedNode();
             this.rootNode.setFile(archiveFile);
             this.rootNode.setFileName(archiveFile.getName());
-            this.rootNode.localRelPath = localPathRoot;
+            this.rootNode.setLocalRelPath(localPathRoot);
         }
 
         /**
@@ -953,6 +955,7 @@ class SevenZipExtractor {
             // create new node
             if (child == null) {
                 child = new UnpackedNode(childName, parent);
+                parent.addChild(child);
             }
 
             // go down one more level
@@ -967,7 +970,7 @@ class SevenZipExtractor {
          */
         List<AbstractFile> getRootFileObjects() {
             List<AbstractFile> ret = new ArrayList<>();
-            for (UnpackedNode child : rootNode.children) {
+            for (UnpackedNode child : rootNode.getChildren()) {
                 ret.add(child.getFile());
             }
             return ret;
@@ -981,7 +984,7 @@ class SevenZipExtractor {
          */
         List<AbstractFile> getAllFileObjects() {
             List<AbstractFile> ret = new ArrayList<>();
-            for (UnpackedNode child : rootNode.children) {
+            for (UnpackedNode child : rootNode.getChildren()) {
                 getAllFileObjectsRec(ret, child);
             }
             return ret;
@@ -989,7 +992,7 @@ class SevenZipExtractor {
 
         private void getAllFileObjectsRec(List<AbstractFile> list, UnpackedNode parent) {
             list.add(parent.getFile());
-            for (UnpackedNode child : parent.children) {
+            for (UnpackedNode child : parent.getChildren()) {
                 getAllFileObjectsRec(list, child);
             }
         }
@@ -1000,7 +1003,7 @@ class SevenZipExtractor {
          */
         void updateOrAddFileToCaseRec(HashMap<String, ZipFileStatusWrapper> statusMap, String archiveFilePath) throws TskCoreException, NoCurrentCaseException {
             final FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
-            for (UnpackedNode child : rootNode.children) {
+            for (UnpackedNode child : rootNode.getChildren()) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, archiveFilePath);
             }
         }
@@ -1057,7 +1060,7 @@ class SevenZipExtractor {
                                 node.getFileName()), ex);
             }
             //recurse adding the children if this file was incomplete the children presumably need to be added
-            for (UnpackedNode child : node.children) {
+            for (UnpackedNode child : node.getChildren()) {
                 updateOrAddFileToCaseRec(child, fileManager, statusMap, getKeyFromUnpackedNode(node, archiveFilePath));
             }
         }
@@ -1084,31 +1087,53 @@ class SevenZipExtractor {
             UnpackedNode(String fileName, UnpackedNode parent) {
                 this.fileName = fileName;
                 this.parent = parent;
-                this.localRelPath = parent.localRelPath + File.separator + fileName;
-                //new child derived file will be set by unpack() method
-                parent.children.add(this);
+                this.localRelPath = parent.getLocalRelPath() + File.separator + fileName;
             }
 
-            public long getCtime() {
+            long getCtime() {
                 return ctime;
             }
 
-            public long getCrtime() {
+            long getCrtime() {
                 return crtime;
             }
 
-            public long getAtime() {
+            long getAtime() {
                 return atime;
             }
 
-            public long getMtime() {
+            long getMtime() {
                 return mtime;
             }
 
-            public void setFileName(String fileName) {
+            void setFileName(String fileName) {
                 this.fileName = fileName;
             }
 
+            /**
+             * Add a child to the list of child nodes associated with this node.
+             *
+             * @param child - the node which is a child node of this node
+             */
+            void addChild(UnpackedNode child) {
+                children.add(child);
+            }
+
+            /**
+             * Get this nodes list of child UnpackedNode
+             *
+             * @return children - the UnpackedNodes which are children of this
+             *         node.
+             */
+            List<UnpackedNode> getChildren() {
+                return children;
+            }
+
+            /**
+             * Gets the parent node of this node.
+             *
+             * @return - the parent UnpackedNode
+             */
             UnpackedNode getParent() {
                 return parent;
             }
@@ -1139,7 +1164,7 @@ class SevenZipExtractor {
             UnpackedNode getChild(String childFileName) {
                 UnpackedNode ret = null;
                 for (UnpackedNode child : children) {
-                    if (child.fileName.equals(childFileName)) {
+                    if (child.getFileName().equals(childFileName)) {
                         ret = child;
                         break;
                     }
@@ -1147,23 +1172,33 @@ class SevenZipExtractor {
                 return ret;
             }
 
-            public String getFileName() {
+            String getFileName() {
                 return fileName;
             }
 
-            public AbstractFile getFile() {
+            AbstractFile getFile() {
                 return file;
             }
 
-            public String getLocalRelPath() {
+            String getLocalRelPath() {
                 return localRelPath;
             }
 
-            public long getSize() {
+            /**
+             * Set the local relative path associated with this UnpackedNode
+             *
+             * @param localRelativePath - the local relative path to be
+             *                          associated with this node.
+             */
+            void setLocalRelPath(String localRelativePath) {
+                localRelPath = localRelativePath;
+            }
+
+            long getSize() {
                 return size;
             }
 
-            public boolean isIsFile() {
+            boolean isIsFile() {
                 return isFile;
             }
         }
@@ -1183,22 +1218,40 @@ class SevenZipExtractor {
             this.depth = depth;
         }
 
-        void addChild(Archive child){
+        /**
+         * Add a child to the list of child archives associated with this
+         * archive.
+         *
+         * @param child - the archive which is a child archive of this archive
+         */
+        void addChild(Archive child) {
             children.add(child);
         }
-        
+
+        /**
+         * Get the object id of the parent of this archive.
+         *
+         * @return parent.objectId - the unique objectId of this archives parent
+         *         archive
+         */
         long getParentObjectId() {
             return parent.getObjectId();
         }
 
+        /**
+         * Get the object id of this archive.
+         *
+         * @return objectId - the unique objectId of this archive
+         */
         long getObjectId() {
             return objectId;
         }
 
         /**
-         * get archive depth of this archive
+         * Get archive depth of this archive
          *
-         * @return
+         * @return depth - an integer representing how many layers of archives
+         *         this archive is inside.
          */
         int getDepth() {
             return depth;

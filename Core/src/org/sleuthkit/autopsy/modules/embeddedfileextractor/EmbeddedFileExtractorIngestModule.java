@@ -48,15 +48,14 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Arc
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
+    private static final HashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new HashMap<>();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private String moduleDirRelative;
     private String moduleDirAbsolute;
     private MSOfficeEmbeddedContentExtractor officeExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
     private long jobId;
-    private static final HashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new HashMap<>();
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
 
     /**
      * Constructs a file level ingest module that extracts embedded files from
@@ -108,7 +107,8 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         }
         if (refCounter.incrementAndGet(jobId) == 1) {
             /*
-             * Construct a concurrentHashmap to keep track of depth in archives while processing archive files.
+             * Construct a concurrentHashmap to keep track of depth in archives
+             * while processing archive files.
              */
             mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
         }
