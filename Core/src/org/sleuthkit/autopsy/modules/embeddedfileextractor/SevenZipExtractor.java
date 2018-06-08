@@ -1204,12 +1204,22 @@ class SevenZipExtractor {
         }
     }
 
+    /**
+     * Class to keep track of an objects id and its depth in the archive
+     * structure.
+     */
     static class Archive {
 
         private final int depth;
         private final long objectId;
         private final List<Archive> children;
 
+        /**
+         * Create a new Archive object.
+         *
+         * @param objectId the unique object id of the archive object
+         * @param depth    the depth in the archive structure
+         */
         Archive(long objectId, int depth) {
             this.objectId = objectId;
             this.children = new ArrayList<>();

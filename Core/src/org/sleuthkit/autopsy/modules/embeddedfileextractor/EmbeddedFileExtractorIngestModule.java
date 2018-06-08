@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -48,7 +47,7 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Arc
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
-    private static final HashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new HashMap<>();
+    private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private String moduleDirRelative;
     private String moduleDirAbsolute;
