@@ -65,7 +65,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 1);
     
@@ -435,7 +435,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * @throws HealthMonitorException 
      */
     private void gatherTimerBasedMetrics() throws HealthMonitorException {
-        // Time a database query
         performDatabaseQuery();
     }
     
