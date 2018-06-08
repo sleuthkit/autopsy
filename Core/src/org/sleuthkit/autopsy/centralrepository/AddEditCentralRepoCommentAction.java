@@ -62,7 +62,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      *              derived.
      * @param title The text for the menu item.
      */
-    private AddEditCentralRepoCommentAction(AbstractFile file, String title) throws EamDbException, NoCurrentCaseException, TskCoreException {
+    private AddEditCentralRepoCommentAction(AbstractFile file, String title) {
 
         super(title);
         this.title = title;
@@ -119,22 +119,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      * @throws TskCoreException
      */
     @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
-    public static AddEditCentralRepoCommentAction createAddEditCentralRepoCommentAction(AbstractFile file)
-            throws AddEditCentralRepoCommentException {
+    public static AddEditCentralRepoCommentAction createAddEditCentralRepoCommentAction(AbstractFile file) {
 
-        try {
-            return new AddEditCentralRepoCommentAction(file,
-                    Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
-        } catch (EamDbException ex) {
-            throw new AddEditCentralRepoCommentException(
-                    "Error connecting to Central Repository database.", ex);
-        } catch (NoCurrentCaseException ex) {
-            throw new AddEditCentralRepoCommentException(
-                    "Exception while getting open case.", ex);
-        } catch (TskCoreException ex) {
-            throw new AddEditCentralRepoCommentException(String.format(
-                    "Could not retrieve data source from file '%s' (objId=%d).", file.getName(), file.getId()), ex);
-        }
+        return new AddEditCentralRepoCommentAction(file,
+                Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
     }
 
     /**
@@ -150,23 +138,5 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
         return new AddEditCentralRepoCommentAction(correlationAttribute,
                 Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditComment());
-    }
-
-    /**
-     * Thrown when there's an issue in the Add/Edit Central Repository Comment
-     * action.
-     */
-    public static final class AddEditCentralRepoCommentException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        private AddEditCentralRepoCommentException(String message) {
-            super(message);
-        }
-
-        private AddEditCentralRepoCommentException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
     }
 }

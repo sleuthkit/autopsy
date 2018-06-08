@@ -225,13 +225,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
         if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
-            try {
-                actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-            } catch (AddEditCentralRepoCommentAction.AddEditCentralRepoCommentException ex) {
-                logger.log(Level.SEVERE, String.format(
-                        "An error occurred while trying to create the 'Add/Edit Central Repository Comment' action for file \"%s\" (objId=%d).",
-                        file.getName(), file.getId()), ex);
-            }
+            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
 
         //if this artifact has a time stamp add the action to view it in the timeline
