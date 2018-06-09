@@ -157,7 +157,7 @@ public abstract class FileInstanceNodeGenerator {
 
             final String referenceCase = Case.getCurrentCase().getDisplayName().toLowerCase();
 
-            final String referencePath = Paths.get(referenceFile.getParentPath(), referenceFile.getName()).toString().toLowerCase();
+            final String referencePath = Paths.get(referenceFile.getParentPath(), referenceFile.getName()).toString().toLowerCase().replace("\\", "/");
 
             final boolean sameDataSource = referenceFileDataSource.equals(instanceDataSource);
             final boolean sameCase = referenceCase.equals(instanceCase);
