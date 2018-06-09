@@ -134,10 +134,12 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         final String name = file.getName();
         final String parent = file.getParent();
         
+        final String caseQualifiedDataSource = String.format("%s: %s", centralRepoFile.getCorrelationCase().getDisplayName(), centralRepoFile.getCorrelationDataSource().getName());
+        
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), name);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), parent);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), centralRepoFile.getCorrelationDataSource().getName());
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), caseQualifiedDataSource);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.MimeType.toString(), "");
     }
     
@@ -170,6 +172,5 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         public String toString() {
             return displayString;
         }
-    }
-        
+    }        
 }
