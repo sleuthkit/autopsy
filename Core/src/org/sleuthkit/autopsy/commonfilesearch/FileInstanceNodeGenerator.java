@@ -109,13 +109,13 @@ public abstract class FileInstanceNodeGenerator {
     public abstract DisplayableItemNode generateNode();
 
     /**
-     * 
-     * @param dataSource 
+     *
+     * @param dataSource
      */
-    protected void setDataSource(String dataSource){
+    protected void setDataSource(String dataSource) {
         this.dataSource = dataSource;
     }
-    
+
     /**
      * Get string name of the data source where this instance appears.
      *
@@ -138,43 +138,42 @@ public abstract class FileInstanceNodeGenerator {
     public static FileInstanceNodeGenerator createInstance(Iterator<FileInstanceNodeGenerator> identicalFileNodeGeneratorIterator, CentralRepositoryFile instance, Map<Long, AbstractFile> cachedFiles) throws Exception {
 
         Long arbitraryIdenticalAbstractFileId = null;
-        
+
+        final String instanceDataSource = instance.getCorrelationDataSource().getName().toLowerCase();
+        final String instanceCase = instance.getCorrelationCase().getDisplayName().toLowerCase();
+        final String instancePath = instance.getFilePath().toLowerCase();
+
         while (identicalFileNodeGeneratorIterator.hasNext()) {
-            
+
             FileInstanceNodeGenerator identicalFileNodeGenerator = identicalFileNodeGeneratorIterator.next();
-            
+
             final Long identicalFileSleuthkitCaseObjectID = identicalFileNodeGenerator.getIdenticalFileSleuthkitCaseObjectID();
 
             final AbstractFile referenceFile = FileInstanceNodeGenerator.lookupOrCreateAbstractFile(identicalFileSleuthkitCaseObjectID, cachedFiles);
             final Long referenceFileId = referenceFile.getId();
             arbitraryIdenticalAbstractFileId = referenceFileId;
 
-            final String referenceFileDataSource = identicalFileNodeGenerator.getDataSource();
+            final String referenceFileDataSource = identicalFileNodeGenerator.getDataSource().toLowerCase();
 
-            final String referenceCase = Case.getCurrentCase().getDisplayName();
+            final String referenceCase = Case.getCurrentCase().getDisplayName().toLowerCase();
 
-            final String referencePath = Paths.get(referenceFile.getParentPath(), referenceFile.getName()).toString();
+            final String referencePath = Paths.get(referenceFile.getParentPath(), referenceFile.getName()).toString().toLowerCase();
 
-            final String instanceDataSource = instance.getCorrelationDataSource().getName();
-
-            final String instanceCase = instance.getCorrelationCase().getDisplayName();
-
-            final String instancePath = instance.getFilePath();
-            
             final boolean sameDataSource = referenceFileDataSource.equals(instanceDataSource);
             final boolean sameCase = referenceCase.equals(instanceCase);
             final boolean samePathAndName = referencePath.equals(instancePath);
-            
-            if(sameDataSource && sameCase && samePathAndName){
-                return new SleuthkitCaseFileInstanceMetadata(referenceFile.getId(), cachedFiles, instanceDataSource);
+
+            if (sameDataSource && sameCase && samePathAndName) {
+                String dataSource = String.format("%s: %s", referenceCase, referenceFileDataSource);
+                return new SleuthkitCaseFileInstanceMetadata(referenceFile.getId(), cachedFiles, dataSource);
             }
         }
-        
-        if(arbitraryIdenticalAbstractFileId != null){
-            return new CentralRepositoryCaseFileInstanceMetadata(instance, arbitraryIdenticalAbstractFileId, cachedFiles);
+
+        if (arbitraryIdenticalAbstractFileId != null) {
+            String dataSource = String.format("%s: %s", instanceCase, instanceDataSource);
+            return new CentralRepositoryCaseFileInstanceMetadata(instance, arbitraryIdenticalAbstractFileId, cachedFiles, dataSource);
         } else {
             throw new Exception("Unable to get instance.");
         }
-
     }
 }

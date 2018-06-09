@@ -32,12 +32,12 @@ final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanc
 
     private CentralRepositoryFile crFile;
     
-    CentralRepositoryCaseFileInstanceMetadata(CentralRepositoryFile crFile, Long abstractFileReference, Map<Long, AbstractFile> cachedFiles){
-        super(abstractFileReference, cachedFiles, null);
+    CentralRepositoryCaseFileInstanceMetadata(CentralRepositoryFile crFile, Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource){
+        super(abstractFileReference, cachedFiles, dataSource);
         //TODO should we actually just take an ID instead of the whole object
         //  like we've done previously, or is this ok?
         this.crFile = crFile;
-        this.setDataSource(crFile.getCorrelationDataSource().getName());
+        //this.setDataSource(crFile.getCorrelationDataSource().getName());
     }
     
     @Override

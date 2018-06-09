@@ -130,8 +130,6 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
                     // we don't *have* all the information for the rows in the CR,
                     //  so we need to consult the present case via the SleuthkitCase object
                     
-                    //TODO resume here!!!
-                    //TODO need to figure out if we have a CR instance or a SK resource and create as appropriate....
                     final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = commonFiles.get(md5).getMetadata().iterator();
                     
                     FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, instance, cachedFiles);
