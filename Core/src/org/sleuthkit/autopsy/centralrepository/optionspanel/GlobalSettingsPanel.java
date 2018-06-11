@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 /**
  * Main settings panel for the Central Repository
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;

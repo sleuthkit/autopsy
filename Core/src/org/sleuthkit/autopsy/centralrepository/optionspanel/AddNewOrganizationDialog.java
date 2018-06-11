@@ -36,9 +36,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 /**
  * Dialog to add a new organization to the Central Repository database
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AddNewOrganizationDialog extends javax.swing.JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(AddNewOrganizationDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(AddNewOrganizationDialog.class.getName());
     private static final long serialVersionUID = 1L;
 
     private final Collection<JTextField> textBoxes;
@@ -351,7 +352,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
             dispose();
         } catch (EamDbException ex) {
             lbWarningMsg.setText(Bundle.AddNewOrganizationDialog_bnOk_addFailed_text());
-            LOGGER.log(Level.SEVERE, "Failed adding new organization.", ex);
+            logger.log(Level.SEVERE, "Failed adding new organization.", ex);
         }
     }//GEN-LAST:event_bnOKActionPerformed
 
