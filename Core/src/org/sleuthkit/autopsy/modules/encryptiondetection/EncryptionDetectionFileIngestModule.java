@@ -138,36 +138,33 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     /*
                      * Has the file been deleted?
                      */
-                    if (!file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)
-                            && !file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+                    if (!file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
                         /*
                          * Is the file in FILE_IGNORE_LIST?
                          */
-                        boolean ignoreFile = false;
                         String filePath = file.getParentPath();
                         if (filePath.equals("/")) {
                             String fileName = file.getName();
                             for (String listEntry : FILE_IGNORE_LIST) {
                                 if (fileName.equalsIgnoreCase(listEntry)) {
-                                    ignoreFile = true;
-                                    break;
+                                    // Skip this file.
+                                    return IngestModule.ProcessResult.OK;
                                 }
                             }
                         }
-                        if (!ignoreFile) {
-                            /*
-                             * Qualify the MIME type.
-                             */
-                            String mimeType = fileTypeDetector.getMIMEType(file);
-                            if (mimeType.equals("application/octet-stream")) {
-                                if (isFileEncryptionSuspected(file)) {
-                                    return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
-                                            String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
-                                }
-                            } else {
-                                if (isFilePasswordProtected(file)) {
-                                    return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
-                                }
+                        
+                        /*
+                         * Qualify the MIME type.
+                         */
+                        String mimeType = fileTypeDetector.getMIMEType(file);
+                        if (mimeType.equals("application/octet-stream")) {
+                            if (isFileEncryptionSuspected(file)) {
+                                return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
+                                        String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
+                            }
+                        } else {
+                            if (isFilePasswordProtected(file)) {
+                                return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                             }
                         }
                     }
