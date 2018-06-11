@@ -1526,6 +1526,45 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return 0 < badInstances;
     }
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processInstances(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        if (type == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        if (instanceTableCallback == null) {
+            throw new EamDbException("Callback interface is null");
+        }
+
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+        StringBuilder sql = new StringBuilder();
+        sql.append("select * from ");
+        sql.append(tableName);
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                instanceTableCallback.process(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex);
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
 
     /**
      * Add a new organization

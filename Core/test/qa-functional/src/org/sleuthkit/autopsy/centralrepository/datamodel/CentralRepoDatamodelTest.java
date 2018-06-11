@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
 import java.util.stream.Collectors;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -1065,6 +1066,35 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
+        }
+
+        // Test running processinstance which queries all rows from instances table
+        try {
+            //test filetype instances
+            ArtifactInstanceProcessCallbackTest instancetableCallback = new ArtifactInstanceProcessCallbackTest();
+            EamDb.getInstance().processInstances(fileType, instancetableCallback);
+            int count = instancetableCallback.getCounter();
+            assertTrue("Process Instance count for filetype instances: " + count + "-expected 6", count == 6);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        try {
+            //test emailtype instances
+            ArtifactInstanceProcessCallbackTest instancetableCallback = new ArtifactInstanceProcessCallbackTest();
+            EamDb.getInstance().processInstances(emailType, instancetableCallback);
+            int count = instancetableCallback.getCounter();
+            assertTrue("Process Instance count for filetype instances: " + count + "-expected 1", count == 1);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        try {
+            //test null inputs
+            EamDb.getInstance().processInstances(null, null);
+            Assert.fail("processinstance method failed to throw exception for null type value");
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
         }
     }
 
@@ -2616,6 +2646,21 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             // This is the expected behavior
         }
+    }
+
+    public class ArtifactInstanceProcessCallbackTest implements InstanceTableCallback {
+
+        int counter = 0;
+
+        @Override
+        public void process(ResultSet resultSet) {
+            counter++;
+        }
+
+        public int getCounter() {
+            return counter;
+        }
+
     }
 
 }
