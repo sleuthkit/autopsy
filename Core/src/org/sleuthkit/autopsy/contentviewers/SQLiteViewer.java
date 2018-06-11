@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 /**
  * A file content viewer for SQLite database files.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;

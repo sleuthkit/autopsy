@@ -69,6 +69,7 @@ import org.sleuthkit.datamodel.TskData;
 @ServiceProviders(value = {
     @ServiceProvider(service = FrameCapture.class)
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class GstVideoPanel extends MediaViewVideoPanel {
 
     private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"}; //NON-NLS
@@ -365,7 +366,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             playbin.getState();
 
             if (!playbin.seek(timeStamp, unit)) {
-                logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase()); //NON-NLS
+                logger.log(Level.INFO, "There was a problem seeking to {0} {1}", new Object[]{timeStamp, unit.name().toLowerCase()}); //NON-NLS
             }
 
             ret = playbin.play();
@@ -395,7 +396,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             }
 
             if (image == null) {
-                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName()); //NON-NLS
+                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file {0}", file.getName()); //NON-NLS
                 badVideoFiles.add(file.getName());
                 break;
             }
@@ -672,7 +673,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage()); //NON-NLS
+                logger.log(Level.WARNING, "Error updating video progress: {0}", ex.getMessage()); //NON-NLS
                 infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.infoLabel.updateErr",
                         ex.getMessage()));
             } // catch and ignore if we were cancelled

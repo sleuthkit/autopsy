@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoInges
 /**
  * A dashboard for monitoring the existing AutoIngestNodes and their status.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     private final AutoIngestMonitor autoIngestMonitor;
