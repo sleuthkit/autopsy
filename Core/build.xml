@@ -78,6 +78,8 @@
               tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
+		<copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
+              tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	  
     </target>
 
     <target name="download-binlist">
