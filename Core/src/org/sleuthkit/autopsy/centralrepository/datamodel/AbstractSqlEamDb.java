@@ -1554,11 +1554,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                instanceTableCallback.process(resultSet);
-            }
+            instanceTableCallback.process(resultSet);
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting notable artifact instances.", ex);
+            throw new EamDbException("Error getting all artifact instances from instances table", ex);
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);

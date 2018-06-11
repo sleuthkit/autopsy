@@ -30,14 +30,14 @@ public interface InstanceTableCallback {
     /**
     * Process the artifact instance
     * 
-    * @param resultSet row of artifact instance table.
+    * @param resultSet artifact instance table.
     */
     public void process(ResultSet resultSet);
     
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return ID of the instance
      * @throws SQLException 
      */
@@ -47,7 +47,7 @@ public interface InstanceTableCallback {
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return Case ID of a given instance
      * @throws SQLException 
      */
@@ -57,7 +57,7 @@ public interface InstanceTableCallback {
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return Data source id of a particular instance
      * @throws SQLException 
      */
@@ -67,7 +67,7 @@ public interface InstanceTableCallback {
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return md5 hash value of the instance
      * @throws SQLException 
      */
@@ -77,7 +77,7 @@ public interface InstanceTableCallback {
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return file path of the instance
      * @throws SQLException 
      */
@@ -87,7 +87,7 @@ public interface InstanceTableCallback {
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return status integer based on whether instance is marked notable or not
      * @throws SQLException 
      */
@@ -97,7 +97,7 @@ public interface InstanceTableCallback {
     
     /**
      * 
-     * @param resultSet row of artifact instance table
+     * @param resultSet artifact instance table
      * @return previous comment made for the instance
      * @throws SQLException 
      */
