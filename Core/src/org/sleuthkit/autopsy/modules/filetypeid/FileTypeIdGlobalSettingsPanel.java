@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
  * being an ingest module global settings panel, an instance of this class also
  * appears in the NetBeans options dialog as an options panel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(FileTypeIdGlobalSettingsPanel.class.getName());
