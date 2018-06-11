@@ -49,6 +49,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Image
 from org.sleuthkit.autopsy.ingest import IngestModule
+from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModuleProcessTerminator
@@ -107,8 +108,8 @@ class RunExeIngestModule(DataSourceIngestModule):
         # Assumes EXE is in same folder as script
         # Verify it is there before any ingest starts
         exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img_stat.exe")
-        self.path_to_exe = File(exe_path)
-        if not self.path_to_exe.exists():
+        self.pathToEXE = File(exe_path)
+        if not self.pathToEXE.exists():
             raise IngestModuleException("EXE was not found in module folder")
     # Where the analysis is done.
     # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
@@ -139,7 +140,7 @@ class RunExeIngestModule(DataSourceIngestModule):
         # cancelled and then killing the process. 
         self.log(Level.INFO, "Running program on data source")
         cmd = ArrayList()
-        cmd.add(self.path_to_exe.toString())
+        cmd.add(self.pathToEXE.toString())
         cmd.add(imagePaths[0])
         
         processBuilder = ProcessBuilder(cmd);
@@ -147,6 +148,7 @@ class RunExeIngestModule(DataSourceIngestModule):
         ExecUtil.execute(processBuilder,DataSourceIngestModuleProcessTerminator(self.context))
         
         # Add the report to the case, so it shows up in the tree
-        Case.getCurrentCase().addReport(reportFile.toString(), "Run EXE", "img_stat output")
+        if not self.context.dataSourceIngestIsCancelled():
+            Case.getCurrentCase().addReport(reportFile.toString(), "Run EXE", "img_stat output")
         
         return IngestModule.ProcessResult.OK
