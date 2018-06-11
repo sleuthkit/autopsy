@@ -22,9 +22,11 @@ import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.logging.Level;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.DefaultListCellRenderer;
@@ -46,7 +48,8 @@ import org.sleuthkit.datamodel.TskData;
 public class GetTagNameAndCommentDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
-    private final Set<TagName> tagNamesSet = new HashSet<>();
+    private final List<TagName> tagNamesList = new ArrayList<>();
+    private final List<TagName> standardTagNamesList = new ArrayList<>();
     private TagNameAndComment tagNameAndComment = null;
     
     public static class TagNameAndComment {
@@ -101,7 +104,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
     private GetTagNameAndCommentDialog(Window owner) {
         super(owner,
-                NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
+                NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.selectTag"),
                 ModalityType.APPLICATION_MODAL);
     }
 
@@ -140,17 +143,29 @@ public class GetTagNameAndCommentDialog extends JDialog {
         // not exist in the database).
         try {
             TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
-            tagNamesSet.addAll(tagsManager.getAllTagNames());
+            List<String> standardTagNames = TagsManager.getStandardTagNames();
+            Map<String, TagName> tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
+            
+            tagNamesMap.entrySet().stream().map((entry) -> entry.getValue()).forEachOrdered((tagName) -> {
+                if (standardTagNames.contains(tagName.getDisplayName())) {
+                    standardTagNamesList.add(tagName);
+                } else {
+                    tagNamesList.add(tagName);
+                }
+            });
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class
                     .getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
-        for (TagName tag : tagNamesSet) {
-
+        tagNamesList.forEach((tag) -> {
             tagCombo.addItem(tag);
-        }
+        });
 
+        standardTagNamesList.forEach((tag) -> {
+            tagCombo.addItem(tag);
+        });
+        
         // Center and show the dialog box. 
         this.setLocationRelativeTo(this.getOwner());
         setVisible(true);
@@ -170,8 +185,8 @@ public class GetTagNameAndCommentDialog extends JDialog {
         tagCombo = new javax.swing.JComboBox<TagName>();
         tagLabel = new javax.swing.JLabel();
         commentLabel = new javax.swing.JLabel();
-        commentText = new javax.swing.JTextField();
-        newTagButton = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        commentText = new javax.swing.JTextArea();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -199,15 +214,10 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentLabel.text")); // NOI18N
 
-        commentText.setText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.text")); // NOI18N
-        commentText.setToolTipText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(newTagButton, org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.newTagButton.text")); // NOI18N
-        newTagButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newTagButtonActionPerformed(evt);
-            }
-        });
+        commentText.setColumns(20);
+        commentText.setRows(5);
+        commentText.setToolTipText(org.openide.util.NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.commentText.toolTipText"));
+        jScrollPane1.setViewportView(commentText);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -216,20 +226,17 @@ public class GetTagNameAndCommentDialog extends JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(newTagButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 165, Short.MAX_VALUE)
+                    .addComponent(commentLabel)
+                    .addComponent(tagLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(commentLabel)
-                            .addComponent(tagLabel))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(commentText)
-                            .addComponent(tagCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addComponent(tagCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -242,15 +249,17 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tagCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(tagLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(commentLabel)
-                    .addComponent(commentText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 37, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(commentLabel)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(okButton)
-                    .addComponent(newTagButton))
+                    .addComponent(okButton))
                 .addContainerGap())
         );
 
@@ -275,20 +284,11 @@ public class GetTagNameAndCommentDialog extends JDialog {
         dispose();
     }//GEN-LAST:event_closeDialog
 
-    private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
-        TagName newTagName = GetTagNameDialog.doDialog(this);
-        if (newTagName != null) {
-            tagNamesSet.add(newTagName);
-            tagCombo.addItem(newTagName);
-            tagCombo.setSelectedItem(newTagName);
-        }
-    }//GEN-LAST:event_newTagButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
-    private javax.swing.JTextField commentText;
-    private javax.swing.JButton newTagButton;
+    private javax.swing.JTextArea commentText;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okButton;
     private javax.swing.JComboBox<TagName> tagCombo;
     private javax.swing.JLabel tagLabel;
