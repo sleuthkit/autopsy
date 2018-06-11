@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ package org.sleuthkit.autopsy.keywordsearch;
  * indicate whether they want the keyword to be an exact match, a substring, or
  * a regular expression.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class NewKeywordPanel extends javax.swing.JPanel {
 
     /**
