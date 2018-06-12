@@ -270,7 +270,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
         
-        return actionsList.toArray(new Action[0]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     /**

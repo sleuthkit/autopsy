@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  * Dialog to allow Central Repository file instance comments to be added and
  * modified.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
     private final CorrelationAttribute correlationAttribute;

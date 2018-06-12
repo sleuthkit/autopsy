@@ -632,8 +632,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ");
-        sql.append(tableName);
+        sql.append("SELECT ").append(tableName);
         sql.append(".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
