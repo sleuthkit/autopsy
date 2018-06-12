@@ -46,8 +46,12 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Displays existing tag names, and allows the creation of new tags.
+ */
 @Messages({"GetTagNameDialog.descriptionLabel.text=Description:",
     "GetTagNameDialog.notableCheckbox.text=Tag indicates item is notable."})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class GetTagNameDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;

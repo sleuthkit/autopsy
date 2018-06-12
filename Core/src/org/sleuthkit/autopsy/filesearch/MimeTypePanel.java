@@ -81,7 +81,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(150, 150));
-        setPreferredSize(new java.awt.Dimension(100, 100));
+        setPreferredSize(new java.awt.Dimension(150, 150));
 
         mimeTypeList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = getMimeTypeArray();
@@ -98,8 +98,8 @@ public class MimeTypePanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jLabel1.text")); // NOI18N
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(MimeTypePanel.class, "MimeTypePanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -122,10 +122,10 @@ public class MimeTypePanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(mimeTypeCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel1)
-                .addContainerGap())
+                .addGap(40, 40, 40))
         );
     }// </editor-fold>//GEN-END:initComponents
 

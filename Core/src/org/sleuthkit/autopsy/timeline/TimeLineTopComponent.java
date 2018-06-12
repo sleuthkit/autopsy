@@ -87,9 +87,10 @@ import org.sleuthkit.datamodel.TskCoreException;
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
 @RetainLocation("timeline")
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class TimeLineTopComponent extends TopComponent implements ExplorerManager.Provider {
 
-    private static final Logger LOGGER = Logger.getLogger(TimeLineTopComponent.class.getName());
+    private static final Logger logger = Logger.getLogger(TimeLineTopComponent.class.getName());
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final DataContentExplorerPanel contentViewerPanel;
@@ -182,7 +183,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                                 explorerManager.setSelectedNodes(childArray);
                             } catch (PropertyVetoException ex) {
                                 //I don't know why this would ever happen.
-                                LOGGER.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
+                                logger.log(Level.SEVERE, "Selecting the event node was vetoed.", ex); // NON-NLS
                             }
                             //if there is only one event selected push it into content viewer.
                             if (childArray.length == 1) {
@@ -193,9 +194,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                         });
                     } catch (NoCurrentCaseException ex) {
                         //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        LOGGER.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        logger.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                     } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
+                        logger.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                         Platform.runLater(() -> {
                             Notifications.create()
                                     .owner(jFXViewPanel.getScene().getWindow())

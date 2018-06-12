@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.EventQueue;
+import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -55,6 +58,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
  * Instances of this class provide a comprehensive UI for managing the hash sets
  * configuration.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final String NO_SELECTION_TEXT = NbBundle

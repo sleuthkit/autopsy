@@ -36,9 +36,9 @@ import org.sleuthkit.datamodel.HashEntry;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author sidhesh
+ * Progress dialog for MD5 hash values being added to the hash database.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AddHashValuesToDatabaseProgressDialog extends javax.swing.JDialog {
 
     private final AddHashValuesToDatabaseDialog parentRef;
