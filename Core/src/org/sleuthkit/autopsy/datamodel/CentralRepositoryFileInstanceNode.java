@@ -131,6 +131,8 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         final String fullPath = centralRepoFile.getFilePath();
         final File file = new File(fullPath);
         
+        final String caseName = centralRepoFile.getCorrelationCase().getDisplayName();
+        
         final String name = file.getName();
         final String parent = file.getParent();
         
@@ -139,6 +141,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), name);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), parent);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.Case.toString(), caseName);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), caseQualifiedDataSource);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.MimeType.toString(), "");
     }
@@ -151,6 +154,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         "CentralRepoFileInstancesPropertyType.fileColLbl=File",
         "CentralRepoFileInstancesPropertyType.pathColLbl=Parent Path",
         "CentralRepoFileInstancesPropertyType.hashsetHitsColLbl=Hash Set Hits",
+        "CentralRepoFileInstancesPropertyType.caseColLbl=Case",
         "CentralRepoFileInstancesPropertyType.dataSourceColLbl=Data Source",
         "CentralRepoFileInstancesPropertyType.mimeTypeColLbl=MIME Type"
     })
@@ -159,6 +163,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         File(Bundle.CentralRepoFileInstancesPropertyType_fileColLbl()),
         ParentPath(Bundle.CentralRepoFileInstancesPropertyType_pathColLbl()),
         HashsetHits(Bundle.CentralRepoFileInstancesPropertyType_hashsetHitsColLbl()),
+        Case(Bundle.CentralRepoFileInstancesPropertyType_caseColLbl()),
         DataSource(Bundle.CentralRepoFileInstancesPropertyType_dataSourceColLbl()),
         MimeType(Bundle.CentralRepoFileInstancesPropertyType_mimeTypeColLbl());
 

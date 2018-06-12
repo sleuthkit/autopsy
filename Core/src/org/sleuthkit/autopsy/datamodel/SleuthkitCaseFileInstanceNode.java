@@ -95,6 +95,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.getName());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.Case.toString(), "TODO");
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.DataSource.toString(), node.getDataSource());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }
@@ -107,6 +108,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         "SleuthkitCaseFileInstanceNodePropertyType.fileColLbl=File",
         "SleuthkitCaseFileInstanceNodePropertyType.pathColLbl=Parent Path",
         "SleuthkitCaseFileInstanceNodePropertyType.hashsetHitsColLbl=Hash Set Hits",
+        "SleuthkitCaseFileInstanceNodePropertyType.caseColLbl=Case",
         "SleuthkitCaseFileInstanceNodePropertyType.dataSourceColLbl=Data Source",
         "SleuthkitCaseFileInstanceNodePropertyType.mimeTypeColLbl=MIME Type"
     })
@@ -115,6 +117,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         File(Bundle.SleuthkitCaseFileInstanceNodePropertyType_fileColLbl()),
         ParentPath(Bundle.SleuthkitCaseFileInstanceNodePropertyType_pathColLbl()),
         HashsetHits(Bundle.SleuthkitCaseFileInstanceNodePropertyType_hashsetHitsColLbl()),
+        Case(Bundle.SleuthkitCaseFileInstanceNodePropertyType_caseColLbl()),
         DataSource(Bundle.SleuthkitCaseFileInstanceNodePropertyType_dataSourceColLbl()),
         MimeType(Bundle.SleuthkitCaseFileInstanceNodePropertyType_mimeTypeColLbl());
 

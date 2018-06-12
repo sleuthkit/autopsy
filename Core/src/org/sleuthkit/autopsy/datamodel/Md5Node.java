@@ -128,6 +128,7 @@ public class Md5Node extends DisplayableItemNode {
     static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
         map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
         map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
+        map.put(CommonFileParentPropertyType.Case.toString(), "TODO");
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
     }
 
@@ -176,11 +177,13 @@ public class Md5Node extends DisplayableItemNode {
     @NbBundle.Messages({
         "CommonFileParentPropertyType.fileColLbl=File",
         "CommonFileParentPropertyType.instanceColLbl=Instance Count",
+        "CommonFileParentPropertyType.caseColLbl=Case",
         "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {
 
         File(Bundle.CommonFileParentPropertyType_fileColLbl()),
         InstanceCount(Bundle.CommonFileParentPropertyType_instanceColLbl()),
+        Case(Bundle.CommonFileParentPropertyType_caseColLbl()),
         DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
 
         final private String displayString;
