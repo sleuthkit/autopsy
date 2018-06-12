@@ -1245,6 +1245,62 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return artifactInstances;
     }
+    
+    /**
+     *
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
+     * @param aType EamArtifact.Type to search for
+     * @return List with 0 or more matching eamArtifact instances.
+     * @throws EamDbException
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException {
+        if (aType == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        Connection conn = connect();
+
+        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
+
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append(tableName);
+        sql.append(" LEFT JOIN cases ON ");
+        sql.append(tableName);
+        sql.append(".case_id=cases.id");
+        sql.append(" LEFT JOIN data_sources ON ");
+        sql.append(tableName);
+        sql.append(".data_source_id=data_sources.id");
+        sql.append(" WHERE known_status=?");
+        sql.append(" GROUP BY ");
+        sql.append(tableName);
+        sql.append(".value");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setByte(1, TskData.FileKnown.BAD.getFileKnownValue());
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstances.add(artifactInstance);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return artifactInstances;
+    }
 
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".

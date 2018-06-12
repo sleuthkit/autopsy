@@ -591,6 +591,24 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
+     *
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
+     * @param aType EamArtifact.Type to search for
+     * @return List with 0 or more matching eamArtifact instances.
+     * @throws EamDbException
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.getArtifactInstancesKnownBad(aType);
+        } finally {
+            releaseSharedLock();
+        }       
+    }
+    
+    /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
      * @param aType EamArtifact.Type to search for
