@@ -691,8 +691,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ");
-        sql.append(tableName);
+        sql.append("SELECT ").append(tableName);
         sql.append(".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
@@ -1133,8 +1132,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
 
         StringBuilder sqlUpdate = new StringBuilder();
-        sqlUpdate.append("UPDATE ");
-        sqlUpdate.append(tableName);
+        sqlUpdate.append("UPDATE ").append(tableName);
         sqlUpdate.append(" SET comment=? ");
         sqlUpdate.append("WHERE case_id=(SELECT id FROM cases WHERE case_uid=?) ");
         sqlUpdate.append("AND data_source_id=(SELECT id FROM data_sources WHERE device_id=?) ");
@@ -1283,8 +1281,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         sqlQuery.append("AND file_path=?");
 
         StringBuilder sqlUpdate = new StringBuilder();
-        sqlUpdate.append("UPDATE ");
-        sqlUpdate.append(tableName);
+        sqlUpdate.append("UPDATE ").append(tableName);
         sqlUpdate.append(" SET known_status=?, comment=? ");
         sqlUpdate.append("WHERE id=?");
 
@@ -1364,8 +1361,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ");
-        sql.append(tableName);
+        sql.append("SELECT ").append(tableName);
         sql.append(".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
