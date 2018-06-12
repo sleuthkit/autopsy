@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,11 @@
  */
 package org.sleuthkit.autopsy.experimental.configuration;
 
-import java.util.Base64;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.TextConverter;
+import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Provides convenient access to a Preferences node for auto ingest user
@@ -58,16 +54,32 @@ public final class AutoIngestUserPreferences {
     private AutoIngestUserPreferences() {
     }
 
-     /**
+    /**
+     * Get the value for the given preference name.
+     *
+     * @param preferenceName
+     *
+     * @return The preference value if it exists, otherwise an empty string.
+     */
+    private static String getPreferenceValue(String preferenceName) {
+        // User preferences can be overridden through system properties
+        // so we check those first. Defaults to empty string if the
+        // property doesn't exist.
+        String preferenceValue = System.getProperty(UserPreferences.SETTINGS_PROPERTIES + "." + preferenceName, "");
+
+        if (preferenceValue.isEmpty() && ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, preferenceName)) {
+            preferenceValue = ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, preferenceName);
+        }
+        return preferenceValue;
+    }
+
+    /**
      * Get "Join auto ingest cluster" setting from persistent storage.
      *
      * @return SelectedMode Selected setting.
      */
     public static boolean getJoinAutoModeCluster() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, JOIN_AUTO_MODE_CLUSTER)) {
-            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, JOIN_AUTO_MODE_CLUSTER));
-        }
-        return false;
+        return Boolean.parseBoolean(getPreferenceValue(JOIN_AUTO_MODE_CLUSTER));
     }
 
     /**
@@ -85,10 +97,7 @@ public final class AutoIngestUserPreferences {
      * @return String Selected input folder.
      */
     public static String getAutoModeImageFolder() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, AUTO_MODE_IMAGES_FOLDER)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, AUTO_MODE_IMAGES_FOLDER);
-        }
-        return "";
+        return getPreferenceValue(AUTO_MODE_IMAGES_FOLDER);
     }
 
     /**
@@ -106,10 +115,7 @@ public final class AutoIngestUserPreferences {
      * @return String Selected output folder.
      */
     public static String getAutoModeResultsFolder() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, AUTO_MODE_RESULTS_FOLDER)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, AUTO_MODE_RESULTS_FOLDER);
-        }
-        return "";
+        return getPreferenceValue(AUTO_MODE_RESULTS_FOLDER);
     }
 
     /**
@@ -127,10 +133,7 @@ public final class AutoIngestUserPreferences {
      * @return String Selected settings folder.
      */
     public static String getSharedConfigFolder() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_FOLDER)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_FOLDER);
-        }
-        return "";
+        return getPreferenceValue(SHARED_CONFIG_FOLDER);
     }
 
     /**
@@ -149,10 +152,7 @@ public final class AutoIngestUserPreferences {
      * @return Boolean true if shared settings are enabled.
      */
     public static Boolean getSharedConfigEnabled() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_ENABLED)) {
-            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_ENABLED));
-        }
-        return false;
+        return Boolean.parseBoolean(getPreferenceValue(SHARED_CONFIG_ENABLED));
     }
 
     /**
@@ -173,10 +173,7 @@ public final class AutoIngestUserPreferences {
      * @return true if this node is set as a shared configuration master
      */
     public static Boolean getSharedConfigMaster() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_MASTER)) {
-            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_MASTER));
-        }
-        return false;
+        return Boolean.parseBoolean(getPreferenceValue(SHARED_CONFIG_MASTER));
     }
 
     /**
@@ -212,10 +209,8 @@ public final class AutoIngestUserPreferences {
      * @return
      */
     public static boolean getShowToolsWarning() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, SHOW_TOOLS_WARNING)) {
-            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, SHOW_TOOLS_WARNING));
-        }
-        return true;
+        String value = getPreferenceValue(SHOW_TOOLS_WARNING);
+        return value.isEmpty() ? true : Boolean.parseBoolean(value);
     }
 
     /**
@@ -224,10 +219,8 @@ public final class AutoIngestUserPreferences {
      * @return int the value in seconds, default is 30 seconds.
      */
     public static int getSecondsToSleepBetweenCases() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, SLEEP_BETWEEN_CASES_TIME)) {
-            return Integer.parseInt(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, SLEEP_BETWEEN_CASES_TIME));
-        }
-        return 30;
+        String value = getPreferenceValue(SLEEP_BETWEEN_CASES_TIME);
+        return value.isEmpty() ? 30 : Integer.parseInt(value);
     }
 
     /**
@@ -250,10 +243,8 @@ public final class AutoIngestUserPreferences {
      * @return int maximum number of attempts, default is 0.
      */
     public static int getMaxNumTimesToProcessImage() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE)) {
-            return Integer.parseInt(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE));
-        }
-        return DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE;
+        String value = getPreferenceValue(MAX_NUM_TIMES_TO_PROCESS_IMAGE);
+        return value.isEmpty() ? DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE : Integer.parseInt(value);
     }
 
     /**
@@ -274,10 +265,8 @@ public final class AutoIngestUserPreferences {
      * @return maximum number of concurrent nodes for one case. Default is 3.
      */
     public static int getMaxConcurrentJobsForOneCase() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE)) {
-            return Integer.parseInt(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE));
-        }
-        return 3;
+        String value = getPreferenceValue(MAX_CONCURRENT_NODES_FOR_ONE_CASE);
+        return value.isEmpty() ? 3 : Integer.parseInt(value);
     }
 
     /**
@@ -297,10 +286,7 @@ public final class AutoIngestUserPreferences {
      * @return Boolean true if database logging is enabled.
      */
     public static Boolean getStatusDatabaseLoggingEnabled() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, STATUS_DATABASE_LOGGING_ENABLED)) {
-            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, STATUS_DATABASE_LOGGING_ENABLED));
-        }
-        return false;
+        return Boolean.parseBoolean(getPreferenceValue(STATUS_DATABASE_LOGGING_ENABLED));
     }
 
     /**
@@ -320,10 +306,7 @@ public final class AutoIngestUserPreferences {
      * @return Logging database hostname or IP
      */
     public static String getLoggingDatabaseHostnameOrIP() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, LOGGING_DB_HOSTNAME_OR_IP)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_DB_HOSTNAME_OR_IP);
-        }
-        return "";
+        return getPreferenceValue(LOGGING_DB_HOSTNAME_OR_IP);
     }
 
     /**
@@ -341,10 +324,7 @@ public final class AutoIngestUserPreferences {
      * @return logging database port
      */
     public static String getLoggingPort() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PORT)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PORT);
-        }
-        return "";
+        return getPreferenceValue(LOGGING_PORT);
     }
 
     /**
@@ -362,10 +342,7 @@ public final class AutoIngestUserPreferences {
      * @return logging database username
      */
     public static String getLoggingUsername() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, LOGGING_USERNAME)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_USERNAME);
-        }
-        return "";
+        return getPreferenceValue(LOGGING_USERNAME);
     }
 
     /**
@@ -385,10 +362,7 @@ public final class AutoIngestUserPreferences {
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static String getLoggingPassword() throws UserPreferencesException {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD)) {
-            return TextConverter.convertHexTextToText(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD));
-        }
-        return "";
+        return getPreferenceValue(LOGGING_PASSWORD);
     }
 
     /**
@@ -399,7 +373,11 @@ public final class AutoIngestUserPreferences {
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static void setLoggingPassword(String password) throws UserPreferencesException {
-        ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
+        try {
+            ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
+        } catch (TextConverterException ex) {
+            throw new UserPreferencesException("Error encrypting password");
+        }
     }
 
     /**
@@ -408,10 +386,7 @@ public final class AutoIngestUserPreferences {
      * @return logging database name
      */
     public static String getLoggingDatabaseName() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, LOGGING_DATABASE_NAME)) {
-            return ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_DATABASE_NAME);
-        }
-        return "";
+        return getPreferenceValue(LOGGING_DATABASE_NAME);
     }
 
     /**
@@ -429,10 +404,8 @@ public final class AutoIngestUserPreferences {
      * @return int the value in minutes, default is 60 minutes.
      */
     public static int getMinutesOfInputScanInterval() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME)) {
-            return Integer.parseInt(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME));
-        }
-        return 60;
+        String value = getPreferenceValue(INPUT_SCAN_INTERVAL_TIME);
+        return value.isEmpty() ? 60 : Integer.parseInt(value);
     }
 
     /**
@@ -442,67 +415,5 @@ public final class AutoIngestUserPreferences {
      */
     public static void setMinutesOfInputScanInterval(int value) {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME, Integer.toString(value));
-    }
-
-    /**
-     * Copied from Autopsy UserPreferences - can be removed once everything is
-     * merged together. Provides ability to convert text to hex text.
-     */
-    static final class TextConverter {
-
-        private static final char[] TMP = "hgleri21auty84fwe".toCharArray(); //NON-NLS
-        private static final byte[] SALT = {
-            (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-            (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,};
-
-        /**
-         * Convert text to hex text.
-         *
-         * @param property Input text string.
-         *
-         * @return Converted hex string.
-         *
-         * @throws org.sleuthkit.autopsy.core.UserPreferencesException
-         */
-        static String convertTextToHexText(String property) throws UserPreferencesException {
-            try {
-                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
-                SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
-                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
-                pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-                return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
-            } catch (Exception ex) {
-                throw new UserPreferencesException("Error encrypting text");
-            }
-        }
-
-        private static String base64Encode(byte[] bytes) {
-            return Base64.getEncoder().encodeToString(bytes);
-        }
-
-        /**
-         * Convert hex text back to text.
-         *
-         * @param property Input hex text string.
-         *
-         * @return Converted text string.
-         *
-         * @throws org.sleuthkit.autopsy.core.UserPreferencesException
-         */
-        static String convertHexTextToText(String property) throws UserPreferencesException {
-            try {
-                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
-                SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
-                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
-                pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-                return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
-            } catch (Exception ex) {
-                throw new UserPreferencesException("Error decrypting text");
-            }
-        }
-
-        private static byte[] base64Decode(String property) {
-            return Base64.getDecoder().decode(property);
-        }
     }
 }

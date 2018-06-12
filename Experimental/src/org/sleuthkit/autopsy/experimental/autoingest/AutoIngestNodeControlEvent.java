@@ -24,12 +24,12 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 /**
  * Event published to pause, resume or shutdown an AIN.
  */
-final class AutoIngestNodeControlEvent extends AutopsyEvent implements Serializable {
+public final class AutoIngestNodeControlEvent extends AutopsyEvent implements Serializable {
 
     /**
      * The set of available controls.
      */
-    enum ControlEventType {
+    public enum ControlEventType {
         PAUSE,
         RESUME,
         SHUTDOWN
@@ -41,7 +41,7 @@ final class AutoIngestNodeControlEvent extends AutopsyEvent implements Serializa
     private final String userName;
     private final ControlEventType eventType;
 
-    AutoIngestNodeControlEvent(ControlEventType eventType, String targetNode, String originatingNode, String userName) {
+    public AutoIngestNodeControlEvent(ControlEventType eventType, String targetNode, String originatingNode, String userName) {
         super(eventType.toString(), null, null);
         this.eventType = eventType;
         this.targetNodeName = targetNode;
