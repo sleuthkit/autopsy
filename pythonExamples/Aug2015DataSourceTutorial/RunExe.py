@@ -136,8 +136,10 @@ class RunExeIngestModule(DataSourceIngestModule):
         # We'll save our output to a file in the reports folder, named based on EXE and data source ID
         reportFile = File(Case.getCurrentCase().getCaseDirectory() + "\\Reports" + "\\img_stat-" + str(dataSource.getId()) + ".txt")
         # Run the EXE, saving output to the report
-        # NOTE: we should really be checking for if the module has been
-        # cancelled and then killing the process. 
+        # Check if the ingest is terminated and delete the incomplete report file
+        # Do not add report to the case tree if the ingest is cancelled before finish.
+        # This can be done by using IngestJobContext.dataSourceIngestIsCancelled
+        # See: http://sleuthkit.org/autopsy/docs/api-docs/4.7.0/_ingest_job_context_8java.html
         self.log(Level.INFO, "Running program on data source")
         cmd = ArrayList()
         cmd.add(self.pathToEXE.toString())
@@ -150,5 +152,9 @@ class RunExeIngestModule(DataSourceIngestModule):
         # Add the report to the case, so it shows up in the tree
         if not self.context.dataSourceIngestIsCancelled():
             Case.getCurrentCase().addReport(reportFile.toString(), "Run EXE", "img_stat output")
-        
+        else:
+            if reportFile.exists():
+                if not reportFile.delete():
+                    self.log(LEVEL.warning,"Error deleting the incomplete report file")
+            
         return IngestModule.ProcessResult.OK
