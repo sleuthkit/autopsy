@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * A panel to manage all keyword lists created/imported in Autopsy.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;

@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.DatabaseTimin
 /**
  * Creates a graph of the given timing metric data
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class TimingMetricGraphPanel extends JPanel {
     
     private final static Logger logger = Logger.getLogger(TimingMetricGraphPanel.class.getName());

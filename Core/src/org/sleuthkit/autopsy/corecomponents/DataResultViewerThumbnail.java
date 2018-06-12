@@ -71,6 +71,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * ancestor top component's explorer manager at runtime.
  */
 @ServiceProvider(service = DataResultViewer.class)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
@@ -372,10 +373,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public boolean isSupported(Node selectedNode) {
-        if (selectedNode == null) {
-            return false;
-        }
-        return true;
+        return (selectedNode != null);
     }
 
     @Override

@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
  * Container panel for File Extension Mismatch Ingest Module advanced
  * configuration options
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class FileExtMismatchSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(FileExtMismatchSettingsPanel.class.getName());
