@@ -83,8 +83,8 @@ final public class CommonFilesNode extends DisplayableItemNode {
 
         @Override
         protected Node createNodeForKey(String md5){
-            Md5Metadata metadata = this.metadata.getMetadataForMd5(md5);
-            return new Md5Node(metadata);
+            Md5Metadata metadataForMd5 = this.metadata.getMetadataForMd5(md5);
+            return new Md5Node(metadataForMd5);
         }
 
         @Override

@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findCommonFiles()</code> is called, which organizes files by md5 to
+ * <code>findFiles()</code> is called, which organizes files by md5 to
  * prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
@@ -166,8 +166,8 @@ public abstract class CommonFilesMetadataBuilder {
      * @throws NoCurrentCaseException
      * @throws SQLException
      */
-    public CommonFilesMetadata findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
-
+    public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
+        //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, Md5Metadata> commonFiles = new HashMap<>();
 
         SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -235,7 +235,8 @@ public abstract class CommonFilesMetadataBuilder {
 
     @NbBundle.Messages({
         "CommonFilesMetadataBuilder.buildTabTitle.titleAll=Common Files (All Data Sources, %s)",
-        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
+        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)",
+        "CommonFilesMetadataBuilder.buildTabTitle.titleEamDb=Common Files (Central Repository Source(s), %s)",
     })
     protected abstract String buildTabTitle();
   

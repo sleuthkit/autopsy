@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -32,12 +33,25 @@ import org.sleuthkit.datamodel.AbstractFile;
 public class FileInstanceNode extends FileNode {
     
     private final String dataSource;
+    private final File file;
 
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
+        this.file = null;
     }
+    
+    public FileInstanceNode(AbstractFile fsContent, String dataSource, File file){
+        super(fsContent);
+        this.content = fsContent;
+        this.dataSource = dataSource;
+        this.file = file;
+    }
+    
+    //TODO add constructor with correlation attr instance
+    //TODO override getactions
+    //TODO use constructor overload that consumes a lookup and pass an instance of this (or a subclas of it)
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
@@ -51,6 +65,14 @@ public class FileInstanceNode extends FileNode {
 
     String getDataSource() {
         return this.dataSource;
+    }
+    
+    boolean hasFile(){
+        return this.file != null;
+    }
+    
+    File getFile(){
+        return this.file;
     }
 
     @Override
@@ -87,8 +109,10 @@ public class FileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
 
-        map.put(CommonFilePropertyType.File.toString(), node.getName());
-        map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
+        //TODO rather than these ternary operators we should subclass FileInstanceNode or derive an interface
+        
+        map.put(CommonFilePropertyType.File.toString(), node.hasFile() ? node.getFile().getName() : node.getName());
+        map.put(CommonFilePropertyType.ParentPath.toString(), node.hasFile() ? node.getFile().getParent() : node.getContent().getParentPath());     //TODO this appears to have a bug
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
         map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));

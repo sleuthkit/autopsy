@@ -100,6 +100,12 @@
         <get src="https://drive.google.com/uc?id=1rMP1QTI0LdppzdypbG-4BDwkKcR3tHXc" dest="${test-input}/commonfiles_image2_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1OdwyJ2lru55ZPdvwzj3pq6sXIys27i4x" dest="${test-input}/commonfiles_image3_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1GoF2x0km5AyFvE926ttN20lrMX1oLN7E" dest="${test-input}/commonfiles_image4_v1.vhd" skipexisting="true"/>
+<!--        <get src="TODO: FINISH ME" dest="${test-input}/c1da1_v1.vhd" skipexisting="true"/>
+        <get src="TODO: FINISH ME" dest="${test-input}/c1da2_v1.vhd" skipexisting="true"/>
+        <get src="TODO: FINISH ME" dest="${test-input}/c2da1_v1.vhd" skipexisting="true"/>
+        <get src="TODO: FINISH ME" dest="${test-input}/c2da2_v1.vhd" skipexisting="true"/>
+        <get src="TODO: FINISH ME" dest="${test-input}/c3da1_v1.vhd" skipexisting="true"/>
+        <get src="TODO: FINISH ME" dest="${test-input}/c3da2_v1.vhd" skipexisting="true"/>-->
     </target>
 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">

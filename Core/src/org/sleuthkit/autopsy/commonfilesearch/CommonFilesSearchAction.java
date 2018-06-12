@@ -19,17 +19,22 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
  */
 final public class CommonFilesSearchAction extends CallableSystemAction {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchAction.class.getName());
+    
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
 
@@ -40,7 +45,16 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
     
     @Override
     public boolean isEnabled(){
-        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
+        boolean isEamDbAvailable = CommonFilesPanel.isEamDbAvailable();
+        
+        boolean isMultiDataSourceCase = false;
+        try {
+            isMultiDataSourceCase = Case.isCaseOpen() && !Case.getCurrentCase().getDataSources().isEmpty();
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Exception determining whether or not CommonFilesSearch should be enabled.", ex);
+        }
+        
+        return super.isEnabled() && Installer.isJavaFxInited() && (isMultiDataSourceCase || isEamDbAvailable);
     }
 
     public static synchronized CommonFilesSearchAction getDefault() {

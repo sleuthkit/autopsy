@@ -19,6 +19,8 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.io.File;
+
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
@@ -26,6 +28,7 @@ final public class FileInstanceMetadata {
     
     private final Long objectId;
     private final String dataSourceName;
+    private final File file;
     
     /**
      * Create meta data required to find an abstract file and build a FileInstanceNode.
@@ -35,6 +38,13 @@ final public class FileInstanceMetadata {
     FileInstanceMetadata(Long objectId, String dataSourceName) {
         this.objectId = objectId;
         this.dataSourceName = dataSourceName;
+        this.file = null;
+    }
+    
+    FileInstanceMetadata(Long objectId, String dataSourceName, File file){
+        this.objectId = objectId;
+        this.dataSourceName = dataSourceName;
+        this.file = file;
     }
     
     /**
@@ -51,6 +61,5 @@ final public class FileInstanceMetadata {
      */
     public String getDataSourceName(){
         return this.dataSourceName;
-    }    
-
+    }
 }
