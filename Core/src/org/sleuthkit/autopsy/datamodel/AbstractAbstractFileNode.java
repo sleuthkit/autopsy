@@ -266,7 +266,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         
         // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
         AbstractFile file = content;
-        if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isValidCentralRepoFile(file) && file.isFile()) {
+        if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
             actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
         }
         

@@ -76,9 +76,9 @@ public class EamArtifactUtil {
             // have switch based on artifact type
             for (CorrelationAttribute.Type aType : EamDb.getInstance().getDefinedCorrelationTypes()) {
                 if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                    CorrelationAttribute eamArtifact = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
-                    if (eamArtifact != null) {
-                        eamArtifacts.add(eamArtifact);
+                    CorrelationAttribute correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
+                    if (correlationAttribute != null) {
+                        eamArtifacts.add(correlationAttribute);
                     }
                 }
             }
@@ -231,7 +231,7 @@ public class EamArtifactUtil {
 
         final AbstractFile file = (AbstractFile) content;
 
-        if (!isValidCentralRepoFile(file)) {
+        if (!isSupportedAbstractFileType(file)) {
             return null;
         }
 
@@ -273,7 +273,7 @@ public class EamArtifactUtil {
 
         final AbstractFile af = (AbstractFile) content;
 
-        if (!isValidCentralRepoFile(af)) {
+        if (!isSupportedAbstractFileType(af)) {
             return null;
         }
 
@@ -312,12 +312,8 @@ public class EamArtifactUtil {
      * @return true if the file should be added to the central repo, false
      *         otherwise
      */
-    public static boolean isValidCentralRepoFile(AbstractFile file) {
+    public static boolean isSupportedAbstractFileType(AbstractFile file) {
         if (file == null) {
-            return false;
-        }
-
-        if (file.getKnown() == TskData.FileKnown.KNOWN) {
             return false;
         }
 

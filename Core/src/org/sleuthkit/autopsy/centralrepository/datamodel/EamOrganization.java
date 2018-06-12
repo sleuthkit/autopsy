@@ -29,7 +29,7 @@ public class EamOrganization {
     private String pocEmail;
     private String pocPhone;
 
-    public EamOrganization(
+    EamOrganization(
             int orgID,
             String name,
             String pocName,
@@ -84,7 +84,7 @@ public class EamOrganization {
     /**
      * @param orgID the orgID to set
      */
-    public void setOrgID(int orgID) {
+    void setOrgID(int orgID) {
         this.orgID = orgID;
     }
 
