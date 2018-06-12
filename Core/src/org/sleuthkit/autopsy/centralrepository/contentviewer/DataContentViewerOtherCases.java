@@ -49,10 +49,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -847,9 +844,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addComponent(earliestDatePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(tableContainerPanelLayout.createSequentialGroup()
                         .addComponent(tableStatusPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -867,10 +864,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 144, Short.MAX_VALUE)
+            .addGap(0, 170, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -882,7 +879,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
