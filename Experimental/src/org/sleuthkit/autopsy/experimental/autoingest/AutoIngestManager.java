@@ -408,7 +408,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 completedJobs.remove(job);
                 // Add to pending jobs table and re-sort.
                 pendingJobs.add(job);
-                Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+                Collections.sort(pendingJobs);
 
                 setChanged();
                 notifyObservers(Event.REPROCESS_JOB);
@@ -656,7 +656,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
             }
 
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+            Collections.sort(pendingJobs);
         }
 
         if (!jobsToDeprioritize.isEmpty()) {
@@ -705,7 +705,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
             }
 
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+            Collections.sort(pendingJobs);
         }
 
         if (!jobsToPrioritize.isEmpty()) {
@@ -755,7 +755,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
             }
 
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+            Collections.sort(pendingJobs);
         }
 
         if (null != jobToDeprioritize) {
@@ -811,7 +811,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
             }
 
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+            Collections.sort(pendingJobs);
         }
 
         if (null != jobToPrioritize) {
@@ -868,7 +868,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
             }
 
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
+            Collections.sort(pendingJobs);
         }
     }
 
@@ -1168,7 +1168,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     newPendingJobsList.clear();
                     newCompletedJobsList.clear();
                     Files.walkFileTree(rootInputDirectory, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, this);
-                    Collections.sort(newPendingJobsList, new AutoIngestJob.PriorityComparator());
+                    Collections.sort(newPendingJobsList);
                     AutoIngestManager.this.pendingJobs = newPendingJobsList;
                     AutoIngestManager.this.completedJobs = newCompletedJobsList;
 

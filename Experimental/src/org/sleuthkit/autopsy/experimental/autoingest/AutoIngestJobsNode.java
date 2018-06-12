@@ -23,6 +23,7 @@ import com.google.common.eventbus.Subscribe;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
@@ -102,7 +103,7 @@ final class AutoIngestJobsNode extends AbstractNode {
             switch (autoIngestJobStatus) {
                 case PENDING_JOB:
                     jobs = jobsSnapshot.getPendingJobs();
-                    jobs.sort(new AutoIngestJob.PriorityComparator());
+                    Collections.sort(jobs);
                     break;
                 case RUNNING_JOB:
                     jobs = jobsSnapshot.getRunningJobs();

@@ -591,7 +591,21 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      */
     @Override
     public int compareTo(AutoIngestJob otherJob) {
-        return -this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
+        int comparisonResult = -(this.getPriority().compareTo(otherJob.getPriority()));
+        if (comparisonResult == 0) {
+            //if the priority is the same compare with the jobs manifest creation date
+            comparisonResult = this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
+            if (comparisonResult == 0) {
+                //if the manifest files were created at the same time compare with the jobs case name
+                comparisonResult = -this.getManifest().getCaseName().compareTo(otherJob.getManifest().getCaseName());
+                if (comparisonResult == 0) {
+                    //if the case name is the same compare with the jobs datasource file name
+                    comparisonResult = -this.getManifest().getDataSourcePath().getFileName().toString().compareTo(otherJob.getManifest().getDataSourcePath().getFileName().toString());
+                    //if they are still the same at this point they may be ordered incosistantly
+                }
+            }
+        }
+        return comparisonResult;
     }
 
     @Override
@@ -607,45 +621,6 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     @Override
     public Map<String, Long> getModuleRunTimes() {
         return this.moduleRunTimesSnapshot;
-    }
-
-    /**
-     * Comparator that supports doing a descending sort of jobs based on job
-     * completion date.
-     */
-    static class CompletedDateDescendingComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getCompletedDate().compareTo(o2.getCompletedDate());
-        }
-
-    }
-
-    /**
-     * Comparator that orders jobs in descending order by job priority.
-     */
-    public static class PriorityComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
-            int comparisonResult = -(job.getPriority().compareTo(anotherJob.getPriority()));
-            if (comparisonResult == 0) {
-                //if the priority is the same compare with the jobs manifest creation date
-                comparisonResult = -job.compareTo(anotherJob);
-                if (comparisonResult == 0) {
-                    //if the manifest files were created at the same time compare with the jobs case name
-                    comparisonResult = -job.getManifest().getCaseName().compareTo(anotherJob.getManifest().getCaseName());
-                    if (comparisonResult == 0) {
-                        //if the case name is the same compare with the jobs datasource file name
-                        comparisonResult = -job.getManifest().getDataSourcePath().getFileName().toString().compareTo(anotherJob.getManifest().getDataSourcePath().getFileName().toString());
-                        //if they are still the same at this point they may be ordered incosistantly
-                    }
-                }
-            }
-            return comparisonResult;
-        }
-
     }
 
     /**
@@ -665,18 +640,6 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             } else {
                 return aJob.getManifest().getCaseName().compareToIgnoreCase(anotherJob.getManifest().getCaseName());
             }
-        }
-
-    }
-
-    /**
-     * Comparator that orders jobs by data source name.
-     */
-    static class DataSourceFileNameComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
-            return aJob.getManifest().getDataSourceFileName().compareToIgnoreCase(anotherJob.getManifest().getDataSourceFileName());
         }
 
     }
