@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -40,7 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findCommonFiles()</code> is called, which organizes files by md5 to
+ * <code>findFiles()</code> is called, which organizes files by md5 to
  * prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
@@ -166,12 +167,14 @@ public abstract class CommonFilesMetadataBuilder {
      * @throws NoCurrentCaseException
      * @throws SQLException
      */
-    public CommonFilesMetadata findCommonFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
-
+    public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
+        //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, Md5Metadata> commonFiles = new HashMap<>();
 
         SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         String selectStatement = this.buildSqlSelectStatement();
+        
+        Map<Long, AbstractFile> fileCache = new HashMap<>();
 
         try (
                 CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement);
@@ -189,11 +192,10 @@ public abstract class CommonFilesMetadataBuilder {
 
                 if (commonFiles.containsKey(md5)) {
                     final Md5Metadata md5Metadata = commonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new FileInstanceMetadata(objectId, dataSource));
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource));
                 } else {
-                    final List<FileInstanceMetadata> fileInstances = new ArrayList<>();
-                    fileInstances.add(new FileInstanceMetadata(objectId, dataSource));
-                    Md5Metadata md5Metadata = new Md5Metadata(md5, fileInstances);
+                    final Md5Metadata md5Metadata = new Md5Metadata(md5);
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource));
                     commonFiles.put(md5, md5Metadata);
                 }
             }
@@ -235,7 +237,8 @@ public abstract class CommonFilesMetadataBuilder {
 
     @NbBundle.Messages({
         "CommonFilesMetadataBuilder.buildTabTitle.titleAll=Common Files (All Data Sources, %s)",
-        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)"
+        "CommonFilesMetadataBuilder.buildTabTitle.titleSingle=Common Files (Match Within Data Source: %s, %s)",
+        "CommonFilesMetadataBuilder.buildTabTitle.titleEamDb=Common Files (Central Repository Source(s), %s)",
     })
     protected abstract String buildTabTitle();
   

@@ -19,38 +19,30 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.io.File;
+import java.util.Map;
+import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.SleuthkitCaseFileInstanceNode;
+import org.sleuthkit.datamodel.AbstractFile;
+
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-final public class FileInstanceMetadata {
-    
-    private final Long objectId;
-    private final String dataSourceName;
+final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
     
     /**
      * Create meta data required to find an abstract file and build a FileInstanceNode.
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    FileInstanceMetadata(Long objectId, String dataSourceName) {
-        this.objectId = objectId;
-        this.dataSourceName = dataSourceName;
+    SleuthkitCaseFileInstanceMetadata (Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource) {
+        super(abstractFileReference, cachedFiles, dataSource);
     }
-    
-    /**
-     * obj_id for the file represented by this object
-     * @return 
-     */
-    public Long getObjectId(){
-        return this.objectId;
-    }
-    
-    /**
-     * Name of datasource where this instance was found.
-     * @return 
-     */
-    public String getDataSourceName(){
-        return this.dataSourceName;
-    }    
 
+    @Override
+    public DisplayableItemNode generateNode() {
+        return new SleuthkitCaseFileInstanceNode(this.lookupOrCreateAbstractFile(), this.getDataSource());
+    }
 }

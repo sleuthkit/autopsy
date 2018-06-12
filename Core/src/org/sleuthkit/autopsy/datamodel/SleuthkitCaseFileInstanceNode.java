@@ -28,12 +28,17 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
  * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ * 
+ * Use this type for files which are in the current case.  Contrast with 
+ * <code>CentralRepositoryFileInstanceNode</code> which should be used when the 
+ * FileInstance was found in some case not presently open in Autopsy, but present 
+ * in the Central Repository.
  */
-public class FileInstanceNode extends FileNode {
+public class SleuthkitCaseFileInstanceNode extends FileNode {
     
     private final String dataSource;
 
-    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
@@ -66,7 +71,7 @@ public class FileInstanceNode extends FileNode {
         fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
-        for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
+        for (SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType propType : SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.values()) {
             final String propString = propType.toString();
             final Object property = map.get(propString);
             final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
@@ -85,13 +90,14 @@ public class FileInstanceNode extends FileNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
+    static private void fillPropertyMap(Map<String, Object> map, SleuthkitCaseFileInstanceNode node) {
 
-        map.put(CommonFilePropertyType.File.toString(), node.getName());
-        map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
-        map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
-        map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
-        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.getName());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.getContent().getParentPath());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.Case.toString(), "TODO");
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.DataSource.toString(), node.getDataSource());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }
 
     /**
@@ -99,23 +105,25 @@ public class FileInstanceNode extends FileNode {
      * instance of this object.
      */
     @NbBundle.Messages({
-        "CommonFilePropertyType.fileColLbl=File",
-        "CommonFilePropertyType.pathColLbl=Parent Path",
-        "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source",
-        "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
+        "SleuthkitCaseFileInstanceNodePropertyType.fileColLbl=File",
+        "SleuthkitCaseFileInstanceNodePropertyType.pathColLbl=Parent Path",
+        "SleuthkitCaseFileInstanceNodePropertyType.hashsetHitsColLbl=Hash Set Hits",
+        "SleuthkitCaseFileInstanceNodePropertyType.caseColLbl=Case",
+        "SleuthkitCaseFileInstanceNodePropertyType.dataSourceColLbl=Data Source",
+        "SleuthkitCaseFileInstanceNodePropertyType.mimeTypeColLbl=MIME Type"
     })
-    public enum CommonFilePropertyType {
+    public enum SleuthkitCaseFileInstanceNodePropertyType {
 
-        File(Bundle.CommonFilePropertyType_fileColLbl()),
-        ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
-        HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
+        File(Bundle.SleuthkitCaseFileInstanceNodePropertyType_fileColLbl()),
+        ParentPath(Bundle.SleuthkitCaseFileInstanceNodePropertyType_pathColLbl()),
+        HashsetHits(Bundle.SleuthkitCaseFileInstanceNodePropertyType_hashsetHitsColLbl()),
+        Case(Bundle.SleuthkitCaseFileInstanceNodePropertyType_caseColLbl()),
+        DataSource(Bundle.SleuthkitCaseFileInstanceNodePropertyType_dataSourceColLbl()),
+        MimeType(Bundle.SleuthkitCaseFileInstanceNodePropertyType_mimeTypeColLbl());
 
         final private String displayString;
 
-        private CommonFilePropertyType(String displayString) {
+        private SleuthkitCaseFileInstanceNodePropertyType(String displayString) {
             this.displayString = displayString;
         }
 
