@@ -670,10 +670,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public void processInstances(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
+    public void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
         try {
             acquireSharedLock();
-            super.processInstances(type, instanceTableCallback);
+            super.processInstanceTable(type, instanceTableCallback);
         } finally {
             releaseSharedLock();
         }

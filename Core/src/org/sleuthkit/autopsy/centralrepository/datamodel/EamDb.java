@@ -632,5 +632,5 @@ public interface EamDb {
      * @param instanceTableCallback callback to process the instance
      * @throws EamDbException
      */
-    public void processInstances(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
+    void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
 }

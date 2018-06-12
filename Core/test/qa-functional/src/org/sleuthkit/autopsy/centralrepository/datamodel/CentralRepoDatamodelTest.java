@@ -631,8 +631,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         String inDataSource1twicePath2 = "C:\\files\\path2.txt";
         String onlyInDataSource3Hash = "2af54305f183778d87de0c70c591fae4";
         String onlyInDataSource3Path = "C:\\files\\path3.txt";
-        String callbackTestFilePath1 = "C:\\files\\_\\path1.txt";
-        String callbackTestFilePath2 = "C:\\files\\_\\path2.txt";
+        String callbackTestFilePath1 = "C:\\files\\processinstancecallback\\path1.txt";
+        String callbackTestFilePath2 = "C:\\files\\processinstancecallback\\path2.txt";
         String callbackTestFileHash = "fb9dd8f04dacd3e82f4917f1a002223c";
 
         // These will all go in dataSource1fromCase1
@@ -1074,6 +1074,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         
         // Test running processinstance which queries all rows from instances table
         try {
+            // Add two instances to the central repository and use the callback query to verify we can see them
             CorrelationAttribute attr = new CorrelationAttribute(fileType, callbackTestFileHash);
             CorrelationAttributeInstance inst1 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, callbackTestFilePath1);
             CorrelationAttributeInstance inst2 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, callbackTestFilePath2);
@@ -1081,8 +1082,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             attr.addInstance(inst2);
             EamDb DbManager = EamDb.getInstance();
             DbManager.addArtifact(attr);
-            ArtifactInstanceProcessCallbackTest instancetableCallback = new ArtifactInstanceProcessCallbackTest();
-            DbManager.processInstances(fileType, instancetableCallback);
+            AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
+            DbManager.processInstanceTable(fileType, instancetableCallback);
             int count1 = instancetableCallback.getCounter();
             int count2 = instancetableCallback.getCounterNamingConvention();
             assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
@@ -1093,10 +1094,10 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         try {
             //test null inputs
-            EamDb.getInstance().processInstances(null, null);
+            EamDb.getInstance().processInstanceTable(null, null);
             Assert.fail("processinstance method failed to throw exception for null type value");
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            // This is the expected 
         }
     }
 
@@ -2650,7 +2651,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
     }
 
-    public class ArtifactInstanceProcessCallbackTest implements InstanceTableCallback {
+    public class AttributeInstanceTableCallback implements InstanceTableCallback {
 
         int counterNamingConvention = 0;
         int counter = 0;
@@ -2659,7 +2660,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         public void process(ResultSet resultSet) {
             try {
                 while(resultSet.next()){
-                    if(InstanceTableCallback.getFilePath(resultSet).contains("_")){
+                    if(InstanceTableCallback.getFilePath(resultSet).contains("processinstancecallback")){
                         counterNamingConvention++;
                     }else{
                         counter++;

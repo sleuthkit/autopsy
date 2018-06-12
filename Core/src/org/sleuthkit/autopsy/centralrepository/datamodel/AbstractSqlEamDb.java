@@ -1534,7 +1534,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public void processInstances(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
+    public void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
         if (type == null) {
             throw new EamDbException("Correlation type is null");
         }

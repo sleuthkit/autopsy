@@ -22,86 +22,87 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * CallBack Interface to process artifact instance. Used in EamDb.processInstance
- * to process instances in instances table in Central Repository
+ * CallBack Interface to process attribute instance Table. Used in EamDb.processInstanceTable
+ * is called only once. The implementation of this method needs to call resultset.next to
+ * loop through each row of attribute instance table.
  */
 public interface InstanceTableCallback {
     
     /**
-    * Process the artifact instance
+    * Process the attribute instance
     * 
-    * @param resultSet artifact instance table.
+    * @param resultSet attribute instance table.
     */
-    public void process(ResultSet resultSet);
+    void process(ResultSet resultSet);
     
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return ID of the instance
      * @throws SQLException 
      */
-    public static int getId(ResultSet resultSet) throws SQLException{
+    static int getId(ResultSet resultSet) throws SQLException{
         return resultSet.getInt("id");
     }
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return Case ID of a given instance
      * @throws SQLException 
      */
-    public static int getCaseId(ResultSet resultSet) throws SQLException {
+    static int getCaseId(ResultSet resultSet) throws SQLException {
         return resultSet.getInt("case_id");
     }
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return Data source id of a particular instance
      * @throws SQLException 
      */
-    public static int getDataSourceId(ResultSet resultSet) throws SQLException {
+    static int getDataSourceId(ResultSet resultSet) throws SQLException {
         return resultSet.getInt("data_source_id");
     }
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return md5 hash value of the instance
      * @throws SQLException 
      */
-    public static String getValue(ResultSet resultSet) throws SQLException {
+    static String getValue(ResultSet resultSet) throws SQLException {
         return resultSet.getString("value");
     }
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return file path of the instance
      * @throws SQLException 
      */
-    public static String getFilePath(ResultSet resultSet) throws SQLException {
+    static String getFilePath(ResultSet resultSet) throws SQLException {
         return resultSet.getString("file_path");
     }
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return status integer based on whether instance is marked notable or not
      * @throws SQLException 
      */
-    public static int getKnownStatus(ResultSet resultSet) throws SQLException {
+    static int getKnownStatus(ResultSet resultSet) throws SQLException {
         return resultSet.getInt("known_status");
     }
     
     /**
      * 
-     * @param resultSet artifact instance table
+     * @param resultSet attribute instance table
      * @return previous comment made for the instance
      * @throws SQLException 
      */
-    public static String getComment(ResultSet resultSet) throws SQLException {
+    static String getComment(ResultSet resultSet) throws SQLException {
         return resultSet.getString("comment");
     }
     
