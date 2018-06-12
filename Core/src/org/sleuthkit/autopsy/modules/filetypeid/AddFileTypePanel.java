@@ -32,11 +32,11 @@ import static org.sleuthkit.autopsy.modules.filetypeid.AddFileTypePanel.EVENT.SI
 import org.sleuthkit.autopsy.modules.filetypeid.AddFileTypeSignatureDialog.BUTTON_PRESSED;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
-@Messages("AddFileTypePanel.mimeFormatLabel.text=Form of MIME type should be: media type/media subtype")
-
 /**
  * Panel for adding or editing file types.
  */
+@Messages("AddFileTypePanel.mimeFormatLabel.text=Form of MIME type should be: media type/media subtype")
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddFileTypePanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

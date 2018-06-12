@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private final RawDSInputPanel configPanel;
-    private AddRawImageTask addImageTask;
     private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
     private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);   
     private static final List<FileFilter> filtersList = new ArrayList<>();
@@ -163,7 +162,7 @@ public class RawDSProcessor implements DataSourceProcessor, AutoIngestDataSource
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, progressMonitor, callback);
+        AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 

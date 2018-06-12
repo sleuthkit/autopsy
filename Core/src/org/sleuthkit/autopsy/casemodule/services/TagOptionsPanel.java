@@ -27,7 +27,6 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
@@ -43,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * A panel to allow the user to create and delete custom tag types.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;

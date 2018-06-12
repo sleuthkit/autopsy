@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Subpanel with controls for data source filtering.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataSourcePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(DataSourcePanel.class.getName());
@@ -65,10 +66,12 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
             @Override
             public void mouseMoved(MouseEvent evt) {
-                JList<String> DsList = (JList<String>) evt.getSource();
-                int index = DsList.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    DsList.setToolTipText(toolTipList.get(index));
+                if (evt.getSource() instanceof JList<?>) {
+                    JList<?> dsList = (JList<?>) evt.getSource();
+                    int index = dsList.locationToIndex(evt.getPoint());
+                    if (index > -1) {
+                        dsList.setToolTipText(toolTipList.get(index));
+                    }
                 }
             }
     });
@@ -151,7 +154,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         dataSourceNoteLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(150, 150));
-        setPreferredSize(new java.awt.Dimension(100, 100));
+        setPreferredSize(new java.awt.Dimension(150, 150));
 
         dataSourceList.setModel(new javax.swing.AbstractListModel<String>() {
             List<String> strings  = getDataSourceArray();
@@ -194,8 +197,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(dataSourceCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(dataSourceNoteLabel)
                 .addContainerGap())
         );
