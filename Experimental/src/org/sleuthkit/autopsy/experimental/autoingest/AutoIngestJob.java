@@ -602,7 +602,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
                     //if the case name is the same compare with the jobs datasource file name
                     comparisonResult = -this.getManifest().getDataSourcePath().getFileName().toString().compareTo(otherJob.getManifest().getDataSourcePath().getFileName().toString());
                     //if they are still the same at this point they may be ordered inconsistently
-                }n
+                }
             }
         }
         return comparisonResult;
