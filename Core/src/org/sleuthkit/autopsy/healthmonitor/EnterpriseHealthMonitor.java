@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,18 +65,16 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
-            = new CaseDbSchemaVersionNumber(1, 0);
+            = new CaseDbSchemaVersionNumber(1, 1);
     
     private static final AtomicBoolean isEnabled = new AtomicBoolean(false);
     private static EnterpriseHealthMonitor instance;
     
-    private final ExecutorService healthMonitorExecutor;
-    private static final String HEALTH_MONITOR_EVENT_THREAD_NAME = "Health-Monitor-Event-Listener-%d";
-    
     private ScheduledThreadPoolExecutor healthMonitorOutputTimer;
     private final Map<String, TimingInfo> timingInfoMap;
+    private final List<UserData> userInfoList;
     private static final int CONN_POOL_SIZE = 10;
     private BasicDataSource connectionPool = null;
     private CaseDbConnectionInfo connectionSettingsInUse = null;
@@ -90,8 +86,9 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
         // of whether the monitor is enabled.
         timingInfoMap = new HashMap<>();
         
-        // Set up the executor to handle case events
-        healthMonitorExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(HEALTH_MONITOR_EVENT_THREAD_NAME).build());
+        // Create the list to hold user information. The list will exist regardless
+        // of whether the monitor is enabled.
+        userInfoList = new ArrayList<>();
         
         // Get the host name
         try {
@@ -156,12 +153,70 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 initializeDatabaseSchema();
             }
             
+            if( ! CURRENT_DB_SCHEMA_VERSION.equals(getVersion())) {
+                upgradeDatabaseSchema();
+            }
+            
         } catch (CoordinationService.CoordinationServiceException ex) {
             throw new HealthMonitorException("Error releasing database lock", ex);
         }
         
         // Clear out any old data
         timingInfoMap.clear();
+        userInfoList.clear();
+    }
+    
+    /**
+     * Upgrade an older database
+     */
+    private void upgradeDatabaseSchema() throws HealthMonitorException {
+        
+        logger.log(Level.INFO, "Upgrading Health Monitor database");
+        CaseDbSchemaVersionNumber currentSchema = getVersion();
+        
+        Connection conn = connect();
+        if(conn == null) {
+            throw new HealthMonitorException("Error getting database connection");
+        }
+
+        try (Statement statement = conn.createStatement()) {
+            conn.setAutoCommit(false);
+
+            // Upgrade from 1.0 to 1.1
+            // Changes: user_data table added
+            if(currentSchema.compareTo(new CaseDbSchemaVersionNumber(1,1)) < 0) {
+                
+                // Add the user_data table
+                statement.execute("CREATE TABLE IF NOT EXISTS user_data ("+
+                    "id SERIAL PRIMARY KEY," + 
+                    "host text NOT NULL," + 
+                    "timestamp bigint NOT NULL," + 
+                    "event_type int NOT NULL," + 
+                    "is_examiner boolean NOT NULL," +
+                    "case_name text NOT NULL" +
+                    ")");
+            }
+            
+            // Update the schema version
+            statement.execute("UPDATE db_info SET value='" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "' WHERE name='SCHEMA_VERSION'");
+            statement.execute("UPDATE db_info SET value='" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name='SCHEMA_MINOR_VERSION'");
+            
+            conn.commit();
+            logger.log(Level.INFO, "Health Monitor database upgraded to version {0}", CURRENT_DB_SCHEMA_VERSION.toString());
+        } catch (SQLException ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex2) {
+                logger.log(Level.SEVERE, "Rollback error");
+            }
+            throw new HealthMonitorException("Error upgrading database", ex);
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error closing connection.", ex);
+            }
+        }
     }
     
     /**
@@ -207,7 +262,17 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * @throws HealthMonitorException 
      */
     static synchronized void startUpIfEnabled() throws HealthMonitorException {
-        getInstance();
+        getInstance().addUserEvent(UserEvent.LOG_ON);
+    }
+    
+    /**
+     * Called when the application is closing.
+     * Create a log off event and write all existing metrics to the database
+     * @throws HealthMonitorException 
+     */
+    static synchronized void shutdown() throws HealthMonitorException {
+        getInstance().addUserEvent(UserEvent.LOG_OFF);
+        recordMetrics();
     }
     
     /**
@@ -319,6 +384,17 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Add a user event to the list.
+     * @param eventType 
+     */
+    private void addUserEvent(UserEvent eventType) {
+        UserData userInfo = new UserData(eventType);
+        synchronized(this) {
+            userInfoList.add(userInfo);
+        }
+    }
+    
+    /**
      * Time a database query.
      * Database queries are hard to test in normal processing because the time
      * is so dependent on the size of the tables being queried. We use getImages here
@@ -359,7 +435,6 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
      * @throws HealthMonitorException 
      */
     private void gatherTimerBasedMetrics() throws HealthMonitorException {
-        // Time a database query
         performDatabaseQuery();
     }
     
@@ -370,6 +445,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     private void writeCurrentStateToDatabase() throws HealthMonitorException {
         
         Map<String, TimingInfo> timingMapCopy;
+        List<UserData> userDataCopy;
         
         // Do as little as possible within the synchronized block since it will
         // block threads attempting to record metrics.
@@ -382,10 +458,13 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             // per metric name.
             timingMapCopy = new HashMap<>(timingInfoMap);
             timingInfoMap.clear();
+            
+            userDataCopy = new ArrayList<>(userInfoList);
+            userInfoList.clear();
         }
         
-        // Check if there's anything to report (right now we only have the timing map)
-        if(timingMapCopy.keySet().isEmpty()) {
+        // Check if there's anything to report
+        if(timingMapCopy.keySet().isEmpty() && userDataCopy.isEmpty()) {
             return;
         }
         
@@ -402,22 +481,33 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 throw new HealthMonitorException("Error getting database connection");
             }
 
-            // Add timing metrics to the database
+            // Add metrics to the database
             String addTimingInfoSql = "INSERT INTO timing_data (name, host, timestamp, count, average, max, min) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement statement = conn.prepareStatement(addTimingInfoSql)) {
+            String addUserInfoSql = "INSERT INTO user_data (host, timestamp, event_type, is_examiner, case_name) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement timingStatement = conn.prepareStatement(addTimingInfoSql);
+                 PreparedStatement userStatement = conn.prepareStatement(addUserInfoSql)) {
 
                 for(String name:timingMapCopy.keySet()) {
                     TimingInfo info = timingMapCopy.get(name);
 
-                    statement.setString(1, name);
-                    statement.setString(2, hostName);
-                    statement.setLong(3, System.currentTimeMillis());
-                    statement.setLong(4, info.getCount());
-                    statement.setDouble(5, info.getAverage());
-                    statement.setDouble(6, info.getMax());
-                    statement.setDouble(7, info.getMin());
+                    timingStatement.setString(1, name);
+                    timingStatement.setString(2, hostName);
+                    timingStatement.setLong(3, System.currentTimeMillis());
+                    timingStatement.setLong(4, info.getCount());
+                    timingStatement.setDouble(5, info.getAverage());
+                    timingStatement.setDouble(6, info.getMax());
+                    timingStatement.setDouble(7, info.getMin());
 
-                    statement.execute();
+                    timingStatement.execute();
+                }
+                
+                for(UserData userInfo:userDataCopy) {
+                    userStatement.setString(1, hostName);
+                    userStatement.setLong(2, userInfo.getTimestamp());
+                    userStatement.setInt(3, userInfo.getEventType().getEventValue());
+                    userStatement.setBoolean(4, userInfo.isExaminerNode());
+                    userStatement.setString(5, userInfo.getCaseName());
+                    userStatement.execute();
                 }
 
             } catch (SQLException ex) {
@@ -757,9 +847,8 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
 
         try (Statement statement = conn.createStatement()) {
             conn.setAutoCommit(false);
-            
-            String createTimingTable = 
-                "CREATE TABLE IF NOT EXISTS timing_data (" + 
+
+            statement.execute("CREATE TABLE IF NOT EXISTS timing_data (" + 
                 "id SERIAL PRIMARY KEY," + 
                 "name text NOT NULL," + 
                 "host text NOT NULL," + 
@@ -768,16 +857,23 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
                 "average double precision NOT NULL," + 
                 "max double precision NOT NULL," + 
                 "min double precision NOT NULL" + 
-                ")";
-            statement.execute(createTimingTable);
+                ")");
             
-            String createDbInfoTable = 
-                "CREATE TABLE IF NOT EXISTS db_info (" + 
+            statement.execute("CREATE TABLE IF NOT EXISTS db_info (" + 
                 "id SERIAL PRIMARY KEY NOT NULL," + 
                 "name text NOT NULL," + 
                 "value text NOT NULL" + 
-                ")";
-            statement.execute(createDbInfoTable);
+                ")");
+            
+            statement.execute("CREATE TABLE IF NOT EXISTS user_data ("+
+                "id SERIAL PRIMARY KEY," + 
+                "host text NOT NULL," + 
+                "timestamp bigint NOT NULL," + 
+                "event_type int NOT NULL," + 
+                "is_examiner BOOLEAN NOT NULL," +
+                "case_name text NOT NULL" + 
+                ")");
+            
             
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
@@ -802,25 +898,32 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     /**
      * The task called by the ScheduledThreadPoolExecutor to handle
-     * the database checks/writes.
+     * the periodic database update
      */
     static final class PeriodicHealthMonitorTask implements Runnable {
 
-        /**
-         * Perform all periodic tasks:
-         * - Check if monitoring has been enabled / disabled in the database
-         * - Gather any additional metrics
-         * - Write current metric data to the database
-         */
         @Override
         public void run() {
-            try {
-                getInstance().updateFromGlobalEnabledStatus();
+            recordMetrics();
+        }
+    }
+    
+    /**
+     * Perform all periodic tasks:
+     * - Check if monitoring has been enabled / disabled in the database
+     * - Gather any additional metrics
+     * - Write current metric data to the database
+     * Do not run this from a new thread if the case/application is closing.
+     */
+    private static void recordMetrics() {
+        try {
+            getInstance().updateFromGlobalEnabledStatus();
+            if(monitorIsEnabled()) {
                 getInstance().gatherTimerBasedMetrics();
                 getInstance().writeCurrentStateToDatabase();
-            } catch (HealthMonitorException ex) {
-                logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
             }
+        } catch (HealthMonitorException ex) {
+            logger.log(Level.SEVERE, "Error performing periodic task", ex); //NON-NLS
         }
     }
     
@@ -831,8 +934,12 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
 
             case CURRENT_CASE:
                 if ((null == evt.getNewValue()) && (evt.getOldValue() instanceof Case)) {
-                    // When a case is closed, write the current metrics to the database
-                    healthMonitorExecutor.submit(new EnterpriseHealthMonitor.PeriodicHealthMonitorTask());
+                    // Case is closing
+                    addUserEvent(UserEvent.CASE_CLOSE);
+                    
+                } else if((null == evt.getOldValue()) && (evt.getNewValue() instanceof Case)) {
+                    // Case is opening
+                    addUserEvent(UserEvent.CASE_OPEN);
                 }
                 break;
         }
@@ -1047,6 +1154,47 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     }
     
     /**
+     * Get user metrics currently stored in the database.
+     * @param timeRange Maximum age for returned metrics (in milliseconds)
+     * @return A list of user metrics
+     * @throws HealthMonitorException 
+     */
+    List<UserData> getUserMetricsFromDatabase(long timeRange) throws HealthMonitorException {
+        
+        // Make sure the monitor is enabled. It could theoretically get disabled after this
+        // check but it doesn't seem worth holding a lock to ensure that it doesn't since that
+        // may slow down ingest.
+        if(! isEnabled.get()) {
+            throw new HealthMonitorException("Health Monitor is not enabled");
+        }
+        
+        // Calculate the smallest timestamp we should return
+        long minimumTimestamp = System.currentTimeMillis() - timeRange;
+
+        try (CoordinationService.Lock lock = getSharedDbLock()) {
+            if(lock == null) {
+                throw new HealthMonitorException("Error getting database lock");
+            }
+
+            List<UserData> resultList = new ArrayList<>();
+
+            try (Connection conn = connect();
+                 Statement statement = conn.createStatement();
+                 ResultSet resultSet = statement.executeQuery("SELECT * FROM user_data WHERE timestamp > " + minimumTimestamp)) {
+                
+                while (resultSet.next()) {
+                    resultList.add(new UserData(resultSet));
+                }
+                return resultList;
+            } catch (SQLException ex) {
+                throw new HealthMonitorException("Error reading user metrics from database", ex);
+            }
+        } catch (CoordinationService.CoordinationServiceException ex) {
+            throw new HealthMonitorException("Error getting database lock", ex);
+        }
+    }    
+    
+    /**
      * Get an exclusive lock for the health monitor database.
      * Acquire this before creating, initializing, or updating the database schema.
      * @return The lock
@@ -1084,6 +1232,164 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             throw new HealthMonitorException("Error acquiring database lock");
         }
     } 
+    
+    /**
+     * Types of user events being logged
+     */
+    enum UserEvent {
+        LOG_ON(0),
+        LOG_OFF(1),
+        CASE_OPEN(2),
+        CASE_CLOSE(3);
+        
+        int value;
+        
+        UserEvent(int value) {
+            this.value = value;
+        }
+        
+        /**
+         * Get the integer value of the event to store in the database.
+         * @return value corresponding to the event
+         */
+        int getEventValue() {
+            return value;
+        }
+        
+        /**
+         * Get the UserEvent from the value stored in the database
+         * @param value
+         * @return the corresponding UserEvent object
+         * @throws HealthMonitorException 
+         */
+        static UserEvent valueOf(int value) throws HealthMonitorException {
+            for (UserEvent v : UserEvent.values()) {
+                    if (v.value == value) {
+                            return v;
+                    }
+            }
+            throw new HealthMonitorException("Can not create UserEvent from unknown value " + value);
+        }
+        
+        /**
+         * Return whether a case is considered to be open given this event
+         * as the last recorded event.
+         * @return true if a case is open, false otherwise
+         */
+        boolean caseIsOpen() {
+            return(this.equals(CASE_OPEN));
+        }
+        
+        /**
+         * Return whether a user is considered to be logged in given this event
+         * as the last recorded event.
+         * @return true if a the user is logged in, false otherwise
+         */
+        boolean userIsLoggedIn() {
+            // LOG_ON, CASE_OPEN, and CASE_CLOSED events all imply that the user
+            // is logged in
+            return( ! this.equals(LOG_OFF));
+        }
+    }
+    
+    /**
+     * Class holding user metric data.
+     * Can be used for storing new events or retrieving
+     * events out of the database.
+     */
+    static class UserData {
+        private final UserEvent eventType;
+        private long timestamp;
+        private final boolean isExaminer;
+        private final String hostname;
+        private String caseName;
+        
+        /**
+         * Create a new UserData object using the given event type
+         * and the current settings.
+         * @param eventType The type of event being recorded
+         */
+        private UserData(UserEvent eventType) {
+            this.eventType = eventType;
+            this.timestamp = System.currentTimeMillis();
+            this.isExaminer = (UserPreferences.SelectedMode.STANDALONE == UserPreferences.getMode());
+            this.hostname = "";
+            
+            // If there's a case open, record the name
+            try {
+                this.caseName = Case.getCurrentCaseThrows().getDisplayName();
+            } catch (NoCurrentCaseException ex) {
+                // It's not an error if there's no case open
+                this.caseName = "";
+            }
+        }
+        
+        /**
+         * Create a UserData object from a database result set.
+         * @param resultSet The result set containing the data
+         * @throws SQLException
+         * @throws HealthMonitorException 
+         */
+        UserData(ResultSet resultSet) throws SQLException, HealthMonitorException {
+            this.timestamp = resultSet.getLong("timestamp");
+            this.hostname = resultSet.getString("host");
+            this.eventType = UserEvent.valueOf(resultSet.getInt("event_type"));
+            this.isExaminer = resultSet.getBoolean("is_examiner");
+            this.caseName = resultSet.getString("case_name");
+        }
+        
+        /**
+         * This should only be used to make a dummy object to use for timestamp
+         * comparisons.
+         * @param timestamp
+         * @return A UserData object with the given timestamp
+         */
+        static UserData createDummyUserData(long timestamp) {
+            UserData userData = new UserData(UserEvent.CASE_CLOSE);
+            userData.timestamp = timestamp;
+            return userData;
+        }
+        
+        /**
+         * Get the timestamp for the event
+         * @return Timestamp in milliseconds
+         */
+        long getTimestamp() {
+            return timestamp;
+        }
+        
+        /**
+         * Get the host that created the metric
+         * @return the host name
+         */
+        String getHostname() {
+            return hostname;
+        }
+        
+        /**
+         * Get the type of event
+         * @return the event type
+         */
+        UserEvent getEventType() {
+            return eventType;
+        }
+        
+        /**
+         * Check whether this node is an examiner node or an auto ingest node
+         * @return true if it is an examiner node
+         */
+        boolean isExaminerNode() {
+            return isExaminer;
+        }
+        
+        /**
+         * Get the name of the case for this metric
+         * @return the case name. Will be the empty string if no case was open.
+         */
+        String getCaseName() {
+            return caseName;
+        }
+    }
     
     /**
      * Internal class for collecting timing metrics.

@@ -112,6 +112,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * CVTTopComponent when this tab is active allowing for context sensitive
  * actions to work correctly.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final public class VisualizationPanel extends JPanel implements Lookup.Provider {
 
     private static final long serialVersionUID = 1L;

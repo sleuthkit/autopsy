@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 /**
  * A panel to allow a user to make ingest job settings.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

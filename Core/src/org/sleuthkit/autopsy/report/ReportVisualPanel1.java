@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,14 +40,18 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
+/**
+ * Display reports modules.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
     private static final Logger logger = Logger.getLogger(ReportVisualPanel1.class.getName());
-    private ReportWizardPanel1 wizPanel;
-    private List<ReportModule> modules = new ArrayList<>();
-    private List<GeneralReportModule> generalModules = new ArrayList<>();
-    private List<TableReportModule> tableModules = new ArrayList<>();
-    private List<FileReportModule> fileModules = new ArrayList<>();
+    private final ReportWizardPanel1 wizPanel;
+    private final List<ReportModule> modules = new ArrayList<>();
+    private final List<GeneralReportModule> generalModules = new ArrayList<>();
+    private final List<TableReportModule> tableModules = new ArrayList<>();
+    private final List<FileReportModule> fileModules = new ArrayList<>();
     private Integer selectedIndex;
 
     /**

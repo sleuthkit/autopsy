@@ -34,7 +34,8 @@ public interface EamDb {
     public static final int SCHEMA_VERSION = 1;
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 1);
-
+  
+    
     /**
      * Get the instance
      *
@@ -330,6 +331,15 @@ public interface EamDb {
     List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException;
 
     /**
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
+     * 
+     * @param aType EamArtifact.Type to search for
+     * @return List with 0 or more matching eamArtifact instances.
+     * @throws EamDbException
+     */
+    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException;
+    /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
      * @param aType EamArtifact.Type to search for
@@ -422,11 +432,11 @@ public interface EamDb {
      *
      * @param eamOrg The organization to add
      *
-     * @return the Organization ID of the newly created organization.
+     * @return The organization with the org ID set. 
      *
      * @throws EamDbException
      */
-    long newOrganization(EamOrganization eamOrg) throws EamDbException;
+    EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException;
 
     /**
      * Get all organizations

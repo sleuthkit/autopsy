@@ -35,6 +35,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Dialog to allow the examiner to locate an image when it cannot be found.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class MissingImageDialog extends javax.swing.JDialog {
 
     private static final Logger logger = Logger.getLogger(MissingImageDialog.class.getName());
@@ -50,7 +54,7 @@ class MissingImageDialog extends javax.swing.JDialog {
     }
     static final String allDesc = NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.allDesc.text");
     static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-    private JFileChooser fc = new JFileChooser();
+    private final JFileChooser fc = new JFileChooser();
 
     /**
      * Instantiate a MissingImageDialog.
