@@ -466,31 +466,43 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @return A collection of correlated artifact instances from other cases
      */
-    private Map<UniquePathKey,CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey,OtherOccurrenceNodeData> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
-            HashMap<UniquePathKey,CorrelationAttributeInstance> artifactInstances = new HashMap<>();
+            HashMap<UniquePathKey,OtherOccurrenceNodeData> nodeDataMap = new HashMap<>();
 
             if (EamDb.isEnabled()) {
-                EamDb dbManager = EamDb.getInstance();
-                artifactInstances.putAll(dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
-                        .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
-                        || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
-                        || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                        .collect(Collectors.toMap(correlationAttr -> new UniquePathKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
-                                correlationAttr -> correlationAttr)));
-            }
+                List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue());
 
-            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
-                List<AbstractFile> caseDbFiles = addCaseDbMatches(corAttr, openCase);
-                for (AbstractFile caseDbFile : caseDbFiles) {
-                    addOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
+                for (CorrelationAttributeInstance artifactInstance:instances) {
+                    
+                    // Only add the attribute if it isn't the object the user selected.
+                    // We consider it to be a different object if at least one of the following is true:
+                    // - the case UUID is different
+                    // - the data source name is different
+                    // - the data source device ID is different
+                    // - (TODO) file path is different
+                    if (!artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                            || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
+                            || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId)) {
+
+                        OtherOccurrenceNodeData newNode = new OtherOccurrenceNodeData(artifactInstance, corAttr.getCorrelationType().getDisplayName(), corAttr.getCorrelationValue());
+                        UniquePathKey uniquePathKey = new UniquePathKey(newNode);
+                        nodeDataMap.put(uniquePathKey, newNode);
+                    }
                 }
             }
 
-            return artifactInstances;
+            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
+                List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase);
+                for (AbstractFile caseDbFile : caseDbFiles) {
+                    addOrUpdateNodeData(openCase, nodeDataMap, caseDbFile);
+                }
+            }
+
+            return nodeDataMap;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
@@ -504,7 +516,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         return new HashMap<>(0);
     }
 
-    private List<AbstractFile> addCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
+    private List<AbstractFile> getCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
         String md5 = corAttr.getCorrelationValue();
 
         SleuthkitCase tsk = openCase.getSleuthkitCase();
@@ -522,58 +534,44 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     /**
-     * Adds the file to the artifactInstances map if it does not already exist
+     * Adds the file to the nodeDataMap map if it does not already exist
      * 
      * @param autopsyCase 
-     * @param artifactInstances
+     * @param nodeDataMap
      * @param newFile
      * @throws TskCoreException
      * @throws EamDbException 
      */
-    private void addOrUpdateAttributeInstance(final Case autopsyCase, Map<UniquePathKey,CorrelationAttributeInstance> artifactInstances, AbstractFile newFile) throws TskCoreException, EamDbException {
+    private void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey,OtherOccurrenceNodeData> nodeDataMap, AbstractFile newFile) throws TskCoreException, EamDbException {
         
-        // figure out if the casedb file is known via either hash or tags
-        TskData.FileKnown localKnown = newFile.getKnown();
-
-        if (localKnown != TskData.FileKnown.BAD) {
+        OtherOccurrenceNodeData newNode = new OtherOccurrenceNodeData(newFile, autopsyCase);
+        
+        // If the caseDB object has a notable tag associated with it, update
+        // the known status to BAD
+        if (newNode.getKnown() != TskData.FileKnown.BAD) {
             List<ContentTag> fileMatchTags = autopsyCase.getServices().getTagsManager().getContentTagsByContent(newFile);
             for (ContentTag tag : fileMatchTags) {
                 TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
                 if (tagKnownStatus.equals(TskData.FileKnown.BAD)) {
-                    localKnown = TskData.FileKnown.BAD;
+                    newNode.updateKnown(TskData.FileKnown.BAD);
                     break;
                 }
             }
         }
 
-        // make a key to see if the file is already in the map
-        String filePath = newFile.getParentPath() + newFile.getName();
-        String deviceId;
-        try {
-            deviceId = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId()).getDeviceId();
-        } catch (TskDataException | TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Error getting data source info: " + ex);
-            return;
-        }
-        UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
+        // Make a key to see if the file is already in the map
+        UniquePathKey uniquePathKey = new UniquePathKey(newNode);
         
-        // double check that the CR version is BAD if the caseDB version is BAD.
-        if (artifactInstances.containsKey(uniquePathKey)) {
-            if (localKnown == TskData.FileKnown.BAD) {
-                CorrelationAttributeInstance prevInstance = artifactInstances.get(uniquePathKey);
-                prevInstance.setKnownStatus(localKnown);
+        // If this node is already in the list, the only thing we need to do is
+        // update the known status to BAD if the caseDB version had known status BAD.
+        // Otherwise, add the new node to the map.
+        if (nodeDataMap.containsKey(uniquePathKey)) {
+            if (newNode.getKnown() == TskData.FileKnown.BAD) {
+                OtherOccurrenceNodeData prevInstance = nodeDataMap.get(uniquePathKey);
+                prevInstance.updateKnown(newNode.getKnown());
             }
-        }
-        // add the data from the case DB by pushing data into CorrelationAttributeInstance class
-        else {
-            // NOTE: If we are in here, it is likely because CR is not enabled.  So, we cannot rely
-            // on any of the methods that query the DB.
-            CorrelationCase correlationCase = new CorrelationCase(autopsyCase.getName(), autopsyCase.getDisplayName());
-            
-            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, newFile.getDataSource());
-        
-            CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(correlationCase, correlationDataSource, filePath, "", localKnown);
-            artifactInstances.put(uniquePathKey, caseDbInstance);
+        } else {
+            nodeDataMap.put(uniquePathKey, newNode);
         }
     }
 
@@ -632,22 +630,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
         for (CorrelationAttribute corAttr : correlationAttributes) {
-            Map<UniquePathKey, CorrelationAttributeInstance> corAttrInstances = new HashMap<>(0);
+            Map<UniquePathKey,OtherOccurrenceNodeData> correlatedNodeDataMap = new HashMap<>(0);
 
             // get correlation and reference set instances from DB
-            corAttrInstances.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+            correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
 
-            corAttrInstances.values().forEach((corAttrInstance) -> {
-                try {
-                    CorrelationAttribute newCeArtifact = new CorrelationAttribute(
-                            corAttr.getCorrelationType(),
-                            corAttr.getCorrelationValue()
-                    );
-                    newCeArtifact.addInstance(corAttrInstance);
-                    tableModel.addEamArtifact(newCeArtifact);
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error creating correlation attribute", ex);
-                }
+            correlatedNodeDataMap.values().forEach((nodeData) -> {
+                tableModel.addNodeData(nodeData);
             });
         }
 
@@ -816,33 +805,26 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         private final String dataSourceID;
         private final String filePath;
+        private final String type;
 
-        UniquePathKey(String theDataSource, String theFilePath) {
+        UniquePathKey(OtherOccurrenceNodeData nodeData) {
             super();
-            dataSourceID = theDataSource;
-            filePath = theFilePath.toLowerCase();
-        }
-
-        /**
-         *
-         * @return the dataSourceID device ID
-         */
-        String getDataSourceID() {
-            return dataSourceID;
-        }
-
-        /**
-         *
-         * @return the filPath including the filename and extension.
-         */
-        String getFilePath() {
-            return filePath;
+            dataSourceID = nodeData.getDeviceID();
+            if (nodeData.getFilePath() != null) {
+                filePath = nodeData.getFilePath().toLowerCase();
+            } else {
+                filePath = null;
+            }
+            type = nodeData.getType();
         }
 
         @Override
         public boolean equals(Object other) {
             if (other instanceof UniquePathKey) {
-                return ((UniquePathKey) other).getDataSourceID().equals(dataSourceID) && ((UniquePathKey) other).getFilePath().equals(filePath);
+                UniquePathKey otherKey = (UniquePathKey)(other);
+                return ( Objects.equals(otherKey.dataSourceID, this.dataSourceID) 
+                        && Objects.equals(otherKey.filePath, this.filePath) 
+                        && Objects.equals(otherKey.type, this.type));
             }
             return false;
         }
@@ -852,7 +834,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             //int hash = 7;
             //hash = 67 * hash + this.dataSourceID.hashCode();
             //hash = 67 * hash + this.filePath.hashCode();
-            return Objects.hash(dataSourceID, filePath);
+            return Objects.hash(dataSourceID, filePath, type);
         }
     }
 
