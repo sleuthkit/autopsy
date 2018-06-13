@@ -125,7 +125,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error adding new name/value pair to db_info.", ex);
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
 
@@ -158,7 +158,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting value for name.", ex);
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -188,7 +188,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error updating value for name.", ex);
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -260,7 +260,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new case.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
 
@@ -359,7 +359,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error updating case.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -397,7 +397,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting case details.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -434,7 +434,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting all cases.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -472,7 +472,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -511,7 +511,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -545,7 +545,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting all data sources.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -618,7 +618,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new artifact into artifacts table.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -672,7 +672,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -732,7 +732,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -780,7 +780,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting count of artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -838,7 +838,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -864,7 +864,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error counting data sources.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -918,7 +918,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error counting artifact instances by caseName/dataSource.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1033,7 +1033,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(bulkPs);
+            EamDbUtil.closeStatement(bulkPs);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1113,7 +1113,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting bulk cases.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(bulkPs);
+            EamDbUtil.closeStatement(bulkPs);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1169,7 +1169,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting/setting artifact instance comment=" + eamInstance.getComment(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedQuery);
+            EamDbUtil.closeStatement(preparedQuery);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1243,7 +1243,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1349,8 +1349,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting/setting artifact instance knownStatus=" + knownStatus.getName(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedUpdate);
-            EamDbUtil.closePreparedStatement(preparedQuery);
+            EamDbUtil.closeStatement(preparedUpdate);
+            EamDbUtil.closeStatement(preparedQuery);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1405,7 +1405,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1464,7 +1464,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1508,7 +1508,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting count of notable artifact instances.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1564,7 +1564,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1605,7 +1605,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error deleting reference set " + referenceSetID, ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1634,7 +1634,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error deleting files from reference set " + referenceSetID, ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1709,7 +1709,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error determining if value (" + value + ") is in reference set " + referenceSetID, ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1753,7 +1753,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error determining if artifact is notable by reference.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1793,7 +1793,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new organization.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(generatedKeys);
             EamDbUtil.closeConnection(conn);
         }
@@ -1826,7 +1826,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting all organizations.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1859,7 +1859,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting organization by id.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -1925,7 +1925,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error updating organization.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -1958,8 +1958,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_errorDeleting_message(), ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(checkIfUsedStatement);
-            EamDbUtil.closePreparedStatement(deleteOrgStatement);
+            EamDbUtil.closeStatement(checkIfUsedStatement);
+            EamDbUtil.closeStatement(deleteOrgStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2022,8 +2022,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new global set.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement1);
-            EamDbUtil.closePreparedStatement(preparedStatement2);
+            EamDbUtil.closeStatement(preparedStatement1);
+            EamDbUtil.closeStatement(preparedStatement2);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2059,7 +2059,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting reference set by id.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2098,7 +2098,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting reference sets.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2140,7 +2140,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new reference instance into reference_ table.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -2176,7 +2176,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Error testing whether reference set exists (name: " + referenceSetName
                     + " version: " + version, ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2230,7 +2230,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS           
         } finally {
-            EamDbUtil.closePreparedStatement(bulkPs);
+            EamDbUtil.closeStatement(bulkPs);
             EamDbUtil.closeConnection(conn);
         }
     }
@@ -2270,7 +2270,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement1);
+            EamDbUtil.closeStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2337,8 +2337,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new correlation type.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
-            EamDbUtil.closePreparedStatement(preparedStatementQuery);
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatementQuery);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2365,7 +2365,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting all correlation types.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2400,7 +2400,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting enabled correlation types.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2435,7 +2435,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting supported correlation types.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2467,7 +2467,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error updating correlation type.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
 
@@ -2505,7 +2505,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting correlation type by id.", ex); // NON-NLS
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
@@ -2725,9 +2725,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw ex;
         } finally {
             EamDbUtil.closeResultSet(resultSet);
-            if (statement != null) {
-                statement.close();
-            }
+            EamDbUtil.closeStatement(statement);
             EamDbUtil.closeConnection(conn);
         }
     }
