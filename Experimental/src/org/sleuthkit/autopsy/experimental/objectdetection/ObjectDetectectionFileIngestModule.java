@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
@@ -112,7 +113,14 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
             MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
             for (String classifierKey : classifiers.keySet()) {
                 //apply each classifier to the file
-                classifiers.get(classifierKey).detectMultiScale(originalImage, detectionRectangles);
+                try {
+                    classifiers.get(classifierKey).detectMultiScale(originalImage, detectionRectangles);
+                } catch (CvException ignored) {
+                    //The image was likely an image which we are unable to generate a thumbnail for, and the classifier was likely one where that is not acceptable
+                    logger.log(Level.INFO, String.format("Classifier '%s' could not be applied to file '%s'.", classifierKey, file.getParentPath() + file.getName())); //NON-NLS
+                    continue;
+                }
+
                 if (!detectionRectangles.empty()) {
                     //if any detections occurred create an artifact for this classifier and file combination
                     try {
@@ -137,6 +145,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                          * Send an event to update the view with the new result.
                          */
                         services.fireModuleDataEvent(new ModuleDataEvent(ObjectDetectionModuleFactory.getModuleName(), TSK_OBJECT_DETECTED, Collections.singletonList(artifact)));
+
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
                         return IngestModule.ProcessResult.ERROR;
