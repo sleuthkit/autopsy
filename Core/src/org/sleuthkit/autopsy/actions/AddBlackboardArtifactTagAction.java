@@ -37,8 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this Action allow users to apply tags to blackboard artifacts.
  */
 @NbBundle.Messages({
-    "AddBlackboardArtifactTagAction.singularTagResult=Tag Result",
-    "AddBlackboardArtifactTagAction.pluralTagResult=Tag Results",
+    "AddBlackboardArtifactTagAction.singularTagResult=Add Result Tag",
+    "AddBlackboardArtifactTagAction.pluralTagResult=Add Result Tags",
     "# {0} - artifactName",
     "AddBlackboardArtifactTagAction.unableToTag.msg=Unable to tag {0}.",
     "AddBlackboardArtifactTagAction.taggingErr=Tagging Error"

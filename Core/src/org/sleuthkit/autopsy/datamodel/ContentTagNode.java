@@ -129,9 +129,9 @@ class ContentTagNode extends DisplayableItemNode {
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
-        actions.addAll(DataModelActionsFactory.getActions(tag.getContent(), false));
-        actions.add(DeleteContentTagAction.getInstance());
-        actions.add(ReplaceContentTagAction.getInstance());
+        
+        actions.addAll(DataModelActionsFactory.getActions(tag, false));
+        
         return actions.toArray(new Action[actions.size()]);
     }
 

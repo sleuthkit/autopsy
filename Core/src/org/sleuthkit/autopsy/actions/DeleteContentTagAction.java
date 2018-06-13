@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this Action allow users to delete tags applied to content.
  */
 @NbBundle.Messages({
-    "DeleteContentTagAction.deleteTag=Delete Tag",
+    "DeleteContentTagAction.deleteTag=Remove Selected Tag(s)",
     "# {0} - tagName",
     "DeleteContentTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
     "DeleteContentTagAction.tagDelErr=Tag Deletion Error"

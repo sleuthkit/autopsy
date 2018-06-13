@@ -1,13 +1,28 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -30,7 +45,7 @@ import org.sleuthkit.datamodel.TskData;
  * @param <T> tag type
  */
 @NbBundle.Messages({
-    "ReplaceTagAction.replaceTag=Replace Tag"
+    "ReplaceTagAction.replaceTag=Replace Selected Tag(s) With"
 })
 abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements Presenter.Popup {
 
@@ -72,6 +87,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
      */
     abstract Collection<? extends T> getTagsToReplace();
 
+   
     @Override
     public JMenuItem getPopupPresenter() {
         return new ReplaceTagMenu();
@@ -89,7 +105,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
             super(getActionDisplayName());
 
             final Collection<? extends T> selectedTags = getTagsToReplace();
-
+            
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
             try {
@@ -99,6 +115,14 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 Logger.getLogger(ReplaceTagMenu.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
 
+            // Ideally we should'nt allow user to pick a replacement tag that's already been applied to an item
+            // In the very least we don't allow them to pick the same tag as the one they are trying to replace
+            Set<String> existingTagNames = new HashSet<>();
+            if (!selectedTags.isEmpty()) {
+                T firstTag = selectedTags.iterator().next();
+                existingTagNames.add(firstTag.getName().getDisplayName());
+            }
+            
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                     String tagDisplayName = entry.getKey();
@@ -116,6 +140,11 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                         });
                     });
 
+                    // Don't allow replacing a tag with same tag.
+                    if (existingTagNames.contains(tagDisplayName)) {
+                        tagNameItem.setEnabled(false);
+                    }
+                    
                     add(tagNameItem);
                 }
             } else {
