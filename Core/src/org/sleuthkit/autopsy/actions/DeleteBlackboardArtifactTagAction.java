@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * artifacts.
  */
 @NbBundle.Messages({
-    "DeleteBlackboardArtifactTagAction.deleteTag=Delete Tag",
+    "DeleteBlackboardArtifactTagAction.deleteTag=Remove Selected Tag(s)",
     "# {0} - tagName",
     "DeleteBlackboardArtifactTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
     "DeleteBlackboardArtifactTagAction.tagDelErr=Tag Deletion Error"

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 /**
  * Ingest job settings panel for hash lookup file ingest modules.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener {
 
     private static final long serialVersionUID = 1L;

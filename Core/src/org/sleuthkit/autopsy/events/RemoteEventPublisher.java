@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,6 @@ final class RemoteEventPublisher {
     private final MessageProducer producer;
     @GuardedBy("this")
     private final MessageConsumer consumer;
-    private final MessageReceiver receiver;
 
     /**
      * Constructs an object for publishing events to registered subscribers on
@@ -84,7 +83,7 @@ final class RemoteEventPublisher {
             producer = session.createProducer(topic);
             producer.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
             consumer = session.createConsumer(topic, "events = '" + ALL_MESSAGE_SELECTOR + "'", true); //NON-NLS
-            receiver = new MessageReceiver();
+            MessageReceiver receiver = new MessageReceiver();
             consumer.setMessageListener(receiver);
         } catch (URISyntaxException | JMSException ex) {
             logger.log(Level.SEVERE, "Failed to connect to event channel", ex); //NON-NLS

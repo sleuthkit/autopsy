@@ -102,13 +102,8 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
 
-            // Create a "Quick Tag" sub-menu.
-            JMenu quickTagMenu = new JMenu(NbBundle.getMessage(this.getClass(), "AddTagAction.quickTag"));
-            add(quickTagMenu);
-
-            // Each tag name in the current set of tags gets its own menu item in
-            // the "Quick Tags" sub-menu. Selecting one of these menu items adds
-            // a tag with the associated tag name.
+            // Create a menu item for each of the existing and visible tags.
+            // Selecting one of these menu items adds  a tag with the associated tag name.
             List<JMenuItem> standardTagMenuitems = new ArrayList<>();
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
@@ -128,36 +123,21 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                     if (standardTagNames.contains(tagDisplayName)) {
                         standardTagMenuitems.add(tagNameItem);
                     } else {
-                        quickTagMenu.add(tagNameItem);
+                        add(tagNameItem);
                     }
                 }
-            } else {
-                JMenuItem empty = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.noTags"));
-                empty.setEnabled(false);
-                quickTagMenu.add(empty);
+            } 
+            
+            if (getItemCount() > 0) {
+                addSeparator();
             }
-
-            if (quickTagMenu.getItemCount() > 0) {
-                quickTagMenu.addSeparator();
-            }
+            
             standardTagMenuitems.forEach((menuItem) -> {
-                quickTagMenu.add(menuItem);
+                add(menuItem);
             });
             
-            quickTagMenu.addSeparator();
+            addSeparator();
              
-            // The "Quick Tag" menu also gets an "Choose Tag..." menu item.
-            // Selecting this item initiates a dialog that can be used to create
-            // or select a tag name and adds a tag with the resulting name.
-            JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
-            newTagMenuItem.addActionListener((ActionEvent e) -> {
-                TagName tagName = GetTagNameDialog.doDialog();
-                if (null != tagName) {
-                    addTag(tagName, NO_COMMENT);
-                }
-            });
-            quickTagMenu.add(newTagMenuItem);
-
             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
             // a dialog that can be used to create or select a tag name with an
             // optional comment and adds a tag with the resulting name.
@@ -170,6 +150,19 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 }
             });
             add(tagAndCommentItem);
+            
+            // Create a  "New Tag..." menu item.
+            // Selecting this item initiates a dialog that can be used to create
+            // or select a tag name and adds a tag with the resulting name.
+            JMenuItem newTagMenuItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.newTag"));
+            newTagMenuItem.addActionListener((ActionEvent e) -> {
+                TagName tagName = GetTagNameDialog.doDialog();
+                if (null != tagName) {
+                    addTag(tagName, NO_COMMENT);
+                }
+            });
+            add(newTagMenuItem);
+             
         }
 
         /**

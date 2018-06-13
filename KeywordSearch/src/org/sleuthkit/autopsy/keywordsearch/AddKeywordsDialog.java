@@ -35,6 +35,7 @@ import org.openide.windows.WindowManager;
 /**
  * Dialog to add one or more keywords to a list
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddKeywordsDialog extends javax.swing.JDialog {
 
     List<String> newKeywords = new ArrayList<>();

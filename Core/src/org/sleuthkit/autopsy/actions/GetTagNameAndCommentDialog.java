@@ -43,6 +43,10 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * This dialog allows tag assignment with a comment attached.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class GetTagNameAndCommentDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;

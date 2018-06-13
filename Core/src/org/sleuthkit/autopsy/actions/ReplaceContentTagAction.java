@@ -37,9 +37,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * This Action allow users to replace a content tag with another tag
  */
-@NbBundle.Messages({
-    "ReplaceContentArtifactTagAction.replaceTag=Replace File Tag"
-})
 public final class ReplaceContentTagAction extends ReplaceTagAction<ContentTag> {
 
     private static final Logger logger = Logger.getLogger(ReplaceContentTagAction.class.getName());
