@@ -33,9 +33,9 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.HashEntry;
 
 /**
- *
- * @author sidhesh
+ * Dialog for supplying MD5 hash values for the hash database.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
 
     HashDb hashDb;

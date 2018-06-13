@@ -45,17 +45,18 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.autoingest.FileExporterSettingsPanel;
 
 /**
- *
+ * Configuration panel for auto ingest settings.
  */
 @Messages({"AutoIngestSettingsPanel.examinerModeRadioButton.text=Examiner mode",
     "AutoIngestSettingsPanel.autoIngestModeRadioButton.text=Auto Ingest mode"})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private final AutoIngestSettingsPanelController controller;
     private final JFileChooser fc = new JFileChooser();
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(AutoIngestSettingsPanel.class.getName());
-    private Integer oldIngestThreads;
+    private final Integer oldIngestThreads;
     private static final String MULTI_USER_SETTINGS_MUST_BE_ENABLED = NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.validationErrMsg.MUdisabled");
 
     enum OptionsUiMode {

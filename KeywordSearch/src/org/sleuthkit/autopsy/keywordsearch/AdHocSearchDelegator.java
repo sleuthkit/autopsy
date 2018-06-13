@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -41,11 +42,13 @@ class AdHocSearchDelegator {
 
     private final List<KeywordList> keywordLists;
     private List<KeywordSearchQuery> queryDelegates;
+    private final Set<Long> dataSourceIds;
     private static int resultWindowCount = 0; //keep track of unique window ids to display
     private static final Logger logger = Logger.getLogger(AdHocSearchDelegator.class.getName());
 
-    public AdHocSearchDelegator(List<KeywordList> keywordLists) {
+    public AdHocSearchDelegator(List<KeywordList> keywordLists, Set<Long> dataSourceIds) {
         this.keywordLists = keywordLists;
+        this.dataSourceIds = dataSourceIds;
         init();
     }
 
@@ -56,6 +59,13 @@ class AdHocSearchDelegator {
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
                 KeywordSearchQuery query = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
+
+                //Limit search to a set of data sources
+                if (dataSourceIds != null && !dataSourceIds.isEmpty()) {
+                    final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, dataSourceIds);
+                    query.addFilter(dataSourceFilter);
+                }
+
                 queryDelegates.add(query);
             }
         }

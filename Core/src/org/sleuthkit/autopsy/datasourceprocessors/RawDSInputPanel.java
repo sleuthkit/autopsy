@@ -33,6 +33,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
+/**
+ * Allows examiner to supply a raw data source.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class RawDSInputPanel extends JPanel implements DocumentListener {
     private static final long TWO_GB = 2000000000L;
     private static final long serialVersionUID = 1L;    //default

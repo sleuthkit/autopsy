@@ -30,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.swing.filechooser.FileFilter;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
+import net.sf.sevenzipjbinding.IInArchive;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
@@ -185,7 +185,7 @@ final class ArchiveUtil {
             }
         }
         List<String> files = new ArrayList<>();
-        ISevenZipInArchive inArchive = null;
+        IInArchive inArchive = null;
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(new File(archiveFilePath), "r");
             inArchive = SevenZip.openInArchive(null, new RandomAccessFileInStream(randomAccessFile));
@@ -227,7 +227,7 @@ final class ArchiveUtil {
             }
         }
         List<String> files = new ArrayList<>();
-        ISevenZipInArchive inArchive = null;
+        IInArchive inArchive = null;
         try {
             RandomAccessFile randomAccessFile = new RandomAccessFile(new File(archiveFilePath), "r");
             inArchive = SevenZip.openInArchive(null, new RandomAccessFileInStream(randomAccessFile));
