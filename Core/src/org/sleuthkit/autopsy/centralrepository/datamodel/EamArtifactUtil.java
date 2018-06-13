@@ -240,6 +240,9 @@ public class EamArtifactUtil {
         try {
             CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+            if (null == correlationCase) {
+                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
+            }
             CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
             String value = file.getMd5Hash();
             String filePath = (file.getParentPath() + file.getName()).toLowerCase();
