@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,6 @@ import org.sleuthkit.datamodel.Content;
 final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
-    private final IngestJobSettings.IngestType ingestType;
     private final List<ShortcutWizardDescriptorPanel> panels;
     private int currentPanelIndex;
 
@@ -47,14 +46,13 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
      * @param ingestType       The type of ingest to be configured.
      */
     RunIngestModulesWizardIterator(String executionContext, IngestJobSettings.IngestType ingestType, List<Content> dataSources) {
-        this.ingestType = ingestType;
         panels = new ArrayList<>();
         List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
-        if (!profiles.isEmpty() && IngestJobSettings.IngestType.FILES_ONLY != this.ingestType) {
+        if (!profiles.isEmpty() && IngestJobSettings.IngestType.FILES_ONLY != ingestType) {
             panels.add(new IngestProfileSelectionWizardPanel(executionContext, PROP_LASTPROFILE_NAME));
         }
 
-        panels.add(new IngestModulesConfigWizardPanel(executionContext, this.ingestType, dataSources));
+        panels.add(new IngestModulesConfigWizardPanel(executionContext, ingestType, dataSources));
         String[] steps = new String[panels.size()];
         for (int i = 0; i < panels.size(); i++) {
             Component c = panels.get(i).getComponent();

@@ -45,8 +45,6 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
     static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
-    private String moduleDirRelative;
-    private String moduleDirAbsolute;
     private MSOfficeEmbeddedContentExtractor officeExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
@@ -66,10 +64,13 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * case database for extracted (derived) file paths. The absolute path
          * is used to write the extracted (derived) files to local storage.
          */
+        String moduleDirRelative = null;
+        String moduleDirAbsolute = null;
+        
         try {
-        final Case currentCase = Case.getCurrentCaseThrows();
-        moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+            final Case currentCase = Case.getCurrentCaseThrows();
+            moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+            moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_NoOpenCase_errMsg(), ex);
         }

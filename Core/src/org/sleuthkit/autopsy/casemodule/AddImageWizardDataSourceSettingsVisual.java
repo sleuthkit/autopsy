@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * visual component for the first panel of add image wizard. Allows the user to
  * choose the data source type and then select the data source
- *
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AddImageWizardDataSourceSettingsVisual extends JPanel {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardDataSourceSettingsVisual.class.getName());
