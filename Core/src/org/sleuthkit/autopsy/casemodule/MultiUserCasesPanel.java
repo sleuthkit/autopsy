@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,9 +36,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 /**
  * A panel that allows a user to open cases created by auto ingest.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class MultiUserCasesPanel extends JPanel{
 
-    private static final Logger LOGGER = Logger.getLogger(MultiUserCasesPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(MultiUserCasesPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final JDialog parentDialog;
     private final CaseBrowser caseBrowserPanel;
@@ -98,7 +99,7 @@ final class MultiUserCasesPanel extends JPanel{
                     Case.openAsCurrentCase(caseMetadataFilePath);
                 } catch (CaseActionException ex) {
                     if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                        LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
                         MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
                     }
                     SwingUtilities.invokeLater(() -> {
