@@ -65,7 +65,8 @@ import org.sleuthkit.datamodel.TskData;
     "AbstractSqlEamDb.exceptionMessage.globalSetNull=EamGlobalSet is null",
     "AbstractSqlEamDb.exceptionMessage.globalSetKnownStatusNull=File known status on the EamGlobalSet is null",
     "AbstractSqlEamDb.exceptionMessage.globalSetTypeNull=Type on the EamGlobalSet is null",
-    "AbstractSqlEamDb.exceptionMessage.globalFileInstanceKnownStatusNull=Known status of EamGlobalFileInstance is null"
+    "AbstractSqlEamDb.exceptionMessage.globalFileInstanceKnownStatusNull=Known status of EamGlobalFileInstance is null",
+    "AbstractSqlEamDb.exceptionMessage.errorGettingNotableArtifactInstances=Error getting notable artifact instances."
 })
 abstract class AbstractSqlEamDb implements EamDb {
 
@@ -973,8 +974,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                     return;
                 }
 
-                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
-
                 for (CorrelationAttribute.Type type : artifactTypes) {
 
                     String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
@@ -1025,6 +1024,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     bulkArtifacts.get(type.getDbTableName()).clear();
                 }
 
+                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
                 EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
 
                 // Reset state
@@ -1241,7 +1241,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 correlationAttribute.addInstance(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1403,7 +1403,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1462,7 +1462,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1562,7 +1562,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 caseNames.add(resultSet.getString("case_name"));
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -2596,7 +2596,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
         // @@@ We should have data source ID in the previous query instead of passing -1 into the below constructor
-        CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
+        return new CorrelationAttributeInstance(
                 resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name")),
@@ -2604,8 +2604,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status"))
         );
-
-        return eamArtifactInstance;
     }
 
     private EamOrganization getEamOrganizationFromResultSet(ResultSet resultSet) throws SQLException {
@@ -2613,15 +2611,13 @@ abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
 
-        EamOrganization eamOrganization = new EamOrganization(
+        return new EamOrganization(
                 resultSet.getInt("id"),
                 resultSet.getString("org_name"),
                 resultSet.getString("poc_name"),
                 resultSet.getString("poc_email"),
                 resultSet.getString("poc_phone")
         );
-
-        return eamOrganization;
     }
 
     private EamGlobalSet getEamGlobalSetFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
@@ -2629,7 +2625,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
 
-        EamGlobalSet eamGlobalSet = new EamGlobalSet(
+        return new EamGlobalSet(
                 resultSet.getInt("id"),
                 resultSet.getInt("org_id"),
                 resultSet.getString("set_name"),
@@ -2639,8 +2635,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 EamDb.getInstance().getCorrelationTypeById(resultSet.getInt("type")),
                 LocalDate.parse(resultSet.getString("import_date"))
         );
-
-        return eamGlobalSet;
     }
 
     private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
@@ -2648,15 +2642,13 @@ abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
 
-        EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
+        return new EamGlobalFileInstance(
                 resultSet.getInt("id"),
                 resultSet.getInt("reference_set_id"),
                 resultSet.getString("value"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
                 resultSet.getString("comment")
         );
-
-        return eamGlobalFileInstance;
     }
 
     /**
@@ -2668,7 +2660,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void upgradeSchema() throws EamDbException, SQLException {
 
         ResultSet resultSet = null;
-        Statement statement;
+        Statement statement = null;
         Connection conn = null;
         try {
 
@@ -2677,24 +2669,24 @@ abstract class AbstractSqlEamDb implements EamDb {
             statement = conn.createStatement();
 
             int minorVersion = 0;
-            int majorVersion = 0;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
             if (resultSet.next()) {
                 String minorVersionStr = resultSet.getString("value");
                 try {
                     minorVersion = Integer.parseInt(minorVersionStr);
                 } catch (NumberFormatException ex) {
-                    throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt");
+                    throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt", ex);
                 }
             }
 
+            int majorVersion = 0;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
             if (resultSet.next()) {
                 String majorVersionStr = resultSet.getString("value");
                 try {
                     majorVersion = Integer.parseInt(majorVersionStr);
                 } catch (NumberFormatException ex) {
-                    throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt");
+                    throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt", ex);
                 }
             }
 
@@ -2733,6 +2725,9 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw ex;
         } finally {
             EamDbUtil.closeResultSet(resultSet);
+            if (statement != null) {
+                statement.close();
+            }
             EamDbUtil.closeConnection(conn);
         }
     }

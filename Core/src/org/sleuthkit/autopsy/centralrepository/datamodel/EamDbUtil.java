@@ -42,20 +42,34 @@ public class EamDbUtil {
     private static final String DEFAULT_ORG_NAME = "Not Specified";
 
     /**
-     * Close the prepared statement.
+     * Close the statement.
      *
-     * @param preparedStatement
+     * @param statement The statement to be closed.
      *
      * @throws EamDbException
      */
-    public static void closePreparedStatement(PreparedStatement preparedStatement) {
-        if (null != preparedStatement) {
+    public static void closeStatement(Statement statement) {
+        if (null != statement) {
             try {
-                preparedStatement.close();
+                statement.close();
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Error closing PreparedStatement.", ex);
+                LOGGER.log(Level.SEVERE, "Error closing Statement.", ex);
             }
         }
+    }
+
+    /**
+     * Close the prepared statement.
+     *
+     * @param preparedStatement The prepared statement to be closed.
+     * 
+     * @deprecated Use closeStatement() instead.
+     *
+     * @throws EamDbException
+     */
+    @Deprecated
+    public static void closePreparedStatement(PreparedStatement preparedStatement) {
+        closeStatement(preparedStatement);
     }
 
     /**
