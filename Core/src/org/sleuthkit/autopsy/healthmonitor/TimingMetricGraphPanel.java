@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.DatabaseTimin
 /**
  * Creates a graph of the given timing metric data
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class TimingMetricGraphPanel extends JPanel {
     
     private final static Logger logger = Logger.getLogger(TimingMetricGraphPanel.class.getName());
@@ -373,7 +374,7 @@ class TimingMetricGraphPanel extends JPanel {
                 }
             } else if (y0value > maxValueOnYAxis) {
                 try {
-                    y0value = minValueOnYAxis;
+                    y0value = maxValueOnYAxis;
                     x0value = trendLine.getXGivenY(y0value);
                 } catch (HealthMonitorException ex) {
                     // The exception is caused by a slope of zero on the trend line, which 

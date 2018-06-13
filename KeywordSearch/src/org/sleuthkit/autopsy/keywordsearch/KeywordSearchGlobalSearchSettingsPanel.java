@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
 /**
  * General, not per list, keyword search configuration and status display widget
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private final Logger logger = Logger.getLogger(KeywordSearchGlobalSearchSettingsPanel.class.getName());
@@ -360,7 +361,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                 Object newValue = evt.getNewValue();
 
                 if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                    int newFilesIndexed = ((Integer) newValue).intValue();
+                    int newFilesIndexed = ((Integer) newValue);
                     filesIndexedValue.setText(Integer.toString(newFilesIndexed));
                     try {
                         chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));

@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel for displaying ingest job history.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
@@ -91,7 +92,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         "IngestJobInfoPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
     private class IngestJobTableModel extends AbstractTableModel {
 
-        private List<String> columnHeaders = new ArrayList<>();
+        private final List<String> columnHeaders = new ArrayList<>();
 
         IngestJobTableModel() {
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_DataSource_header());
@@ -146,8 +147,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         "IngestJobInfoPanel.IngestModuleTableModel.ModuleVersion.header=Module Version"})
     private class IngestModuleTableModel extends AbstractTableModel {
 
-        private List<String> columnHeaders = new ArrayList<>();
-        private IngestJobInfo currJob;
+        private final List<String> columnHeaders = new ArrayList<>();
+        private final IngestJobInfo currJob;
 
         IngestModuleTableModel(IngestJobInfo currJob) {
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestModuleTableModel_ModuleName_header());

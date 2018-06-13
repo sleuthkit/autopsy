@@ -40,15 +40,21 @@ public class CorrelationDataSource implements Serializable {
     private final String name;
 
     /**
-     * 
-     * @param caseId
-     * @param deviceId
-     * @param name 
+     * @param correlationCase CorrelationCase object data source is associated with. Must have been created by EamDB and have a valid ID.
+     * @param deviceId User specified case-specific ID
+     * @param name Display name of data source
      */
-    public CorrelationDataSource(int caseId, String deviceId, String name) {
-        this(caseId, -1, deviceId, name);
+    public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name) {
+        this(correlationCase.getID(), -1, deviceId, name);
     }  
     
+    /**
+     * 
+     * @param caseId Row ID for Case in DB
+     * @param dataSourceId Row ID for this data source in DB (or -1)
+     * @param deviceId User specified ID for device (unique per case)
+     * @param name User specified name
+     */
     CorrelationDataSource(int caseId,
             int dataSourceId,
             String deviceId,
@@ -102,7 +108,7 @@ public class CorrelationDataSource implements Serializable {
     /**
      * Get the database row ID
      *
-     * @return the ID
+     * @return the ID or -1 if unknown
      */
     int getID() {
         return dataSourceID;

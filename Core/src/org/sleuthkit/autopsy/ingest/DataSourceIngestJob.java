@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -224,8 +224,8 @@ public final class DataSourceIngestJob {
         /**
          * Make mappings of ingest module factory class names to templates.
          */
-        Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new HashMap<>();
-        Map<String, IngestModuleTemplate> fileModuleTemplates = new HashMap<>();
+        Map<String, IngestModuleTemplate> dataSourceModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> fileModuleTemplates = new LinkedHashMap<>();
         for (IngestModuleTemplate template : ingestModuleTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
                 dataSourceModuleTemplates.put(template.getModuleFactory().getClass().getCanonicalName(), template);

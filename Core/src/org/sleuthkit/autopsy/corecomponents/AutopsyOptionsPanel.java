@@ -66,7 +66,7 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set.",
     "AutopsyOptionsPanel.logNumAlert.invalidInput.text=A positive integer is required here."
 })
-
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

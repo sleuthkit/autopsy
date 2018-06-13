@@ -113,6 +113,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
     "AutoIngestControlPanel.ConfigLockedTitle=Configuration directory locked",
     "AutoIngestControlPanel.PauseDueToSystemError=Paused due to system error, please consult the auto ingest system log"
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class AutoIngestControlPanel extends JPanel implements Observer {
 
     private static final long serialVersionUID = 1L;
