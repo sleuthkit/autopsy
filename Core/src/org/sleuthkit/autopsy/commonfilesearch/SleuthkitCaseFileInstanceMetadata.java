@@ -37,12 +37,12 @@ final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGen
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    SleuthkitCaseFileInstanceMetadata (Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource) {
-        super(abstractFileReference, cachedFiles, dataSource);
+    SleuthkitCaseFileInstanceMetadata (Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
+        super(abstractFileReference, cachedFiles, dataSource, caseName);
     }
 
     @Override
     public DisplayableItemNode generateNode() {
-        return new SleuthkitCaseFileInstanceNode(this.lookupOrCreateAbstractFile(), this.getDataSource());
+        return new SleuthkitCaseFileInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource());
     }
 }

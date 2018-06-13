@@ -36,11 +36,13 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class SleuthkitCaseFileInstanceNode extends FileNode {
     
+    private final String caseName;
     private final String dataSource;
 
-    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
         super(fsContent);
         this.content = fsContent;
+        this.caseName = caseName;
         this.dataSource = dataSource;
     }
 
@@ -54,6 +56,10 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         return this.content;
     }
 
+    String getCase(){
+        return this.caseName;
+    }
+    
     String getDataSource() {
         return this.dataSource;
     }
@@ -95,7 +101,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.getName());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
-        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.Case.toString(), "TODO");
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.Case.toString(), node.getCase());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.DataSource.toString(), node.getDataSource());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }

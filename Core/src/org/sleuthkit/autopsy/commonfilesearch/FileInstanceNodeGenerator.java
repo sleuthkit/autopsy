@@ -45,11 +45,13 @@ public abstract class FileInstanceNodeGenerator {
     private static final Logger LOGGER = Logger.getLogger(FileInstanceNodeGenerator.class.getName());
     protected Long abstractFileReference;
     protected Map<Long, AbstractFile> cachedFiles;
+    private final String caseName;
     private String dataSource;
 
-    public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource) {
+    public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         this.abstractFileReference = abstractFileReference;
         this.cachedFiles = cachedFiles;
+        this.caseName = caseName;
         this.dataSource = dataSource;
     }
 
@@ -108,14 +110,10 @@ public abstract class FileInstanceNodeGenerator {
      */
     public abstract DisplayableItemNode generateNode();
 
-    /**
-     *
-     * @param dataSource
-     */
-    protected void setDataSource(String dataSource) {
-        this.dataSource = dataSource;
+    public String getCaseName(){
+        return this.caseName;
     }
-
+    
     /**
      * Get string name of the data source where this instance appears.
      *
@@ -164,14 +162,12 @@ public abstract class FileInstanceNodeGenerator {
             final boolean samePathAndName = referencePath.equals(instancePath);
 
             if (sameDataSource && sameCase && samePathAndName) {
-                String dataSource = String.format("%s: %s", referenceCase, referenceFileDataSource);
-                return new SleuthkitCaseFileInstanceMetadata(referenceFile.getId(), cachedFiles, dataSource);
+                return new SleuthkitCaseFileInstanceMetadata(referenceFile.getId(), cachedFiles, referenceFileDataSource, referenceCase);
             }
         }
 
         if (arbitraryIdenticalAbstractFileId != null) {
-            String dataSource = String.format("%s: %s", instanceCase, instanceDataSource);
-            return new CentralRepositoryCaseFileInstanceMetadata(instance, arbitraryIdenticalAbstractFileId, cachedFiles, dataSource);
+            return new CentralRepositoryCaseFileInstanceMetadata(instance, arbitraryIdenticalAbstractFileId, cachedFiles, instanceDataSource, instanceCase);
         } else {
             throw new Exception("Unable to get instance.");
         }

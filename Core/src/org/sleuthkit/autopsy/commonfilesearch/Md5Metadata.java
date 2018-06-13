@@ -25,54 +25,65 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Encapsulates data required to instantiate an <code>Md5Node</code>.
  */
 final public class Md5Metadata {
-    
+
     private final String md5;
     private final List<FileInstanceNodeGenerator> fileInstances;
-        
-    Md5Metadata(String md5, List<FileInstanceNodeGenerator> fileInstances){
+
+    Md5Metadata(String md5, List<FileInstanceNodeGenerator> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
-    
-    Md5Metadata(String md5){
+
+    Md5Metadata(String md5) {
         this.md5 = md5;
         this.fileInstances = new ArrayList<>();
     }
-    
-    public String getMd5(){
+
+    public String getMd5() {
         return this.md5;
     }
-    
-    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata){
-        this.fileInstances.add(metadata);
-    }
-    
-    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata, String caseName){
-        this.fileInstances.add(metadata);
-    }
-    
-    public Collection<FileInstanceNodeGenerator> getMetadata(){
-        return Collections.unmodifiableCollection(this.fileInstances);
-    }
-    
-    /**
-     * How many distinct file instances exist for the MD5 represented by this object?
-     * @return number of instances
-     */
-    public int size(){
-        return this.fileInstances.size();
+
+    public String getCases() {
+        final String cases = this.fileInstances.stream().map(FileInstanceNodeGenerator::getCaseName).collect(Collectors.joining(", "));
+        return cases;
     }
 
     public String getDataSources() {
-        Set<String> sources = new HashSet<> ();
-        for(FileInstanceNodeGenerator data  : this.fileInstances){
+        Set<String> sources = new HashSet<>();
+        for (FileInstanceNodeGenerator data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
-        return String.join(", ", sources);
+        
+        final String dataSources = String.join(", ", sources);
+        return dataSources;
+    }
+
+    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata) {
+        this.fileInstances.add(metadata);
+    }
+
+    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata, String caseName) {
+        this.fileInstances.add(metadata);
+    }
+
+    public Collection<FileInstanceNodeGenerator> getMetadata() {
+        return Collections.unmodifiableCollection(this.fileInstances);
+    }
+
+    /**
+     * How many distinct file instances exist for the MD5 represented by this
+     * object?
+     *
+     * @return number of instances
+     */
+    public int size() {
+        return this.fileInstances.size();
     }
 }

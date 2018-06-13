@@ -170,8 +170,12 @@ public abstract class CommonFilesMetadataBuilder {
     public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
         //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, Md5Metadata> commonFiles = new HashMap<>();
+        
+        final Case currentCase = Case.getCurrentCaseThrows();
+        final String caseName = currentCase.getDisplayName();
 
-        SleuthkitCase sleuthkitCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
+        
         String selectStatement = this.buildSqlSelectStatement();
         
         Map<Long, AbstractFile> fileCache = new HashMap<>();
@@ -192,10 +196,10 @@ public abstract class CommonFilesMetadataBuilder {
 
                 if (commonFiles.containsKey(md5)) {
                     final Md5Metadata md5Metadata = commonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource));
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource, caseName));
                 } else {
                     final Md5Metadata md5Metadata = new Md5Metadata(md5);
-                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource));
+                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource, caseName));
                     commonFiles.put(md5, md5Metadata);
                 }
             }

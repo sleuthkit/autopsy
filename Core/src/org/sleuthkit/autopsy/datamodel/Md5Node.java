@@ -54,11 +54,13 @@ public class Md5Node extends DisplayableItemNode {
 
     private final String md5Hash;
     private final int commonFileCount;
+    private final String cases;
     private final String dataSources;
 
     public Md5Node(Md5Metadata data) {
         super(Children.createLazy(new Md5ChildCallable(data)), Lookups.singleton(data.getMd5()));
         this.commonFileCount = data.size();
+        this.cases = data.getCases();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
 
@@ -87,6 +89,10 @@ public class Md5Node extends DisplayableItemNode {
 
     int getCommonFileCount() {
         return this.commonFileCount;
+    }
+    
+    String getCases(){
+        return this.cases;
     }
 
     String getDataSources() {
@@ -128,7 +134,7 @@ public class Md5Node extends DisplayableItemNode {
     static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
         map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
         map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
-        map.put(CommonFileParentPropertyType.Case.toString(), "TODO");
+        map.put(CommonFileParentPropertyType.Case.toString(), node.getCases());
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
     }
 
