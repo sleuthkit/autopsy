@@ -461,6 +461,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         return ret;
     }
 
+    @Messages({"DataContentViewerOtherCases.earliestCaseNotAvailable= Date Not Available."})
     /**
      * Gets the list of Eam Cases and determines the earliest case creation date.
      * Sets the label to display the earliest date string to the user.
@@ -468,7 +469,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void setEarliestCaseDate() {
        LocalDate earliestDate = LocalDate.now();
        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-       String dateStringDisplay = datetimeFormat.format(earliestDate.toDate());
+       String dateStringDisplay = Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable();
        
 
         if (EamDb.isEnabled()) {
