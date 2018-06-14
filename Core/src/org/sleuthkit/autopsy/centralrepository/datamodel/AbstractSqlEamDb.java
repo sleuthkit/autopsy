@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -49,25 +48,6 @@ import org.sleuthkit.datamodel.TskData;
  * Generic JDBC methods
  *
  */
-@Messages({
-    "AbstractSqlEamDb.exceptionMessage.correlationInstanceNull=CorrelationAttributeInstance is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationInstanceKnownStatusNull=CorrelationAttributeInstance known status is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationInstanceDataSourceNull=CorrelationAttributeInstance data source is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationInstanceCaseNull=CorrelationAttributeInstance case is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationAttributeNull=CorrelationAttribute is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationTypeNull=Correlation type is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationValueNull=Correlation value is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationFilePathNull=Correlation file path is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationDataSourceNull=Correlation data source is null",
-    "AbstractSqlEamDb.exceptionMessage.correlationCaseNull=Correlation case is null",
-    "AbstractSqlEamDb.exceptionMessage.organizationNull=EamOrganization is null",
-    "AbstractSqlEamDb.exceptionMessage.organizationAlreadyHasId=EamOrganization already has an ID",
-    "AbstractSqlEamDb.exceptionMessage.globalSetNull=EamGlobalSet is null",
-    "AbstractSqlEamDb.exceptionMessage.globalSetKnownStatusNull=File known status on the EamGlobalSet is null",
-    "AbstractSqlEamDb.exceptionMessage.globalSetTypeNull=Type on the EamGlobalSet is null",
-    "AbstractSqlEamDb.exceptionMessage.globalFileInstanceKnownStatusNull=Known status of EamGlobalFileInstance is null",
-    "AbstractSqlEamDb.exceptionMessage.errorGettingNotableArtifactInstances=Error getting notable artifact instances."
-})
 abstract class AbstractSqlEamDb implements EamDb {
 
     private final static Logger logger = Logger.getLogger(AbstractSqlEamDb.class.getName());
@@ -306,7 +286,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void updateCase(CorrelationCase eamCase) throws EamDbException {
         if (eamCase == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationCaseNull());
+            throw new EamDbException("Correlation case is null");
         }
 
         Connection conn = connect();
@@ -489,7 +469,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         if (correlationCase == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationCaseNull());
+            throw new EamDbException("Correlation case is null");
         }
 
         Connection conn = connect();
@@ -562,13 +542,13 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void addArtifact(CorrelationAttribute eamArtifact) throws EamDbException {
         if (eamArtifact == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationAttributeNull());
+            throw new EamDbException("CorrelationAttribute is null");
         }
         if (eamArtifact.getCorrelationType() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
         if (eamArtifact.getCorrelationValue() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationValueNull());
+            throw new EamDbException("Correlation value is null");
         }
 
         Connection conn = connect();
@@ -591,13 +571,13 @@ abstract class AbstractSqlEamDb implements EamDb {
             for (CorrelationAttributeInstance eamInstance : eamInstances) {
                 if (!eamArtifact.getCorrelationValue().isEmpty()) {
                     if (eamInstance.getCorrelationCase() == null) {
-                        throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceCaseNull());
+                        throw new EamDbException("CorrelationAttributeInstance case is null");
                     }
                     if (eamInstance.getCorrelationDataSource() == null) {
-                        throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceDataSourceNull());
+                        throw new EamDbException("CorrelationAttributeInstance data source is null");
                     }
                     if (eamInstance.getKnownStatus() == null) {
-                        throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceKnownStatusNull());
+                        throw new EamDbException("CorrelationAttributeInstance known status is null");
                     }
 
                     preparedStatement.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
@@ -637,7 +617,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
         Connection conn = connect();
 
@@ -694,10 +674,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByPath(CorrelationAttribute.Type aType, String filePath) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
         if (filePath == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationValueNull());
+            throw new EamDbException("Correlation value is null");
         }
         Connection conn = connect();
 
@@ -753,10 +733,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
         if (value == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationValueNull());
+            throw new EamDbException("Correlation value is null");
         }
 
         Connection conn = connect();
@@ -791,7 +771,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException {
         if (corAttr == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationAttributeNull());
+            throw new EamDbException("CorrelationAttribute is null");
         }
         Double uniqueTypeValueTuples = getCountUniqueCaseDataSourceTuplesHavingTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).doubleValue();
         Double uniqueCaseDataSourceTuples = getCountUniqueDataSources().doubleValue();
@@ -812,7 +792,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -937,7 +917,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void prepareBulkArtifact(CorrelationAttribute eamArtifact) throws EamDbException {
 
         if (eamArtifact.getCorrelationType() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         synchronized (bulkArtifacts) {
@@ -995,13 +975,13 @@ abstract class AbstractSqlEamDb implements EamDb {
                             if (!eamArtifact.getCorrelationValue().isEmpty()) {
 
                                 if (eamInstance.getCorrelationCase() == null) {
-                                    throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceCaseNull());
+                                    throw new EamDbException("CorrelationAttributeInstance case is null");
                                 }
                                 if (eamInstance.getCorrelationDataSource() == null) {
-                                    throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceDataSourceNull());
+                                    throw new EamDbException("CorrelationAttributeInstance data source is null");
                                 }
                                 if (eamInstance.getKnownStatus() == null) {
-                                    throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceKnownStatusNull());
+                                    throw new EamDbException("CorrelationAttributeInstance known status is null");
                                 }
 
                                 bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
@@ -1130,19 +1110,19 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void updateAttributeInstanceComment(CorrelationAttribute eamArtifact) throws EamDbException {
         if (eamArtifact == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationAttributeNull());
+            throw new EamDbException("CorrelationAttribute is null");
         }
 
         CorrelationAttributeInstance eamInstance = eamArtifact.getInstances().get(0);
 
         if (eamInstance == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationInstanceNull());
+            throw new EamDbException("CorrelationAttributeInstance is null");
         }
         if (eamInstance.getCorrelationCase() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationCaseNull());
+            throw new EamDbException("Correlation case is null");
         }
         if (eamInstance.getCorrelationDataSource() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationDataSourceNull());
+            throw new EamDbException("Correlation data source is null");
         }
 
         Connection conn = connect();
@@ -1193,19 +1173,19 @@ abstract class AbstractSqlEamDb implements EamDb {
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException {
 
         if (type == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
         if (correlationCase == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationCaseNull());
+            throw new EamDbException("Correlation case is null");
         }
         if (correlationDataSource == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationDataSourceNull());
+            throw new EamDbException("Correlation data source is null");
         }
         if (value == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationValueNull());
+            throw new EamDbException("Correlation value is null");
         }
         if (filePath == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationFilePathNull());
+            throw new EamDbException("Correlation file path is null");
         }
 
         Connection conn = connect();
@@ -1231,17 +1211,17 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(4, filePath.toLowerCase());
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                int id = resultSet.getInt(1);
+                int instanceId = resultSet.getInt(1);
                 int knownStatus = resultSet.getInt(2);
                 String comment = resultSet.getString(3);
 
                 correlationAttribute = new CorrelationAttribute(type, value);
                 CorrelationAttributeInstance artifactInstance = new CorrelationAttributeInstance(
-                        id, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
+                        instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
                 correlationAttribute.addInstance(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1264,7 +1244,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
         if (eamArtifact == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationAttributeNull());
+            throw new EamDbException("CorrelationAttribute is null");
         }
         if (knownStatus == null) {
             throw new EamDbException("Known status is null");
@@ -1277,10 +1257,10 @@ abstract class AbstractSqlEamDb implements EamDb {
         CorrelationAttributeInstance eamInstance = eamInstances.get(0);
 
         if (eamInstance.getCorrelationCase() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationCaseNull());
+            throw new EamDbException("Correlation case is null");
         }
         if (eamInstance.getCorrelationDataSource() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationDataSourceNull());
+            throw new EamDbException("Correlation data source is null");
         }
 
         Connection conn = connect();
@@ -1368,7 +1348,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -1403,7 +1383,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1427,7 +1407,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -1462,7 +1442,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1483,7 +1463,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -1531,7 +1511,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -1562,7 +1542,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 caseNames.add(resultSet.getString("case_name"));
             }
         } catch (SQLException ex) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_errorGettingNotableArtifactInstances(), ex); // NON-NLS
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1728,7 +1708,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         // TEMP: Only support file correlation type
@@ -1764,9 +1744,9 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {
         if (eamOrg == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_organizationNull());
+            throw new EamDbException("EamOrganization is null");
         } else if (eamOrg.getOrgID() != -1) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_organizationAlreadyHasId());
+            throw new EamDbException("EamOrganization already has an ID");
         }
 
         Connection conn = connect();
@@ -1893,7 +1873,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     private void testArgument(EamOrganization org) throws EamDbException {
         if (org == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_organizationNull());
+            throw new EamDbException("EamOrganization is null");
         } else if (org.getOrgID() == -1) {
             throw new EamDbException("Organization  has -1 row ID");
         }
@@ -1930,9 +1910,6 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
     }
 
-    @Messages({"AbstractSqlEamDb.deleteOrganization.inUseException.message=Can not delete organization "
-        + "which is currently in use by a case or reference set in the central repository.",
-        "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
     @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
         testArgument(organizationToDelete);
@@ -1950,13 +1927,13 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = checkIfUsedStatement.executeQuery();
             resultSet.next();
             if (resultSet.getLong(1) > 0) {
-                throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_inUseException_message());
+                throw new EamDbException("Can not delete organization which is currently in use by a case or reference set in the central repository.");
             }
             deleteOrgStatement = conn.prepareStatement(deleteOrgSql);
             deleteOrgStatement.setInt(1, organizationToDelete.getOrgID());
             deleteOrgStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_deleteOrganization_errorDeleting_message(), ex); // NON-NLS
+            throw new EamDbException("Error executing query when attempting to delete organization by id.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(checkIfUsedStatement);
             EamDbUtil.closeStatement(deleteOrgStatement);
@@ -1977,15 +1954,15 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public int newReferenceSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         if (eamGlobalSet == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_globalSetNull());
+            throw new EamDbException("EamGlobalSet is null");
         }
 
         if (eamGlobalSet.getFileKnownStatus() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_globalSetKnownStatusNull());
+            throw new EamDbException("File known status on the EamGlobalSet is null");
         }
 
         if (eamGlobalSet.getType() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_globalSetTypeNull());
+            throw new EamDbException("Type on the EamGlobalSet is null");
         }
 
         Connection conn = connect();
@@ -2078,7 +2055,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public List<EamGlobalSet> getAllReferenceSets(CorrelationAttribute.Type correlationType) throws EamDbException {
 
         if (correlationType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         List<EamGlobalSet> results = new ArrayList<>();
@@ -2117,10 +2094,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException {
         if (eamGlobalFileInstance.getKnownStatus() == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_globalFileInstanceKnownStatusNull());
+            throw new EamDbException("Known status of EamGlobalFileInstance is null");
         }
         if (correlationType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -2190,7 +2167,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttribute.Type contentType) throws EamDbException {
         if (contentType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
         if (globalInstances == null) {
             throw new EamDbException("Null set of EamGlobalFileInstance");
@@ -2248,7 +2225,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException {
         if (aType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();
@@ -2288,7 +2265,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public int newCorrelationType(CorrelationAttribute.Type newType) throws EamDbException {
         if (newType == null) {
-            throw new EamDbException(Bundle.AbstractSqlEamDb_exceptionMessage_correlationTypeNull());
+            throw new EamDbException("Correlation type is null");
         }
 
         Connection conn = connect();

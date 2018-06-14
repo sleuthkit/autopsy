@@ -59,20 +59,6 @@ public class EamDbUtil {
     }
 
     /**
-     * Close the prepared statement.
-     *
-     * @param preparedStatement The prepared statement to be closed.
-     * 
-     * @deprecated Use closeStatement() instead.
-     *
-     * @throws EamDbException
-     */
-    @Deprecated
-    public static void closePreparedStatement(PreparedStatement preparedStatement) {
-        closeStatement(preparedStatement);
-    }
-
-    /**
      * Close the resultSet.
      *
      * @param resultSet
@@ -373,6 +359,20 @@ public class EamDbUtil {
      */
     public static String correlationTypeToReferenceTableName(CorrelationAttribute.Type type) {
         return "reference_" + type.getDbTableName();
+    }
+
+    /**
+     * Close the prepared statement.
+     *
+     * @param preparedStatement The prepared statement to be closed.
+     * 
+     * @deprecated Use closeStatement() instead.
+     *
+     * @throws EamDbException
+     */
+    @Deprecated
+    public static void closePreparedStatement(PreparedStatement preparedStatement) {
+        closeStatement(preparedStatement);
     }
 
 }
