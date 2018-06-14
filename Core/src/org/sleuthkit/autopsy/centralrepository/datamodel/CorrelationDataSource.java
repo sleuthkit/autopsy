@@ -90,7 +90,18 @@ public class CorrelationDataSource implements Serializable {
         } catch (TskDataException | TskCoreException ex) {
             throw new EamDbException("Error getting data source info: " + ex.getMessage());
         }
-        return new CorrelationDataSource(correlationCase.getID(), -1, deviceId, dataSource.getName());
+        
+        CorrelationDataSource correlationDataSource = null;
+        if (EamDbUtil.useCentralRepo()) {
+            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
+        }
+        if (correlationDataSource == null) {
+            correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName());
+            if (EamDbUtil.useCentralRepo()) {
+                EamDb.getInstance().newDataSource(correlationDataSource);
+            }
+        }
+        return correlationDataSource;
     }
 
     @Override

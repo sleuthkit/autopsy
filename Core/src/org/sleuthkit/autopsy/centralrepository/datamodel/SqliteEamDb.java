@@ -124,7 +124,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
 
                 String instancesTemplate = "DELETE FROM %s_instances";
                 String referencesTemplate = "DELETE FROM global_files";
-                for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
+                for (CorrelationAttribute.Type type : defaultCorrelationTypes) {
                     dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
                     // FUTURE: support other reference types
                     if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
