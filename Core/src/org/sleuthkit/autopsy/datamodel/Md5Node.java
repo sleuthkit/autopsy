@@ -69,10 +69,7 @@ public class Md5Node extends DisplayableItemNode {
         }
         @Override
         public Children call() throws Exception {
-            //Check, somehow, that your key has children,
-            //e.g., create "hasChildren" on the object
-            //to look in the database to see whether
-            //the object has children;
+            //Check that the key has children,
             //if it doesn't have children, return a leaf:
             if (key.getMetadata().isEmpty()) {
                 return Children.LEAF;
