@@ -49,8 +49,8 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
  *
  * Used to display a list of multi user cases and allow the user to open one of
  * them.
- *
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;

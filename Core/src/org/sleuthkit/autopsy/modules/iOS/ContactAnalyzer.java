@@ -54,8 +54,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ContactAnalyzer {
 
     private Connection connection = null;
-    private ResultSet resultSet = null;
-    private Statement statement = null;
     private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
@@ -114,13 +112,16 @@ final class ContactAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
+        
         Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
-        } 
+        }
+        
+        Statement statement = null;
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
@@ -137,6 +138,7 @@ final class ContactAnalyzer {
                 return;
             }
 
+            ResultSet resultSet = null;
             try {
                 // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
                 //sorted by name, so phonenumber/email would be consecutive for a person if they exist.
