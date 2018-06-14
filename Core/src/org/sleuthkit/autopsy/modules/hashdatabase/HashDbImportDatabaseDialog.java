@@ -47,9 +47,10 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
  * add it to the set of hash databases used to classify files as unknown, known,
  * or notable.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
-    private JFileChooser fileChooser = new JFileChooser();
+    private final JFileChooser fileChooser;
     private String selectedFilePath = "";
     private HashDb selectedHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
@@ -65,6 +66,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
                 true);
+        this.fileChooser = new JFileChooser();
         initComponents();
         enableComponents();
         initFileChooser();

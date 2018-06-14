@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMetricsCollector.
 /**
  * Displays auto ingest metrics for a cluster.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutoIngestMetricsDialog extends javax.swing.JDialog {
 
     private static final int GIGABYTE_SIZE = 1073741824;
