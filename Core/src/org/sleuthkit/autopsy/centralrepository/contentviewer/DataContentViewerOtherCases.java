@@ -461,10 +461,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         return ret;
     }
 
+    /**
+     * Gets the list of Eam Cases and determines the earliest case creation date.
+     * Sets the label to display the earliest date string to the user.
+     */
     private void setEarliestCaseDate() {
-        LocalDate earliestDate = LocalDate.now();
-
+       LocalDate earliestDate = LocalDate.now();
        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+       String dateStringDisplay = datetimeFormat.format(earliestDate.toDate());
+       
 
         if (EamDb.isEnabled()) {
             try {
@@ -475,6 +480,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
                    if (caseDate.isBefore(earliestDate)) {
                         earliestDate = caseDate;
+                        dateStringDisplay = aCase.getCreationDate();
                    }
 
                 }
@@ -486,7 +492,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             // NON-NLS
 
         }
-        earliestCaseDate.setText(datetimeFormat.format(earliestDate.toDate()));
+        earliestCaseDate.setText(dateStringDisplay);
     }
 
     /**
@@ -739,9 +745,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         otherCasesTable = new javax.swing.JTable();
         tableStatusPanel = new javax.swing.JPanel();
         earliestDatePanel = new javax.swing.JPanel();
+        tableStatusPanelLabel = new javax.swing.JLabel();
         earliestCaseLabel = new javax.swing.JLabel();
         earliestCaseDate = new javax.swing.JLabel();
-        tableStatusPanelLabel = new javax.swing.JLabel();
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
@@ -798,32 +804,23 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 16, Short.MAX_VALUE)
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(earliestCaseLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseLabel.text")); // NOI18N
-        earliestCaseLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseLabel.toolTipText")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(earliestCaseDate, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseDate.text")); // NOI18N
-
         javax.swing.GroupLayout earliestDatePanelLayout = new javax.swing.GroupLayout(earliestDatePanel);
         earliestDatePanel.setLayout(earliestDatePanelLayout);
         earliestDatePanelLayout.setHorizontalGroup(
             earliestDatePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(earliestDatePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(earliestCaseLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(earliestCaseDate)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(0, 206, Short.MAX_VALUE)
         );
         earliestDatePanelLayout.setVerticalGroup(
             earliestDatePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, earliestDatePanelLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(earliestDatePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(earliestCaseLabel)
-                    .addComponent(earliestCaseDate)))
+            .addGap(0, 16, Short.MAX_VALUE)
         );
 
         tableStatusPanelLabel.setForeground(new java.awt.Color(255, 0, 51));
+
+        org.openide.awt.Mnemonics.setLocalizedText(earliestCaseLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseLabel.text")); // NOI18N
+        earliestCaseLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseLabel.toolTipText")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(earliestCaseDate, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseDate.text")); // NOI18N
 
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
         tableContainerPanel.setLayout(tableContainerPanelLayout);
@@ -831,6 +828,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(tableContainerPanelLayout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(earliestCaseLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(earliestCaseDate)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(earliestDatePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
             .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1500, Short.MAX_VALUE)
@@ -842,8 +843,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         tableContainerPanelLayout.setVerticalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(earliestDatePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(earliestDatePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(earliestCaseLabel)
+                        .addComponent(earliestCaseDate)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)

@@ -26,7 +26,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 
 /**
  * Model for cells to display correlation case information
- * TODO sorting
  */
 public class ShowCasesTableModel extends AbstractTableModel {
 
@@ -43,11 +42,11 @@ public class ShowCasesTableModel extends AbstractTableModel {
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.ShowCasesTableModel_case(), 100),
-        CREATION_DATE(Bundle.ShowCasesTableModel_creationDate(), 100),
-        CASE_NUMBER(Bundle.ShowCasesTableModel_caseNumber(), 50),
+        CASE_NAME(Bundle.ShowCasesTableModel_case(), 200),
+        CREATION_DATE(Bundle.ShowCasesTableModel_creationDate(), 150),
+        CASE_NUMBER(Bundle.ShowCasesTableModel_caseNumber(), 100),
         EXAMINER_NAME(Bundle.ShowCasesTableModel_examinerName(), 200),
-        EXAMINER_EMAIL(Bundle.ShowCasesTableModel_examinerEmail(), 50),
+        EXAMINER_EMAIL(Bundle.ShowCasesTableModel_examinerEmail(), 100),
         EXAMINER_PHONE(Bundle.ShowCasesTableModel_examinerPhone(), 100),
         NOTES(Bundle.ShowCasesTableModel_notes(), 450);
 
@@ -68,6 +67,9 @@ public class ShowCasesTableModel extends AbstractTableModel {
         }
     };
 
+    /**
+     * list of Eam Cases from central repository.
+     */
     private List<CorrelationCase> eamCases;
 
     ShowCasesTableModel() {
@@ -160,9 +162,9 @@ public class ShowCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one local central repository artifact to the table.
+     * Add one local central repository case to the table.
      *
-     * @param eamArtifact central repository artifact to add to the
+     * @param eamCase central repository case to add to the
      *                   table
      */
     public void addEamCase(CorrelationCase eamCase) {

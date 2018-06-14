@@ -21,24 +21,24 @@ package org.sleuthkit.autopsy.centralrepository.optionspanel;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.table.TableColumn;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 public final class ShowCasesDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
     private EamDb dbManager;
-    private final static Logger logger = Logger.getLogger(ShowCasesDialog.class.getName());
+
     private ShowCasesTableModel tableModel;
     @Messages({"ShowCasesDialog.title_text=All Cases Details"})
     /**
-     * Creates new form ManageOrganizationsPanel
+     * Creates new form ShowCases Panel
      */
     public ShowCasesDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
@@ -55,6 +55,7 @@ public final class ShowCasesDialog extends JDialog {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
         }
+        // setColumnWidths();
         display();
     }
 
@@ -74,19 +75,62 @@ public final class ShowCasesDialog extends JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        showCasesScrollPane = new javax.swing.JScrollPane();
         showCasesPanel = new javax.swing.JPanel();
-        closeButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        showCasesScrollPane = new javax.swing.JScrollPane();
+        outCasesPane = new javax.swing.JPanel();
+        innerCaseScrollPane = new javax.swing.JScrollPane();
         caseDetailsTable = new javax.swing.JTable();
+        closeButton = new javax.swing.JButton();
 
         setTitle(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.title")); // NOI18N
         setMinimumSize(new java.awt.Dimension(545, 415));
 
-        showCasesScrollPane.setMinimumSize(null);
+        showCasesPanel.setPreferredSize(new java.awt.Dimension(527, 407));
+
+        showCasesScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         showCasesScrollPane.setPreferredSize(new java.awt.Dimension(535, 415));
 
-        showCasesPanel.setPreferredSize(new java.awt.Dimension(527, 407));
+        caseDetailsTable.setAutoCreateRowSorter(true);
+        caseDetailsTable.setModel(tableModel);
+        caseDetailsTable.setToolTipText(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.caseDetailsTable.toolTipText")); // NOI18N
+        caseDetailsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        caseDetailsTable.getTableHeader().setReorderingAllowed(false);
+        innerCaseScrollPane.setViewportView(caseDetailsTable);
+        caseDetailsTable.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.caseDetailsTable.AccessibleContext.accessibleDescription")); // NOI18N
+
+        javax.swing.GroupLayout outCasesPaneLayout = new javax.swing.GroupLayout(outCasesPane);
+        outCasesPane.setLayout(outCasesPaneLayout);
+        outCasesPaneLayout.setHorizontalGroup(
+            outCasesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 1222, Short.MAX_VALUE)
+            .addGroup(outCasesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(outCasesPaneLayout.createSequentialGroup()
+                    .addComponent(innerCaseScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 1222, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 0, Short.MAX_VALUE)))
+        );
+        outCasesPaneLayout.setVerticalGroup(
+            outCasesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 423, Short.MAX_VALUE)
+            .addGroup(outCasesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(innerCaseScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE))
+        );
+
+        showCasesScrollPane.setViewportView(outCasesPane);
+
+        javax.swing.GroupLayout showCasesPanelLayout = new javax.swing.GroupLayout(showCasesPanel);
+        showCasesPanel.setLayout(showCasesPanelLayout);
+        showCasesPanelLayout.setHorizontalGroup(
+            showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 527, Short.MAX_VALUE)
+            .addGroup(showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(showCasesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE))
+        );
+        showCasesPanelLayout.setVerticalGroup(
+            showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 426, Short.MAX_VALUE)
+            .addGroup(showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(showCasesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE))
+        );
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.closeButton.text")); // NOI18N
         closeButton.setActionCommand(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.closeButton.actionCommand")); // NOI18N
@@ -96,51 +140,30 @@ public final class ShowCasesDialog extends JDialog {
             }
         });
 
-        caseDetailsTable.setModel(tableModel);
-        caseDetailsTable.setToolTipText(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.caseDetailsTable.toolTipText")); // NOI18N
-        jScrollPane1.setViewportView(caseDetailsTable);
-
-        javax.swing.GroupLayout showCasesPanelLayout = new javax.swing.GroupLayout(showCasesPanel);
-        showCasesPanel.setLayout(showCasesPanelLayout);
-        showCasesPanelLayout.setHorizontalGroup(
-            showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(showCasesPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(showCasesPanelLayout.createSequentialGroup()
-                        .addGap(0, 458, Short.MAX_VALUE)
-                        .addComponent(closeButton))
-                    .addComponent(jScrollPane1))
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 4, Short.MAX_VALUE)
+                .addComponent(showCasesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 4, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(closeButton)
                 .addContainerGap())
         );
-        showCasesPanelLayout.setVerticalGroup(
-            showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(showCasesPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 6, Short.MAX_VALUE)
+                .addComponent(showCasesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 426, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(closeButton)
                 .addContainerGap())
         );
 
         closeButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.closeButton.AccessibleContext.accessibleName")); // NOI18N
-
-        showCasesScrollPane.setViewportView(showCasesPanel);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(showCasesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(showCasesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -148,12 +171,22 @@ public final class ShowCasesDialog extends JDialog {
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
         dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
-
+    
+    private void setColumnWidths() {
+        for (int idx = 0; idx < tableModel.getColumnCount(); idx++) {
+            TableColumn column = caseDetailsTable.getColumnModel().getColumn(idx);
+            int colWidth = tableModel.getColumnPreferredWidth(idx);
+            if (0 < colWidth) {
+                column.setPreferredWidth(colWidth);
+            }
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable caseDetailsTable;
     private javax.swing.JButton closeButton;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane innerCaseScrollPane;
+    private javax.swing.JPanel outCasesPane;
     private javax.swing.JPanel showCasesPanel;
     private javax.swing.JScrollPane showCasesScrollPane;
     // End of variables declaration//GEN-END:variables
