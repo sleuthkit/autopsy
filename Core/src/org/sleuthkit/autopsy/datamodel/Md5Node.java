@@ -55,7 +55,7 @@ public class Md5Node extends DisplayableItemNode {
     public Md5Node(Md5Metadata data) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true),
-                Lookups.singleton(data.getMd5()));
+                Lookups.singleton(Md5Node.class));
         
         this.commonFileCount = data.size();
         this.dataSources = String.join(", ", data.getDataSources());
@@ -177,7 +177,7 @@ public class Md5Node extends DisplayableItemNode {
 
         @Override
         public String toString() {
-            return displayString;
+            return this.displayString;
         }
     }
 }

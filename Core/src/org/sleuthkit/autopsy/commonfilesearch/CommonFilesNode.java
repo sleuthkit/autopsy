@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
@@ -36,7 +36,7 @@ final public class CommonFilesNode extends DisplayableItemNode {
     
 
     CommonFilesNode(CommonFilesMetadata metadataList) {
-        super(Children.create(new Md5NodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
+        super(Children.create(new InstanceCountNodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
     }
 
     @NbBundle.Messages({
@@ -60,37 +60,25 @@ final public class CommonFilesNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
+    
+    static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
-    /**
-     * ChildFactory which builds CommonFileParentNodes from the
-     * CommonFilesMetaaData models.
-     */
-    static class Md5NodeFactory extends ChildFactory<String> {
-
-        /**
-         * List of models, each of which is a parent node matching a single md5,
-         * containing children FileNodes.
-         */
         private CommonFilesMetadata metadata;
-
-        Md5NodeFactory(CommonFilesMetadata metadata) {
+        
+        InstanceCountNodeFactory(CommonFilesMetadata metadata){
             this.metadata = metadata;
         }
-
-        protected void removeNotify() {
-            metadata = null;
-        }
-
+        
         @Override
-        protected Node createNodeForKey(String md5){
-            Md5Metadata metadata = this.metadata.getMetadataForMd5(md5);
-            return new Md5Node(metadata);
-        }
-
-        @Override
-        protected boolean createKeys(List<String> list) {
+        protected boolean createKeys(List<Integer> list) {
             list.addAll(this.metadata.getMetadata().keySet());
             return true;
         }
+        
+        @Override
+        protected Node createNodeForKey(Integer instanceCount){
+            List<Md5Metadata> metadata=  this.metadata.getMetadataForMd5(instanceCount);
+            return new InstanceCountNode(instanceCount, metadata);
+        }        
     }
 }

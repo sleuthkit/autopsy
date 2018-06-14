@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
@@ -198,8 +199,22 @@ public abstract class CommonFilesMetadataBuilder {
                 }
             }
         }
+        
+        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = new TreeMap<>();
 
-        return new CommonFilesMetadata(commonFiles);
+        for(Md5Metadata md5Metadata : commonFiles.values()){
+            Integer size = md5Metadata.size();
+            
+            if(instanceCollatedCommonFiles.containsKey(size)){
+                instanceCollatedCommonFiles.get(size).add(md5Metadata);
+            } else {
+                ArrayList<Md5Metadata> value = new ArrayList<Md5Metadata>();
+                value.add(md5Metadata);
+                instanceCollatedCommonFiles.put(size, value);
+            }
+        }
+        
+        return new CommonFilesMetadata(instanceCollatedCommonFiles);
     }
 
     /**
