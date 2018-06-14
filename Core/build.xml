@@ -21,11 +21,6 @@
     </target>
 
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
-        <!--Copy openCV dependencies to release-->
-        <copy todir="${modules.dir}" >
-            <fileset dir="${thirdparty.dir}/opencv" />
-        </copy>
-        
         <!--Copy photorec to release-->
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
