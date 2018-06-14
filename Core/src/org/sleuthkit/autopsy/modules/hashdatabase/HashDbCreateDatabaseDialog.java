@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * to the set of hash databases used to classify files as unknown, known or
  * notable.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private static final String DEFAULT_FILE_NAME = NbBundle

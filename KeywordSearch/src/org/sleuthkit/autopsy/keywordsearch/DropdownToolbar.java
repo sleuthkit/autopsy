@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * panel and dropdown single keyword search panel. Displayed in the upper right
  * hand corner of the application by default.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class DropdownToolbar extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

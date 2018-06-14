@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
 /**
  * A panel that allows a user to create and edit files set membership rules.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class FilesSetRulePanel extends javax.swing.JPanel {
 
     @Messages({

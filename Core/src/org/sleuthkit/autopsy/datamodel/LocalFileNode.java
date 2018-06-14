@@ -96,8 +96,8 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-
         actionsList.addAll(Arrays.asList(super.getActions(true)));
+        
         actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(

@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 @Messages({
     "CTL_AutoIngestDashboardAction=Auto Ingest Jobs",
     "CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs"})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class AutoIngestDashboardTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;

@@ -102,10 +102,14 @@ final class IngestModule implements FileIngestModule {
             return ProcessResult.ERROR;
         }
 
-        if (!EamArtifactUtil.isValidCentralRepoFile(abstractFile)) {
+        if (!EamArtifactUtil.isSupportedAbstractFileType(abstractFile)) {
             return ProcessResult.OK;
         }
 
+        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
+            return ProcessResult.OK;
+        }
+        
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();

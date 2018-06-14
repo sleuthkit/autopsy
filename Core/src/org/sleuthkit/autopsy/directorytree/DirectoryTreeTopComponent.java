@@ -97,6 +97,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({
     "DirectoryTreeTopComponent.resultsView.title=Listing"
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
 
     private final transient ExplorerManager em = new ExplorerManager();
@@ -1059,10 +1060,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
         undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
         getTree().expandNode(treeNode);
-        try {
-            em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
-        } catch (PropertyVetoException ex) {
-            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        if (this.getSelectedNode().equals(treeNode)) {
+            this.setDirectoryListingActive();
+            this.respondSelection(em.getSelectedNodes(), new Node[]{treeNode});
+        } else {
+            try {
+                em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
+            } catch (PropertyVetoException ex) {
+                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            }
         }
         // Another thread is needed because we have to wait for dataResult to populate
     }
