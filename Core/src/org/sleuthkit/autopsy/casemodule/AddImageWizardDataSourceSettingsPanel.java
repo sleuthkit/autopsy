@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
  * to add to Case, and pick the time zone.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
     /**

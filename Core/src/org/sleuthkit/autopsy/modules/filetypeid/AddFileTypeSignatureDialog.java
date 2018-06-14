@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
  * A dialog box that allows a user to create a file type signature, to be added
  * to a selected file type.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AddFileTypeSignatureDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
