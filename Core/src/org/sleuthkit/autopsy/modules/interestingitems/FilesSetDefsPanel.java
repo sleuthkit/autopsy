@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 /**
  * A panel that allows a user to make interesting item definitions.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;

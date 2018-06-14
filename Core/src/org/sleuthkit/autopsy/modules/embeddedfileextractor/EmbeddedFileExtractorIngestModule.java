@@ -50,8 +50,6 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private String moduleDirRelative;
-    private String moduleDirAbsolute;
     private MSOfficeEmbeddedContentExtractor officeExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
@@ -73,6 +71,9 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * is used to write the extracted (derived) files to local storage.
          */
         jobId = context.getJobId();
+        String moduleDirRelative = null;
+        String moduleDirAbsolute = null;
+
         try {
             final Case currentCase = Case.getCurrentCaseThrows();
             moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();

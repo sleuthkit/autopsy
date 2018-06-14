@@ -88,6 +88,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
  * Global settings panel for data-source-level ingest modules that export and
  * catalog files based on user-defined export rules.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class FileExporterSettingsPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;

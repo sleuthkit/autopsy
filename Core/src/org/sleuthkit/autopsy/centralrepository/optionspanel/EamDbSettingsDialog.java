@@ -47,9 +47,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 
 /**
- *
- * @author nick
+ * Configuration dialog for Central Repository database settings.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class EamDbSettingsDialog extends JDialog {
 
     private static final Logger logger = Logger.getLogger(EamDbSettingsDialog.class.getName());
@@ -96,11 +96,8 @@ public class EamDbSettingsDialog extends JDialog {
             public boolean accept(File pathname) {
                 if (pathname.isDirectory()) {
                     return true;
-                } else if (pathname.getName().toLowerCase().equals((CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT).toLowerCase())) {
-                    return true;
-                } else {
-                    return false;
                 }
+                return pathname.getName().toLowerCase().equals((CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT).toLowerCase());
             }
 
             @Override

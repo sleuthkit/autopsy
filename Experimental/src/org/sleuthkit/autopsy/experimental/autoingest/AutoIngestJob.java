@@ -87,7 +87,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     private int numberOfCrashes;
     @GuardedBy("this")
     private StageDetails stageDetails;
-    
+
     /*
      * Version 2 fields.
      */
@@ -100,7 +100,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     private List<IngestThreadActivitySnapshot> ingestThreadsSnapshot;
     private List<Snapshot> ingestJobsSnapshot;
     private Map<String, Long> moduleRunTimesSnapshot;
-    
+
     /**
      * Constructs a new automated ingest job. All job state not specified in the
      * job manifest is set to the default state for a new job.
@@ -132,14 +132,14 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             this.processingStatus = ProcessingStatus.PENDING;
             this.numberOfCrashes = 0;
             this.stageDetails = this.getProcessingStageDetails();
-            
+
             /*
              * Version 2 fields.
              */
             this.dataSourceSize = 0;
-            
+
             /*
-             * Version 3 fields.           
+             * Version 3 fields.
              */
             this.ingestThreadsSnapshot = Collections.emptyList();
             this.ingestJobsSnapshot = Collections.emptyList();
@@ -181,12 +181,12 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             this.processingStatus = nodeData.getProcessingStatus();
             this.numberOfCrashes = nodeData.getNumberOfCrashes();
             this.stageDetails = this.getProcessingStageDetails();
-            
+
             /*
              * Version 2 fields.
              */
             this.dataSourceSize = nodeData.getDataSourceSize();
-            
+
             /*
              * Version 3 fields
              */
@@ -257,7 +257,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      * Sets the processing stage of the job. The start date/time for the stage
      * is set when the stage is set.
      *
-     * @param newStage The processing stage.
+     * @param newStage       The processing stage.
      * @param stageStartDate The date and time this stage started.
      */
     synchronized void setProcessingStage(Stage newStage, Date stageStartDate) {
@@ -377,20 +377,22 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
 
     /**
      * Sets the ingest job snapshot for the auto ingest job.
-     * @param snapshot 
+     *
+     * @param snapshot
      */
     synchronized void setIngestJobsSnapshot(List<Snapshot> snapshot) {
         this.ingestJobsSnapshot = snapshot;
     }
-    
+
     /**
      * Sets the module run times snapshot for the auto ingest job.
-     * @param snapshot 
+     *
+     * @param snapshot
      */
     synchronized void setModuleRuntimesSnapshot(Map<String, Long> snapshot) {
         this.moduleRunTimesSnapshot = snapshot;
     }
-    
+
     /**
      * Cancels the job.
      */
@@ -589,7 +591,21 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      */
     @Override
     public int compareTo(AutoIngestJob otherJob) {
-        return -this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
+        int comparisonResult = -(this.getPriority().compareTo(otherJob.getPriority()));
+        if (comparisonResult == 0) {
+            //if the priority is the same compare with the jobs manifest creation date
+            comparisonResult = this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
+            if (comparisonResult == 0) {
+                //if the manifest files were created at the same time compare with the jobs case name
+                comparisonResult = -this.getManifest().getCaseName().compareTo(otherJob.getManifest().getCaseName());
+                if (comparisonResult == 0) {
+                    //if the case name is the same compare with the jobs datasource file name
+                    comparisonResult = -this.getManifest().getDataSourcePath().getFileName().toString().compareTo(otherJob.getManifest().getDataSourcePath().getFileName().toString());
+                    //if they are still the same at this point they may be ordered inconsistently
+                }
+            }
+        }
+        return comparisonResult;
     }
 
     @Override
@@ -605,31 +621,6 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     @Override
     public Map<String, Long> getModuleRunTimes() {
         return this.moduleRunTimesSnapshot;
-    }
-
-    /**
-     * Comparator that supports doing a descending sort of jobs based on job
-     * completion date.
-     */
-    static class CompletedDateDescendingComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getCompletedDate().compareTo(o2.getCompletedDate());
-        }
-
-    }
-
-    /**
-     * Comparator that orders jobs in descending order by job priority.
-     */
-    public static class PriorityComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
-            return -(job.getPriority().compareTo(anotherJob.getPriority()));
-        }
-
     }
 
     /**
@@ -649,18 +640,6 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             } else {
                 return aJob.getManifest().getCaseName().compareToIgnoreCase(anotherJob.getManifest().getCaseName());
             }
-        }
-
-    }
-
-    /**
-     * Comparator that orders jobs by data source name.
-     */
-    static class DataSourceFileNameComparator implements Comparator<AutoIngestJob> {
-
-        @Override
-        public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
-            return aJob.getManifest().getDataSourceFileName().compareToIgnoreCase(anotherJob.getManifest().getDataSourceFileName());
         }
 
     }
@@ -730,7 +709,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
         }
 
     }
-    
+
     /**
      * Exception thrown when there is a problem creating auto ingest job.
      */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SleuthkitHashSet
  * completion. Furthermore, it does not delete any files left over from a
  * half-indexed state, forcing the user to perform cleanup.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListener {
 
     List<SleuthkitHashSet> unindexed;

@@ -72,6 +72,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  * (DataContentTopComponent) that is normally docked into the lower right hand
  * side of the main application window, or it could be a custom content view.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
@@ -451,7 +452,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     }
                 }
             }
-        };
+        }
         if (tabToSelect == NO_TAB_SELECTED) {
             tabToSelect = resultViewerTabs.getSelectedIndex();
             if ((tabToSelect == NO_TAB_SELECTED) || (!resultViewerTabs.isEnabledAt(tabToSelect))) {

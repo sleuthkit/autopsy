@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
- /*
- * FileSearchPanel.java
- *
- * Created on Mar 5, 2012, 1:51:50 PM
- */
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.Component;
 import java.awt.Cursor;
-import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -37,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -56,9 +51,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * FileSearchPanel that present search options
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class FileSearchPanel extends javax.swing.JPanel {
 
-    private final List<FilterArea> filterAreas = new ArrayList<>();
+    private final List<FileSearchFilter> filters = new ArrayList<>();
     private static int resultWindowCount = 0; //keep track of result windows so they get unique names
     private static final String EMPTY_WHERE_CLAUSE = NbBundle.getMessage(DateSearchFilter.class, "FileSearchPanel.emptyWhereClause.text");
 
@@ -79,32 +75,57 @@ class FileSearchPanel extends javax.swing.JPanel {
      * This method is called from within the constructor to initialize the form.
      */
     private void customizeComponents() {
-
+        
         JLabel label = new JLabel(NbBundle.getMessage(this.getClass(), "FileSearchPanel.custComp.label.text"));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setBorder(new EmptyBorder(0, 0, 10, 0));
-        filterPanel.add(label);
+        
+        JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayout(1,2));
+        panel1.add(new JLabel(""));
+        JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayout(1,2, 20, 0));
+        JPanel panel3 = new JPanel();
+        panel3.setLayout(new GridLayout(1,2, 20, 0));
+        JPanel panel4 = new JPanel();
+        panel4.setLayout(new GridLayout(1,2, 20, 0));
+        JPanel panel5 = new JPanel();
+        panel5.setLayout(new GridLayout(1,2, 20, 0));
 
         // Create and add filter areas
-        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), new NameSearchFilter()));
-
-        List<FileSearchFilter> metadataFilters = new ArrayList<>();
-        metadataFilters.add(new SizeSearchFilter());
-        metadataFilters.add(new MimeTypeFilter());
-        metadataFilters.add(new DateSearchFilter());
+        NameSearchFilter nameFilter =  new NameSearchFilter();
+        SizeSearchFilter sizeFilter = new SizeSearchFilter();
+        DateSearchFilter dateFilter = new DateSearchFilter();
+        KnownStatusSearchFilter knowStatusFilter = new KnownStatusSearchFilter();
+        HashSearchFilter hashFilter = new HashSearchFilter();
+        MimeTypeFilter mimeTypeFilter = new MimeTypeFilter();
+        DataSourceFilter dataSourceFilter = new DataSourceFilter();
         
-        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
-
-        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
+        panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"),nameFilter));
         
-        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), new HashSearchFilter()));
-        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DataSourcePanel.dataSourceCheckBox.text"), new DataSourceFilter()));
-        for (FilterArea fa : this.filterAreas) {
-            fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));
-            fa.setAlignmentX(Component.LEFT_ALIGNMENT);
-            filterPanel.add(fa);
-        }
-
+        panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"),sizeFilter));
+        
+        panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), dateFilter)); 
+        panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), knowStatusFilter));
+        
+        panel5.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), hashFilter));
+        panel5.add(new JLabel(""));
+        panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), mimeTypeFilter));
+        panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DataSourcePanel.dataSourceCheckBox.text"), dataSourceFilter));
+        filterPanel.add(panel1);
+        filterPanel.add(panel2);
+        filterPanel.add(panel3);
+        filterPanel.add(panel4);
+        filterPanel.add(panel5);
+        
+        filters.add(nameFilter);
+        filters.add(sizeFilter);
+        filters.add(dateFilter);
+        filters.add(knowStatusFilter);
+        filters.add(hashFilter);
+        filters.add(mimeTypeFilter);
+        filters.add(dataSourceFilter);
+        
         for (FileSearchFilter filter : this.getFilters()) {
             filter.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
@@ -242,12 +263,6 @@ class FileSearchPanel extends javax.swing.JPanel {
     }
 
     private Collection<FileSearchFilter> getFilters() {
-        Collection<FileSearchFilter> filters = new ArrayList<>();
-
-        for (FilterArea fa : this.filterAreas) {
-            filters.addAll(fa.getFilters());
-        }
-
         return filters;
     }
 
@@ -265,10 +280,8 @@ class FileSearchPanel extends javax.swing.JPanel {
 
     void addListenerToAll(ActionListener l) {
         searchButton.addActionListener(l);
-        for (FilterArea fa : this.filterAreas) {
-            for (FileSearchFilter fsf : fa.getFilters()) {
-                fsf.addActionListener(l);
-            }
+        for (FileSearchFilter fsf : getFilters()) {
+            fsf.addActionListener(l);
         }
     }
 

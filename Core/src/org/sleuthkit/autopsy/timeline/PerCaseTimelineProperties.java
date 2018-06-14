@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,13 +37,11 @@ class PerCaseTimelineProperties {
     private static final String STALE_KEY = "stale"; //NON-NLS
     private static final String WAS_INGEST_RUNNING_KEY = "was_ingest_running"; // NON-NLS
 
-    private final Case autoCase;
     private final Path propertiesPath;
 
-    PerCaseTimelineProperties(Case c) {
-        Objects.requireNonNull(c, "Case must not be null");
-        this.autoCase = c;
-        propertiesPath = Paths.get(autoCase.getModuleDirectory(), "Timeline", "timeline.properties"); //NON-NLS
+    PerCaseTimelineProperties(Case autopsyCase) {
+        Objects.requireNonNull(autopsyCase, "Case must not be null");
+        propertiesPath = Paths.get(autopsyCase.getModuleDirectory(), "Timeline", "timeline.properties"); //NON-NLS
     }
 
     /**
