@@ -23,6 +23,7 @@ import org.opencv.core.Core;
 public final class OpenCvLoader {
 
     private static final boolean OPEN_CV_LOADED;
+    private static UnsatisfiedLinkError exception = null;
 
     static {
         boolean tempOpenCvLoaded = false;
@@ -31,7 +32,7 @@ public final class OpenCvLoader {
             tempOpenCvLoaded = true;
         } catch (UnsatisfiedLinkError e) {
             tempOpenCvLoaded = false;
-            System.out.println("OpenCV native library failed to load " + e.toString());
+            exception = e;  //save relevant error for throwing at appropriate time
         }
         OPEN_CV_LOADED = tempOpenCvLoaded;
     }
@@ -42,8 +43,14 @@ public final class OpenCvLoader {
      * @return - true if the opencv library is loaded or false if it is not
      */
     public static boolean isOpenCvLoaded() throws UnsatisfiedLinkError {
-        if (!OPEN_CV_LOADED){
-            throw new UnsatisfiedLinkError("OpenCV native library failed to load");
+        if (!OPEN_CV_LOADED) {
+             //exception should never be null if the open cv isn't loaded but just in case
+            if (exception != null) {
+                throw exception;
+            } else {
+                throw new UnsatisfiedLinkError("OpenCV native library failed to load");
+            }
+
         }
         return OPEN_CV_LOADED;
     }

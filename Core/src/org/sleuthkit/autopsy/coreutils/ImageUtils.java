@@ -60,6 +60,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
@@ -105,6 +106,8 @@ public class ImageUtils {
      *
      * NOTE: Must be cleared when the case is changed.
      */
+    @Messages({"ImageUtils.ffmpegLoadedError.title=OpenCV FFMpeg",
+               "ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details"})
     private static final ConcurrentHashMap<Long, File> cacheFileMap = new ConcurrentHashMap<>();
 
     static {
@@ -128,8 +131,8 @@ public class ImageUtils {
                 tempFfmpegLoaded = true;
             } catch (UnsatisfiedLinkError e) {
                 tempFfmpegLoaded = false;
-                LOGGER.log(Level.SEVERE, "opencv_ffmepeg code library failed to load", e); //NON-NLS
-                MessageNotifyUtil.Notify.show("OpenCV FFMpeg", "OpenCV FFMpeg library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
+                LOGGER.log(Level.SEVERE, Bundle.ImageUtils_ffmpegLoadedError_msg(), e); //NON-NLS
+                MessageNotifyUtil.Notify.show(Bundle.ImageUtils_ffmpegLoadedError_title(), Bundle.ImageUtils_ffmpegLoadedError_msg(), MessageNotifyUtil.MessageType.WARNING);
             }
         }
         FFMPEG_LOADED = tempFfmpegLoaded;
