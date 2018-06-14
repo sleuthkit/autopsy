@@ -46,8 +46,12 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Displays existing tag names, and allows the creation of new tags.
+ */
 @Messages({"GetTagNameDialog.descriptionLabel.text=Description:",
     "GetTagNameDialog.notableCheckbox.text=Tag indicates item is notable."})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class GetTagNameDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -110,7 +114,7 @@ public class GetTagNameDialog extends JDialog {
         // Get the current set of tag names and hash them for a speedy lookup in
         // case the user chooses an existing tag name from the tag names table.
         try {
-            TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             tagNamesMap.putAll(tagsManager.getDisplayNamesToTagNamesMap());
         } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(GetTagNameDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
@@ -348,7 +352,7 @@ public class GetTagNameDialog extends JDialog {
 
             if (tagName == null) {
                 try {
-                    tagName = Case.getOpenCase().getServices().getTagsManager().addTagName(tagDisplayName, userTagDescription, TagName.HTML_COLOR.NONE, status);
+                    tagName = Case.getCurrentCaseThrows().getServices().getTagsManager().addTagName(tagDisplayName, userTagDescription, TagName.HTML_COLOR.NONE, status);
                     dispose();
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
@@ -361,7 +365,7 @@ public class GetTagNameDialog extends JDialog {
                     tagName = null;
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
                     try {
-                        tagName = Case.getOpenCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                        tagName = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
                     } catch (TskCoreException | NoCurrentCaseException ex1) {
                         Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
                         JOptionPane.showMessageDialog(this,

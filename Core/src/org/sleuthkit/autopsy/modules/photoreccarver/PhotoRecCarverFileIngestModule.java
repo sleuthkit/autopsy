@@ -39,6 +39,7 @@ import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -77,6 +78,8 @@ import org.sleuthkit.datamodel.TskData;
 })
 final class PhotoRecCarverFileIngestModule implements FileIngestModule {
 
+    static final boolean DEFAULT_CONFIG_KEEP_CORRUPTED_FILES = false;
+    
     private static final String PHOTOREC_DIRECTORY = "photorec_exec"; //NON-NLS
     private static final String PHOTOREC_EXECUTABLE = "photorec_win.exe"; //NON-NLS
     private static final String PHOTOREC_LINUX_EXECUTABLE = "photorec";
@@ -94,15 +97,24 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
     private Path rootOutputDirPath;
     private File executableFile;
     private IngestServices services;
-    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     private long jobId;
+    
+    private final boolean keepCorruptedFiles;
 
     private static class IngestJobTotals {
-
-        private AtomicLong totalItemsRecovered = new AtomicLong(0);
-        private AtomicLong totalItemsWithErrors = new AtomicLong(0);
-        private AtomicLong totalWritetime = new AtomicLong(0);
-        private AtomicLong totalParsetime = new AtomicLong(0);
+        private final AtomicLong totalItemsRecovered = new AtomicLong(0);
+        private final AtomicLong totalItemsWithErrors = new AtomicLong(0);
+        private final AtomicLong totalWritetime = new AtomicLong(0);
+        private final AtomicLong totalParsetime = new AtomicLong(0);
+    }
+    /**
+     * Create a PhotoRec Carver ingest module instance.
+     * 
+     * @param settings Ingest job settings used to configure the module.
+     */
+    PhotoRecCarverFileIngestModule(PhotoRecCarverIngestJobSettings settings) {
+        keepCorruptedFiles = settings.isKeepCorruptedFiles();
     }
 
     private static synchronized IngestJobTotals getTotalsForIngestJobs(long ingestJobId) {
@@ -228,8 +240,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
                     "/d", // NON-NLS
                     outputDirPath.toAbsolutePath().toString() + File.separator + PHOTOREC_RESULTS_BASE,
                     "/cmd", // NON-NLS
-                    tempFilePath.toFile().toString(),
-                    "search");  // NON-NLS
+                    tempFilePath.toFile().toString());
+            if (keepCorruptedFiles) {
+                processAndSettings.command().add("options,keep_corrupted_file,search"); // NON-NLS
+            } else {
+                processAndSettings.command().add("search"); // NON-NLS
+            }
             
             // Add environment variable to force PhotoRec to run with the same permissions Autopsy uses
             processAndSettings.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
@@ -409,7 +425,12 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     synchronized Path createModuleOutputDirectoryForCase() throws IngestModule.IngestModuleException {
-        Path path = Paths.get(Case.getCurrentCase().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        Path path;
+        try {
+            path = Paths.get(Case.getCurrentCaseThrows().getModuleDirectory(), PhotoRecCarverIngestModuleFactory.getModuleName());
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModule.IngestModuleException(Bundle.cannotCreateOutputDir_message(ex.getLocalizedMessage()), ex);
+        }
         try {
             Files.createDirectory(path);
             if (UNCPathUtilities.isUNC(path)) {

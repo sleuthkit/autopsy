@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 /**
  * Panel to display options for profile creation and editing.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     @NbBundle.Messages({"ProfilePanel.title.text=Profile",
@@ -222,7 +223,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         } else if (!profile.getName().equals(getProfileName())) {
             IngestProfile.renameProfile(profile.getName(), getProfileName());
         }
-        profile = new IngestProfile(getProfileName(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileIngestFilter().getName());
+        profile = new IngestProfile(getProfileName(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileFilter().getName());
         IngestProfile.saveProfile(profile);
         ingestSettingsPanel.getSettings().saveAs(getProfileName());
     }

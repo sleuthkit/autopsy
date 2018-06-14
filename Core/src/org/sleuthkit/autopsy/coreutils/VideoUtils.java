@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import org.opencv.core.Mat;
 import org.opencv.highgui.VideoCapture;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import static org.sleuthkit.autopsy.coreutils.ImageUtils.isMediaThumbnailSupported;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -44,8 +45,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class VideoUtils {
 
-    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS =
-            Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
+    private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
+            = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
                     "mpeg", "asf", "divx", "rm", "moov", "wmv", "vob", "dat", //NON-NLS
                     "m1v", "m2v", "m4v", "mkv", "mpe", "yop", "vqa", "xmv", //NON-NLS
                     "mve", "wtv", "webm", "vivo", "vc1", "seq", "thp", "san", //NON-NLS
@@ -90,8 +91,17 @@ public class VideoUtils {
     private VideoUtils() {
     }
 
-    public static File getTempVideoFile(AbstractFile file) {
-        return Paths.get(Case.getCurrentCase().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
+    /**
+     * Gets a File object in the temp directory of the current case for the
+     * given AbstractFile object.
+     *
+     * @param file The AbstractFile object
+     *
+     * @return The File object
+     *
+     */
+    public static File getVideoFileInTempDir(AbstractFile file) throws NoCurrentCaseException {
+        return Paths.get(Case.getCurrentCaseThrows().getTempDirectory(), "videos", file.getId() + "." + file.getNameExtension()).toFile(); //NON-NLS
     }
 
     public static boolean isVideoThumbnailSupported(AbstractFile file) {
@@ -101,7 +111,13 @@ public class VideoUtils {
     @NbBundle.Messages({"# {0} - file name",
         "VideoUtils.genVideoThumb.progress.text=extracting temporary file {0}"})
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
-        java.io.File tempFile = getTempVideoFile(file);
+        java.io.File tempFile;
+        try {
+            tempFile = getVideoFileInTempDir(file);
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            return null;
+        }
         if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
             ProgressHandle progress = ProgressHandle.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
             progress.start(100);
@@ -182,4 +198,25 @@ public class VideoUtils {
         }
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
+
+    /**
+     * Gets a File object in the temp directory of the current case for the
+     * given AbstractFile object.
+     *
+     * @param file The AbstractFile object
+     *
+     * @return The File object
+     *
+     * @deprecated Call getVideoFileInTempDir instead.
+     */
+    @Deprecated
+    public static File getTempVideoFile(AbstractFile file) {
+        try {
+            return getVideoFileInTempDir(file);
+        } catch (NoCurrentCaseException ex) {
+            // Mimic the old behavior.
+            throw new IllegalStateException(ex);
+        }
+    }
+    
 }

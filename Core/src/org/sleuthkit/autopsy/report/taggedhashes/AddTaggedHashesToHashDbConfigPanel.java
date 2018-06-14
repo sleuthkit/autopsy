@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this class are used to configure the report module plug in that
  * provides a convenient way to add content hashes to hash set databases.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -68,7 +69,7 @@ class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
         try {
-            tagNames = Case.getOpenCase().getServices().getTagsManager().getTagNamesInUse();
+            tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
             Logger.getLogger(AddTaggedHashesToHashDbConfigPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
             JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Tag Names Not Found", JOptionPane.ERROR_MESSAGE);

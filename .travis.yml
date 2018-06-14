@@ -1,0 +1,29 @@
+language: java
+sudo: required
+dist: trusty
+os:
+ - linux
+env:
+ global:
+  - TSK_HOME=$TRAVIS_BUILD_DIR/sleuthkit/sleuthkit
+python:
+  - "2.7"
+jdk:
+ - oraclejdk8
+before_install:
+ - git clone https://github.com/sleuthkit/sleuthkit.git sleuthkit/sleuthkit
+ - python setupSleuthkitBranch.py
+install:
+ - sudo apt-get install testdisk
+ - cd sleuthkit/sleuthkit
+ - sh travis_build.sh
+script:
+ - set -e
+ - echo "building autopsy..." && echo -en 'travis_fold:start:script.build\\r'
+ - cd $TRAVIS_BUILD_DIR/
+ - ant -q build
+ - echo -en 'travis_fold:end:script.build\\r'
+ - echo "testing autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
+ - cd Core/
+ - xvfb-run ant -q test
+ - echo -en 'travis_fold:end:script.tests\\r'

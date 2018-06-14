@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -73,16 +75,16 @@ public class KeyValueNode extends AbstractNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet s = super.createSheet();
-        Sheet.Set ss = s.get(Sheet.PROPERTIES);
-        if (ss == null) {
-            ss = Sheet.createPropertiesSet();
-            s.put(ss);
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+        if (sheetSet == null) {
+            sheetSet = Sheet.createPropertiesSet();
+            sheet.put(sheetSet);
         }
 
         // table view drops first column of properties under assumption
         // that it contains the node's name
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
+        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.name.desc"),
                 data.getName()));
@@ -90,13 +92,13 @@ public class KeyValueNode extends AbstractNode {
         for (Map.Entry<String, Object> entry : data.getMap().entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            ss.put(new NodeProperty<>(key,
+            sheetSet.put(new NodeProperty<>(key,
                     key,
                     NbBundle.getMessage(this.getClass(), "KeyValueNode.createSheet.map.desc"),
                     value));
         }
 
-        return s;
+        return sheet;
     }
 
     /**
@@ -107,17 +109,21 @@ public class KeyValueNode extends AbstractNode {
      *
      * @return actions
      */
+    @Messages({
+        "KeyValueNode.menuItemText.viewFileInDir=View Source File in Directory"
+    })
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(popup)));
-        //if this artifact has associated content, add the action to view the content in the timeline
+        List<Action> actionsList = new ArrayList<>();
+        actionsList.addAll(Arrays.asList(super.getActions(popup)));
+        // If this artifact has associated content, add the actions.
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-            actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+            actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+            actionsList.add(new ViewContextAction(Bundle.KeyValueNode_menuItemText_viewFileInDir(), file));
         }
-        actions.add(null); // creates a menu separator
+        actionsList.add(null); // creates a menu separator
 
-        return actions.toArray(new Action[actions.size()]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 }

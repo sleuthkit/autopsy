@@ -170,10 +170,13 @@ final class RegexQuery implements KeywordSearchQuery {
          */
         // We construct the query by surrounding it with slashes (to indicate it is
         // a regular expression search) and .* as anchors (if the query doesn't
-        // already have them).
+        // already have them). We do not add .* if there is a boundary character.
+        boolean skipWildcardPrefix = queryStringContainsWildcardPrefix || getQueryString().startsWith("^");
+        boolean skipWildcardSuffix = queryStringContainsWildcardSuffix || 
+                (getQueryString().endsWith("$") && ( ! getQueryString().endsWith("\\$")));
         solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/"
-                + (queryStringContainsWildcardPrefix ? "" : ".*") + getQueryString()
-                + (queryStringContainsWildcardSuffix ? "" : ".*") + "/");
+                + (skipWildcardPrefix ? "" : ".*") + getQueryString()
+                + (skipWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
         solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
@@ -591,7 +594,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getOpenCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
             
             ccAccountInstance.addAttributes(attributes);
 
@@ -645,18 +648,18 @@ final class RegexQuery implements KeywordSearchQuery {
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
-        attributeMap.computeIfAbsent(type, t -> {
+
+        if( ! attributeMap.containsKey(type)) {
             String value = matcher.group(groupName);
             if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
                 attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD),
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
+            
             if (StringUtils.isNotBlank(value)) {
-                return new BlackboardAttribute(attrType, MODULE_NAME, value);
-            } else {
-                return null;
+                attributeMap.put(type, new BlackboardAttribute(attrType, MODULE_NAME, value));
             }
-        });
+        }
     }
 }

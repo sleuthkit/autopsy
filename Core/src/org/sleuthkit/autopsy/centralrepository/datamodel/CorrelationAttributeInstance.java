@@ -45,27 +45,12 @@ public class CorrelationAttributeInstance implements Serializable {
 
     public CorrelationAttributeInstance(
             CorrelationCase eamCase,
-            CorrelationDataSource eamDataSource
-    ) throws EamDbException {
-        this(-1, eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN);
-    }
-
-    public CorrelationAttributeInstance(
-            CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath
     ) throws EamDbException {
         this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
     }
 
-    public CorrelationAttributeInstance(
-            CorrelationCase eamCase,
-            CorrelationDataSource eamDataSource,
-            String filePath,
-            String comment
-    ) throws EamDbException {
-        this(-1, eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN);
-    }
 
     public CorrelationAttributeInstance(
             CorrelationCase eamCase,
@@ -111,7 +96,7 @@ public class CorrelationAttributeInstance implements Serializable {
     public String toString() {
         return this.getID()
                 + this.getCorrelationCase().getCaseUUID()
-                + this.getCorrelationDataSource().getName()
+                + this.getCorrelationDataSource().getDeviceID()
                 + this.getFilePath()
                 + this.getKnownStatus()
                 + this.getComment();

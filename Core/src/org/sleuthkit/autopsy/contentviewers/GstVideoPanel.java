@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.FrameCapture;
 import org.sleuthkit.autopsy.corecomponents.VideoFrame;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -68,6 +69,7 @@ import org.sleuthkit.datamodel.TskData;
 @ServiceProviders(value = {
     @ServiceProvider(service = FrameCapture.class)
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class GstVideoPanel extends MediaViewVideoPanel {
 
     private static final String[] EXTENSIONS = new String[]{".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg", ".wmv"}; //NON-NLS
@@ -181,6 +183,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
     }
 
     @Override
+    @NbBundle.Messages ({"GstVideoPanel.noOpenCase.errMsg=No open case available."})
     void setupVideo(final AbstractFile file, final Dimension dims) {
         reset();
         infoLabel.setText("");
@@ -191,6 +194,18 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             videoPanel.removeAll();
             pauseButton.setEnabled(false);
             progressSlider.setEnabled(false);
+            return;
+        }
+
+        java.io.File ioFile;
+        try {
+            ioFile = VideoUtils.getVideoFileInTempDir(file);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
+            pauseButton.setEnabled(false);
+            progressSlider.setEnabled(false);
+
             return;
         }
 
@@ -205,7 +220,6 @@ public class GstVideoPanel extends MediaViewVideoPanel {
         pauseButton.setEnabled(true);
         progressSlider.setEnabled(true);
 
-        java.io.File ioFile = VideoUtils.getTempVideoFile(file);
 
         gstVideoComponent = new VideoComponent();
         synchronized (playbinLock) {
@@ -352,7 +366,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             playbin.getState();
 
             if (!playbin.seek(timeStamp, unit)) {
-                logger.log(Level.INFO, "There was a problem seeking to " + timeStamp + " " + unit.name().toLowerCase()); //NON-NLS
+                logger.log(Level.INFO, "There was a problem seeking to {0} {1}", new Object[]{timeStamp, unit.name().toLowerCase()}); //NON-NLS
             }
 
             ret = playbin.play();
@@ -382,7 +396,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             }
 
             if (image == null) {
-                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file " + file.getName()); //NON-NLS
+                logger.log(Level.WARNING, "There was a problem while trying to capture a frame from file {0}", file.getName()); //NON-NLS
                 badVideoFiles.add(file.getName());
                 break;
             }
@@ -537,7 +551,14 @@ public class GstVideoPanel extends MediaViewVideoPanel {
                     return;
                 }
             } else if (state.equals(State.READY)) {
-                final File tempVideoFile = VideoUtils.getTempVideoFile(currentFile);
+                final File tempVideoFile;
+                try {
+                    tempVideoFile = VideoUtils.getVideoFileInTempDir(currentFile);
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.WARNING, "Exception while getting open case."); //NON-NLS
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
+                }
 
                 new ExtractMedia(currentFile, tempVideoFile).execute();
 
@@ -652,7 +673,7 @@ public class GstVideoPanel extends MediaViewVideoPanel {
             try {
                 get();
             } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Error updating video progress: " + ex.getMessage()); //NON-NLS
+                logger.log(Level.WARNING, "Error updating video progress: {0}", ex.getMessage()); //NON-NLS
                 infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.infoLabel.updateErr",
                         ex.getMessage()));
             } // catch and ignore if we were cancelled

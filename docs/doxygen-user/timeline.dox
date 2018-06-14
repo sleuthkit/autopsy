@@ -69,6 +69,7 @@ The __Counts View__ shows a stacked bar chart. Use this type of graph to show ho
 
 The __Details View__ shows individual or groups of related events. Date/time is represented horizontally along the x-axis, but the vertical axis does not represent any specific units. You would use this interface to answer questions about what specific events happened in a given time frame or what events occurred before or after a given event.  You would generally use this type of interface after using the Counts View to identify a period of time that you wanted details on.  There can be a lot of details in this view and we have introduced zooming concepts, as described in the next section, to help with this. 
 
+The table on the bottom left hand side of the panel has a \ref ui_quick_search feature which can be used to quickly find a node in the table. 
 
 Visualization settings
 ----------------------
@@ -105,7 +106,7 @@ Filters / Events
 This area allows the user to apply filters to limit what events are shown in the visualization.  When the Details View is active, a tab in this area also enables navigating the visualization by event descriptions ( see the Details View section for more on this) 
 
 
-When the __Hide Known Files__ filter is active, files with known hashes will not be included in any way in the rest of the timeline tool (except for the Histogram which shows all events).  In order for this filter to work, the Hash Lookup ingest module must have been run with a Known hash database enabled.
+When the __Hide Known Files__ filter is active, files with known hashes will not be included in any way in the rest of the timeline tool (except for the Histogram which shows all events).  In order for this filter to work, the Hash Lookup ingest module must have been run with a Known hash set enabled.
 
 When the __Text Filter__ is active, only events with descriptions containing the supplied string as a substring will be shown.  Note: this filter users the full description in its search even if not displayed.
 

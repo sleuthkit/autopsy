@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -101,7 +100,7 @@ class AddArchiveTask implements Runnable {
 
         // extract the archive and pass the extracted folder as input
         try {
-            Case currentCase = Case.getCurrentCase();
+            Case currentCase = Case.getCurrentCaseThrows();
 
             // create folder to extract archive to
             Path destinationFolder = createDirectoryForFile(archivePath, currentCase.getModuleDirectory());
@@ -179,36 +178,30 @@ class AddArchiveTask implements Runnable {
 
                     logger.log(Level.INFO, "Using {0} to process extracted file {1} ", new Object[]{selectedProcessor.getDataSourceType(), file});
                     synchronized (archiveDspLock) {
-                        try {
-                            UUID taskId = UUID.randomUUID();
-                            currentCase.notifyAddingDataSource(taskId);
-                            AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
-                            DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
-                            selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
-                            archiveDspLock.wait();
+                        UUID taskId = UUID.randomUUID();
+                        currentCase.notifyAddingDataSource(taskId);
+                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
+                        DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
+                        selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
+                        archiveDspLock.wait();
 
-                            // at this point we got the content object(s) from the current DSP.
-                            // check whether the data source was processed successfully
-                            if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
-                                    || internalDataSource.getContent().isEmpty()) {
-                                // move onto the the next DSP that can process this data source
-                                continue;
+                        // at this point we got the content object(s) from the current DSP.
+                        // check whether the data source was processed successfully
+                        if ((internalDataSource.getResultDataSourceProcessorResultCode() == CRITICAL_ERRORS)
+                                || internalDataSource.getContent().isEmpty()) {
+                            // move onto the the next DSP that can process this data source
+                            for (String errorMessage : internalDataSource.getDataSourceProcessorErrorMessages()) {
+                                logger.log(Level.SEVERE, "Data source processor {0} was unable to process {1}: {2}", new Object[]{selectedProcessor.getDataSourceType(), internalDataSource.getPath(), errorMessage});
                             }
-
-                            // if we are here it means the data source was addedd successfully
-                            success = true;
-                            newDataSources.addAll(internalDataSource.getContent());
-
-                            // skip all other DSPs for this data source
-                            break;
-                        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
-                            // Log that the current DSP failed and set the error flag. We consider it an error
-                            // if a DSP fails even if a later one succeeds since we expected to be able to process
-                            // the data source which each DSP on the list.
-                            criticalErrorOccurred = true;
-                            errorMessages.add(ex.getMessage());
-                            logger.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{newFilePath.toString(), selectedProcessor.getDataSourceType()});
+                            continue;
                         }
+
+                        // if we are here it means the data source was addedd successfully
+                        success = true;
+                        newDataSources.addAll(internalDataSource.getContent());
+
+                        // skip all other DSPs for this data source
+                        break;
                     }
                 }
 
@@ -272,7 +265,7 @@ class AddArchiveTask implements Runnable {
     }
 
     /**
-     * Get a list of data source processors. LocalDisk, LocalFiles, and
+     * Get a list of data source processors. LocalFiles, and
      * ArchiveDSP are removed from the list.
      *
      * @return List of data source processors
@@ -286,10 +279,9 @@ class AddArchiveTask implements Runnable {
         for (Iterator<AutoIngestDataSourceProcessor> iterator = validDataSourceProcessors.iterator(); iterator.hasNext();) {
             AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
 
-            // skip local files and local disk DSPs, only looking for "valid" data sources.
+            // skip local files, only looking for "valid" data sources.
             // also skip nested archive files, those will be ingested as logical files and extracted during ingest
-            if ((selectedProcessor instanceof LocalDiskDSProcessor)
-                    || (selectedProcessor instanceof LocalFilesDSProcessor)
+            if ((selectedProcessor instanceof LocalFilesDSProcessor)
                     || (selectedProcessor instanceof ArchiveExtractorDSProcessor)) {
                 iterator.remove();
             }

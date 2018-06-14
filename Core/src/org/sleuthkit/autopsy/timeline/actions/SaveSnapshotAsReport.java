@@ -66,7 +66,6 @@ public class SaveSnapshotAsReport extends Action {
     private static final ButtonType OPEN = new ButtonType(Bundle.OpenReportAction_DisplayName(), ButtonBar.ButtonData.NO);
     private static final ButtonType OK = new ButtonType(ButtonType.OK.getText(), ButtonBar.ButtonData.CANCEL_CLOSE);
 
-    private final TimeLineController controller;
     private final Case currentCase;
 
     /**
@@ -96,7 +95,6 @@ public class SaveSnapshotAsReport extends Action {
         setLongText(Bundle.SaveSnapShotAsReport_action_longText());
         setGraphic(new ImageView(SNAP_SHOT));
 
-        this.controller = controller;
         this.currentCase = controller.getAutopsyCase();
 
         setEventHandler(actionEvent -> {
@@ -153,7 +151,7 @@ public class SaveSnapshotAsReport extends Action {
 
                 try {
                     //add main file as report to case
-                    Case.getOpenCase().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
+                    Case.getCurrentCaseThrows().addReport(reportMainFilePath.toString(), Bundle.Timeline_ModuleName(), reportName);
                 } catch (TskCoreException | NoCurrentCaseException ex) {
                     LOGGER.log(Level.WARNING, "Failed to add " + reportMainFilePath.toString() + " to case as a report", ex); //NON_NLS
                     new Alert(Alert.AlertType.ERROR, Bundle.SaveSnapShotAsReport_FailedToAddReport()).show();

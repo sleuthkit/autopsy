@@ -43,6 +43,10 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * This dialog allows tag assignment with a comment attached.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class GetTagNameAndCommentDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -139,7 +143,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         // Tag name DTOs may be null (user tag names that have not been used do
         // not exist in the database).
         try {
-            TagsManager tagsManager = Case.getOpenCase().getServices().getTagsManager();
+            TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             tagNamesSet.addAll(tagsManager.getAllTagNames());
 
         } catch (TskCoreException | NoCurrentCaseException ex) {

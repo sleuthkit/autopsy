@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
@@ -61,6 +62,7 @@ import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -219,11 +221,12 @@ public class DataResultFilterNode extends FilterNode {
 
     /**
      * Gets the display name for the wrapped node.
-     * 
-     * OutlineView used in the DataResult table uses getDisplayName() to populate
-     * the first column, which is Source File.
-     * 
-     * Hence this override to return the 'correct' displayName for the wrapped node.
+     *
+     * OutlineView used in the DataResult table uses getDisplayName() to
+     * populate the first column, which is Source File.
+     *
+     * Hence this override to return the 'correct' displayName for the wrapped
+     * node.
      *
      * @return The display name for the node.
      */
@@ -236,7 +239,7 @@ public class DataResultFilterNode extends FilterNode {
         }
         return name;
     }
-    
+
     /**
      * Adds information about which child node of this node, if any, should be
      * selected. Can be null.
@@ -282,13 +285,13 @@ public class DataResultFilterNode extends FilterNode {
          */
         private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
-            
+
             this.filterArtifacts = false;
             switch (SelectionContext.getSelectionContext(arg)) {
                 case DATA_SOURCES:
                     filterSlack = filterSlackFromDataSources;
                     filterKnown = filterKnownFromDataSources;
-                    filterArtifacts = true;                    
+                    filterArtifacts = true;
                     break;
                 case VIEWS:
                     filterSlack = filterSlackFromViews;
@@ -322,18 +325,19 @@ public class DataResultFilterNode extends FilterNode {
                     return new Node[]{};
                 }
             }
-            
+
             // filter out all non-message artifacts, if displaying the results from the Data Source tree
             BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
-            if (art != null && filterArtifacts)  {
-                if ( (art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) &&             
-                    (art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
-                   return new Node[]{};
-                }
-             }
-             
+            if (art != null
+                    && filterArtifacts
+                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                    && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
+                return new Node[]{};
+            }
+
             return new Node[]{new DataResultFilterNode(key, sourceEm, filterKnown, filterSlack)};
         }
+
     }
 
     @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
@@ -382,8 +386,15 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                actionsList.add(new ViewContextAction(
+                                // action to go to the source file of the artifact
+                Content fileContent = ban.getLookup().lookup(AbstractFile.class);
+                if (fileContent == null) {
+                    Content content = ban.getLookup().lookup(Content.class);
+                    actionsList.add(new ViewContextAction("View Source Content in Directory", content));
+                } else {
+                    actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                }
             }
             Content c = ban.getLookup().lookup(File.class);
             Node n = null;
@@ -402,6 +413,15 @@ public class DataResultFilterNode extends FilterNode {
             } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
                     || (c = ban.getLookup().lookup(DerivedFile.class)) != null) {
                 n = new LocalFileNode((AbstractFile) c);
+                if (FileTypeExtensions.getArchiveExtensions().contains("." + ((AbstractFile) c).getNameExtension().toLowerCase())) {
+                    try {
+                        if (c.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
+                            actionsList.add(new ExtractArchiveWithPasswordAction((AbstractFile) c));
+                        }
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
+                    }
+                }
             } else if ((c = ban.getLookup().lookup(SlackFile.class)) != null) {
                 n = new SlackFileNode((SlackFile) c);
             } else if ((c = ban.getLookup().lookup(Report.class)) != null) {
@@ -509,19 +529,18 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
             BlackboardArtifact artifact = ban.getArtifact();
-                try {
-                    if ( (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) ||             
-                         (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
-                        if (artifact.hasChildren()) {
-                            return openChild(ban);
-                        }
+            try {
+                if ((artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
+                        || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())) {
+                    if (artifact.hasChildren()) {
+                        return openChild(ban);
                     }
                 }
-                catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting children from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-                }
-                return new ViewContextAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInDir.text"), ban);
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting children from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            }
+            return new ViewContextAction(
+                    NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInDir.text"), ban);
         }
 
         @Override

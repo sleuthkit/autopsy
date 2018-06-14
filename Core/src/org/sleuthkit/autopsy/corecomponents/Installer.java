@@ -76,7 +76,8 @@ public class Installer extends ModuleInstall {
     
     private void setLookAndFeel() {
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
-            setOSXLookAndFeel();
+            setUnixLookAndFeel();
+            setModuleSettings("false");
         }else if (System.getProperty("os.name").toLowerCase().contains("nux")){
             setUnixLookAndFeel();
         }
@@ -120,7 +121,7 @@ public class Installer extends ModuleInstall {
         });
     }
     
-    public static void setUIFont (javax.swing.plaf.FontUIResource f){
+    private static void setUIFont (javax.swing.plaf.FontUIResource f){
     java.util.Enumeration<Object> keys = UIManager.getDefaults().keys();
     while (keys.hasMoreElements()) {
       Object key = keys.nextElement();

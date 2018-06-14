@@ -39,15 +39,17 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  *
- * SQLite manager implementation
+ * Generic JDBC methods 
  *
  */
-public abstract class AbstractSqlEamDb implements EamDb {
+abstract class AbstractSqlEamDb implements EamDb {
 
     private final static Logger LOGGER = Logger.getLogger(AbstractSqlEamDb.class.getName());
 
@@ -57,6 +59,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
 
+    // number of instances to keep in bulk queue before doing an insert.
+    // Update Test code if this changes.  It's hard coded there.
+    static final int DEFAULT_BULK_THRESHHOLD = 1000;
+    
+    
     /**
      * Connect to the DB and initialize it.
      *
@@ -90,7 +97,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
+        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?) "
+                + getConflictClause();
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, name);
@@ -176,14 +184,21 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @returns New Case class with populated database ID
      */
     @Override
-    public CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
-        Connection conn = connect();
+    public synchronized CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
+        
+        // check if there is already an existing CorrelationCase for this Case
+        CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
+        if (cRCase != null) {
+            return cRCase;
+        }
 
+        Connection conn = connect();
         PreparedStatement preparedStatement = null;
 
         String sql = "INSERT INTO cases(case_uid, org_id, case_name, creation_date, case_number, "
                 + "examiner_name, examiner_email, examiner_phone, notes) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(sql);
@@ -415,11 +430,18 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+        if (eamDataSource.getCaseID() == -1) {
+            throw new EamDbException("Case ID is -1");
+        }
+        else if (eamDataSource.getID() != -1) {
+            throw new EamDbException("Database ID is already set in object");
+        }
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO data_sources(device_id, case_id, name) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO data_sources(device_id, case_id, name) VALUES (?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(sql);
@@ -543,7 +565,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append(tableName);
         sql.append("(case_id, data_source_id, value, file_path, known_status, comment) ");
         sql.append("VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), ");
-        sql.append("(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?)");
+        sql.append("(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?) ");
+        sql.append(getConflictClause());
        
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
@@ -928,6 +951,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 if (bulkArtifactsCount == 0) {
                     return;
                 }
+                
+                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
 
                 for (CorrelationAttribute.Type type : artifactTypes) {
 
@@ -978,6 +1003,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     bulkPs.executeBatch();
                     bulkArtifacts.get(type.getDbTableName()).clear();
                 }
+                
+                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
 
                 // Reset state
                 bulkArtifactsCount = 0;
@@ -1214,6 +1241,62 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, value);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstances.add(artifactInstance);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return artifactInstances;
+    }
+    
+    /**
+     *
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
+     * @param aType EamArtifact.Type to search for
+     * @return List with 0 or more matching eamArtifact instances.
+     * @throws EamDbException
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException {
+        if (aType == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        Connection conn = connect();
+
+        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
+
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
+        sql.append(tableName);
+        sql.append(" LEFT JOIN cases ON ");
+        sql.append(tableName);
+        sql.append(".case_id=cases.id");
+        sql.append(" LEFT JOIN data_sources ON ");
+        sql.append(tableName);
+        sql.append(".data_source_id=data_sources.id");
+        sql.append(" WHERE known_status=?");
+        sql.append(" GROUP BY ");
+        sql.append(tableName);
+        sql.append(".value");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setByte(1, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
@@ -1511,25 +1594,21 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return 0 < badInstances;
     }
 
-    /**
-     * Add a new organization
-     *
-     * @return the Organization ID of the newly created organization.
-     *
-     * @param eamOrg The organization to add
-     *
-     * @throws EamDbException
-     */
+
     @Override
-    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
-        if(eamOrg == null) {
+    public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {
+        if (eamOrg == null) {
             throw new EamDbException("EamOrganization is null");
+        }
+        else if (eamOrg.getOrgID() != -1) { 
+            throw new EamDbException("EamOrganization already has an ID");
         }
         
         Connection conn = connect();
         ResultSet generatedKeys = null;
         PreparedStatement preparedStatement = null;
-        String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -1541,7 +1620,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             generatedKeys = preparedStatement.getGeneratedKeys();
             if (generatedKeys.next()) {
-                return generatedKeys.getLong(1);
+                eamOrg.setOrgID((int)generatedKeys.getLong(1));
+                return eamOrg;
             } else {
                 throw new SQLException("Creating user failed, no ID obtained.");
             }
@@ -1637,6 +1717,22 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return (getOrganizationByID(globalSet.getOrgID()));
     }
 
+    /** 
+     * Tests that an organization passed in as an argument is valid
+     * 
+     * @param org
+     * @throws EamDbException if invalid
+     */
+    private void testArgument(EamOrganization org) throws EamDbException {
+        if(org == null) {
+            throw new EamDbException("Organization is null");
+        }
+        else if (org.getOrgID() == -1) {
+            throw new EamDbException("Organization  has -1 row ID");
+        }
+    }
+    
+    
     /**
      * Update an existing organization.
      *
@@ -1647,9 +1743,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
-        if(updatedOrganization == null) {
-            throw new EamDbException("null updatedOrganization");
-        }
+        testArgument(updatedOrganization);
         
         Connection conn = connect();
         PreparedStatement preparedStatement = null;
@@ -1675,9 +1769,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         "AbstractSqlEamDb.deleteOrganization.errorDeleting.message=Error executing query when attempting to delete organization by id."})
     @Override
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
-        if(organizationToDelete == null) {
-            throw new EamDbException("Organization to delete is null");
-        }
+        testArgument(organizationToDelete);
         
         Connection conn = connect();
         PreparedStatement checkIfUsedStatement = null;
@@ -1735,7 +1827,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, type, import_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, known_status, read_only, type, import_date) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                + getConflictClause();
         String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
@@ -1867,7 +1960,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
+                + getConflictClause();
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(correlationType)));
@@ -2038,9 +2132,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
         String querySql;
         // if we have a known ID, use it, if not (is -1) let the db assign it.
         if (-1 == newType.getId()) {
-            insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?)";
+            insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?) " + getConflictClause();
         } else {
-            insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
+            insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();
         }
         querySql = "SELECT * FROM correlation_types WHERE display_name=? AND db_table_name=?";
 
@@ -2332,9 +2426,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
         if (null == resultSet) {
             return null;
         }
+        // @@@ We should have data source ID in the previous query instead of passing -1 into the below constructor
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(resultSet.getInt("case_id"), -1, resultSet.getString("device_id"), resultSet.getString("name")),
+                new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status"))

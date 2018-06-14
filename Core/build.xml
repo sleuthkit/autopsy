@@ -6,20 +6,20 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core</description>
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
-    
+    <import file="../TSKVersion.xml"/>
+     
      
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
-    
+    <property name="test-input" location="test/qa-functional/data"/>
+
     <target name="get-InternalPythonModules" description="get internal python modules"> 
         <copy todir="release/InternalPythonModules" >
             <fileset dir="{basedir}/../../InternalPythonModules"/>
         </copy>
     </target>
-	
-	<property name="VERSION" value="4.6.0"/>
-    
+
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
         <!--Copy openCV dependencies to release-->
         <copy todir="${modules.dir}" >
@@ -30,10 +30,21 @@
         <copy todir="${basedir}/release/photorec_exec" >
             <fileset dir="${thirdparty.dir}/photorec_exec"/>
         </copy>
-               <!--Copy ewfexport to release-->
+        <!--Copy ewfexport to release-->
         <copy todir="${basedir}/release/ewfexport_exec" >
             <fileset dir="${thirdparty.dir}/ewfexport_exec"/>
         </copy>
+
+        <!--Copy Volatility to release-->
+        <copy todir="${basedir}/release/Volatility" >
+            <fileset dir="${thirdparty.dir}/Volatility"/>
+        </copy>
+        
+        <!--Copy Tesseract OCR to release-->
+        <copy todir="${basedir}/release/Tesseract-OCR" >
+            <fileset dir="${thirdparty.dir}/Tesseract-OCR"/>
+        </copy>
+            
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
@@ -57,8 +68,8 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${VERSION}.jar" 
-              tofile="${ext.dir}/sleuthkit-postgresql-${VERSION}.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${TSK_VERSION}.jar" 
+              tofile="${ext.dir}/sleuthkit-postgresql-${TSK_VERSION}.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.8.11.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
@@ -76,15 +87,28 @@
              verbose="true"/>
     </target>
 
-    
-    <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
+    <target name="getTestDataFiles">
+        <mkdir dir="${basedir}/test/qa-functional/data"/>
+	<get src="https://drive.google.com/uc?id=1dLYGctuvRQMmnzfXPppTM_9gB49eLc_g" dest="${test-input}/embedded.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1JACMDyH4y54ypGzFWl82ZzMQf3qbrioP" dest="${test-input}/encryption_detection_bitlocker_test.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=17sGybvmBGsWWJYo1IWKmO04oG9hKpPi3" dest="${test-input}/encryption_detection_sqlcipher_test.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/filter_test1.img" skipexisting="true"/>	    
+        <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/local_files_test.zip" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1BrSiUQ1fzxFS9vIaK4mYKX6qIVp9kRWT" dest="${test-input}/password_detection_test.img" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1HD8s4rculgHV1qZT5g80Kg7j4m1qccrN" dest="${test-input}/veracrypt_detection_test.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1O5D09fFCFpXZqw0uLEs8kVLtfYTxqXAd" dest="${test-input}/commonfiles_image1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1rMP1QTI0LdppzdypbG-4BDwkKcR3tHXc" dest="${test-input}/commonfiles_image2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1OdwyJ2lru55ZPdvwzj3pq6sXIys27i4x" dest="${test-input}/commonfiles_image3_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1GoF2x0km5AyFvE926ttN20lrMX1oLN7E" dest="${test-input}/commonfiles_image4_v1.vhd" skipexisting="true"/>
+    </target>
+
+    <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">
         <mkdir dir="${ext.dir}"/>
-        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
-        
+        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
-        <ivy:resolve/>
+        <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
-           </target>
+     </target>
 
      <target name="init" depends="get-deps,harness.init"/>
   

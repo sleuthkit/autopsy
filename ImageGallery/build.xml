@@ -21,8 +21,5 @@
         <copy file="${thirdparty.dir}/sqlite-jdbc/sqlite-jdbc-3.7.8-SNAPSHOT.jar" todir="${ext.dir}" />
     </target>
  
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init">
-        <!--  copy jars not downloaded with Ivy -->
-        <antcall target="get-thirdparty-jars"/>
-    </target>
+    <target name="init" depends="get-thirdparty-jars,harness.init" />
 </project>

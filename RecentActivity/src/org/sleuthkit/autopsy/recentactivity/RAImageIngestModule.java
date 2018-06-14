@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -27,9 +27,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -59,9 +59,14 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
 
-        
+        Extract iexplore;
+        try {
+            iexplore = new ExtractIE();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(ex.getMessage(), ex);
+        }
+
         Extract registry = new ExtractRegistry();
-        Extract iexplore = new ExtractIE();
         Extract recentDocuments = new RecentDocumentsByLnk();
         Extract chrome = new Chrome();
         Extract firefox = new Firefox();

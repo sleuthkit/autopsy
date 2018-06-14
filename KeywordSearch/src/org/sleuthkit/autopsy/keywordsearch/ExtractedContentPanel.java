@@ -145,133 +145,140 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
-        extractedTextPane = new JTextPane(){
-            public boolean getScrollableTracksViewportWidth() {
-                return (getSize().width < 400);
-            }};
-            sourceComboBox = new javax.swing.JComboBox<>();
-            jLabel1 = new javax.swing.JLabel();
-            pageOfLabel = new javax.swing.JLabel();
-            pageButtonsLabel = new javax.swing.JLabel();
-            pageTotalLabel = new javax.swing.JLabel();
-            pagesLabel = new javax.swing.JLabel();
-            pageNextButton = new javax.swing.JButton();
-            pagePreviousButton = new javax.swing.JButton();
-            pageCurLabel = new javax.swing.JLabel();
-            jSeparator1 = new javax.swing.JSeparator();
-            hitLabel = new javax.swing.JLabel();
-            hitButtonsLabel = new javax.swing.JLabel();
-            hitNextButton = new javax.swing.JButton();
-            hitOfLabel = new javax.swing.JLabel();
-            hitTotalLabel = new javax.swing.JLabel();
-            hitPreviousButton = new javax.swing.JButton();
-            hitCountLabel = new javax.swing.JLabel();
-            jSeparator2 = new javax.swing.JSeparator();
+        extractedTextPane = new javax.swing.JTextPane();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jPanel1 = new javax.swing.JPanel();
+        sourceComboBox = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
+        pageOfLabel = new javax.swing.JLabel();
+        pageButtonsLabel = new javax.swing.JLabel();
+        pageTotalLabel = new javax.swing.JLabel();
+        pagesLabel = new javax.swing.JLabel();
+        pageNextButton = new javax.swing.JButton();
+        pagePreviousButton = new javax.swing.JButton();
+        pageCurLabel = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        hitLabel = new javax.swing.JLabel();
+        hitButtonsLabel = new javax.swing.JLabel();
+        hitNextButton = new javax.swing.JButton();
+        hitOfLabel = new javax.swing.JLabel();
+        hitTotalLabel = new javax.swing.JLabel();
+        hitPreviousButton = new javax.swing.JButton();
+        hitCountLabel = new javax.swing.JLabel();
+        jSeparator2 = new javax.swing.JSeparator();
 
-            copyMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.copyMenuItem.text")); // NOI18N
-            rightClickMenu.add(copyMenuItem);
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
 
-            selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
-            rightClickMenu.add(selectAllMenuItem);
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
-            setPreferredSize(new java.awt.Dimension(717, 58));
+        setPreferredSize(new java.awt.Dimension(100, 58));
 
-            jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
-            jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            jScrollPane1.setPreferredSize(new java.awt.Dimension(640, 29));
+        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(640, 29));
 
-            extractedTextPane.setEditable(false);
-            extractedTextPane.setAutoscrolls(false);
-            extractedTextPane.setInheritsPopupMenu(true);
-            extractedTextPane.setMaximumSize(new java.awt.Dimension(2000, 2000));
-            extractedTextPane.setPreferredSize(new java.awt.Dimension(640, 29));
-            jScrollPane1.setViewportView(extractedTextPane);
+        extractedTextPane.setEditable(false);
+        extractedTextPane.setAutoscrolls(false);
+        extractedTextPane.setInheritsPopupMenu(true);
+        extractedTextPane.setMaximumSize(new java.awt.Dimension(2000, 2000));
+        extractedTextPane.setPreferredSize(new java.awt.Dimension(600, 29));
+        jScrollPane1.setViewportView(extractedTextPane);
 
-            sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
-            sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
-            sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 20));
-            sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 20));
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        jScrollPane2.setPreferredSize(new java.awt.Dimension(600, 100));
 
-            jLabel1.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.jLabel1.text")); // NOI18N
+        jPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
+        jPanel1.setPreferredSize(new java.awt.Dimension(600, 81));
 
-            pageOfLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageOfLabel.text")); // NOI18N
+        sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
+        sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
+        sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 20));
+        sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 20));
 
-            pageButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageButtonsLabel.text")); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.jLabel1.text")); // NOI18N
 
-            pageTotalLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            pageTotalLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageTotalLabel.text")); // NOI18N
+        pageOfLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageOfLabel.text")); // NOI18N
 
-            pagesLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagesLabel.text")); // NOI18N
+        pageButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageButtonsLabel.text")); // NOI18N
 
-            pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N
-            pageNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageNextButton.text")); // NOI18N
-            pageNextButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
-            pageNextButton.setBorderPainted(false);
-            pageNextButton.setContentAreaFilled(false);
-            pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N
-            pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-            pageNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        pageTotalLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        pageTotalLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageTotalLabel.text")); // NOI18N
 
-            pagePreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
-            pagePreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.text")); // NOI18N
-            pagePreviousButton.setActionCommand(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.actionCommand")); // NOI18N
-            pagePreviousButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
-            pagePreviousButton.setBorderPainted(false);
-            pagePreviousButton.setContentAreaFilled(false);
-            pagePreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N
-            pagePreviousButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        pagesLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagesLabel.text")); // NOI18N
 
-            pageCurLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            pageCurLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageCurLabel.text")); // NOI18N
+        pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N
+        pageNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageNextButton.text")); // NOI18N
+        pageNextButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        pageNextButton.setBorderPainted(false);
+        pageNextButton.setContentAreaFilled(false);
+        pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N
+        pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        pageNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
 
-            jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+        pagePreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
+        pagePreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.text")); // NOI18N
+        pagePreviousButton.setActionCommand(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pagePreviousButton.actionCommand")); // NOI18N
+        pagePreviousButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        pagePreviousButton.setBorderPainted(false);
+        pagePreviousButton.setContentAreaFilled(false);
+        pagePreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N
+        pagePreviousButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
 
-            hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
-            hitLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.toolTipText")); // NOI18N
+        pageCurLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        pageCurLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.pageCurLabel.text")); // NOI18N
 
-            hitButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitButtonsLabel.text")); // NOI18N
+        jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-            hitNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N
-            hitNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitNextButton.text")); // NOI18N
-            hitNextButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
-            hitNextButton.setBorderPainted(false);
-            hitNextButton.setContentAreaFilled(false);
-            hitNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N
-            hitNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-            hitNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            hitNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_hover.png"))); // NOI18N
+        hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
+        hitLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.toolTipText")); // NOI18N
 
-            hitOfLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitOfLabel.text")); // NOI18N
+        hitButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitButtonsLabel.text")); // NOI18N
 
-            hitTotalLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            hitTotalLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitTotalLabel.text")); // NOI18N
-            hitTotalLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-            hitTotalLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-            hitTotalLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+        hitNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward.png"))); // NOI18N
+        hitNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitNextButton.text")); // NOI18N
+        hitNextButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        hitNextButton.setBorderPainted(false);
+        hitNextButton.setContentAreaFilled(false);
+        hitNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_disabled.png"))); // NOI18N
+        hitNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        hitNextButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        hitNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_forward_hover.png"))); // NOI18N
 
-            hitPreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
-            hitPreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitPreviousButton.text")); // NOI18N
-            hitPreviousButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
-            hitPreviousButton.setBorderPainted(false);
-            hitPreviousButton.setContentAreaFilled(false);
-            hitPreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N
-            hitPreviousButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-            hitPreviousButton.setPreferredSize(new java.awt.Dimension(23, 23));
-            hitPreviousButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_hover.png"))); // NOI18N
+        hitOfLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitOfLabel.text")); // NOI18N
 
-            hitCountLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            hitCountLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitCountLabel.text")); // NOI18N
-            hitCountLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-            hitCountLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-            hitCountLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+        hitTotalLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        hitTotalLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitTotalLabel.text")); // NOI18N
+        hitTotalLabel.setMaximumSize(new java.awt.Dimension(18, 14));
+        hitTotalLabel.setMinimumSize(new java.awt.Dimension(18, 14));
+        hitTotalLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
-            jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+        hitPreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back.png"))); // NOI18N
+        hitPreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitPreviousButton.text")); // NOI18N
+        hitPreviousButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        hitPreviousButton.setBorderPainted(false);
+        hitPreviousButton.setContentAreaFilled(false);
+        hitPreviousButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_disabled.png"))); // NOI18N
+        hitPreviousButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        hitPreviousButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        hitPreviousButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/btn_step_back_hover.png"))); // NOI18N
 
-            javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-            this.setLayout(layout);
-            layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
+        hitCountLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        hitCountLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitCountLabel.text")); // NOI18N
+        hitCountLabel.setMaximumSize(new java.awt.Dimension(18, 14));
+        hitCountLabel.setMinimumSize(new java.awt.Dimension(18, 14));
+        hitCountLabel.setPreferredSize(new java.awt.Dimension(18, 14));
+
+        jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 600, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
                     .addContainerGap()
                     .addComponent(hitLabel)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -308,14 +315,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                     .addComponent(jLabel1)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                     .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap())
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            );
-            layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 81, Short.MAX_VALUE)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
                     .addContainerGap()
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                         .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel1)
                         .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -334,13 +342,28 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                         .addComponent(hitOfLabel)
                         .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(hitButtonsLabel))
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 126, Short.MAX_VALUE))
-            );
+                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        );
 
-            layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
 
-        }// </editor-fold>//GEN-END:initComponents
+        jScrollPane2.setViewportView(jPanel1);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JTextPane extractedTextPane;
@@ -352,7 +375,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JButton hitPreviousButton;
     private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel pageButtonsLabel;

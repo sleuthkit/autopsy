@@ -25,12 +25,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -40,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Panel for displaying ingest job history.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
@@ -75,12 +75,12 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     }
 
     private void refresh() {
-        SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
             this.ingestJobs = ingestJobs;
             this.repaint();
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
@@ -92,7 +92,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         "IngestJobInfoPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
     private class IngestJobTableModel extends AbstractTableModel {
 
-        private List<String> columnHeaders = new ArrayList<>();
+        private final List<String> columnHeaders = new ArrayList<>();
 
         IngestJobTableModel() {
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_DataSource_header());
@@ -114,11 +114,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             if (columnIndex == 0) {
                 try {
+                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                     return skCase.getContentById(currIngestJob.getObjectId()).getName();
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Failed to get content from db", ex);
                     return "";
                 }
@@ -147,8 +147,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         "IngestJobInfoPanel.IngestModuleTableModel.ModuleVersion.header=Module Version"})
     private class IngestModuleTableModel extends AbstractTableModel {
 
-        private List<String> columnHeaders = new ArrayList<>();
-        private IngestJobInfo currJob;
+        private final List<String> columnHeaders = new ArrayList<>();
+        private final IngestJobInfo currJob;
 
         IngestModuleTableModel(IngestJobInfo currJob) {
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestModuleTableModel_ModuleName_header());

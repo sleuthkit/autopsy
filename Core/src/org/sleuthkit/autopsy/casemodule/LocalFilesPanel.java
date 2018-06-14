@@ -191,6 +191,9 @@ final class LocalFilesPanel extends javax.swing.JPanel {
             StringBuilder allPaths = new StringBuilder();
             for (File f : files) {
                 currentFiles.add(f);
+            }
+            for (File f : currentFiles) { 
+                //loop over set of all files to ensure list is accurate
                 //update label
                 allPaths.append(f.getAbsolutePath()).append("\n");
             }
@@ -280,7 +283,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         errorLabel.setVisible(false);
 
         try {
-            final Case.CaseType currentCaseType = Case.getOpenCase().getCaseType();
+            final Case.CaseType currentCaseType = Case.getCurrentCaseThrows().getCaseType();
 
             for (String currentPath : pathsList) {
                 if (!PathValidator.isValid(currentPath, currentCaseType)) {

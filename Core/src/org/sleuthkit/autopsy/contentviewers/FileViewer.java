@@ -31,15 +31,14 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.autopsy.corecomponentinterfaces.FileTypeViewer;
 
 /**
  * Generic Application content viewer
  */
-@ServiceProvider(service = DataContentViewer.class, position = 5)
+@ServiceProvider(service = DataContentViewer.class, position = 3)
 public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final int CONFIDENCE_LEVEL = 7;
+    private static final int CONFIDENCE_LEVEL = 5;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(FileViewer.class.getName());
 

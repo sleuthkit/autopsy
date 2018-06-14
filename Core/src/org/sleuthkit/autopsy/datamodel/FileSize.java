@@ -91,8 +91,8 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(AutopsyItemVisitor<T> visitor) {
+            return visitor.visit(this);
         }
     }
 
@@ -101,8 +101,8 @@ public class FileSize implements AutopsyVisitableItem {
     }
 
     @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
+    public <T> T accept(AutopsyItemVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     public SleuthkitCase getSleuthkitCase() {
@@ -129,24 +129,24 @@ public class FileSize implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+        public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+            return visitor.visit(this);
         }
 
         @Override
         protected Sheet createSheet() {
-            Sheet s = super.createSheet();
-            Sheet.Set ss = s.get(Sheet.PROPERTIES);
-            if (ss == null) {
-                ss = Sheet.createPropertiesSet();
-                s.put(ss);
+            Sheet sheet = super.createSheet();
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            if (sheetSet == null) {
+                sheetSet = Sheet.createPropertiesSet();
+                sheet.put(sheetSet);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.name"),
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.displayName"),
                     NbBundle.getMessage(this.getClass(), "FileSize.createSheet.name.desc"),
                     NAME));
-            return s;
+            return sheet;
         }
 
         @Override
@@ -202,7 +202,7 @@ public class FileSize implements AutopsyVisitableItem {
                     try {
                         // new file was added
                         // @@@ could check the size here and only fire off updates if we know the file meets the min size criteria
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**
@@ -219,7 +219,7 @@ public class FileSize implements AutopsyVisitableItem {
                      * that is already closed.
                      */
                     try {
-                        Case.getOpenCase();
+                        Case.getCurrentCaseThrows();
                         update();
                     } catch (NoCurrentCaseException notUsed) {
                         /**
@@ -314,25 +314,25 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             @Override
-            public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-                return v.visit(this);
+            public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+                return visitor.visit(this);
             }
 
             @Override
             protected Sheet createSheet() {
-                Sheet s = super.createSheet();
-                Sheet.Set ss = s.get(Sheet.PROPERTIES);
-                if (ss == null) {
-                    ss = Sheet.createPropertiesSet();
-                    s.put(ss);
+                Sheet sheet = super.createSheet();
+                Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+                if (sheetSet == null) {
+                    sheetSet = Sheet.createPropertiesSet();
+                    sheet.put(sheetSet);
                 }
 
-                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.name"),
+                sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.name"),
                         NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.displayName"),
                         NbBundle.getMessage(this.getClass(), "FileSize.createSheet.filterType.desc"),
                         filter.getDisplayName()));
 
-                return s;
+                return sheet;
             }
 
             @Override

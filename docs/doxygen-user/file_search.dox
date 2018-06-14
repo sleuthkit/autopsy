@@ -27,7 +27,7 @@ Search for all files with the selected MIME type. Multiple types can be used by 
 \li Date:
 Search for all files and directory whose "date property" is within the date range given. The "date properties" are "Modified Date", "Accessed Date", "Changed Date", and "Created Date". You must also specify the timezone for the date given.
 \li Known Status:
-Search for all files and directory whose known status is recognized as either Unknown, Known, or Known Bad. For more on Known Status, see Hash Database Management.
+Search for all files and directory whose known status is recognized as either Unknown, Known, or Known Bad. For more on Known Status, see the \ref hash_db_page.
 To use any of these filters, check the box next to the category and click "Search" button to start the search process. The result will show up in the "Result Viewer".
 \li MD5
 Search for all files with the given MD5 hash.

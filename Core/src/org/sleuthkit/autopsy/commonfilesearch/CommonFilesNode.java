@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,27 +19,78 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
-import org.openide.nodes.AbstractNode;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.datamodel.Md5Node;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- *
- * @author bsweeney
+ * Wrapper node for <code>Md5Node</code> used to display common files search
+ * results in the top right pane. Calls <code>Md5NodeFactory</code>.
  */
-class CommonFilesNode extends AbstractNode {
+final public class CommonFilesNode extends DisplayableItemNode {
     
-    private final CommonFilesChildren children;
-    
-    public CommonFilesNode(List<AbstractFile> keys) {
-        super(new CommonFilesChildren(true, keys));
-        this.children = (CommonFilesChildren) this.getChildren();
+
+    CommonFilesNode(CommonFilesMetadata metadataList) {
+        super(Children.create(new Md5NodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
+    }
+
+    @NbBundle.Messages({
+        "CommonFilesNode.getName.text=Common Files"})
+    @Override
+    public String getName() {
+        return Bundle.CommonFilesNode_getName_text();
     }
 
     @Override
-    public String getName(){
-        return NbBundle.getMessage(this.getClass(), "CommonFilesNode.getName.text");
+    public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
-    
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
+
+    /**
+     * ChildFactory which builds CommonFileParentNodes from the
+     * CommonFilesMetaaData models.
+     */
+    static class Md5NodeFactory extends ChildFactory<String> {
+
+        /**
+         * List of models, each of which is a parent node matching a single md5,
+         * containing children FileNodes.
+         */
+        private CommonFilesMetadata metadata;
+
+        Md5NodeFactory(CommonFilesMetadata metadata) {
+            this.metadata = metadata;
+        }
+
+        protected void removeNotify() {
+            metadata = null;
+        }
+
+        @Override
+        protected Node createNodeForKey(String md5){
+            Md5Metadata metadata = this.metadata.getMetadataForMd5(md5);
+            return new Md5Node(metadata);
+        }
+
+        @Override
+        protected boolean createKeys(List<String> list) {
+            list.addAll(this.metadata.getMetadata().keySet());
+            return true;
+        }
+    }
 }

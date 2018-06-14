@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,10 +28,15 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
+/**
+ * Allows examiner to supply a raw data source.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class RawDSInputPanel extends JPanel implements DocumentListener {
     private static final long TWO_GB = 2000000000L;
     private static final long serialVersionUID = 1L;    //default
@@ -296,11 +301,17 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
      *
      * @param path Absolute path to the selected data source
      */
-    @Messages({"RawDSInputPanel.error.text=Path to multi-user data source is on \"C:\" drive"})
+    @Messages({"RawDSInputPanel.error.text=Path to multi-user data source is on \"C:\" drive",
+        "RawDSInputPanel.noOpenCase.errMsg=Exception while getting open case."})
     private void warnIfPathIsInvalid(String path) {
-        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        try {
+        if (!PathValidator.isValid(path, Case.getCurrentCaseThrows().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(Bundle.RawDSInputPanel_error_text());
+        }
+        } catch (NoCurrentCaseException ex) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.RawDSInputPanel_noOpenCase_errMsg());
         }
     }
 

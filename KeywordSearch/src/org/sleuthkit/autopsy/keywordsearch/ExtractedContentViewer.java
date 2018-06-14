@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.AdHocQueryResult;
+import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -220,7 +220,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
-                    BlackboardArtifact associatedArtifact = Case.getOpenCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(artifactId);
                     rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
 
                 }
@@ -376,12 +376,12 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (artifact == null) {
             return 4;
         } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            return 6;
+            return 7;
         } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(TSK_ACCOUNT_TYPE);
                 if (attribute != null && Account.Type.CREDIT_CARD.getTypeName().equals(attribute.getValueString())) {
-                    return 6;
+                    return 7;
                 } else {
                     return 4;
                 }

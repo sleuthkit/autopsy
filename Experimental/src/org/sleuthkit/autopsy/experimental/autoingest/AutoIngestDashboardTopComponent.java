@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Component;
+import java.awt.EventQueue;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -38,8 +40,8 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 )
 @TopComponent.Registration(mode = "dashboard", openAtStartup = false)
 @Messages({
-    "CTL_AutoIngestDashboardAction=Auto Ingest Dashboard",
-    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Dashboard"})
+    "CTL_AutoIngestDashboardAction=Auto Ingest Jobs",
+    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs"})
 public final class AutoIngestDashboardTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;
@@ -54,18 +56,34 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         if (tc != null) {
             topComponentInitialized = true;
             WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
-            if (mode != null) {
-                mode.dockInto(tc);
-            }
 
-            AutoIngestDashboard dashboard;
             try {
-                dashboard = AutoIngestDashboard.createDashboard();
-                tc.add(dashboard);
-                dashboard.setSize(dashboard.getPreferredSize());
                 if (tc.isOpened() == false) {
+                    Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
+                    if (mode != null) {
+                        mode.dockInto(tc);
+                    }
+                    /*
+                     * Make sure we have a clean-slate before attaching a new
+                     * dashboard instance so we don't accumulate them.
+                     */
+                    tc.removeAll();
+
+                    /*
+                     * Create a new dashboard instance to ensure we're using the
+                     * most recent configuration.
+                     */
+                    AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
+                    tc.add(dashboard);
+                    dashboard.setSize(dashboard.getPreferredSize());
+                    //if the user has administrator access enabled open the Node Status top component as well
+                    if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
+                        EventQueue.invokeLater(() -> {  
+                            AinStatusDashboardTopComponent.openTopComponent(dashboard.getMonitor());
+                        });          
+                    }
                     tc.open();
+
                 }
                 tc.toFront();
                 tc.requestActive();
@@ -76,22 +94,43 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
         }
     }
 
-    public static void closeTopComponent() {
+    @Override
+    protected void componentClosed() {
         if (topComponentInitialized) {
             final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
             if (tc != null) {
                 try {
+                    for (Component comp : getComponents()) {
+                        if (comp instanceof AutoIngestDashboard) {
+                            ((AutoIngestDashboard) comp).shutDown();
+                        }
+                    }
                     tc.close();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
+        super.componentClosed();
     }
 
     public AutoIngestDashboardTopComponent() {
         initComponents();
         setName(Bundle.CTL_AutoIngestDashboardTopComponent());
+    }
+
+    /**
+     * Get the current AutoIngestDashboard if there is one.
+     *
+     * @return the current AutoIngestDashboard or null if there is not one
+     */
+    AutoIngestDashboard getAutoIngestDashboard() {
+        for (Component comp : getComponents()) {
+            if (comp instanceof AutoIngestDashboard) {
+                return (AutoIngestDashboard) comp;
+            }
+        }
+        return null;
     }
 
     @Override

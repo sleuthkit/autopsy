@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,14 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -35,6 +36,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Details panel within IngestMessagePanel
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
     private final IngestMessageMainPanel mainPanel;
@@ -239,7 +241,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 this.messageDetailsPane.setText("");
             }
             //show artifact/content only for a message group with a single message
-            BlackboardArtifact artifact = messageGroup.getData();;
+            BlackboardArtifact artifact = messageGroup.getData();
             if (artifact != null && messageGroup.getCount() == 1) {
                 viewArtifactButton.setEnabled(true);
 
@@ -247,8 +249,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 long objId = artifact.getObjectID();
                 AbstractFile file = null;
                 try {
-                    file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(objId);
-                } catch (TskException ex) {
+                    file = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(objId);
+                } catch (TskException | NoCurrentCaseException ex) {
 
                 }
                 if (file == null) {

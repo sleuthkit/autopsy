@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -68,18 +69,25 @@ final class ContactAnalyzer {
      * @param context The ingest job context.
      */
     public void findContacts(IngestJobContext context) {
-
-        blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        Case openCase;
+        try {
+            openCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        }
+ 
+        blackboard = openCase.getServices().getBlackboard();
         List<AbstractFile> absFiles;
         try {
-            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            SleuthkitCase skCase = openCase.getSleuthkitCase();
             absFiles = skCase.findAllFilesWhere("LOWER(name) LIKE LOWER('%call_history%') "); //NON-NLS //get exact file names
             if (absFiles.isEmpty()) {
                 return;
             }
             for (AbstractFile file : absFiles) {
                 try {
-                    jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
+                    jFile = new java.io.File(openCase.getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string
                     fileId = file.getId();
                     ContentUtils.writeToFile(file, jFile, context::dataSourceIngestIsCancelled);
@@ -106,6 +114,13 @@ final class ContactAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return;
+        } 
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
@@ -114,7 +129,6 @@ final class ContactAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
         }
 
-        Case currentCase = Case.getCurrentCase();
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
         try {
             AbstractFile file = skCase.getAbstractFileById(fileId);

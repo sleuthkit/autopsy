@@ -25,7 +25,7 @@ Autopsy will start to analyze these data sources and add them to the case and th
 You will next be prompted to configure the Ingest Modules. Ingest modules will run in the background and perform specific tasks. The Ingest Modules analyze files in a prioritized order so that files in a user's directory are analyzed before files in other folders. Ingest modules can be developed by third-parties. The standard ingest modules included with Autopsy are:
 
 - <strong>\subpage recent_activity_page</strong> extracts user activity as saved by web browsers and the OS.  Also runs Regripper on the registry hive. 
-- <strong>\subpage hash_db_page</strong> uses hash databases to ignore known files from the NIST NSRL and flag known bad files. Use the "Advanced" button to add and configure the hash databases to use during this process. You will get updates on known bad file hits as the ingest occurs.  You can later add hash databases via the Tools -&gt; Options menu in the main UI.  You can download an index of the NIST NSRL from http://sourceforge.net/projects/autopsy/files/NSRL/
+- <strong>\subpage hash_db_page</strong> uses hash sets to ignore known files from the NIST NSRL and flag known bad files. Use the "Advanced" button to add and configure the hash sets to use during this process. You will get updates on known bad file hits as the ingest occurs.  You can later add hash sets via the Tools -&gt; Options menu in the main UI.  You can download an index of the NIST NSRL from http://sourceforge.net/projects/autopsy/files/NSRL/
 - <strong>\subpage file_type_identification_page</strong> determines file types based on signatures and reports them based on MIME type. It stores the results in the Blackboard and many modules depend on this. It uses the Tika open source library. You can define your own custom file types in Tools, Options, File Types.
 - <strong>\subpage embedded_file_extractor_page</strong> opens ZIP, RAR, other archive formats, Doc, Docx, PPT, PPTX, XLS, and XLSX and sends the derived files from those files back through the ingest pipeline for analysis.
 - <strong>\subpage EXIF_parser_page</strong> extracts EXIF information from JPEG files and posts the results into the tree in the main UI.
@@ -37,7 +37,7 @@ You will next be prompted to configure the Ingest Modules. Ingest modules will r
 - <strong>\subpage interesting_files_identifier_page</strong> searches for files and directories based on user-specified rules in Tools, Options, Interesting Files. It works as a "File Alerting Module". It generates messages in the inbox when specified files are found.
 - <strong>\subpage photorec_carver_page</strong> carves files from unallocated space and sends them through the file processing chain.
 
-When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash databases to use. Refer to the individual module help for details on configuring each module.
+When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash sets to use. Refer to the individual module help for details on configuring each module.
 
 While ingest modules are running in the background, you will see a progress bar in the lower right. You can use the GUI to review incoming results and perform other tasks while ingesting at the same time.
 
@@ -58,6 +58,8 @@ When you select a node from the tree on the left, a list of files will be shown 
 If you are viewing files from the Views and Results nodes, you can right-click on a file to go to its file system location. This feature is useful to see what else the user stored in the same folder as the file that you are currently looking at. You can also right click on a file to extract it to the local system.
 
 If you want to search for single keywords, then you can use the search box in the upper right of the program. The results will be shown in a table in the upper right.
+
+The tree on the left as well as the table on the right have a \ref ui_quick_search feature which can be used to quickly find a visible node. 
 
 You can tag (bookmark) arbitrary files so that you can more quickly find them later or so that you can include them specifically in a report.
 

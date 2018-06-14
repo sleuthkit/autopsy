@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
@@ -51,7 +53,11 @@ class CaseInformationPanel extends javax.swing.JPanel {
         "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
-        propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
+        try {
+            propertiesPanel = new CasePropertiesPanel(Case.getCurrentCaseThrows());
+        } catch (NoCurrentCaseException ex) { 
+            Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
+        }
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
         this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
@@ -59,11 +65,6 @@ class CaseInformationPanel extends javax.swing.JPanel {
             @Override
             public void stateChanged(ChangeEvent e) {
                 tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
-                if (tabbedPane.getSelectedComponent() instanceof CasePropertiesPanel) {
-                    editDetailsButton.setVisible(true);
-                } else {
-                    editDetailsButton.setVisible(false);
-                }
             }
         });
     }

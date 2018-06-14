@@ -50,16 +50,9 @@ import org.sleuthkit.autopsy.report.ReportBranding;
 /**
  * Options panel that allow users to set application preferences.
  */
-@Messages({"AutopsyOptionsPanel.agencyLogoPreview.text=<html><div style='text-align: center;'>No logo<br>selected</div></html>",
-    "AutopsyOptionsPanel.logoPanel.border.title=Logo",
-    "AutopsyOptionsPanel.viewPanel.border.title=View",
+@Messages({
     "AutopsyOptionsPanel.invalidImageFile.msg=The selected file was not able to be used as an agency logo.",
     "AutopsyOptionsPanel.invalidImageFile.title=Invalid Image File",
-    "AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any changes to max memory to take effect.",
-    "AutopsyOptionsPanel.totalMemoryLabel.text=Total System Memory:",
-    "AutopsyOptionsPanel.maxMemoryLabel.text=Maximum JVM Memory:",
-    "AutopsyOptionsPanel.maxMemoryUnitsLabel.text=GB",
-    "AutopsyOptionsPanel.runtimePanel.border.title=Runtime",
     "AutopsyOptionsPanel.memFieldValidationLabel.not64BitInstall.text=JVM memory settings only enabled for 64 bit version",
     "AutopsyOptionsPanel.memFieldValidationLabel.noValueEntered.text=No value entered",
     "AutopsyOptionsPanel.memFieldValidationLabel.invalidCharacters.text=Invalid characters, value must be a positive integer",
@@ -68,16 +61,12 @@ import org.sleuthkit.autopsy.report.ReportBranding;
     "# {0} - systemMemory",
     "AutopsyOptionsPanel.memFieldValidationLabel.overMaxMemory.text=Value must be less than the total system memory of {0}GB",
     "AutopsyOptionsPanel.memFieldValidationLabel.developerMode.text=Memory settings are not available while running in developer mode",
-    "AutopsyOptionsPanel.defaultLogoRB.text=Use default",
-    "AutopsyOptionsPanel.specifyLogoRB.text=Specify a logo",
-    "AutopsyOptionsPanel.browseLogosButton.text=Browse",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidPath.text=Path is not valid.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.invalidImageSpecified.text=Invalid image file specified.",
     "AutopsyOptionsPanel.agencyLogoPathFieldValidationLabel.pathNotSet.text=Agency logo path must be set.",
-    "AutopsyOptionsPanel.maxLogFileCount.text=Maximum Log Files:",
     "AutopsyOptionsPanel.logNumAlert.invalidInput.text=A positive integer is required here."
 })
-
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -341,7 +330,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private void updateAgencyLogo(String path) throws IOException {
         agencyLogoPathField.setText(path);
         ImageIcon agencyLogoIcon = new ImageIcon();
-        agencyLogoPreview.setText(Bundle.AutopsyOptionsPanel_agencyLogoPreview_text());
+        agencyLogoPreview.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPreview.text"));
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
             if (file.exists()) {
@@ -572,11 +561,15 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         logFileCount = new javax.swing.JTextField();
         logNumAlert = new javax.swing.JTextField();
 
-        jScrollPane1.setBorder(null);
+        setPreferredSize(new java.awt.Dimension(1022, 488));
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(671, 488));
+        jScrollPane1.setBorder(null);
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(1022, 407));
+
+        jPanel1.setPreferredSize(new java.awt.Dimension(1022, 407));
 
         logoPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.logoPanel.border.title"))); // NOI18N
+        logoPanel.setPreferredSize(new java.awt.Dimension(533, 87));
 
         agencyLogoPathField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPathField.text")); // NOI18N
 
@@ -894,7 +887,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(viewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -919,11 +912,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 479, Short.MAX_VALUE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

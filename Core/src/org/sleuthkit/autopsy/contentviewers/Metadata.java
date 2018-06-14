@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * shows the same data that can also be found in the ResultViewer table, just a
  * different order and allows the full path to be visible in the bottom area.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 3)
+@ServiceProvider(service = DataContentViewer.class, position = 6)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     /**
@@ -59,9 +60,10 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextPane1 = new javax.swing.JTextPane();
 
-        setPreferredSize(new java.awt.Dimension(610, 52));
+        setPreferredSize(new java.awt.Dimension(100, 52));
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new java.awt.Dimension(610, 52));
 
         jTextPane1.setEditable(false);
@@ -221,7 +223,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     @Override
     public void resetComponent() {
         setText("");
-        return;
     }
 
     @Override

@@ -3,8 +3,10 @@
 \section cvt_overview Overview
 
 The Communications Visualization Tool gives a consolidated view of all communication events for the case. This allows an analyst to quickly view communications data such as:
-* The most commonly used accounts
-* Communications within a specific time frame
+<ul>
+<li> The most commonly used accounts
+<li> Communications within a specific time frame
+</ul>
 
 \section cvt_usage Usage
 
@@ -19,5 +21,29 @@ The middle column displays each account, its device and type, and the number of 
 Selecting an account in the middle column will bring up the messages for that account in the right hand column. Here data about each message is displayed in the top section, and the messages itself can be seen in the bottom section (if applicable).
 
 \image html cvt_messages.png
+
+The middle column and the right hand column both have a \ref ui_quick_search feature which can be used to quickly find a visible item in their section's table. 
+
+\section cvt_viz Visualization
+
+The Visualize tab in the middle panel will show a graph of one or more accounts selected in the Browse tab.
+
+To start, right click the first account you want to view.
+
+\image html cvt_select_account.png
+
+There are two options, which are equivalent when no accounts have previously been selected:
+<ul>
+<li>Add Selected Account to Visualization - Adds this account and its connections to the graph
+<li>Visualize Only Selected Account - Clears the graph and only displays the connections for this account
+</ul>
+
+After selecting either option, the middle tab will switch to the Visualize view and the graph will be displayed. 
+
+\image html cvt_visualize.png
+
+The options at the top allow you to clear the graph, try different graph layouts, and resize the graph. The nodes in the graph can be dragged around and nodes and edges can be selected to display their messages or relationships in the right side tab. For example, in the image below the link between two email addresses has been selected so the Messages viewer is displaying the single email between those two email addresses.
+
+\image html cvt_links.png
 
 */

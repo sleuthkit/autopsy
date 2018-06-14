@@ -63,9 +63,8 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
      *                        background task to report progress.
      * @param callBack        Callback that will be used by the background task
      *                        to return results.
-     * @throws org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
-    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException;
+    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack);
 
     /**
      * A custom exception for the use of AutomatedIngestDataSourceProcessor.

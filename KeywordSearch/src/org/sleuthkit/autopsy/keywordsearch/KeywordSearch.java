@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,10 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -39,8 +39,8 @@ public class KeywordSearch {
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
-    private static final Logger TIKA_LOGGER = Logger.getLogger("Tika"); //NON-NLS
-    private static final org.sleuthkit.autopsy.coreutils.Logger logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(Case.class.getName());
+    private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
+    private static final Logger logger = Logger.getLogger(Case.class.getName());
 
     // @@@ We should move this into TskData (or somewhere) because we are using
     // this value in the results tree to display substring differently from regexp (KeywordHit.java)
@@ -70,9 +70,9 @@ public class KeywordSearch {
                     0, MAX_TIKA_LOG_FILES);
             tikaLogHandler.setFormatter(new SimpleFormatter());
             tikaLogHandler.setEncoding(PlatformUtil.getLogFileEncoding());
-            TIKA_LOGGER.addHandler(tikaLogHandler);
+            tikaLogger.addHandler(tikaLogHandler);
             //do not forward to the parent autopsy logger
-            TIKA_LOGGER.setUseParentHandlers(false);
+            tikaLogger.setUseParentHandlers(false);
         } catch (IOException | SecurityException ex) {
             logger.log(Level.SEVERE, "Error setting up tika logging", ex); //NON-NLS
         }
@@ -83,8 +83,8 @@ public class KeywordSearch {
         throw new AssertionError();
     }
 
-    static Logger getTikaLogger() {
-        return TIKA_LOGGER;
+    static java.util.logging.Logger getTikaLogger() {
+        return tikaLogger;
     }
 
     public static void addNumIndexedFilesChangeListener(PropertyChangeListener l) {

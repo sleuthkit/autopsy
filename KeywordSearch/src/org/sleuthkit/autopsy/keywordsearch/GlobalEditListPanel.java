@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * GlobalEditListPanel widget to manage keywords in lists
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());
@@ -125,7 +126,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         }
     }
 
-    @NbBundle.Messages("GlobalEditListPanel.editKeyword.title=Edit Keyword")
+    @NbBundle.Messages({"GlobalEditListPanel.editKeyword.title=Edit Keyword",
+        "GlobalEditListPanel.warning.title=Warning",
+        "GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]"})
+   
     /**
      * Adds keywords to a keyword list, returns true if at least one keyword was
      * successfully added and no duplicates were found.
@@ -151,6 +155,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             dupeCount = 0;
             badCount = 0;
             keywordsToRedisplay = "";
+            boolean displayedBoundaryWarning = false;
 
             if (!dialog.getKeywords().isEmpty()) {
 
@@ -163,6 +168,19 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     if (currentKeywordList.hasKeyword(keyword)) {
                         dupeCount++;
                         continue;
+                    }
+                    
+                    // Check if it is a regex and starts or ends with a boundary character
+                    if (( ! displayedBoundaryWarning) && dialog.isKeywordRegex()) {
+                        if(newWord.startsWith("^") || 
+                                (newWord.endsWith("$") && ! newWord.endsWith("\\$"))) {
+
+                            KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "GlobalEditListPanel.warning.title"),
+                                    NbBundle.getMessage(this.getClass(), "GlobalEditListPanel.warning.text"),
+                                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                            // Only display the warning once
+                            displayedBoundaryWarning = true;
+                        }
                     }
 
                     //check if valid

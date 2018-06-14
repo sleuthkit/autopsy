@@ -54,7 +54,7 @@ public class ServicesMonitor {
 
     private static final String PERIODIC_TASK_THREAD_NAME = "services-monitor-periodic-task-%d"; //NON-NLS
     private static final int NUMBER_OF_PERIODIC_TASK_THREADS = 1;
-    private static final long CRASH_DETECTION_INTERVAL_MINUTES = 2;
+    private static final long CRASH_DETECTION_INTERVAL_MINUTES = 15;
 
     private static final Set<String> servicesList = Stream.of(ServicesMonitor.Service.values())
             .map(Service::toString)
@@ -143,7 +143,7 @@ public class ServicesMonitor {
          * services.
          */
         periodicTasksExecutor = new ScheduledThreadPoolExecutor(NUMBER_OF_PERIODIC_TASK_THREADS, new ThreadFactoryBuilder().setNameFormat(PERIODIC_TASK_THREAD_NAME).build());
-        periodicTasksExecutor.scheduleAtFixedRate(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        periodicTasksExecutor.scheduleWithFixedDelay(new CrashDetectionTask(), CRASH_DETECTION_INTERVAL_MINUTES, CRASH_DETECTION_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 
     /**

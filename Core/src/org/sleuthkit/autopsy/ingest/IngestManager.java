@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -107,7 +108,7 @@ import org.sleuthkit.datamodel.Content;
  * job progress, and ingest module run times.
  */
 @ThreadSafe
-public class IngestManager {
+public class IngestManager implements IngestProgressSnapshotProvider {
 
     private final static Logger logger = Logger.getLogger(IngestManager.class.getName());
     private final static String INGEST_JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
@@ -121,7 +122,7 @@ public class IngestManager {
     private final AtomicLong nextIngestManagerTaskId = new AtomicLong(0L);
     private final ExecutorService startIngestJobsExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS;
     private final Map<Long, Future<Void>> startIngestJobFutures = new ConcurrentHashMap<>();
-    private final Map<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
+    private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
     private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
@@ -191,7 +192,7 @@ public class IngestManager {
                  * only necessary for multi-user cases.
                  */
                 try {
-                    if (Case.getOpenCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                    if (Case.getCurrentCaseThrows().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                         return;
                     }
                 } catch (NoCurrentCaseException noCaseOpenException) {
@@ -252,7 +253,7 @@ public class IngestManager {
         caseIsOpen = true;
         clearIngestMessageBox();
         try {
-            Case openedCase = Case.getOpenCase();
+            Case openedCase = Case.getCurrentCaseThrows();
             String channelPrefix = openedCase.getName();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 jobEventPublisher.openRemoteEventChannel(String.format(INGEST_JOB_EVENT_CHANNEL_NAME, channelPrefix));
@@ -298,12 +299,31 @@ public class IngestManager {
     /**
      * Queues an ingest job for for one or more data sources.
      *
-     * @param dataSources The data sources to process.
+     * @param dataSources The data sources to analyze.
      * @param settings    The settings for the ingest job.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
+            if (job.hasIngestPipeline()) {
+                long taskId = nextIngestManagerTaskId.incrementAndGet();
+                Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
+                startIngestJobFutures.put(taskId, task);
+            }
+        }
+    }
+
+    /**
+     * Queues an ingest job for for a data source. Either all of the files in
+     * the data source or a given subset of the files will be analyzed.
+     *
+     * @param dataSource The data source to analyze.
+     * @param files      A subset of the files for the data source.
+     * @param settings   The settings for the ingest job.
+     */
+    public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        if (caseIsOpen) {
+            IngestJob job = new IngestJob(dataSource, files, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -350,8 +370,8 @@ public class IngestManager {
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
-            openCase = Case.getOpenCase();
-        } catch (NoCurrentCaseException ex) { 
+            openCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
             return new IngestJobStartResult(null, new IngestManagerException("Exception while getting open case.", ex), Collections.<IngestModuleError>emptyList()); //NON-NLS
         }
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -380,13 +400,17 @@ public class IngestManager {
             ingestMonitor.start();
         }
 
-        ingestJobsById.put(job.getId(), job);
+        synchronized (ingestJobsById) {
+            ingestJobsById.put(job.getId(), job);
+        }
         errors = job.start();
         if (errors.isEmpty()) {
             this.fireIngestJobStarted(job.getId());
             IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
         } else {
-            this.ingestJobsById.remove(job.getId());
+            synchronized (ingestJobsById) {
+                this.ingestJobsById.remove(job.getId());
+            }
             for (IngestModuleError error : errors) {
                 logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
             }
@@ -419,7 +443,9 @@ public class IngestManager {
      */
     void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
-        ingestJobsById.remove(jobId);
+        synchronized (ingestJobsById) {
+            ingestJobsById.remove(jobId);
+        }
         if (!job.isCancelled()) {
             IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
             fireIngestJobCompleted(jobId);
@@ -436,7 +462,9 @@ public class IngestManager {
      * @return True or false.
      */
     public boolean isIngestRunning() {
-        return !ingestJobsById.isEmpty();
+        synchronized (ingestJobsById) {
+            return !ingestJobsById.isEmpty();
+        }
     }
 
     /**
@@ -448,9 +476,11 @@ public class IngestManager {
         startIngestJobFutures.values().forEach((handle) -> {
             handle.cancel(true);
         });
-        this.ingestJobsById.values().forEach((job) -> {
-            job.cancel(reason);
-        });
+        synchronized (ingestJobsById) {
+            this.ingestJobsById.values().forEach((job) -> {
+                job.cancel(reason);
+            });
+        }
     }
 
     /**
@@ -727,7 +757,8 @@ public class IngestManager {
      *
      * @return Map of module name to run time (in milliseconds)
      */
-    Map<String, Long> getModuleRunTimes() {
+    @Override
+    public Map<String, Long> getModuleRunTimes() {
         synchronized (ingestModuleRunTimes) {
             Map<String, Long> times = new HashMap<>(ingestModuleRunTimes);
             return times;
@@ -740,7 +771,8 @@ public class IngestManager {
      *
      * @return A collection of ingest manager ingest task snapshots.
      */
-    List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
+    @Override
+    public List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
         return new ArrayList<>(ingestThreadActivitySnapshots.values());
     }
 
@@ -749,11 +781,14 @@ public class IngestManager {
      *
      * @return A list of ingest job state snapshots.
      */
-    List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
+    @Override
+    public List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
-        ingestJobsById.values().forEach((job) -> {
-            snapShots.addAll(job.getDataSourceIngestJobSnapshots());
-        });
+        synchronized (ingestJobsById) {
+            ingestJobsById.values().forEach((job) -> {
+                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+            });
+        }
         return snapShots;
     }
 
@@ -789,7 +824,9 @@ public class IngestManager {
         public Void call() {
             try {
                 if (Thread.currentThread().isInterrupted()) {
-                    ingestJobsById.remove(job.getId());
+                    synchronized (ingestJobsById) {
+                        ingestJobsById.remove(job.getId());
+                    }
                     return null;
                 }
 
@@ -828,9 +865,9 @@ public class IngestManager {
     private final class ExecuteIngestJobTasksTask implements Runnable {
 
         private final long threadId;
-        private final IngestTaskQueue tasks;
+        private final BlockingIngestTaskQueue tasks;
 
-        ExecuteIngestJobTasksTask(long threadId, IngestTaskQueue tasks) {
+        ExecuteIngestJobTasksTask(long threadId, BlockingIngestTaskQueue tasks) {
             this.threadId = threadId;
             this.tasks = tasks;
         }
@@ -883,7 +920,9 @@ public class IngestManager {
      * running in an ingest thread.
      */
     @Immutable
-    static final class IngestThreadActivitySnapshot {
+    public static final class IngestThreadActivitySnapshot implements Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         private final long threadId;
         private final Date startTime;

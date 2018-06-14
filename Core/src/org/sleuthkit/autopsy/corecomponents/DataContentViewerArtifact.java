@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
+import javax.swing.JTextArea;
 import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -39,7 +40,6 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.event.TableColumnModelListener;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
@@ -62,7 +62,7 @@ import org.netbeans.swing.etable.ETable;
  * Content represented by a Node. Each BlackboardArtifact is rendered displayed
  * in a JTable representation of its BlackboardAttributes.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 3)
+@ServiceProvider(service = DataContentViewer.class, position = 7)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
 
     @NbBundle.Messages({
@@ -86,6 +86,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         Bundle.DataContentViewerArtifact_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
     private static final int CELL_BOTTOM_MARGIN = 5;
+    private static final int CELL_RIGHT_MARGIN = 1;
 
     public DataContentViewerArtifact() {
         initResultsTable();
@@ -152,12 +153,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 Component comp = resultsTable.prepareRenderer(
                         resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex);
                 final int rowHeight;
-                if (comp instanceof JTextComponent) {
-                    final JTextComponent tc = (JTextComponent) comp;
+             if (comp instanceof JTextArea) {
+                    final JTextArea tc = (JTextArea) comp;
                     final View rootView = tc.getUI().getRootView(tc);
-                    java.awt.Insets i = tc.getInsets(null);
+                    java.awt.Insets i = tc.getInsets();
                     rootView.setSize(resultsTable.getColumnModel().getColumn(valueColIndex)
-                            .getPreferredWidth() - i.left - i.right,
+                            .getWidth() - (i.left + i.right +CELL_RIGHT_MARGIN), //current width minus borders
                             Integer.MAX_VALUE);
                     rowHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
                 } else {
@@ -199,6 +200,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
+        jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
@@ -207,8 +209,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         nextPageButton = new javax.swing.JButton();
         pageLabel2 = new javax.swing.JLabel();
         prevPageButton = new javax.swing.JButton();
-        resultsTableScrollPane = new javax.swing.JScrollPane();
         artifactLabel = new javax.swing.JLabel();
+        resultsTableScrollPane = new javax.swing.JScrollPane();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -216,7 +218,10 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerArtifact.class, "DataContentViewerArtifact.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        setPreferredSize(new java.awt.Dimension(622, 58));
+        setPreferredSize(new java.awt.Dimension(100, 58));
+
+        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane1.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
         jPanel1.setPreferredSize(new java.awt.Dimension(620, 58));
 
@@ -263,9 +268,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             }
         });
 
-        resultsTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(620, 34));
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -285,8 +287,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(334, Short.MAX_VALUE))
-            .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(383, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                     .addContainerGap(280, Short.MAX_VALUE)
@@ -305,24 +306,32 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addContainerGap(35, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addComponent(artifactLabel)
-                    .addGap(0, 401, Short.MAX_VALUE)))
+                    .addGap(0, 58, Short.MAX_VALUE)))
         );
+
+        jScrollPane1.setViewportView(jPanel1);
+
+        resultsTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        resultsTableScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(620, 34));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
+            .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -345,6 +354,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JLabel pageLabel;
@@ -473,10 +483,11 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         // file and not more details about the artifact
         if ((artifact == null)
                 || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())) {
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())) {        
             return 3;
         } else {
-            return 5;
+            return 6;
         }
     }
 
@@ -844,7 +855,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             if (value instanceof String) {
                 jtex.setText((String) value);
                 jtex.setLineWrap(true);
-                jtex.setWrapStyleWord(true);
+                jtex.setWrapStyleWord(false);
             }
             //cell backgroud color when selected
             if (isSelected) {

@@ -24,8 +24,6 @@ import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Central Repository database implementation using Postgres as a
  * backend
  */
-public class PostgresEamDb extends AbstractSqlEamDb {
+final class PostgresEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDb.class.getName());
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,23 +25,28 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestJob.Snapshot;
 import org.sleuthkit.autopsy.ingest.IngestJob;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestThreadActivitySnapshot;
+import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotProvider;
 
 /**
  * An automated ingest job, which is an ingest job performed by the automated
  * ingest service.
  */
 @ThreadSafe
-final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
+final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSnapshotProvider, Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
     private static final int DEFAULT_PRIORITY = 0;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
@@ -89,6 +94,13 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
     @GuardedBy("this")
     private long dataSourceSize;
 
+    /*
+     * Version 3 fields.
+     */
+    private List<IngestThreadActivitySnapshot> ingestThreadsSnapshot;
+    private List<Snapshot> ingestJobsSnapshot;
+    private Map<String, Long> moduleRunTimesSnapshot;
+    
     /**
      * Constructs a new automated ingest job. All job state not specified in the
      * job manifest is set to the default state for a new job.
@@ -125,6 +137,13 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
              * Version 2 fields.
              */
             this.dataSourceSize = 0;
+            
+            /*
+             * Version 3 fields.           
+             */
+            this.ingestThreadsSnapshot = Collections.emptyList();
+            this.ingestJobsSnapshot = Collections.emptyList();
+            this.moduleRunTimesSnapshot = Collections.emptyMap();
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -167,6 +186,13 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
              * Version 2 fields.
              */
             this.dataSourceSize = nodeData.getDataSourceSize();
+            
+            /*
+             * Version 3 fields
+             */
+            this.ingestThreadsSnapshot = Collections.emptyList();
+            this.ingestJobsSnapshot = Collections.emptyList();
+            this.moduleRunTimesSnapshot = Collections.emptyMap();
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -340,6 +366,31 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
         return this.ingestJob;
     }
 
+    /**
+     * Sets the ingest thread snapshot for the auto ingest job.
+     *
+     * @param snapshot
+     */
+    synchronized void setIngestThreadSnapshot(List<IngestThreadActivitySnapshot> snapshot) {
+        this.ingestThreadsSnapshot = snapshot;
+    }
+
+    /**
+     * Sets the ingest job snapshot for the auto ingest job.
+     * @param snapshot 
+     */
+    synchronized void setIngestJobsSnapshot(List<Snapshot> snapshot) {
+        this.ingestJobsSnapshot = snapshot;
+    }
+    
+    /**
+     * Sets the module run times snapshot for the auto ingest job.
+     * @param snapshot 
+     */
+    synchronized void setModuleRuntimesSnapshot(Map<String, Long> snapshot) {
+        this.moduleRunTimesSnapshot = snapshot;
+    }
+    
     /**
      * Cancels the job.
      */
@@ -539,6 +590,21 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
     @Override
     public int compareTo(AutoIngestJob otherJob) {
         return -this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
+    }
+
+    @Override
+    public List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
+        return this.ingestThreadsSnapshot;
+    }
+
+    @Override
+    public List<Snapshot> getIngestJobSnapshots() {
+        return this.ingestJobsSnapshot;
+    }
+
+    @Override
+    public Map<String, Long> getModuleRunTimes() {
+        return this.moduleRunTimesSnapshot;
     }
 
     /**

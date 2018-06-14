@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +53,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
@@ -100,7 +101,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, Bundle.DirectoryTreeTopComponent_resultsView_title());
+    private final DataResultTopComponent dataResult = new DataResultTopComponent(Bundle.DirectoryTreeTopComponent_resultsView_title());
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
@@ -363,8 +364,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         Case currentCase = null;
         try {
-            currentCase = Case.getCurrentCase();
-        } catch (IllegalStateException ex) {
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
             // No open case.
         }
 
@@ -524,7 +525,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
          * be closed if there is no opne case or the open case has no data
          * sources.
          */
-        return !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
+        try {
+            Case openCase = Case.getCurrentCaseThrows();
+            return openCase.hasData() == false;
+        } catch (NoCurrentCaseException ex) {
+            return true;
+        }
     }
 
     /**
@@ -613,13 +619,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                  * already closed.
                  */
                 try {
-                    Case currentCase = Case.getCurrentCase();
+                    Case currentCase = Case.getCurrentCaseThrows();
                     // We only need to trigger openCoreWindows() when the
                     // first data source is added.
                     if (currentCase.getDataSources().size() == 1) {
                         SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
                     }
-                } catch (IllegalStateException | TskCoreException notUsed) {
+                } catch (NoCurrentCaseException | TskCoreException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
@@ -1053,10 +1059,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
         undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
         getTree().expandNode(treeNode);
-        try {
-            em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
-        } catch (PropertyVetoException ex) {
-            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        if (this.getSelectedNode().equals(treeNode)) {
+            this.setDirectoryListingActive();
+            this.respondSelection(em.getSelectedNodes(), new Node[]{treeNode});
+        } else {
+            try {
+                em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
+            } catch (PropertyVetoException ex) {
+                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            }
         }
         // Another thread is needed because we have to wait for dataResult to populate
     }

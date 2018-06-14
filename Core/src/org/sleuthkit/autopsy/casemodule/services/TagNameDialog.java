@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.services;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
@@ -34,6 +32,7 @@ import org.sleuthkit.datamodel.TskData;
 
 @Messages({"TagNameDialog.descriptionLabel.text=Description:",
     "TagNameDialog.notableCheckbox.text=Tag indicates item is notable."})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class TagNameDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;

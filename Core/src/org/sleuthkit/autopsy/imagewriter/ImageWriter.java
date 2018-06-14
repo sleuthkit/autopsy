@@ -83,7 +83,7 @@ class ImageWriter implements PropertyChangeListener{
         // null before Image Writer finishes. The user can still elect to wait for image writer
         // (in ImageWriterService.closeCaseResources) even though the case is closing. 
         try{
-            caseDb = Case.getOpenCase().getSleuthkitCase();
+            caseDb = Case.getCurrentCaseThrows().getSleuthkitCase();
         } catch (NoCurrentCaseException ex){
             logger.log(Level.SEVERE, "Unable to load case. Image writer will be cancelled.");
             this.isCancelled = true;
@@ -152,7 +152,7 @@ class ImageWriter implements PropertyChangeListener{
             
             Image image;
             try{
-                image = Case.getOpenCase().getSleuthkitCase().getImageById(dataSourceId);
+                image = Case.getCurrentCaseThrows().getSleuthkitCase().getImageById(dataSourceId);
                 imageHandle = image.getImageHandle();
             } catch (NoCurrentCaseException ex){
                 // This exception means that getOpenCase() failed because no case was open.
@@ -174,7 +174,7 @@ class ImageWriter implements PropertyChangeListener{
                 periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
                 progressHandle = ProgressHandle.createHandle(Bundle.ImageWriter_progressBar_message(dataSourceName));
                 progressHandle.start(100);
-                progressUpdateTask = periodicTasksExecutor.scheduleAtFixedRate(
+                progressUpdateTask = periodicTasksExecutor.scheduleWithFixedDelay(
                         new ProgressUpdateTask(progressHandle, imageHandle), 0, 250, TimeUnit.MILLISECONDS);
             }
 

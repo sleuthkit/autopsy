@@ -24,22 +24,25 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel to allow the user to create and delete custom tag types.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
@@ -421,8 +424,10 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
     private void sendStatusChangedEvents() {
         for (String modifiedTagDisplayName : updatedStatusTags) {
             //if  user closes their case after options have been changed but before application of them is complete don't notify
-            if (Case.isCaseOpen()) {
-                Case.getCurrentCase().notifyTagDefinitionChanged(modifiedTagDisplayName);
+            try {
+                Case.getCurrentCaseThrows().notifyTagDefinitionChanged(modifiedTagDisplayName);
+            } catch (NoCurrentCaseException ex) {
+                Logger.getLogger(TagOptionsPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }
         }
         updatedStatusTags.clear();

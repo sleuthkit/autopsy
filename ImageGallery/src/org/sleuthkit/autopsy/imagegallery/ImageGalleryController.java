@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
@@ -192,8 +193,10 @@ public final class ImageGalleryController {
         Platform.runLater(() -> {
             stale.set(b);
         });
-        if (Case.isCaseOpen()) {
-            new PerCaseProperties(Case.getCurrentCase()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
+        try {
+            new PerCaseProperties(Case.getCurrentCaseThrows()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
+        } catch (NoCurrentCaseException ex) {
+            Logger.getLogger(ImageGalleryController.class.getName()).log(Level.WARNING, "Exception while getting open case."); //NON-NLS
         }
     }
 
@@ -209,10 +212,14 @@ public final class ImageGalleryController {
     private ImageGalleryController() {
 
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
-            //if we just turned on listening and a case is open and that case is not up to date
-            if (newValue && !oldValue && Case.isCaseOpen() && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCase())) {
-                //populate the db
-                queueDBTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
+            try {
+                //if we just turned on listening and a case is open and that case is not up to date
+                if (newValue && !oldValue && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCaseThrows())) {
+                    //populate the db
+                    queueDBTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
+                }
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.WARNING, "Exception while getting open case.", ex);
             }
         });
 
@@ -650,6 +657,7 @@ public final class ImageGalleryController {
     @NbBundle.Messages({"BulkTask.committingDb.status=committing image/video database",
         "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
+    /* Base abstract class for various methods of copying data into the Image gallery DB */
     abstract static private class BulkTransferTask extends BackgroundTask {
 
         static private final String FILE_EXTENSION_CLAUSE =
@@ -682,6 +690,10 @@ public final class ImageGalleryController {
             this.tskCase = tskCase;
         }
 
+        /**
+         * 
+         * @param success true if the transfer was successful
+         */
         abstract void cleanup(boolean success);
 
         abstract List<AbstractFile> getFiles() throws TskCoreException;

@@ -49,6 +49,8 @@ import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
+import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -56,9 +58,11 @@ import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListen
  */
 @Messages({"IngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
     "IngestModule.prevCaseComment.text=Previous Case: "})
-class IngestModule implements FileIngestModule {
+final class IngestModule implements FileIngestModule {
 
-    private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
+    static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
+
+    private final static Logger logger = Logger.getLogger(IngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
@@ -68,8 +72,19 @@ class IngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private CorrelationAttribute.Type filesType;
 
+    private final boolean flagTaggedNotableItems;
+
+    /**
+     * Instantiate the Correlation Engine ingest module.
+     *
+     * @param settings The ingest settings for the module instance.
+     */
+    IngestModule(IngestSettings settings) {
+        flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
+    }
+
     @Override
-    public ProcessResult process(AbstractFile af) {
+    public ProcessResult process(AbstractFile abstractFile) {
         if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
@@ -81,21 +96,25 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
-            blackboard = Case.getOpenCase().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
         }
 
-        if (!EamArtifactUtil.isValidCentralRepoFile(af)) {
+        if (!EamArtifactUtil.isSupportedAbstractFileType(abstractFile)) {
             return ProcessResult.OK;
         }
 
+        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
+            return ProcessResult.OK;
+        }
+        
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return ProcessResult.ERROR;
         }
 
@@ -105,21 +124,25 @@ class IngestModule implements FileIngestModule {
         }
 
         // get the hash because we're going to correlate it
-        String md5 = af.getMd5Hash();
+        String md5 = abstractFile.getMd5Hash();
         if ((md5 == null) || (HashUtility.isNoDataMd5(md5))) {
             return ProcessResult.OK;
         }
 
-        /* Search the central repo to see if this file was previously 
-         * marked as being bad.  Create artifact if it was.  */
-        if (af.getKnown() != TskData.FileKnown.KNOWN) {
+        /*
+         * Search the central repo to see if this file was previously marked as
+         * being bad. Create artifact if it was.
+         */
+        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
-                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
-                if (!caseDisplayNames.isEmpty()) {
-                    postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
+                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Notable artifact query");
+                List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
+                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
+                if (!caseDisplayNamesList.isEmpty()) {
+                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
@@ -130,14 +153,14 @@ class IngestModule implements FileIngestModule {
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
                     eamCase,
                     eamDataSource,
-                    af.getParentPath() + af.getName(),
+                    abstractFile.getParentPath() + abstractFile.getName(),
                     null,
-                    TskData.FileKnown.UNKNOWN  // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
+                    TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
             return ProcessResult.ERROR;
         }
 
@@ -147,6 +170,7 @@ class IngestModule implements FileIngestModule {
     @Override
     public void shutDown() {
         IngestEventsListener.decrementCorrelationEngineModuleCount();
+
         if ((EamDb.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
@@ -154,19 +178,19 @@ class IngestModule implements FileIngestModule {
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return;
         }
         try {
             dbManager.bulkInsertArtifacts();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
         try {
             Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamCase.getCaseUUID(), eamDataSource.getDeviceID());
-            LOGGER.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
+            logger.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
         }
 
         // TODO: once we implement shared cache, if refCounter is 1, then submit data in bulk.
@@ -181,6 +205,25 @@ class IngestModule implements FileIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         IngestEventsListener.incrementCorrelationEngineModuleCount();
+
+        /*
+         * Tell the IngestEventsListener to flag notable items based on the
+         * current module's configuration. This is a work around for the lack of
+         * an artifacts pipeline. Note that this can be changed by another
+         * module instance. All modules are affected by the value. While not
+         * ideal, this will be good enough until a better solution can be
+         * posited.
+         *
+         * Note: Flagging cannot be disabled if any other instances of the
+         * Correlation Engine module are running. This restriction is to prevent
+         * missing results in the case where the first module is flagging
+         * notable items, and the proceeding module (with flagging disabled)
+         * causes the first to stop flagging.
+         */
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagNotableItems()) {
+            IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
+        }
+
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
@@ -198,16 +241,16 @@ class IngestModule implements FileIngestModule {
         }
         Case autopsyCase;
         try {
-            autopsyCase = Case.getOpenCase();
+            autopsyCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
-            throw new IngestModuleException("Exception while getting open case.", ex); 
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            throw new IngestModuleException("Exception while getting open case.", ex);
         }
-        
+
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
                 && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
-            LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
+            logger.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
@@ -216,14 +259,14 @@ class IngestModule implements FileIngestModule {
         try {
             centralRepoDb = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
 
         try {
             filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
 
@@ -237,15 +280,15 @@ class IngestModule implements FileIngestModule {
             try {
                 eamCase = centralRepoDb.newCase(autopsyCase);
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
                 throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
             }
         }
-        
+
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
             throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
         }
         // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
@@ -259,7 +302,7 @@ class IngestModule implements FileIngestModule {
                     centralRepoDb.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
                 throw new IngestModuleException("Error adding data source to Central Repository.", ex); // NON-NLS
             }
 
@@ -282,7 +325,7 @@ class IngestModule implements FileIngestModule {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(tifArtifact);
             } catch (Blackboard.BlackboardException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }
 
             // send inbox message
@@ -291,9 +334,9 @@ class IngestModule implements FileIngestModule {
             // fire event to notify UI of this new artifact
             services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
         }
     }
 

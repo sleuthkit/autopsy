@@ -32,7 +32,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  * A panel which allows the user to select a Logical Evidence File (L01)
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements DocumentListener {
 
     private static final long serialVersionUID = 1L;
@@ -191,7 +191,7 @@ final class LogicalEvidenceFilePanel extends javax.swing.JPanel implements Docum
         }
         // display warning if there is one (but don't disable "next" button)
         try {
-            if (!PathValidator.isValid(path, Case.getOpenCase().getCaseType())) {
+            if (!PathValidator.isValid(path, Case.getCurrentCaseThrows().getCaseType())) {
                 errorLabel.setVisible(true);
                 errorLabel.setText(Bundle.LogicalEvidenceFilePanel_pathValidation_dataSourceOnCDriveError());
                 return false;
