@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -148,7 +149,9 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     }
 
     private static StringBuilder sanitize(String s) {
-        return sanitizeToUTF8(replaceInvalidUTF16(s));
+        String normStr = Normalizer.normalize(s, Normalizer.Form.NFKD);
+        return sanitizeToUTF8(replaceInvalidUTF16(normStr));
+
     }
 
     @Override
