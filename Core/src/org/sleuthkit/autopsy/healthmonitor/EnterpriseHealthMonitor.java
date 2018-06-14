@@ -65,7 +65,7 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
     
     private final static Logger logger = Logger.getLogger(EnterpriseHealthMonitor.class.getName());
     private final static String DATABASE_NAME = "EnterpriseHealthMonitor";
-    private final static long DATABASE_WRITE_INTERVAL = 1; // Minutes
+    private final static long DATABASE_WRITE_INTERVAL = 60; // Minutes
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 1);
     
@@ -962,7 +962,8 @@ public final class EnterpriseHealthMonitor implements PropertyChangeListener {
             throw new HealthMonitorException("Error getting database lock");
         }
         
-        String[] metricNames = {"Disk Reads: Hash calculation", "Database: getImages query", "Solr: Index chunk", "Solr: Connectivity check"}; // NON-NLS 
+        String[] metricNames = {"Disk Reads: Hash calculation", "Database: getImages query", "Solr: Index chunk", "Solr: Connectivity check",
+            "Correlation Engine: Notable artifact query", "Correlation Engine: Bulk insert"}; // NON-NLS 
         
         Random rand = new Random();
         
