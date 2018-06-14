@@ -120,7 +120,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     try {
                         saveToCSV();
                     } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
                     }
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
@@ -179,7 +179,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
                         DEFAULT_OPTION, PLAIN_MESSAGE);
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error getting commonality details.", ex);
+                LOGGER.log(Level.SEVERE, "Error getting commonality details.", ex);
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_failed(),
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
@@ -303,7 +303,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
 
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
+            LOGGER.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
         }
     }
 
@@ -395,7 +395,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             try {
                 content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
                 return null;
             }
 
@@ -441,7 +441,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     }
                 }
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
 
         } else {
@@ -454,7 +454,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     }
                 }
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
         }
 
@@ -535,13 +535,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
             return artifactInstances;
         } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
             // do nothing. 
             // @@@ Review this behavior
-            logger.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
         }
 
         return new HashMap<>(0);
@@ -595,7 +595,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         try {
             deviceId = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId()).getDeviceId();
         } catch (TskDataException | TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting data source info: {0}", ex);
+            LOGGER.log(Level.WARNING, "Error getting data source info: {0}", ex);
             return;
         }
         UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
@@ -688,7 +688,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     newCeArtifact.addInstance(corAttrInstance);
                     tableModel.addEamArtifact(newCeArtifact);
                 } catch (EamDbException ex) {
-                    logger.log(Level.SEVERE, "Error creating correlation attribute", ex);
+                    LOGGER.log(Level.SEVERE, "Error creating correlation attribute", ex);
                 }
             });
         }
