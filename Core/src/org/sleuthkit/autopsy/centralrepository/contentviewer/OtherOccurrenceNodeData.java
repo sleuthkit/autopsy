@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -29,24 +30,33 @@ import org.sleuthkit.datamodel.TskDataException;
 
 class OtherOccurrenceNodeData {
     
+    private final String FILE_TYPE = "Files";
+    
     private String caseName;
     private String deviceID;
     private String dataSourceName;
     private final String filePath;
-    private final String type;
+    private final String typeStr;
+    private final CorrelationAttribute.Type type;
     private final String value;
     private TskData.FileKnown known;
     private final String comment;
     
-    OtherOccurrenceNodeData(CorrelationAttributeInstance instance, String type, String value) {
+    private AbstractFile originalAbstractFile = null;
+    private CorrelationAttributeInstance originalCorrelationInstance = null;
+    
+    OtherOccurrenceNodeData(CorrelationAttributeInstance instance, CorrelationAttribute.Type type, String value) {
         caseName = instance.getCorrelationCase().getDisplayName();
         deviceID = instance.getCorrelationDataSource().getDeviceID();
         dataSourceName = instance.getCorrelationDataSource().getName();
         filePath = instance.getFilePath();
+        this.typeStr = type.getDisplayName();
         this.type = type;
         this.value = value;
         known = instance.getKnownStatus();
         comment = instance.getComment();
+        
+        originalCorrelationInstance = instance;
     }
     
     OtherOccurrenceNodeData(AbstractFile newFile, Case autopsyCase) throws EamDbException {
@@ -60,14 +70,38 @@ class OtherOccurrenceNodeData {
         }
         
         filePath = newFile.getParentPath() + newFile.getName();
-        type = "Files";
+        typeStr = FILE_TYPE;
+        this.type = null; // TEMP
         value = newFile.getMd5Hash();
         known = newFile.getKnown();
         comment = "";
+        
+        originalAbstractFile = newFile;
+    }
+    
+    boolean isFileType() {
+        return FILE_TYPE.equals(typeStr);
     }
     
     void updateKnown(TskData.FileKnown newKnownStatus) {
         known = newKnownStatus;
+    }
+    
+    boolean isCentralRepoNode() {
+        return (originalCorrelationInstance != null);
+    }
+    
+    /**
+     * Uses the saved instance plus type and value to make a new CorrelationAttribute
+     * @return 
+     */
+    CorrelationAttribute createCorrelationAttribute() throws EamDbException {
+        if (! isCentralRepoNode() ) { 
+            throw new EamDbException("Can not create CorrelationAttribute for non central repo node");
+        }
+        CorrelationAttribute attr = new CorrelationAttribute(type, value);
+        attr.addInstance(originalCorrelationInstance);
+        return attr;
     }
     
     String getCaseName() {
@@ -87,7 +121,7 @@ class OtherOccurrenceNodeData {
     }
     
     String getType() {
-        return type;
+        return typeStr;
     }
     
     String getValue() {
@@ -100,5 +134,16 @@ class OtherOccurrenceNodeData {
     
     String getComment() {
         return comment;
+    }
+    
+    AbstractFile getAbstractFile() {
+        return originalAbstractFile;
+    }
+    
+    CorrelationAttributeInstance getCorrelationAttributeInstance() throws EamDbException {
+        if (originalCorrelationInstance == null) {
+            throw new EamDbException("CorrelationAttributeInstance is null");
+        }
+        return originalCorrelationInstance;
     }
 }
