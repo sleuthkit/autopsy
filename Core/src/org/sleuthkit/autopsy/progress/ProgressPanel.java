@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.progress;
 /**
  * A progress panel consisting of a message label and a progress bar.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ProgressPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

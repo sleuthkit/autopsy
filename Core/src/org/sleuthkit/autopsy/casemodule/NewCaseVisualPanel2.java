@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
- /*
- * NewCaseVisualPanel2.java
- *
- * Created on Mar 7, 2012, 11:01:48 AM
- */
 package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
 
 /**
- *
- * @author dfickling
+ * The JPanel for the second page of the new case wizard.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class NewCaseVisualPanel2 extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

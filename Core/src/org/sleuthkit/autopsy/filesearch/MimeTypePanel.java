@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,10 @@ import javax.swing.event.ListSelectionEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
+/**
+ * Enter MIME types for search.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MimeTypePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(MimeTypePanel.class.getName());
