@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  *  A panel which allows the user to select local files and/or directories.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LocalFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

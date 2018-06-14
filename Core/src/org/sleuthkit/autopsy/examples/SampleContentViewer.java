@@ -31,7 +31,6 @@ package org.sleuthkit.autopsy.examples;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -45,6 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * compiled each time to ensure that it is compliant with the API.
  */
 // @ServiceProvider(service = DataContentViewer.class)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class SampleContentViewer extends javax.swing.JPanel implements DataContentViewer {
 
     /**

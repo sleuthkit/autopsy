@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
- /*
- * NameSearchPanel.java
- *
- * Created on Oct 19, 2011, 11:58:53 AM
- */
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
@@ -33,9 +27,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 /**
- *
- * @author pmartel
+ * Provide a name for search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class NameSearchPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

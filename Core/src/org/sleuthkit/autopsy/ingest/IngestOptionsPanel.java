@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
 /**
  * Global options panel for keyword searching.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     @NbBundle.Messages({"IngestOptionsPanel.settingsTab.text=Settings",

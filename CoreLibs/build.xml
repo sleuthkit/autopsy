@@ -20,8 +20,16 @@
 
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
     <property name="lib.dir" value="${basedir}/release/modules/lib" />
-   
-    <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
+    <property name="modules.dir" value="${basedir}/release/modules/" />
+     
+    <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <!--Copy openCV dependencies to release-->
+        <copy todir="${modules.dir}" >
+            <fileset dir="${thirdparty.dir}/opencv" />
+        </copy>
+    </target>
+    
+    <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs,get-thirdparty-dependencies">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve log="quiet"/>
         <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
