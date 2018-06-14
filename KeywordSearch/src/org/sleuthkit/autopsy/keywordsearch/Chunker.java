@@ -149,7 +149,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     }
 
     private static StringBuilder sanitize(String s) {
-        String normStr = Normalizer.normalize(s, Normalizer.Form.NFKD);
+        String normStr = Normalizer.normalize(s, Normalizer.Form.NFKC);
         return sanitizeToUTF8(replaceInvalidUTF16(normStr));
 
     }

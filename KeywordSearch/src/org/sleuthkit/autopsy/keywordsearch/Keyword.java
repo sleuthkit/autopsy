@@ -90,7 +90,7 @@ class Keyword {
      *                     used (e.g. for highlighting purposes).
      */
     Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {
-        this.searchTerm = Normalizer.normalize(searchTerm, Normalizer.Form.NFKD);
+        this.searchTerm = Normalizer.normalize(searchTerm, Normalizer.Form.NFKC);
         this.isLiteral = isLiteral;
         this.isWholeWord = isWholeWord;
         this.listName = listName;
