@@ -58,11 +58,7 @@ class Keyword {
      *                    than a substring.
      */
     Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord) {
-        this.searchTerm = Normalizer.normalize(searchTerm, Normalizer.Form.NFKD);;
-        this.isLiteral = isLiteral;
-        this.isWholeWord = isWholeWord;
-        this.listName = "";
-        this.originalTerm = searchTerm;
+        this(searchTerm, isLiteral, isWholeWord, "", searchTerm);
     }
 
     /**
