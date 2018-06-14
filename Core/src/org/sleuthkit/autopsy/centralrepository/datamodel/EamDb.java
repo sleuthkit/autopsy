@@ -634,4 +634,13 @@ public interface EamDb {
      * to get the lock
      */
     public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException;
+
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
 }
