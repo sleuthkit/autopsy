@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Searches for files by md5 hash, based off the hash given in this panel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
 
     private static final Logger logger = Logger.getLogger(HashDbSearchPanel.class.getName());
@@ -329,7 +330,7 @@ class HashDbSearchPanel extends javax.swing.JPanel implements ActionListener {
         errorField.setVisible(false);
         // Get all the rows in the table
         int numRows = hashTable.getRowCount();
-        ArrayList<String> hashes = new ArrayList<String>();
+        ArrayList<String> hashes = new ArrayList<>();
         for (int i = 0; i < numRows; i++) {
             hashes.add((String) hashTable.getValueAt(i, 0));
         }

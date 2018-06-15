@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
- /*
- * KnownStatusSearchPanel.java
- *
- * Created on Oct 19, 2011, 11:45:44 AM
- */
 package org.sleuthkit.autopsy.filesearch;
 
 import javax.swing.JCheckBox;
 
 /**
- *
- * @author pmartel
+ * Search for known, unknown, and bad files.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class KnownStatusSearchPanel extends javax.swing.JPanel {
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,6 +65,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
     "CTL_ImageGalleryAction=Image/Video Gallery",
     "CTL_ImageGalleryTopComponent=Image/Video Gallery"
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS

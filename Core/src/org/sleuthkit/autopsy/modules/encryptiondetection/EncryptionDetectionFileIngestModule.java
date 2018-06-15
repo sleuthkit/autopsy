@@ -75,6 +75,8 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private static final String MIME_TYPE_MSACCESS = "application/x-msaccess";
     private static final String MIME_TYPE_PDF = "application/pdf";
 
+    private static final String[] FILE_IGNORE_LIST = {"hiberfile.sys", "pagefile.sys"};
+
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
@@ -122,31 +124,39 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
         try {
             /*
-             * Qualify the file type.
+             * Qualify the file type, qualify it against hash databases, and
+             * verify the file hasn't been deleted.
              */
             if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                     && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                     && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
                     && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
-                    && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)) {
+                    && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
+                    && !file.getKnown().equals(TskData.FileKnown.KNOWN)
+                    && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
                 /*
-                 * Qualify the file against hash databases.
+                 * Is the file in FILE_IGNORE_LIST?
                  */
-                if (!file.getKnown().equals(TskData.FileKnown.KNOWN)) {
-                    /*
-                     * Qualify the MIME type.
-                     */
-                    String mimeType = fileTypeDetector.getMIMEType(file);
-                    if (mimeType.equals("application/octet-stream")) {
-                        if (isFileEncryptionSuspected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
-                                    String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
-                        }
-                    } else {
-                        if (isFilePasswordProtected(file)) {
-                            return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
+                String filePath = file.getParentPath();
+                if (filePath.equals("/")) {
+                    String fileName = file.getName();
+                    for (String listEntry : FILE_IGNORE_LIST) {
+                        if (fileName.equalsIgnoreCase(listEntry)) {
+                            // Skip this file.
+                            return IngestModule.ProcessResult.OK;
                         }
                     }
+                }
+
+                /*
+                 * Qualify the MIME type.
+                 */
+                String mimeType = fileTypeDetector.getMIMEType(file);
+                if (mimeType.equals("application/octet-stream") && isFileEncryptionSuspected(file)) {
+                    return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED,
+                            String.format(Bundle.EncryptionDetectionFileIngestModule_artifactComment_suspected(), calculatedEntropy));
+                } else if (isFilePasswordProtected(file)) {
+                    return flagFile(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionFileIngestModule_artifactComment_password());
                 }
             }
         } catch (ReadContentInputStreamException | SAXException | TikaException | UnsupportedCodecException ex) {
@@ -376,7 +386,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 fileSizeQualified = true;
             }
         }
-        
+
         if (fileSizeQualified) {
             /*
              * Qualify the entropy.
@@ -386,7 +396,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                 possiblyEncrypted = true;
             }
         }
-        
+
         return possiblyEncrypted;
     }
 }

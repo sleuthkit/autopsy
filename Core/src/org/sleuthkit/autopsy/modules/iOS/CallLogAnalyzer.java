@@ -50,7 +50,6 @@ final class CallLogAnalyzer {
     private Connection connection = null;
     private ResultSet resultSet = null;
     private Statement statement = null;
-    private String dbPath = "";
     private long fileId = 0;
     private java.io.File jFile = null;
     private final String moduleName = iOSModuleFactory.getModuleName();
@@ -79,6 +78,7 @@ final class CallLogAnalyzer {
                 return;
             }
             for (AbstractFile file : absFiles) {
+                String dbPath = "";
                 try {
                     jFile = new java.io.File(Case.getCurrentCaseThrows().getTempDirectory(), file.getName().replaceAll("[<>%|\"/:*\\\\]", ""));
                     dbPath = jFile.toString(); //path of file as string

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * the main layered pane container for messages table (IngestMessagePanel) and
  * details view (IngestMessageDetailsPanel)
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class IngestMessageMainPanel extends javax.swing.JPanel {
 
     private IngestMessagePanel messagePanel;

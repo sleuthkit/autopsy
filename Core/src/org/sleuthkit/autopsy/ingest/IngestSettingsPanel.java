@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 /**
  * Options panel that allow users to set application preferences.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel {
 
     IngestSettingsPanel() {

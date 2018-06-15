@@ -35,6 +35,7 @@ import org.openide.windows.WindowManager;
 /**
  * A dialog that displays ingest task progress snapshots.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class IngestProgressSnapshotDialog extends JDialog {
 
     private static final String TITLE = NbBundle.getMessage(IngestProgressSnapshotDialog.class, "IngestProgressSnapshotDialog.title.text");

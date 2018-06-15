@@ -31,7 +31,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -46,6 +45,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  * to select a file as well as choose the timezone and whether to ignore orphan
  * files in FAT32.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ImageFilePanel extends JPanel implements DocumentListener {
 
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
