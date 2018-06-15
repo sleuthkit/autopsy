@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JTextPane;
 import javax.swing.SizeRequirements;
 import javax.swing.SwingWorker;
 import javax.swing.text.Element;
@@ -48,6 +47,7 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
  * Panel displays HTML content sent to ExtractedContentViewer, and provides a
  * combo-box to select between multiple sources.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ExtractedContentPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());

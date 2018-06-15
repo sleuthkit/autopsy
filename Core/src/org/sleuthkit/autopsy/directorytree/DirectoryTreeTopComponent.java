@@ -97,6 +97,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({
     "DirectoryTreeTopComponent.resultsView.title=Listing"
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
 
     private final transient ExplorerManager em = new ExplorerManager();

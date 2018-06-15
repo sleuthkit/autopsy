@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,10 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.awt.*;
-
 /**
  * The panel shown for all TableReportModules when configuring report modules.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DefaultReportConfigurationPanel extends javax.swing.JPanel {
 
     /**

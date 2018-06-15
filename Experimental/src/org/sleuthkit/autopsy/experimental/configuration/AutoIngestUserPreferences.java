@@ -267,30 +267,7 @@ public final class AutoIngestUserPreferences {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE, Integer.toString(retries));
     }
 
-    /**
-     * Get maximum number of concurrent ingest nodes allowable for one case at a
-     * time.
-     *
-     * @return maximum number of concurrent nodes for one case. Default is 3.
-     */
-    public static int getMaxConcurrentJobsForOneCase() {
-        if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE)) {
-            return Integer.parseInt(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE));
-        }
-        return 3;
-    }
-
-    /**
-     * Get maximum number of concurrent ingest nodes allowable for one case at a
-     * time.
-     *
-     * @param numberOfNodes the number of concurrent nodes to allow for one case
-     */
-    public static void setMaxConcurrentIngestNodesForOneCase(int numberOfNodes) {
-        ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE, Integer.toString(numberOfNodes));
-    }
-
-    /**
+     /**
      * Get status database logging checkbox state for automated ingest mode from
      * persistent storage.
      *

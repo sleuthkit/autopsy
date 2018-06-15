@@ -48,7 +48,6 @@ import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -60,11 +59,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 @NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
     "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
     "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
     private static final Image EXTERNAL = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm());
-
-    private static final Logger LOGGER = Logger.getLogger(MediaViewImagePanel.class.getName());
 
     private final boolean fxInited;
 

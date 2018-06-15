@@ -77,6 +77,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  * ancestor top component's explorer manager at runtime.
  */
 @ServiceProvider(service = DataResultViewer.class)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;

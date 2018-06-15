@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Panel which displays the available DataSourceProcessors and allows selection
  * of one
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AddImageWizardSelectDspVisual extends JPanel {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());

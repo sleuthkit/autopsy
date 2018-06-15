@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * ImageDetailsPanel.java
- *
- * Created on May 2, 2011, 3:53:49 PM
- */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
- *
- * @author jantonius
+ * Image details panel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ImageDetailsPanel extends javax.swing.JPanel {
 
     /**
