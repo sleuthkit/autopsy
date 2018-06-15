@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -69,7 +68,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * View correlation results from other cases
@@ -458,9 +456,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     /**
-     * Query the database for artifact instances from other cases correlated to
-     * the given central repository artifact. Instances from the same datasource
-     * / device will also be included.
+     * Query the central repo database (if enabled) and the case database to find all
+     * artifact instances correlated to the given central repository artifact. If the 
+     * central repo is not enabled, this will only return files from the current case
+     * with matching MD5 hashes.
      *
      * @param corAttr        CorrelationAttribute to query for
      * @param dataSourceName Data source to filter results
@@ -521,6 +520,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         return new HashMap<>(0);
     }
 
+    /**
+     * Get all other abstract files in the current case with the same MD5 as the selected node.
+     * @param corAttr  The CorrelationAttribute containing the MD5 to search for
+     * @param openCase The current case
+     * @return List of matching AbstractFile objects
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     * @throws EamDbException 
+     */
     private List<AbstractFile> getCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
         String md5 = corAttr.getCorrelationValue();
 
@@ -570,7 +578,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         
         // If this node is already in the list, the only thing we need to do is
         // update the known status to BAD if the caseDB version had known status BAD.
-        // Otherwise, add the new node to the map.
+        // Otherwise this is a new node so add the new node to the map.
         if (nodeDataMap.containsKey(uniquePathKey)) {
             if (newNode.getKnown() == TskData.FileKnown.BAD) {
                 OtherOccurrenceNodeData prevInstance = nodeDataMap.get(uniquePathKey);
@@ -583,18 +591,20 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     @Override
     public boolean isSupported(Node node) {
-        this.file = this.getAbstractFileFromNode(node);
-        //  Is supported if this node
-        //      has correlatable content (File, BlackboardArtifact) OR
-        //      other common files across datasources.
 
+        // Is supported if one of the following is true:
+        // - The central repo is enabled and the node has correlatable content
+        //   (either through the MD5 hash of the associated file or through a BlackboardArtifact)
+        // - The central repo is disabled and the backing file has a valid MD5 hash
+        this.file = this.getAbstractFileFromNode(node);
         if (EamDb.isEnabled()) {
             return this.file != null
                     && this.file.getSize() > 0
                     && !getCorrelationAttributesFromNode(node).isEmpty();
         } else {
             return this.file != null
-                    && this.file.getSize() > 0;
+                    && this.file.getSize() > 0
+                    && ((this.file.getMd5Hash() != null) && ( ! this.file.getMd5Hash().isEmpty()));
         }
     }
 
@@ -813,16 +823,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
         boolean enableCentralRepoActions = false;
-        boolean enableComment = false;
 
         if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
             int rowIndex = otherCasesTable.getSelectedRow();
             OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(rowIndex);
             if (selectedNode.isCentralRepoNode()) {
                 enableCentralRepoActions = true;
-                if (selectedNode.isFileType()) {
-                    enableComment = true;
-                }
             }
         }
 

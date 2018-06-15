@@ -28,9 +28,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
+/**
+ * Class for populating the Other Occurrences tab
+ */
 class OtherOccurrenceNodeData {
     
-    private final String FILE_TYPE = "Files";
+    // For now hard code the string for the central repo files type, since 
+    // getting it dynamically can fail.
+    private final String FILE_TYPE_STR = "Files";
     
     private String caseName;
     private String deviceID;
@@ -45,6 +50,12 @@ class OtherOccurrenceNodeData {
     private AbstractFile originalAbstractFile = null;
     private CorrelationAttributeInstance originalCorrelationInstance = null;
     
+    /**
+     * Create a node from a central repo instance.
+     * @param instance The central repo instance
+     * @param type     The type of the instance
+     * @param value    The value of the instance
+     */
     OtherOccurrenceNodeData(CorrelationAttributeInstance instance, CorrelationAttribute.Type type, String value) {
         caseName = instance.getCorrelationCase().getDisplayName();
         deviceID = instance.getCorrelationDataSource().getDeviceID();
@@ -59,6 +70,12 @@ class OtherOccurrenceNodeData {
         originalCorrelationInstance = instance;
     }
     
+    /**
+     * Create a node from an abstract file.
+     * @param newFile     The abstract file
+     * @param autopsyCase The current case
+     * @throws EamDbException 
+     */
     OtherOccurrenceNodeData(AbstractFile newFile, Case autopsyCase) throws EamDbException {
         caseName = autopsyCase.getDisplayName();
         try {
@@ -70,8 +87,8 @@ class OtherOccurrenceNodeData {
         }
         
         filePath = newFile.getParentPath() + newFile.getName();
-        typeStr = FILE_TYPE;
-        this.type = null; // TEMP
+        typeStr = FILE_TYPE_STR;
+        this.type = null;  // We can't make the Type object without the central repo enabled
         value = newFile.getMd5Hash();
         known = newFile.getKnown();
         comment = "";
@@ -79,21 +96,34 @@ class OtherOccurrenceNodeData {
         originalAbstractFile = newFile;
     }
     
+    /**
+     * Check if this node is a "file" type
+     * @return true if it is a file type
+     */
     boolean isFileType() {
-        return FILE_TYPE.equals(typeStr);
+        return FILE_TYPE_STR.equals(typeStr);
     }
     
+    /**
+     * Update the known status for this node
+     * @param newKnownStatus The new known status
+     */
     void updateKnown(TskData.FileKnown newKnownStatus) {
         known = newKnownStatus;
     }
     
+    /**
+     * Check if this is a central repo node.
+     * @return true if this node was created from a central repo instance, false otherwise
+     */
     boolean isCentralRepoNode() {
         return (originalCorrelationInstance != null);
     }
     
     /**
-     * Uses the saved instance plus type and value to make a new CorrelationAttribute
-     * @return 
+     * Uses the saved instance plus type and value to make a new CorrelationAttribute.
+     * Should only be called if isCentralRepoNode() is true.
+     * @return the newly created CorrelationAttribute
      */
     CorrelationAttribute createCorrelationAttribute() throws EamDbException {
         if (! isCentralRepoNode() ) { 
@@ -104,42 +134,88 @@ class OtherOccurrenceNodeData {
         return attr;
     }
     
+    /**
+     * Get the case name
+     * @return the case name
+     */
     String getCaseName() {
         return caseName;
     }
     
+    /**
+     * Get the device ID
+     * @return the device ID
+     */
     String getDeviceID() {
         return deviceID;
     }
     
+    /**
+     * Get the data source name
+     * @return the data source name
+     */
     String getDataSourceName() {
         return dataSourceName;
     }
     
+    /**
+     * Get the file path
+     * @return the file path
+     */
     String getFilePath() {
         return filePath;
     }
     
+    /**
+     * Get the type (as a string)
+     * @return the type
+     */
     String getType() {
         return typeStr;
     }
     
+    /**
+     * Get the value (MD5 hash for files)
+     * @return the value
+     */
     String getValue() {
         return value;
     }
     
+    /**
+     * Get the known status
+     * @return the known status
+     */
     TskData.FileKnown getKnown() {
         return known;
     }
     
+    /**
+     * Get the comment
+     * @return the comment
+     */
     String getComment() {
         return comment;
     }
     
-    AbstractFile getAbstractFile() {
+    /**
+     * Get the backing abstract file.
+     * Should only be called if isCentralRepoNode() is false
+     * @return the original abstract file
+     */
+    AbstractFile getAbstractFile() throws EamDbException {
+        if (originalCorrelationInstance == null) {
+            throw new EamDbException("AbstractFile is null");
+        }
         return originalAbstractFile;
     }
     
+    /**
+     * Get the backing CorrelationAttributeInstance.
+     * Should only be called if isCentralRepoNode() is true
+     * @return the original CorrelationAttributeInstance
+     * @throws EamDbException 
+     */
     CorrelationAttributeInstance getCorrelationAttributeInstance() throws EamDbException {
         if (originalCorrelationInstance == null) {
             throw new EamDbException("CorrelationAttributeInstance is null");
