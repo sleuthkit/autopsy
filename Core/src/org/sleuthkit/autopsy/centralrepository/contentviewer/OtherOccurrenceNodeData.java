@@ -45,7 +45,7 @@ class OtherOccurrenceNodeData {
     private final CorrelationAttribute.Type type;
     private final String value;
     private TskData.FileKnown known;
-    private final String comment;
+    private String comment;
     
     private AbstractFile originalAbstractFile = null;
     private CorrelationAttributeInstance originalCorrelationInstance = null;
@@ -88,7 +88,7 @@ class OtherOccurrenceNodeData {
         
         filePath = newFile.getParentPath() + newFile.getName();
         typeStr = FILE_TYPE_STR;
-        this.type = null;  // We can't make the Type object without the central repo enabled
+        this.type = null;
         value = newFile.getMd5Hash();
         known = newFile.getKnown();
         comment = "";
@@ -110,6 +110,14 @@ class OtherOccurrenceNodeData {
      */
     void updateKnown(TskData.FileKnown newKnownStatus) {
         known = newKnownStatus;
+    }
+    
+    /**
+     * Update the comment for this node
+     * @param newComment The new comment
+     */
+    void updateComment(String newComment) {
+        comment = newComment;
     }
     
     /**

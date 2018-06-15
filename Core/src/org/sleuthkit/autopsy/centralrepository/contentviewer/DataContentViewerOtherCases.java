@@ -120,7 +120,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     try {
                         OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(otherCasesTable.getSelectedRow());
                         AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(selectedNode.createCorrelationAttribute());
-                        action.addEditCentralRepoComment();
+                        String newComment = action.addEditCentralRepoComment();
+                        if (newComment != null) {
+                            selectedNode.updateComment(newComment);
+                        }
                         otherCasesTable.repaint();
                     } catch (EamDbException ex) {
                         logger.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);

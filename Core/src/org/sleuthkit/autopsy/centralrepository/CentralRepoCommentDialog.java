@@ -31,6 +31,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
     private final CorrelationAttribute correlationAttribute;
     private boolean commentUpdated = false;
+    private String comment = "";
 
     /**
      * Create an instance.
@@ -70,6 +71,14 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
      */
     boolean isCommentUpdated() {
         return commentUpdated;
+    }
+    
+    /**
+     * Get the newly added comment
+     * @return the comment
+     */
+    String getComment() {
+        return comment;
     }
 
     /**
@@ -168,7 +177,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        String comment = commentTextArea.getText();
+        comment = commentTextArea.getText();
         correlationAttribute.getInstances().get(0).setComment(comment);
         commentUpdated = true;
 
