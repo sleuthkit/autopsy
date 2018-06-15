@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -92,6 +94,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
             // Get the current set of tag names.
             Map<String, TagName> tagNamesMap = null;
+            List<String> standardTagNames = TagsManager.getStandardTagNames();
             try {
                 TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                 tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
@@ -101,6 +104,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
             // Create a menu item for each of the existing and visible tags.
             // Selecting one of these menu items adds  a tag with the associated tag name.
+            List<JMenuItem> standardTagMenuitems = new ArrayList<>();
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
                     String tagDisplayName = entry.getKey();
@@ -114,15 +118,26 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                     tagNameItem.addActionListener((ActionEvent e) -> {
                         getAndAddTag(entry.getKey(), entry.getValue(), NO_COMMENT);
                     });
-                   
-                    add(tagNameItem);
+                    
+                     // Show custom tags before predefined tags in the menu
+                    if (standardTagNames.contains(tagDisplayName)) {
+                        standardTagMenuitems.add(tagNameItem);
+                    } else {
+                        add(tagNameItem);
+                    }
                 }
             } 
             
             if (getItemCount() > 0) {
                 addSeparator();
             }
-
+            
+            standardTagMenuitems.forEach((menuItem) -> {
+                add(menuItem);
+            });
+            
+            addSeparator();
+             
             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
             // a dialog that can be used to create or select a tag name with an
             // optional comment and adds a tag with the resulting name.

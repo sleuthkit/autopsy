@@ -126,6 +126,15 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Returns a list of names of standard/predefined tags
+     * 
+     * @return list of predefined tag names
+     */
+    public static List<String> getStandardTagNames() {
+        return TagNameDefinition.getStandardTagNames();
+    }
+    
+    /**
      * Constructs a per case Autopsy service that manages the addition of
      * content and artifact tags to the case database.
      *

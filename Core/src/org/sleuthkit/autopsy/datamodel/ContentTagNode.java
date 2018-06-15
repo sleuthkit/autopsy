@@ -29,7 +29,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -128,8 +127,9 @@ class ContentTagNode extends DisplayableItemNode {
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
-        actions.addAll(DataModelActionsFactory.getActions(tag.getContent(), false));
-        actions.add(DeleteContentTagAction.getInstance());
+        
+        actions.addAll(DataModelActionsFactory.getActions(tag, false));
+        
         return actions.toArray(new Action[actions.size()]);
     }
 
