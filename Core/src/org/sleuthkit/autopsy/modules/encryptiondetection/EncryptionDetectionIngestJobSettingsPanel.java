@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 /**
  * Ingest job settings panel for the Encryption Detection module.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class EncryptionDetectionIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     private static final int MEGABYTE_SIZE = 1048576;

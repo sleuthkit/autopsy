@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import javax.swing.JOptionPane;
 import static javax.swing.JOptionPane.DEFAULT_OPTION;
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
+import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -48,6 +50,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -63,18 +66,21 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * View correlation results from other cases
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 @ServiceProvider(service = DataContentViewer.class, position = 8)
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
     "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
-public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
+public class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
 
-    private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
+    private final static Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
     private final Collection<CorrelationAttribute> correlationAttributes;
@@ -108,10 +114,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                     try {
                         saveToCSV();
                     } catch (NoCurrentCaseException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                        logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
                     }
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
+                } else if (jmi.equals(addCommentMenuItem)) {
+                    CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(otherCasesTable.getSelectedRow());
+                    AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(selectedAttribute);
+                    action.addEditCentralRepoComment();
+                    otherCasesTable.repaint();
                 }
             }
         };
@@ -120,6 +131,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         selectAllMenuItem.addActionListener(actList);
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
+        addCommentMenuItem.addActionListener(actList);
 
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
@@ -135,7 +147,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         "DataContentViewerOtherCases.correlatedArtifacts.title=Attribute Frequency",
         "DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get frequency details."})
     /**
-     * Show how common the selected correlationAttributes are with details dialog.
+     * Show how common the selected correlationAttributes are with details
+     * dialog.
      */
     private void showCommonalityDetails() {
         if (correlationAttributes.isEmpty()) {
@@ -159,7 +172,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
                         DEFAULT_OPTION, PLAIN_MESSAGE);
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error getting commonality details.", ex);
+                logger.log(Level.SEVERE, "Error getting commonality details.", ex);
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_failed(),
                         Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
@@ -283,7 +296,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             }
 
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
+            logger.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
         }
     }
 
@@ -374,7 +387,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             try {
                 content = nodeBbArtifact.getSleuthkitCase().getContentById(nodeBbArtifact.getObjectID());
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error retrieving blackboard artifact", ex); // NON-NLS
                 return null;
             }
 
@@ -401,7 +414,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
-        if (bbArtifact != null) {
+        if (bbArtifact != null && EamDb.isEnabled()) {
             ret.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, false, false));
         }
 
@@ -420,20 +433,20 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                     }
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
 
         } else {
             try {
                 // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
-                if(this.file != null) {
+                if (this.file != null) {
                     String md5 = this.file.getMd5Hash();
-                    if(md5 != null && !md5.isEmpty()) {
-                        ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0),md5));
+                    if (md5 != null && !md5.isEmpty()) {
+                        ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), md5));
                     }
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
         }
 
@@ -441,35 +454,36 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }
 
     /**
-     * Query the db for artifact instances from other cases correlated to the
-     * given central repository artifact. Will not show instances from the same
-     * datasource / device
+     * Query the database for artifact instances from other cases correlated to
+     * the given central repository artifact. Instances from the same datasource
+     * / device will also be included.
      *
-     * @param corAttr CorrelationAttribute to query for
+     * @param corAttr        CorrelationAttribute to query for
      * @param dataSourceName Data source to filter results
-     * @param deviceId Device Id to filter results
+     * @param deviceId       Device Id to filter results
      *
-     * @return A collection of correlated artifact instances from other cases
+     * @return A collection of correlated artifact instances
      */
-    private Map<ArtifactKey, CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey, CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
-            HashMap<ArtifactKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
+            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+            HashMap<UniquePathKey, CorrelationAttributeInstance> artifactInstances = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 EamDb dbManager = EamDb.getInstance();
                 artifactInstances.putAll(dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
-                        .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                        .filter(artifactInstance -> !artifactInstance.getFilePath().equals(filePath)
+                        || !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
                         || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
                         || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
-                        .collect(Collectors.toMap(
-                                correlationAttr -> new ArtifactKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
+                        .collect(Collectors.toMap(correlationAttr -> new UniquePathKey(correlationAttr.getCorrelationDataSource().getDeviceID(), correlationAttr.getFilePath()),
                                 correlationAttr -> correlationAttr)));
             }
 
-            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
+            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
                 List<AbstractFile> caseDbFiles = addCaseDbMatches(corAttr, openCase);
                 for (AbstractFile caseDbFile : caseDbFiles) {
                     addOrUpdateAttributeInstance(openCase, artifactInstances, caseDbFile);
@@ -478,13 +492,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
             return artifactInstances;
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
             // do nothing. 
             // @@@ Review this behavior
-            LOGGER.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Exception while querying open case.", ex); // NON-NLS
         }
 
         return new HashMap<>(0);
@@ -507,29 +521,59 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     }
 
-    private void addOrUpdateAttributeInstance(final Case openCase, Map<ArtifactKey, CorrelationAttributeInstance> artifactInstances, AbstractFile caseDbFile) throws TskCoreException, EamDbException {
-        CorrelationCase caze = new CorrelationCase(openCase.getNumber(), openCase.getDisplayName());
-        CorrelationDataSource dataSource = CorrelationDataSource.fromTSKDataSource(caze, caseDbFile.getDataSource());
-        String filePath = caseDbFile.getParentPath() + caseDbFile.getName();
-        ArtifactKey instKey = new ArtifactKey(dataSource.getDeviceID(), filePath);
-        CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(caze, dataSource, filePath, "", caseDbFile.getKnown());
-        TskData.FileKnown knownStatus = caseDbInstance.getKnownStatus();
-        // If not known, check Tags for known and set
-        TskData.FileKnown knownBad = TskData.FileKnown.BAD;
-        if (!knownStatus.equals(knownBad)) {
-            List<ContentTag> fileMatchTags = openCase.getServices().getTagsManager().getContentTagsByContent(caseDbFile);
+    /**
+     * Adds the file to the artifactInstances map if it does not already exist
+     *
+     * @param autopsyCase
+     * @param artifactInstances
+     * @param newFile
+     *
+     * @throws TskCoreException
+     * @throws EamDbException
+     */
+    private void addOrUpdateAttributeInstance(final Case autopsyCase, Map<UniquePathKey, CorrelationAttributeInstance> artifactInstances, AbstractFile newFile) throws TskCoreException, EamDbException {
+
+        // figure out if the casedb file is known via either hash or tags
+        TskData.FileKnown localKnown = newFile.getKnown();
+
+        if (localKnown != TskData.FileKnown.BAD) {
+            List<ContentTag> fileMatchTags = autopsyCase.getServices().getTagsManager().getContentTagsByContent(newFile);
             for (ContentTag tag : fileMatchTags) {
                 TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
-                if (tagKnownStatus.equals(knownBad)) {
-                    caseDbInstance.setKnownStatus(knownBad);
+                if (tagKnownStatus.equals(TskData.FileKnown.BAD)) {
+                    localKnown = TskData.FileKnown.BAD;
                     break;
                 }
             }
         }
 
-        // If known, or not in CR, add
-        if (caseDbInstance.getKnownStatus().equals(knownBad) || !artifactInstances.containsKey(instKey)) {
-            artifactInstances.put(instKey, caseDbInstance);
+        // make a key to see if the file is already in the map
+        String filePath = newFile.getParentPath() + newFile.getName();
+        String deviceId;
+        try {
+            deviceId = autopsyCase.getSleuthkitCase().getDataSource(newFile.getDataSource().getId()).getDeviceId();
+        } catch (TskDataException | TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting data source info: {0}", ex);
+            return;
+        }
+        UniquePathKey uniquePathKey = new UniquePathKey(deviceId, filePath);
+
+        // double check that the CR version is BAD if the caseDB version is BAD.
+        if (artifactInstances.containsKey(uniquePathKey)) {
+            if (localKnown == TskData.FileKnown.BAD) {
+                CorrelationAttributeInstance prevInstance = artifactInstances.get(uniquePathKey);
+                prevInstance.setKnownStatus(localKnown);
+            }
+        } // add the data from the case DB by pushing data into CorrelationAttributeInstance class
+        else {
+            // NOTE: If we are in here, it is likely because CR is not enabled.  So, we cannot rely
+            // on any of the methods that query the DB.
+            CorrelationCase correlationCase = new CorrelationCase(autopsyCase.getName(), autopsyCase.getDisplayName());
+
+            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, newFile.getDataSource());
+
+            CorrelationAttributeInstance caseDbInstance = new CorrelationAttributeInstance(correlationCase, correlationDataSource, filePath, "", localKnown);
+            artifactInstances.put(uniquePathKey, caseDbInstance);
         }
     }
 
@@ -539,9 +583,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         //  Is supported if this node
         //      has correlatable content (File, BlackboardArtifact) OR
         //      other common files across datasources.
-        return this.file != null
-                && this.file.getSize() > 0
-                && !getCorrelationAttributesFromNode(node).isEmpty();
+
+        if (EamDb.isEnabled()) {
+            return this.file != null
+                    && this.file.getSize() > 0
+                    && !getCorrelationAttributesFromNode(node).isEmpty();
+        } else {
+            return this.file != null
+                    && this.file.getSize() > 0;
+        }
     }
 
     @Override
@@ -582,7 +632,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
         for (CorrelationAttribute corAttr : correlationAttributes) {
-            Map<ArtifactKey, CorrelationAttributeInstance> corAttrInstances = new HashMap<>(0);
+            Map<UniquePathKey, CorrelationAttributeInstance> corAttrInstances = new HashMap<>(0);
 
             // get correlation and reference set instances from DB
             corAttrInstances.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
@@ -596,12 +646,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                     newCeArtifact.addInstance(corAttrInstance);
                     tableModel.addEamArtifact(newCeArtifact);
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error creating correlation attribute", ex);
+                    logger.log(Level.SEVERE, "Error creating correlation attribute", ex);
                 }
             });
         }
 
         if (correlationAttributes.isEmpty()) {
+            // @@@ BC: We should have a more descriptive message than this.  Mention that the file didn't have a MD5, etc.
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_isempty());
@@ -644,6 +695,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
+        addCommentMenuItem = new javax.swing.JMenuItem();
         CSVFileChooser = new javax.swing.JFileChooser();
         otherCasesPanel = new javax.swing.JPanel();
         tableContainerPanel = new javax.swing.JPanel();
@@ -651,6 +703,16 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         otherCasesTable = new javax.swing.JTable();
         tableStatusPanel = new javax.swing.JPanel();
         tableStatusPanelLabel = new javax.swing.JLabel();
+
+        rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
+            }
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {
+            }
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
+                rightClickPopupMenuPopupMenuWillBecomeVisible(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.selectAllMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(selectAllMenuItem);
@@ -663,6 +725,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
+
+        org.openide.awt.Mnemonics.setLocalizedText(addCommentMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.addCommentMenuItem.text")); // NOI18N
+        rightClickPopupMenu.add(addCommentMenuItem);
 
         setMinimumSize(new java.awt.Dimension(1500, 10));
         setOpaque(false);
@@ -734,7 +799,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             .addGap(0, 60, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 52, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -746,13 +811,28 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 52, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
+        boolean addCommentMenuItemVisible = false;
+
+        if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
+            int rowIndex = otherCasesTable.getSelectedRow();
+            CorrelationAttribute selectedAttribute = (CorrelationAttribute) tableModel.getRow(rowIndex);
+            if (selectedAttribute.getInstances().get(0).isDatabaseInstance()
+                    && selectedAttribute.getCorrelationType().getId() == CorrelationAttribute.FILES_TYPE_ID) {
+                addCommentMenuItemVisible = true;
+            }
+        }
+
+        addCommentMenuItem.setVisible(addCommentMenuItemVisible);
+    }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser CSVFileChooser;
+    private javax.swing.JMenuItem addCommentMenuItem;
     private javax.swing.JMenuItem exportToCSVMenuItem;
     private javax.swing.JPanel otherCasesPanel;
     private javax.swing.JTable otherCasesTable;
@@ -765,5 +845,53 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     private javax.swing.JPanel tableStatusPanel;
     private javax.swing.JLabel tableStatusPanelLabel;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * Used as a key to ensure we eliminate duplicates from the result set by
+     * not overwriting CR correlation instances.
+     */
+    static final class UniquePathKey {
+
+        private final String dataSourceID;
+        private final String filePath;
+
+        UniquePathKey(String theDataSource, String theFilePath) {
+            super();
+            dataSourceID = theDataSource;
+            filePath = theFilePath.toLowerCase();
+        }
+
+        /**
+         *
+         * @return the dataSourceID device ID
+         */
+        String getDataSourceID() {
+            return dataSourceID;
+        }
+
+        /**
+         *
+         * @return the filPath including the filename and extension.
+         */
+        String getFilePath() {
+            return filePath;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof UniquePathKey) {
+                return ((UniquePathKey) other).getDataSourceID().equals(dataSourceID) && ((UniquePathKey) other).getFilePath().equals(filePath);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            //int hash = 7;
+            //hash = 67 * hash + this.dataSourceID.hashCode();
+            //hash = 67 * hash + this.filePath.hashCode();
+            return Objects.hash(dataSourceID, filePath);
+        }
+    }
 
 }

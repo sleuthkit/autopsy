@@ -6,7 +6,7 @@
       <Dimension value="[150, 150]"/>
     </Property>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[100, 100]"/>
+      <Dimension value="[150, 150]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -46,8 +46,8 @@
           <Group type="102" alignment="1" attributes="0">
               <Component id="dataSourceCheckBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="95" max="32767" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jScrollPane1" min="-2" pref="103" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Component id="dataSourceNoteLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>

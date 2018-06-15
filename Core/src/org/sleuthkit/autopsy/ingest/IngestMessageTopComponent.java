@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Top component which displays something.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class IngestMessageTopComponent extends TopComponent {
 
     private static IngestMessageTopComponent instance;

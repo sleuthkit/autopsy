@@ -68,6 +68,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * viewers to the actions global context.
  */
 @RetainLocation("editor")
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());

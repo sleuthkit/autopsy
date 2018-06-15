@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this class are used to configure the report module plug in that
  * provides a convenient way to add content hashes to hash set databases.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddTaggedHashesToHashDbConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -61,13 +62,16 @@ public class HealthMonitorDashboard {
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(), ADMIN_ACCESS_FILE_NAME).toString();
     
     Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
+    List<EnterpriseHealthMonitor.UserData> userData;
 
-    private JComboBox<String> dateComboBox = null;
-    private JComboBox<String> hostComboBox = null;
-    private JCheckBox hostCheckBox = null;
-    private JCheckBox showTrendLineCheckBox = null;
-    private JCheckBox skipOutliersCheckBox = null;
-    private JPanel graphPanel = null;
+    private JComboBox<String> timingDateComboBox = null;
+    private JComboBox<String> timingHostComboBox = null;
+    private JCheckBox timingHostCheckBox = null;
+    private JCheckBox timingShowTrendLineCheckBox = null;
+    private JCheckBox timingSkipOutliersCheckBox = null;
+    private JPanel timingGraphPanel = null;
+    private JComboBox<String> userDateComboBox = null;
+    private JPanel userGraphPanel = null;
     private JDialog dialog = null;
     private final Container parentWindow;
     
@@ -78,6 +82,7 @@ public class HealthMonitorDashboard {
      */
     public HealthMonitorDashboard(Container parent) {
         timingData = new HashMap<>();
+        userData = new ArrayList<>();
         parentWindow = parent;
     }
     
@@ -91,10 +96,12 @@ public class HealthMonitorDashboard {
         // Update the enabled status and get the timing data, then create all
         // the sub panels.
         JPanel timingPanel;
+        JPanel userPanel;
         JPanel adminPanel;        
         try {
             updateData();
             timingPanel = createTimingPanel();
+            userPanel = createUserPanel();
             adminPanel = createAdminPanel();
         } catch (HealthMonitorException ex) {
             logger.log(Level.SEVERE, "Error creating panels for health monitor dashboard", ex);
@@ -108,6 +115,9 @@ public class HealthMonitorDashboard {
                
         // Add the timing panel
         mainPanel.add(timingPanel);
+        
+        // Add the user panel
+        mainPanel.add(userPanel);
         
         // Add the admin panel if the admin file is present
         File adminFile = new File(ADMIN_ACCESS_FILE_PATH);
@@ -148,6 +158,9 @@ public class HealthMonitorDashboard {
         if(EnterpriseHealthMonitor.monitorIsEnabled()) {
             // Get a copy of the timing data from the database
             timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase(DateRange.getMaximumTimestampRange()); 
+            
+            // Get a copy of the user data from the database
+            userData = EnterpriseHealthMonitor.getInstance().getUserMetricsFromDatabase(DateRange.getMaximumTimestampRange());
         }
     }
     
@@ -185,12 +198,12 @@ public class HealthMonitorDashboard {
         timingMetricPanel.add(new JSeparator());
         
         // Create panel to hold graphs
-        graphPanel = new JPanel();
-        graphPanel.setLayout(new GridLayout(0,2));
+        timingGraphPanel = new JPanel();
+        timingGraphPanel.setLayout(new GridLayout(0,2));
         
         // Update the graph panel, put it in a scroll pane, and add to the timing metric panel
         updateTimingMetricGraphs();
-        JScrollPane scrollPane = new JScrollPane(graphPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane = new JScrollPane(timingGraphPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         timingMetricPanel.add(scrollPane);
         timingMetricPanel.revalidate();
         timingMetricPanel.repaint();
@@ -216,11 +229,11 @@ public class HealthMonitorDashboard {
         
         // Create the combo box for selecting how much data to display
         String[] dateOptionStrings = Arrays.stream(DateRange.values()).map(e -> e.getLabel()).toArray(String[]::new);
-        dateComboBox = new JComboBox<>(dateOptionStrings);
-        dateComboBox.setSelectedItem(DateRange.ONE_DAY.getLabel());
+        timingDateComboBox = new JComboBox<>(dateOptionStrings);
+        timingDateComboBox.setSelectedItem(DateRange.ONE_DAY.getLabel());
         
         // Set up the listener on the date combo box
-        dateComboBox.addActionListener(new ActionListener() {
+        timingDateComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 try {
@@ -240,14 +253,14 @@ public class HealthMonitorDashboard {
         }
         
         // Load the host names into the combo box
-        hostComboBox = new JComboBox<>(hostNameSet.toArray(new String[hostNameSet.size()]));
+        timingHostComboBox = new JComboBox<>(hostNameSet.toArray(new String[hostNameSet.size()]));
         
         // Set up the listener on the combo box
-        hostComboBox.addActionListener(new ActionListener() {
+        timingHostComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 try {
-                    if((hostCheckBox != null) && hostCheckBox.isSelected()) {
+                    if((timingHostCheckBox != null) && timingHostCheckBox.isSelected()) {
                         updateTimingMetricGraphs();
                     }
                 } catch (HealthMonitorException ex) {
@@ -257,16 +270,16 @@ public class HealthMonitorDashboard {
         });
         
         // Create the host checkbox
-        hostCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_filterByHost());
-        hostCheckBox.setSelected(false);
-        hostComboBox.setEnabled(false);
+        timingHostCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_filterByHost());
+        timingHostCheckBox.setSelected(false);
+        timingHostComboBox.setEnabled(false);
         
         // Set up the listener on the checkbox
-        hostCheckBox.addActionListener(new ActionListener() {
+        timingHostCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 try {
-                    hostComboBox.setEnabled(hostCheckBox.isSelected());
+                    timingHostComboBox.setEnabled(timingHostCheckBox.isSelected());
                     updateTimingMetricGraphs();
                 } catch (HealthMonitorException ex) {
                     logger.log(Level.SEVERE, "Error populating timing metric panel", ex);
@@ -275,11 +288,11 @@ public class HealthMonitorDashboard {
         });
         
         // Create the checkbox for showing the trend line
-        showTrendLineCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_showTrendLine());
-        showTrendLineCheckBox.setSelected(true);
+        timingShowTrendLineCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_showTrendLine());
+        timingShowTrendLineCheckBox.setSelected(true);
         
         // Set up the listener on the checkbox
-        showTrendLineCheckBox.addActionListener(new ActionListener() {
+        timingShowTrendLineCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 try {
@@ -291,11 +304,11 @@ public class HealthMonitorDashboard {
         });
         
         // Create the checkbox for omitting outliers
-        skipOutliersCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_skipOutliers());
-        skipOutliersCheckBox.setSelected(false);
+        timingSkipOutliersCheckBox = new JCheckBox(Bundle.HealthMonitorDashboard_createTimingControlPanel_skipOutliers());
+        timingSkipOutliersCheckBox.setSelected(false);
         
         // Set up the listener on the checkbox
-        skipOutliersCheckBox.addActionListener(new ActionListener() {
+        timingSkipOutliersCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 try {
@@ -308,26 +321,26 @@ public class HealthMonitorDashboard {
         
         // Add the date range combo box and label to the panel
         timingControlPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingControlPanel_maxDays()));
-        timingControlPanel.add(dateComboBox);
+        timingControlPanel.add(timingDateComboBox);
         
         // Put some space between the elements
         timingControlPanel.add(Box.createHorizontalStrut(100));
         
         // Add the host combo box and checkbox to the panel
-        timingControlPanel.add(hostCheckBox);
-        timingControlPanel.add(hostComboBox);
+        timingControlPanel.add(timingHostCheckBox);
+        timingControlPanel.add(timingHostComboBox);
         
         // Put some space between the elements
         timingControlPanel.add(Box.createHorizontalStrut(100));
         
         // Add the skip outliers checkbox
-        timingControlPanel.add(this.showTrendLineCheckBox);
+        timingControlPanel.add(this.timingShowTrendLineCheckBox);
         
         // Put some space between the elements
         timingControlPanel.add(Box.createHorizontalStrut(100));
         
         // Add the skip outliers checkbox
-        timingControlPanel.add(this.skipOutliersCheckBox);
+        timingControlPanel.add(this.timingSkipOutliersCheckBox);
         
         return timingControlPanel;
     }
@@ -340,11 +353,11 @@ public class HealthMonitorDashboard {
     private void updateTimingMetricGraphs() throws HealthMonitorException {
         
         // Clear out any old graphs
-        graphPanel.removeAll();
+        timingGraphPanel.removeAll();
         
         if(timingData.keySet().isEmpty()) {
             // There are no timing metrics in the database
-            graphPanel.add(new JLabel(Bundle.HealthMonitorDashboard_updateTimingMetricGraphs_noData()));
+            timingGraphPanel.add(new JLabel(Bundle.HealthMonitorDashboard_updateTimingMetricGraphs_noData()));
             return;
         }
         
@@ -352,8 +365,8 @@ public class HealthMonitorDashboard {
             
             // If necessary, trim down the list of results to fit the selected time range
             List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
-            if(dateComboBox.getSelectedItem() != null) {
-                DateRange selectedDateRange = DateRange.fromLabel(dateComboBox.getSelectedItem().toString());
+            if(timingDateComboBox.getSelectedItem() != null) {
+                DateRange selectedDateRange = DateRange.fromLabel(timingDateComboBox.getSelectedItem().toString());
                 long threshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
                 intermediateTimingDataForDisplay = timingData.get(metricName).stream()
                         .filter(t -> t.getTimestamp() > threshold)
@@ -366,25 +379,150 @@ public class HealthMonitorDashboard {
             // The graph always uses the data from all hosts to generate the x and y scales
             // so we don't filter anything out here.
             String hostToDisplay = null;
-            if(hostCheckBox.isSelected() && (hostComboBox.getSelectedItem() != null)) {
-                hostToDisplay = hostComboBox.getSelectedItem().toString();
+            if(timingHostCheckBox.isSelected() && (timingHostComboBox.getSelectedItem() != null)) {
+                hostToDisplay = timingHostComboBox.getSelectedItem().toString();
             }
             
             // Generate the graph
             TimingMetricGraphPanel singleTimingGraphPanel = new TimingMetricGraphPanel(intermediateTimingDataForDisplay, 
-                    hostToDisplay, true, metricName, skipOutliersCheckBox.isSelected(), showTrendLineCheckBox.isSelected());
+                    hostToDisplay, true, metricName, timingSkipOutliersCheckBox.isSelected(), timingShowTrendLineCheckBox.isSelected());
             singleTimingGraphPanel.setPreferredSize(new Dimension(700,200));
             
-            graphPanel.add(singleTimingGraphPanel);
+            timingGraphPanel.add(singleTimingGraphPanel);
         }
-        graphPanel.revalidate();
-        graphPanel.repaint();
+        timingGraphPanel.revalidate();
+        timingGraphPanel.repaint();
+    }
+    
+    /**
+     * Create the user panel.
+     * This displays cases open and users logged in
+     * @return the user panel
+     */
+    @NbBundle.Messages({"HealthMonitorDashboard.createUserPanel.noData=No data to display - monitor is not enabled",
+                    "HealthMonitorDashboard.createUserPanel.userMetricsTitle=User Metrics"})
+    private JPanel createUserPanel() throws HealthMonitorException {
+        // If the monitor isn't enabled, just add a message
+        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+            JPanel emptyUserMetricPanel = new JPanel();
+            emptyUserMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createUserPanel_userMetricsTitle()));
+            emptyUserMetricPanel.add(new JLabel(" "));
+            emptyUserMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createUserPanel_noData()));
+            
+            return emptyUserMetricPanel;
+        }
+        
+        JPanel userMetricPanel = new JPanel();
+        userMetricPanel.setLayout(new BoxLayout(userMetricPanel, BoxLayout.PAGE_AXIS));
+        userMetricPanel.setBorder(BorderFactory.createEtchedBorder());
+              
+        // Add title
+        JLabel userMetricTitle = new JLabel(Bundle.HealthMonitorDashboard_createUserPanel_userMetricsTitle());
+        userMetricPanel.add(userMetricTitle);
+        userMetricPanel.add(new JSeparator());  
+        
+        // Add the controls
+        userMetricPanel.add(createUserControlPanel());
+        userMetricPanel.add(new JSeparator());
+        
+        // Create panel to hold graphs
+        userGraphPanel = new JPanel();
+        userGraphPanel.setLayout(new GridLayout(0,2));
+        
+        // Update the graph panel, put it in a scroll pane, and add to the timing metric panel
+        updateUserMetricGraphs();
+        JScrollPane scrollPane = new JScrollPane(userGraphPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        userMetricPanel.add(scrollPane);
+        userMetricPanel.revalidate();
+        userMetricPanel.repaint();
+        
+        return userMetricPanel;
+    }
+    
+    /**
+     * Create the panel with controls for the user panel
+     * @return the control panel
+     */
+    @NbBundle.Messages({"HealthMonitorDashboard.createUserControlPanel.maxDays=Max days to display"})
+    private JPanel createUserControlPanel() {
+        JPanel userControlPanel = new JPanel();
+        
+        // If the monitor is not enabled, don't add any components
+        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+            return userControlPanel;
+        }
+        
+        // Create the combo box for selecting how much data to display
+        String[] dateOptionStrings = Arrays.stream(DateRange.values()).map(e -> e.getLabel()).toArray(String[]::new);
+        userDateComboBox = new JComboBox<>(dateOptionStrings);
+        userDateComboBox.setSelectedItem(DateRange.ONE_DAY.getLabel());
+        
+        // Set up the listener on the date combo box
+        userDateComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                try {
+                    updateUserMetricGraphs();
+                } catch (HealthMonitorException ex) {
+                    logger.log(Level.SEVERE, "Error updating user metric panel", ex);
+                }
+            }
+        });
+        
+        // Add the date range combo box and label to the panel
+        userControlPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createUserControlPanel_maxDays()));
+        userControlPanel.add(userDateComboBox);
+        
+        return userControlPanel;
+    }
+    
+    /**
+     * Update the user graphs.
+     * @throws HealthMonitorException 
+     */
+    @NbBundle.Messages({"HealthMonitorDashboard.updateUserMetricGraphs.noData=No data to display"})
+    private void updateUserMetricGraphs() throws HealthMonitorException {
+        
+        // Clear out any old graphs
+        userGraphPanel.removeAll();
+        
+        if(userData.isEmpty()) {
+            // There are no user metrics in the database
+            userGraphPanel.add(new JLabel(Bundle.HealthMonitorDashboard_updateUserMetricGraphs_noData()));
+            return;
+        }
+
+        // Calculate the minimum timestamp for the graph.
+        // Unlike the timing graphs, we do not filter the list of user metrics here. 
+        // This is because even if we're only displaying one day, the
+        // last metric for a host may be that it logged on two days ago, so we would want
+        // to show that node as logged on.
+        long timestampThreshold;
+        if(userDateComboBox.getSelectedItem() != null) {
+            DateRange selectedDateRange = DateRange.fromLabel(userDateComboBox.getSelectedItem().toString());
+            timestampThreshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
+
+        } else {
+            timestampThreshold = System.currentTimeMillis() - DateRange.getMaximumTimestampRange();
+        }
+                        
+        // Generate the graphs
+        UserMetricGraphPanel caseGraphPanel = new UserMetricGraphPanel(userData, timestampThreshold, true);
+        caseGraphPanel.setPreferredSize(new Dimension(700,200));
+        
+        UserMetricGraphPanel logonGraphPanel = new UserMetricGraphPanel(userData, timestampThreshold, false);
+        logonGraphPanel.setPreferredSize(new Dimension(700,200));
+
+        userGraphPanel.add(caseGraphPanel);
+        userGraphPanel.add(logonGraphPanel);
+        userGraphPanel.revalidate();
+        userGraphPanel.repaint();
     }
     
     /**
      * Create the admin panel.
      * This allows the health monitor to be enabled and disabled.
-     * @return 
+     * @return the admin panel
      */
     @NbBundle.Messages({"HealthMonitorDashboard.createAdminPanel.enableButton=Enable monitor",
                         "HealthMonitorDashboard.createAdminPanel.disableButton=Disable monitor"})

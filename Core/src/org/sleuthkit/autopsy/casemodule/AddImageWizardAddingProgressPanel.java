@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
  * -jm)
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
     private boolean readyToIngest = false;
@@ -79,7 +80,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
      */
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
-    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
+    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<>());
     private final DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
     private IngestJobSettings ingestJobSettings;
 

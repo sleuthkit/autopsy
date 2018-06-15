@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,8 +52,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @Messages("CTL_OfflineHelpAction=Offline Autopsy Documentation")
 public final class OfflineHelpAction implements ActionListener {
 
-    private URI uri;
-    private static final Logger Logger
+    private static final Logger logger
             = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
 
     @Override
@@ -71,7 +70,8 @@ public final class OfflineHelpAction implements ActionListener {
         String fileForHelp = "";
         String indexForHelp = "";
         String currentDirectory = "";
-
+        URI uri = null;
+        
         try {
             // Match the form:  file:///C:/some/directory/AutopsyXYZ/docs/index.html
             fileForHelp = NbBundle.getMessage(OfflineHelpAction.class, "FILE_FOR_LOCAL_HELP");
@@ -79,7 +79,7 @@ public final class OfflineHelpAction implements ActionListener {
             currentDirectory = System.getProperty("user.dir").replace("\\", "/").replace(" ", "%20"); //NON-NLS
             uri = new URI(fileForHelp + currentDirectory + indexForHelp);
         } catch (Exception ex) {
-            Logger.log(Level.SEVERE, "Unable to load Offline Documentation: "
+            logger.log(Level.SEVERE, "Unable to load Offline Documentation: "
                     + fileForHelp + currentDirectory + indexForHelp, ex); //NON-NLS
         }
         if (uri != null) {
@@ -89,7 +89,7 @@ public final class OfflineHelpAction implements ActionListener {
                 try {
                     desktop.browse(uri);
                 } catch (IOException ex) {
-                    Logger.log(Level.SEVERE, "Unable to launch the system browser: "
+                    logger.log(Level.SEVERE, "Unable to launch the system browser: "
                             + fileForHelp + currentDirectory + indexForHelp, ex); //NON-NLS
                 }
             } else {
@@ -98,7 +98,7 @@ public final class OfflineHelpAction implements ActionListener {
                 try {
                     HtmlBrowser.URLDisplayer.getDefault().showURL(uri.toURL());
                 } catch (MalformedURLException ex) {
-                    Logger.log(Level.SEVERE, "Unable to launch the built-in browser: "
+                    logger.log(Level.SEVERE, "Unable to launch the built-in browser: "
                             + fileForHelp + currentDirectory + indexForHelp, ex); //NON-NLS
                 }
             }

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;

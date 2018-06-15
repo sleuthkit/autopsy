@@ -48,6 +48,8 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
@@ -68,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifact> {
 
-    private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    private static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
             Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
             Case.Events.CONTENT_TAG_ADDED,
@@ -217,6 +219,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(context)));
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+
+        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
+        if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
+            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
+        }
 
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
@@ -224,7 +232,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 actionsList.add(new ViewArtifactInTimelineAction(artifact));
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_resultErrorMessage());
         }
 
@@ -235,12 +243,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 actionsList.add(ViewFileInTimelineAction.createViewFileAction(c));
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            logger.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
         }
 
-        //if this artifact has associated content, add the action to view the content in the timeline
-        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        //if the artifact has associated content, add the action to view the content in the timeline
         if (null != file) {
             actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
@@ -391,7 +398,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 sourcePath = associated.getUniquePath();
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName()); //NON-NLS
+                logger.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName()); //NON-NLS
             }
 
             if (sourcePath.isEmpty() == false) {
@@ -439,7 +446,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     dataSourceStr = getRootParentName();
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
+                logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
             }
 
             if (dataSourceStr.isEmpty() == false) {
@@ -472,7 +479,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
             tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(associated));
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+            logger.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
         }
         sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
@@ -490,7 +497,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 parentName = parent.getName();
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName()); //NON-NLS
+            logger.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName()); //NON-NLS
             return "";
         }
         return parentName;
@@ -551,7 +558,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 }
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
         }
     }
 
@@ -614,7 +621,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 return Lookups.fixed(artifact, content);
             }
         } catch (ExecutionException ex) {
-            LOGGER.log(Level.WARNING, "Getting associated content for artifact failed", ex); //NON-NLS
+            logger.log(Level.WARNING, "Getting associated content for artifact failed", ex); //NON-NLS
             return Lookups.fixed(artifact);
         }
     }

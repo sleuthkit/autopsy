@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,8 +38,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Data content panel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
 
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
@@ -241,7 +242,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
     private static class UpdateWrapper {
 
-        private DataContentViewer wrapped;
+        private final DataContentViewer wrapped;
         private boolean outdated;
 
         UpdateWrapper(DataContentViewer wrapped) {

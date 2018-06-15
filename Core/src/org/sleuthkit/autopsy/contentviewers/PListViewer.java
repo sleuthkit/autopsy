@@ -63,11 +63,12 @@ import org.xml.sax.SAXException;
  * PListViewer - a file viewer for binary plist files.
  *
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class PListViewer extends javax.swing.JPanel implements FileTypeViewer, ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private static final String[] MIMETYPES = new String[]{"application/x-bplist"};
-    private static final Logger LOGGER = Logger.getLogger(PListViewer.class.getName());
+    private static final Logger logger = Logger.getLogger(PListViewer.class.getName());
 
     private final org.openide.explorer.view.OutlineView outlineView;
     private final Outline outline;
@@ -198,7 +199,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                         Bundle.PListViewer_ExportFailed_message(),
                         JOptionPane.ERROR_MESSAGE);
 
-                LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex);
                 return;
         }
         
@@ -227,7 +228,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                         Bundle.PListViewer_ExportFailed_message(),
                         JOptionPane.ERROR_MESSAGE);
 
-                LOGGER.log(Level.SEVERE, "Error exporting plist to XML file " + selectedFile.getName(), ex);
+                logger.log(Level.SEVERE, "Error exporting plist to XML file " + selectedFile.getName(), ex);
             }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
@@ -305,7 +306,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                          setColumnWidths();
                     });
                 } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, "Interruption while parsing/dislaying  plist file " + plistFile.getName(), ex);
+                    logger.log(Level.SEVERE, "Interruption while parsing/dislaying  plist file " + plistFile.getName(), ex);
                       
                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                         ex.getMessage(),
@@ -313,7 +314,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
                                         JOptionPane.ERROR_MESSAGE);
                     
                 } catch (ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Exception while parsing/dislaying  plist file " + plistFile.getName(), ex);
+                    logger.log(Level.SEVERE, "Exception while parsing/dislaying  plist file " + plistFile.getName(), ex);
                       JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                                         ex.getCause().getMessage(),
                                         Bundle.PListViewer_processPlist_errorMessage(),
@@ -407,7 +408,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
             pkv.setChildren(children.toArray(new PropKeyValue[children.size()]));
             return pkv;
         } else {
-            LOGGER.log(Level.SEVERE, "Can''t parse Plist for key = {0} value of type {1}", new Object[]{key, value.getClass()});
+            logger.log(Level.SEVERE, "Can''t parse Plist for key = {0} value of type {1}", new Object[]{key, value.getClass()});
         }
 
         return null;

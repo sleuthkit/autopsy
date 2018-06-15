@@ -23,10 +23,12 @@ import java.awt.EventQueue;
 import java.util.Observable;
 import java.util.Observer;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitorDashboard;
 
 /**
  * A dashboard for monitoring the existing AutoIngestNodes and their status.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     private final AutoIngestMonitor autoIngestMonitor;
@@ -73,6 +75,7 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
         clusterMetricsButton = new javax.swing.JButton();
         nodeStatusScrollPane = new javax.swing.JScrollPane();
         nodeStatusTableTitle = new javax.swing.JLabel();
+        healthMonitorButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.text")); // NOI18N
         refreshButton.setToolTipText(org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.refreshButton.toolTipText")); // NOI18N
@@ -92,6 +95,16 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
         nodeStatusTableTitle.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(nodeStatusTableTitle, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.nodeStatusTableTitle.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(healthMonitorButton, org.openide.util.NbBundle.getMessage(AinStatusDashboard.class, "AinStatusDashboard.healthMonitorButton.text")); // NOI18N
+        healthMonitorButton.setMaximumSize(new java.awt.Dimension(133, 23));
+        healthMonitorButton.setMinimumSize(new java.awt.Dimension(133, 23));
+        healthMonitorButton.setPreferredSize(new java.awt.Dimension(133, 23));
+        healthMonitorButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                healthMonitorButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -105,7 +118,9 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 715, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 576, Short.MAX_VALUE)
+                        .addComponent(healthMonitorButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(clusterMetricsButton)))
                 .addContainerGap())
         );
@@ -122,7 +137,8 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
                 .addGap(382, 382, 382)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
-                    .addComponent(clusterMetricsButton))
+                    .addComponent(clusterMetricsButton)
+                    .addComponent(healthMonitorButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -141,9 +157,14 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
         new AutoIngestMetricsDialog(this.getTopLevelAncestor());
     }//GEN-LAST:event_clusterMetricsButtonActionPerformed
 
+    private void healthMonitorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_healthMonitorButtonActionPerformed
+        new HealthMonitorDashboard(this.getTopLevelAncestor()).display();
+    }//GEN-LAST:event_healthMonitorButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clusterMetricsButton;
+    private javax.swing.JButton healthMonitorButton;
     private javax.swing.JScrollPane nodeStatusScrollPane;
     private javax.swing.JLabel nodeStatusTableTitle;
     private javax.swing.JButton refreshButton;

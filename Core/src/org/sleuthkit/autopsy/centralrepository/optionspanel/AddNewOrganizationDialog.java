@@ -36,9 +36,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 /**
  * Dialog to add a new organization to the Central Repository database
  */
-public class AddNewOrganizationDialog extends javax.swing.JDialog {
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+class AddNewOrganizationDialog extends javax.swing.JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(AddNewOrganizationDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(AddNewOrganizationDialog.class.getName());
     private static final long serialVersionUID = 1L;
 
     private final Collection<JTextField> textBoxes;
@@ -51,7 +52,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
      * Creates new form AddNewOrganizationDialog
      */
     @Messages({"AddNewOrganizationDialog.addNewOrg.msg=Add New Organization"})
-    public AddNewOrganizationDialog() {
+    AddNewOrganizationDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
                 true); // NON-NLS
@@ -65,6 +66,7 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
         display();
     }
 
+    // populates the dialog with existing case information to edit
     public AddNewOrganizationDialog(EamOrganization orgToEdit) {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
@@ -193,10 +195,19 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
         }
     }
 
+    /**
+     * 
+     * @return True if new org was added or existing org changed
+     */
     public boolean isChanged() {
         return hasChanged;
     }
 
+    /**
+     * Only valid if isChanged() is true.
+     * 
+     * @return Org that was added or changed.  null if nothing changed
+     */
     public EamOrganization getNewOrg() {
         return newOrg;
     }
@@ -332,12 +343,12 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
         try {
             EamDb dbManager = EamDb.getInstance();
             if (organizationToEdit != null) {
-                //check if new name exists with ID other than the one in use here
-                newOrg = new EamOrganization(organizationToEdit.getOrgID(),
-                        tfOrganizationName.getText(),
-                        tfPocName.getText(),
-                        tfPocEmail.getText(),
-                        tfPocPhone.getText());
+                // make a copy in case the update fails
+                newOrg = dbManager.getOrganizationByID(organizationToEdit.getOrgID());
+                newOrg.setName(tfOrganizationName.getText());
+                newOrg.setPocName(tfPocName.getText());
+                newOrg.setPocEmail(tfPocEmail.getText());
+                newOrg.setPocPhone(tfPocPhone.getText());
                 dbManager.updateOrganization(newOrg);
             } else {
                 newOrg = new EamOrganization(
@@ -345,13 +356,14 @@ public class AddNewOrganizationDialog extends javax.swing.JDialog {
                         tfPocName.getText(),
                         tfPocEmail.getText(),
                         tfPocPhone.getText());
-                newOrg.setOrgID((int)dbManager.newOrganization(newOrg));
+                newOrg = dbManager.newOrganization(newOrg);
             }
             hasChanged = true;
             dispose();
         } catch (EamDbException ex) {
             lbWarningMsg.setText(Bundle.AddNewOrganizationDialog_bnOk_addFailed_text());
-            LOGGER.log(Level.SEVERE, "Failed adding new organization.", ex);
+            logger.log(Level.SEVERE, "Failed adding new organization.", ex);
+            newOrg = null;
         }
     }//GEN-LAST:event_bnOKActionPerformed
 
