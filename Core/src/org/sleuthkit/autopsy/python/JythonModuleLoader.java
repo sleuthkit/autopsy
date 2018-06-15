@@ -70,8 +70,12 @@ public final class JythonModuleLoader {
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
         List<T> objects = new ArrayList<>();
         Set<File> pythonModuleDirs = new HashSet<>();
-        PythonInterpreter interpreter = new PythonInterpreter();
-
+        PythonInterpreter interpreter = null;
+        try {
+            interpreter = new PythonInterpreter();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed to load python Intepreter. Cannot load python modules", ex);
+        }
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
         // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
         for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", "org.sleuthkit.autopsy.core", false)) { //NON-NLS
@@ -91,7 +95,9 @@ public final class JythonModuleLoader {
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    objects.add(createObjectFromScript(interpreter, script, className, interfaceClass));
+                                    if (interpreter != null) {
+                                        objects.add(createObjectFromScript(interpreter, script, className, interfaceClass));
+                                    }
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     // NOTE: using ex.toString() because the current version is always returning null for ex.getMessage().
