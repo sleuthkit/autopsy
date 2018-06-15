@@ -35,9 +35,9 @@ class OtherOccurrenceNodeData {
     
     // For now hard code the string for the central repo files type, since 
     // getting it dynamically can fail.
-    private final String FILE_TYPE_STR = "Files";
+    private static final String FILE_TYPE_STR = "Files";
     
-    private String caseName;
+    private final String caseName;
     private String deviceID;
     private String dataSourceName;
     private final String filePath;
@@ -83,7 +83,7 @@ class OtherOccurrenceNodeData {
             deviceID = dataSource.getDeviceId();
             dataSourceName = dataSource.getName();
         } catch (TskDataException | TskCoreException ex) {
-            throw new EamDbException("Error loading data source for abstract file ID " + newFile.getId());
+            throw new EamDbException("Error loading data source for abstract file ID " + newFile.getId(), ex);
         }
         
         filePath = newFile.getParentPath() + newFile.getName();
