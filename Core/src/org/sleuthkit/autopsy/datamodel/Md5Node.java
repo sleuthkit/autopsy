@@ -62,6 +62,10 @@ public class Md5Node extends DisplayableItemNode {
         this.setDisplayName(this.md5Hash);
     }
     
+    /**
+     * Callable wrapper to further delay lazy ChildFactory creation
+     * and createNodes() call once lazy loading is functional.
+     */
     private static class Md5ChildCallable implements Callable<Children> {
         private final Md5Metadata key;
         private Md5ChildCallable(Md5Metadata key) {
