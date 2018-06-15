@@ -1772,7 +1772,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting all artifact instances from instances table", ex);
         } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }

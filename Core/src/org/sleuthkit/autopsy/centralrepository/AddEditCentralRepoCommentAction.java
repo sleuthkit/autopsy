@@ -84,9 +84,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      * exists there, or a new file instance will be added to the database with
      * the comment attached otherwise.
      * 
-     * The new comment is returned in case it is needed to update the display
+     * The current comment for this instance is returned in case it is needed to 
+     * update the display.
      *
-     * @return the newly added comment or null if it was not updated
+     * @return the current comment for this instance
      */
     public String addEditCentralRepoComment() {
         CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute, title);
@@ -106,9 +107,8 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             }
-            return centralRepoCommentDialog.getComment();
         }
-        return null;
+        return centralRepoCommentDialog.getComment();
     }
 
     /**

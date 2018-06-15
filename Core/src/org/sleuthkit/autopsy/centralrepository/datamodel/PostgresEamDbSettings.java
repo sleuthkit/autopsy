@@ -221,7 +221,7 @@ public final class PostgresEamDbSettings {
             LOGGER.log(Level.SEVERE, "Failed to execute database existance query.", ex); // NON-NLS
             return false;
         } finally {
-            EamDbUtil.closePreparedStatement(ps);
+            EamDbUtil.closeStatement(ps);
             EamDbUtil.closeResultSet(rs);
             EamDbUtil.closeConnection(conn);
         }
