@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.TskDataException;
 public class DataSourcesNode extends DisplayableItemNode {
 
     public static final String NAME = NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.name");
+    private final String displayName;
 
     // NOTE: The images passed in via argument will be ignored.
     @Deprecated
@@ -55,12 +56,13 @@ public class DataSourcesNode extends DisplayableItemNode {
 
     public DataSourcesNode(long dsObjId) {
         super(new DataSourcesNodeChildren(dsObjId), Lookups.singleton(NAME));
+        displayName = (dsObjId > 0) ?  NbBundle.getMessage(DataSourcesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
         init();
     }
     
     private void init() {
         setName(NAME);
-        setDisplayName(NAME);
+        setDisplayName(displayName);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
     }
 

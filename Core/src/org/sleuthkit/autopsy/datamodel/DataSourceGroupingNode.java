@@ -34,12 +34,12 @@ import org.sleuthkit.datamodel.LocalFilesDataSource;
  *  Data source grouping node - an optional grouping node in the data tree view
  * 
  */
-public class DataSourceGroupingNode extends DisplayableItemNode {
+class DataSourceGroupingNode extends DisplayableItemNode {
 
     private static final Logger logger = Logger.getLogger(DataSourceGroupingNode.class.getName());
 
     /**
-     * Creates the Data source grouping node for the given data source,  
+     * Creates a data source grouping node for the given data source. 
      * 
      * @param dataSource specifies the data source 
      */

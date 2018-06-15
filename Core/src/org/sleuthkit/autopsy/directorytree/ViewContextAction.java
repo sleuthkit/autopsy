@@ -147,7 +147,7 @@ public class ViewContextAction extends AbstractAction {
                 try {
                     // get the objid/name of the datasource of the selected content.
                     skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    long contentDSObjid = skCase.getDataSourceObjectId(content.getId());
+                    long contentDSObjid = content.getDataSource().getId();
                     DataSource datasource = skCase.getDataSource(contentDSObjid);
                     dsname = datasource.getName();
                     

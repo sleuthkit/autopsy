@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * A top level UI grouping of Files, Views, Results, Tags 
@@ -28,15 +27,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class DataSourceGrouping  implements AutopsyVisitableItem {
     
-    private final SleuthkitCase skCase;
     private final DataSource dataSource;
 
-    public DataSourceGrouping(SleuthkitCase skCase, DataSource dataSource) {
-        this.skCase = skCase;
+    public DataSourceGrouping(DataSource dataSource) {
         this.dataSource = dataSource;
     }
     
-    DataSource getgDataSource() {
+    DataSource getDataSource() {
         return this.dataSource;
     }
     
@@ -45,8 +42,4 @@ public class DataSourceGrouping  implements AutopsyVisitableItem {
         return visitor.visit(this);
     }
 
-    public SleuthkitCase getSleuthkitCase() {
-        return skCase;
-    }
-    
 }

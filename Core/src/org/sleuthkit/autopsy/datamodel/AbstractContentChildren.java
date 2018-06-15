@@ -202,7 +202,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(DataSourceGrouping datasourceGrouping) {
-            return new DataSourceGroupingNode(datasourceGrouping.getgDataSource());
+            return new DataSourceGroupingNode(datasourceGrouping.getDataSource());
         }
         
         @Override

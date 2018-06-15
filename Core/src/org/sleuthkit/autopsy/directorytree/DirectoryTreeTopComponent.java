@@ -73,7 +73,7 @@ import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
-import org.sleuthkit.autopsy.datamodel.RootContentChildrenFactory;
+import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildrenFactory;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -102,8 +102,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private RootContentChildrenFactory rootChildrenFactory;
-    private Children contentChildren;
+    private AutopsyTreeChildrenFactory autopsyTreeChildrenFactory;
+    private Children autopsyTreeChildren;
 
     /**
      * the constructor
@@ -397,9 +397,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             // if there's at least one image, load the image and open the top component
             final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
             
-            rootChildrenFactory = new RootContentChildrenFactory(tskCase);
-            contentChildren = Children.create(rootChildrenFactory, true);     
-            Node root = new AbstractNode(contentChildren) {
+            autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory(tskCase);
+            autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);     
+            Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
                  * to override the right click action in the white blank space
@@ -512,7 +512,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     @Override
     public void componentClosed() {
         //@@@ push the selection node to null?
-        contentChildren = null;
+        autopsyTreeChildren = null;
     }
 
     void writeProperties(java.util.Properties p) {
@@ -808,7 +808,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void rebuildTree() {
 
         // refresh all children of the root.
-        rootChildrenFactory.refreshChildren();
+        autopsyTreeChildrenFactory.refreshChildren();
 
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.

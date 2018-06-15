@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
@@ -39,19 +37,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
- * Child factory to create the top level children of the root of the directory tree 
+ * Child factory to create the top level children of the autopsy tree
  *  
  */
-public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> implements Observer { 
+public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> { 
     
-    private static final Logger logger = Logger.getLogger(RootContentChildrenFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(AutopsyTreeChildrenFactory.class.getName());
     private final SleuthkitCase tskCase;
     
     /**
-     * Constructs the child factory for root nodes
+     * Constructs the child factory
      * @param tskCase 
      */
-    public RootContentChildrenFactory(SleuthkitCase tskCase) {
+    public AutopsyTreeChildrenFactory(SleuthkitCase tskCase) {
         this.tskCase = tskCase;
 
     }
@@ -81,15 +79,11 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
     }
 
-    @Override
-    public void update(Observable observable, Object arg) {
-        refresh(true);
-    }
-    
     /**
      * Creates keys for the top level children.  
      * 
      * @param list list of keys created
+     * @return true, indicating that the key list is complete
      */
     @Override
     protected boolean createKeys(List<Object> list) {
@@ -99,7 +93,7 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
                 List<DataSource> dataSources = tskCase.getDataSources();
                 List<DataSourceGrouping> keys = new ArrayList<>();
                 dataSources.forEach((datasource) -> {
-                    keys.add(new DataSourceGrouping(tskCase, datasource));
+                    keys.add(new DataSourceGrouping(datasource));
                 });
                 list.addAll(keys);
                 
@@ -117,7 +111,7 @@ public class RootContentChildrenFactory extends ChildFactory.Detachable<Object> 
             }
 
         } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Error getting datas sources list form the database.", tskCoreException);
+            logger.log(Level.SEVERE, "Error getting datas sources list from the database.", tskCoreException);
         }
         return true;
     }

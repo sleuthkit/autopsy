@@ -81,7 +81,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
     public ExtractedContent(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
         this.datasourceObjId = objId;
-        this.blackboard = new Blackboard(skCase);
+        this.blackboard = skCase.getBlackboard();
     }
     
     @Override
@@ -292,7 +292,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact.Type> types = (UserPreferences.groupItemsInTreeByDatasource()) ? 
-                            blackboard.getArtifactTypesInUseByDataSource(datasourceObjId) :
+                            blackboard.getArtifactTypesInUse(datasourceObjId) :
                             skCase.getArtifactTypesInUse() ;
                     
                     types.removeAll(doNotShow);
@@ -357,7 +357,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    "getBlackboardArtifactCount()" method to skCase
             try {
                 this.childCount = UserPreferences.groupItemsInTreeByDatasource() ? 
-                        blackboard.getBlackboardArtifactsCountByDataSource(type.getTypeID(), datasourceObjId) :
+                        blackboard.getArtifactsCount(type.getTypeID(), datasourceObjId) :
                         skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
             } catch (TskException ex) {
                 Logger.getLogger(TypeNode.class.getName())
@@ -482,7 +482,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 try {
                     List<BlackboardArtifact> arts = 
                             UserPreferences.groupItemsInTreeByDatasource() ?
-                            blackboard.getBlackboardArtifactsByDataSource(type.getTypeID(), datasourceObjId) :
+                            blackboard.getArtifacts(type.getTypeID(), datasourceObjId) :
                             skCase.getBlackboardArtifacts(type.getTypeID());
                     list.addAll(arts);
                 } catch (TskException ex) {
