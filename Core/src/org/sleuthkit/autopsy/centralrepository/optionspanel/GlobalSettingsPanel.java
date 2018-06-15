@@ -429,12 +429,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed
         store();
-        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
+        ManageOrganizationsDialog manageOrganizationsDialog = new ManageOrganizationsDialog();
     }//GEN-LAST:event_manageOrganizationButtonActionPerformed
 
     private void showCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showCasesButtonActionPerformed
         store();
-        ShowCasesDialog dialog = new ShowCasesDialog();
+        ShowCasesDialog showCasesDialog = new ShowCasesDialog();
     }//GEN-LAST:event_showCasesButtonActionPerformed
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,9 @@ public class ShowCasesTableModel extends AbstractTableModel {
         "ShowCasesTableModel.examinerPhone=Examiner Phone",
         "ShowCasesTableModel.notes=Notes",
         "ShowCasesTableModel.noData=No Cases"})
+    /**
+     * Enum which lists columns of interest from CorrelationCase.
+     */
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
@@ -107,7 +110,7 @@ public class ShowCasesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == eamCases.size()) {
+        if (eamCases.isEmpty()) {
             return Bundle.ShowCasesTableModel_noData();
         }
 
@@ -151,6 +154,8 @@ public class ShowCasesTableModel extends AbstractTableModel {
                 break;
             case NOTES:
                 value = eamCase.getNotes();
+                break;
+            default:
                 break;
         }
         return value;

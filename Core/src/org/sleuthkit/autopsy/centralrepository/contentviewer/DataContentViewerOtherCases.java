@@ -33,6 +33,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -468,7 +469,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      */
     private void setEarliestCaseDate() {
        LocalDate earliestDate = LocalDate.now();
-       DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+       DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
        String dateStringDisplay = Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable();
        
 

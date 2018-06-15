@@ -29,13 +29,14 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
+/**
+ * Dialog to display table of CorrelationCase information from the CR tab of options.
+ */
 public final class ShowCasesDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
 
-    private EamDb dbManager;
-
-    private ShowCasesTableModel tableModel;
+    private final ShowCasesTableModel tableModel;
     @Messages({"ShowCasesDialog.title_text=All Cases Details"})
     /**
      * Creates new form ShowCases Panel
@@ -47,7 +48,7 @@ public final class ShowCasesDialog extends JDialog {
         tableModel = new ShowCasesTableModel();
         initComponents();
         try {
-            this.dbManager = EamDb.getInstance();
+            EamDb dbManager = EamDb.getInstance();
             List<CorrelationCase> eamCases = dbManager.getCases();          
             for(CorrelationCase eamCase : eamCases) {
                 tableModel.addEamCase(eamCase);
@@ -55,7 +56,6 @@ public final class ShowCasesDialog extends JDialog {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
         }
-        // setColumnWidths();
         display();
     }
 
@@ -171,16 +171,7 @@ public final class ShowCasesDialog extends JDialog {
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
         dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
-    
-    private void setColumnWidths() {
-        for (int idx = 0; idx < tableModel.getColumnCount(); idx++) {
-            TableColumn column = caseDetailsTable.getColumnModel().getColumn(idx);
-            int colWidth = tableModel.getColumnPreferredWidth(idx);
-            if (0 < colWidth) {
-                column.setPreferredWidth(colWidth);
-            }
-        }
-    }
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable caseDetailsTable;

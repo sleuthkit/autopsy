@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
 /**
- *
- * @author bsweeney
+ * 
  */
 class CommonFilesChildren extends Children.Keys<AbstractFile>{
 
@@ -35,14 +34,14 @@ class CommonFilesChildren extends Children.Keys<AbstractFile>{
     }
     
     @Override
-    protected Node[] createNodes(AbstractFile t) {
+    protected Node[] createNodes(AbstractFile abstractFile) {
         
-        if(t.isDir()){
-            //TODO log an error ???
-            
-        } else {
-            
-        }
+//        if(abstractFile.isDir()){
+//            //TODO log an error ???
+//            
+//        } else {
+//            
+//        }
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
