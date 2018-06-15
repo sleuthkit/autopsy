@@ -258,21 +258,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(EXTENSION.toString(), content.getNameExtension());
     }
 
-    @Override
-    public Action[] getActions(boolean context) {
-        List<Action> actionsList = new ArrayList<>();
-
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
-        
-        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
-        AbstractFile file = content;
-        if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
-            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-        }
-        
-        return actionsList.toArray(new Action[actionsList.size()]);
-    }
-
     /**
      * Used by subclasses of AbstractAbstractFileNode to add the tags property
      * to their sheets.
