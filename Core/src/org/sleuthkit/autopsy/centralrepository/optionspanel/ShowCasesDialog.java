@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.centralrepository.optionspanel;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.table.TableColumn;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
