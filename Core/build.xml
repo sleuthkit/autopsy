@@ -96,10 +96,10 @@
         <get src="https://drive.google.com/uc?id=1bghoSm7z7nhmGIxlllyY1MMlbLntxm7n" dest="${test-input}/IngestFilters_local1_v1.zip" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1BrSiUQ1fzxFS9vIaK4mYKX6qIVp9kRWT" dest="${test-input}/PasswordDetection_img1_v1.img" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1HD8s4rculgHV1qZT5g80Kg7j4m1qccrN" dest="${test-input}/VeracryptDetection_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1O5D09fFCFpXZqw0uLEs8kVLtfYTxqXAd" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1rMP1QTI0LdppzdypbG-4BDwkKcR3tHXc" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1OdwyJ2lru55ZPdvwzj3pq6sXIys27i4x" dest="${test-input}/CommonFiles_img3_v1.vhd" skipexisting="true"/>
-        <get src="https://drive.google.com/uc?id=1GoF2x0km5AyFvE926ttN20lrMX1oLN7E" dest="${test-input}/CommonFiles_img4_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1mr9waEDG5H8GBBn_yXwMUQ6senwC1goL" dest="${test-input}/CommonFiles_img1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1-vmbmAAb2HBLbf58GpAA97ozGUFiYHbN" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1ghDjm0NhI3ShMQ38E-4o7XrGeexpjdJb" dest="${test-input}/CommonFiles_img3_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1SJYJFjiumKEtQmeMPsQ6G3xmABarbKm_" dest="${test-input}/CommonFiles_img4_v1.vhd" skipexisting="true"/>
     </target>
 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">
