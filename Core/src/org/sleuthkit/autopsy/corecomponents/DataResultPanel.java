@@ -443,8 +443,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          * found.
          */
         int tabToSelect = NO_TAB_SELECTED;
-        if (selectedNode instanceof SinlgeLayerTableFilterNode) {
-            NodeSelectionInfo selectedChildInfo = ((SinlgeLayerTableFilterNode) selectedNode).getChildNodeSelectionInfo();
+        if (selectedNode instanceof SingleLayerTableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) selectedNode).getChildNodeSelectionInfo();
             if (null != selectedChildInfo) {
                 for (int i = 0; i < resultViewers.size(); ++i) {
                     if (resultViewers.get(i) instanceof DataResultViewerTable && resultViewerTabs.isEnabledAt(i)) {

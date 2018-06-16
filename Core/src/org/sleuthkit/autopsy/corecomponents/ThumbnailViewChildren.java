@@ -133,10 +133,10 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private synchronized Comparator<Node> getComparator() {
         Comparator<Node> comp = (node1, node2) -> 0; //eveything is equal.
 
-        if (!(parent instanceof SinlgeLayerTableFilterNode)) {
+        if (!(parent instanceof SingleLayerTableFilterNode)) {
             return comp;
         } else {
-            List<SortCriterion> sortCriteria = loadSortCriteria((SinlgeLayerTableFilterNode) parent);
+            List<SortCriterion> sortCriteria = loadSortCriteria((SingleLayerTableFilterNode) parent);
 
             /**
              * Make a comparator that will sort the nodes.

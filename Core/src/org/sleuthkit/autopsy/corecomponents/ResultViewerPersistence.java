@@ -43,7 +43,7 @@ final class ResultViewerPersistence {
      *
      * @return A generated key for the preference file
      */
-    static String getColumnPositionKey(SinlgeLayerTableFilterNode node, String propName) {
+    static String getColumnPositionKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".column";
     }
 
@@ -56,7 +56,7 @@ final class ResultViewerPersistence {
      *
      * @return A generated key for the preference file
      */
-    static String getColumnSortOrderKey(SinlgeLayerTableFilterNode node, String propName) {
+    static String getColumnSortOrderKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".sortOrder";
     }
 
@@ -69,7 +69,7 @@ final class ResultViewerPersistence {
      *
      * @return A generated key for the preference file
      */
-    static String getColumnSortRankKey(SinlgeLayerTableFilterNode node, String propName) {
+    static String getColumnSortRankKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".sortRank";
     }
 
@@ -82,11 +82,11 @@ final class ResultViewerPersistence {
      *
      * @return A generated key for the preference file
      */
-    static String getColumnHiddenKey(SinlgeLayerTableFilterNode node, String propName) {
+    static String getColumnHiddenKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".hidden";
     }
 
-    private static String getColumnKeyBase(SinlgeLayerTableFilterNode node, String propName) {
+    private static String getColumnKeyBase(TableFilterNode node, String propName) {
         return stripNonAlphanumeric(node.getColumnOrderKey()) + "." + stripNonAlphanumeric(propName);
     }
 
@@ -152,7 +152,7 @@ final class ResultViewerPersistence {
      * @return A map from sort rank to sort criterion, where rank 1 means that
      *         this is the most important sort criteria, 2 means second etc.
      */
-    static List< SortCriterion> loadSortCriteria(SinlgeLayerTableFilterNode node) {
+    static List< SortCriterion> loadSortCriteria(SingleLayerTableFilterNode node) {
         List<Node.Property<?>> availableProperties = ResultViewerPersistence.getAllChildProperties(node, 100);
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
         java.util.SortedMap<Integer, SortCriterion> criteriaMap = new TreeMap<>();

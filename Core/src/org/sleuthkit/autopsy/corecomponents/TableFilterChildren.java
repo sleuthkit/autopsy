@@ -23,7 +23,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 /**
- * A Children implementation for a SinlgeLayerTableFilterNode. A SinlgeLayerTableFilterNode creates at
+ * A Children implementation for a SingleLayerTableFilterNode. A SingleLayerTableFilterNode creates at
  most one layer of child nodes for the node it wraps. It is designed to be
  used in the results view to ensure the individual viewers display only the
  first layer of child nodes.
@@ -31,18 +31,18 @@ import org.openide.nodes.Node;
 class TableFilterChildren extends FilterNode.Children {
 
     /**
-     * Creates a Children object for a SinlgeLayerTableFilterNode. A SinlgeLayerTableFilterNode
+     * Creates a Children object for a SingleLayerTableFilterNode. A SingleLayerTableFilterNode
  creates at most one layer of child nodes for the node it wraps. It is
  designed to be used in the results view to ensure the individual viewers
  display only the first layer of child nodes.
      *
      *
-     * @param wrappedNode The node wrapped by the SinlgeLayerTableFilterNode.
+     * @param wrappedNode The node wrapped by the SingleLayerTableFilterNode.
      * @param createChildren True if a children (child factory) object should be
      * created for the wrapped node.
      *
      * @return A children (child factory) object for a node wrapped by a
- SinlgeLayerTableFilterNode.
+ SingleLayerTableFilterNode.
      */
     public static Children createInstance(Node wrappedNode, boolean createChildren) {
 
@@ -57,27 +57,27 @@ class TableFilterChildren extends FilterNode.Children {
 
     /**
      * Constructs a children (child factory) implementation for a
- SinlgeLayerTableFilterNode. A SinlgeLayerTableFilterNode creates at most one layer of child
+ SingleLayerTableFilterNode. A SingleLayerTableFilterNode creates at most one layer of child
  nodes for the node it wraps. It is designed to be used for nodes
  displayed in Autopsy table views.
      *
-     * @param wrappedNode The node wrapped by the SinlgeLayerTableFilterNode.
+     * @param wrappedNode The node wrapped by the SingleLayerTableFilterNode.
      */
     TableFilterChildren(Node wrappedNode) {
         super(wrappedNode);
     }
 
     /**
-     * Copies a SinlgeLayerTableFilterNode, with the create children (child factory) flag
+     * Copies a SingleLayerTableFilterNode, with the create children (child factory) flag
  set to false.
      *
-     * @param nodeToCopy The SinlgeLayerTableFilterNode to copy.
+     * @param nodeToCopy The SingleLayerTableFilterNode to copy.
      *
-     * @return A copy of a SinlgeLayerTableFilterNode.
+     * @return A copy of a SingleLayerTableFilterNode.
      */
     @Override
     protected Node copyNode(Node nodeToCopy) {
-        return new SinlgeLayerTableFilterNode(nodeToCopy, false);
+        return new SingleLayerTableFilterNode(nodeToCopy, false);
     }
 
     /**

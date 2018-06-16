@@ -30,7 +30,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.corecomponents.SinlgeLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -104,7 +104,7 @@ class AdHocSearchDelegator {
 
         final String pathText = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.pathText.text");
 
-        DataResultTopComponent.initInstance(pathText, new SinlgeLayerTableFilterNode(rootNode, true, KeywordSearch.class.getName()),
+        DataResultTopComponent.initInstance(pathText, new SingleLayerTableFilterNode(rootNode, true, KeywordSearch.class.getName()),
                 queryRequests.size(), searchResultWin);
 
         searchResultWin.requestActive();
