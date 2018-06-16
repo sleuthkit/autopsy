@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
  * wraps. It is designed to be used in the results view to ensure the individual
  * viewers display only the first layer of child nodes.
  */
-public class TableFilterNode extends FilterNode {
+public class SinlgeLayerTableFilterNode extends FilterNode {
 
     private final boolean createChildren;
     private boolean forceUseWrappedDisplayName = false;
@@ -46,7 +46,7 @@ public class TableFilterNode extends FilterNode {
      * @param createChildren True if a Children object should be created for the
      * wrapped node.
      */
-    public TableFilterNode(Node node, boolean createChildren) {
+    public SinlgeLayerTableFilterNode(Node node, boolean createChildren) {
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
     }
@@ -59,7 +59,7 @@ public class TableFilterNode extends FilterNode {
      *
      * @param node The node to wrap
      */
-    public TableFilterNode(Node node) {
+    public SinlgeLayerTableFilterNode(Node node) {
         super(node, TableFilterChildrenWithDescendants.createInstance(node, true), Lookups.proxy(node));
         this.createChildren = true;
         this.forceUseWrappedDisplayName = false;
@@ -72,7 +72,7 @@ public class TableFilterNode extends FilterNode {
      * @param createChildren node has children?
      * @param forceUseWrappedDisplayName  allow use of custom <code>getDisplayName()</code> .
      */
-    TableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
+    SinlgeLayerTableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
         this.forceUseWrappedDisplayName = forceUseWrappedDisplayName;
@@ -90,7 +90,7 @@ public class TableFilterNode extends FilterNode {
      * @param columnOrderKey A key that represents the type of the original
      * wrapped node and what is being displayed under that node.
      */
-    public TableFilterNode(Node node, boolean createChildren, String columnOrderKey) {
+    public SinlgeLayerTableFilterNode(Node node, boolean createChildren, String columnOrderKey) {
         super(node, TableFilterChildren.createInstance(node, createChildren));
         this.createChildren = createChildren;
         this.columnOrderKey = columnOrderKey;

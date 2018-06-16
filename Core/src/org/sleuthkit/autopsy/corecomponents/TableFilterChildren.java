@@ -23,26 +23,26 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
 /**
- * A Children implementation for a TableFilterNode. A TableFilterNode creates at
- * most one layer of child nodes for the node it wraps. It is designed to be
- * used in the results view to ensure the individual viewers display only the
- * first layer of child nodes.
+ * A Children implementation for a SinlgeLayerTableFilterNode. A SinlgeLayerTableFilterNode creates at
+ most one layer of child nodes for the node it wraps. It is designed to be
+ used in the results view to ensure the individual viewers display only the
+ first layer of child nodes.
  */
 class TableFilterChildren extends FilterNode.Children {
 
     /**
-     * Creates a Children object for a TableFilterNode. A TableFilterNode
-     * creates at most one layer of child nodes for the node it wraps. It is
-     * designed to be used in the results view to ensure the individual viewers
-     * display only the first layer of child nodes.
+     * Creates a Children object for a SinlgeLayerTableFilterNode. A SinlgeLayerTableFilterNode
+ creates at most one layer of child nodes for the node it wraps. It is
+ designed to be used in the results view to ensure the individual viewers
+ display only the first layer of child nodes.
      *
      *
-     * @param wrappedNode The node wrapped by the TableFilterNode.
+     * @param wrappedNode The node wrapped by the SinlgeLayerTableFilterNode.
      * @param createChildren True if a children (child factory) object should be
      * created for the wrapped node.
      *
      * @return A children (child factory) object for a node wrapped by a
-     * TableFilterNode.
+ SinlgeLayerTableFilterNode.
      */
     public static Children createInstance(Node wrappedNode, boolean createChildren) {
 
@@ -57,27 +57,27 @@ class TableFilterChildren extends FilterNode.Children {
 
     /**
      * Constructs a children (child factory) implementation for a
-     * TableFilterNode. A TableFilterNode creates at most one layer of child
-     * nodes for the node it wraps. It is designed to be used for nodes
-     * displayed in Autopsy table views.
+ SinlgeLayerTableFilterNode. A SinlgeLayerTableFilterNode creates at most one layer of child
+ nodes for the node it wraps. It is designed to be used for nodes
+ displayed in Autopsy table views.
      *
-     * @param wrappedNode The node wrapped by the TableFilterNode.
+     * @param wrappedNode The node wrapped by the SinlgeLayerTableFilterNode.
      */
     TableFilterChildren(Node wrappedNode) {
         super(wrappedNode);
     }
 
     /**
-     * Copies a TableFilterNode, with the create children (child factory) flag
-     * set to false.
+     * Copies a SinlgeLayerTableFilterNode, with the create children (child factory) flag
+ set to false.
      *
-     * @param nodeToCopy The TableFilterNode to copy.
+     * @param nodeToCopy The SinlgeLayerTableFilterNode to copy.
      *
-     * @return A copy of a TableFilterNode.
+     * @return A copy of a SinlgeLayerTableFilterNode.
      */
     @Override
     protected Node copyNode(Node nodeToCopy) {
-        return new TableFilterNode(nodeToCopy, false);
+        return new SinlgeLayerTableFilterNode(nodeToCopy, false);
     }
 
     /**

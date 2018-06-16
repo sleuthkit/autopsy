@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.SinlgeLayerTableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.actions.Back;
@@ -209,7 +209,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                 case DETAIL:
                     //make a root node with nodes for the selected events as children and push it to the result viewer.
                     EventRootNode rootNode = new EventRootNode(selectedEventIDs, controller.getEventsModel());
-                    TableFilterNode tableFilterNode = new TableFilterNode(rootNode, true, "Event");
+                    SinlgeLayerTableFilterNode tableFilterNode = new SinlgeLayerTableFilterNode(rootNode, true, "Event");
                     SwingUtilities.invokeLater(() -> {
                         dataResultPanel.setPath(getResultViewerSummaryString());
                         dataResultPanel.setNode(tableFilterNode);

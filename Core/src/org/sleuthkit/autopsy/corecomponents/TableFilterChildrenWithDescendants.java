@@ -42,6 +42,6 @@ final class TableFilterChildrenWithDescendants extends TableFilterChildren {
     
     @Override
     protected Node copyNode(Node nodeToCopy){
-        return new TableFilterNode(nodeToCopy, true, true);
+        return new SinlgeLayerTableFilterNode(nodeToCopy, true, true);
     }    
 }

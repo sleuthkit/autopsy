@@ -315,8 +315,8 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * it.
          */
         SwingUtilities.invokeLater(() -> {
-            if (rootNode instanceof TableFilterNode) {
-                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) rootNode).getChildNodeSelectionInfo();
+            if (rootNode instanceof SinlgeLayerTableFilterNode) {
+                NodeSelectionInfo selectedChildInfo = ((SinlgeLayerTableFilterNode) rootNode).getChildNodeSelectionInfo();
                 if (null != selectedChildInfo) {
                     Node[] childNodes = rootNode.getChildren().getNodes(true);
                     for (int i = 0; i < childNodes.length; ++i) {
@@ -330,7 +330,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
                             break;
                         }
                     }
-                    ((TableFilterNode) rootNode).setChildNodeSelectionInfo(null);
+                    ((SinlgeLayerTableFilterNode) rootNode).setChildNodeSelectionInfo(null);
                 }
             }
         });
@@ -430,8 +430,8 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            TableFilterNode tfn = (TableFilterNode) rootNode;
+        if (rootNode instanceof SinlgeLayerTableFilterNode) {
+            SinlgeLayerTableFilterNode tfn = (SinlgeLayerTableFilterNode) rootNode;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             final ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
@@ -456,8 +456,8 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            TableFilterNode tfn = (TableFilterNode) rootNode;
+        if (rootNode instanceof SinlgeLayerTableFilterNode) {
+            SinlgeLayerTableFilterNode tfn = (SinlgeLayerTableFilterNode) rootNode;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
@@ -473,8 +473,8 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            final TableFilterNode tfn = ((TableFilterNode) rootNode);
+        if (rootNode instanceof SinlgeLayerTableFilterNode) {
+            final SinlgeLayerTableFilterNode tfn = ((SinlgeLayerTableFilterNode) rootNode);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
@@ -505,8 +505,8 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            final TableFilterNode tfn = (TableFilterNode) rootNode;
+        if (rootNode instanceof SinlgeLayerTableFilterNode) {
+            final SinlgeLayerTableFilterNode tfn = (SinlgeLayerTableFilterNode) rootNode;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             //organize property sorting information, sorted by rank
             TreeSet<ColumnSortInfo> sortInfos = new TreeSet<>(Comparator.comparing(ColumnSortInfo::getRank));
@@ -531,9 +531,9 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
+        if (rootNode instanceof SinlgeLayerTableFilterNode) {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-            final TableFilterNode tfn = ((TableFilterNode) rootNode);
+            final SinlgeLayerTableFilterNode tfn = ((SinlgeLayerTableFilterNode) rootNode);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
                 final String propName = entry.getValue().getName();
@@ -557,11 +557,11 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(rootNode, 100);
 
         // If node is not table filter node, use default order for columns
-        if (!(rootNode instanceof TableFilterNode)) {
+        if (!(rootNode instanceof SinlgeLayerTableFilterNode)) {
             return props;
         }
 
-        final TableFilterNode tfn = ((TableFilterNode) rootNode);
+        final SinlgeLayerTableFilterNode tfn = ((SinlgeLayerTableFilterNode) rootNode);
         propertiesMap.clear();
 
         /*
