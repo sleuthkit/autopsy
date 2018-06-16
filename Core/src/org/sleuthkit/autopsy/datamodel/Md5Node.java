@@ -54,13 +54,12 @@ public class Md5Node extends DisplayableItemNode {
 
     public Md5Node(Md5Metadata data) {
         super(Children.create(
-                new FileInstanceNodeFactory(data), true),
-                Lookups.singleton(Md5Node.class));
+                new FileInstanceNodeFactory(data), true));
         
         this.commonFileCount = data.size();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
-
+        
         this.setDisplayName(this.md5Hash);
     }
 
@@ -105,8 +104,8 @@ public class Md5Node extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
-        map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
-        map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
+        //map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
+        //map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
     }
 
@@ -165,8 +164,8 @@ public class Md5Node extends DisplayableItemNode {
         "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {
 
-        File(Bundle.CommonFileParentPropertyType_fileColLbl()),
-        InstanceCount(Bundle.CommonFileParentPropertyType_instanceColLbl()),
+        //File(Bundle.CommonFileParentPropertyType_fileColLbl()),
+        //InstanceCount(Bundle.CommonFileParentPropertyType_instanceColLbl()),
         DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
 
         final private String displayString;

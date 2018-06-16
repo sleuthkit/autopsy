@@ -41,7 +41,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
     final private List<Md5Metadata> metadataList;
 
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
-        super(Children.create(new Md5NodeFactory(md5Metadata), true), Lookups.singleton(InstanceCountNode.class));
+        super(Children.create(new Md5NodeFactory(md5Metadata), true));
 
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
@@ -101,14 +101,15 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
-        map.put(InstanceCountNodePropertyType.Instance.toString(), node.instanceCount);
+        map.put(InstanceCountNodePropertyType.Match.toString(), node.instanceCount);
     }
     
     @NbBundle.Messages({
-        "InstanceCountNodeProeprtyType.instanceCountColLbl1=Instance Count"
+        "InstanceCountNodeProeprtyType.matchCountColLbl1=Match"
     })
     public enum InstanceCountNodePropertyType{
-        Instance(Bundle.InstanceCountNodeProeprtyType_instanceCountColLbl1());
+        
+        Match(Bundle.InstanceCountNodeProeprtyType_matchCountColLbl1());
         
         final private String displayString;
         

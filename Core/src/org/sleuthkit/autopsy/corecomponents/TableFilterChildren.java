@@ -37,19 +37,21 @@ class TableFilterChildren extends FilterNode.Children {
      * display only the first layer of child nodes.
      *
      *
-     * @param wrappedNode    The node wrapped by the TableFilterNode.
+     * @param wrappedNode The node wrapped by the TableFilterNode.
      * @param createChildren True if a children (child factory) object should be
-     *                       created for the wrapped node.
+     * created for the wrapped node.
      *
      * @return A children (child factory) object for a node wrapped by a
-     *         TableFilterNode.
+     * TableFilterNode.
      */
     public static Children createInstance(Node wrappedNode, boolean createChildren) {
-        
-        if (createChildren) {
-            return new TableFilterChildren(wrappedNode);
-        } else {
+
+        if (wrappedNode.isLeaf()) {
             return Children.LEAF;
+        } else {
+            return new TableFilterChildren(wrappedNode);
+            //This stops us after 2 layers of nodes
+
         }
     }
 
@@ -64,7 +66,7 @@ class TableFilterChildren extends FilterNode.Children {
     TableFilterChildren(Node wrappedNode) {
         super(wrappedNode);
     }
-    
+
     /**
      * Copies a TableFilterNode, with the create children (child factory) flag
      * set to false.

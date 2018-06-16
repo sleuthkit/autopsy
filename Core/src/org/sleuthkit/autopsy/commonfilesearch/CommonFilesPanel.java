@@ -244,6 +244,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
+                    //TODO this will be something else that acts similarly to tablefilternode
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
 
                     DataResultViewerTable table = new DataResultViewerTable();

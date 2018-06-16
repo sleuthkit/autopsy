@@ -36,7 +36,7 @@ final public class CommonFilesNode extends DisplayableItemNode {
     
 
     CommonFilesNode(CommonFilesMetadata metadataList) {
-        super(Children.create(new InstanceCountNodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
+        super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
     @NbBundle.Messages({
