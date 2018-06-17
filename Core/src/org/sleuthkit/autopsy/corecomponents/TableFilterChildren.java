@@ -46,12 +46,10 @@ class TableFilterChildren extends FilterNode.Children {
      */
     public static Children createInstance(Node wrappedNode, boolean createChildren) {
 
-        if (wrappedNode.isLeaf()) {
-            return Children.LEAF;
-        } else {
+        if (createChildren) {
             return new TableFilterChildren(wrappedNode);
-            //This stops us after 2 layers of nodes
-
+        } else {
+            return Children.LEAF;
         }
     }
 

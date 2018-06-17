@@ -33,15 +33,15 @@ final class TableFilterChildrenWithDescendants extends TableFilterChildren {
     }
     
     public static Children createInstance(Node wrappedNode, boolean createChildren){
-        if(createChildren){
-            return new TableFilterChildrenWithDescendants(wrappedNode);
-        } else {
+        if(wrappedNode.isLeaf()){
             return Children.LEAF;
+        } else {
+            return new TableFilterChildrenWithDescendants(wrappedNode);
         }
     }
     
     @Override
     protected Node copyNode(Node nodeToCopy){
-        return new SingleLayerTableFilterNode(nodeToCopy, true, true);
+        return new MultiLayerTableFilterNode(nodeToCopy);
     }    
 }

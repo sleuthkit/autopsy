@@ -50,33 +50,18 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
     }
-
-    /**
-     * Constructs a filter node that generates children using
-     * TableFilterChildrenWithDescendants. This enables row to have descendants.
-     * 
-     * Enables use of <code>getDisplayName()</code> for children of this node.
-     *
-     * @param node The node to wrap
-     */
-    public SingleLayerTableFilterNode(Node node) {
-        super(node, TableFilterChildrenWithDescendants.createInstance(node, true), Lookups.proxy(node));
-        this.createChildren = true;
-        this.forceUseWrappedDisplayName = false;
-    }
-    
-    /**
-     * To be used in TableFilterChildrenWithDescendants.
-     * 
-     * @param node node to wrap
-     * @param createChildren node has children?
-     * @param forceUseWrappedDisplayName  allow use of custom <code>getDisplayName()</code> .
-     */
-    SingleLayerTableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
-        super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
-        this.createChildren = createChildren;
-        this.forceUseWrappedDisplayName = forceUseWrappedDisplayName;
-    }
+//    /**
+//     * To be used in TableFilterChildrenWithDescendants.
+//     * 
+//     * @param node node to wrap
+//     * @param createChildren node has children?
+//     * @param forceUseWrappedDisplayName  allow use of custom <code>getDisplayName()</code> .
+//     */
+//    SingleLayerTableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
+//        super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
+//        this.createChildren = createChildren;
+//        this.forceUseWrappedDisplayName = forceUseWrappedDisplayName;
+//    }
 
     /**
      * Constructs a filter node that creates at most one layer of child nodes

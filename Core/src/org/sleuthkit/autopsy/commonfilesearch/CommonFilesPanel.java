@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.corecomponents.MultiLayerTableFilterNode;
 import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -244,8 +245,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
-                    //TODO this will be something else that acts similarly to tablefilternode
-                    SingleLayerTableFilterNode tableFilterWithDescendantsNode = new SingleLayerTableFilterNode(dataResultFilterNode);
+                    MultiLayerTableFilterNode tableFilterWithDescendantsNode = new MultiLayerTableFilterNode(dataResultFilterNode);
 
                     DataResultViewerTable table = new DataResultViewerTable();
 
