@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(GlobalSettingsPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(GlobalSettingsPanel.class.getName());
 
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 

@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 /**
  * Model for cells to display correlation case information
  */
-public class ShowCasesTableModel extends AbstractTableModel {
+class ShowCasesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
 
@@ -61,11 +61,11 @@ public class ShowCasesTableModel extends AbstractTableModel {
             this.columnWidth = columnWidth;
         }
 
-        public String columnName() {
+        String columnName() {
             return columnName;
         }
 
-        public int columnWidth() {
+        int columnWidth() {
             return columnWidth;
         }
     };
@@ -94,7 +94,7 @@ public class ShowCasesTableModel extends AbstractTableModel {
      *
      * @return preferred column width >= 0
      */
-    public int getColumnPreferredWidth(int colIdx) {
+    int getColumnPreferredWidth(int colIdx) {
         return TableColumns.values()[colIdx].columnWidth();
     }
 
@@ -117,7 +117,7 @@ public class ShowCasesTableModel extends AbstractTableModel {
         return mapValueById(rowIdx, TableColumns.values()[colIdx]);
     }
 
-    public Object getRow(int rowIdx) {
+    Object getRow(int rowIdx) {
         return eamCases.get(rowIdx);
     }
 
@@ -172,12 +172,12 @@ public class ShowCasesTableModel extends AbstractTableModel {
      * @param eamCase central repository case to add to the
      *                   table
      */
-    public void addEamCase(CorrelationCase eamCase) {
+    void addEamCase(CorrelationCase eamCase) {
         eamCases.add(eamCase);
         fireTableDataChanged();
     }
 
-    public void clearTable() {
+    void clearTable() {
         eamCases.clear();
         fireTableDataChanged();
     }
