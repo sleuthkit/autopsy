@@ -221,11 +221,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         actionsList.addAll(Arrays.asList(super.getActions(context)));
         AbstractFile file = getLookup().lookup(AbstractFile.class);
 
-        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
-        if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
-            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-        }
-
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
             if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {

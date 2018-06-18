@@ -36,6 +36,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -57,6 +58,20 @@ public class Tags implements AutopsyVisitableItem {
     private final String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
+    private final long datasourceObjId;
+    
+    Tags() {
+       this(0);
+    }
+    
+    Tags(long dsObjId) {
+        this.datasourceObjId = dsObjId;
+    }
+    
+    long filteringDataSourceObjId() {
+        return this.datasourceObjId;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -83,11 +98,13 @@ public class Tags implements AutopsyVisitableItem {
      */
     public class RootNode extends DisplayableItemNode {
 
-        public RootNode() {
-            super(Children.create(new TagNameNodeFactory(), true), Lookups.singleton(DISPLAY_NAME));
+        
+        public RootNode(long objId) {
+            super(Children.create(new TagNameNodeFactory(objId), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(DISPLAY_NAME);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension(ICON_PATH);
+           
         }
 
         @Override
@@ -121,6 +138,8 @@ public class Tags implements AutopsyVisitableItem {
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
 
+        private final long datasourceObjId;
+        
         private final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
                 Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
                 Case.Events.CONTENT_TAG_ADDED,
@@ -176,6 +195,15 @@ public class Tags implements AutopsyVisitableItem {
             }
         };
 
+        /**
+         * Constructor
+         * @param objId data source object id
+         */
+        TagNameNodeFactory(long objId) {
+            this.datasourceObjId = objId;
+            
+        }
+        
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
@@ -196,7 +224,11 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {
-                List<TagName> tagNamesInUse = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+                
+                List<TagName> tagNamesInUse = UserPreferences.groupItemsInTreeByDatasource() ?
+                        Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse(datasourceObjId) :
+                        Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse()
+                ;
                 Collections.sort(tagNamesInUse);
                 keys.addAll(tagNamesInUse);
             } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -244,8 +276,15 @@ public class Tags implements AutopsyVisitableItem {
             long tagsCount = 0;
             try {
                 TagsManager tm = Case.getCurrentCaseThrows().getServices().getTagsManager();
-                tagsCount = tm.getContentTagsCountByTagName(tagName);
-                tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
+                if (UserPreferences.groupItemsInTreeByDatasource()) {
+                    tagsCount = tm.getContentTagsCountByTagName(tagName,  datasourceObjId);
+                    tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName, datasourceObjId);
+                }
+                else {
+                    tagsCount = tm.getContentTagsCountByTagName(tagName);
+                    tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
+                }
+                
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -348,7 +387,9 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                tagsCount = Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+                tagsCount = UserPreferences.groupItemsInTreeByDatasource() ? 
+                        Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName, datasourceObjId) :
+                        Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(ContentTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get content tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -403,7 +444,11 @@ public class Tags implements AutopsyVisitableItem {
         protected boolean createKeys(List<ContentTag> keys) {
             // Use the content tags bearing the specified tag name as the keys.
             try {
-                keys.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName));
+                List<ContentTag> contentTags = UserPreferences.groupItemsInTreeByDatasource() ?
+                     Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName, datasourceObjId) :
+                     Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
+               
+                keys.addAll(contentTags);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }
@@ -447,7 +492,9 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                tagsCount = Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+                tagsCount = UserPreferences.groupItemsInTreeByDatasource() ? 
+                        Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName, datasourceObjId) :
+                        Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -502,7 +549,10 @@ public class Tags implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifactTag> keys) {
             try {
                 // Use the blackboard artifact tags bearing the specified tag name as the keys.
-                keys.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName));
+                List<BlackboardArtifactTag> artifactTags = UserPreferences.groupItemsInTreeByDatasource() ?
+                     Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, datasourceObjId) :
+                     Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
+                keys.addAll(artifactTags);
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
             }

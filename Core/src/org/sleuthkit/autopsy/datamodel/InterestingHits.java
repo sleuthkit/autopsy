@@ -42,6 +42,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -59,9 +60,28 @@ public class InterestingHits implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
     private SleuthkitCase skCase;
     private final InterestingResults interestingResults = new InterestingResults();
+    private final long datasourceObjId;
 
+    /**
+     * Constructor
+     * 
+     * @param skCase  Case DB
+     * 
+     */ 
     public InterestingHits(SleuthkitCase skCase) {
+        this(skCase, 0);
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param skCase  Case DB
+     * @param objId  Object id of the data source 
+     * 
+     */ 
+    public InterestingHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
+        this.datasourceObjId = objId;
         interestingResults.update();
     }
 
@@ -112,6 +132,9 @@ public class InterestingHits implements AutopsyVisitableItem {
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+            if (UserPreferences.groupItemsInTreeByDatasource()) {
+                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            }
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 synchronized (interestingItemsMap) {

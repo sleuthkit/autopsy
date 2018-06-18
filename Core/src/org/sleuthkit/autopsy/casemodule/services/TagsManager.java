@@ -167,6 +167,21 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Selects all of the rows from the tag_names table in the case database for
+     * which there is at least one matching row in the content_tags or
+     * blackboard_artifact_tags tables, for the given data source object id.
+     *
+     * @param dsObjId data source object id
+     * 
+     * @return A list, possibly empty, of TagName data transfer objects (DTOs)
+     * for the rows.
+     *
+     * @throws TskCoreException
+     */
+    public List<TagName> getTagNamesInUse(long dsObjId) throws TskCoreException {
+        return caseDb.getTagNamesInUse(dsObjId);
+    }
+    /**
      * Gets a map of tag display names to tag name entries in the case database.
      * It has keys for the display names of the standard tag types, the current
      * user's custom tag types, and the tags in the case database. The value for
@@ -402,6 +417,24 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets content tags count by tag name, for the given data source
+     *
+     * @param tagName The representation of the desired tag type in the case
+     * database, which can be obtained by calling getTagNames and/or addTagName.
+     * 
+     * @param dsObjId data source object id
+     *
+     * @return A count of the content tags with the specified tag name, and for
+     * the given data source
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     * the case database.
+     */
+    public long getContentTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        return caseDb.getContentTagsCountByTagName(tagName, dsObjId);
+    }
+    
+    /**
      * Gets a content tag by tag id.
      *
      * @param tagId The tag id of interest.
@@ -430,6 +463,23 @@ public class TagsManager implements Closeable {
         return caseDb.getContentTagsByTagName(tagName);
     }
 
+     /**
+     * Gets content tags by tag name, for the given data source.
+     *
+     * @param tagName The tag name of interest.
+     * 
+     * @param dsObjId data source object id
+     *
+     * @return A list, possibly empty, of the content tags with the specified
+     *         tag name, and for the given data source.
+     *
+     * @throws TskCoreException If there is an error getting the tags from the
+     *                          case database.
+     */
+    public List<ContentTag> getContentTagsByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        return caseDb.getContentTagsByTagName(tagName, dsObjId);
+    }
+    
     /**
      * Gets content tags count by content.
      *
@@ -532,6 +582,24 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets an artifact tags count by tag name, for the given data source.
+     *
+     * @param tagName The representation of the desired tag type in the case
+     *                database, which can be obtained by calling getTagNames
+     *                and/or addTagName.
+     * @param dsObjId data source object id
+     *
+     * @return A count of the artifact tags with the specified tag name, 
+     *         for the given data source.
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     *                          the case database.
+     */
+    public long getBlackboardArtifactTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        return caseDb.getBlackboardArtifactTagsCountByTagName(tagName, dsObjId);
+    }
+    
+    /**
      * Gets an artifact tag by tag id.
      *
      * @param tagId The tag id of interest.
@@ -562,6 +630,24 @@ public class TagsManager implements Closeable {
         return caseDb.getBlackboardArtifactTagsByTagName(tagName);
     }
 
+    /**
+     * Gets artifact tags by tag name, for specified data source.
+     *
+     * @param tagName The representation of the desired tag type in the case
+     *                database, which can be obtained by calling getTagNames
+     *                and/or addTagName.
+     * @param dsObjId data source object id
+     *
+     * @return A list, possibly empty, of the artifact tags with the specified
+     *         tag name, for the specified data source.
+     *
+     * @throws TskCoreException If there is an error getting the tags from the
+     *                          case database.
+     */
+    public List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName, long dsObjId) throws TskCoreException {
+        return caseDb.getBlackboardArtifactTagsByTagName(tagName, dsObjId);
+    }
+    
     /**
      * Gets artifact tags for a particular artifact.
      *
