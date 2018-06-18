@@ -90,6 +90,8 @@ public final class ShowCasesDialog extends JDialog {
         showCasesScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         showCasesScrollPane.setPreferredSize(new java.awt.Dimension(535, 415));
 
+        innerCaseScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
         caseDetailsTable.setAutoCreateRowSorter(true);
         caseDetailsTable.setModel(tableModel);
         caseDetailsTable.setToolTipText(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.caseDetailsTable.toolTipText")); // NOI18N
@@ -110,9 +112,9 @@ public final class ShowCasesDialog extends JDialog {
         );
         outCasesPaneLayout.setVerticalGroup(
             outCasesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 423, Short.MAX_VALUE)
+            .addGap(0, 400, Short.MAX_VALUE)
             .addGroup(outCasesPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(innerCaseScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE))
+                .addComponent(innerCaseScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
         );
 
         showCasesScrollPane.setViewportView(outCasesPane);
@@ -127,9 +129,9 @@ public final class ShowCasesDialog extends JDialog {
         );
         showCasesPanelLayout.setVerticalGroup(
             showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 426, Short.MAX_VALUE)
+            .addGap(0, 407, Short.MAX_VALUE)
             .addGroup(showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(showCasesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE))
+                .addComponent(showCasesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE))
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.closeButton.text")); // NOI18N
