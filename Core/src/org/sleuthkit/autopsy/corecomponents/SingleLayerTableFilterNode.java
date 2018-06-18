@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 public class SingleLayerTableFilterNode extends FilterNode implements TableFilterNode {
 
     private final boolean createChildren;
-    private boolean forceUseWrappedDisplayName = false;
+    private final boolean forceUseWrappedDisplayName;
     private String columnOrderKey = "NONE";
 
     /**
@@ -48,20 +48,9 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
      */
     public SingleLayerTableFilterNode(Node node, boolean createChildren) {
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
+        this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
     }
-//    /**
-//     * To be used in TableFilterChildrenWithDescendants.
-//     * 
-//     * @param node node to wrap
-//     * @param createChildren node has children?
-//     * @param forceUseWrappedDisplayName  allow use of custom <code>getDisplayName()</code> .
-//     */
-//    SingleLayerTableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
-//        super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
-//        this.createChildren = createChildren;
-//        this.forceUseWrappedDisplayName = forceUseWrappedDisplayName;
-//    }
 
     /**
      * Constructs a filter node that creates at most one layer of child nodes
@@ -77,6 +66,7 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
      */
     public SingleLayerTableFilterNode(Node node, boolean createChildren, String columnOrderKey) {
         super(node, TableFilterChildren.createInstance(node, createChildren));
+        this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
         this.columnOrderKey = columnOrderKey;
     }
@@ -98,6 +88,7 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
         }
     }
 
+    @Override
     public String getParentDisplayName() {
         return super.getDisplayName();
     }
@@ -108,6 +99,7 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
      *
      * @param selectedChildNodeInfo The child node selection information.
      */
+    @Override
     public void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
         /*
          * Currently, child selection is only supported for nodes selected in
@@ -125,6 +117,7 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
      * @return The child node selection information, or null if no child should
      * be selected.
      */
+    @Override
     public NodeSelectionInfo getChildNodeSelectionInfo() {
         /*
          * Currently, child selection is only supported for nodes selected in
@@ -144,6 +137,7 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
      * DataResultViewerTable. The key should represent what kinds of items the
      * table is showing.
      */
+    @Override
     public String getColumnOrderKey() {
         return columnOrderKey;
     }

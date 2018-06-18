@@ -24,7 +24,6 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
@@ -63,7 +62,7 @@ final public class CommonFilesNode extends DisplayableItemNode {
     
     static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
-        private CommonFilesMetadata metadata;
+        private final CommonFilesMetadata metadata;
         
         InstanceCountNodeFactory(CommonFilesMetadata metadata){
             this.metadata = metadata;
@@ -77,8 +76,8 @@ final public class CommonFilesNode extends DisplayableItemNode {
         
         @Override
         protected Node createNodeForKey(Integer instanceCount){
-            List<Md5Metadata> metadata=  this.metadata.getMetadataForMd5(instanceCount);
-            return new InstanceCountNode(instanceCount, metadata);
+            List<Md5Metadata> md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
+            return new InstanceCountNode(instanceCount, md5Metadata);
         }        
     }
 }

@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 public class MultiLayerTableFilterNode extends FilterNode implements TableFilterNode {
 
     private final boolean createChildren;
-    private boolean forceUseWrappedDisplayName = false;
-    private String columnOrderKey = "NONE";
+    private final boolean forceUseWrappedDisplayName;
+    private static final String columnOrderKey = "NONE";
 
     /**
      * Constructs a filter node that generates children using

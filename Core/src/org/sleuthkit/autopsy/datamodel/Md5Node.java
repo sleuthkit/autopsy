@@ -28,7 +28,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
@@ -143,9 +142,7 @@ public class Md5Node extends DisplayableItemNode {
                 AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
                 
                 return new FileInstanceNode(abstractFile, file.getDataSourceName());
-            } catch (NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
-            } catch (TskCoreException ex) {
+            } catch (NoCurrentCaseException | TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
             }
             return null;

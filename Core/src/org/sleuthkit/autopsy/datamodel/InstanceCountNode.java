@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -29,7 +30,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 
 /**
@@ -54,7 +54,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
     }
 
     List<Md5Metadata> getMetadata() {
-        return this.metadataList;
+        return Collections.unmodifiableList(this.metadataList);
     }
 
     @Override
@@ -101,7 +101,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
-        map.put(InstanceCountNodePropertyType.Match.toString(), node.instanceCount);
+        map.put(InstanceCountNodePropertyType.Match.toString(), node.getInstanceCount());
     }
     
     @NbBundle.Messages({
@@ -133,7 +133,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
-        private Map<String, Md5Metadata> metadata;
+        private final Map<String, Md5Metadata> metadata;
 
         Md5NodeFactory(List<Md5Metadata> metadata) {
             this.metadata = new HashMap<>();
@@ -147,8 +147,8 @@ final public class InstanceCountNode extends DisplayableItemNode {
 
         @Override
         protected Node createNodeForKey(String md5) {
-            Md5Metadata metadata = this.metadata.get(md5);
-            return new Md5Node(metadata);
+            Md5Metadata md5Metadata = this.metadata.get(md5);
+            return new Md5Node(md5Metadata);
         }
 
         @Override

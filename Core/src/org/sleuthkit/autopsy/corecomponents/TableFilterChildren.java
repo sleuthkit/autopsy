@@ -90,5 +90,4 @@ class TableFilterChildren extends FilterNode.Children {
     protected Node[] createNodes(Node key) {
         return new Node[]{this.copyNode(key)};
     }
-
 }
