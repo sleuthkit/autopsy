@@ -46,7 +46,7 @@ import static junit.framework.Assert.assertTrue;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
- *
+ * Functional tests for the Central Repository data model.
  */
 public class CentralRepoDatamodelTest extends TestCase {
 
@@ -115,7 +115,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDbUtil.setUseCentralRepo(true);
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-        } catch (Exception ex) {
+        } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -2554,7 +2554,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 // This seems to help in allowing the Autopsy case to be deleted
                 try {
                     Thread.sleep(2000);
-                } catch (Exception ex) {
+                } catch (InterruptedException ex) {
 
                 }
             } catch (CaseActionException ex) {
