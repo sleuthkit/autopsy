@@ -31,6 +31,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
     private final CorrelationAttribute correlationAttribute;
     private boolean commentUpdated = false;
+    private String currentComment = "";
 
     /**
      * Create an instance.
@@ -44,6 +45,11 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         initComponents();
 
         CorrelationAttributeInstance instance = correlationAttribute.getInstances().get(0);
+        
+        // Store the original comment
+        if (instance.getComment() != null) {
+            currentComment = instance.getComment();
+        }
 
         pathLabel.setText(instance.getFilePath());
         commentTextArea.setText(instance.getComment());
@@ -70,6 +76,16 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
      */
     boolean isCommentUpdated() {
         return commentUpdated;
+    }
+    
+    /**
+     * Get the current comment.
+     * If the user hit OK, this will be the new comment.
+     * If the user canceled, this will be the original comment.
+     * @return the comment
+     */
+    String getComment() {
+        return currentComment;
     }
 
     /**
@@ -168,8 +184,8 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        String comment = commentTextArea.getText();
-        correlationAttribute.getInstances().get(0).setComment(comment);
+        currentComment = commentTextArea.getText();
+        correlationAttribute.getInstances().get(0).setComment(currentComment);
         commentUpdated = true;
 
         dispose();
