@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 /**
  * Dialog to display table of CorrelationCase information from the CR tab of options.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class ShowCasesDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;

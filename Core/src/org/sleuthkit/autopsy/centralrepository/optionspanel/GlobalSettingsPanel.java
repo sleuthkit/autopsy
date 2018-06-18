@@ -613,6 +613,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         organizationPanel.setEnabled(enable && !ingestRunning);
         organizationTextArea.setEnabled(enable && !ingestRunning);
         manageOrganizationButton.setEnabled(enable && !ingestRunning);
+        showCasesButton.setEnabled(enable && !ingestRunning);
         return true;
     }
 
