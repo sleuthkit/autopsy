@@ -84,7 +84,7 @@ public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implement
      *
      * @return The user name
      */
-    public String getUserName() {
+    String getUserName() {
         return userName;
     }    
 
@@ -93,7 +93,7 @@ public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implement
      *
      * @return The type
      */
-    public EventType getEventType() {
+    EventType getEventType() {
         return eventType;
     }
     
@@ -102,7 +102,7 @@ public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implement
      *
      * @return The data sources
      */
-    public String getDataSources() {
+    String getDataSources() {
         return dataSource;
     }
 }
