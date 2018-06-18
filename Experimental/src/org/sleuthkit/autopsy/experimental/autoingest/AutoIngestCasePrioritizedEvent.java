@@ -27,7 +27,9 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
  */
 public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implements Serializable {
 
-    // Possible event types
+    /**
+     * Possible event types
+     */
     enum EventType {
         CASE_PRIORITIZED,
         CASE_DEPRIORITIZED,
