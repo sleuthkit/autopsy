@@ -53,7 +53,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -157,8 +156,14 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveFile     the parent archive
-     * @param archiveFileItem the archive item
+     * @param archiveFile     the AbstractFile for the parent archive which
+     *                        which we are checking
+     * @param archiveFileItem the current item being extracted from the parent
+     *                        archive
+     * @param depthMap        a concurrent hashmap which keeps track of the
+     *                        depth of all nested archives, key of objectID
+     * @param escapedFilePath the path to the archiveFileItem which has been
+     *                        escaped
      *
      * @return true if potential zip bomb, false otherwise
      */
@@ -203,8 +208,10 @@ class SevenZipExtractor {
      * file artifact and posting a message to the inbox for the user.
      *
      * @param rootArchive     - the Archive which the artifact is to be for
-     * @param archiveFile - the AbstractFile which for the file which triggered the potential zip bomb to be detected
-     * @param details - the String which contains the details about how the potential zip bomb was detected
+     * @param archiveFile     - the AbstractFile which for the file which
+     *                        triggered the potential zip bomb to be detected
+     * @param details         - the String which contains the details about how
+     *                        the potential zip bomb was detected
      * @param escapedFilePath - the escaped file path for the archiveFile
      */
     private void flagRootArchiveAsZipBomb(Archive rootArchive, AbstractFile archiveFile, String details, String escapedFilePath) {
@@ -526,7 +533,6 @@ class SevenZipExtractor {
         SevenZipContentReadStream stream = null;
         final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         //recursion depth check for zip bomb
-        final long archiveId = archiveFile.getId();
         Archive parentAr;
         try {
             blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
@@ -550,10 +556,10 @@ class SevenZipExtractor {
             unpackSuccessful = false;
             return unpackSuccessful;
         }
-        parentAr = depthMap.get(archiveId);
+        parentAr = depthMap.get(archiveFile.getId());
         if (parentAr == null) {
-            parentAr = new Archive(archiveId, 0, archiveId, archiveFile);
-            depthMap.put(archiveId, parentAr);
+            parentAr = new Archive(0, archiveFile.getId(), archiveFile);
+            depthMap.put(archiveFile.getId(), parentAr);
         } else {
             Archive rootArchive = depthMap.get(parentAr.getRootArchiveId());
             if (rootArchive.isFlaggedAsZipBomb()) {
@@ -705,7 +711,7 @@ class SevenZipExtractor {
                         continue;
                     }
                     if (isSevenZipExtractionSupported(unpackedFile)) {
-                        Archive child = new Archive(unpackedFile.getId(), parentAr.getDepth() + 1, parentAr.getRootArchiveId(), archiveFile);
+                        Archive child = new Archive(parentAr.getDepth() + 1, parentAr.getRootArchiveId(), archiveFile);
                         parentAr.addChild(child);
                         depthMap.put(unpackedFile.getId(), child);
                     }
@@ -1249,23 +1255,24 @@ class SevenZipExtractor {
 
         //depth will be 0 for the root archive unpack was called on, and increase as unpack recurses down through archives contained within
         private final int depth;
-        private final long objectId;
         private final List<Archive> children;
         private final long rootArchiveId;
         private boolean flaggedAsZipBomb = false;
-        private AbstractFile archiveFile;
+        private final AbstractFile archiveFile;
 
         /**
          * Create a new Archive object.
          *
-         * @param objectId the unique object id of the archive object
-         * @param depth    the depth in the archive structure - 0 will be the
-         *                 root archive unpack was called on, and it will
-         *                 increase as unpack recurses down through archives
-         *                 contained within
+         * @param depth         the depth in the archive structure - 0 will be
+         *                      the root archive unpack was called on, and it
+         *                      will increase as unpack recurses down through
+         *                      archives contained within
+         * @param rootArchiveId the unique object id of the root parent archive
+         *                      of this archive
+         * @param archiveFile   the AbstractFile which this Archive object
+         *                      represents
          */
-        Archive(long objectId, int depth, long rootArchiveId, AbstractFile archiveFile) {
-            this.objectId = objectId;
+        Archive(int depth, long rootArchiveId, AbstractFile archiveFile) {
             this.children = new ArrayList<>();
             this.depth = depth;
             this.rootArchiveId = rootArchiveId;
@@ -1282,18 +1289,36 @@ class SevenZipExtractor {
             children.add(child);
         }
 
+        /**
+         * Set the flag which identifies whether this file has been determined to be a zip bomb to true.
+         */
         void flagAsZipBomb() {
             flaggedAsZipBomb = true;
         }
 
+        /**
+         * Gets whether or not this archive has been flagged as a zip bomb.
+         *
+         * @return True when flagged as a zip bomb, false if it is not flagged
+         */
         boolean isFlaggedAsZipBomb() {
             return flaggedAsZipBomb;
         }
 
+        /**
+         * Get the AbstractFile which this Archive object represents.
+         *
+         * @return archiveFile - the AbstractFile which this Archive represents.
+         */
         AbstractFile getArchiveFile() {
             return archiveFile;
         }
 
+        /**
+         * Get the object id of the root archive which contained this archive.
+         *
+         * @return rootArchiveId - the objectID of the root archive
+         */
         long getRootArchiveId() {
             return rootArchiveId;
         }
@@ -1301,10 +1326,10 @@ class SevenZipExtractor {
         /**
          * Get the object id of this archive.
          *
-         * @return objectId - the unique objectId of this archive
+         * @return the unique objectId of this archive from its AbstractFile
          */
         long getObjectId() {
-            return objectId;
+            return archiveFile.getId();
         }
 
         /**
