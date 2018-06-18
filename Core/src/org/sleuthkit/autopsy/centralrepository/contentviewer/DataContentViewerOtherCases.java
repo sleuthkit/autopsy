@@ -315,7 +315,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // start with empty table
         tableModel.clearTable();
         correlationAttributes.clear();
-        earliestCaseDate.setText("None");
+        earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
     }
 
     @Override
@@ -467,13 +467,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Gets the list of Eam Cases and determines the earliest case creation date.
      * Sets the label to display the earliest date string to the user.
      */
-    private void setEarliestCaseDate() {
-       LocalDate earliestDate = LocalDate.now();
-       DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
+    private void setEarliestCaseDate() {       
        String dateStringDisplay = Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable();
        
-
         if (EamDb.isEnabled()) {
+            LocalDate earliestDate = LocalDate.now();
+            DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
             try {
                 EamDb dbManager = EamDb.getInstance();
                 List<CorrelationCase> cases = dbManager.getCases();
@@ -703,8 +702,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         } else {
             clearMessageOnTableStatusPanel();
             setColumnWidths();
-            setEarliestCaseDate();
         }
+        setEarliestCaseDate();
     }
 
     private void setColumnWidths() {
@@ -817,30 +816,31 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         tableContainerPanel.setLayout(tableContainerPanelLayout);
         tableContainerPanelLayout.setHorizontalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(earliestCaseLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(earliestCaseDate)
-                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
                 .addComponent(tableStatusPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1282, Short.MAX_VALUE)
                 .addGap(218, 218, 218))
             .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(tableContainerPanelLayout.createSequentialGroup()
+                .addComponent(earliestCaseLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(earliestCaseDate)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         tableContainerPanelLayout.setVerticalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(earliestCaseLabel)
-                    .addComponent(earliestCaseDate))
-                .addGap(10, 10, 10)
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
+                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(earliestCaseLabel)
+                        .addComponent(earliestCaseDate))
+                    .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, 0)
                 .addComponent(tableStatusPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, 0))
         );
 
         javax.swing.GroupLayout otherCasesPanelLayout = new javax.swing.GroupLayout(otherCasesPanel);
@@ -853,10 +853,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 336, Short.MAX_VALUE)
+            .addGap(0, 483, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 483, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -868,7 +868,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 483, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
