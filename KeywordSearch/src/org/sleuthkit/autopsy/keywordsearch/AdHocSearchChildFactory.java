@@ -121,6 +121,12 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
 
             createFlatKeys(queryRequest.getQuery(), toPopulate);
         }
+        
+        // If there were no hits, make a single Node that will display that
+        // no results were found.
+        if (toPopulate.isEmpty()) {
+            toPopulate.add(new KeyValue("This KeyValue Is Empty", 0));
+        }
 
         return true;
     }
@@ -207,9 +213,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
 
         }
 
-        if (hitNumber == 0) {
-            toPopulate.add(new KeyValue("This KeyValue Is Empty", 0));
-        } else {
+        if (hitNumber != 0) {
             // Add all the nodes to toPopulate at once. Minimizes node creation
             // EDT threads, which can slow and/or hang the UI on large queries.
             toPopulate.addAll(tempList);
