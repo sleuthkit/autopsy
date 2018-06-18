@@ -1292,7 +1292,7 @@ class SevenZipExtractor {
         /**
          * Set the flag which identifies whether this file has been determined to be a zip bomb to true.
          */
-        void flagAsZipBomb() {
+        synchronized void flagAsZipBomb() {
             flaggedAsZipBomb = true;
         }
 
@@ -1301,7 +1301,7 @@ class SevenZipExtractor {
          *
          * @return True when flagged as a zip bomb, false if it is not flagged
          */
-        boolean isFlaggedAsZipBomb() {
+        synchronized boolean isFlaggedAsZipBomb() {
             return flaggedAsZipBomb;
         }
 
