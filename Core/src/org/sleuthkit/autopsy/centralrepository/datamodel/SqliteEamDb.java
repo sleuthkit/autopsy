@@ -124,7 +124,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
 
                 String instancesTemplate = "DELETE FROM %s_instances";
                 String referencesTemplate = "DELETE FROM global_files";
-                for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
+                for (CorrelationAttribute.Type type : defaultCorrelationTypes) {
                     dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
                     // FUTURE: support other reference types
                     if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
@@ -416,8 +416,8 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseSharedLock();
         }            
-    }    
-    
+    }
+
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
@@ -679,6 +679,22 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }          
     }
     
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        try {
+            acquireSharedLock();
+            super.processInstanceTable(type, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }
+    }
     /**
      * Check whether a reference set with the given name/version is in the central repo.
      * Used to check for name collisions when creating reference sets.

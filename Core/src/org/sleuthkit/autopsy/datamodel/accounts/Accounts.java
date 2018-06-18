@@ -58,6 +58,7 @@ import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
@@ -94,6 +95,8 @@ final public class Accounts implements AutopsyVisitableItem {
     final public static String NAME = Bundle.AccountsRootNode_name();
 
     private SleuthkitCase skCase;
+    private final long datasourceObjId;
+    
     private final EventBus reviewStatusBus = new EventBus("ReviewStatusBus");
 
     /* Should rejected accounts be shown in the accounts section of the tree. */
@@ -108,12 +111,24 @@ final public class Accounts implements AutopsyVisitableItem {
      * @param skCase The SleuthkitCase object to use for db queries.
      */
     public Accounts(SleuthkitCase skCase) {
+        this(skCase, 0);
+    }
+
+    /**
+     * Constructor
+     *
+     * @param skCase The SleuthkitCase object to use for db queries.
+     * @param objId  Object id of the data source 
+     */
+    public Accounts(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
+        this.datasourceObjId = objId;
 
         this.rejectActionInstance = new RejectAccounts();
         this.approveActionInstance = new ApproveAccounts();
     }
-
+    
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -128,6 +143,18 @@ final public class Accounts implements AutopsyVisitableItem {
      */
     private String getRejectedArtifactFilterClause() {
         return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + " "; //NON-NLS
+    }
+
+    /**
+     * Returns the clause to filter artifacts by data source.
+     *
+     * @return A clause that will or will not filter artifacts by datasource 
+     *         based on the UserPreferences groupItemsInTreeByDatasource setting 
+     */
+    private String getFilterByDataSourceClause() {
+        return  (UserPreferences.groupItemsInTreeByDatasource()) ? 
+                "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " " 
+                : " ";
     }
 
     /**
@@ -291,10 +318,14 @@ final public class Accounts implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<String> list) {
-            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(
-                    "SELECT DISTINCT blackboard_attributes.value_text as account_type "
-                    + " FROM blackboard_attributes "
-                    + " WHERE blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID());
+            String  accountTypesInUseQuery =   
+                   "SELECT DISTINCT blackboard_attributes.value_text as account_type "
+                    + " FROM blackboard_artifacts " //NON-NLS
+                    + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
+                    + " WHERE blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()
+                    + getFilterByDataSourceClause();
+                   
+            try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery(accountTypesInUseQuery );
                     ResultSet resultSet = executeQuery.getResultSet()) {
                 while (resultSet.next()) {
                     String accountType = resultSet.getString("account_type");
@@ -429,6 +460,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text = '" + accountType.getTypeName() + "'" //NON-NLS
+                    + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause(); //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
@@ -739,6 +771,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + getFilterByDataSourceClause()
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
                     + " ORDER BY hits DESC ";  //NON-NLS
@@ -807,6 +840,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
+                    + getFilterByDataSourceClause() 
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -943,6 +977,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
+                    + getFilterByDataSourceClause() 
                     + getRejectedArtifactFilterClause()
                     + " GROUP BY BIN " //NON-NLS
                     + " ORDER BY BIN "; //NON-NLS
@@ -1009,6 +1044,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
+                    + getFilterByDataSourceClause() 
                     + getRejectedArtifactFilterClause(); //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet resultSet = results.getResultSet();) {
@@ -1304,6 +1340,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
+                    + getFilterByDataSourceClause() 
                     + getRejectedArtifactFilterClause()
                     + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -1375,6 +1412,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
+                    + getFilterByDataSourceClause() 
                     + getRejectedArtifactFilterClause();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet resultSet = results.getResultSet();) {

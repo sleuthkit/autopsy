@@ -68,10 +68,10 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    List<CorrelationAttribute> eamArtifacts;
+    List<OtherOccurrenceNodeData> nodeDataList;
 
     DataContentViewerOtherCasesTableModel() {
-        eamArtifacts = new ArrayList<>();
+        nodeDataList = new ArrayList<>();
     }
 
     @Override
@@ -95,7 +95,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return eamArtifacts.size();
+        return nodeDataList.size();
     }
 
     @Override
@@ -105,15 +105,15 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == eamArtifacts.size()) {
+        if (0 == nodeDataList.size()) {
             return Bundle.DataContentViewerOtherCasesTableModel_noData();
         }
 
         return mapValueById(rowIdx, TableColumns.values()[colIdx]);
     }
 
-    public Object getRow(int rowIdx) {
-        return eamArtifacts.get(rowIdx);
+    Object getRow(int rowIdx) {
+        return nodeDataList.get(rowIdx);
     }
 
     /**
@@ -125,40 +125,39 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     private Object mapValueById(int rowIdx, TableColumns colId) {
-        CorrelationAttribute eamArtifact = eamArtifacts.get(rowIdx);
-        CorrelationAttributeInstance eamArtifactInstance = eamArtifact.getInstances().get(0);
+        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
         switch (colId) {
             case CASE_NAME:
-                if (null != eamArtifactInstance.getCorrelationCase()) {
-                    value = eamArtifactInstance.getCorrelationCase().getDisplayName();
+                if (null != nodeData.getCaseName()) {
+                    value = nodeData.getCaseName();
                 }
                 break;
             case DEVICE:
-                if (null != eamArtifactInstance.getCorrelationDataSource()) {
-                    value = eamArtifactInstance.getCorrelationDataSource().getDeviceID();
+                if (null != nodeData.getDeviceID()) {
+                    value = nodeData.getDeviceID();
                 }
                 break;
             case DATA_SOURCE:
-                if (null != eamArtifactInstance.getCorrelationDataSource()) {
-                    value = eamArtifactInstance.getCorrelationDataSource().getName();
+                if (null != nodeData.getDataSourceName()) {
+                    value = nodeData.getDataSourceName();
                 }
                 break;
             case FILE_PATH:
-                value = eamArtifactInstance.getFilePath();
+                value = nodeData.getFilePath();
                 break;
             case TYPE:
-                value = eamArtifact.getCorrelationType().getDisplayName();
+                value = nodeData.getType();
                 break;
             case VALUE:
-                value = eamArtifact.getCorrelationValue();
+                value = nodeData.getValue();
                 break;
             case KNOWN:
-                value = eamArtifactInstance.getKnownStatus().getName();
+                value = nodeData.getKnown().getName();
                 break;
             case COMMENT:
-                value = eamArtifactInstance.getComment();
+                value = nodeData.getComment();
                 break;
         }
         return value;
@@ -170,18 +169,17 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one local central repository artifact to the table.
+     * Add one correlated instance object to the table
      *
-     * @param eamArtifact central repository artifact to add to the
-     *                   table
+     * @param newNodeData data to add to the table
      */
-    public void addEamArtifact(CorrelationAttribute eamArtifact) {
-        eamArtifacts.add(eamArtifact);
+    void addNodeData(OtherOccurrenceNodeData newNodeData) {
+        nodeDataList.add(newNodeData);
         fireTableDataChanged();
     }
 
-    public void clearTable() {
-        eamArtifacts.clear();
+    void clearTable() {
+        nodeDataList.clear();
         fireTableDataChanged();
     }
 

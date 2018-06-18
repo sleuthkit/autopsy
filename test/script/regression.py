@@ -884,7 +884,7 @@ class TestConfiguration(object):
 
         linkFile = open(os.path.join(self.args.diff_files_output_folder, OUTPUT_DIR_LINK_FILE), "a")
         index = self.output_dir.find("\\")
-        linkStr = "file://"
+        linkStr = "file:\\"
         linkOutputDir =  self.output_dir[index+2:].replace("//", "/").replace("\\\\", "\\")
         if index == 0:
             linkStr = linkStr + linkOutputDir

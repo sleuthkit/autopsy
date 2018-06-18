@@ -34,6 +34,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
+/**
+ * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
+ * C:.
+ */
 @NbBundle.Messages({
     "LocalDiskPanel.errorMessage.noOpenCaseTitle=No open case available",
     "LocalDiskPanel.errorMessage.noOpenCaseBody=LocalDiskPanel listener couldn't get the open case.",
@@ -45,10 +49,7 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
     "LocalDiskPanel.moduleErrorMessage.body=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.",
     "LocalDiskPanel.localDiskMessage.unspecified=Unspecified"
 })
-/**
- * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
- * C:.
- */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LocalDiskPanel extends JPanel {
 
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());

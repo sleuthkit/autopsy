@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @Messages({
     "CTL_AinStatusDashboardAction=Auto Ingest Nodes",
     "CTL_AinStatusDashboardTopComponent=Auto Ingest Nodes"})
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AinStatusDashboardTopComponent extends TopComponent {
 
     private static final long serialVersionUID = 1L;

@@ -28,13 +28,14 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
+/**
+ * Add input wizard subpanel for adding local files / dirs to the case
+ */
 @Messages({
     "LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders",
     "LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L01)"
 })
-/**
- * Add input wizard subpanel for adding local files / dirs to the case
- */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LogicalFilesDspPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;

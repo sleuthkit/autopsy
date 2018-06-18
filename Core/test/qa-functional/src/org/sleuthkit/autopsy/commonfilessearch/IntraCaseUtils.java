@@ -1,5 +1,4 @@
 /*
- * 
  * Autopsy Forensic Browser
  * 
  * Copyright 2018 Basis Technology Corp.
@@ -84,20 +83,20 @@ class IntraCaseUtils {
     static final String PDF = "adsf.pdf"; //not a typo - it appears this way in the test image
     static final String EMPTY = "file.dat";
     
-    static final String SET1 = "commonfiles_image1_v1.vhd";
-    static final String SET2 = "commonfiles_image2_v1.vhd";
-    static final String SET3 = "commonfiles_image3_v1.vhd";
-    static final String SET4 = "commonfiles_image4_v1.vhd";
+    static final String SET1 = "CommonFiles_img1_v1.vhd";
+    static final String SET2 = "CommonFiles_img2_v1.vhd";
+    static final String SET3 = "CommonFiles_img3_v1.vhd";
+    static final String SET4 = "CommonFiles_img4_v1.vhd";
     
     private final DataSourceLoader dataSourceLoader;
     
     private final String caseName;
     
     IntraCaseUtils(NbTestCase nbTestCase, String caseName){
-        imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image1_v1.vhd");
-        imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image2_v1.vhd");
-        imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image3_v1.vhd");
-        imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), "commonfiles_image4_v1.vhd");
+        imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), SET1);
+        imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
+        imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);
+        imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), SET4);
         
         this.dataSourceLoader = new DataSourceLoader();
         

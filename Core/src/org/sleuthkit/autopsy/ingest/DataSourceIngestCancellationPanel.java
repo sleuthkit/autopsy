@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.ingest;
  * A UI panel that allows a user to make data source ingest cancellation
  * requests.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class DataSourceIngestCancellationPanel extends javax.swing.JPanel {
 
     private boolean cancelAllIngestModules;

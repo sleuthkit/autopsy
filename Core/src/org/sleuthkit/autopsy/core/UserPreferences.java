@@ -69,6 +69,7 @@ public final class UserPreferences {
     private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
     private static final int LOG_FILE_NUM_INT = 10;
+    public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -185,6 +186,14 @@ public final class UserPreferences {
 
     public static void setNumberOfFileIngestThreads(int value) {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
+    }
+
+    public static boolean groupItemsInTreeByDatasource() {
+        return preferences.getBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, false);
+    }
+
+    public static void setGroupItemsInTreeByDatasource(boolean value) {
+        preferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
     }
 
     /**

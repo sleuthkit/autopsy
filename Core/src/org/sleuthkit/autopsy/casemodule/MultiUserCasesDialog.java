@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.openide.windows.WindowManager;
 /**
  * This class extends a JDialog and maintains the MultiUserCasesPanel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class MultiUserCasesDialog extends JDialog {
     
     private static final long serialVersionUID = 1L;

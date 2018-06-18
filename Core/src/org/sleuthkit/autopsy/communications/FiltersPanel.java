@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-18 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,6 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Panel that holds the Filter control widgets and triggers queries against the
  * CommunicationsManager on user filtering changes.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final public class FiltersPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;

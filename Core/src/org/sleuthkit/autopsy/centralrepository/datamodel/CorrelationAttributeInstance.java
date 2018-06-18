@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,8 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  *
- * Used to store details about a specific instance of a
- * CorrelationAttribute. Includes its data source, path, etc.
+ * Used to store details about a specific instance of a CorrelationAttribute.
+ * Includes its data source, path, etc.
  *
  */
 @Messages({
@@ -70,10 +70,10 @@ public class CorrelationAttributeInstance implements Serializable {
             String comment,
             TskData.FileKnown knownStatus
     ) throws EamDbException {
-        if(filePath == null) {
+        if (filePath == null) {
             throw new EamDbException("file path is null");
         }
-        
+
         this.ID = ID;
         this.correlationCase = eamCase;
         this.correlationDataSource = eamDataSource;
@@ -100,6 +100,16 @@ public class CorrelationAttributeInstance implements Serializable {
                 + this.getFilePath()
                 + this.getKnownStatus()
                 + this.getComment();
+    }
+
+    /**
+     * Is this a database instance?
+     *
+     * @return True if the instance ID is greater or equal to zero; otherwise
+     *         false.
+     */
+    public boolean isDatabaseInstance() {
+        return (ID >= 0);
     }
 
     /**
@@ -145,9 +155,9 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * Get this knownStatus. This only indicates whether an item has been 
-     * tagged as notable and should never return KNOWN.
-     * 
+     * Get this knownStatus. This only indicates whether an item has been tagged
+     * as notable and should never return KNOWN.
+     *
      * @return BAD if the item has been tagged as notable, UNKNOWN otherwise
      */
     public TskData.FileKnown getKnownStatus() {
@@ -155,10 +165,11 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * Set the knownStatus. This only indicates whether an item has been 
-     * tagged as notable and should never be set to KNOWN.
-     * 
-     * @param knownStatus Should be BAD if the item is tagged as notable, UNKNOWN otherwise
+     * Set the knownStatus. This only indicates whether an item has been tagged
+     * as notable and should never be set to KNOWN.
+     *
+     * @param knownStatus Should be BAD if the item is tagged as notable,
+     *                    UNKNOWN otherwise
      */
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;

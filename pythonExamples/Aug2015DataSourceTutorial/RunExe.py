@@ -36,9 +36,11 @@
 import jarray
 import inspect
 import os
-import subprocess
+import java.util.ArrayList as ArrayList
 from java.lang import Class
 from java.lang import System
+from java.lang import ProcessBuilder
+from java.io import File
 from java.util.logging import Level
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
@@ -47,8 +49,10 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Image
 from org.sleuthkit.autopsy.ingest import IngestModule
+from org.sleuthkit.autopsy.ingest import IngestJobContext
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
+from org.sleuthkit.autopsy.ingest import DataSourceIngestModuleProcessTerminator
 from org.sleuthkit.autopsy.ingest import IngestModuleFactoryAdapter
 from org.sleuthkit.autopsy.ingest import IngestMessage
 from org.sleuthkit.autopsy.ingest import IngestServices
@@ -58,6 +62,7 @@ from org.sleuthkit.autopsy.coreutils import PlatformUtil
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.datamodel import ContentUtils
+from org.sleuthkit.autopsy.coreutils import ExecUtil
 
 
 # Factory that defines the name and details of the module and allows Autopsy
@@ -102,10 +107,10 @@ class RunExeIngestModule(DataSourceIngestModule):
         # Get path to EXE based on where this script is run from.
         # Assumes EXE is in same folder as script
         # Verify it is there before any ingest starts
-        self.path_to_exe = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img_stat.exe")
-        if not os.path.exists(self.path_to_exe):
+        exe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img_stat.exe")
+        self.pathToEXE = File(exe_path)
+        if not self.pathToEXE.exists():
             raise IngestModuleException("EXE was not found in module folder")
-
     # Where the analysis is done.
     # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
     # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.4/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
@@ -115,7 +120,6 @@ class RunExeIngestModule(DataSourceIngestModule):
         
         # we don't know how much work there will be
         progressBar.switchToIndeterminate()
-        
         # Example has only a Windows EXE, so bail if we aren't on Windows
         if not PlatformUtil.isWindowsOS(): 
             self.log(Level.INFO, "Ignoring data source.  Not running on Windows")
@@ -130,17 +134,27 @@ class RunExeIngestModule(DataSourceIngestModule):
         imagePaths = dataSource.getPaths()
         
         # We'll save our output to a file in the reports folder, named based on EXE and data source ID
-        reportPath = os.path.join(Case.getCurrentCase().getCaseDirectory(), "Reports", "img_stat-" + str(dataSource.getId()) + ".txt") 
-        reportHandle = open(reportPath, 'w')
-        
+        reportFile = File(Case.getCurrentCase().getCaseDirectory() + "\\Reports" + "\\img_stat-" + str(dataSource.getId()) + ".txt")
         # Run the EXE, saving output to the report
-        # NOTE: we should really be checking for if the module has been
-        # cancelled and then killing the process. 
+        # Check if the ingest is terminated and delete the incomplete report file
+        # Do not add report to the case tree if the ingest is cancelled before finish.
+        # This can be done by using IngestJobContext.dataSourceIngestIsCancelled
+        # See: http://sleuthkit.org/autopsy/docs/api-docs/4.7.0/_ingest_job_context_8java.html
         self.log(Level.INFO, "Running program on data source")
-        subprocess.Popen([self.path_to_exe, imagePaths[0]], stdout=reportHandle).communicate()[0]    
-        reportHandle.close()
+        cmd = ArrayList()
+        cmd.add(self.pathToEXE.toString())
+        cmd.add(imagePaths[0])
+        
+        processBuilder = ProcessBuilder(cmd);
+        processBuilder.redirectOutput(reportFile)
+        ExecUtil.execute(processBuilder,DataSourceIngestModuleProcessTerminator(self.context))
         
         # Add the report to the case, so it shows up in the tree
-        Case.getCurrentCase().addReport(reportPath, "Run EXE", "img_stat output")
-        
+        if not self.context.dataSourceIngestIsCancelled():
+            Case.getCurrentCase().addReport(reportFile.toString(), "Run EXE", "img_stat output")
+        else:
+            if reportFile.exists():
+                if not reportFile.delete():
+                    self.log(LEVEL.warning,"Error deleting the incomplete report file")
+            
         return IngestModule.ProcessResult.OK
