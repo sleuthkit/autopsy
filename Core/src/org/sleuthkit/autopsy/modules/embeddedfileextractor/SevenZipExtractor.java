@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -156,7 +157,7 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveName     the parent archive
+     * @param archiveFile     the parent archive
      * @param archiveFileItem the archive item
      *
      * @return true if potential zip bomb, false otherwise
@@ -182,7 +183,7 @@ class SevenZipExtractor {
             if (cRatio >= MAX_COMPRESSION_RATIO) {
                 Archive rootArchive = depthMap.get(depthMap.get(archiveFile.getId()).getRootArchiveId());
                 String details = NbBundle.getMessage(SevenZipExtractor.class,
-                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnDetails", 
+                        "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnDetails",
                         cRatio, FileUtil.escapeFileName(getArchiveFilePath(rootArchive.getArchiveFile())));
 
                 flagRootArchiveAsZipBomb(rootArchive, archiveFile, details, escapedFilePath);
@@ -197,6 +198,15 @@ class SevenZipExtractor {
         }
     }
 
+    /**
+     * Flag the root archive archive as a zipbomb by creating an interesting
+     * file artifact and posting a message to the inbox for the user.
+     *
+     * @param rootArchive     - the Archive which the artifact is to be for
+     * @param archiveFile - the AbstractFile which for the file which triggered the potential zip bomb to be detected
+     * @param details - the String which contains the details about how the potential zip bomb was detected
+     * @param escapedFilePath - the escaped file path for the archiveFile
+     */
     private void flagRootArchiveAsZipBomb(Archive rootArchive, AbstractFile archiveFile, String details, String escapedFilePath) {
         rootArchive.flagAsZipBomb();
         logger.log(Level.INFO, details); //NON-NLS
@@ -224,7 +234,7 @@ class SevenZipExtractor {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating blackboard artifact for Zip Bomb Detection for file: " + escapedFilePath, ex); //NON-NLS
         }
-        services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
     }
 
     /**
@@ -638,7 +648,6 @@ class SevenZipExtractor {
                                 escapedArchiveFilePath, item.getPath());
                         String details = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.details");
-                        //MessageNotifyUtil.Notify.error(msg, details);
                         services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
                         logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new String[]{escapedArchiveFilePath, item.getPath()}); //NON-NLS
                         logger.log(Level.INFO, "Available disk space: {0}", new Object[]{freeDiskSpace}); //NON-NLS
