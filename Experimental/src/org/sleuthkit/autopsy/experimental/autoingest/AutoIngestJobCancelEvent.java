@@ -25,8 +25,20 @@ import java.io.Serializable;
  */
 public final class AutoIngestJobCancelEvent extends AutoIngestJobEvent implements Serializable{
     private static final long serialVersionUID = 1L;
+    private final String nodeName;
+    private final String userName;
     
-    public AutoIngestJobCancelEvent(AutoIngestJob job) {
+    public AutoIngestJobCancelEvent(AutoIngestJob job, String nodeName, String userName) {
         super(AutoIngestManager.Event.CANCEL_JOB, job);
+        this.nodeName = nodeName;
+        this.userName = userName;
+    }
+    
+    String getNodeName() {
+        return nodeName;
+    }
+    
+    String getUserName() {
+        return userName;
     }
 }

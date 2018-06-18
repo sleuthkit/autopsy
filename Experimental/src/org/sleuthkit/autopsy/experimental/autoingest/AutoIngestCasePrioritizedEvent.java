@@ -27,9 +27,20 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
  */
 public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implements Serializable {
 
+    // Possible event types
+    enum EventType {
+        CASE_PRIORITIZED,
+        CASE_DEPRIORITIZED,
+        JOB_PRIORITIZED,
+        JOB_DEPRIORITIZED
+    }
+    
     private static final long serialVersionUID = 1L;
     private final String caseName;
     private final String nodeName;
+    private final String userName;
+    private final EventType eventType;
+    private final String dataSource;
 
     /**
      * Constructs an event published when an automated ingest manager
@@ -37,11 +48,17 @@ public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implement
      *
      * @param caseName The name of the case.
      * @param nodeName The host name of the node that prioritized the case.
+     * @param userName The logged in user
+     * @param eventType The type of prioritization event
+     * @pamam dataSource List of data sources that were prioritized/deprioritized (if it wasn't the whole case)
      */
-    public AutoIngestCasePrioritizedEvent(String nodeName, String caseName) {
+    public AutoIngestCasePrioritizedEvent(String nodeName, String caseName, String userName, EventType eventType, String dataSource) {
         super(AutoIngestManager.Event.CASE_PRIORITIZED.toString(), null, null);
         this.caseName = caseName;
         this.nodeName = nodeName;
+        this.userName = userName;
+        this.eventType = eventType;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -61,5 +78,31 @@ public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implement
     public String getNodeName() {
         return nodeName;
     }
+    
+    /**
+     * Gets the user logged in to the node that prioritized the case.
+     *
+     * @return The user name
+     */
+    public String getUserName() {
+        return userName;
+    }    
 
+    /**
+     * Gets the type of prioritization
+     *
+     * @return The type
+     */
+    public EventType getEventType() {
+        return eventType;
+    }
+    
+    /**
+     * Gets the list of data sources (if applicable)
+     *
+     * @return The data sources
+     */
+    public String getDataSources() {
+        return dataSource;
+    }
 }
