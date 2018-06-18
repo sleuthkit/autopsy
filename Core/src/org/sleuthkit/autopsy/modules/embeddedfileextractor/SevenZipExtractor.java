@@ -234,7 +234,7 @@ class SevenZipExtractor {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating blackboard artifact for Zip Bomb Detection for file: " + escapedFilePath, ex); //NON-NLS
         }
-        services.postMessage(IngestMessage.createMessage(MessageType.INFO, EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
+        services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
     }
 
     /**
