@@ -387,7 +387,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
                 }).start();
             }
             return jobsSnapshot;
@@ -435,7 +435,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
                 }).start();
             }
             return jobsSnapshot;
@@ -487,7 +487,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
                 }).start();
 
             }
@@ -545,7 +545,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
                 }).start();
 
             }
@@ -560,7 +560,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     void cancelJob(AutoIngestJob job) {
         new Thread(() -> {
-            eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job, LOCAL_HOST_NAME, System.getProperty("user.name")));
+            eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }).start();
     }
 
@@ -605,7 +605,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  * Publish a reprocess event.
                  */
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestJobReprocessEvent(job, LOCAL_HOST_NAME, System.getProperty("user.name")));
+                    eventPublisher.publishRemotely(new AutoIngestJobReprocessEvent(job, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
                 }).start();
 
             }
@@ -658,7 +658,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 completedJob.getManifest().getCaseName().equals(caseName));
 
             // Publish a message to update auto ingest nodes.
-            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, System.getProperty("user.name")));
+            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }
 
         return CaseDeletionResult.FULLY_DELETED;
@@ -672,7 +672,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     private void sendControlEventToNode(ControlEventType eventType, String nodeName) {
         new Thread(() -> {
-            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName, LOCAL_HOST_NAME, System.getProperty("user.name")));
+            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }).start();
     }
 

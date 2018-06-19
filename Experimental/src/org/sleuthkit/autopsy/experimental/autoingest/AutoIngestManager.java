@@ -650,6 +650,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         jobProcessingTask.requestResume();
     }
+    
+    /**
+     * Get the name of the currently logged in user
+     * @return 
+     */
+    static String getSystemUserNameProperty() {
+        return System.getProperty("user.name");
+    }
+            
 
     /**
      * Removes the priority (set to zero) of all pending ingest jobs for a
@@ -691,7 +700,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (!jobsToDeprioritize.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
             }).start();
         }
     }
@@ -741,7 +750,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (!jobsToPrioritize.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
             }).start();
         }
     }
@@ -794,7 +803,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
             }).start();
         }
     }
@@ -852,7 +861,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    System.getProperty("user.name"), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
             }).start();
         }
     }
@@ -1005,7 +1014,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 casesToManifests.remove(caseName);
             }
 
-            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, System.getProperty("user.name")));
+            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, getSystemUserNameProperty()));
             setChanged();
             notifyObservers(Event.CASE_DELETED);
             return result;
