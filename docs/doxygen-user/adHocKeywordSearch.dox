@@ -72,7 +72,7 @@ In general all three types of keyword searches will work as expected but the fea
 
 \section ad_hoc_kw_search Keyword Search
 
-Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.
+Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.  The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+right click or control+right click.
 
 \image html keyword-search-bar.PNG
 
