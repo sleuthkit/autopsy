@@ -49,7 +49,8 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.joda.time.LocalDate;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -471,20 +472,21 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
        String dateStringDisplay = Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable();
        
         if (EamDb.isEnabled()) {
-            LocalDate earliestDate = LocalDate.now();
+            LocalDateTime earliestDate = LocalDateTime.now(DateTimeZone.UTC);
             DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
             try {
                 EamDb dbManager = EamDb.getInstance();
                 List<CorrelationCase> cases = dbManager.getCases();
                 for (CorrelationCase aCase : cases) {
-                   LocalDate caseDate = LocalDate.fromDateFields(datetimeFormat.parse(aCase.getCreationDate()));
-
+                   LocalDateTime caseDate = LocalDateTime.fromDateFields(datetimeFormat.parse(aCase.getCreationDate()));
+                  
                    if (caseDate.isBefore(earliestDate)) {
                         earliestDate = caseDate;
                         dateStringDisplay = aCase.getCreationDate();
                    }
 
                 }
+                
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
             } catch (ParseException ex) {
