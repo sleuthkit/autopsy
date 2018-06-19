@@ -19,14 +19,15 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Dialog to display table of CorrelationCase information from the CR tab of options.
@@ -35,6 +36,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 final class ShowCasesDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
+    
+    private final static Logger logger = Logger.getLogger(ShowCasesDialog.class.getName());
 
     private final ShowCasesTableModel tableModel;
     @Messages({"ShowCasesDialog.title_text=All Cases Details"})
@@ -44,7 +47,7 @@ final class ShowCasesDialog extends JDialog {
     ShowCasesDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ShowCasesDialog_title_text(),
-                true); // NON-NLS
+                true);
         tableModel = new ShowCasesTableModel();
         initComponents();
         try {
@@ -54,7 +57,7 @@ final class ShowCasesDialog extends JDialog {
                 tableModel.addEamCase(eamCase);
             }
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
         }
         display();
     }

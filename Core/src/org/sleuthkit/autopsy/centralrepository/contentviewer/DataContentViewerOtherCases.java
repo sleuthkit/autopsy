@@ -492,8 +492,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             } catch (ParseException ex) {
                 logger.log(Level.SEVERE, "Error parsing date of cases from database.", ex); // NON-NLS
             }
-            // NON-NLS
-            // NON-NLS
 
         }
         earliestCaseDate.setText(dateStringDisplay);

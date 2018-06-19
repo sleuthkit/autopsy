@@ -127,7 +127,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         casesPanel = new javax.swing.JPanel();
         showCasesButton = new javax.swing.JButton();
         casesScrollPane = new javax.swing.JScrollPane();
-        casesTextArea1 = new javax.swing.JTextArea();
+        casesTextArea = new javax.swing.JTextArea();
         tbOops = new javax.swing.JTextField();
 
         setName(""); // NOI18N
@@ -308,16 +308,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         casesScrollPane.setBorder(null);
 
-        casesTextArea1.setEditable(false);
-        casesTextArea1.setBackground(new java.awt.Color(240, 240, 240));
-        casesTextArea1.setColumns(20);
-        casesTextArea1.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        casesTextArea1.setLineWrap(true);
-        casesTextArea1.setRows(2);
-        casesTextArea1.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesTextArea1.text")); // NOI18N
-        casesTextArea1.setWrapStyleWord(true);
-        casesTextArea1.setBorder(null);
-        casesScrollPane.setViewportView(casesTextArea1);
+        casesTextArea.setEditable(false);
+        casesTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        casesTextArea.setColumns(20);
+        casesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        casesTextArea.setLineWrap(true);
+        casesTextArea.setRows(2);
+        casesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesTextArea.text")); // NOI18N
+        casesTextArea.setWrapStyleWord(true);
+        casesTextArea.setBorder(null);
+        casesScrollPane.setViewportView(casesTextArea);
 
         javax.swing.GroupLayout casesPanelLayout = new javax.swing.GroupLayout(casesPanel);
         casesPanel.setLayout(casesPanelLayout);
@@ -614,6 +614,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         organizationTextArea.setEnabled(enable && !ingestRunning);
         manageOrganizationButton.setEnabled(enable && !ingestRunning);
         showCasesButton.setEnabled(enable && !ingestRunning);
+        casesPanel.setEnabled(enable && !ingestRunning);
+        casesTextArea.setEnabled(enable && !ingestRunning);
         return true;
     }
 
@@ -622,7 +624,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JButton bnManageTypes;
     private javax.swing.JPanel casesPanel;
     private javax.swing.JScrollPane casesScrollPane;
-    private javax.swing.JTextArea casesTextArea1;
+    private javax.swing.JTextArea casesTextArea;
     private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
     private javax.swing.JTextArea correlationPropertiesTextArea;
