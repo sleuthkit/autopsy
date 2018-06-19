@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.hssf.record.crypto.Biff8EncryptionKey;
@@ -56,6 +57,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.EncodedFileOutputStream;
 
 /**
  * An action that will allow the user to enter a password for document file and
@@ -96,49 +98,56 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        try {
-            String password = getPassword(Bundle.ExtractDocumentWithPasswordAction_prompt_title(), "");
-            if (password != null) {
-                ReadContentInputStream stream = new ReadContentInputStream(documentFile);
-                switch (documentFile.getNameExtension().toLowerCase()) {
-                    case ("doc"):
-                        decryptDoc(password, stream);
-                        break;
-                    case ("xls"):
-                        decryptXls(password, stream);
-                        break;
-                    case ("ppt"):
-                        decryptPpt(password, stream);
-                        break;
-                    case ("docx"):
-                        decryptDocx(password, stream);
-                        break;
-                    case ("xlsx"):
-                        decryptXlsx(password, stream);
-                        break;
-                    case ("pptx"):
-                        decryptPptx(password, stream);
-                        break;
-                    case ("pdf"):
-                        decryptPdf(password, stream);
-                        break;
-                    default:
-                        throw new CaseActionException(documentFile.getNameExtension() + " NOT SUPPORTED");
+        String password = "";
+        boolean correctPassword = false;
+        while (!correctPassword) {
+            try {
+                password = getPassword(Bundle.ExtractDocumentWithPasswordAction_prompt_title(), "");
+                if (!password.isEmpty()) {
+                    ReadContentInputStream stream = new ReadContentInputStream(documentFile);
+                    switch (documentFile.getNameExtension().toLowerCase()) {
+                        case ("doc"):
+                            decryptDoc(password, stream);
+                            break;
+                        case ("xls"):
+                            decryptXls(password, stream);
+                            break;
+                        case ("ppt"):
+                            decryptPpt(password, stream);
+                            break;
+                        case ("docx"):
+                            decryptDocx(password, stream);
+                            break;
+                        case ("xlsx"):
+                            decryptXlsx(password, stream);
+                            break;
+                        case ("pptx"):
+                            decryptPptx(password, stream);
+                            break;
+                        case ("pdf"):
+                            decryptPdf(password, stream);
+                            break;
+                        default:
+                            throw new CaseActionException(documentFile.getNameExtension() + " NOT SUPPORTED");
+                    } 
+                    correctPassword = true;
+                    DerivedFile newFile = fileManager.addDerivedFile(documentFile.getName(), decryptedFilePathRelative + File.separator + documentFile.getName(), documentFile.getSize(),
+                            documentFile.getCtime(), documentFile.getCrtime(), documentFile.getAtime(), documentFile.getAtime(),
+                            true, documentFile, null, "Embedded File Extractor", null, null, TskData.EncodingType.XOR1);
+                    KeywordSearchService kwsService = new SolrSearchService();
+                    kwsService.index(newFile);
                 }
-                DerivedFile newFile = fileManager.addDerivedFile(documentFile.getName(), decryptedFilePathRelative + File.separator + documentFile.getName(), documentFile.getSize(),
-                        documentFile.getCtime(), documentFile.getCrtime(), documentFile.getAtime(), documentFile.getAtime(),
-                        true, documentFile, null, "Embedded File Extractor", null, null, TskData.EncodingType.NONE);
-                KeywordSearchService kwsService = new SolrSearchService();
-                kwsService.index(newFile);
+            } catch (EncryptedDocumentException ex) {
+                logger.log(Level.INFO, "Incorrect password of " + password + " entered", ex);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "IO EXCEPTION TRYING TO DECRYPT", ex);
+            } catch (CaseActionException ex) {
+                logger.log(Level.INFO, "invalid extension", ex);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "TskCoreException adding derived file", ex);
+            } catch (GeneralSecurityException ex) {
+                logger.log(Level.WARNING, "GeneralSecurityException parsing document", ex);
             }
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE,"IO EXCEPTION TRYING TO DECRYPT", ex);
-        } catch (CaseActionException ex) {
-            logger.log(Level.INFO,"invalid extension", ex);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE,"TskCoreException adding derived file", ex);
-        } catch (GeneralSecurityException ex) {
-            logger.log(Level.WARNING,"GeneralSecurityException parsing document",ex);
         }
     }
 
@@ -196,29 +205,35 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
-    private void decryptPdf(String password, ReadContentInputStream stream) throws IOException {
+    private void decryptPdf(String password, ReadContentInputStream stream) throws IOException, BadPasswordException {
         PDDocument doc = PDDocument.load(stream, password);
         doc.setAllSecurityToBeRemoved(true);
+
         try (OutputStream os = getOutputStream()) {
             doc.save(os);
         }
+        if (doc.isEncrypted()) {
+            throw new BadPasswordException("Unable to process: password for encrypted document is not correct");
+        }
     }
 
-    private InputStream getOoxmlInputStream(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
+    private InputStream getOoxmlInputStream(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException, BadPasswordException {
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
         EncryptionInfo info = new EncryptionInfo(filesystem);
         Decryptor d = Decryptor.getInstance(info);
         if (!d.verifyPassword(password)) {
-            throw new RuntimeException("Unable to process: document is encrypted");
+            throw new BadPasswordException("Unable to process: password for encrypted document is not correct");
         }
         return d.getDataStream(filesystem);
     }
 
-    private OutputStream getOutputStream() throws IOException {
+    private EncodedFileOutputStream getOutputStream() throws IOException {
         if (!decryptedFilePathAbsolute.toFile().exists()) {
             Files.createDirectories(decryptedFilePathAbsolute);
         }
-        return new FileOutputStream(decryptedFilePathAbsolute.toString() + File.separator + documentFile.getName());
+        return new EncodedFileOutputStream(new FileOutputStream(
+                decryptedFilePathAbsolute.toString() + File.separator + documentFile.getName()),
+                TskData.EncodingType.XOR1);
     }
 
     private String getPassword(String title, String oldPassword) {
@@ -234,6 +249,16 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private class BadPasswordException extends EncryptedDocumentException {
+
+        private static final long serialVersionUID = 1L;
+
+        BadPasswordException(String message) {
+            super(message);
+        }
+
     }
 
 }
