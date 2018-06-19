@@ -28,7 +28,7 @@ It will display most image types:
 
 \image html content_viewer_app_image.png
 
-It also allows you to browse SQLite tables:
+It also allows you to browse SQLite tables and export their contents as CSV:
 
 \image html content_viewer_app_sqlite.png 
 
