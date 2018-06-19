@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -122,7 +123,6 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
                         decryptPdf(password, stream);
                         break;
                     default:
-                        System.out.println(documentFile.getNameExtension() + " NOT SUPPORTED");
                         throw new CaseActionException(documentFile.getNameExtension() + " NOT SUPPORTED");
                 }
                 DerivedFile newFile = fileManager.addDerivedFile(documentFile.getName(), decryptedFilePathRelative + File.separator + documentFile.getName(), documentFile.getSize(),
@@ -132,13 +132,13 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
                 kwsService.index(newFile);
             }
         } catch (IOException ex) {
-            System.out.println("IO EXCEPTION TRYING TO DECRYPT");
+            logger.log(Level.SEVERE,"IO EXCEPTION TRYING TO DECRYPT", ex);
         } catch (CaseActionException ex) {
-            System.out.println("invalid extension");
+            logger.log(Level.INFO,"invalid extension", ex);
         } catch (TskCoreException ex) {
-            System.out.println("TskCoreException adding derived file");
+            logger.log(Level.SEVERE,"TskCoreException adding derived file", ex);
         } catch (GeneralSecurityException ex) {
-            System.out.println("GeneralSecurityException parsing document");
+            logger.log(Level.WARNING,"GeneralSecurityException parsing document",ex);
         }
     }
 
