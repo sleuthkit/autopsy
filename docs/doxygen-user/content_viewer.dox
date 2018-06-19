@@ -64,7 +64,7 @@ The Results tab is active when selecting entries that are part of the Results tr
 
 \section cv_other_occurrences Other Occurrences
 
-The Other Occurrences tab shows what other cases/data sources this file or result has appeared in. The \ref central_repo_page must be enabled to access this tab. See the \ref cr_content_viewer section for more information.
+The Other Occurrences tab shows other instances of this file or result. Enabling the \ref central_repo_page adds additional functionality to this tab. See the \ref cr_content_viewer section for more information.
 
 \image html content_viewer_other_occurrences.png
 

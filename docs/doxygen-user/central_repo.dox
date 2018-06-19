@@ -125,9 +125,7 @@ Results from enabling a central repository and running the Correlation Engine In
 
 \subsection cr_content_viewer Content Viewer
 
-The \ref content_viewer_page panel is where previous instances of properties are displayed. This module adds a new tab to the Content Viewer. The tab for this module is called "Other Occurrences". It can display data that is found in other cases, other data sources for the same case, or imported global artifacts.
-
-If at least one other case or data source has been ingested with this module enabled, there is a potential that data will be displayed in the Other Occurrences content viewer. Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated files from other cases/data sources. If the selected file or artifact is associated by one of the supported Correlation Types, to one or more file(s) or artifact(s) in the database, the associated files/artifacts will be displayed. Note: the Content Viewer will display ALL associated files and artifacts available in the database. It ignores the user's enabled/disabled Correlation Properties.
+The \ref content_viewer_page panel is where previous instances of properties are displayed. Without a central repository enabled, this "Other Occurrences" panel will show files with hashes matching the selected file within the current case. Enabling a central repository allows this panel to also display matching files and artifacts from other cases, and adds some functionality to the row. Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated files and artifacts from the central repository. If the selected file or artifact is associated by one of the supported Correlation Types, to one or more file(s) or artifact(s) in the database, the associated files/artifacts will be displayed. Note: the Content Viewer will display ALL associated files and artifacts available in the database. It ignores the user's enabled/disabled Correlation Properties.
 
 By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Files/artifacts that are notable will have a Red background, all others will have a White background.
 
@@ -141,6 +139,7 @@ This menu has several options.
 -# Export Selected Rows to CSV
 -# Show Case Details
 -# Show Frequency
+-# Add/Edit Comment
 
 <b>Select All</b>
 
@@ -171,6 +170,12 @@ the Case -> Case Properties menu.
 <b>Show Frequency</b>
 
 This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected file or artifact.
+
+<b>Add/Edit Comment</b>
+
+This allows you to add a comment for this entry or edit an existing comment. If you want instead to edit the comment of the originally selected node, it can be done by right clicking on the original item in the result viewer and selecting "Add/Edit Central Repository Comment".
+
+\image html central_repo_comment_menu.png
 
 \subsection cr_interesting_items Interesting Items
 
