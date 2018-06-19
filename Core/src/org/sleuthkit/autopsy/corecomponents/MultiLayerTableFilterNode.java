@@ -45,8 +45,8 @@ public class MultiLayerTableFilterNode extends FilterNode implements TableFilter
      *
      * @param node The node to wrap
      */
-    public MultiLayerTableFilterNode(Node node) {
-        super(node, TableFilterChildrenWithDescendants.createInstance(node, true), Lookups.proxy(node));
+    public MultiLayerTableFilterNode(Node node, int childLayerDepth) {
+        super(node, TableFilterChildrenWithDescendants.createInstance(node, true, childLayerDepth), Lookups.proxy(node));
         this.createChildren = true;
         this.forceUseWrappedDisplayName = true;
     }

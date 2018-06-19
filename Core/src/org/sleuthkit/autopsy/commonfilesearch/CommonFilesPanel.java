@@ -245,7 +245,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     //TODO this could be enumerating the children!!!
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
-                    MultiLayerTableFilterNode tableFilterWithDescendantsNode = new MultiLayerTableFilterNode(dataResultFilterNode);
+                    MultiLayerTableFilterNode tableFilterWithDescendantsNode = new MultiLayerTableFilterNode(dataResultFilterNode, 3);
 
                     DataResultViewerTable table = new DataResultViewerTable();
 

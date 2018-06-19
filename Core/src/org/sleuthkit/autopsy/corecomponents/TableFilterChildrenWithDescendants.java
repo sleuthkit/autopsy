@@ -27,21 +27,24 @@ import org.openide.nodes.Node;
  * of rows (plus/minus buttons for each row with children).
  */
 final class TableFilterChildrenWithDescendants extends TableFilterChildren {
-        
-    private TableFilterChildrenWithDescendants(Node wrappedNode) {
+
+    private int childLayerDepth;
+    
+    private TableFilterChildrenWithDescendants(Node wrappedNode, int childLayerDepth) {
         super(wrappedNode);
+        this.childLayerDepth = childLayerDepth;
     }
     
-    public static Children createInstance(Node wrappedNode, boolean createChildren){
-        if(wrappedNode.isLeaf()){
+    public static Children createInstance(Node wrappedNode, boolean createChildren, int childLayerDepth){
+        if(childLayerDepth == 0){
             return Children.LEAF;
         } else {
-            return new TableFilterChildrenWithDescendants(wrappedNode);
+            return new TableFilterChildrenWithDescendants(wrappedNode, childLayerDepth - 1);
         }
     }
     
     @Override
     protected Node copyNode(Node nodeToCopy){
-        return new MultiLayerTableFilterNode(nodeToCopy);
+        return new MultiLayerTableFilterNode(nodeToCopy, this.childLayerDepth);
     }    
 }
