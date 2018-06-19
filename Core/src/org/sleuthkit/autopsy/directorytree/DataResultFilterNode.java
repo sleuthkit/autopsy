@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.FileInstanceNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
@@ -536,6 +537,11 @@ public class DataResultFilterNode extends FilterNode {
         
         @Override
         public AbstractAction visit(Md5Node md5n){
+            return new NoAction();
+        }
+        
+        @Override
+        public AbstractAction visit(FileInstanceNode fin){
             return new NoAction();
         }
         
