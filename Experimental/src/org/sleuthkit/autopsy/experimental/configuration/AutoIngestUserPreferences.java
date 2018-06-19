@@ -210,7 +210,7 @@ public final class AutoIngestUserPreferences {
      */
     public static boolean getShowToolsWarning() {
         String value = getPreferenceValue(SHOW_TOOLS_WARNING);
-        return value.isEmpty() ? true : Boolean.parseBoolean(value);
+        return value.isEmpty() || Boolean.parseBoolean(value);
     }
 
     /**
@@ -376,7 +376,7 @@ public final class AutoIngestUserPreferences {
         try {
             ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
         } catch (TextConverterException ex) {
-            throw new UserPreferencesException("Error encrypting password");
+            throw new UserPreferencesException("Error encrypting password", ex);
         }
     }
 
