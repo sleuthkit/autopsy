@@ -40,6 +40,12 @@ public class FileInstanceNode extends FileNode {
     }
 
     @Override
+    public boolean isLeafTypeNode(){
+        //Not used atm - could maybe be leveraged for better use in Children objects
+        return true;
+    }
+    
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }
@@ -87,9 +93,9 @@ public class FileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
 
-        map.put(CommonFilePropertyType.File.toString(), node.getName());
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
+        //map.put(CommonFilePropertyType.Case.toString(), "");
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
         map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }
@@ -103,13 +109,14 @@ public class FileInstanceNode extends FileNode {
         "CommonFilePropertyType.pathColLbl=Parent Path",
         "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
         "CommonFilePropertyType.dataSourceColLbl=Data Source",
+        "CommonFilePropertyType.caseColLbl=Case",
         "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
     })
     public enum CommonFilePropertyType {
 
-        File(Bundle.CommonFilePropertyType_fileColLbl()),
         ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
         HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
+        //Case(Bundle.CommonFilePropertyType_caseColLbl()),
         DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
         MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
 

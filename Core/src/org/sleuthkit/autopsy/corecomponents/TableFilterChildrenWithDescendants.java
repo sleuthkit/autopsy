@@ -46,5 +46,5 @@ final class TableFilterChildrenWithDescendants extends TableFilterChildren {
     @Override
     protected Node copyNode(Node nodeToCopy){
         return new MultiLayerTableFilterNode(nodeToCopy, this.childLayerDepth);
-    }    
+    }
 }
