@@ -41,7 +41,6 @@ public final class AutoIngestUserPreferences {
     private static final String SHOW_TOOLS_WARNING = "ShowToolsWarning"; // NON-NLS
     private static final String MAX_NUM_TIMES_TO_PROCESS_IMAGE = "MaxNumTimesToAttemptToProcessImage"; // NON-NLS
     private static final int DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE = 0;
-    private static final String MAX_CONCURRENT_NODES_FOR_ONE_CASE = "MaxConcurrentNodesForOneCase"; // NON-NLS
     private static final String STATUS_DATABASE_LOGGING_ENABLED = "StatusDatabaseLoggingEnabled"; // NON-NLS
     private static final String LOGGING_DB_HOSTNAME_OR_IP = "LoggingHostnameOrIP"; // NON-NLS
     private static final String LOGGING_PORT = "LoggingPort"; // NON-NLS
@@ -256,27 +255,6 @@ public final class AutoIngestUserPreferences {
      */
     public static void setMaxNumTimesToProcessImage(int retries) {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE, Integer.toString(retries));
-    }
-
-    /**
-     * Get maximum number of concurrent ingest nodes allowable for one case at a
-     * time.
-     *
-     * @return maximum number of concurrent nodes for one case. Default is 3.
-     */
-    public static int getMaxConcurrentJobsForOneCase() {
-        String value = getPreferenceValue(MAX_CONCURRENT_NODES_FOR_ONE_CASE);
-        return value.isEmpty() ? 3 : Integer.parseInt(value);
-    }
-
-    /**
-     * Get maximum number of concurrent ingest nodes allowable for one case at a
-     * time.
-     *
-     * @param numberOfNodes the number of concurrent nodes to allow for one case
-     */
-    public static void setMaxConcurrentIngestNodesForOneCase(int numberOfNodes) {
-        ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE, Integer.toString(numberOfNodes));
     }
 
     /**
