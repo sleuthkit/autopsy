@@ -53,11 +53,7 @@ public class DataSourceGrouping  implements AutopsyVisitableItem {
             return false;
         }
         final DataSourceGrouping other = (DataSourceGrouping) obj;
-        if (this.dataSource.getId() != other.getDataSource().getId()) {
-            return false;
-        }
-
-        return true;
+        return this.dataSource.getId() == other.getDataSource().getId();
     }
 
     @Override

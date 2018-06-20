@@ -61,12 +61,11 @@ public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                if (UserPreferences.groupItemsInTreeByDatasource()) {
+            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
+                UserPreferences.groupItemsInTreeByDatasource()) {
                     refreshChildren();
                 }
             }
-        }
     };
     
     @Override
