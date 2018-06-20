@@ -119,6 +119,9 @@ final public class InstanceCountNode extends DisplayableItemNode {
         map.put(InstanceCountNodePropertyType.Match.toString(), node.getInstanceCount());
     }
     
+    /**
+     * Fields which will appear in the tree table.
+     */
     @NbBundle.Messages({
         "InstanceCountNodeProeprtyType.matchCountColLbl1=Match"
     })

@@ -26,9 +26,9 @@ import org.openide.nodes.Node;
  * Provides TableFilterChildren functionality, and adds support for children 
  * of rows (plus/minus buttons for each row with children).
  */
-class TableFilterChildrenWithDescendants extends TableFilterChildren {
+final class TableFilterChildrenWithDescendants extends TableFilterChildren {
 
-    private int childLayerDepth;
+    private final int childLayerDepth;
     
     /**
      * Used to create children of the given node, with the specified number of 
