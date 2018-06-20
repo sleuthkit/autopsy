@@ -35,6 +35,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.python.util.PythonInterpreter;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -79,7 +80,9 @@ public final class JythonModuleLoader {
             interpreter = new PythonInterpreter();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Failed to load python Intepreter. Cannot load python modules", ex);
-            MessageNotifyUtil.Notify.show(Bundle.JythonModuleLoader_pythonInterpreterError_title(),Bundle.JythonModuleLoader_pythonInterpreterError_msg(), MessageNotifyUtil.MessageType.ERROR);
+            if(RuntimeProperties.runningWithGUI()){
+                MessageNotifyUtil.Notify.show(Bundle.JythonModuleLoader_pythonInterpreterError_title(),Bundle.JythonModuleLoader_pythonInterpreterError_msg(), MessageNotifyUtil.MessageType.ERROR);
+            }
             return objects;
         }
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
@@ -101,9 +104,7 @@ public final class JythonModuleLoader {
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
                                 String className = line.substring(6, line.indexOf("("));
                                 try {
-                                    if (interpreter != null) {
-                                        objects.add(createObjectFromScript(interpreter, script, className, interfaceClass));
-                                    }
+                                    objects.add(createObjectFromScript(interpreter, script, className, interfaceClass));
                                 } catch (Exception ex) {
                                     logger.log(Level.SEVERE, String.format("Failed to load %s from %s", className, script.getAbsolutePath()), ex); //NON-NLS
                                     // NOTE: using ex.toString() because the current version is always returning null for ex.getMessage().
