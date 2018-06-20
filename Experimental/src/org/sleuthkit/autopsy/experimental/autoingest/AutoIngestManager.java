@@ -389,6 +389,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
         AutoIngestJob job = event.getJob();
         if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
+            sysLogger.log(Level.INFO, "Received cancel job event for data source {0} in case {1} from user {2} on machine {3}", 
+                    new Object[]{job.getManifest().getDataSourceFileName(), job.getManifest().getCaseName(), event.getUserName(), event.getNodeName()});
             if (event.getJob().equals(currentJob)) {
                 cancelCurrentJob();
             }
@@ -403,6 +405,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteJobReprocessEvent(AutoIngestJobReprocessEvent event) {
         synchronized (jobsLock) {
             AutoIngestJob job = event.getJob();
+            sysLogger.log(Level.INFO, "Received reprocess job event for data source {0} in case {1} from user {2} on machine {3}", 
+                    new Object[]{job.getManifest().getDataSourceFileName(), job.getManifest().getCaseName(), event.getUserName(), event.getNodeName()});
             if (completedJobs.contains(job)) {
                 // Remove from completed jobs table.
                 completedJobs.remove(job);
@@ -423,6 +427,29 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * @param event A prioritization event from another auto ingest node.
      */
     private void handleRemoteCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
+        switch (event.getEventType()) {
+            case CASE_PRIORITIZED:
+                sysLogger.log(Level.INFO, "Received prioritize case event for case {0} from user {1} on machine {2}", 
+                        new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            case CASE_DEPRIORITIZED:
+                sysLogger.log(Level.INFO, "Received deprioritize case event for case {0} from user {1} on machine {2}", 
+                        new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            case JOB_PRIORITIZED:
+                sysLogger.log(Level.INFO, "Received prioritize job event for data source {0} in case {1} from user {2} on machine {3}", 
+                        new Object[]{event.getDataSources(), event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            case JOB_DEPRIORITIZED:
+                sysLogger.log(Level.INFO, "Received deprioritize job event for data source {0} in case {1} from user {2} on machine {3}", 
+                        new Object[]{event.getDataSources(), event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            default:
+                sysLogger.log(Level.WARNING, "Received invalid prioritization event from user {0} on machine {1}", 
+                        new Object[]{event.getUserName(), event.getNodeName()});
+                break;
+        }
+                
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
         scanInputDirsNow();
@@ -437,6 +464,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * @param event A case deleted event from another auto ingest node.
      */
     private void handleRemoteCaseDeletedEvent(AutoIngestCaseDeletedEvent event) {
+        sysLogger.log(Level.INFO, "Received delete case event for case {0} from user {1} on machine {2}", 
+                    new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
         scanInputDirsNow();
@@ -621,6 +650,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         jobProcessingTask.requestResume();
     }
+    
+    /**
+     * Get the name of the currently logged in user
+     * @return 
+     */
+    static String getSystemUserNameProperty() {
+        return System.getProperty("user.name");
+    }
+            
 
     /**
      * Removes the priority (set to zero) of all pending ingest jobs for a
@@ -661,7 +699,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         if (!jobsToDeprioritize.isEmpty()) {
             new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
             }).start();
         }
     }
@@ -710,7 +749,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         if (!jobsToPrioritize.isEmpty()) {
             new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
             }).start();
         }
     }
@@ -760,8 +800,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         if (null != jobToDeprioritize) {
             final String caseName = jobToDeprioritize.getManifest().getCaseName();
+            final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
             new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
             }).start();
         }
     }
@@ -816,8 +858,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         if (null != jobToPrioritize) {
             final String caseName = jobToPrioritize.getManifest().getCaseName();
+            final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
             new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
             }).start();
         }
     }
@@ -970,7 +1014,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 casesToManifests.remove(caseName);
             }
 
-            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME));
+            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, getSystemUserNameProperty()));
             setChanged();
             notifyObservers(Event.CASE_DELETED);
             return result;

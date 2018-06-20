@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;

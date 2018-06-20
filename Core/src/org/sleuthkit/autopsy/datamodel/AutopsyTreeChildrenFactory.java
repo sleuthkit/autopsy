@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
@@ -43,28 +44,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> { 
     
     private static final Logger logger = Logger.getLogger(AutopsyTreeChildrenFactory.class.getName());
-    private final SleuthkitCase tskCase;
     
     /**
-     * Constructs the child factory
-     * @param tskCase 
-     */
-    public AutopsyTreeChildrenFactory(SleuthkitCase tskCase) {
-        this.tskCase = tskCase;
-
-    }
-
-     /**
      * Listener for handling DATA_SOURCE_ADDED events.
      */
     private final PropertyChangeListener pcl = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                refreshChildren();
+            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
+                UserPreferences.groupItemsInTreeByDatasource()) {
+                    refreshChildren();
+                }
             }
-        }
     };
     
     @Override
@@ -89,6 +81,8 @@ public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> 
     protected boolean createKeys(List<Object> list) {
 
         try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+           
             if (UserPreferences.groupItemsInTreeByDatasource()) {
                 List<DataSource> dataSources = tskCase.getDataSources();
                 List<DataSourceGrouping> keys = new ArrayList<>();
@@ -99,7 +93,6 @@ public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> 
                 
                 list.add(new Reports());
             } else {
-
                 List<AutopsyVisitableItem> keys = new ArrayList<>(Arrays.asList(
                         new DataSources(),
                         new Views(tskCase),
@@ -112,6 +105,8 @@ public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> 
 
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Error getting datas sources list from the database.", tskCoreException);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
         return true;
     }
