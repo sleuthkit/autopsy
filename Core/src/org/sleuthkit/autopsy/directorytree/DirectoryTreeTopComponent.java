@@ -82,7 +82,6 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -394,10 +393,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (null == currentCase || currentCase.hasData() == false) {
             getTree().setRootVisible(false); // hide the root
         } else {
-            // if there's at least one image, load the image and open the top component
-            final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-            
-            autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory(tskCase);
+            // if there's at least one image, load the image and open the top componen
+            autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory();
             autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);     
             Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
