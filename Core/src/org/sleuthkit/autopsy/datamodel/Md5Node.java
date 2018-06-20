@@ -161,7 +161,6 @@ public class Md5Node extends DisplayableItemNode {
         "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {
 
-        //Case(Bundle.CommonFilePropertyType_caseColLbl()),
         DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
 
         final private String displayString;

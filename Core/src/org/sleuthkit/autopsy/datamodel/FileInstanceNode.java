@@ -95,7 +95,6 @@ public class FileInstanceNode extends FileNode {
 
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
-        //map.put(CommonFilePropertyType.Case.toString(), "");
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
         map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
     }
@@ -105,7 +104,6 @@ public class FileInstanceNode extends FileNode {
      * instance of this object.
      */
     @NbBundle.Messages({
-        "CommonFilePropertyType.fileColLbl=File",
         "CommonFilePropertyType.pathColLbl=Parent Path",
         "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
         "CommonFilePropertyType.dataSourceColLbl=Data Source",
@@ -116,7 +114,6 @@ public class FileInstanceNode extends FileNode {
 
         ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
         HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        //Case(Bundle.CommonFilePropertyType_caseColLbl()),
         DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
         MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
 
