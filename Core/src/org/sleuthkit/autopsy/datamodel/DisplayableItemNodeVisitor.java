@@ -119,6 +119,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(FileInstanceNode fin);
 
     T visit(CommonFileChildNodeLoading cfcnl);
+    
+    T visit(InstanceCountNode icn);
 
     /*
      * Tags
@@ -201,6 +203,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(CommonFilesNode cfn) {
             return defaultVisit(cfn);
+        }
+        
+        @Override
+        public T visit(InstanceCountNode icn){
+            return defaultVisit(icn);
         }
 
         @Override

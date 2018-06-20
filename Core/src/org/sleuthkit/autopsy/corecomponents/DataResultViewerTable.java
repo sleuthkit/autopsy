@@ -78,7 +78,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  */
 @ServiceProvider(service = DataResultViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class DataResultViewerTable extends AbstractDataResultViewer {
+public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
@@ -180,6 +180,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets the title of this tabular result viewer.
+     * @return  title of tab.
      */
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
@@ -365,7 +366,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
      * Sets the column widths for the child OutlineView of this tabular results
      * viewer.
      */
-    private void setColumnWidths() {
+    protected void setColumnWidths() {
         if (rootNode.getChildren().getNodesCount() != 0) {
             final Graphics graphics = outlineView.getGraphics();
             if (graphics != null) {
@@ -400,6 +401,10 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
             // if there's no content just auto resize all columns
             outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
+    }
+    
+    protected TableColumnModel getColumnModel(){
+        return outline.getColumnModel();
     }
 
     /*

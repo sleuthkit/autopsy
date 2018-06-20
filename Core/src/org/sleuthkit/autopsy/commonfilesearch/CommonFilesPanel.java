@@ -250,11 +250,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 
+                    //TODO this could be enumerating the children!!!
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
-                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
+                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
 
-                    DataResultViewerTable table = new DataResultViewerTable();
+                    DataResultViewerTable table = new CommonFilesSearchResultsViewerTable();
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);

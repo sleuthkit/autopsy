@@ -33,12 +33,25 @@ public class FileInstanceNode extends FileNode {
     
     private final String dataSource;
 
+    /**
+     * Create a node which can be used in a multilayer tree table and is based
+     * on an <code>AbstractFile</code>.
+     * 
+     * @param fsContent
+     * @param dataSource 
+     */
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.dataSource = dataSource;
     }
 
+    @Override
+    public boolean isLeafTypeNode(){
+        //Not used atm - could maybe be leveraged for better use in Children objects
+        return true;
+    }
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
@@ -87,7 +100,6 @@ public class FileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
 
-        map.put(CommonFilePropertyType.File.toString(), node.getName());
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
@@ -99,15 +111,14 @@ public class FileInstanceNode extends FileNode {
      * instance of this object.
      */
     @NbBundle.Messages({
-        "CommonFilePropertyType.fileColLbl=File",
         "CommonFilePropertyType.pathColLbl=Parent Path",
         "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
         "CommonFilePropertyType.dataSourceColLbl=Data Source",
+        "CommonFilePropertyType.caseColLbl=Case",
         "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
     })
     public enum CommonFilePropertyType {
 
-        File(Bundle.CommonFilePropertyType_fileColLbl()),
         ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
         HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
         DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
