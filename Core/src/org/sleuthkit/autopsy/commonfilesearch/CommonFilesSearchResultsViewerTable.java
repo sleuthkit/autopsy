@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 
 /**
@@ -36,16 +37,24 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     
     static {
         Map<String, Integer> map = new HashMap<>();
-        map.put("Match", 220);
-        map.put("Parent Path", 300);
-        map.put("Data Source", 200);
-        map.put("Hash Set Hits", 100);
-        map.put("MIME Type", 150);
-        map.put("Tags", 300);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_matchColLbl(), 220);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 150);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);
         
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
     }
     
+    @NbBundle.Messages({
+        "CommonFilesSearchResultsViewerTable.matchColLbl=Match",
+        "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
+        "CommonFilesSearchResultsViewerTable.hashsetHitsColLbl=Hash Set Hits",
+        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
+        "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
+        "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
+    })
     @Override
     protected void setColumnWidths(){
         TableColumnModel model = this.getColumnModel();
