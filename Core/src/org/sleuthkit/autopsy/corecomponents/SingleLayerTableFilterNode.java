@@ -88,11 +88,6 @@ public class SingleLayerTableFilterNode extends FilterNode implements TableFilte
         }
     }
 
-    @Override
-    public String getParentDisplayName() {
-        return super.getDisplayName();
-    }
-
     /**
      * Adds information about which child node of this node, if any, should be
      * selected. Can be null.

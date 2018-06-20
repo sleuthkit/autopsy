@@ -35,18 +35,19 @@ public class MultiLayerTableFilterNode extends FilterNode implements TableFilter
 
     private final boolean createChildren;
     private final boolean forceUseWrappedDisplayName;
-    private static final String columnOrderKey = "NONE";
+    private static final String COLUMN_ORDER_KEY = "NONE";
 
     /**
      * Constructs a filter node that generates children using
-     * TableFilterChildrenWithDescendants. This enables row to have descendants.
+     * <code>TableFilterChildrenWithDescendant</code>s. This enables row to have descendants.
      *
      * Enables use of <code>getDisplayName()</code> for children of this node.
      *
      * @param node The node to wrap
+     * @param childLayerDepth number of tree layers before we hit a leaf
      */
     public MultiLayerTableFilterNode(Node node, int childLayerDepth) {
-        super(node, TableFilterChildrenWithDescendants.createInstance(node, true, childLayerDepth), Lookups.proxy(node));
+        super(node, TableFilterChildrenWithDescendants.createInstance(node, childLayerDepth), Lookups.proxy(node));
         this.createChildren = true;
         this.forceUseWrappedDisplayName = true;
     }
@@ -77,12 +78,7 @@ public class MultiLayerTableFilterNode extends FilterNode implements TableFilter
 
     @Override
     public String getColumnOrderKey() {
-        return columnOrderKey;
-    }
-
-    @Override
-    public String getParentDisplayName() {
-        return super.getDisplayName();
+        return COLUMN_ORDER_KEY;
     }
 
     @Override

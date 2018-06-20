@@ -51,6 +51,10 @@ public class Md5Node extends DisplayableItemNode {
     private final int commonFileCount;
     private final String dataSources;
 
+    /**
+     * Create a Match node whose children will all have this object in common.
+     * @param data the common feature, and the children
+     */
     public Md5Node(Md5Metadata data) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true));
@@ -62,14 +66,26 @@ public class Md5Node extends DisplayableItemNode {
         this.setDisplayName(this.md5Hash);
     }
 
+    /**
+     * How many files are in common?  This will be the number of children.
+     * @return int
+     */
     int getCommonFileCount() {
         return this.commonFileCount;
     }
 
+    /**
+     * Datasources where these matches occur.
+     * @return string delimited list of sources
+     */
     String getDataSources() {
         return this.dataSources;
     }
 
+    /**
+     * MD5 which is common to these matches
+     * @return string md5 hash
+     */
     public String getMd5() {
         return this.md5Hash;
     }

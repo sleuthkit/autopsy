@@ -26,9 +26,6 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  */
 public interface TableFilterNode {
     
-    //TODO DisplayableItemNode
-    //TODO would be nice if this could be cast to Node - probably not totally critical...
-
     /**
      * Gets information about which child node of this node, if any, should be
      * selected.
@@ -54,8 +51,6 @@ public interface TableFilterNode {
      * @return The display name.
      */
     public String getDisplayName();
-
-    public String getParentDisplayName();
 
     /**
      * Adds information about which child node of this node, if any, should be

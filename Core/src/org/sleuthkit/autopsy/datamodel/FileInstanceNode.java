@@ -33,6 +33,13 @@ public class FileInstanceNode extends FileNode {
     
     private final String dataSource;
 
+    /**
+     * Create a node which can be used in a multilayer tree table and is based
+     * on an <code>AbstractFile</code>.
+     * 
+     * @param fsContent
+     * @param dataSource 
+     */
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;

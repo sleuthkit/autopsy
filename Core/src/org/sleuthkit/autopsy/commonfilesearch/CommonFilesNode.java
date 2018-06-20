@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
  * Wrapper node for <code>Md5Node</code> used to display common files search
- * results in the top right pane. Calls <code>Md5NodeFactory</code>.
+ * results in the top right pane. Calls <code>InstanceCountNodeFactory</code>.
  */
 final public class CommonFilesNode extends DisplayableItemNode {
     
@@ -60,10 +60,18 @@ final public class CommonFilesNode extends DisplayableItemNode {
         return getClass().getName();
     }
     
+    /**
+     * Used to generate <code>InstanceCountNode</code>s.
+     */
     static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
         private final CommonFilesMetadata metadata;
         
+        /**
+         * Build a factory which converts a <code>CommonFilesMetadata</code> 
+         * object into <code>DisplayableItemNode</code>s.
+         * @param metadata 
+         */
         InstanceCountNodeFactory(CommonFilesMetadata metadata){
             this.metadata = metadata;
         }

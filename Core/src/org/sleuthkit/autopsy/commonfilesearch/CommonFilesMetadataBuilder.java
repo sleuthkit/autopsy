@@ -52,7 +52,7 @@ public abstract class CommonFilesMetadataBuilder {
     private final Map<Long, String> dataSourceIdToNameMap;
     private final boolean filterByMedia;
     private final boolean filterByDoc;
-    private static final String filterByMimeTypesWhereClause = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
+    private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     /*
      * The set of the MIME types that will be checked for extension mismatches
@@ -208,7 +208,7 @@ public abstract class CommonFilesMetadataBuilder {
             if(instanceCollatedCommonFiles.containsKey(size)){
                 instanceCollatedCommonFiles.get(size).add(md5Metadata);
             } else {
-                ArrayList<Md5Metadata> value = new ArrayList<Md5Metadata>();
+                ArrayList<Md5Metadata> value = new ArrayList<>();
                 value.add(md5Metadata);
                 instanceCollatedCommonFiles.put(size, value);
             }
@@ -243,7 +243,7 @@ public abstract class CommonFilesMetadataBuilder {
                 mimeTypeFilter.append("'").append(mimeType).append("',");
             }
             mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
-            mimeTypeString = String.format(filterByMimeTypesWhereClause, new Object[]{mimeTypeString});
+            mimeTypeString = String.format(FILTER_BY_MIME_TYPES_WHERE_CLAUSE, new Object[]{mimeTypeString});
         }
         return mimeTypeString;
     }

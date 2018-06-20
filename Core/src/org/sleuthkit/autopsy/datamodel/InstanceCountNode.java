@@ -33,13 +33,20 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 
 /**
- *
+ * Node used to indicate the number of matches found with the MD5 children 
+ * of this Node.
  */
 final public class InstanceCountNode extends DisplayableItemNode {
 
     final private int instanceCount;
     final private List<Md5Metadata> metadataList;
 
+    /**
+     * Create a node with the given number of instances, and the given
+     * selection of metadata.
+     * @param instanceCount
+     * @param md5Metadata 
+     */
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
 
@@ -49,10 +56,18 @@ final public class InstanceCountNode extends DisplayableItemNode {
         this.setDisplayName(Integer.toString(instanceCount));
     }
 
+    /**
+     * Number of matches found for each of the MD5 children.
+     * @return int match count
+     */
     int getInstanceCount() {
         return this.instanceCount;
     }
 
+    /**
+     * Get a list of metadata for the MD5s which are children of this object.
+     * @return List<Md5Metadata>
+     */
     List<Md5Metadata> getMetadata() {
         return Collections.unmodifiableList(this.metadataList);
     }

@@ -180,6 +180,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets the title of this tabular result viewer.
+     * @return  title of tab.
      */
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")

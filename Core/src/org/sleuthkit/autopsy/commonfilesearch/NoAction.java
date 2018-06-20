@@ -24,10 +24,13 @@ import javax.swing.AbstractAction;
 
 /**
  * Default action for nodes which do not represent files, such as 
- * InstanceCountNode and Md5Node.
+ * <code>InstanceCountNode</code> and <code>Md5Node</code>.
  */
 public class NoAction extends AbstractAction {
 
+    private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("PMD")
     @Override
     public void actionPerformed(ActionEvent e) {
         //intentionally does nothing
