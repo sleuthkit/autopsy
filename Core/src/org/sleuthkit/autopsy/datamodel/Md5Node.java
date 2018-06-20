@@ -19,15 +19,19 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
@@ -43,24 +47,53 @@ import org.sleuthkit.datamodel.TskCoreException;
  * the MD5 of the matched files, the data sources those files were found within,
  * and a count of the instances represented by the md5.
  */
-public class Md5Node extends DisplayableItemNode {
+public class Md5Node extends DisplayableItemNode implements PropertyChangeListener {
     
     private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());    
     
     private final String md5Hash;
     private final int commonFileCount;
     private final String dataSources;
+    private final Md5Metadata metaData;
 
     public Md5Node(Md5Metadata data) {
-        super(Children.create(
-                new FileInstanceNodeFactory(data), true));
+        super(Children.createLazy(new Md5ChildCallable(data)), Lookups.singleton(data.getMd5()));
+
         
         this.commonFileCount = data.size();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
-        
+        this.metaData = data;
+        metaData.addPropertyChangeListener(this);
         this.setDisplayName(this.md5Hash);
     }
+    
+        /**
+     * Callable wrapper to further delay lazy ChildFactory creation
+     * and createNodes() call once lazy loading is functional.
+     */
+    private static class Md5ChildCallable implements Callable<Children> {
+        private final Md5Metadata key;
+        private Md5ChildCallable(Md5Metadata key) {
+            this.key = key;
+        }
+        @Override
+        public Children call() throws Exception {
+            //Check that the key has children,
+            //if it doesn't have children, return a leaf:
+            if (key.getMetadata().isEmpty()) {
+                return Children.LEAF;
+            } else {
+                return Children.create(new FileInstanceNodeFactory(key), true);
+            }
+        }
+    }
+    
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals("ADD")) {
+            setChildren(Children.create(new FileInstanceNodeFactory(metaData), false));
+        }
+    } 
 
     int getCommonFileCount() {
         return this.commonFileCount;
@@ -125,12 +158,13 @@ public class Md5Node extends DisplayableItemNode {
     /**
      * Child generator for <code>FileInstanceNode</code> of <code>Md5Node</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> {
+    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> implements PropertyChangeListener  {
 
         private final Md5Metadata descendants;
 
         FileInstanceNodeFactory(Md5Metadata descendants) {
             this.descendants = descendants;
+            descendants.addPropertyChangeListener(this);
         }
 
         @Override
@@ -151,6 +185,13 @@ public class Md5Node extends DisplayableItemNode {
         protected boolean createKeys(List<FileInstanceMetadata> list) {            
             list.addAll(this.descendants.getMetadata());
             return true;
+        }
+        
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals("ADD") || evt.getPropertyName().equals("REMOVE")) {
+               this.refresh(true);
+            }
         }
     }
 
@@ -175,4 +216,5 @@ public class Md5Node extends DisplayableItemNode {
             return this.displayString;
         }
     }
+    
 }
