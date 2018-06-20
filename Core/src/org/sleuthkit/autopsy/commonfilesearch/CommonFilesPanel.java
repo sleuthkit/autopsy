@@ -247,7 +247,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     MultiLayerTableFilterNode tableFilterWithDescendantsNode = new MultiLayerTableFilterNode(dataResultFilterNode, 3);
 
-                    DataResultViewerTable table = new DataResultViewerTable();
+                    DataResultViewerTable table = new DataResultViewerTable(true);
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);

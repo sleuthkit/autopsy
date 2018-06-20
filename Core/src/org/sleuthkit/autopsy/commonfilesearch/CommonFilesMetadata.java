@@ -20,7 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -29,7 +29,8 @@ import java.util.Map;
  */
 final public class CommonFilesMetadata {
     
-    private final Map<Integer, List<Md5Metadata>> metadata;
+    private final Map<Integer, Md5MetadataList> metadata;
+    private final Map<Integer, Md5MetadataList> hiddenMetaData;
     
     /**
      * Create a metadata object which can be handed off to the node
@@ -37,8 +38,13 @@ final public class CommonFilesMetadata {
      * 
      * @param metadata list of Md5Metadata indexed by size of Md5Metadata
      */
-    CommonFilesMetadata(Map<Integer, List<Md5Metadata>> metadata){
-        this.metadata = metadata;
+    CommonFilesMetadata(Map<Integer, Md5MetadataList> metadata){
+        Map<Integer, Md5MetadataList> tempMetadata = new HashMap<>();
+        for(Integer key : metadata.keySet()) {
+            tempMetadata.put(key, new Md5MetadataList());
+        }
+        this.metadata = tempMetadata;
+        this.hiddenMetaData = metadata;
     }
 
     /**
@@ -50,11 +56,15 @@ final public class CommonFilesMetadata {
      * @param md5 key
      * @return 
      */
-    List<Md5Metadata> getMetadataForMd5(Integer instanceCount) {
+    Md5MetadataList getMetadataForMd5(Integer instanceCount) {
         return this.metadata.get(instanceCount);
     }
+    
+    public void displayHiddenMetadata() {
+        this.metadata.putAll(this.hiddenMetaData);
+    }
 
-    public Map<Integer, List<Md5Metadata>> getMetadata() {
+    public Map<Integer, Md5MetadataList> getMetadata() {
         return Collections.unmodifiableMap(this.metadata);
     }
 
@@ -65,8 +75,8 @@ final public class CommonFilesMetadata {
     public int size() {
                 
         int count = 0;
-        for (List<Md5Metadata> data : this.metadata.values()) {
-            for(Md5Metadata md5 : data){
+        for (Md5MetadataList data : this.metadata.values()) {
+            for(Md5Metadata md5 : data.getMetadataList()){
                 count += md5.size();
             }
         }

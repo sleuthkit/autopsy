@@ -44,9 +44,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.TreeExpansionEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.event.TreeExpansionListener;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
@@ -54,6 +56,7 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
+import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -61,10 +64,13 @@ import org.openide.nodes.Node.Property;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -102,6 +108,70 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
     public DataResultViewerTable() {
         this(null, Bundle.DataResultViewerTable_title());
     }
+    /**
+     * Constructs a tabular result viewer that displays the children of the
+     * given root node using an OutlineView. The viewer should have an ancestor
+     * top component to connect the lookups of the nodes displayed in the
+     * OutlineView to the actions global context. The explorer manager will be
+     * discovered at runtime.
+     */
+    public DataResultViewerTable(boolean addListener) {
+        this(null, Bundle.DataResultViewerTable_title());
+        outlineView.addTreeExpansionListener(new LazyLoadChildNodesOnTreeExpansion());
+    }
+    
+    /**
+     * A tree expansion listener that will trigger a recreation of childs through its
+     * child factory on re-expansion of a node (causes to recreate the ChildFactory for
+     * this purpose.).
+     */
+    private class LazyLoadChildNodesOnTreeExpansion implements TreeExpansionListener {
+
+        /**
+         * A flag for avoiding endless recursion inside the expansion listener that could
+         * trigger collapsing and (re-)expanding nodes again.
+         */
+        private boolean inRecursion = false;
+        
+        @Override
+        public synchronized void treeCollapsed(final TreeExpansionEvent event) {
+            Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
+            if (!inRecursion && eventNode instanceof CommonFilesNode) { // avoid endless
+                // recursion
+                final CommonFilesNode node = (CommonFilesNode) eventNode;
+                node.setCleanRefreshNeeded(true);
+            }
+        }
+        
+        @Override
+        public synchronized void treeExpanded(final TreeExpansionEvent event) {
+            Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
+            if (!inRecursion && eventNode instanceof MultiLayerTableFilterNode) {
+                final MultiLayerTableFilterNode node = (MultiLayerTableFilterNode) eventNode;
+                Node innerNode = node.getInnerNode();
+                if(innerNode instanceof DataResultFilterNode) {
+                    
+                    final DataResultFilterNode drNode = (DataResultFilterNode) innerNode;
+                    Node innerInnerNode = drNode.getInnerNode();
+                if(innerInnerNode instanceof InstanceCountNode) {
+                    final InstanceCountNode cfNode = (InstanceCountNode) innerInnerNode;
+                    cfNode.refresh();
+                }}
+                
+                if (!outlineView.isExpanded(node)) {
+                    // Seems that the refresh caused to collapse, re-expand again and
+                    // avoid recursion in this listener!
+                    inRecursion = true;
+                    try {
+                        outlineView.expandNode(node);
+                    } finally {
+                        inRecursion = false;
+                    }
+                }
+            }
+            
+        }
+    }  
 
     /**
      * Constructs a tabular result viewer that displays the children of a given

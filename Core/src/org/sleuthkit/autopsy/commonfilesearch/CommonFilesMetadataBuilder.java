@@ -200,17 +200,17 @@ public abstract class CommonFilesMetadataBuilder {
             }
         }
         
-        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = new TreeMap<>();
+        Map<Integer, Md5MetadataList> instanceCollatedCommonFiles = new TreeMap<>();
 
         for(Md5Metadata md5Metadata : commonFiles.values()){
             Integer size = md5Metadata.size();
             
             if(instanceCollatedCommonFiles.containsKey(size)){
-                instanceCollatedCommonFiles.get(size).add(md5Metadata);
+                instanceCollatedCommonFiles.get(size).addMetadataToList(md5Metadata);
             } else {
-                ArrayList<Md5Metadata> value = new ArrayList<Md5Metadata>();
-                value.add(md5Metadata);
-                instanceCollatedCommonFiles.put(size, value);
+                Md5MetadataList metaList = new Md5MetadataList();
+                metaList.addMetadataToList(md5Metadata);
+                instanceCollatedCommonFiles.put(size, metaList);
             }
         }
         

@@ -20,8 +20,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,10 +29,15 @@ import java.util.concurrent.Callable;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeEvent;
+import org.openide.nodes.NodeListener;
+import org.openide.nodes.NodeMemberEvent;
+import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
+import org.sleuthkit.autopsy.commonfilesearch.Md5MetadataList;
 
 /**
  *
@@ -42,9 +45,9 @@ import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 final public class InstanceCountNode extends DisplayableItemNode {
 
     final private int instanceCount;
-    final private List<Md5Metadata> metadataList;
+    final private Md5MetadataList metadataList;
 
-    public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
+    public InstanceCountNode(int instanceCount, Md5MetadataList md5Metadata) {
         super(Children.createLazy(new InstanceCountChildCallable(md5Metadata)), Lookups.singleton(instanceCount));
 
         this.instanceCount = instanceCount;
@@ -58,20 +61,20 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * and createNodes() call once lazy loading is functional.
      */
     private static class InstanceCountChildCallable implements Callable<Children> {
-        private final List<Md5Metadata> key;
-        private InstanceCountChildCallable(List<Md5Metadata> key) {
+        private final Md5MetadataList key;
+        private InstanceCountChildCallable(Md5MetadataList key) {
             this.key = key;
         }
         @Override
         public Children call() throws Exception {
-            return Children.create(new Md5NodeFactory(key), true);
+            return Children.create(new Md5NodeFactory(key.getMetadataList()), true);
             
         }
     }
     
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals("ADD")) {
-            setChildren(Children.create(new Md5NodeFactory(metadataList), false));
+            setChildren(Children.create(new Md5NodeFactory(metadataList.getMetadataList()), false));
         }
     } 
 
@@ -80,7 +83,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
     }
 
     List<Md5Metadata> getMetadata() {
-        return Collections.unmodifiableList(this.metadataList);
+        return this.metadataList.getMetadataList();
     }
 
     @Override
@@ -91,6 +94,16 @@ final public class InstanceCountNode extends DisplayableItemNode {
     @Override
     public boolean isLeafTypeNode() {
         return false;
+    }
+    
+    public void setCleanRefreshNeeded(boolean b) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void refresh() {
+        metadataList.displayDelayedMetadata();
+        //firePropertyChange(PROP_NAME, this, this);
+        setChildren(Children.create(new Md5NodeFactory(metadataList.getMetadataList()), false));
     }
 
     @Override
@@ -153,33 +166,26 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * ChildFactory which builds CommonFileParentNodes from the
      * CommonFilesMetaaData models.
      */
-    static class Md5NodeFactory extends ChildFactory<String>  implements PropertyChangeListener  {
+    static class Md5NodeFactory extends ChildFactory<Md5Metadata>  implements NodeListener   {
 
         /**
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
-        private final Map<String, Md5Metadata> metadata;
+        private final List<Md5Metadata> metadata;
 
         Md5NodeFactory(List<Md5Metadata> metadata) {
-            this.metadata = new HashMap<>();
-          
-            Iterator<Md5Metadata> iterator = metadata.iterator();
-            while (iterator.hasNext()) {
-                Md5Metadata md5Metadata = iterator.next();
-                this.metadata.put(md5Metadata.getMd5(), md5Metadata);
-            }
+            this.metadata = metadata;
         }
 
         @Override
-        protected Node createNodeForKey(String md5) {
-            Md5Metadata md5Metadata = this.metadata.get(md5);
-            return new Md5Node(md5Metadata);
+        protected Node createNodeForKey(Md5Metadata metadataKey) {
+            return new Md5Node(metadataKey);
         }
 
         @Override
-        protected boolean createKeys(List<String> list) {
-            list.addAll(this.metadata.keySet());
+        protected boolean createKeys(List<Md5Metadata> list) {
+            list.addAll(metadata);
             return true;
         }
         
@@ -189,6 +195,24 @@ final public class InstanceCountNode extends DisplayableItemNode {
                this.refresh(true);
             }
         }
+        
+        @Override
+        public void childrenAdded(NodeMemberEvent nme) {
+        }
+        @Override
+        public void childrenRemoved(NodeMemberEvent nme) {
+        }
+
+        @Override
+        public void childrenReordered(NodeReorderEvent nre) {
+         
+        }
+
+        @Override
+        public void nodeDestroyed(NodeEvent ne) {
+         
+        }
+
  
     }
 }
