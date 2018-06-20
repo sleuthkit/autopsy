@@ -62,13 +62,12 @@ import org.sleuthkit.datamodel.EncodedFileOutputStream;
 /**
  * An action that will allow the user to enter a password for document file and
  * read its contents.
- *
  */
 public class ExtractDocumentWithPasswordAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ExtractDocumentWithPasswordAction.class.getName());
-    private final AbstractFile documentFile;
+    private final AbstractFile abstractFile;
     private final FileManager fileManager;
     private final Path decryptedFilePathAbsolute;
     private final String decryptedFilePathRelative;
@@ -89,7 +88,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         "ExtractDocumentWithPasswordAction.progress.text=Extracting contents of document: {0}"})
     public ExtractDocumentWithPasswordAction(AbstractFile file) throws NoCurrentCaseException {
         super(Bundle.ExtractDocumentWithPasswordAction_name_text());
-        documentFile = file;
+        abstractFile = file;
         currentCase = Case.getCurrentCaseThrows();
         decryptedFilePathAbsolute = Paths.get(currentCase.getModuleDirectory(), "keywordsearch", "extracted");
         decryptedFilePathRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), "keywordsearch", "extracted").toString();
@@ -101,11 +100,12 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         String password = "";
         boolean correctPassword = false;
         while (!correctPassword) {
+            //loop until they enter a correct password, no password, or there is a non-password related error
             try {
                 password = getPassword(Bundle.ExtractDocumentWithPasswordAction_prompt_title(), "");
                 if (!password.isEmpty()) {
-                    ReadContentInputStream stream = new ReadContentInputStream(documentFile);
-                    switch (documentFile.getNameExtension().toLowerCase()) {
+                    ReadContentInputStream stream = new ReadContentInputStream(abstractFile);
+                    switch (abstractFile.getNameExtension().toLowerCase()) {
                         case ("doc"):
                             decryptDoc(password, stream);
                             break;
@@ -128,12 +128,12 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
                             decryptPdf(password, stream);
                             break;
                         default:
-                            throw new CaseActionException(documentFile.getNameExtension() + " NOT SUPPORTED");
-                    } 
+                            throw new CaseActionException(abstractFile.getNameExtension() + " NOT SUPPORTED");
+                    }
                     correctPassword = true;
-                    DerivedFile newFile = fileManager.addDerivedFile(documentFile.getName(), decryptedFilePathRelative + File.separator + documentFile.getName(), documentFile.getSize(),
-                            documentFile.getCtime(), documentFile.getCrtime(), documentFile.getAtime(), documentFile.getAtime(),
-                            true, documentFile, null, "Embedded File Extractor", null, null, TskData.EncodingType.XOR1);
+                    DerivedFile newFile = fileManager.addDerivedFile(abstractFile.getName(), decryptedFilePathRelative + File.separator + abstractFile.getName(), abstractFile.getSize(),
+                            abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getAtime(),
+                            true, abstractFile, null, "Embedded File Extractor", null, null, TskData.EncodingType.XOR1);
                     KeywordSearchService kwsService = new SolrSearchService();
                     kwsService.index(newFile);
                 }
@@ -151,6 +151,15 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+   /**
+     * Read a Ppt with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the Ppt
+     * @param stream   - the stream containing the Ppt to read
+     * 
+     * @throws IOException 
+     */
     private void decryptDoc(String password, ReadContentInputStream stream) throws IOException {
         Biff8EncryptionKey.setCurrentUserPassword(password);
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
@@ -161,6 +170,16 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+    
+   /**
+     * Read a Xls with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the Xls
+     * @param stream   - the stream containing the Xls to read
+     * 
+     * @throws IOException 
+     */
     private void decryptXls(String password, ReadContentInputStream stream) throws IOException {
         Biff8EncryptionKey.setCurrentUserPassword(password);
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
@@ -170,7 +189,16 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
             doc.write(os);
         }
     }
-
+  
+    /**
+     * Read a Doc with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the Doc
+     * @param stream   - the stream containing the Doc to read
+     * 
+     * @throws IOException 
+     */
     private void decryptPpt(String password, ReadContentInputStream stream) throws IOException {
         Biff8EncryptionKey.setCurrentUserPassword(password);
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
@@ -181,6 +209,16 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+   /**
+     * Read a Docx with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the Docx
+     * @param stream   - the stream containing the Docx to read
+     * 
+     * @throws IOException
+     * @throws GeneralSecurityException 
+     */
     private void decryptDocx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XWPFDocument doc = new XWPFDocument(unpasswordedStream);
@@ -189,6 +227,17 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+
+   /**
+     * Read a Xlsx with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the Xlsx
+     * @param stream   - the stream containing the Xlsx to read
+     * 
+     * @throws IOException
+     * @throws GeneralSecurityException 
+     */
     private void decryptXlsx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XSSFWorkbook doc = new XSSFWorkbook(unpasswordedStream);
@@ -197,6 +246,16 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+    /**
+     * Read a Pptx with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the Pptx
+     * @param stream   - the stream containing the Pptx to read
+     * 
+     * @throws IOException
+     * @throws GeneralSecurityException 
+     */
     private void decryptPptx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XMLSlideShow doc = new XMLSlideShow(unpasswordedStream);
@@ -205,6 +264,17 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+    /**
+     * Read a PDF with the provided password and make a copy of it without its
+     * password.
+     *
+     * @param password - the password to try when reading the PDF
+     * @param stream   - the stream containing the PDF to read
+     *
+     * @throws IOException
+     * @throws
+     * org.sleuthkit.autopsy.keywordsearch.actions.ExtractDocumentWithPasswordAction.BadPasswordException
+     */
     private void decryptPdf(String password, ReadContentInputStream stream) throws IOException, BadPasswordException {
         PDDocument doc = PDDocument.load(stream, password);
         doc.setAllSecurityToBeRemoved(true);
@@ -217,6 +287,20 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
+    /**
+     * Get an input stream for the password protected xml based documents such
+     * as xlsx, docx, and pptx.
+     *
+     * @param password - the password to use for reading the file
+     * @param stream   - the input stream containing the file
+     *
+     * @return stream - the inputStream to read the file from
+     *
+     * @throws IOException
+     * @throws GeneralSecurityException
+     * @throws
+     * org.sleuthkit.autopsy.keywordsearch.actions.ExtractDocumentWithPasswordAction.BadPasswordException
+     */
     private InputStream getOoxmlInputStream(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException, BadPasswordException {
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
         EncryptionInfo info = new EncryptionInfo(filesystem);
@@ -227,15 +311,31 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         return d.getDataStream(filesystem);
     }
 
+    /**
+     * Get an output stream for writing of a the unpassword protected copy of
+     * the file.
+     *
+     * @return the EncodedFileOutputStream which the file will be written to.
+     *
+     * @throws IOException
+     */
     private EncodedFileOutputStream getOutputStream() throws IOException {
         if (!decryptedFilePathAbsolute.toFile().exists()) {
             Files.createDirectories(decryptedFilePathAbsolute);
         }
         return new EncodedFileOutputStream(new FileOutputStream(
-                decryptedFilePathAbsolute.toString() + File.separator + documentFile.getName()),
+                decryptedFilePathAbsolute.toString() + File.separator + abstractFile.getName()),
                 TskData.EncodingType.XOR1);
     }
 
+    /**
+     * Get a password from the user.
+     *
+     * @param title       the title of dialogue to prompt for a password
+     * @param oldPassword the password which was entered previously
+     *
+     * @return the password which was entered
+     */
     private String getPassword(String title, String oldPassword) {
         String password = null;
         Object inputValue = JOptionPane.showInputDialog(WindowManager.getDefault().getMainWindow(), Bundle.ExtractDocumentWithPasswordAction_prompt_text(),
@@ -251,10 +351,18 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         return super.clone(); //To change body of generated methods, choose Tools | Templates.
     }
 
+    /**
+     * Exception for when an incorrect password is entered.
+     */
     private class BadPasswordException extends EncryptedDocumentException {
 
         private static final long serialVersionUID = 1L;
 
+        /**
+         * Create a BadPasswordException with the specified message.
+         *
+         * @param message - the message to be associated with the exception.
+         */
         BadPasswordException(String message) {
             super(message);
         }
