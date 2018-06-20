@@ -357,11 +357,6 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
         return password;
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone(); //To change body of generated methods, choose Tools | Templates.
-    }
-
     /**
      * Exception for when an incorrect password is entered.
      */
