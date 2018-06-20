@@ -35,13 +35,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author wschaefer
+ * Action provider for the ExtractDocumentWithPasswordAction
  */
 @ServiceProvider(service = ContextMenuActionsProvider.class)
 public class ExtractDocumentWithPasswordActionProvider implements ContextMenuActionsProvider {
 
-    private static List<String> DOCUMENT_EXTENSIONS = Arrays.asList(".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf");
+    //supported document extensions 
+    private static final List<String> DOCUMENT_EXTENSIONS = Arrays.asList(".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf");
     private static Logger logger = Logger.getLogger(ExtractDocumentWithPasswordActionProvider.class.getName());
 
     @Override

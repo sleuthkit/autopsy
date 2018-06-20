@@ -47,9 +47,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
 import org.sleuthkit.autopsy.keywordsearch.SolrSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -83,6 +83,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     @Messages({"ExtractDocumentWithPasswordAction.name.text=Extract Content with Password",
         "ExtractDocumentWithPasswordAction.prompt.text=Enter Password",
         "ExtractDocumentWithPasswordAction.prompt.title=Enter Password",
+        "ExtractDocumentWithPasswordAction.prompt.retryTitle=Incorrect Password",
         "ExtractDocumentWithPasswordAction.extractFailed.title=Failed to Open File with Password",
         "# {0} - document",
         "ExtractDocumentWithPasswordAction.progress.text=Extracting contents of document: {0}"})
@@ -98,12 +99,18 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         String password = "";
-        boolean correctPassword = false;
-        while (!correctPassword) {
+        boolean incorrectPassword = true;
+        while (incorrectPassword) {
             //loop until they enter a correct password, no password, or there is a non-password related error
             try {
-                password = getPassword(Bundle.ExtractDocumentWithPasswordAction_prompt_title(), "");
-                if (!password.isEmpty()) {
+                String title;
+                if (password.isEmpty()) {
+                    title = Bundle.ExtractDocumentWithPasswordAction_prompt_title();
+                } else {
+                    title = Bundle.ExtractDocumentWithPasswordAction_prompt_retryTitle();
+                }
+                password = getPassword(title, password);
+                if (password != null && !password.isEmpty()) {
                     ReadContentInputStream stream = new ReadContentInputStream(abstractFile);
                     switch (abstractFile.getNameExtension().toLowerCase()) {
                         case ("doc"):
@@ -128,37 +135,41 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
                             decryptPdf(password, stream);
                             break;
                         default:
-                            throw new CaseActionException(abstractFile.getNameExtension() + " NOT SUPPORTED");
+                            throw new KeywordSearchModuleException("File extension of " + abstractFile.getNameExtension()
+                                    + "is not supported by the extract document with password action");
+
                     }
-                    correctPassword = true;
+                    incorrectPassword = false;
                     DerivedFile newFile = fileManager.addDerivedFile(abstractFile.getName(), decryptedFilePathRelative + File.separator + abstractFile.getName(), abstractFile.getSize(),
                             abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getAtime(),
                             true, abstractFile, null, "Embedded File Extractor", null, null, TskData.EncodingType.XOR1);
                     KeywordSearchService kwsService = new SolrSearchService();
                     kwsService.index(newFile);
+                } else {
+                    incorrectPassword = false;
                 }
             } catch (EncryptedDocumentException ex) {
-                logger.log(Level.INFO, "Incorrect password of " + password + " entered", ex);
+                logger.log(Level.INFO, "Incorrect password of " + password + " entered for " + abstractFile.getName(), ex);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "IO EXCEPTION TRYING TO DECRYPT", ex);
-            } catch (CaseActionException ex) {
-                logger.log(Level.INFO, "invalid extension", ex);
+                logger.log(Level.SEVERE, "Error encountered while trying to decrypt " + abstractFile.getName() + "with password " + password, ex);
+            } catch (KeywordSearchModuleException ex) {
+                logger.log(Level.INFO, "Extract document with password action not supported for " + abstractFile.getName(), ex);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "TskCoreException adding derived file", ex);
+                logger.log(Level.SEVERE, "Error encountered adding derived file with password removed to case ", ex);
             } catch (GeneralSecurityException ex) {
-                logger.log(Level.WARNING, "GeneralSecurityException parsing document", ex);
+                logger.log(Level.WARNING, "Error parsing file " + abstractFile.getName() + "with password " + password, ex);
             }
         }
     }
 
-   /**
+    /**
      * Read a Ppt with the provided password and make a copy of it without its
      * password.
      *
      * @param password - the password to try when reading the Ppt
      * @param stream   - the stream containing the Ppt to read
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     private void decryptDoc(String password, ReadContentInputStream stream) throws IOException {
         Biff8EncryptionKey.setCurrentUserPassword(password);
@@ -170,15 +181,14 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
-    
-   /**
+    /**
      * Read a Xls with the provided password and make a copy of it without its
      * password.
      *
      * @param password - the password to try when reading the Xls
      * @param stream   - the stream containing the Xls to read
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     private void decryptXls(String password, ReadContentInputStream stream) throws IOException {
         Biff8EncryptionKey.setCurrentUserPassword(password);
@@ -189,15 +199,15 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
             doc.write(os);
         }
     }
-  
+
     /**
      * Read a Doc with the provided password and make a copy of it without its
      * password.
      *
      * @param password - the password to try when reading the Doc
      * @param stream   - the stream containing the Doc to read
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     private void decryptPpt(String password, ReadContentInputStream stream) throws IOException {
         Biff8EncryptionKey.setCurrentUserPassword(password);
@@ -209,15 +219,15 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
-   /**
+    /**
      * Read a Docx with the provided password and make a copy of it without its
      * password.
      *
      * @param password - the password to try when reading the Docx
      * @param stream   - the stream containing the Docx to read
-     * 
+     *
      * @throws IOException
-     * @throws GeneralSecurityException 
+     * @throws GeneralSecurityException
      */
     private void decryptDocx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
@@ -227,16 +237,15 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         }
     }
 
-
-   /**
+    /**
      * Read a Xlsx with the provided password and make a copy of it without its
      * password.
      *
      * @param password - the password to try when reading the Xlsx
      * @param stream   - the stream containing the Xlsx to read
-     * 
+     *
      * @throws IOException
-     * @throws GeneralSecurityException 
+     * @throws GeneralSecurityException
      */
     private void decryptXlsx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
@@ -252,9 +261,9 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
      *
      * @param password - the password to try when reading the Pptx
      * @param stream   - the stream containing the Pptx to read
-     * 
+     *
      * @throws IOException
-     * @throws GeneralSecurityException 
+     * @throws GeneralSecurityException
      */
     private void decryptPptx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
@@ -276,9 +285,13 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
      * org.sleuthkit.autopsy.keywordsearch.actions.ExtractDocumentWithPasswordAction.BadPasswordException
      */
     private void decryptPdf(String password, ReadContentInputStream stream) throws IOException, BadPasswordException {
-        PDDocument doc = PDDocument.load(stream, password);
+        PDDocument doc;
+        try {
+            doc = PDDocument.load(stream, password);
+        } catch (IOException ex) {
+            throw new BadPasswordException("Unable to load stream stream for pdf with password", ex);
+        }
         doc.setAllSecurityToBeRemoved(true);
-
         try (OutputStream os = getOutputStream()) {
             doc.save(os);
         }
@@ -365,6 +378,17 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
          */
         BadPasswordException(String message) {
             super(message);
+        }
+
+        /**
+         * Create a BadPasswordException with the specified message.
+         *
+         * @param message - the message to be associated with the exception.
+         * @param cause   - the exception which caused this exception to be
+         *                created
+         */
+        BadPasswordException(String message, Throwable cause) {
+            super(message, cause);
         }
 
     }
