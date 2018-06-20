@@ -24,24 +24,24 @@ import org.openide.nodes.Node;
 
 /**
  * A <code>Children</code> implementation for a 
- * <code>SingleLayerTableFilterNode</code>. A 
- * <code>SingleLayerTableFilterNode</code> creates at most one layer of child 
+ * <code>TableFilterNode</code>. A 
+ * <code>TableFilterNode</code> creates at most one layer of child 
  * nodes for the node it wraps. It is designed to be used in the results view 
  * to ensure the individual viewers display only the first layer of child nodes.
  */
 class TableFilterChildren extends FilterNode.Children {
 
     /**
-     * Creates a Children object for a SingleLayerTableFilterNode. A SingleLayerTableFilterNode
-     * creates at most one layer of child nodes for the node it wraps. It is
-     * designed to be used in the results view to ensure the individual viewers
-     * display only the first layer of child nodes.
+     * Creates a Children object for a TableFilterNode. A TableFilterNode
+ creates at most one layer of child nodes for the node it wraps. It is
+ designed to be used in the results view to ensure the individual viewers
+ display only the first layer of child nodes.
      *
-     * @param wrappedNode The node wrapped by the SingleLayerTableFilterNode.
+     * @param wrappedNode The node wrapped by the TableFilterNode.
      * @param createChildren True if a children (child factory) object should be
      * created for the wrapped node.
      *
-     * @return A children (child factory) object for a node wrapped by a SingleLayerTableFilterNode.
+     * @return A children (child factory) object for a node wrapped by a TableFilterNode.
      */
     public static Children createInstance(Node wrappedNode, boolean createChildren) {
 
@@ -54,28 +54,28 @@ class TableFilterChildren extends FilterNode.Children {
 
     /**
      * Constructs a children (child factory) implementation for a 
-     * <code>SingleLayerTableFilterNode</code>. A 
-     * <code>SingleLayerTableFilterNode</code> creates at most one layer of 
+     * <code>TableFilterNode</code>. A 
+     * <code>TableFilterNode</code> creates at most one layer of 
      * child nodes for the node it wraps. It is designed to be used for nodes 
      * displayed in Autopsy table views.
      *
-     * @param wrappedNode The node wrapped by the SingleLayerTableFilterNode.
+     * @param wrappedNode The node wrapped by the TableFilterNode.
      */
     TableFilterChildren(Node wrappedNode) {
         super(wrappedNode);
     }
 
     /**
-     * Copies a SingleLayerTableFilterNode, with the create children 
-     * (child factory) flag set to false.
+     * Copies a TableFilterNode, with the create children 
+ (child factory) flag set to false.
      *
-     * @param nodeToCopy The SingleLayerTableFilterNode to copy.
+     * @param nodeToCopy The TableFilterNode to copy.
      *
-     * @return A copy of a SingleLayerTableFilterNode.
+     * @return A copy of a TableFilterNode.
      */
     @Override
     protected Node copyNode(Node nodeToCopy) {
-        return new SingleLayerTableFilterNode(nodeToCopy, false);
+        return new TableFilterNode(nodeToCopy, false);
     }
 
     /**

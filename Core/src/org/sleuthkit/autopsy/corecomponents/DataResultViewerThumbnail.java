@@ -77,7 +77,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     private final PageUpdater pageUpdater = new PageUpdater();
-    private SingleLayerTableFilterNode rootNode;
+    private TableFilterNode rootNode;
     private ThumbnailViewChildren rootNodeChildren;
     private NodeSelectionListener selectionListener;
     private int currentPage;
@@ -387,7 +387,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
         try {
             if (givenNode != null) {
-                rootNode = (SingleLayerTableFilterNode) givenNode;
+                rootNode = (TableFilterNode) givenNode;
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children

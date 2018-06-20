@@ -38,7 +38,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
-import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -99,7 +99,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
     public MessageContentViewer() {
         initComponents();
-        drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new SingleLayerTableFilterNode(Node.EMPTY, false), 0, null);
+        drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
@@ -596,7 +596,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
         msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
-        drp.setNode(new SingleLayerTableFilterNode(new DataResultFilterNode(new AbstractNode(
+        drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
                 new AttachmentsChildren(attachments)), null), true));
     }
 

@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.corecomponents.MultiLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
@@ -253,7 +253,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     //TODO this could be enumerating the children!!!
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
-                    MultiLayerTableFilterNode tableFilterWithDescendantsNode = new MultiLayerTableFilterNode(dataResultFilterNode, 3);
+                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
 
                     DataResultViewerTable table = new CommonFilesSearchResultsViewerTable();
 

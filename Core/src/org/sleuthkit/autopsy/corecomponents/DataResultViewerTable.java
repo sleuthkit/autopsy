@@ -536,7 +536,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof SingleLayerTableFilterNode) {
+        if (rootNode instanceof TableFilterNode) {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             final TableFilterNode tfn = ((TableFilterNode) rootNode);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();

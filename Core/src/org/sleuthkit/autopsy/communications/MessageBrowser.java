@@ -33,7 +33,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
@@ -142,7 +142,7 @@ public final class MessageBrowser extends JPanel implements ExplorerManager.Prov
                             rootNode = selectedNode;
                         }
                         messagesResultPanel.setPath(rootNode.getDisplayName());
-                        messagesResultPanel.setNode(new SingleLayerTableFilterNode(new DataResultFilterNode(rootNode, gacExplorerManager), true));
+                        messagesResultPanel.setNode(new TableFilterNode(new DataResultFilterNode(rootNode, gacExplorerManager), true));
                     }
                 }
             }

@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -695,16 +695,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                    // Create a SingleLayerTableFilterNode with knowledge of the node's type to allow for column order settings
+                    // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
                     if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree
                         EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
-                        dataResult.setNode(new SingleLayerTableFilterNode(emptyNode, true, "This Node Is Empty")); //NON-NLS
+                        dataResult.setNode(new TableFilterNode(emptyNode, true, "This Node Is Empty")); //NON-NLS
                     } else if (originNode instanceof DisplayableItemNode) {
-                        dataResult.setNode(new SingleLayerTableFilterNode(drfn, true, ((DisplayableItemNode) originNode).getItemType()));
+                        dataResult.setNode(new TableFilterNode(drfn, true, ((DisplayableItemNode) originNode).getItemType()));
                     } else {
-                        dataResult.setNode(new SingleLayerTableFilterNode(drfn, true));
+                        dataResult.setNode(new TableFilterNode(drfn, true));
                     }
                     String displayName = "";
                     Content content = originNode.getLookup().lookup(Content.class);

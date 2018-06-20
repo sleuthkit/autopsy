@@ -152,7 +152,7 @@ final class ResultViewerPersistence {
      * @return A map from sort rank to sort criterion, where rank 1 means that
      *         this is the most important sort criteria, 2 means second etc.
      */
-    static List< SortCriterion> loadSortCriteria(SingleLayerTableFilterNode node) {
+    static List< SortCriterion> loadSortCriteria(TableFilterNode node) {
         List<Node.Property<?>> availableProperties = ResultViewerPersistence.getAllChildProperties(node, 100);
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
         java.util.SortedMap<Integer, SortCriterion> criteriaMap = new TreeMap<>();

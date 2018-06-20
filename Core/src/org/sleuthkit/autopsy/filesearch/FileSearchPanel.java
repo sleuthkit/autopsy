@@ -40,7 +40,7 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
@@ -193,7 +193,7 @@ class FileSearchPanel extends javax.swing.JPanel {
 
                 SearchNode sn = new SearchNode(contentList);
                 final TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                        new SingleLayerTableFilterNode(sn, true, sn.getName()), contentList.size());
+                        new TableFilterNode(sn, true, sn.getName()), contentList.size());
 
                 searchResultWin.requestActive(); // make it the active top component
 
