@@ -42,7 +42,7 @@ public class ExtractDocumentWithPasswordActionProvider implements ContextMenuAct
 
     //supported document extensions 
     private static final List<String> DOCUMENT_EXTENSIONS = Arrays.asList(".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf");
-    private static Logger logger = Logger.getLogger(ExtractDocumentWithPasswordActionProvider.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtractDocumentWithPasswordActionProvider.class.getName());
 
     @Override
     public List<Action> getActions() {
@@ -52,14 +52,13 @@ public class ExtractDocumentWithPasswordActionProvider implements ContextMenuAct
             //when there is an AbstractContent selected get the name of the first one to translate
             AbstractContent content = selectedContents.toArray(new AbstractContent[selectedContents.size()])[0];
             try {
-                if (content instanceof AbstractFile && content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
-                    if (DOCUMENT_EXTENSIONS.contains("." + ((AbstractFile) content).getNameExtension().toLowerCase())) {
-                        actions.add(new ExtractDocumentWithPasswordAction(((AbstractFile) content)));
-                    }
+                if (content instanceof AbstractFile && content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0
+                        && DOCUMENT_EXTENSIONS.contains("." + ((AbstractFile) content).getNameExtension().toLowerCase())) {
+                    actions.add(new ExtractDocumentWithPasswordAction(((AbstractFile) content)));
                 }
-            } catch (TskCoreException  | NoCurrentCaseException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
-            } 
+            }
         }
         return actions;
     }

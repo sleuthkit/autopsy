@@ -71,7 +71,6 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     private final FileManager fileManager;
     private final Path decryptedFilePathAbsolute;
     private final String decryptedFilePathRelative;
-    private final Case currentCase;
 
     /**
      * Create an action that will allow the user to enter an password and then
@@ -90,7 +89,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     public ExtractDocumentWithPasswordAction(AbstractFile file) throws NoCurrentCaseException {
         super(Bundle.ExtractDocumentWithPasswordAction_name_text());
         abstractFile = file;
-        currentCase = Case.getCurrentCaseThrows();
+        Case currentCase = Case.getCurrentCaseThrows();
         decryptedFilePathAbsolute = Paths.get(currentCase.getModuleDirectory(), "keywordsearch", "extracted");
         decryptedFilePathRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), "keywordsearch", "extracted").toString();
         fileManager = currentCase.getServices().getFileManager();
@@ -176,8 +175,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
         HWPFDocument doc = new HWPFDocument(filesystem.getRoot());
         Biff8EncryptionKey.setCurrentUserPassword(null);
-        try (OutputStream os = getOutputStream()) {
-            doc.write(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.write(outStream);
         }
     }
 
@@ -195,8 +194,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
         HSSFWorkbook doc = new HSSFWorkbook(filesystem.getRoot(), true);
         Biff8EncryptionKey.setCurrentUserPassword(null);
-        try (OutputStream os = getOutputStream()) {
-            doc.write(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.write(outStream);
         }
     }
 
@@ -214,8 +213,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
         HSLFSlideShow doc = new HSLFSlideShow(filesystem.getRoot());
         Biff8EncryptionKey.setCurrentUserPassword(null);
-        try (OutputStream os = getOutputStream()) {
-            doc.write(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.write(outStream);
         }
     }
 
@@ -232,8 +231,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     private void decryptDocx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XWPFDocument doc = new XWPFDocument(unpasswordedStream);
-        try (OutputStream os = getOutputStream()) {
-            doc.write(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.write(outStream);
         }
     }
 
@@ -250,8 +249,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     private void decryptXlsx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XSSFWorkbook doc = new XSSFWorkbook(unpasswordedStream);
-        try (OutputStream os = getOutputStream()) {
-            doc.write(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.write(outStream);
         }
     }
 
@@ -268,8 +267,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     private void decryptPptx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XMLSlideShow doc = new XMLSlideShow(unpasswordedStream);
-        try (OutputStream os = getOutputStream()) {
-            doc.write(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.write(outStream);
         }
     }
 
@@ -292,8 +291,8 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
             throw new BadPasswordException("Unable to load stream stream for pdf with password", ex);
         }
         doc.setAllSecurityToBeRemoved(true);
-        try (OutputStream os = getOutputStream()) {
-            doc.save(os);
+        try (OutputStream outStream = getOutputStream()) {
+            doc.save(outStream);
         }
         if (doc.isEncrypted()) {
             throw new BadPasswordException("Unable to process: password for encrypted document is not correct");
@@ -317,11 +316,11 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     private InputStream getOoxmlInputStream(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException, BadPasswordException {
         NPOIFSFileSystem filesystem = new NPOIFSFileSystem(stream);
         EncryptionInfo info = new EncryptionInfo(filesystem);
-        Decryptor d = Decryptor.getInstance(info);
-        if (!d.verifyPassword(password)) {
+        Decryptor decryptor = Decryptor.getInstance(info);
+        if (!decryptor.verifyPassword(password)) {
             throw new BadPasswordException("Unable to process: password for encrypted document is not correct");
         }
-        return d.getDataStream(filesystem);
+        return decryptor.getDataStream(filesystem);
     }
 
     /**
