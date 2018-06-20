@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.EncodedFileOutputStream;
  * An action that will allow the user to enter a password for document file and
  * read its contents.
  */
-public class ExtractDocumentWithPasswordAction extends AbstractAction {
+final class ExtractDocumentWithPasswordAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ExtractDocumentWithPasswordAction.class.getName());
@@ -86,7 +86,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
         "ExtractDocumentWithPasswordAction.extractFailed.title=Failed to Open File with Password",
         "# {0} - document",
         "ExtractDocumentWithPasswordAction.progress.text=Extracting contents of document: {0}"})
-    public ExtractDocumentWithPasswordAction(AbstractFile file) throws NoCurrentCaseException {
+    ExtractDocumentWithPasswordAction(AbstractFile file) throws NoCurrentCaseException {
         super(Bundle.ExtractDocumentWithPasswordAction_name_text());
         abstractFile = file;
         Case currentCase = Case.getCurrentCaseThrows();
@@ -324,8 +324,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     }
 
     /**
-     * Get an output stream for writing of a the unpassword protected copy of
-     * the file.
+     * Get an output stream for writing of a copy of the file without password protection.
      *
      * @return the EncodedFileOutputStream which the file will be written to.
      *
@@ -343,7 +342,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
     /**
      * Get a password from the user.
      *
-     * @param title       the title of dialogue to prompt for a password
+     * @param title       the title of dialog to prompt for a password
      * @param oldPassword the password which was entered previously
      *
      * @return the password which was entered

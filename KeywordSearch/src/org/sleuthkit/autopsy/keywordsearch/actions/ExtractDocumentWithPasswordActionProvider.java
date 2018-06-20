@@ -29,7 +29,6 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -38,26 +37,26 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Action provider for the ExtractDocumentWithPasswordAction
  */
 @ServiceProvider(service = ContextMenuActionsProvider.class)
-public class ExtractDocumentWithPasswordActionProvider implements ContextMenuActionsProvider {
+public final class ExtractDocumentWithPasswordActionProvider implements ContextMenuActionsProvider {
 
     //supported document extensions 
-    private static final List<String> DOCUMENT_EXTENSIONS = Arrays.asList(".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf");
+    private static final List<String> DOCUMENT_EXTENSIONS = Arrays.asList("doc", "docx", "xls", "xlsx", "ppt", "pptx", "pdf");
     private static final Logger logger = Logger.getLogger(ExtractDocumentWithPasswordActionProvider.class.getName());
 
     @Override
     public List<Action> getActions() {
         List<Action> actions = new ArrayList<>();
-        final Collection<? extends AbstractContent> selectedContents = Utilities.actionsGlobalContext().lookupAll(AbstractContent.class);
-        if (!selectedContents.isEmpty() && selectedContents.size() == 1) {
-            //when there is an AbstractContent selected get the name of the first one to translate
-            AbstractContent content = selectedContents.toArray(new AbstractContent[selectedContents.size()])[0];
+        final Collection<? extends AbstractFile> selectedContents = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+        if (selectedContents.size() == 1) {
+            //when there is an AbstractFile selected get the name of the first one to translate
+            AbstractFile content = selectedContents.toArray(new AbstractFile[selectedContents.size()])[0];
             try {
-                if (content instanceof AbstractFile && content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0
-                        && DOCUMENT_EXTENSIONS.contains("." + ((AbstractFile) content).getNameExtension().toLowerCase())) {
-                    actions.add(new ExtractDocumentWithPasswordAction(((AbstractFile) content)));
+                if (content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0
+                        && DOCUMENT_EXTENSIONS.contains(content.getNameExtension().toLowerCase())) {
+                    actions.add(new ExtractDocumentWithPasswordAction(content));
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
+                logger.log(Level.WARNING, "Unable to to add Extract Content with Password action to context menus", ex);
             }
         }
         return actions;
