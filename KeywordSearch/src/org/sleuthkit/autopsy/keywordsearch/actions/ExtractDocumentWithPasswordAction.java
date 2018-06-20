@@ -104,7 +104,7 @@ public class ExtractDocumentWithPasswordAction extends AbstractAction {
             //loop until they enter a correct password, no password, or there is a non-password related error
             try {
                 String title;
-                if (password.isEmpty()) {
+                if (password != null && password.isEmpty()) {
                     title = Bundle.ExtractDocumentWithPasswordAction_prompt_title();
                 } else {
                     title = Bundle.ExtractDocumentWithPasswordAction_prompt_retryTitle();
