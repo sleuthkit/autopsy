@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.commonfilesearch.NoAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -532,17 +531,17 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override 
         public AbstractAction visit(InstanceCountNode icn){
-            return new NoAction();
+            return null;
         }
         
         @Override
         public AbstractAction visit(Md5Node md5n){
-            return new NoAction();
+            return null;
         }
         
         @Override
         public AbstractAction visit(FileInstanceNode fin){
-            return new NoAction();
+            return null;
         }
         
         @Override
