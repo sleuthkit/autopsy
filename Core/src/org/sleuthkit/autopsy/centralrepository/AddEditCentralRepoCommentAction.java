@@ -83,8 +83,13 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      * comment. The comment will be updated in the database if the file instance
      * exists there, or a new file instance will be added to the database with
      * the comment attached otherwise.
+     * 
+     * The current comment for this instance is returned in case it is needed to 
+     * update the display.
+     *
+     * @return the current comment for this instance
      */
-    public void addEditCentralRepoComment() {
+    public String addEditCentralRepoComment() {
         CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute, title);
         centralRepoCommentDialog.display();
 
@@ -103,6 +108,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             }
         }
+        return centralRepoCommentDialog.getComment();
     }
 
     /**

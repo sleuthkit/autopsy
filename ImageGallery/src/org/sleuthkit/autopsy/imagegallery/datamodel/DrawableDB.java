@@ -841,43 +841,6 @@ public final class DrawableDB {
     }
 
     /**
-     * Count the total number of files in the database..
-     *
-     * @return Total number of files in the database
-     *
-     * @throws TskCoreException
-     */
-    @Deprecated
-    public long countFiles() throws TskCoreException {
-        Statement statement = null;
-        ResultSet rs = null;
-        dbReadLock();
-        try {
-            statement = con.createStatement();
-            rs = statement.executeQuery("SELECT COUNT (*) FROM drawable_files"); //NON-NLS
-            return rs.getLong(1);
-        } catch (SQLException e) {
-            throw new TskCoreException("SQLException thrown when calling 'DrawableDB.countFiles(): ", e);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing result set after executing countFiles", ex); //NON-NLS
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing statement after executing countFiles", ex); //NON-NLS
-                }
-            }
-            dbReadUnlock();
-        }
-    }
-
-    /**
      *
      *
      *
@@ -952,7 +915,12 @@ public final class DrawableDB {
         return vals;
     }
 
-    public void insertGroup(final String value, DrawableAttribute<?> groupBy) {
+    /**
+     * Insert new group into DB
+     * @param value Value of the group (unique to the type)
+     * @param groupBy Type of the grouping (CATEGORY, MAKE, etc.)
+     */
+    private void insertGroup(final String value, DrawableAttribute<?> groupBy) {
         dbWriteLock();
 
         try {
@@ -968,25 +936,6 @@ public final class DrawableDB {
             }
         } finally {
             dbWriteUnlock();
-        }
-    }
-
-    /**
-     * @param id       the obj_id of the file to return
-     * @param analyzed the analyzed state of the file
-     *
-     * @return a DrawableFile for the given obj_id and analyzed state
-     *
-     * @throws TskCoreException if unable to get a file from the currently open
-     *                          {@link SleuthkitCase}
-     */
-    private DrawableFile getFileFromID(Long id, boolean analyzed) throws TskCoreException {
-        try {
-            AbstractFile f = tskCase.getAbstractFileById(id);
-            return DrawableFile.create(f, analyzed, isVideoFile(f));
-        } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: " + id, ex); //NON-NLS
-            return null;
         }
     }
 

@@ -50,10 +50,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
+/**
+ * Functional tests for ingest file filters.
+ */
 public class IngestFileFiltersTest extends NbTestCase {
 
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"filter_test1.img");
-    private final Path ZIPFILE_PATH = Paths.get(this.getDataDir().toString(), "local_files_test.zip");
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"IngestFilters_img1_v1.img");
+    private final Path ZIPFILE_PATH = Paths.get(this.getDataDir().toString(), "IngestFilters_local1_v1.zip");
     
     private boolean testSucceeded;
     

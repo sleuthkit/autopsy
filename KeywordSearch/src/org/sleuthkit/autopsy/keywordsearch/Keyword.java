@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.text.Normalizer;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
@@ -57,11 +58,7 @@ class Keyword {
      *                    than a substring.
      */
     Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord) {
-        this.searchTerm = searchTerm;
-        this.isLiteral = isLiteral;
-        this.isWholeWord = isWholeWord;
-        this.listName = "";
-        this.originalTerm = searchTerm;
+        this(searchTerm, isLiteral, isWholeWord, "", searchTerm);
     }
 
     /**
@@ -93,11 +90,12 @@ class Keyword {
      *                     used (e.g. for highlighting purposes).
      */
     Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {
-        this.searchTerm = searchTerm;
+        this.searchTerm = Normalizer.normalize(searchTerm, Normalizer.Form.NFKC);
         this.isLiteral = isLiteral;
         this.isWholeWord = isWholeWord;
         this.listName = listName;
         this.originalTerm = originalTerm;
+        
     }
 
     /**
