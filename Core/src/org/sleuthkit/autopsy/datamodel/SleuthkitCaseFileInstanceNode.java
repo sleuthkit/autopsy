@@ -46,7 +46,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
      * @param fsContent
      * @param dataSource 
      */
-    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.caseName = caseName;

@@ -51,7 +51,6 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.FileInstanceNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
@@ -63,6 +62,7 @@ import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
+import org.sleuthkit.autopsy.datamodel.SleuthkitCaseFileInstanceNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
@@ -540,7 +540,7 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public AbstractAction visit(FileInstanceNode fin){
+        public AbstractAction visit(SleuthkitCaseFileInstanceNode fin){
             return null;
         }
         
