@@ -41,7 +41,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     
     static {
         Map<String, Integer> map = new HashMap<>();
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_matchColLbl(), 220);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_matchColLbl(), 235);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
