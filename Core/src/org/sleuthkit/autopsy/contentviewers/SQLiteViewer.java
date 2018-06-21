@@ -336,10 +336,12 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void setFile(AbstractFile file) {
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        sqliteDbFile = file;
-        processSQLiteFile();
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        if (Case.isCaseOpen()) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            sqliteDbFile = file;
+            processSQLiteFile();
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        }
     }
 
     @Override
