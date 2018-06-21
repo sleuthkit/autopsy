@@ -9,8 +9,6 @@ attributes.
 - User defined tags now appear first in tagging menus.
 - Eliminated one tagging sub menu layer for faster tagging.
 - Added Replace Tag item to tagging menus (shortcut for delete tag, add tag).
-- File and folder names can be translated, if translation service installed.
-- Copied and pasted text can be translated, if translation service installed.
 - The Other Occurrences content viewer now shows matches in the current case.
 - A listing of cases in the Central Repository is displayed by the 
 Central Repository options panel.
