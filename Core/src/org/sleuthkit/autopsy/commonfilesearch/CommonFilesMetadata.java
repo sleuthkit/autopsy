@@ -30,7 +30,6 @@ import java.util.Map;
 final public class CommonFilesMetadata {
     
     private final Map<Integer, Md5MetadataList> metadata;
-    private final Map<Integer, Md5MetadataList> hiddenMetaData;
     
     /**
      * Create a metadata object which can be handed off to the node
@@ -39,12 +38,7 @@ final public class CommonFilesMetadata {
      * @param metadata list of Md5Metadata indexed by size of Md5Metadata
      */
     CommonFilesMetadata(Map<Integer, Md5MetadataList> metadata){
-        Map<Integer, Md5MetadataList> tempMetadata = new HashMap<>();
-        for(Integer key : metadata.keySet()) {
-            tempMetadata.put(key, new Md5MetadataList());
-        }
-        this.metadata = tempMetadata;
-        this.hiddenMetaData = metadata;
+        this.metadata = metadata;
     }
 
     /**
@@ -58,10 +52,6 @@ final public class CommonFilesMetadata {
      */
     Md5MetadataList getMetadataForMd5(Integer instanceCount) {
         return this.metadata.get(instanceCount);
-    }
-    
-    public void displayHiddenMetadata() {
-        this.metadata.putAll(this.hiddenMetaData);
     }
 
     public Map<Integer, Md5MetadataList> getMetadata() {

@@ -19,9 +19,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.beans.PropertyChangeEvent;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +26,8 @@ import java.util.concurrent.Callable;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeListener;
-import org.openide.nodes.NodeMemberEvent;
-import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5MetadataList;
 
@@ -48,7 +40,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
     final private Md5MetadataList metadataList;
 
     public InstanceCountNode(int instanceCount, Md5MetadataList md5Metadata) {
-        super(Children.createLazy(new InstanceCountChildCallable(md5Metadata)), Lookups.singleton(instanceCount));
+        super(Children.create(new Md5NodeFactory(md5Metadata.getMetadataList()), true)); //Children.createLazy(new InstanceCountChildCallable(md5Metadata)), Lookups.singleton(instanceCount));
 
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
@@ -71,12 +63,6 @@ final public class InstanceCountNode extends DisplayableItemNode {
             
         }
     }
-    
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals("ADD")) {
-            setChildren(Children.create(new Md5NodeFactory(metadataList.getMetadataList()), false));
-        }
-    } 
 
     int getInstanceCount() {
         return this.instanceCount;
@@ -94,10 +80,6 @@ final public class InstanceCountNode extends DisplayableItemNode {
     @Override
     public boolean isLeafTypeNode() {
         return false;
-    }
-    
-    public void setCleanRefreshNeeded(boolean b) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public void refresh() {
@@ -166,7 +148,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * ChildFactory which builds CommonFileParentNodes from the
      * CommonFilesMetaaData models.
      */
-    static class Md5NodeFactory extends ChildFactory<Md5Metadata>  implements NodeListener   {
+    static class Md5NodeFactory extends ChildFactory<Md5Metadata> {
 
         /**
          * List of models, each of which is a parent node matching a single md5,
@@ -187,30 +169,6 @@ final public class InstanceCountNode extends DisplayableItemNode {
         protected boolean createKeys(List<Md5Metadata> list) {
             list.addAll(metadata);
             return true;
-        }
-        
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals("ADD") || evt.getPropertyName().equals("REMOVE")) {
-               this.refresh(true);
-            }
-        }
-        
-        @Override
-        public void childrenAdded(NodeMemberEvent nme) {
-        }
-        @Override
-        public void childrenRemoved(NodeMemberEvent nme) {
-        }
-
-        @Override
-        public void childrenReordered(NodeReorderEvent nre) {
-         
-        }
-
-        @Override
-        public void nodeDestroyed(NodeEvent ne) {
-         
         }
 
  

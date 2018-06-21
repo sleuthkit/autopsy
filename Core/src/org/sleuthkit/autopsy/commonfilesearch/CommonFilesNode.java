@@ -35,12 +35,8 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  */
 final public class CommonFilesNode extends DisplayableItemNode {
     
-    private final CommonFilesMetadata metadataList;
-    
     CommonFilesNode(CommonFilesMetadata metadataList) {
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
-        this.metadataList = metadataList;
-        this.refresh();
     }
 
     @NbBundle.Messages({
@@ -64,16 +60,8 @@ final public class CommonFilesNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
-
-    public void setCleanRefreshNeeded(boolean b) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public void refresh() {
-        metadataList.displayHiddenMetadata();
-    }
     
-    static class InstanceCountNodeFactory extends ChildFactory<Integer> implements PropertyChangeListener {
+    static class InstanceCountNodeFactory extends ChildFactory<Integer> {
 
         private final CommonFilesMetadata metadata;
         
@@ -92,12 +80,5 @@ final public class CommonFilesNode extends DisplayableItemNode {
             Md5MetadataList md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
             return new InstanceCountNode(instanceCount, md5Metadata);
         }      
-        
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals("ADD") || evt.getPropertyName().equals("REMOVE")) {
-               this.refresh(true);
-            }
-        }
     }
 }

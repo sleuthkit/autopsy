@@ -133,17 +133,20 @@ public class DataResultFilterNode extends FilterNode {
      * wrapped node and may filter out some of its children.
      *
      * @param node The node to wrap.
-     * @param em   The ExplorerManager for the component that is creating the
-     *             node.
+     * @param em The ExplorerManager for the component that is creating the
+     * node.
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
         this.innerNode = node;
     }
-    
-    public Node getInnerNode() {
-        return innerNode;
+
+    public void refresh() {
+        if (innerNode instanceof InstanceCountNode) {
+            final InstanceCountNode cfNode = (InstanceCountNode) innerNode;
+            cfNode.refresh();
+        }
     }
 
     /**
@@ -151,18 +154,18 @@ public class DataResultFilterNode extends FilterNode {
      * result viewers. The wrapper node defines the actions associated with the
      * wrapped node and may filter out some of its children.
      *
-     * @param node        The node to wrap.
-     * @param em          The ExplorerManager for the component that is creating
-     *                    the node.
+     * @param node The node to wrap.
+     * @param em The ExplorerManager for the component that is creating the
+     * node.
      * @param filterKnown Whether or not to filter out children that represent
-     *                    known files.
+     * known files.
      * @param filterSlack Whether or not to filter out children that represent
-     *                    virtual slack space files.
+     * virtual slack space files.
      */
     private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
-                this.innerNode = node;
+        this.innerNode = node;
     }
 
     /**
@@ -268,7 +271,7 @@ public class DataResultFilterNode extends FilterNode {
      * selected.
      *
      * @return The child node selection information, or null if no child should
-     *         be selected.
+     * be selected.
      */
     public NodeSelectionInfo getChildNodeSelectionInfo() {
         if (getOriginal() instanceof DisplayableItemNode) {
@@ -397,14 +400,14 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                                // action to go to the source file of the artifact
+                // action to go to the source file of the artifact
                 Content fileContent = ban.getLookup().lookup(AbstractFile.class);
                 if (fileContent == null) {
                     Content content = ban.getLookup().lookup(Content.class);
                     actionsList.add(new ViewContextAction("View Source Content in Directory", content));
                 } else {
                     actionsList.add(new ViewContextAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
                 }
             }
             Content c = ban.getLookup().lookup(File.class);
@@ -537,21 +540,21 @@ public class DataResultFilterNode extends FilterNode {
      */
     private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction> {
 
-        @Override 
-        public AbstractAction visit(InstanceCountNode icn){
-            return new NoAction();
-        }
-        
         @Override
-        public AbstractAction visit(Md5Node md5n){
+        public AbstractAction visit(InstanceCountNode icn) {
             return new NoAction();
         }
-        
+
         @Override
-        public AbstractAction visit(FileInstanceNode fin){
+        public AbstractAction visit(Md5Node md5n) {
             return new NoAction();
         }
-        
+
+        @Override
+        public AbstractAction visit(FileInstanceNode fin) {
+            return new NoAction();
+        }
+
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
             BlackboardArtifact artifact = ban.getArtifact();

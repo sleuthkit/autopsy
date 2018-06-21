@@ -52,9 +52,12 @@ public class MultiLayerTableFilterNode extends FilterNode implements TableFilter
         this.forceUseWrappedDisplayName = true;
         this.innerNode = node;
     }
-    
-    public Node getInnerNode() {
-        return innerNode;
+
+    void refresh() {
+        if (innerNode instanceof DataResultFilterNode) {
+            final DataResultFilterNode drNode = (DataResultFilterNode) innerNode;
+            drNode.refresh();
+        }
     }
 
     @Override

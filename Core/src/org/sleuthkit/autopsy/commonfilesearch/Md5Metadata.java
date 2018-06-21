@@ -19,9 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,12 +32,11 @@ final public class Md5Metadata {
     
     private final String md5;
     private final List<FileInstanceMetadata> fileInstances;
-    private final PropertyChangeSupport pss;
     
     Md5Metadata(String md5, List<FileInstanceMetadata> fileInstances){
         this.md5 = md5;
         this.fileInstances = fileInstances;
-        this.pss = new PropertyChangeSupport(this);
+
     }
     
     public String getMd5(){
@@ -69,14 +65,6 @@ final public class Md5Metadata {
             sources.add(data.getDataSourceName());
         }
         return String.join(", ", sources);
-    }
-
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        this.pss.addPropertyChangeListener(listener);
-    }
-    
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        this.pss.removePropertyChangeListener(listener);
     }
     
     

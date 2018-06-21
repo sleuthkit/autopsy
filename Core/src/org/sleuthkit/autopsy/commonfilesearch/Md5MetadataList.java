@@ -24,26 +24,27 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Utility and wrapper model around data required for Common Files Search results.
- * Subclass this to implement different selections of files from the case.
+ * Utility and wrapper model around data required for Common Files Search
+ * results. Subclass this to implement different selections of files from the
+ * case.
  */
 final public class Md5MetadataList {
-    
+
     private final List<Md5Metadata> metadataList;
     private final List<Md5Metadata> delayedMetadataList;
-    
+
     /**
-     * Create a metadata object containing the list of metadata which can be handed off to the node
-     * factories.
-     * 
+     * Create a metadata object containing the list of metadata which can be
+     * handed off to the node factories.
+     *
      * @param metadata list of Md5Metadata indexed by size of Md5Metadata
      */
-    Md5MetadataList(List<Md5Metadata> metadata){
+    Md5MetadataList(List<Md5Metadata> metadata) {
         this.metadataList = new ArrayList<Md5Metadata>();
         this.delayedMetadataList = metadata;
     }
-    
-    Md5MetadataList(){
+
+    Md5MetadataList() {
         this.metadataList = new ArrayList<>();
         this.delayedMetadataList = new ArrayList<>();
     }
@@ -51,11 +52,13 @@ final public class Md5MetadataList {
     public List<Md5Metadata> getMetadataList() {
         return Collections.unmodifiableList(this.metadataList);
     }
-    
+
     public void displayDelayedMetadata() {
-        this.metadataList.addAll(this.delayedMetadataList);
+        if(metadataList.isEmpty()) {
+            this.metadataList.addAll(this.delayedMetadataList);
+        }
     }
-    
+
     public void addMetadataToList(Md5Metadata metadata) {
         delayedMetadataList.add(metadata);
     }

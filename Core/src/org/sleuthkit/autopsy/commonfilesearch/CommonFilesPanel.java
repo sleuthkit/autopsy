@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.corecomponents.DelayedLoadChildNodesOnTreeExpansion;
 import org.sleuthkit.autopsy.corecomponents.MultiLayerTableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -242,12 +243,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 
-                    //TODO this could be enumerating the children!!!
+                    //TODO this could be enumerating the children!!! Instead delay enumeration by dynamically loading nodes with DelayedLoadChildNodesOnTreeExpansion()
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
                     MultiLayerTableFilterNode tableFilterWithDescendantsNode = new MultiLayerTableFilterNode(dataResultFilterNode, 3);
 
-                    DataResultViewerTable table = new DataResultViewerTable(true);
+                    DataResultViewerTable table = new DataResultViewerTable(new DelayedLoadChildNodesOnTreeExpansion());
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);

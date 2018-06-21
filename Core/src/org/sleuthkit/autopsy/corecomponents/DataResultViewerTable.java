@@ -114,64 +114,14 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
      * top component to connect the lookups of the nodes displayed in the
      * OutlineView to the actions global context. The explorer manager will be
      * discovered at runtime.
+     * @param listener
      */
-    public DataResultViewerTable(boolean addListener) {
+    public DataResultViewerTable(TreeExpansionListener listener) {
         this(null, Bundle.DataResultViewerTable_title());
-        outlineView.addTreeExpansionListener(new LazyLoadChildNodesOnTreeExpansion());
+        outlineView.addTreeExpansionListener(listener);
     }
     
-    /**
-     * A tree expansion listener that will trigger a recreation of childs through its
-     * child factory on re-expansion of a node (causes to recreate the ChildFactory for
-     * this purpose.).
-     */
-    private class LazyLoadChildNodesOnTreeExpansion implements TreeExpansionListener {
-
-        /**
-         * A flag for avoiding endless recursion inside the expansion listener that could
-         * trigger collapsing and (re-)expanding nodes again.
-         */
-        private boolean inRecursion = false;
-        
-        @Override
-        public synchronized void treeCollapsed(final TreeExpansionEvent event) {
-            Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
-            if (!inRecursion && eventNode instanceof CommonFilesNode) { // avoid endless
-                // recursion
-                final CommonFilesNode node = (CommonFilesNode) eventNode;
-                node.setCleanRefreshNeeded(true);
-            }
-        }
-        
-        @Override
-        public synchronized void treeExpanded(final TreeExpansionEvent event) {
-            Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
-            if (!inRecursion && eventNode instanceof MultiLayerTableFilterNode) {
-                final MultiLayerTableFilterNode node = (MultiLayerTableFilterNode) eventNode;
-                Node innerNode = node.getInnerNode();
-                if(innerNode instanceof DataResultFilterNode) {
-                    
-                    final DataResultFilterNode drNode = (DataResultFilterNode) innerNode;
-                    Node innerInnerNode = drNode.getInnerNode();
-                if(innerInnerNode instanceof InstanceCountNode) {
-                    final InstanceCountNode cfNode = (InstanceCountNode) innerInnerNode;
-                    cfNode.refresh();
-                }}
-                
-                if (!outlineView.isExpanded(node)) {
-                    // Seems that the refresh caused to collapse, re-expand again and
-                    // avoid recursion in this listener!
-                    inRecursion = true;
-                    try {
-                        outlineView.expandNode(node);
-                    } finally {
-                        inRecursion = false;
-                    }
-                }
-            }
-            
-        }
-    }  
+ 
 
     /**
      * Constructs a tabular result viewer that displays the children of a given
