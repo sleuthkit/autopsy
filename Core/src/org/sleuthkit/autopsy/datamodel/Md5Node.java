@@ -52,7 +52,7 @@ public class Md5Node extends DisplayableItemNode {
     private final String dataSources;
 
     public Md5Node(Md5Metadata data) {
-        super(Children.create(new FileInstanceNodeFactory(data), true)); //Children.createLazy(new Md5ChildCallable(data)), Lookups.singleton(data.getMd5()));
+        super(Children.create(new FileInstanceNodeFactory(data), true));
 
         this.commonFileCount = data.size();
         this.dataSources = String.join(", ", data.getDataSources());

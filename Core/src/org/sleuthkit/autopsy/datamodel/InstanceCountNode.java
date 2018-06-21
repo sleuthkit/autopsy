@@ -39,7 +39,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
     final private Md5MetadataList metadataList;
 
     public InstanceCountNode(int instanceCount, Md5MetadataList md5Metadata) {
-        super(Children.create(new Md5NodeFactory(md5Metadata.getMetadataList()), true)); //Children.createLazy(new InstanceCountChildCallable(md5Metadata)), Lookups.singleton(instanceCount));
+        super(Children.create(new Md5NodeFactory(md5Metadata.getMetadataList()), true));
 
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
