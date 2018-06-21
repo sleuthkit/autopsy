@@ -67,7 +67,6 @@ final public class InstanceCountNode extends DisplayableItemNode {
 
     public void refresh() {
         metadataList.displayDelayedMetadata();
-        //firePropertyChange(PROP_NAME, this, this);
         setChildren(Children.create(new Md5NodeFactory(metadataList.getMetadataList()), false));
     }
 

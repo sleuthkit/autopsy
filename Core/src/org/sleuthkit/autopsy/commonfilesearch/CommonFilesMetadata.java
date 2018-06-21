@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
