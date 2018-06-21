@@ -14,6 +14,6 @@ To start, go to Tools->Plugins and select the "Installed" tab, then check the bo
 
 - Auto Ingest
 - \ref object_detection_page
-- Volatility Data Source Processor
+- \ref volatility_dsp_page
 
 */
