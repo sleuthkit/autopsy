@@ -40,7 +40,7 @@ final public class Md5MetadataList {
      * @param metadata list of Md5Metadata indexed by size of Md5Metadata
      */
     Md5MetadataList(List<Md5Metadata> metadata) {
-        this.metadataList = new ArrayList<Md5Metadata>();
+        this.metadataList = new ArrayList<>();
         this.delayedMetadataList = metadata;
     }
 
@@ -54,7 +54,7 @@ final public class Md5MetadataList {
     }
 
     public void displayDelayedMetadata() {
-        if(metadataList.isEmpty()) {
+        if (metadataList.isEmpty()) {
             this.metadataList.addAll(this.delayedMetadataList);
         }
     }

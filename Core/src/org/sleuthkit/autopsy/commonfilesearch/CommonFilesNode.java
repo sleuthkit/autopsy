@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import java.util.List;
 import org.openide.nodes.ChildFactory;
@@ -34,7 +32,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  * results in the top right pane. Calls <code>Md5NodeFactory</code>.
  */
 final public class CommonFilesNode extends DisplayableItemNode {
-    
+
     CommonFilesNode(CommonFilesMetadata metadataList) {
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
@@ -60,25 +58,25 @@ final public class CommonFilesNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
-    
+
     static class InstanceCountNodeFactory extends ChildFactory<Integer> {
 
         private final CommonFilesMetadata metadata;
-        
-        InstanceCountNodeFactory(CommonFilesMetadata metadata){
+
+        InstanceCountNodeFactory(CommonFilesMetadata metadata) {
             this.metadata = metadata;
         }
-        
+
         @Override
         protected boolean createKeys(List<Integer> list) {
             list.addAll(this.metadata.getMetadata().keySet());
             return true;
         }
-        
+
         @Override
-        protected Node createNodeForKey(Integer instanceCount){
-            Md5MetadataList md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
+        protected Node createNodeForKey(Integer instanceCount) {
+            Md5MetadataList md5Metadata = this.metadata.getMetadataForMd5(instanceCount);
             return new InstanceCountNode(instanceCount, md5Metadata);
-        }      
+        }
     }
 }

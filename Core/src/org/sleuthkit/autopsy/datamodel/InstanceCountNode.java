@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -44,24 +43,8 @@ final public class InstanceCountNode extends DisplayableItemNode {
 
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
-        
+
         this.setDisplayName(Integer.toString(instanceCount));
-    }
-    
-            /**
-     * Callable wrapper to further delay lazy ChildFactory creation
-     * and createNodes() call once lazy loading is functional.
-     */
-    private static class InstanceCountChildCallable implements Callable<Children> {
-        private final Md5MetadataList key;
-        private InstanceCountChildCallable(Md5MetadataList key) {
-            this.key = key;
-        }
-        @Override
-        public Children call() throws Exception {
-            return Children.create(new Md5NodeFactory(key.getMetadataList()), true);
-            
-        }
     }
 
     int getInstanceCount() {
@@ -124,22 +107,22 @@ final public class InstanceCountNode extends DisplayableItemNode {
     static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
         map.put(InstanceCountNodePropertyType.Match.toString(), node.getInstanceCount());
     }
-    
+
     @NbBundle.Messages({
         "InstanceCountNodeProeprtyType.matchCountColLbl1=Match"
     })
-    public enum InstanceCountNodePropertyType{
-        
+    public enum InstanceCountNodePropertyType {
+
         Match(Bundle.InstanceCountNodeProeprtyType_matchCountColLbl1());
-        
+
         final private String displayString;
-        
-        private InstanceCountNodePropertyType(String displayName){
+
+        private InstanceCountNodePropertyType(String displayName) {
             this.displayString = displayName;
         }
-        
+
         @Override
-        public String toString(){
+        public String toString() {
             return this.displayString;
         }
     }
@@ -171,6 +154,5 @@ final public class InstanceCountNode extends DisplayableItemNode {
             return true;
         }
 
- 
     }
 }
