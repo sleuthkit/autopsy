@@ -46,7 +46,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Underlying Sleuth Kit Content object
      */
-    T content;
+    protected T content;
     private static final Logger logger = Logger.getLogger(AbstractContentNode.class.getName());
 
     /**

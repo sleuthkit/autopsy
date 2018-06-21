@@ -17,8 +17,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.commonfilesearch;
 
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +31,10 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -102,7 +104,7 @@ public class Md5Node extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
+        final String NO_DESCR = "";
         for (Md5Node.CommonFileParentPropertyType propType : Md5Node.CommonFileParentPropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));

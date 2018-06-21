@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,7 +30,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
  * Node used to indicate the number of matches found with the MD5 children 
@@ -102,7 +104,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = org.sleuthkit.autopsy.datamodel.Bundle.AbstractFsContentNode_noDesc_text();
+        final String NO_DESCR = "";
         for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));

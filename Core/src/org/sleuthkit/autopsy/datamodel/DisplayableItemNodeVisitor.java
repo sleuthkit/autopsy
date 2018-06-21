@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonfilesearch.Md5Node;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
