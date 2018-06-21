@@ -27,9 +27,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This is the form / panel to show the File System Details.
- *
- * @author jantonius
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class FileSystemDetailsPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(FileSystemDetailsPanel.class.getName());
     private static final long serialVersionUID = 1L;

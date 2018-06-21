@@ -18,25 +18,24 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
  * Wrapper node for <code>Md5Node</code> used to display common files search
- * results in the top right pane. Calls <code>Md5NodeFactory</code>.
+ * results in the top right pane. Calls <code>InstanceCountNodeFactory</code>.
  */
 final public class CommonFilesNode extends DisplayableItemNode {
     
 
     CommonFilesNode(CommonFilesMetadata metadataList) {
-        super(Children.create(new Md5NodeFactory(metadataList), true), Lookups.singleton(CommonFilesNode.class));
+        super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
     @NbBundle.Messages({
@@ -60,27 +59,23 @@ final public class CommonFilesNode extends DisplayableItemNode {
     public String getItemType() {
         return getClass().getName();
     }
-
+    
     /**
-     * ChildFactory which builds CommonFileParentNodes from the
-     * CommonFilesMetaaData models.
+     * Used to generate <code>InstanceCountNode</code>s.
      */
-    static class Md5NodeFactory extends ChildFactory<String> {
+    static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
+        private final CommonFilesMetadata metadata;
+        
         /**
-         * List of models, each of which is a parent node matching a single md5,
-         * containing children FileNodes.
+         * Build a factory which converts a <code>CommonFilesMetadata</code> 
+         * object into <code>DisplayableItemNode</code>s.
+         * @param metadata 
          */
-        private CommonFilesMetadata metadata;
-
-        Md5NodeFactory(CommonFilesMetadata metadata) {
+        InstanceCountNodeFactory(CommonFilesMetadata metadata){
             this.metadata = metadata;
         }
-
-        protected void removeNotify() {
-            metadata = null;
-        }
-
+        
         @Override
         protected Node createNodeForKey(String md5){
             Md5Metadata metadataForMd5 = this.metadata.getMetadataForMd5(md5);
@@ -92,5 +87,11 @@ final public class CommonFilesNode extends DisplayableItemNode {
             list.addAll(this.metadata.getMetadata().keySet());
             return true;
         }
+        
+        @Override
+        protected Node createNodeForKey(Integer instanceCount){
+            List<Md5Metadata> md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
+            return new InstanceCountNode(instanceCount, md5Metadata);
+        }        
     }
 }

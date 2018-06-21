@@ -23,8 +23,9 @@ import javax.swing.JFileChooser;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- *
+ * Configuration panel for STIX report generation.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class STIXReportModuleConfigPanel extends javax.swing.JPanel {
 
     String stixFile = null;

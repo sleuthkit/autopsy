@@ -51,12 +51,15 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.FileInstanceNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
+import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
@@ -526,6 +529,21 @@ public class DataResultFilterNode extends FilterNode {
      */
     private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction> {
 
+        @Override 
+        public AbstractAction visit(InstanceCountNode icn){
+            return null;
+        }
+        
+        @Override
+        public AbstractAction visit(Md5Node md5n){
+            return null;
+        }
+        
+        @Override
+        public AbstractAction visit(FileInstanceNode fin){
+            return null;
+        }
+        
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
             BlackboardArtifact artifact = ban.getArtifact();

@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 //@TopComponent.Description(preferredID = "DataContentTopComponent")
 //@TopComponent.Registration(mode = "output", openAtStartup = true)
 //@TopComponent.OpenActionRegistration(displayName = "#CTL_DataContentAction", preferredID = "DataContentTopComponent")
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DataContentTopComponent extends TopComponent implements DataContent, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataContentTopComponent.class.getName());

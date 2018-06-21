@@ -28,6 +28,8 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 public interface AutopsyItemVisitor<T> {
 
     T visit(DataSources i);
+    
+    T visit(DataSourceGrouping datasourceGrouping);
 
     T visit(Views v);
 
@@ -173,6 +175,11 @@ public interface AutopsyItemVisitor<T> {
             return defaultVisit(v);
         }
 
+        @Override
+        public T visit(DataSourceGrouping datasourceGrouping) {
+            return defaultVisit(datasourceGrouping);
+        }
+        
         @Override
         public T visit(Results r) {
             return defaultVisit(r);

@@ -36,13 +36,21 @@ Under the Keyword list is the option to send ingest inbox messages for each hit.
 \image html keyword-search-inbox.PNG
 
 ## String Extraction tab {#stringExtractionTab}
-The string extraction setting defines how strings are extracted from files from which text cannot be extracted because their file formats are not supported. This is the case with arbitrary binary files (such as the page file) and chunks of unallocated space that represent deleted files.
+The string extraction setting defines how strings are extracted from files from which text cannot be extracted normally because their file formats are not supported. This is the case with arbitrary binary files (such as the page file) and chunks of unallocated space that represent deleted files.
 When we extract strings from binary files we need to interpret sequences of bytes as text differently, depending on the possible text encoding and script/language used. In many cases we don't know in advance what the specific encoding/language the text is encoded in. However, it helps if the investigator is looking for a specific language, because by selecting less languages the indexing performance will be improved and the number of false positives will be reduced.
 
 The default setting is to search for English strings only, encoded as either UTF8 or UTF16. This setting has the best performance (shortest ingest time).
 The user can also use the String Viewer first and try different script/language settings, and see which settings give satisfactory results for the type of text relevant to the investigation. Then the same setting that works for the investigation can be applied to the keyword search ingest.
 
 \image html keyword-search-configuration-dialog-string-extraction.PNG
+
+There is also a setting to enable Optical Character Recognition (OCR). If enabled, text may be extracted from supported image types. Enabling this feature will make the keyword search module take longer to run, and the results are not perfect. The following shows a sample image containing text:
+
+\image html keyword-search-ocr-image.png
+
+The "Indexed Text" tab shows the results when running the keyword search module with the OCR option enabled. If we were to use Keyword Search to look for the word "forensics", this file would be a match.
+
+\image html keyword-search-ocr-indexed-text.png
 
 ## General Settings tab {#generalSettingsTab}
 

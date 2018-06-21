@@ -39,13 +39,26 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
     private final String caseName;
     private final String dataSource;
 
-    public SleuthkitCaseFileInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
+    /**
+     * Create a node which can be used in a multilayer tree table and is based
+     * on an <code>AbstractFile</code>.
+     * 
+     * @param fsContent
+     * @param dataSource 
+     */
+    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.content = fsContent;
         this.caseName = caseName;
         this.dataSource = dataSource;
     }
 
+    @Override
+    public boolean isLeafTypeNode(){
+        //Not used atm - could maybe be leveraged for better use in Children objects
+        return true;
+    }
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);

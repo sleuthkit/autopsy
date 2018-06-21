@@ -61,6 +61,8 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
+    T visit(DataSourceGroupingNode dataSourceGroupingNode);
+    
     T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
 
     T visit(DeletedContentNode dcn);
@@ -119,6 +121,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(CommonFileChildNodeLoading cfcnl);
     
     T visit(CentralRepositoryFileInstanceNode crfin);
+    
+    T visit(InstanceCountNode icn);
 
     /*
      * Tags
@@ -201,6 +205,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(CommonFilesNode cfn) {
             return defaultVisit(cfn);
+        }
+        
+        @Override
+        public T visit(InstanceCountNode icn){
+            return defaultVisit(icn);
         }
 
         @Override
@@ -343,6 +352,11 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(vn);
         }
 
+        @Override
+        public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
+            return defaultVisit(dataSourceGroupingNode);
+        }
+        
         @Override
         public T visit(ResultsNode rn) {
             return defaultVisit(rn);

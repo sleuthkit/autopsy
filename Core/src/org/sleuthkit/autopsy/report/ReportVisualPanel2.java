@@ -49,11 +49,15 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Display data on which to allow reports module to report.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ReportVisualPanel2 extends JPanel {
 
-    private ReportWizardPanel2 wizPanel;
-    private Map<String, Boolean> tagStates = new LinkedHashMap<>();
-    private List<String> tags = new ArrayList<>();
+    private final ReportWizardPanel2 wizPanel;
+    private final Map<String, Boolean> tagStates = new LinkedHashMap<>();
+    private final List<String> tags = new ArrayList<>();
     ArtifactSelectionDialog dialog = new ArtifactSelectionDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
     private Map<BlackboardArtifact.Type, Boolean> artifactStates = new HashMap<>();
     private List<BlackboardArtifact.Type> artifacts = new ArrayList<>();
@@ -367,11 +371,11 @@ final class ReportVisualPanel2 extends JPanel {
         public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
             if (value != null) {
                 setEnabled(list.isEnabled());
-                setSelected(tagStates.get(value.toString()));
+                setSelected(tagStates.get(value));
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(value.toString());
+                setText(value);
                 return this;
             }
             return new JLabel();

@@ -26,11 +26,17 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class Results implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
+    private final long datasourceObjId;
 
     public Results(SleuthkitCase skCase) {
-        this.skCase = skCase;
+        this(skCase, 0);
     }
 
+    public Results(SleuthkitCase skCase, long dsObjId) {
+        this.skCase = skCase;
+        this.datasourceObjId = dsObjId;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -38,5 +44,9 @@ public class Results implements AutopsyVisitableItem {
 
     public SleuthkitCase getSleuthkitCase() {
         return skCase;
+    }
+    
+    long filteringDataSourceObjId() {
+        return datasourceObjId;
     }
 }

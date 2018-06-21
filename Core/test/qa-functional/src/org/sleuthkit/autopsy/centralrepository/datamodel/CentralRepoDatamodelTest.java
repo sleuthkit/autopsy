@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.stream.Collectors;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -44,13 +46,15 @@ import static junit.framework.Assert.assertTrue;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
- *
+ * Functional tests for the Central Repository data model.
  */
 public class CentralRepoDatamodelTest extends TestCase {
 
     private static final String PROPERTIES_FILE = "CentralRepository";
     private static final String CR_DB_NAME = "testcentralrepo.db";
     private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
+    private static final int DEFAULT_BULK_THRESHOLD = 1000; // hard coded from EamDb
+    
     SqliteEamDbSettings dbSettingsSqlite;
 
     private CorrelationCase case1;
@@ -61,6 +65,7 @@ public class CentralRepoDatamodelTest extends TestCase {
     private EamOrganization org1;
     private EamOrganization org2;
     CorrelationAttribute.Type fileType;
+    CorrelationAttribute.Type usbDeviceType;
 
     private Map<String, String> propertiesMap = null;
 
@@ -110,7 +115,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDbUtil.setUseCentralRepo(true);
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-        } catch (Exception ex) {
+        } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -128,30 +133,32 @@ public class CentralRepoDatamodelTest extends TestCase {
             case2 = EamDb.getInstance().newCase(case2);
             assertTrue("Failed to create test object case2", case2 != null);
 
-            dataSource1fromCase1 = new CorrelationDataSource(case1.getID(), "dataSource1_deviceID", "dataSource1");
+            dataSource1fromCase1 = new CorrelationDataSource(case1, "dataSource1_deviceID", "dataSource1");
             EamDb.getInstance().newDataSource(dataSource1fromCase1);
             dataSource1fromCase1 = EamDb.getInstance().getDataSource(case1, dataSource1fromCase1.getDeviceID());
             assertTrue("Failed to create test object dataSource1fromCase1", dataSource1fromCase1 != null);
 
-            dataSource2fromCase1 = new CorrelationDataSource(case1.getID(), "dataSource2_deviceID", "dataSource2");
+            dataSource2fromCase1 = new CorrelationDataSource(case1, "dataSource2_deviceID", "dataSource2");
             EamDb.getInstance().newDataSource(dataSource2fromCase1);
             dataSource2fromCase1 = EamDb.getInstance().getDataSource(case1, dataSource2fromCase1.getDeviceID());
             assertTrue("Failed to create test object dataSource2fromCase1", dataSource2fromCase1 != null);
 
-            dataSource1fromCase2 = new CorrelationDataSource(case2.getID(), "dataSource3_deviceID", "dataSource3");
+            dataSource1fromCase2 = new CorrelationDataSource(case2, "dataSource3_deviceID", "dataSource3");
             EamDb.getInstance().newDataSource(dataSource1fromCase2);
             dataSource1fromCase2 = EamDb.getInstance().getDataSource(case2, dataSource1fromCase2.getDeviceID());
             assertTrue("Failed to create test object dataSource1fromCase2", dataSource1fromCase2 != null);
 
             org1 = new EamOrganization("org1");
-            org1.setOrgID((int) EamDb.getInstance().newOrganization(org1));
+            org1 = EamDb.getInstance().newOrganization(org1);
 
             org2 = new EamOrganization("org2");
-            org2.setOrgID((int) EamDb.getInstance().newOrganization(org2));
+            org2 = EamDb.getInstance().newOrganization(org2);
 
             // Store the file type object for later use
             fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             assertTrue("getCorrelationTypeById(FILES_TYPE_ID) returned null", fileType != null);
+            usbDeviceType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.USBID_TYPE_ID);
+            assertTrue("getCorrelationTypeById(USBID_TYPE_ID) returned null", usbDeviceType != null);
 
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -467,7 +474,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // Create the first list, which will have (bulkThreshold / 2) entries
             List<CorrelationAttribute> list1 = new ArrayList<>();
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() / 2; i++) {
+            for (int i = 0; i < DEFAULT_BULK_THRESHOLD / 2; i++) {
                 String value = "bulkInsertValue1_" + String.valueOf(i);
                 String path = "C:\\bulkInsertPath1\\file" + String.valueOf(i);
 
@@ -487,7 +494,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // Make a second list with length equal to bulkThreshold
             List<CorrelationAttribute> list2 = new ArrayList<>();
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold(); i++) {
+            for (int i = 0; i < DEFAULT_BULK_THRESHOLD; i++) {
                 String value = "bulkInsertValue2_" + String.valueOf(i);
                 String path = "C:\\bulkInsertPath2\\file" + String.valueOf(i);
 
@@ -503,7 +510,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // There should now be bulkThreshold artifacts in the database
             long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
-            assertTrue("Artifact count " + count + " does not match bulkThreshold " + dbSettingsSqlite.getBulkThreshold(), count == dbSettingsSqlite.getBulkThreshold());
+            assertTrue("Artifact count " + count + " does not match bulkThreshold " + DEFAULT_BULK_THRESHOLD, count == DEFAULT_BULK_THRESHOLD);
 
             // Now call bulkInsertArtifacts() to insert the rest of queue
             EamDb.getInstance().bulkInsertArtifacts();
@@ -629,6 +636,9 @@ public class CentralRepoDatamodelTest extends TestCase {
         String inDataSource1twicePath2 = "C:\\files\\path2.txt";
         String onlyInDataSource3Hash = "2af54305f183778d87de0c70c591fae4";
         String onlyInDataSource3Path = "C:\\files\\path3.txt";
+        String callbackTestFilePath1 = "C:\\files\\processinstancecallback\\path1.txt";
+        String callbackTestFilePath2 = "C:\\files\\processinstancecallback\\path2.txt";
+        String callbackTestFileHash = "fb9dd8f04dacd3e82f4917f1a002223c";
 
         // These will all go in dataSource1fromCase1
         String emailValue = "test@gmail.com";
@@ -781,7 +791,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test adding instance with invalid data source ID
         try {
-            CorrelationDataSource badDS = new CorrelationDataSource(case1.getID(), "badDSUuid", "badDSName");
+            CorrelationDataSource badDS = new CorrelationDataSource(case1, "badDSUuid", "badDSName");
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, badDS, "badPath");
             failAttr.addInstance(inst);
             EamDb.getInstance().addArtifact(failAttr);
@@ -1050,6 +1060,25 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             // This is the expected behavior
         }
+        
+        // Test updating a correlation attribute instance comment
+        try {
+            CorrelationAttribute correlationAttribute = EamDb.getInstance().getCorrelationAttribute(
+                    usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
+            assertNotNull("getCorrelationAttribute returned null", correlationAttribute);
+            
+            correlationAttribute.getInstances().get(0).setComment("new comment");
+            EamDb.getInstance().updateAttributeInstanceComment(correlationAttribute);
+            
+            // Get a fresh copy to verify the update.
+            correlationAttribute = EamDb.getInstance().getCorrelationAttribute(
+                    usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
+            assertEquals("updateAttributeInstanceComment did not set comment to \"new comment\".",
+                    "new comment", correlationAttribute.getInstances().get(0).getComment());
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+        }
 
         // Test getting count for dataSource1fromCase1 (includes all types)
         try {
@@ -1120,6 +1149,34 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
+        }
+        
+        // Test running processinstance which queries all rows from instances table
+        try {
+            // Add two instances to the central repository and use the callback query to verify we can see them
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, callbackTestFileHash);
+            CorrelationAttributeInstance inst1 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, callbackTestFilePath1);
+            CorrelationAttributeInstance inst2 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, callbackTestFilePath2);
+            attr.addInstance(inst1);
+            attr.addInstance(inst2);
+            EamDb DbManager = EamDb.getInstance();
+            DbManager.addArtifact(attr);
+            AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
+            DbManager.processInstanceTable(fileType, instancetableCallback);
+            int count1 = instancetableCallback.getCounter();
+            int count2 = instancetableCallback.getCounterNamingConvention();
+            assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
+            assertTrue("Process Instance count with filepath without naming convention: " + count1 + "-expected greater than 0", count1 > 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        try {
+            //test null inputs
+            EamDb.getInstance().processInstanceTable(null, null);
+            Assert.fail("processinstance method failed to throw exception for null type value");
+        } catch (EamDbException ex) {
+            // This is the expected 
         }
     }
 
@@ -1338,7 +1395,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding a basic organization
         try {
             orgA = new EamOrganization(orgAname);
-            orgA.setOrgID((int) EamDb.getInstance().newOrganization(orgA));
+            orgA = EamDb.getInstance().newOrganization(orgA);
             assertTrue("Organization ID is still -1 after adding to db", orgA.getOrgID() != -1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -1349,7 +1406,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding an organization with additional fields
         try {
             orgB = new EamOrganization(orgBname, orgBpocName, orgBpocEmail, orgBpocPhone);
-            orgB.setOrgID((int) EamDb.getInstance().newOrganization(orgB));
+            orgB = EamDb.getInstance().newOrganization(orgB);
             assertTrue("Organization ID is still -1 after adding to db", orgB.getOrgID() != -1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -1441,14 +1498,13 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Test updating invalid org
-        // Shouldn't do anything
+        
         try {
             EamOrganization temp = new EamOrganization("invalidOrg");
-            temp.setOrgID(3434);
             EamDb.getInstance().updateOrganization(temp);
+            Assert.fail("updateOrganization worked for invalid ID");
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            // this is the expected behavior  
         }
 
         // Test updating null org
@@ -1472,7 +1528,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test deleting existing org that isn't in use
         try {
             EamOrganization orgToDelete = new EamOrganization("deleteThis");
-            orgToDelete.setOrgID((int) EamDb.getInstance().newOrganization(orgToDelete));
+            orgToDelete = EamDb.getInstance().newOrganization(orgToDelete);
             int orgCount = EamDb.getInstance().getOrganizations().size();
 
             EamDb.getInstance().deleteOrganization(orgToDelete);
@@ -1486,7 +1542,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             // Make a new org
             EamOrganization inUseOrg = new EamOrganization("inUseOrg");
-            inUseOrg.setOrgID((int) EamDb.getInstance().newOrganization(inUseOrg));
+            inUseOrg = EamDb.getInstance().newOrganization(inUseOrg);
 
             // Make a reference set that uses it
             EamGlobalSet tempSet = new EamGlobalSet(inUseOrg.getOrgID(), "inUseOrgTest", "1.0", TskData.FileKnown.BAD, false, fileType);
@@ -1500,14 +1556,12 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Test deleting non-existent org
-        // Should do nothing
         try {
             EamOrganization temp = new EamOrganization("temp");
-            temp.setOrgID(9876);
             EamDb.getInstance().deleteOrganization(temp);
+            Assert.fail("deleteOrganization failed to throw exception for non-existent organization");
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            // This is the expected behavior
         }
 
         // Test deleting null org
@@ -1665,7 +1719,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Create a list of global file instances. Make enough that the bulk threshold should be hit once.
             Set<EamGlobalFileInstance> instances = new HashSet<>();
             String bulkTestHash = "bulktesthash_";
-            for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
+            for (int i = 0; i < DEFAULT_BULK_THRESHOLD * 1.5; i++) {
                 String hash = bulkTestHash + String.valueOf(i);
                 instances.add(new EamGlobalFileInstance(notableSet2id, hash, TskData.FileKnown.BAD, null));
             }
@@ -1674,7 +1728,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().bulkInsertReferenceTypeEntries(instances, fileType);
 
             // There's no way to get a count of the number of entries in the database, so just do a spot check
-            if (dbSettingsSqlite.getBulkThreshold() > 10) {
+            if (DEFAULT_BULK_THRESHOLD > 10) {
                 String hash = bulkTestHash + "10";
                 assertTrue("Sample bulk insert instance not found", EamDb.getInstance().isFileHashInReferenceSet(hash, notableSet2id));
             }
@@ -2196,7 +2250,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with valid case, name, and ID
         try {
-            dataSourceA = new CorrelationDataSource(case2.getID(), dataSourceAid, dataSourceAname);
+            dataSourceA = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname);
             EamDb.getInstance().newDataSource(dataSourceA);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2206,7 +2260,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with the same case, name, and ID
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), dataSourceAid, dataSourceAname);
+            CorrelationDataSource temp = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname);
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from duplicate data source");
         } catch (EamDbException ex) {
@@ -2215,7 +2269,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with the same name and ID but different case
         try {
-            dataSourceB = new CorrelationDataSource(case1.getID(), dataSourceAid, dataSourceAname);
+            dataSourceB = new CorrelationDataSource(case1, dataSourceAid, dataSourceAname);
             EamDb.getInstance().newDataSource(dataSourceB);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2225,7 +2279,8 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with an invalid case ID
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(5000, "tempID", "tempName");
+            CorrelationCase correlationCase = new CorrelationCase("1", "test");
+            CorrelationDataSource temp = new CorrelationDataSource(correlationCase, "tempID", "tempName");
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from invalid case ID");
         } catch (EamDbException ex) {
@@ -2234,7 +2289,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with null device ID
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), null, "tempName");
+            CorrelationDataSource temp = new CorrelationDataSource(case2, null, "tempName");
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from null device ID");
         } catch (EamDbException ex) {
@@ -2243,7 +2298,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test creating a data source with null name
         try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2.getID(), "tempID", null);
+            CorrelationDataSource temp = new CorrelationDataSource(case2, "tempID", null);
             EamDb.getInstance().newDataSource(temp);
             Assert.fail("newDataSource did not throw exception from null name");
         } catch (EamDbException ex) {
@@ -2522,7 +2577,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 List<CorrelationCase> cases = new ArrayList<>();
                 String bulkTestUuid = "bulkTestUUID_";
                 String bulkTestName = "bulkTestName_";
-                for (int i = 0; i < dbSettingsSqlite.getBulkThreshold() * 1.5; i++) {
+                for (int i = 0; i < DEFAULT_BULK_THRESHOLD * 1.5; i++) {
                     String name = bulkTestUuid + String.valueOf(i);
                     String uuid = bulkTestName + String.valueOf(i);
                     cases.add(new CorrelationCase(uuid, name));
@@ -2554,7 +2609,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 // This seems to help in allowing the Autopsy case to be deleted
                 try {
                     Thread.sleep(2000);
-                } catch (Exception ex) {
+                } catch (InterruptedException ex) {
 
                 }
             } catch (CaseActionException ex) {
@@ -2671,6 +2726,36 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             // This is the expected behavior
         }
+    }
+
+    public class AttributeInstanceTableCallback implements InstanceTableCallback {
+
+        int counterNamingConvention = 0;
+        int counter = 0;
+        
+        @Override
+        public void process(ResultSet resultSet) {
+            try {
+                while(resultSet.next()){
+                    if(InstanceTableCallback.getFilePath(resultSet).contains("processinstancecallback")){
+                        counterNamingConvention++;
+                    }else{
+                        counter++;
+                    }
+                }
+            } catch (SQLException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+
+        public int getCounter() {
+            return counter;
+        }
+        
+        public int getCounterNamingConvention(){
+            return counterNamingConvention;
+        }
+
     }
 
 }

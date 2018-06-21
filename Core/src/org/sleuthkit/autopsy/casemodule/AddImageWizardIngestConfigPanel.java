@@ -40,10 +40,11 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
  * TODO: review this for dead code. think about moving logic of adding image to
  * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
 
     @Messages("AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules")
-    private IngestJobSettingsPanel ingestJobSettingsPanel;
+    private final IngestJobSettingsPanel ingestJobSettingsPanel;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().

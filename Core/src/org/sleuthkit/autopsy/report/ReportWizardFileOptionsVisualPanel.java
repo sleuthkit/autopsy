@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,15 +35,14 @@ import org.openide.util.NbBundle;
 
 /**
  * Visual component of the File Report Configuration panel of the Report Wizard.
- *
- * @author jwallace
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ReportWizardFileOptionsVisualPanel extends javax.swing.JPanel {
 
     private List<FileReportDataTypes> options;
-    private Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
+    private final Map<FileReportDataTypes, Boolean> optionStates = new EnumMap<>(FileReportDataTypes.class);
     private ListModel<FileReportDataTypes> model;
-    private ReportWizardFileOptionsPanel wizPanel;
+    private final ReportWizardFileOptionsPanel wizPanel;
 
     public ReportWizardFileOptionsVisualPanel(ReportWizardFileOptionsPanel wizPanel) {
         this.wizPanel = wizPanel;

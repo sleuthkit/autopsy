@@ -16,24 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * FileSearchDialog.java
- *
- * Created on Mar 5, 2012, 1:57:33 PM
- */
 package org.sleuthkit.autopsy.filesearch;
-
-import org.openide.util.NbBundle;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
 /**
  * File search dialog
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class FileSearchDialog extends javax.swing.JDialog {
 
     /**

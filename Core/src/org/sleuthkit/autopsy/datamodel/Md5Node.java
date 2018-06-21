@@ -30,7 +30,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
@@ -57,13 +56,19 @@ public class Md5Node extends DisplayableItemNode {
     private final String cases;
     private final String dataSources;
 
+    /**
+     * Create a Match node whose children will all have this object in common.
+     * @param data the common feature, and the children
+     */
     public Md5Node(Md5Metadata data) {
-        super(Children.createLazy(new Md5ChildCallable(data)), Lookups.singleton(data.getMd5()));
+        super(Children.create(
+                new FileInstanceNodeFactory(data), true));
+        
         this.commonFileCount = data.size();
         this.cases = data.getCases();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
-
+        
         this.setDisplayName(this.md5Hash);
     }
     
@@ -87,6 +92,10 @@ public class Md5Node extends DisplayableItemNode {
         }
     }
 
+    /**
+     * How many files are in common?  This will be the number of children.
+     * @return int
+     */
     int getCommonFileCount() {
         return this.commonFileCount;
     }
@@ -95,10 +104,18 @@ public class Md5Node extends DisplayableItemNode {
         return this.cases;
     }
 
+    /**
+     * Datasources where these matches occur.
+     * @return string delimited list of sources
+     */
     String getDataSources() {
         return this.dataSources;
     }
 
+    /**
+     * MD5 which is common to these matches
+     * @return string md5 hash
+     */
     public String getMd5() {
         return this.md5Hash;
     }
@@ -132,8 +149,7 @@ public class Md5Node extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
-        map.put(CommonFileParentPropertyType.File.toString(), node.getMd5());
-        map.put(CommonFileParentPropertyType.InstanceCount.toString(), node.getCommonFileCount());
+        //map.put(CommonFileParentPropertyType.Case.toString(), "");
         map.put(CommonFileParentPropertyType.Case.toString(), node.getCases());
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
     }
@@ -169,8 +185,17 @@ public class Md5Node extends DisplayableItemNode {
         }
 
         @Override
-        protected Node createNodeForKey(FileInstanceNodeGenerator file) {
-            return file.generateNode();
+        protected Node createNodeForKey(FileInstanceMetadata file) {
+            try {
+                Case currentCase = Case.getCurrentCaseThrows();
+                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+                AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
+                
+                return new FileInstanceNode(abstractFile, file.getDataSourceName());
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
+            }
+            return null;
         }
 
         @Override
@@ -187,8 +212,6 @@ public class Md5Node extends DisplayableItemNode {
         "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {
 
-        File(Bundle.CommonFileParentPropertyType_fileColLbl()),
-        InstanceCount(Bundle.CommonFileParentPropertyType_instanceColLbl()),
         Case(Bundle.CommonFileParentPropertyType_caseColLbl()),
         DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
 
@@ -200,7 +223,7 @@ public class Md5Node extends DisplayableItemNode {
 
         @Override
         public String toString() {
-            return displayString;
+            return this.displayString;
         }
     }
 }

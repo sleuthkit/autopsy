@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
  * AbstractSqlEamDb that read or write to the database should be overriden here
  * and use appropriate locking.
  */
-public class SqliteEamDb extends AbstractSqlEamDb {
+final class SqliteEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDb.class.getName());
 
@@ -126,7 +126,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
                 String instancesTemplate = "DELETE FROM %s_instances";
                 String referencesTemplate = "DELETE FROM global_files";
-                for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
+                for (CorrelationAttribute.Type type : defaultCorrelationTypes) {
                     dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
                     // FUTURE: support other reference types
                     if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
@@ -629,6 +629,24 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
+     *
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
+     * @param aType EamArtifact.Type to search for
+     * @return List with 0 or more matching eamArtifact instances.
+     * @throws EamDbException
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException {
+        try{
+            acquireSharedLock();
+            return super.getArtifactInstancesKnownBad(aType);
+        } finally {
+            releaseSharedLock();
+        }       
+    }
+    
+    /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
      * @param aType EamArtifact.Type to search for
@@ -703,10 +721,24 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
-     * Check whether a reference set with the given name/version is in the
-     * central repo. Used to check for name collisions when creating reference
-     * sets.
+     * Process the Artifact instance in the EamDb
      *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        try {
+            acquireSharedLock();
+            super.processInstanceTable(type, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    /**
+     * Check whether a reference set with the given name/version is in the central repo.
+     * Used to check for name collisions when creating reference sets.
      * @param referenceSetName
      * @param version
      * @return true if a matching set is found
@@ -750,7 +782,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public long newOrganization(EamOrganization eamOrg) throws EamDbException {
+    public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {
         try {
             acquireExclusiveLock();
             return super.newOrganization(eamOrg);

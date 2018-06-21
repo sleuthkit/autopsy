@@ -59,10 +59,11 @@ import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.opencv.core.Core;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
@@ -96,7 +97,7 @@ public class ImageUtils {
     private static final List<String> SUPPORTED_IMAGE_EXTENSIONS = new ArrayList<>();
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
 
-    private static final boolean OPEN_CV_LOADED;
+    private static final boolean FFMPEG_LOADED;
 
     /**
      * Map from tsk object id to Java File object. Used to get the same File for
@@ -105,6 +106,8 @@ public class ImageUtils {
      *
      * NOTE: Must be cleared when the case is changed.
      */
+    @Messages({"ImageUtils.ffmpegLoadedError.title=OpenCV FFMpeg",
+               "ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details"})
     private static final ConcurrentHashMap<Long, File> cacheFileMap = new ConcurrentHashMap<>();
 
     static {
@@ -117,25 +120,23 @@ public class ImageUtils {
             tempImage = null;
         }
         DEFAULT_THUMBNAIL = tempImage;
-
-        //load opencv libraries
-        boolean openCVLoadedTemp;
-        try {
-            System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-            if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
-                System.loadLibrary("opencv_ffmpeg248_64"); //NON-NLS
-            } else {
-                System.loadLibrary("opencv_ffmpeg248"); //NON-NLS
+        boolean tempFfmpegLoaded = false;
+        if (OpenCvLoader.isOpenCvLoaded()) {
+            try {
+                if (System.getProperty("os.arch").equals("amd64") || System.getProperty("os.arch").equals("x86_64")) { //NON-NLS
+                    System.loadLibrary("opencv_ffmpeg2413_64"); //NON-NLS
+                } else {
+                    System.loadLibrary("opencv_ffmpeg2413"); //NON-NLS
+                }
+                tempFfmpegLoaded = true;
+            } catch (UnsatisfiedLinkError e) {
+                tempFfmpegLoaded = false;
+                LOGGER.log(Level.SEVERE, Bundle.ImageUtils_ffmpegLoadedError_msg(), e); //NON-NLS
+                MessageNotifyUtil.Notify.show(Bundle.ImageUtils_ffmpegLoadedError_title(), Bundle.ImageUtils_ffmpegLoadedError_msg(), MessageNotifyUtil.MessageType.WARNING);
             }
-
-            openCVLoadedTemp = true;
-        } catch (UnsatisfiedLinkError e) {
-            openCVLoadedTemp = false;
-            LOGGER.log(Level.SEVERE, "OpenCV Native code library failed to load", e); //NON-NLS
-            MessageNotifyUtil.Notify.show("Open CV", "OpenCV native library failed to load, see log for more details", MessageNotifyUtil.MessageType.WARNING);
         }
+        FFMPEG_LOADED = tempFfmpegLoaded;
 
-        OPEN_CV_LOADED = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
         SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
         SUPPORTED_IMAGE_EXTENSIONS.removeIf("db"::equals); // remove db files
@@ -165,8 +166,8 @@ public class ImageUtils {
     /**
      * Thread/Executor that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
@@ -687,7 +688,7 @@ public class ImageUtils {
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
             if (VideoUtils.isVideoThumbnailSupported(file)) {
-                if (OPEN_CV_LOADED) {
+                if (FFMPEG_LOADED) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
                     if (isCancelled()) {
                         return null;

@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
  * A panel that displays a panel used by a report generation module to show
  * progress. It provides OK and Cancel buttons.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ReportGenerationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

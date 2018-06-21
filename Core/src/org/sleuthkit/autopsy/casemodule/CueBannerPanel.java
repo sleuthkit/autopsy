@@ -35,6 +35,7 @@ import org.openide.windows.WindowManager;
 /*
  * The panel in the default Autopsy startup window.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class CueBannerPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
