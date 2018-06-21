@@ -44,7 +44,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
-import javax.swing.event.TreeExpansionEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -56,7 +55,6 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
-import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -64,13 +62,10 @@ import org.openide.nodes.Node.Property;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
-import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -200,6 +195,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets the title of this tabular result viewer.
+     * @return 
      */
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
