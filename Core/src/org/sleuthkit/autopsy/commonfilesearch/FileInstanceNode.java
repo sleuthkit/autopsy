@@ -69,6 +69,7 @@ public class FileInstanceNode extends FileNode {
         return this.dataSource;
     }
 
+    @NbBundle.Messages({"FileInstanceNode.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -81,7 +82,7 @@ public class FileInstanceNode extends FileNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = "";
+        final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
         for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
             final String propString = propType.toString();
             final Object property = map.get(propString);

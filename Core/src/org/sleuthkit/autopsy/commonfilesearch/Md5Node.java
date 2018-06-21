@@ -92,6 +92,7 @@ public class Md5Node extends DisplayableItemNode {
         return this.md5Hash;
     }
 
+    @NbBundle.Messages({"Md5Node.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -104,7 +105,7 @@ public class Md5Node extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = "";
+        final String NO_DESCR = Bundle.Md5Node_createSheet_noDescription();
         for (Md5Node.CommonFileParentPropertyType propType : Md5Node.CommonFileParentPropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));

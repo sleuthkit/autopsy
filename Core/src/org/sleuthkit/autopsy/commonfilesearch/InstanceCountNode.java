@@ -92,6 +92,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         return getClass().getName();
     }
 
+    @NbBundle.Messages({"InstanceCountNode.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -104,7 +105,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = "";
+        final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
@@ -128,11 +129,11 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * Fields which will appear in the tree table.
      */
     @NbBundle.Messages({
-        "InstanceCountNodeProeprtyType.matchCountColLbl1=Match"
+        "InstanceCountNodePropertyType.matchCountColLbl1=Match"
     })
     public enum InstanceCountNodePropertyType{
         
-        Match(Bundle.InstanceCountNodeProeprtyType_matchCountColLbl1());
+        Match(Bundle.InstanceCountNodePropertyType_matchCountColLbl1());
         
         final private String displayString;
         
