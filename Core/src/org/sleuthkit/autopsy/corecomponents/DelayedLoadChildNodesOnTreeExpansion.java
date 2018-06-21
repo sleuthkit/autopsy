@@ -36,16 +36,10 @@ public final class DelayedLoadChildNodesOnTreeExpansion implements TreeExpansion
      * could trigger collapsing and (re-)expanding nodes again.
      * @param event
      */
-    //private boolean inRecursion = false;
 
     @Override
     public synchronized void treeCollapsed(final TreeExpansionEvent event) {
-        Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
-//        if (eventNode instanceof CommonFilesNode) { // avoid endless //!inRecursion && 
-//            // recursion
-//            final CommonFilesNode node = (CommonFilesNode) eventNode;
-//            node.setCleanRefreshNeeded(true);
-//        }
+
     }
 
     @Override
@@ -54,16 +48,6 @@ public final class DelayedLoadChildNodesOnTreeExpansion implements TreeExpansion
         if (eventNode instanceof MultiLayerTableFilterNode) { //!inRecursion && 
             final MultiLayerTableFilterNode node = (MultiLayerTableFilterNode) eventNode;
             node.refresh();
-//            if (!outlineView.isExpanded(node)) {
-//                // Seems that the refresh caused to collapse, re-expand again and
-//                // avoid recursion in this listener!
-//                inRecursion = true;
-//                try {
-//                    outlineView.expandNode(node);
-//                } finally {
-//                    inRecursion = false;
-//                }
-//            }
         }
 
     }
