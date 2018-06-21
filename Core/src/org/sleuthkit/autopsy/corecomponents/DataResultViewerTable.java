@@ -144,7 +144,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
-        outline.setColumnSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);
         outline.setDragEnabled(false);
