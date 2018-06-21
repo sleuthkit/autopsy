@@ -483,7 +483,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
     private void handleRemoteNodeControlEvent(AutoIngestNodeControlEvent event) {
         if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
-            sysLogger.log(Level.INFO, "Received {0} event from user {1} on machine {2}", new Object[]{event.getControlEventType().toString(), event.getUserName(), event.getOriginatingNodeName()});
+            sysLogger.log(Level.INFO, "Received {0} event from user {1} on machine {2}", new Object[] {event.getControlEventType().toString(), event.getUserName(), event.getOriginatingNodeName()});
             switch (event.getControlEventType()) {
                 case PAUSE:
                     pause();
@@ -2072,14 +2072,21 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                      while reading the lock data
          */
         private Lock dequeueAndLockNextJob() throws CoordinationServiceException, InterruptedException {
-            sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job");
+            sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job, enforcing max jobs per case");
             Lock manifestLock;
             synchronized (jobsLock) {
-                manifestLock = dequeueAndLockNextJobHelper();
+                manifestLock = dequeueAndLockNextJob(true);
                 if (null != manifestLock) {
                     sysLogger.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
                 } else {
                     sysLogger.log(Level.INFO, "No ready job");
+                    sysLogger.log(Level.INFO, "Checking pending jobs queue for ready job, not enforcing max jobs per case");
+                    manifestLock = dequeueAndLockNextJob(false);
+                    if (null != manifestLock) {
+                        sysLogger.log(Level.INFO, "Dequeued job for {0}", currentJob.getManifest().getFilePath());
+                    } else {
+                        sysLogger.log(Level.INFO, "No ready job");
+                    }
                 }
             }
             return manifestLock;
@@ -2091,6 +2098,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * queue, made the current job, and a coordination service lock on the
          * manifest for the job is returned.
          *
+         * @param enforceMaxJobsPerCase Whether or not to enforce the maximum
+         *                              concurrent jobs per case setting.
          *
          * @return A manifest file lock if a ready job was found, null
          *         otherwise.
@@ -2101,7 +2110,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @throws InterruptedException         if the thread is interrupted
          *                                      while reading the lock data
          */
-        private Lock dequeueAndLockNextJobHelper() throws CoordinationServiceException, InterruptedException {
+        private Lock dequeueAndLockNextJob(boolean enforceMaxJobsPerCase) throws CoordinationServiceException, InterruptedException {
             Lock manifestLock = null;
             synchronized (jobsLock) {
                 Iterator<AutoIngestJob> iterator = pendingJobs.iterator();
@@ -2131,6 +2140,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             continue;
                         }
 
+                        if (enforceMaxJobsPerCase) {
+                            int currentJobsForCase = 0;
+                            for (AutoIngestJob runningJob : hostNamesToRunningJobs.values()) {
+                                if (0 == job.getManifest().getCaseName().compareTo(runningJob.getManifest().getCaseName())) {
+                                    ++currentJobsForCase;
+                                }
+                            }
+                            if (currentJobsForCase >= AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase()) {
+                                manifestLock.release();
+                                manifestLock = null;
+                                continue;
+                            }
+                        }
                         iterator.remove();
                         currentJob = job;
                         break;
@@ -2434,7 +2456,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         throw new CaseManagementException(String.format("Error creating solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
-                    }
+                    } 
                 } else {
                     throw new CaseManagementException(String.format("Timed out acquiring case name lock for %s for %s", caseName, manifest.getFilePath()));
                 }
