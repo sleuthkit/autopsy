@@ -1,3 +1,24 @@
+---------------- VERSION 4.8.0  --------------
+New Features:
+- The case tree view can now be grouped by data source.
+- Added a common files search tool that finds all instances of a file in a case.
+- Text extraction optionally includes optical character recognition (OCR).
+- Data source(s) filter added to Ad hoc keyword search and file search by 
+attributes.
+- SQLite tables can be now be exported to CSV files.
+- User defined tags now appear first in tagging menus.
+- Eliminated one tagging sub menu layer for faster tagging.
+- Added Replace Tag item to tagging menus (shortcut for delete tag, add tag).
+- File and folder names can be translated, if translation service installed.
+- Copied and pasted text can be translated, if translation service installed.
+- The Other Occurrences content viewer now shows matches in the current case.
+- A listing of cases in the Central Repository is displayed by the 
+Central Repository options panel.
+
+Bug Fixes:
+- Expanding the case tree is more efficient.
+- Assorted small bug fixes are included.
+
 ---------------- VERSION 4.7.0  --------------
 New Features: 
 - A graph visualization was added to the Communications tool to make it easier to find messages and relationships.
