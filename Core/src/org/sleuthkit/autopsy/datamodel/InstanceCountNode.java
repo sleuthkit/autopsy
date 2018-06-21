@@ -47,13 +47,16 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param instanceCount
      * @param md5Metadata 
      */
+    @NbBundle.Messages({
+        "InstanceCountNode.displayName=Match with %s instances"
+    })
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
 
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
         
-        this.setDisplayName(Integer.toString(instanceCount));
+        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount)));
     }
 
     /**
