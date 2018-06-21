@@ -87,7 +87,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
         if (refCounter.incrementAndGet(jobId) == 1 && classifiers.isEmpty()) {
             services.postMessage(IngestMessage.createWarningMessage(ObjectDetectionModuleFactory.getModuleName(),
                     Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_subject(),
-                    Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_message(PlatformUtil.getObjectDetectionClassifierPath())));
+                    Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_message("C:\\Users\\user1\\AppData\\Roaming\\autopsy\\object_detection_classifiers")));
         }
         try {
             blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();

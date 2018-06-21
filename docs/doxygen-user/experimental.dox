@@ -1,0 +1,19 @@
+/*! \page experimental_page Experimental Module
+
+\section exp_overview Overview
+
+The Experimental module, as the name implies, contains code that is not yet part of the official Autopsy release. These experimental features can be used but may be less polished than other features and will have less documentation. These modules may be changed at any time. 
+
+\section exp_setup Enabling the Experimental Module
+
+To start, go to Tools->Plugins and select the "Installed" tab, then check the box next to "Experimental" and click "Activate" and go throught the next couple of screens. A reset should not be required.
+
+\image html experimental_plugins_menu.png
+
+\section exp_features Current Experimental Features
+
+- Auto Ingest
+- \ref object_detection_page
+- Volatility Data Source Processor
+
+*/
