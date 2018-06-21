@@ -98,7 +98,6 @@ public class DataResultFilterNode extends FilterNode {
     private static boolean filterKnownFromViews = UserPreferences.hideKnownFilesInViewsTree();
     private static boolean filterSlackFromDataSources = UserPreferences.hideSlackFilesInDataSourcesTree();
     private static boolean filterSlackFromViews = UserPreferences.hideSlackFilesInViewsTree();
-    private Node innerNode;
 
     static {
         UserPreferences.addChangeListener(new PreferenceChangeListener() {
@@ -139,13 +138,12 @@ public class DataResultFilterNode extends FilterNode {
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
-        this.innerNode = node;
     }
 
     public void refresh() {
-        if (innerNode instanceof InstanceCountNode) {
-            final InstanceCountNode cfNode = (InstanceCountNode) innerNode;
-            cfNode.refresh();
+        if (getOriginal() instanceof InstanceCountNode) {
+            InstanceCountNode innerNode = getLookup().lookup(InstanceCountNode.class);
+            innerNode.refresh();
         }
     }
 
@@ -165,7 +163,6 @@ public class DataResultFilterNode extends FilterNode {
     private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
-        this.innerNode = node;
     }
 
     /**

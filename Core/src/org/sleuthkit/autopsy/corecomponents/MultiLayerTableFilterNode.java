@@ -36,7 +36,7 @@ public class MultiLayerTableFilterNode extends FilterNode implements TableFilter
     private final boolean createChildren;
     private final boolean forceUseWrappedDisplayName;
     private static final String columnOrderKey = "NONE";
-    private final Node innerNode;
+    //private final Node innerNode;
 
     /**
      * Constructs a filter node that generates children using
@@ -50,14 +50,12 @@ public class MultiLayerTableFilterNode extends FilterNode implements TableFilter
         super(node, TableFilterChildrenWithDescendants.createInstance(node, true, childLayerDepth), Lookups.proxy(node));
         this.createChildren = true;
         this.forceUseWrappedDisplayName = true;
-        this.innerNode = node;
+        //this.innerNode = node;
     }
 
-    void refresh() {
-        if (innerNode instanceof DataResultFilterNode) {
-            final DataResultFilterNode drNode = (DataResultFilterNode) innerNode;
-            drNode.refresh();
-        }
+    void refresh() { 
+        DataResultFilterNode innerNode = getLookup().lookup(DataResultFilterNode.class);
+        innerNode.refresh();
     }
 
     @Override
