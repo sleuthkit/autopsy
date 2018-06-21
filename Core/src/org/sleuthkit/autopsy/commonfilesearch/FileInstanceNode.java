@@ -45,7 +45,6 @@ public class FileInstanceNode extends FileNode {
      */
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
-        this.content = fsContent;
         this.dataSource = dataSource;
     }
 
@@ -58,11 +57,6 @@ public class FileInstanceNode extends FileNode {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
-    }
-
-    @Override
-    public AbstractFile getContent() {
-        return this.content;
     }
 
     String getDataSource() {
