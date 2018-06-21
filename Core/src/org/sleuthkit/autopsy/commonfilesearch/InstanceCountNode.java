@@ -50,7 +50,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param md5Metadata 
      */
     @NbBundle.Messages({
-        "InstanceCountNode.displayName=Match with %s instances"
+        "InstanceCountNode.displayName=Matches with %s instances"
     })
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
