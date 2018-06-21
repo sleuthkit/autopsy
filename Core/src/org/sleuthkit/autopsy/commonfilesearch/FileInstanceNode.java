@@ -16,13 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -42,7 +45,6 @@ public class FileInstanceNode extends FileNode {
      */
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
-        this.content = fsContent;
         this.dataSource = dataSource;
     }
 
@@ -57,15 +59,11 @@ public class FileInstanceNode extends FileNode {
         return visitor.visit(this);
     }
 
-    @Override
-    public AbstractFile getContent() {
-        return this.content;
-    }
-
     String getDataSource() {
         return this.dataSource;
     }
 
+    @NbBundle.Messages({"FileInstanceNode.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -78,7 +76,7 @@ public class FileInstanceNode extends FileNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
+        final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
         for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
             final String propString = propType.toString();
             final Object property = map.get(propString);
@@ -103,7 +101,7 @@ public class FileInstanceNode extends FileNode {
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
-        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.content.getMIMEType()));
+        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.getContent().getMIMEType()));
     }
 
     /**

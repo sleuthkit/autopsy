@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,7 +30,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
  * Node used to indicate the number of matches found with the MD5 children 
@@ -48,7 +50,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param md5Metadata 
      */
     @NbBundle.Messages({
-        "InstanceCountNode.displayName=Match with %s instances"
+        "InstanceCountNode.displayName=Matches with %s instances"
     })
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
@@ -90,6 +92,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         return getClass().getName();
     }
 
+    @NbBundle.Messages({"InstanceCountNode.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -102,7 +105,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, this);
 
-        final String NO_DESCR = org.sleuthkit.autopsy.datamodel.Bundle.AbstractFsContentNode_noDesc_text();
+        final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
@@ -126,11 +129,11 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * Fields which will appear in the tree table.
      */
     @NbBundle.Messages({
-        "InstanceCountNodeProeprtyType.matchCountColLbl1=Match"
+        "InstanceCountNodePropertyType.matchCountColLbl1=Match"
     })
     public enum InstanceCountNodePropertyType{
         
-        Match(Bundle.InstanceCountNodeProeprtyType_matchCountColLbl1());
+        Match(Bundle.InstanceCountNodePropertyType_matchCountColLbl1());
         
         final private String displayString;
         
