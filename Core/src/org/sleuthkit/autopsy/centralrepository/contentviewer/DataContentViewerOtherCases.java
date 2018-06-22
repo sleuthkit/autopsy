@@ -199,16 +199,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         "DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error",
         "DataContentViewerOtherCases.noOpenCase.errMsg=No open case available."})
     private void showCaseDetails(int selectedRowViewIdx) {
-        Case openCase;
-        try {
-            openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
-                    Bundle.DataContentViewerOtherCases_noOpenCase_errMsg(),
-                    Bundle.DataContentViewerOtherCases_noOpenCase_errMsg(),
-                    DEFAULT_OPTION, PLAIN_MESSAGE);
-            return;
-        }
+
         String caseDisplayName = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noCaseNameError();
         try {
             if (-1 != selectedRowViewIdx) {
