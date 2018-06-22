@@ -206,8 +206,14 @@ public abstract class CommonFilesMetadataBuilder {
             }
         }
         
-        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = new TreeMap<>();
+        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = collatetMatchesByNumberOfInstances(commonFiles);
+        
+        return new CommonFilesMetadata(instanceCollatedCommonFiles);
+    }
 
+    protected static Map<Integer, List<Md5Metadata>> collatetMatchesByNumberOfInstances(Map<String, Md5Metadata> commonFiles) {
+        //collate matches by number of matching instances - doing this in sql doesnt seem efficient
+        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = new TreeMap<>();
         for(Md5Metadata md5Metadata : commonFiles.values()){
             Integer size = md5Metadata.size();
             
@@ -219,8 +225,7 @@ public abstract class CommonFilesMetadataBuilder {
                 instanceCollatedCommonFiles.put(size, value);
             }
         }
-        
-        return new CommonFilesMetadata(instanceCollatedCommonFiles);
+        return instanceCollatedCommonFiles;
     }
 
     /**

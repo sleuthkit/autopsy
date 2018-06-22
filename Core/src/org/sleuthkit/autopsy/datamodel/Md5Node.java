@@ -71,26 +71,6 @@ public class Md5Node extends DisplayableItemNode {
         
         this.setDisplayName(this.md5Hash);
     }
-    
-    private static class Md5ChildCallable implements Callable<Children> {
-        private final Md5Metadata key;
-        private Md5ChildCallable(Md5Metadata key) {
-            this.key = key;
-        }
-        @Override
-        public Children call() throws Exception {
-            //Check, somehow, that your key has children,
-            //e.g., create "hasChildren" on the object
-            //to look in the database to see whether
-            //the object has children;
-            //if it doesn't have children, return a leaf:
-            if (key.getMetadata().isEmpty()) {
-                return Children.LEAF;
-            } else {
-                return Children.create(new FileInstanceNodeFactory(key), true);
-            }
-        }
-    }
 
     /**
      * How many files are in common?  This will be the number of children.
@@ -185,17 +165,8 @@ public class Md5Node extends DisplayableItemNode {
         }
 
         @Override
-        protected Node createNodeForKey(SleuthkitCaseFileInstanceMetadata file) {
-            try {
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
-                
-                return new SleuthkitCaseFileInstanceNode(abstractFile, file.getDataSourceName());
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
-            }
-            return null;
+        protected Node createNodeForKey(FileInstanceNodeGenerator file) {
+            return file.generateNode();
         }
 
         @Override
@@ -206,8 +177,6 @@ public class Md5Node extends DisplayableItemNode {
     }
 
     @NbBundle.Messages({
-        "CommonFileParentPropertyType.fileColLbl=File",
-        "CommonFileParentPropertyType.instanceColLbl=Instance Count",
         "CommonFileParentPropertyType.caseColLbl=Case",
         "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
     public enum CommonFileParentPropertyType {

@@ -75,15 +75,9 @@ final public class CommonFilesNode extends DisplayableItemNode {
         InstanceCountNodeFactory(CommonFilesMetadata metadata){
             this.metadata = metadata;
         }
-        
-        @Override
-        protected Node createNodeForKey(String md5){
-            Md5Metadata metadataForMd5 = this.metadata.getMetadataForMd5(md5);
-            return new Md5Node(metadataForMd5);
-        }
 
         @Override
-        protected boolean createKeys(List<String> list) {
+        protected boolean createKeys(List<Integer> list) {
             list.addAll(this.metadata.getMetadata().keySet());
             return true;
         }

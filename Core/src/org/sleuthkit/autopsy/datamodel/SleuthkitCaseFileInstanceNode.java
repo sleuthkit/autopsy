@@ -111,7 +111,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, SleuthkitCaseFileInstanceNode node) {
 
-        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.File.toString(), node.getName());
+        map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.Match.toString(), node.getName());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(SleuthkitCaseFileInstanceNode.SleuthkitCaseFileInstanceNodePropertyType.Case.toString(), node.getCase());
@@ -124,7 +124,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
      * instance of this object.
      */
     @NbBundle.Messages({
-        "SleuthkitCaseFileInstanceNodePropertyType.fileColLbl=File",
+        "SleuthkitCaseFileInstanceNodePropertyType.matchColLbl=Match",
         "SleuthkitCaseFileInstanceNodePropertyType.pathColLbl=Parent Path",
         "SleuthkitCaseFileInstanceNodePropertyType.hashsetHitsColLbl=Hash Set Hits",
         "SleuthkitCaseFileInstanceNodePropertyType.caseColLbl=Case",
@@ -133,7 +133,7 @@ public class SleuthkitCaseFileInstanceNode extends FileNode {
     })
     public enum SleuthkitCaseFileInstanceNodePropertyType {
 
-        File(Bundle.SleuthkitCaseFileInstanceNodePropertyType_fileColLbl()),
+        Match(Bundle.SleuthkitCaseFileInstanceNodePropertyType_matchColLbl()),
         ParentPath(Bundle.SleuthkitCaseFileInstanceNodePropertyType_pathColLbl()),
         HashsetHits(Bundle.SleuthkitCaseFileInstanceNodePropertyType_hashsetHitsColLbl()),
         Case(Bundle.SleuthkitCaseFileInstanceNodePropertyType_caseColLbl()),

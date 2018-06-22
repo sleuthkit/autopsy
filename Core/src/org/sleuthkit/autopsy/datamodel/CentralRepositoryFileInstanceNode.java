@@ -138,7 +138,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         
         final String caseQualifiedDataSource = String.format("%s: %s", centralRepoFile.getCorrelationCase().getDisplayName(), centralRepoFile.getCorrelationDataSource().getName());
         
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.File.toString(), name);
+        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.Match.toString(), name);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), parent);
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
         map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.Case.toString(), caseName);
@@ -151,7 +151,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
      * instance of this object.
      */
     @NbBundle.Messages({
-        "CentralRepoFileInstancesPropertyType.fileColLbl=File",
+        "CentralRepoFileInstancesPropertyType.matchColLbl=File",
         "CentralRepoFileInstancesPropertyType.pathColLbl=Parent Path",
         "CentralRepoFileInstancesPropertyType.hashsetHitsColLbl=Hash Set Hits",
         "CentralRepoFileInstancesPropertyType.caseColLbl=Case",
@@ -160,7 +160,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
     })
     public enum CentralRepoFileInstancesPropertyType {
         
-        File(Bundle.CentralRepoFileInstancesPropertyType_fileColLbl()),
+        Match(Bundle.CentralRepoFileInstancesPropertyType_matchColLbl()),
         ParentPath(Bundle.CentralRepoFileInstancesPropertyType_pathColLbl()),
         HashsetHits(Bundle.CentralRepoFileInstancesPropertyType_hashsetHitsColLbl()),
         Case(Bundle.CentralRepoFileInstancesPropertyType_caseColLbl()),

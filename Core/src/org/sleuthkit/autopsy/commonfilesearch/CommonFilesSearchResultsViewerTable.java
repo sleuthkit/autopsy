@@ -43,6 +43,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
         Map<String, Integer> map = new HashMap<>();
         map.put(Bundle.CommonFilesSearchResultsViewerTable_matchColLbl(), 235);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 150);
@@ -55,6 +56,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
         "CommonFilesSearchResultsViewerTable.matchColLbl=Match",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.hashsetHitsColLbl=Hash Set Hits",
+        "CommonFilesSearchResultsViewerTable.caseColLbl1=Case",
         "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
         "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
         "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
