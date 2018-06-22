@@ -67,6 +67,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ExtractDocumentWithPasswordAction.class.getName());
+    private static final String PASSWORD_REMOVED_STRING = "_password_removed";
     private final AbstractFile abstractFile;
     private final FileManager fileManager;
     private final Path decryptedFilePathAbsolute;
@@ -139,7 +140,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
 
                     }
                     incorrectPassword = false;
-                    DerivedFile newFile = fileManager.addDerivedFile(abstractFile.getName(), decryptedFilePathRelative + File.separator + abstractFile.getName(), abstractFile.getSize(),
+                    DerivedFile newFile = fileManager.addDerivedFile(abstractFile.getName() + PASSWORD_REMOVED_STRING + abstractFile.getNameExtension(), decryptedFilePathRelative + File.separator + abstractFile.getName() + PASSWORD_REMOVED_STRING + abstractFile.getNameExtension(), abstractFile.getSize(),
                             abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getAtime(),
                             true, abstractFile, null, "Embedded File Extractor", null, null, TskData.EncodingType.XOR1);
                     KeywordSearchService kwsService = new SolrSearchService();
@@ -148,6 +149,8 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
                     incorrectPassword = false;
                 }
             } catch (EncryptedDocumentException ex) {
+                logger.log(Level.WARNING, "Encyption security certificates not found unable to use password", ex);
+            } catch (BadPasswordException ex) {
                 logger.log(Level.INFO, "Incorrect password of " + password + " entered for " + abstractFile.getName(), ex);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error encountered while trying to decrypt " + abstractFile.getName() + "with password " + password, ex);
@@ -228,7 +231,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    private void decryptDocx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
+    private void decryptDocx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException, BadPasswordException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XWPFDocument doc = new XWPFDocument(unpasswordedStream);
         try (OutputStream outStream = getOutputStream()) {
@@ -246,7 +249,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    private void decryptXlsx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
+    private void decryptXlsx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException, BadPasswordException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XSSFWorkbook doc = new XSSFWorkbook(unpasswordedStream);
         try (OutputStream outStream = getOutputStream()) {
@@ -264,7 +267,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
      * @throws IOException
      * @throws GeneralSecurityException
      */
-    private void decryptPptx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException {
+    private void decryptPptx(String password, ReadContentInputStream stream) throws IOException, GeneralSecurityException, BadPasswordException {
         InputStream unpasswordedStream = getOoxmlInputStream(password, stream);
         XMLSlideShow doc = new XMLSlideShow(unpasswordedStream);
         try (OutputStream outStream = getOutputStream()) {
@@ -324,7 +327,8 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
     }
 
     /**
-     * Get an output stream for writing of a copy of the file without password protection.
+     * Get an output stream for writing of a copy of the file without password
+     * protection.
      *
      * @return the EncodedFileOutputStream which the file will be written to.
      *
@@ -335,7 +339,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
             Files.createDirectories(decryptedFilePathAbsolute);
         }
         return new EncodedFileOutputStream(new FileOutputStream(
-                decryptedFilePathAbsolute.toString() + File.separator + abstractFile.getName()),
+                decryptedFilePathAbsolute.toString() + File.separator + abstractFile.getName() + PASSWORD_REMOVED_STRING + abstractFile.getNameExtension()),
                 TskData.EncodingType.XOR1);
     }
 
@@ -360,7 +364,7 @@ final class ExtractDocumentWithPasswordAction extends AbstractAction {
     /**
      * Exception for when an incorrect password is entered.
      */
-    private class BadPasswordException extends EncryptedDocumentException {
+    private final class BadPasswordException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
