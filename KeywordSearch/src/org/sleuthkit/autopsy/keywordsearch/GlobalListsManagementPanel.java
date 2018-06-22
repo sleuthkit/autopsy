@@ -107,7 +107,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     /**
-     * Opens the dialogue for creating a new keyword list and adds it to the
+     * Opens the dialog for creating a new keyword list and adds it to the
      * table.
      */
     private void newKeywordListAction() {
