@@ -47,6 +47,7 @@ The following topics are available here:
  - \subpage stix_page
  - \subpage central_repo_page
  - \subpage communications_page
+ - \subpage common_files_page
  - \subpage logs_and_output_page
 - Reporting
  - \subpage tagging_page
@@ -63,6 +64,7 @@ The following topics are available here:
  - \subpage multiuser_page
 - \subpage live_triage_page
 - \subpage advanced_page
+- \subpage experimental_page
 
 If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.
 

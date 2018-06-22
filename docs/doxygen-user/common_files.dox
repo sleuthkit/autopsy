@@ -1,0 +1,23 @@
+/*! \page common_files_page Common Files Search
+
+\section common_files_overview Overview
+
+The common files feature allows you to search for multiple copies of the same file within a case.
+
+\section common_files_usage Usage
+
+To start, go to Tools->Common Files Search to bring up the following dialog:
+
+\image html common_files_dialog.png
+
+You can choose to find any files with multiple copies in the whole case, or specify that at least one of the copies has to be in the selected data source(s).
+
+\image html common_files_data_source.png
+
+You can also choose to restrict the search to only pictures and videos and/or documents.
+
+Once the search is run, the matching files are displayed in the results tab. The results are grouped by how many matching files were found and then grouped by hash.
+
+\image html common_files_results.png
+
+*/
