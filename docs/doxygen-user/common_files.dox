@@ -16,7 +16,7 @@ You can choose to find any files with multiple copies in the whole case, or spec
 
 You can also choose to restrict the search to only pictures and videos and/or documents.
 
-Once the search is run, the matching files are displayed in the results tab and are grouped by hash.
+Once the search is run, the matching files are displayed in the results tab. The results are grouped by how many matching files were found and then grouped by hash.
 
 \image html common_files_results.png
 
