@@ -225,7 +225,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 }
                 caseDisplayName = eamCasePartial.getDisplayName();
                 // query case details
-                CorrelationCase eamCase = dbManager.getCase(openCase);
+                CorrelationCase eamCase = dbManager.getCaseByUUID(eamCasePartial.getCaseUUID());
                 if (eamCase == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                             Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),
@@ -246,6 +246,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         DEFAULT_OPTION, PLAIN_MESSAGE);
             }
         } catch (EamDbException ex) {
+            logger.log(Level.SEVERE, "Error loading case details", ex);
             JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                     Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),
                     caseDisplayName,
