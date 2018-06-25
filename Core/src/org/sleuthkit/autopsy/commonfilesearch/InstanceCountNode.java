@@ -122,18 +122,18 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
-        map.put(InstanceCountNodePropertyType.Match.toString(), node.getInstanceCount());
+        map.put(InstanceCountNodePropertyType.Instances.toString(), node.getInstanceCount());
     }
     
     /**
      * Fields which will appear in the tree table.
      */
     @NbBundle.Messages({
-        "InstanceCountNodePropertyType.matchCountColLbl1=Match"
+        "InstanceCountNodePropertyType.instancesCountColLbl1=Instances"
     })
     public enum InstanceCountNodePropertyType{
         
-        Match(Bundle.InstanceCountNodePropertyType_matchCountColLbl1());
+        Instances(Bundle.InstanceCountNodePropertyType_instancesCountColLbl1());
         
         final private String displayString;
         
