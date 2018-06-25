@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.corecomponents;
  * Logger.getLogger(OpenCVFrameCapture.class.getName()) in
  * OpenCVFrameCapture.java in an older version of the Video Triage Net Beans
  * Module. It should be removed when the Video Triage NBM changes its dependency
- * on the Autopsy-Core to a major rlease version greater than 10 and a
+ * on the Autopsy-Core NBM to a major rlease version greater than 10 and a
  * specification version greater than 10.
  */
 @Deprecated
