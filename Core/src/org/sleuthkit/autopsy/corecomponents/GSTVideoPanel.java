@@ -20,11 +20,11 @@ package org.sleuthkit.autopsy.corecomponents;
 
 /**
  * This class exists to support backwards compatibility of an erroneous call to
- * Logger.getLogger(OpenCVFrameCapture.class.getName()) in
- * OpenCVFrameCapture.java in an older version of the Video Triage Net Beans
- * Module (NBM). It should be removed when the Video Triage NBM changes its
- * dependency on the Autopsy-Core NBM to a major rlease version greater than 10
- * and a specification version greater than 10.
+ * Logger.getLogger(GSTVideoPanel.class.getName()) in OpenCVFrameCapture.java in
+ * an older version of the Video Triage Net Beans Module (NBM). It should be
+ * removed when the Video Triage NBM changes its dependency on the Autopsy-Core
+ * NBM to a major rlease version greater than 10 and a specification version
+ * greater than 10.
  */
 @Deprecated
 public class GSTVideoPanel {
