@@ -124,13 +124,13 @@ final class ShowCasesDialog extends JDialog {
         showCasesPanel.setLayout(showCasesPanelLayout);
         showCasesPanelLayout.setHorizontalGroup(
             showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1349, Short.MAX_VALUE)
+            .addGap(0, 1188, Short.MAX_VALUE)
             .addGroup(showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(showCasesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 527, Short.MAX_VALUE))
         );
         showCasesPanelLayout.setVerticalGroup(
             showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 477, Short.MAX_VALUE)
+            .addGap(0, 473, Short.MAX_VALUE)
             .addGroup(showCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(showCasesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE))
         );
@@ -149,7 +149,7 @@ final class ShowCasesDialog extends JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(showCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1349, Short.MAX_VALUE)
+                .addComponent(showCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1188, Short.MAX_VALUE)
                 .addGap(6, 6, 6))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -160,9 +160,10 @@ final class ShowCasesDialog extends JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(6, 6, 6)
-                .addComponent(showCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
+                .addComponent(showCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 473, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(closeButton))
+                .addComponent(closeButton)
+                .addContainerGap())
         );
 
         closeButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ShowCasesDialog.class, "ShowCasesDialog.closeButton.AccessibleContext.accessibleName")); // NOI18N
