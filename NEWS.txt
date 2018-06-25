@@ -12,9 +12,11 @@ attributes.
 - The Other Occurrences content viewer now shows matches in the current case.
 - A listing of cases in the Central Repository is displayed by the 
 Central Repository options panel.
+- An interesting file artifact is now created when a "zip bomb" is detected.
 
 Bug Fixes:
 - Expanding the case tree is more efficient.
+- Improved "zip bomb" detection.
 - Assorted small bug fixes are included.
 
 ---------------- VERSION 4.7.0  --------------
