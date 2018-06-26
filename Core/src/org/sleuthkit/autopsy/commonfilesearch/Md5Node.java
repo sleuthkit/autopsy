@@ -66,6 +66,7 @@ public class Md5Node extends DisplayableItemNode {
         this.md5Hash = data.getMd5();
         
         this.setDisplayName(String.format(Bundle.Md5Node_Md5Node_format(), this.md5Hash));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
     /**
