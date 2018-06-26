@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -30,6 +31,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNode.CommonFilePropertyType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -52,6 +54,9 @@ public class Md5Node extends DisplayableItemNode {
     private final int commonFileCount;
     private final String dataSources;
 
+    @NbBundle.Messages({
+        "Md5Node.Md5Node.format=MD5: %s"
+    })
     /**
      * Create a Match node whose children will all have this object in common.
      * @param data the common feature, and the children
@@ -64,7 +69,7 @@ public class Md5Node extends DisplayableItemNode {
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
         
-        this.setDisplayName(this.md5Hash);
+        this.setDisplayName(String.format(Bundle.Md5Node_Md5Node_format(), this.md5Hash));
     }
 
     /**
@@ -121,8 +126,14 @@ public class Md5Node extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
-        //map.put(CommonFileParentPropertyType.Case.toString(), "");
+        
+        //map.put(CommonFileParentPropertyType.Files.toString(), "");
+        //map.put(CommonFileParentPropertyType.Instances.toString(), "");
+        //map.put(CommonFileParentPropertyType.ParentPath.toString(), "");
+        //map.put(CommonFileParentPropertyType.HashsetHits.toString(), "");
         map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
+        //map.put(CommonFileParentPropertyType.MimeType.toString(), "");
+        //map.put(CommonFileParentPropertyType.Tags.toString(), "");
     }
 
     @Override
@@ -173,13 +184,21 @@ public class Md5Node extends DisplayableItemNode {
     }
 
     @NbBundle.Messages({
-        "CommonFileParentPropertyType.fileColLbl=File",
-        "CommonFileParentPropertyType.instanceColLbl=Instance Count",
-        "CommonFileParentPropertyType.caseColLbl=Case",
-        "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
+        "CommonFileParentPropertyType.filesColLbl1=Files",
+        "CommonFileParentPropertyType.instancesColLbl1=Instances",
+        "CommonFilesSearchReCommonFileParentPropertyTypesultsViewerTable.pathColLbl=Parent Path",
+        "CommonFileParentPropertyType.dataSourceColLbl=Data Source",
+        "CommonFileParentPropertyType.parentPathColLbl=Parent Path",
+        "CommonFileParentPropertyType.mimeTypeColLbl1=MIME Type"})
     public enum CommonFileParentPropertyType {
 
-        DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
+        //Files(Bundle.CommonFileParentPropertyType_filesColLbl1()),
+        //Instances(Bundle.CommonFilesParentPropertyType_instancesColLbl1()),
+        //ParentPath(Bundle.CommonFileParentPropertyType_parentPathColLbl()),
+        //HashSetHits(Bundle.CommonFileParentPropertyType_hashSetHitsColLbl1()),
+        DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl()),
+        //MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl1())
+        ;
 
         final private String displayString;
 

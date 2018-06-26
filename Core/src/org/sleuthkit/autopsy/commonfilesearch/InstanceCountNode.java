@@ -30,6 +30,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNode.CommonFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -50,7 +51,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param md5Metadata 
      */
     @NbBundle.Messages({
-        "InstanceCountNode.displayName=Matches with %s instances"
+        "InstanceCountNode.displayName=Files with %s instances (%s)"
     })
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
@@ -58,7 +59,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
         
-        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount)));
+        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), md5Metadata.size()));
     }
 
     /**
@@ -122,18 +123,30 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param node The item to get properties for.
      */
     static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
+        
+        //map.put(InstanceCountNodePropertyType.Files.toString(), "");
         map.put(InstanceCountNodePropertyType.Instances.toString(), node.getInstanceCount());
+        //map.put(CommonFilePropertyType.ParentPath.toString(), "");
+        //map.put(CommonFilePropertyType.HashsetHits.toString(), "");
+        //map.put(CommonFilePropertyType.DataSource.toString(), "");
+        //map.put(CommonFilePropertyType.MimeType.toString(), "");
+        //map.put(CommonFilePropertyType.Tags.toString(), "");
+
     }
     
     /**
      * Fields which will appear in the tree table.
      */
     @NbBundle.Messages({
-        "InstanceCountNodePropertyType.instancesCountColLbl1=Instances"
+        "InstanceCountNodePropertyType.filesColLbl1=Files",
+        "InstanceCountNodePropertyType.instancesCountColLbl1=Instances",
+        "InstanceCountNodePropertyType.parentPathColLbl1=Parent Path"
     })
     public enum InstanceCountNodePropertyType{
         
+        //Files(Bundle.InstanceCountNodePropertyType_filesColLbl1()),
         Instances(Bundle.InstanceCountNodePropertyType_instancesCountColLbl1());
+        //ParentPath(Bundle.InstanceCountNodePropertyType_parentPathColLbl1());
         
         final private String displayString;
         

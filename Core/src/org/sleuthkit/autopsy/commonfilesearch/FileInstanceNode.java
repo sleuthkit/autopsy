@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
- * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
  */
 public class FileInstanceNode extends FileNode {
     
@@ -46,6 +46,8 @@ public class FileInstanceNode extends FileNode {
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.dataSource = dataSource;
+        
+        this.setDisplayName(fsContent.getName());
     }
 
     @Override
@@ -98,10 +100,13 @@ public class FileInstanceNode extends FileNode {
      */
     static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
 
+        map.put(CommonFilePropertyType.Files.toString(), node.getContent().getName());
+        map.put(CommonFilePropertyType.Instances.toString(), "");
         map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
         map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
         map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
         map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.getContent().getMIMEType()));
+        map.put(CommonFilePropertyType.Tags.toString(), "");
     }
 
     /**
@@ -109,18 +114,24 @@ public class FileInstanceNode extends FileNode {
      * instance of this object.
      */
     @NbBundle.Messages({
+        "CommonFilesPropertyType.filesColLbl1=Files",
+        "CommonFilePropertyType.instancesColLbl=Instances",
         "CommonFilePropertyType.pathColLbl=Parent Path",
         "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
         "CommonFilePropertyType.dataSourceColLbl=Data Source",
         "CommonFilePropertyType.caseColLbl=Case",
-        "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
+        "CommonFilePropertyType.mimeTypeColLbl=MIME Type",
+        "CommonFilePropertyType.tagsColLbl1=Tags"
     })
     public enum CommonFilePropertyType {
 
+        Files(Bundle.CommonFilesPropertyType_filesColLbl1()),
+        Instances(Bundle.CommonFilePropertyType_instancesColLbl()),
         ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
         HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
         DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
+        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl()),
+        Tags(Bundle.CommonFilePropertyType_tagsColLbl1());
 
         final private String displayString;
 
