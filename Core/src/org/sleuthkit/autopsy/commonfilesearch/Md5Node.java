@@ -183,20 +183,13 @@ public class Md5Node extends DisplayableItemNode {
         }
     }
 
-    @NbBundle.Messages({
-        "CommonFileParentPropertyType.filesColLbl1=Files",
-        "CommonFileParentPropertyType.instancesColLbl1=Instances",
-        "CommonFilesSearchReCommonFileParentPropertyTypesultsViewerTable.pathColLbl=Parent Path",
-        "CommonFileParentPropertyType.dataSourceColLbl=Data Source",
-        "CommonFileParentPropertyType.parentPathColLbl=Parent Path",
-        "CommonFileParentPropertyType.mimeTypeColLbl1=MIME Type"})
     public enum CommonFileParentPropertyType {
 
         //Files(Bundle.CommonFileParentPropertyType_filesColLbl1()),
         //Instances(Bundle.CommonFilesParentPropertyType_instancesColLbl1()),
         //ParentPath(Bundle.CommonFileParentPropertyType_parentPathColLbl()),
         //HashSetHits(Bundle.CommonFileParentPropertyType_hashSetHitsColLbl1()),
-        DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl()),
+        DataSource(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl()),
         //MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl1())
         ;
 

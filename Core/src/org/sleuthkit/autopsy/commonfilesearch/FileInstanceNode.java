@@ -113,25 +113,15 @@ public class FileInstanceNode extends FileNode {
      * Encapsulates the columns to be displayed for reach row represented by an 
      * instance of this object.
      */
-    @NbBundle.Messages({
-        "CommonFilesPropertyType.filesColLbl1=Files",
-        "CommonFilePropertyType.instancesColLbl=Instances",
-        "CommonFilePropertyType.pathColLbl=Parent Path",
-        "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source",
-        "CommonFilePropertyType.caseColLbl=Case",
-        "CommonFilePropertyType.mimeTypeColLbl=MIME Type",
-        "CommonFilePropertyType.tagsColLbl1=Tags"
-    })
     public enum CommonFilePropertyType {
 
-        Files(Bundle.CommonFilesPropertyType_filesColLbl1()),
-        Instances(Bundle.CommonFilePropertyType_instancesColLbl()),
-        ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
-        HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl()),
-        Tags(Bundle.CommonFilePropertyType_tagsColLbl1());
+        Files(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl()),
+        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl()),
+        ParentPath(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl()),
+        HashsetHits(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl()),
+        DataSource(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl()),
+        MimeType(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl()),
+        Tags(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1());
 
         final private String displayString;
 

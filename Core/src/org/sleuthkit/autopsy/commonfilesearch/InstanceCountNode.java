@@ -137,15 +137,10 @@ final public class InstanceCountNode extends DisplayableItemNode {
     /**
      * Fields which will appear in the tree table.
      */
-    @NbBundle.Messages({
-        "InstanceCountNodePropertyType.filesColLbl1=Files",
-        "InstanceCountNodePropertyType.instancesCountColLbl1=Instances",
-        "InstanceCountNodePropertyType.parentPathColLbl1=Parent Path"
-    })
     public enum InstanceCountNodePropertyType{
         
         //Files(Bundle.InstanceCountNodePropertyType_filesColLbl1()),
-        Instances(Bundle.InstanceCountNodePropertyType_instancesCountColLbl1());
+        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl());
         //ParentPath(Bundle.InstanceCountNodePropertyType_parentPathColLbl1());
         
         final private String displayString;
