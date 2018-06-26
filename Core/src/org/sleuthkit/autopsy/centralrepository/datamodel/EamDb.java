@@ -685,4 +685,13 @@ public interface EamDb {
      * @throws EamDbException
      */
     void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
+    
+    /**
+     * Process the Artifact md5s in the EamDb for matches of case files which are not known
+     * @param type EamArtifact.Type to search for
+     * @param correlationCase  CorrelationCase to filter by
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    public void processCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, InstanceTableCallback instanceTableCallback) throws EamDbException;
 }
