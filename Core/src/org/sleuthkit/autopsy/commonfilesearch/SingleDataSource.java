@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  */
 final public class SingleDataSource extends CommonFilesMetadataBuilder {
 
-    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != "+ FileKnown.KNOWN + " OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(DISTINCT data_source_obj_id) > 1) order by md5"; //NON-NLS
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where md5 in (select md5 from tsk_files where (known != "+ FileKnown.KNOWN.getFileKnownValue() + " OR known IS NULL) and data_source_obj_id=%s%s) GROUP BY md5 HAVING COUNT(DISTINCT data_source_obj_id) > 1) order by md5"; //NON-NLS
     private final Long selectedDataSourceId;
     private final String dataSourceName;
 
