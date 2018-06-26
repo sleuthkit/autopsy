@@ -71,8 +71,8 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
             
             TableColumn column = columnsEnumerator.nextElement();
             
-            final Object headerValue = column.getHeaderValue();
-            final Integer get = COLUMN_WIDTHS.get(headerValue);
+            final String headerValue = column.getHeaderValue().toString();
+            final Integer get = COLUMN_WIDTHS.get((String)headerValue);
                         
             column.setPreferredWidth(get);
         }
