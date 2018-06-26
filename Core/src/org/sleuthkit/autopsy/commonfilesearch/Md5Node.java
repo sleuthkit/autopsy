@@ -105,15 +105,18 @@ public class Md5Node extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
+//
+//        Map<String, Object> map = new LinkedHashMap<>();
+        //fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.Md5Node_createSheet_noDescription();
-        for (Md5Node.CommonFileParentPropertyType propType : Md5Node.CommonFileParentPropertyType.values()) {
-            final String propString = propType.toString();
-            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
-        }
+        
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSources()));
+        
+//        for (Md5Node.CommonFileParentPropertyType propType : Md5Node.CommonFileParentPropertyType.values()) {
+//            final String propString = propType.toString();
+//            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
+//        }
 
         return sheet;
     }
@@ -125,16 +128,16 @@ public class Md5Node extends DisplayableItemNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
-        
-        //map.put(CommonFileParentPropertyType.Files.toString(), "");
-        //map.put(CommonFileParentPropertyType.Instances.toString(), "");
-        //map.put(CommonFileParentPropertyType.ParentPath.toString(), "");
-        //map.put(CommonFileParentPropertyType.HashsetHits.toString(), "");
-        map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
-        //map.put(CommonFileParentPropertyType.MimeType.toString(), "");
-        //map.put(CommonFileParentPropertyType.Tags.toString(), "");
-    }
+//    static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
+//        
+//        //map.put(CommonFileParentPropertyType.Files.toString(), "");
+//        //map.put(CommonFileParentPropertyType.Instances.toString(), "");
+//        //map.put(CommonFileParentPropertyType.ParentPath.toString(), "");
+//        //map.put(CommonFileParentPropertyType.HashsetHits.toString(), "");
+//        map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
+//        //map.put(CommonFileParentPropertyType.MimeType.toString(), "");
+//        //map.put(CommonFileParentPropertyType.Tags.toString(), "");
+//    }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
@@ -183,32 +186,25 @@ public class Md5Node extends DisplayableItemNode {
         }
     }
 
-    @NbBundle.Messages({
-        "CommonFileParentPropertyType.filesColLbl1=Files",
-        "CommonFileParentPropertyType.instancesColLbl1=Instances",
-        "CommonFilesSearchReCommonFileParentPropertyTypesultsViewerTable.pathColLbl=Parent Path",
-        "CommonFileParentPropertyType.dataSourceColLbl=Data Source",
-        "CommonFileParentPropertyType.parentPathColLbl=Parent Path",
-        "CommonFileParentPropertyType.mimeTypeColLbl1=MIME Type"})
-    public enum CommonFileParentPropertyType {
-
-        //Files(Bundle.CommonFileParentPropertyType_filesColLbl1()),
-        //Instances(Bundle.CommonFilesParentPropertyType_instancesColLbl1()),
-        //ParentPath(Bundle.CommonFileParentPropertyType_parentPathColLbl()),
-        //HashSetHits(Bundle.CommonFileParentPropertyType_hashSetHitsColLbl1()),
-        DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl()),
-        //MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl1())
-        ;
-
-        final private String displayString;
-
-        private CommonFileParentPropertyType(String displayString) {
-            this.displayString = displayString;
-        }
-
-        @Override
-        public String toString() {
-            return this.displayString;
-        }
-    }
+//    public enum CommonFileParentPropertyType {
+//
+//        //Files(Bundle.CommonFileParentPropertyType_filesColLbl1()),
+//        //Instances(Bundle.CommonFilesParentPropertyType_instancesColLbl1()),
+//        //ParentPath(Bundle.CommonFileParentPropertyType_parentPathColLbl()),
+//        //HashSetHits(Bundle.CommonFileParentPropertyType_hashSetHitsColLbl1()),
+//        DataSource(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl()),
+//        //MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl1())
+//        ;
+//
+//        final private String displayString;
+//
+//        private CommonFileParentPropertyType(String displayString) {
+//            this.displayString = displayString;
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return this.displayString;
+//        }
+//    }
 }

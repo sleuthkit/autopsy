@@ -76,15 +76,16 @@ public class FileInstanceNode extends FileNode {
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
+        //fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
-        for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
-            final String propString = propType.toString();
-            final Object property = map.get(propString);
-            final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
-            sheetSet.put(nodeProperty);
-        }
+        
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsForFile(this.getContent())));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, StringUtils.defaultString(this.getContent().getMIMEType())));
 
         this.addTagProperty(sheetSet);
 
@@ -113,25 +114,15 @@ public class FileInstanceNode extends FileNode {
      * Encapsulates the columns to be displayed for reach row represented by an 
      * instance of this object.
      */
-    @NbBundle.Messages({
-        "CommonFilesPropertyType.filesColLbl1=Files",
-        "CommonFilePropertyType.instancesColLbl=Instances",
-        "CommonFilePropertyType.pathColLbl=Parent Path",
-        "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source",
-        "CommonFilePropertyType.caseColLbl=Case",
-        "CommonFilePropertyType.mimeTypeColLbl=MIME Type",
-        "CommonFilePropertyType.tagsColLbl1=Tags"
-    })
     public enum CommonFilePropertyType {
 
-        Files(Bundle.CommonFilesPropertyType_filesColLbl1()),
-        Instances(Bundle.CommonFilePropertyType_instancesColLbl()),
-        ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
-        HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl()),
-        Tags(Bundle.CommonFilePropertyType_tagsColLbl1());
+        Files(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl()),
+        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl()),
+        ParentPath(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl()),
+        HashsetHits(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl()),
+        DataSource(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl()),
+        MimeType(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl()),
+        Tags(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1());
 
         final private String displayString;
 
