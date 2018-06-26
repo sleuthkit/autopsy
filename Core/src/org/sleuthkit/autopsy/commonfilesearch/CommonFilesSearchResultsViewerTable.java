@@ -42,12 +42,12 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     
     static {
         Map<String, Integer> map = new HashMap<>();
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 235);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 235);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 150);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);
         
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
@@ -58,7 +58,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
         "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
+        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source(s)",
         "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
         "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
     })
