@@ -100,61 +100,13 @@ final public class InstanceCountNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
-        //Map<String, Object> map = new LinkedHashMap<>();
-        //fillPropertyMap(map, this);
-
+        
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
-        
-//        for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
-//            final String propString = propType.toString();
-//            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
-//        }
-
         return sheet;
     }
 
-    /**
-     * Fill map with AbstractFile properties
-     *
-     * @param map map with preserved ordering, where property names/values are
-     * put
-     * @param node The item to get properties for.
-     */
-//    static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
-//        
-//        //map.put(InstanceCountNodePropertyType.Files.toString(), "");
-//        map.put(InstanceCountNodePropertyType.Instances.toString(), node.getInstanceCount());
-//        //map.put(CommonFilePropertyType.ParentPath.toString(), "");
-//        //map.put(CommonFilePropertyType.HashsetHits.toString(), "");
-//        //map.put(CommonFilePropertyType.DataSource.toString(), "");
-//        //map.put(CommonFilePropertyType.MimeType.toString(), "");
-//        //map.put(CommonFilePropertyType.Tags.toString(), "");
-//
-//    }
-//    
-//    /**
-//     * Fields which will appear in the tree table.
-//     */
-//    public enum InstanceCountNodePropertyType{
-//        
-//        //Files(Bundle.InstanceCountNodePropertyType_filesColLbl1()),
-//        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl());
-//        //ParentPath(Bundle.InstanceCountNodePropertyType_parentPathColLbl1());
-//        
-//        final private String displayString;
-//        
-//        private InstanceCountNodePropertyType(String displayName){
-//            this.displayString = displayName;
-//        }
-//        
-//        @Override
-//        public String toString(){
-//            return this.displayString;
-//        }
-//    }
 
     /**
      * ChildFactory which builds CommonFileParentNodes from the
