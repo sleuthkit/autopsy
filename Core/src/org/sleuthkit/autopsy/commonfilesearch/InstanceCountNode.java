@@ -103,14 +103,17 @@ final public class InstanceCountNode extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
 
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
+        //Map<String, Object> map = new LinkedHashMap<>();
+        //fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
-        for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
-            final String propString = propType.toString();
-            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
-        }
+        
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
+        
+//        for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
+//            final String propString = propType.toString();
+//            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
+//        }
 
         return sheet;
     }
