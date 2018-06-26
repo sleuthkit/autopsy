@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -75,13 +73,13 @@ public class FileInstanceNode extends FileNode {
             sheet.put(sheetSet);
         }
 
-        Map<String, Object> map = new LinkedHashMap<>();
+        //Map<String, Object> map = new LinkedHashMap<>();
         //fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
         
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, ""));
+        //sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsForFile(this.getContent())));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
@@ -99,40 +97,40 @@ public class FileInstanceNode extends FileNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
-
-        map.put(CommonFilePropertyType.Files.toString(), node.getContent().getName());
-        map.put(CommonFilePropertyType.Instances.toString(), "");
-        map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
-        map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
-        map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
-        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.getContent().getMIMEType()));
-        map.put(CommonFilePropertyType.Tags.toString(), "");
-    }
-
-    /**
-     * Encapsulates the columns to be displayed for reach row represented by an 
-     * instance of this object.
-     */
-    public enum CommonFilePropertyType {
-
-        Files(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl()),
-        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl()),
-        ParentPath(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl()),
-        HashsetHits(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl()),
-        Tags(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1());
-
-        final private String displayString;
-
-        private CommonFilePropertyType(String displayString) {
-            this.displayString = displayString;
-        }
-
-        @Override
-        public String toString() {
-            return displayString;
-        }
-    }
+//    static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
+//
+//        map.put(CommonFilePropertyType.Files.toString(), node.getContent().getName());
+//        map.put(CommonFilePropertyType.Instances.toString(), "");
+//        map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
+//        map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
+//        map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
+//        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.getContent().getMIMEType()));
+//        map.put(CommonFilePropertyType.Tags.toString(), "");
+//    }
+//
+//    /**
+//     * Encapsulates the columns to be displayed for reach row represented by an 
+//     * instance of this object.
+//     */
+//    public enum CommonFilePropertyType {
+//
+//        Files(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl()),
+//        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl()),
+//        ParentPath(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl()),
+//        HashsetHits(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl()),
+//        DataSource(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl()),
+//        MimeType(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl()),
+//        Tags(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1());
+//
+//        final private String displayString;
+//
+//        private CommonFilePropertyType(String displayString) {
+//            this.displayString = displayString;
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return displayString;
+//        }
+//    }
 }

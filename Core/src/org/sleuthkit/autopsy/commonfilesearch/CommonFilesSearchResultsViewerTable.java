@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     
     private static final Map<String, Integer> COLUMN_WIDTHS;
+    private static final long serialVersionUID = 1L;
     
     static {
         Map<String, Integer> map = new HashMap<>();

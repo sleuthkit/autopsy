@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.openide.nodes.ChildFactory;
@@ -106,7 +105,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         //fillPropertyMap(map, this);
 
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
-        
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
         
 //        for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
@@ -124,38 +123,38 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * put
      * @param node The item to get properties for.
      */
-    static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
-        
-        //map.put(InstanceCountNodePropertyType.Files.toString(), "");
-        map.put(InstanceCountNodePropertyType.Instances.toString(), node.getInstanceCount());
-        //map.put(CommonFilePropertyType.ParentPath.toString(), "");
-        //map.put(CommonFilePropertyType.HashsetHits.toString(), "");
-        //map.put(CommonFilePropertyType.DataSource.toString(), "");
-        //map.put(CommonFilePropertyType.MimeType.toString(), "");
-        //map.put(CommonFilePropertyType.Tags.toString(), "");
-
-    }
-    
-    /**
-     * Fields which will appear in the tree table.
-     */
-    public enum InstanceCountNodePropertyType{
-        
-        //Files(Bundle.InstanceCountNodePropertyType_filesColLbl1()),
-        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl());
-        //ParentPath(Bundle.InstanceCountNodePropertyType_parentPathColLbl1());
-        
-        final private String displayString;
-        
-        private InstanceCountNodePropertyType(String displayName){
-            this.displayString = displayName;
-        }
-        
-        @Override
-        public String toString(){
-            return this.displayString;
-        }
-    }
+//    static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
+//        
+//        //map.put(InstanceCountNodePropertyType.Files.toString(), "");
+//        map.put(InstanceCountNodePropertyType.Instances.toString(), node.getInstanceCount());
+//        //map.put(CommonFilePropertyType.ParentPath.toString(), "");
+//        //map.put(CommonFilePropertyType.HashsetHits.toString(), "");
+//        //map.put(CommonFilePropertyType.DataSource.toString(), "");
+//        //map.put(CommonFilePropertyType.MimeType.toString(), "");
+//        //map.put(CommonFilePropertyType.Tags.toString(), "");
+//
+//    }
+//    
+//    /**
+//     * Fields which will appear in the tree table.
+//     */
+//    public enum InstanceCountNodePropertyType{
+//        
+//        //Files(Bundle.InstanceCountNodePropertyType_filesColLbl1()),
+//        Instances(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl());
+//        //ParentPath(Bundle.InstanceCountNodePropertyType_parentPathColLbl1());
+//        
+//        final private String displayString;
+//        
+//        private InstanceCountNodePropertyType(String displayName){
+//            this.displayString = displayName;
+//        }
+//        
+//        @Override
+//        public String toString(){
+//            return this.displayString;
+//        }
+//    }
 
     /**
      * ChildFactory which builds CommonFileParentNodes from the
