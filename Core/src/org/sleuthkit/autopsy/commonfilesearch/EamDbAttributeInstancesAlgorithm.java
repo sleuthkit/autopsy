@@ -20,9 +20,9 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -38,20 +38,32 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 class EamDbAttributeInstancesAlgorithm {
 
     private static final Logger logger = Logger.getLogger(CommonFilesPanel.class.getName());
-
-    List<String> getCorrelationCaseAttributeValues(Case currentCase) {
-        List<String> intercaseCommonValues = new ArrayList<>();
+    
+    private final Map<Integer, String>  intercaseCommonValuesMap = new HashMap<>();
+    private final Map<Integer, String>  intercaseCommonDatasourcesMap = new HashMap<>();
+    
+    void processCorrelationCaseAttributeValues(Case currentCase) {
+        
         try {
             EamDbAttributeInstancesCallback instancetableCallback = new EamDbAttributeInstancesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processCaseInstancesTable(fileType, DbManager.getCase(currentCase), instancetableCallback);
 
-            intercaseCommonValues = instancetableCallback.getCorrelationValues();
+            intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
+            intercaseCommonDatasourcesMap.putAll(instancetableCallback.getCorrelationIdDatasourceMap());
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
-        return intercaseCommonValues;
+ 
+    }
+    
+    Map<Integer, String> getIntercaseCommonValuesMap() {
+        return Collections.unmodifiableMap(intercaseCommonValuesMap);
+    }
+    
+       Map<Integer, String> getIntercaseCommonDatasourcesMap() {
+        return Collections.unmodifiableMap(intercaseCommonDatasourcesMap);
     }
 
     /**
@@ -60,21 +72,28 @@ class EamDbAttributeInstancesAlgorithm {
      */
     private class EamDbAttributeInstancesCallback implements InstanceTableCallback {
 
-        List<String> correlationValues = new ArrayList<>();
+        private final Map<Integer, String> correlationIdToValueMap = new HashMap<>();
+        private final Map<Integer, String> correlationIdToDatasourceMap = new HashMap<>();
 
         @Override
         public void process(ResultSet resultSet) {
             try {
                 while (resultSet.next()) {
-                    correlationValues.add(InstanceTableCallback.getValue(resultSet));
+                    int resultId = InstanceTableCallback.getId(resultSet);
+                    correlationIdToValueMap.put(resultId, InstanceTableCallback.getValue(resultSet));
+                    correlationIdToDatasourceMap.put(resultId, InstanceTableCallback.getValue(resultSet));
                 }
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }
 
-        public List<String> getCorrelationValues() {
-            return Collections.unmodifiableList(correlationValues);
+        Map<Integer, String> getCorrelationIdValueMap() {
+            return Collections.unmodifiableMap(correlationIdToValueMap);
+        }
+        
+        Map<Integer, String> getCorrelationIdDatasourceMap() {
+            return Collections.unmodifiableMap(correlationIdToDatasourceMap);
         }
 
     }

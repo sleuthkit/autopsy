@@ -1805,7 +1805,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         ResultSet resultSet = null;
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT value FROM "); 
+        sql.append("SELECT id,value, data_source_id FROM "); // TODO should this select * so any field is available?
         sql.append(tableName);
         sql.append(" WHERE value IN (SELECT value FROM ");
         sql.append(tableName);
