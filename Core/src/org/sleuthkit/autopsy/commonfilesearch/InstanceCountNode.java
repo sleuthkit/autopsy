@@ -58,6 +58,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         this.metadataList = md5Metadata;
         
         this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), md5Metadata.size()));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
     /**
