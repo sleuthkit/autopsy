@@ -19,11 +19,14 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
@@ -32,15 +35,22 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
 
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
-
+    private static final Logger logger = Logger.getLogger(CommonFilesSearchAction.class.getName());
     CommonFilesSearchAction() {
         super();
         this.setEnabled(false);
     }
-    
+    @NbBundle.Messages({
+        "CommonFilesSearchAction.exception=Unexpected Exception checking for common files search enabled."})
     @Override
     public boolean isEnabled(){
-        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
+        boolean shouldBeEnabled = false;
+        try {
+            shouldBeEnabled = Case.isCaseOpen() && Case.getCurrentCase().getDataSources().size() > 1 && Installer.isJavaFxInited();
+        } catch(TskCoreException ex) {
+            logger.log(Level.INFO, Bundle.CommonFilesSearchAction_exception(), ex);
+        }
+        return super.isEnabled() && shouldBeEnabled;
     }
 
     public static synchronized CommonFilesSearchAction getDefault() {
