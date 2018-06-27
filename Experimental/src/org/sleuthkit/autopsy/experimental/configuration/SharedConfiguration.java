@@ -929,7 +929,7 @@ public class SharedConfiguration {
      * @throws SharedConfigurationException 
      */
     private void uploadPythonModules(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Uploading object detection classfiers");
+        publishTask("Uploading python modules");
         File classifiersFolder = new File(PlatformUtil.getUserPythonModulesPath());
         copyLocalFolderToRemoteFolder(classifiersFolder, remoteFolder);
     }
@@ -942,7 +942,7 @@ public class SharedConfiguration {
      * @throws SharedConfigurationException 
      */
     private void downloadPythonModules(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Downloading object detection classfiers");
+        publishTask("Downloading python modules");
         File classifiersFolder = new File(PlatformUtil.getUserPythonModulesPath());
         copyRemoteFolderToLocalFolder(classifiersFolder, remoteFolder);
     }
