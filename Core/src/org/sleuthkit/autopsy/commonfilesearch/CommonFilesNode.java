@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
 import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;

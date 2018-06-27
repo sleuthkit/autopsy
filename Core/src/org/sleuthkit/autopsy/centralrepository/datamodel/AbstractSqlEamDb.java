@@ -1000,7 +1000,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             sql
                     += "+ (SELECT count(*) FROM "
                     + table_name
-                    + " WHERE case_id=(SELECT id FROM cases WHERE case_uid=?) and data_source_id=(SELECT id FROM data_sources WHERE device_id=?))";
+                    + " WHERE data_source_id=(SELECT data_sources.id FROM cases INNER JOIN data_sources ON cases.id = data_sources.case_id WHERE case_uid=? and device_id=?))";
         }
 
         try {

@@ -77,10 +77,11 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
     /**
      * Method to actually replace the selected tag with the given new tag
      *
-     * @param oldTag
-     * @param newTagName
+     * @param oldTag - the TagName which is being removed from the item
+     * @param newTagName - the TagName which is being added to the itme
+     * @param comment the comment associated with the tag, empty string for no comment
      */
-    abstract protected void replaceTag(T oldTag, TagName newTagName);
+    abstract protected void replaceTag(T oldTag, TagName newTagName, String comment);
 
     /**
      * Returns elected tags which are to be replaced
@@ -140,7 +141,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                     // Add action to replace the tag
                     tagNameItem.addActionListener((ActionEvent event) -> {
                         selectedTags.forEach((oldtag) -> {
-                            replaceTag(oldtag, entry.getValue());
+                            replaceTag(oldtag, entry.getValue(), "");
                         });
                     });
 
@@ -177,12 +178,24 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 TagName newTagName = GetTagNameDialog.doDialog();
                 if (null != newTagName) {
                     selectedTags.forEach((oldtag) -> {
-                        replaceTag(oldtag, newTagName);
+                        replaceTag(oldtag, newTagName, "");
                     });
                 }
             });
             add(newTagMenuItem);
-
+             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
+            // a dialog that can be used to create or select a tag name with an
+            // optional comment and adds a tag with the resulting name.
+            JMenuItem tagAndCommentItem = new JMenuItem(NbBundle.getMessage(this.getClass(), "AddTagAction.tagAndComment"));
+            tagAndCommentItem.addActionListener((ActionEvent event) -> {
+                GetTagNameAndCommentDialog.TagNameAndComment tagNameAndComment = GetTagNameAndCommentDialog.doDialog();
+                if (null != tagNameAndComment) {
+                    selectedTags.forEach((oldtag) -> {
+                        replaceTag(oldtag, tagNameAndComment.getTagName(), tagNameAndComment.getComment());
+                    });
+                }
+            });
+            add(tagAndCommentItem);   
         }
     }
 }

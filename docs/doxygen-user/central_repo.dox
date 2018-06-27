@@ -7,11 +7,11 @@ It is a combination of an ingest module that extracts, stores, and compares prop
 properties, a database that stores these properties, and an additional panel in Autopsy to display other instances of each 
 property. The central repository database can either be SQLite or PostgreSQL.
 
-The following are some use cases for the Central Repository:
+The following are some use cases for the central repository:
 - <b>Finding Other Instances of a Property</b>
- - If you find a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other cases that had this same file or that had items with the same feature (such as Domain name).   You will also be able to see what other data sources in the same case had this feature. 
+ - If you navigate to a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other instances of this property across the data stored in the central repository. 
 - <b>Alerting When Previously Notable Properties Occur</b>
- - You can use the Central Repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
+ - You can use the central repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
 - <b>Storing Hash Sets</b>
  - You can create and import hash sets into the central repository instead of using local copies in the \ref hash_db_page "Hash Lookup module". These hash sets are functionally equivalent to local hash sets but can be shared among multiple analysts (when using a PostgreSQL central repository).
 
@@ -24,13 +24,13 @@ The following are some use cases for the Central Repository:
 
 \section cr_setup Setup
 
-To start, open the main options panel and select the Central Repository icon. 
+To start, open the main options panel and select the "Central Repository" icon. 
 
 \image html central_repo_options.png
 
 \subsection cr_db_setup Setting up the Database
 
-On the Central Repository options panel, check the 'Use a Central Repository' option and then click the Configure button to set up a database. There are two options here:
+On the central repository options panel, check the 'Use a Central Repository' option and then click the Configure button to set up a database. There are two options here:
 - <b>SQLite</b> - This option stores the database in a file. It should only be used when a single client will be accessing the database.
 - <b>PostgreSQL</b> - This option uses a database server running either on the user's host or a remote server. This option must be used if multiple users will be using the same database.
 
@@ -89,7 +89,13 @@ Organizations are stored in the central repository and contain contact informati
 One default org, "Not Specified" will always be present in the list. New organizations can be created, edited, and deleted through the appropriate buttons. Note that any organization that is currently in use by a case or hash set can not be deleted. All fields apart from the organization name are optional.
 
 \image html central_repo_new_org.png
- 
+
+\subsection cr_show_cases Show Cases
+
+Displays a list of all cases that are in the central repository database.
+
+\image html central_repo_details.png
+
 \section cr_using_repo Using the Central Repository
 
 \subsection cr_ingest_module Correlation Engine Module
@@ -103,17 +109,20 @@ other cases/data sources where the Correlation Engine was run.
 
 \subsection cr_tagging Tagging Files and Artifacts
 
-Any file or artifact that a user tags with a tag with notable set will be added 
-to the database as a file or artifact of interest. By default, there will be a tag named "Notable Item" that can be used for this purpose. See the \ref tagging_page "Tagging page" for more information on creating additional tags with notable status. Any future data source ingest (where this module is enabled) 
-will use those notable files or artifacts in a similar manner as a Known Bad hash set, causing matching files from that 
-ingest to be added to the Interesting Artifacts list in that currently open case.
+Tagging a file or artifact with a "notable" tag will change its associated property in the central repository to notable as well. 
+By default, there will be a tag named "Notable Item" that can be used for this purpose. See the \ref tagging_page "Tagging page" for more information on creating additional tags with notable status. 
+Any future data source ingest (where this module is enabled) 
+will use those notable properties in a similar manner as a Known Bad hash set, causing matching files and artifacts from that 
+ingest to be added to the Interesting Items list in that currently open case.
 
 \image html central_repo_tag_file.png
 
-If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its
-notable status in the Central Repository.
+If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its property's
+notable status in the central repository.
 
-If you would like to prevent the Interesting Items from being created in a particular case, you can disable the flagging through the run time ingest properties. Note that this only disables the Interesting Item results - all files and artifacts are still added to the central repository.
+If you would like to prevent the Interesting Items from being created in a particular case, you can disable the flagging 
+through the run time ingest properties. Note that this only disables the Interesting Item results - all properties
+are still added to the central repository.
 
 \image html central_repo_disable_flagging.png
 
@@ -125,9 +134,16 @@ Results from enabling a central repository and running the Correlation Engine In
 
 \subsection cr_content_viewer Content Viewer
 
-The \ref content_viewer_page panel is where previous instances of properties are displayed. Without a central repository enabled, this "Other Occurrences" panel will show files with hashes matching the selected file within the current case. Enabling a central repository allows this panel to also display matching files and artifacts from other cases, and adds some functionality to the row. Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated files and artifacts from the central repository. If the selected file or artifact is associated by one of the supported Correlation Types, to one or more file(s) or artifact(s) in the database, the associated files/artifacts will be displayed. Note: the Content Viewer will display ALL associated files and artifacts available in the database. It ignores the user's enabled/disabled Correlation Properties.
+The \ref content_viewer_page panel is where previous instances of properties are displayed. Without a central repository enabled, 
+this "Other Occurrences" panel will show files with hashes matching the selected file within the current case. Enabling a central 
+repository allows this panel to also display matching properties stored in the database, and adds some functionality to the row. 
+Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated 
+properties from the central repository. If the selected file or artifact is associated by one of the supported Correlation Types, 
+to one or more properties in the database, the associated properties will be displayed. Note: the Content 
+Viewer will display ALL associated properties available in the database. It ignores the user's enabled/disabled Correlation Properties.
 
-By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Files/artifacts that are notable will have a Red background, all others will have a White background.
+By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Properties that are notable 
+will have a Red background, all others will have a White background.
 
 \image html central_repo_content_viewer.png
 
@@ -169,7 +185,7 @@ the Case -> Case Properties menu.
 
 <b>Show Frequency</b>
 
-This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected file or artifact.
+This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected property.
 
 <b>Add/Edit Comment</b>
 
@@ -179,15 +195,19 @@ This allows you to add a comment for this entry or edit an existing comment. If 
 
 \subsection cr_interesting_items Interesting Items
 
-In the Results tree of an open case is an entry called Interesting Items. When this module is enabled, all of the enabled Correlatable Properties will cause matching files to be added to this Interesting Items tree during ingest.
+In the Results tree of an open case is an entry called Interesting Items. When this module is enabled, all of the enabled 
+Correlatable Properties will cause matching files and artifacts to be added to this Interesting Items tree during ingest.
 
 \image html central_repo_interesting_items.png
 
-As an example, if the Files Correlatable Property is enabled, and the ingest is currently processing a file, for example "badfile.exe", and the MD5 hash for that file already exists in the database as a notable file, then an entry in the Interesting Items tree will be added for the current instance of "badfile.exe" in the data source currently being ingested.
+As an example, suppose the Files Correlatable Property is enabled and the ingest is currently processing a file "badfile.exe", and the MD5 hash 
+for that file already exists in the database as a notable file property. In this case an entry in the Interesting Items tree will be added for 
+the current instance of "badfile.exe" in the data source currently being ingested.
 
 The same type of thing will happen for each enabled Correlatable Property.
 
-In the case of the phone number correlatable type, the Interesting Items tree will start a sub-tree for each phone number. The sub-tree will then contain each instance of that notable phone number.
+In the case of the phone number correlatable type, the Interesting Items tree will start a sub-tree for each phone number. The sub-tree will 
+then contain each instance of that notable phone number.
 
 
 
