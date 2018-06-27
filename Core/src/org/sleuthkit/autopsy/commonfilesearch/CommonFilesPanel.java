@@ -104,12 +104,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
 
                     boolean multipleDataSources = this.caseHasMultipleSources();
-                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
-                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
-
+                    
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(true);
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(true);
+                    
                     if (!multipleDataSources) {
-                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
-                        withinDataSourceSelected(true);
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setEnabled(false);
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(false);
+                        withinDataSourceSelected(false);
+                        CommonFilesPanel.this.selectDataSourceComboBox.setEnabled(false);
                     }
 
                     CommonFilesPanel.this.searchButton.setEnabled(true);
@@ -120,7 +123,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
 
             private boolean caseHasMultipleSources() {
-                return CommonFilesPanel.this.dataSourceMap.size() >= 2;
+                return CommonFilesPanel.this.dataSourceMap.size() >= 3;
             }
 
             @Override
