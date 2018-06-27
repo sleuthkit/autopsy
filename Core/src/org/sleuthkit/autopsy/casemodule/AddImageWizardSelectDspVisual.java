@@ -173,10 +173,8 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         constraints.weighty = 1;
         gridBagLayout.setConstraints(vertGlue, constraints);
         jPanel1.setLayout(gridBagLayout);
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                jScrollPane1.getVerticalScrollBar().setValue(0);
-            }
+        SwingUtilities.invokeLater(() -> {
+            jScrollPane1.getVerticalScrollBar().setValue(0);
         });
     }
 
