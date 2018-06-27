@@ -38,24 +38,27 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     
     private static final Map<String, Integer> COLUMN_WIDTHS;
+    private static final long serialVersionUID = 1L;
     
     static {
         Map<String, Integer> map = new HashMap<>();
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_matchColLbl(), 235);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 150);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);
         
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
     }
     
     @NbBundle.Messages({
-        "CommonFilesSearchResultsViewerTable.matchColLbl=Match",
+        "CommonFilesSearchResultsViewerTable.filesColLbl=Files",
+        "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
+        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source(s)",
         "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
         "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
     })
@@ -68,8 +71,8 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
             
             TableColumn column = columnsEnumerator.nextElement();
             
-            final Object headerValue = column.getHeaderValue();
-            final Integer get = COLUMN_WIDTHS.get(headerValue);
+            final String headerValue = column.getHeaderValue().toString();
+            final Integer get = COLUMN_WIDTHS.get((String)headerValue);
                         
             column.setPreferredWidth(get);
         }
