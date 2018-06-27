@@ -557,19 +557,21 @@ public class SharedConfiguration {
     private void copyRemoteFolderToLocalFolder(File localFolder, File remoteBaseFolder) throws SharedConfigurationException {
         logger.log(Level.INFO, "Downloading {0} from {1}", new Object[]{localFolder.getAbsolutePath(), remoteBaseFolder.getAbsolutePath()});
         
+        // Clean out the local folder regardless of whether the remote version exists. leave the 
+        // folder in place since Autopsy expects it to exist.
+        if(localFolder.exists()) {
+            try {
+                FileUtils.cleanDirectory(localFolder);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Failed to delete files from local folder {0}", localFolder.getAbsolutePath());
+                throw new SharedConfigurationException(String.format("Failed to delete files from local folder {0}", localFolder.getAbsolutePath()), ex);
+            }
+        }
+        
         File remoteSubFolder = new File(remoteBaseFolder, localFolder.getName());
         if(! remoteSubFolder.exists()) {
             logger.log(Level.INFO, "{0} does not exist", remoteSubFolder.getAbsolutePath());
             return;
-        }
-        
-        if(localFolder.exists()) {
-            try {
-                FileUtils.deleteDirectory(localFolder);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Failed to delete local folder {0}", localFolder.getAbsolutePath());
-                throw new SharedConfigurationException(String.format("Failed to delete local folder {0}", localFolder.getAbsolutePath()), ex);
-            }
         }
         
         try {
