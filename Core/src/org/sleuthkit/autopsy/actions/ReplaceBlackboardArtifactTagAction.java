@@ -64,13 +64,14 @@ public final class ReplaceBlackboardArtifactTagAction extends ReplaceTagAction<B
      * 
      * @param oldArtifactTag tag to be replaced
      * @param newTagName name of the tag to replace with
+     * @param comment the comment for the tag use an empty string for no comment
      */
     @NbBundle.Messages({
         "# {0} - old tag name",
         "# {1} - artifactID",
         "ReplaceBlackboardArtifactTagAction.replaceTag.alert=Unable to replace tag {0} for artifact {1}."})
     @Override
-    protected void replaceTag( BlackboardArtifactTag oldArtifactTag, TagName newTagName) {
+    protected void replaceTag( BlackboardArtifactTag oldArtifactTag, TagName newTagName, String comment) {
         new SwingWorker<Void, Void>() {
             
             @Override
@@ -90,7 +91,7 @@ public final class ReplaceBlackboardArtifactTagAction extends ReplaceTagAction<B
                     logger.log(Level.INFO, "Replacing tag {0}  with tag {1} for artifact {2}", new Object[]{oldArtifactTag.getName().getDisplayName(), newTagName.getDisplayName(), oldArtifactTag.getContent().getName()}); //NON-NLS
 
                     tagsManager.deleteBlackboardArtifactTag(oldArtifactTag);
-                    tagsManager.addBlackboardArtifactTag(oldArtifactTag.getArtifact(), newTagName);
+                    tagsManager.addBlackboardArtifactTag(oldArtifactTag.getArtifact(), newTagName, comment);
 
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error replacing artifact tag", tskCoreException); //NON-NLS
