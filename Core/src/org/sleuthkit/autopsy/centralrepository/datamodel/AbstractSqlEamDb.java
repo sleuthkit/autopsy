@@ -1809,7 +1809,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         sql.append(tableName);
         sql.append(" WHERE value IN (SELECT value FROM ");
         sql.append(tableName);
-        sql.append(" WHERE case_id=? AND known_status !=?) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1 ORDER BY value");
+        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1 ORDER BY value");
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
