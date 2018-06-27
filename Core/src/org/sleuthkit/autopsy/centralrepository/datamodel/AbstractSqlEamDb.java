@@ -1778,6 +1778,46 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
     }
     
+        /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processInstanceTableRow(CorrelationAttribute.Type type, int id, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        if (type == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        if (instanceTableCallback == null) {
+            throw new EamDbException("Callback interface is null");
+        }
+
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+        StringBuilder sql = new StringBuilder();
+        sql.append("select * from ");
+        sql.append(tableName);
+        sql.append("WHERE id = ?");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setInt(1, id);
+            resultSet = preparedStatement.executeQuery();
+            instanceTableCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting all artifact instances from instances table", ex);
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+    
     /**
      * Process the Artifact instance in the EamDb
      *

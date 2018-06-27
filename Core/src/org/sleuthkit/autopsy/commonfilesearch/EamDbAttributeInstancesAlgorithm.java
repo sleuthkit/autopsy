@@ -27,27 +27,46 @@ import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Used to process and return CorrelationCase md5s from the EamDB for CommonFilesSearch.
+ * Used to process and return CorrelationCase md5s from the EamDB for
+ * CommonFilesSearch.
  */
 class EamDbAttributeInstancesAlgorithm {
 
     private static final Logger logger = Logger.getLogger(CommonFilesPanel.class.getName());
+
+    private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
+    private final Map<Integer, String> intercaseCommonDatasourcesMap = new HashMap<>();
     
-    private final Map<Integer, String>  intercaseCommonValuesMap = new HashMap<>();
-    private final Map<Integer, String>  intercaseCommonDatasourcesMap = new HashMap<>();
-    
-    void processCorrelationCaseAttributeValues(Case currentCase) {
+    CorrelationAttribute processCorrelationCaseSingleAttribute(int attrbuteId) {
+         try {
+            EamDbAttributeInstanceRowCallback instancetableCallback = new EamDbAttributeInstanceRowCallback();
+            EamDb DbManager = EamDb.getInstance();
+            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            DbManager.processInstanceTableRow(fileType, attrbuteId, instancetableCallback);
+
+            return instancetableCallback.getCorrelationAttribute();
+            
+        } catch (EamDbException ex) {
+            logger.log(Level.SEVERE, "Error accessing EamDb processing InstanceTable row.", ex);
+        }
+         
+        return null;
         
+    }
+
+    void processCorrelationCaseAttributeValues(Case currentCase) {
+
         try {
             EamDbAttributeInstancesCallback instancetableCallback = new EamDbAttributeInstancesCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processCaseInstancesTable(fileType, DbManager.getCase(currentCase), instancetableCallback);
 
             intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
@@ -55,14 +74,14 @@ class EamDbAttributeInstancesAlgorithm {
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
- 
+
     }
-    
+
     Map<Integer, String> getIntercaseCommonValuesMap() {
         return Collections.unmodifiableMap(intercaseCommonValuesMap);
     }
-    
-       Map<Integer, String> getIntercaseCommonDatasourcesMap() {
+
+    Map<Integer, String> getIntercaseCommonDatasourcesMap() {
         return Collections.unmodifiableMap(intercaseCommonDatasourcesMap);
     }
 
@@ -91,9 +110,43 @@ class EamDbAttributeInstancesAlgorithm {
         Map<Integer, String> getCorrelationIdValueMap() {
             return Collections.unmodifiableMap(correlationIdToValueMap);
         }
-        
+
         Map<Integer, String> getCorrelationIdDatasourceMap() {
             return Collections.unmodifiableMap(correlationIdToDatasourceMap);
+        }
+
+    }
+
+    /**
+     * Callback to use with processCaseInstancesTable which generates a list of
+     * md5s for common files search
+     */
+    private class EamDbAttributeInstanceRowCallback implements InstanceTableCallback {
+
+        CorrelationAttribute correlationAttribute = null;
+
+        @Override
+        public void process(ResultSet resultSet) {
+            try {
+                EamDb DbManager = EamDb.getInstance();
+                CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+                
+                while (resultSet.next()) {
+                    CorrelationCase correlationCase = DbManager.getCaseByUUID(String.valueOf(InstanceTableCallback.getCaseId(resultSet)));
+                    correlationAttribute = DbManager.getCorrelationAttribute(fileType,
+                            correlationCase,
+                            DbManager.getDataSource(correlationCase, String.valueOf(InstanceTableCallback.getDataSourceId(resultSet))),
+                            InstanceTableCallback.getValue(resultSet),
+                            InstanceTableCallback.getFilePath(resultSet));
+
+                }
+            } catch (SQLException | EamDbException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+
+        CorrelationAttribute getCorrelationAttribute() {
+            return correlationAttribute;
         }
 
     }
