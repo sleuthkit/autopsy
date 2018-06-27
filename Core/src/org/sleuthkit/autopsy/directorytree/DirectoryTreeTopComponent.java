@@ -800,10 +800,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Rebuilds the directory tree
+     * Rebuilds the autopsy tree.
+     * 
+     * Does nothing if there is no open case.
      */
     private void rebuildTree() {
 
+        // if no open case or has no data then there is no tree to rebuild
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
+            return;
+        }
+        if (null == currentCase || currentCase.hasData() == false) {
+           return;
+        }
+        
         // refresh all children of the root.
         autopsyTreeChildrenFactory.refreshChildren();
 
