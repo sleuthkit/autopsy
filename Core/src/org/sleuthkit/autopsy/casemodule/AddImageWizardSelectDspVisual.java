@@ -36,6 +36,7 @@ import javax.swing.Box.Filler;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -67,7 +68,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
         }
-        
+
         //add actionlistner to listen for change
     }
 
@@ -132,7 +133,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             //Add the button
             JToggleButton dspButton = createDspButton(dspType);
             dspButton.addActionListener(cbActionListener);
-            if ((Case.getCurrentCaseThrows().getCaseType() == Case.CaseType.MULTI_USER_CASE) && dspType.equals(LocalDiskDSProcessor.getType())){
+            if ((Case.getCurrentCaseThrows().getCaseType() == Case.CaseType.MULTI_USER_CASE) && dspType.equals(LocalDiskDSProcessor.getType())) {
                 dspButton.setEnabled(false); //disable the button for local disk DSP when this is a multi user case
                 dspButton.setSelected(false);
                 shouldAddMultiUserWarning = true;
@@ -172,6 +173,11 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         constraints.weighty = 1;
         gridBagLayout.setConstraints(vertGlue, constraints);
         jPanel1.setLayout(gridBagLayout);
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                jScrollPane1.getVerticalScrollBar().setValue(0);
+            }
+        });
     }
 
     /**
