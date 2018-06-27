@@ -559,6 +559,7 @@ public class SharedConfiguration {
         
         File remoteSubFolder = new File(remoteBaseFolder, localFolder.getName());
         if(! remoteSubFolder.exists()) {
+            logger.log(Level.INFO, "{0} does not exist", remoteSubFolder.getAbsolutePath());
             return;
         }
         
