@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;

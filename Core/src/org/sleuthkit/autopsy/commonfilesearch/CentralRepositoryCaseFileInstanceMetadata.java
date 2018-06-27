@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
-import org.sleuthkit.autopsy.datamodel.CentralRepositoryFileInstanceNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
 

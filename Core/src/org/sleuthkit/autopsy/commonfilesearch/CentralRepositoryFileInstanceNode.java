@@ -17,20 +17,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
@@ -103,30 +103,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
         
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
-        
-        final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
-        for (CentralRepoFileInstancesPropertyType propType : CentralRepoFileInstancesPropertyType.values()) {
-            final String propString = propType.toString();
-            final Object property = map.get(propString);
-            final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
-            sheetSet.put(nodeProperty);
-        }
-        
-        return sheet;        
-    }
-
-    /**
-     * Fill map with CentralRepoFileInstance properties
-     *
-     * @param map map with preserved ordering, where property names/values are
-     * put
-     * @param node The item to get properties for.
-     */
-    private static void fillPropertyMap(Map<String, Object> map, CentralRepositoryFileInstanceNode node) {
-        
-        final CentralRepositoryFile centralRepoFile = node.getCentralRepoFile();
+        final CentralRepositoryFile centralRepoFile = this.getCentralRepoFile();
         
         final String fullPath = centralRepoFile.getFilePath();
         final File file = new File(fullPath);
@@ -138,44 +115,14 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         
         final String caseQualifiedDataSource = String.format("%s: %s", centralRepoFile.getCorrelationCase().getDisplayName(), centralRepoFile.getCorrelationDataSource().getName());
         
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.Match.toString(), name);
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.ParentPath.toString(), parent);
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.HashsetHits.toString(), "");
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.Case.toString(), caseName);
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.DataSource.toString(), caseQualifiedDataSource);
-        map.put(CentralRepositoryFileInstanceNode.CentralRepoFileInstancesPropertyType.MimeType.toString(), "");
-    }
-    
-    /**
-     * Encapsulates the columns to be displayed for reach row represented by an 
-     * instance of this object.
-     */
-    @NbBundle.Messages({
-        "CentralRepoFileInstancesPropertyType.matchColLbl=File",
-        "CentralRepoFileInstancesPropertyType.pathColLbl=Parent Path",
-        "CentralRepoFileInstancesPropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CentralRepoFileInstancesPropertyType.caseColLbl=Case",
-        "CentralRepoFileInstancesPropertyType.dataSourceColLbl=Data Source",
-        "CentralRepoFileInstancesPropertyType.mimeTypeColLbl=MIME Type"
-    })
-    public enum CentralRepoFileInstancesPropertyType {
+        final String NO_DESCR = "";//Bundle.CommonFilesSearchResultsViewerTable_noDesc();
         
-        Match(Bundle.CentralRepoFileInstancesPropertyType_matchColLbl()),
-        ParentPath(Bundle.CentralRepoFileInstancesPropertyType_pathColLbl()),
-        HashsetHits(Bundle.CentralRepoFileInstancesPropertyType_hashsetHitsColLbl()),
-        Case(Bundle.CentralRepoFileInstancesPropertyType_caseColLbl()),
-        DataSource(Bundle.CentralRepoFileInstancesPropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CentralRepoFileInstancesPropertyType_mimeTypeColLbl());
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, name));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, parent));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, caseQualifiedDataSource));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, ""));
 
-        final private String displayString;
-
-        private CentralRepoFileInstancesPropertyType(String displayString) {
-            this.displayString = displayString;
-        }
-
-        @Override
-        public String toString() {
-            return displayString;
-        }
-    }        
+        return sheet;        
+    }
 }
