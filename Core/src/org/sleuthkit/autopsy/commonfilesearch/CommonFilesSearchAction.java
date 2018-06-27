@@ -36,19 +36,19 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(CommonFilesSearchAction.class.getName());
+    
     CommonFilesSearchAction() {
         super();
         this.setEnabled(false);
     }
-    @NbBundle.Messages({
-        "CommonFilesSearchAction.exception=Unexpected Exception checking for common files search enabled."})
+
     @Override
     public boolean isEnabled(){
         boolean shouldBeEnabled = false;
         try {
-            shouldBeEnabled = Case.isCaseOpen() && Case.getCurrentCase().getDataSources().size() > 1 && Installer.isJavaFxInited();
+            shouldBeEnabled = Case.isCaseOpen() && Case.getCurrentCase().getDataSources().size() > 1;
         } catch(TskCoreException ex) {
-            logger.log(Level.INFO, Bundle.CommonFilesSearchAction_exception(), ex);
+            logger.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
         }
         return super.isEnabled() && shouldBeEnabled;
     }
