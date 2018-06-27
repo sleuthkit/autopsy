@@ -39,7 +39,7 @@ import java.util.logging.Level;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.DatabaseTimingResult;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor.DatabaseTimingResult;
 
 /**
  * Creates a graph of the given timing metric data
