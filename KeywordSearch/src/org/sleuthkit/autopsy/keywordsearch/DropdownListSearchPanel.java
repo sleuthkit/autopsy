@@ -73,22 +73,6 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
         });
-        dataSourceList.addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent evt) {
-                //Unused by now
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent evt) {
-                JList<String> dsList = (JList<String>) evt.getSource();
-                int index = dsList.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    dsList.setToolTipText(getDataSourceToolTipList().get(index));
-                }
-            }
-        });
     }
 
     static synchronized DropdownListSearchPanel getDefault() {
