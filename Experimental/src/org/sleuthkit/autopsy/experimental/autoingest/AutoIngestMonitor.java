@@ -380,6 +380,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                         throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
                     }
                     job.setPriority(DEFAULT_PRIORITY);
+
+                    /**
+                     * Update job object in pending jobs queue
+                     */
+                    jobsSnapshot.addOrReplacePendingJob(job);
                 }
 
                 /*
@@ -428,6 +433,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                         throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
                     }
                     job.setPriority(highestPriority);
+
+                    /**
+                     * Update job object in pending jobs queue
+                     */
+                    jobsSnapshot.addOrReplacePendingJob(job);
                 }
 
                 /*
@@ -466,7 +476,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             }
 
             /*
-             * If the job was still in the pending jobs queue, bump its
+             * If the job was still in the pending jobs queue, reset its
              * priority.
              */
             if (null != jobToDeprioritize) {
@@ -479,6 +489,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
                 }
                 jobToDeprioritize.setPriority(DEFAULT_PRIORITY);
+
+                /**
+                 * Update job object in pending jobs queue
+                 */
+                jobsSnapshot.addOrReplacePendingJob(jobToDeprioritize);
 
                 /*
                  * Publish a deprioritization event.
@@ -537,6 +552,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
                 }
                 jobToPrioritize.setPriority(highestPriority);
+
+                /**
+                 * Update job object in pending jobs queue
+                 */
+                jobsSnapshot.addOrReplacePendingJob(jobToPrioritize);
 
                 /*
                  * Publish a prioritization event.

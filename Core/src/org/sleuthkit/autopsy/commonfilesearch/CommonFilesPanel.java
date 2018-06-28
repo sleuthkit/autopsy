@@ -90,14 +90,72 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         this.interCaseRadio.setEnabled(false);
     }
 
-    public static boolean isEamDbAvailable() {
-        boolean isEamDbAvailable = false;
-        try {
-            isEamDbAvailable = EamDb.isEnabled() && !EamDb.getInstance().getCases().isEmpty();
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.WARNING, "Error accessing EamDb", ex);
-        }
-        return isEamDbAvailable;
+                //only enable all this stuff if we actually have datasources
+                if (dataSourcesNames.length > 0) {
+                    dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
+                    CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
+                    CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
+
+                    boolean multipleDataSources = this.caseHasMultipleSources();
+                    
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(true);
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(true);
+                    
+                    if (!multipleDataSources) {
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setEnabled(false);
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(false);
+                        withinDataSourceSelected(false);
+                        CommonFilesPanel.this.selectDataSourceComboBox.setEnabled(false);
+                    }
+
+                    CommonFilesPanel.this.searchButton.setEnabled(true);
+                } else {
+                    MessageNotifyUtil.Message.info(Bundle.CommonFilesPanel_buildDataSourcesMap_updateUi_noDataSources());
+                    CommonFilesPanel.this.cancelButtonActionPerformed(null);
+                }
+            }
+
+            private boolean caseHasMultipleSources() {
+                return CommonFilesPanel.this.dataSourceMap.size() >= 3;
+            }
+
+            @Override
+            protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
+                DataSourceLoader loader = new DataSourceLoader();
+                return loader.getDataSourceMap();
+            }
+
+            @Override
+            protected void done() {
+
+                try {
+                    CommonFilesPanel.this.dataSourceMap = this.get();
+
+                    updateUi();
+
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
+                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_buildDataSourceMap_done_interupted());
+                } catch (ExecutionException ex) {
+                    String errorMessage;
+                    Throwable inner = ex.getCause();
+                    if (inner instanceof TskCoreException) {
+                        LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_tskCoreException();
+                    } else if (inner instanceof NoCurrentCaseException) {
+                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_noCurrentCaseException();
+                    } else if (inner instanceof SQLException) {
+                        LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_sqlException();
+                    } else {
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
+                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_exception();
+                    }
+                    MessageNotifyUtil.Message.error(errorMessage);
+                }
+            }
+        }.execute();
     }
 
     @NbBundle.Messages({

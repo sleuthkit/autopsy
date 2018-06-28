@@ -38,7 +38,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
@@ -1123,8 +1123,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                     bulkArtifacts.get(type.getDbTableName()).clear();
                 }
 
-                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
-                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
+                HealthMonitor.submitTimingMetric(timingMetric);
 
                 // Reset state
                 bulkArtifactsCount = 0;
