@@ -37,12 +37,12 @@ import javax.swing.DefaultListModel;
  * class and extended classes model the user's intentions, not necessarily how
  * the search manager and 3rd party tools actually perform the search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 abstract class AdHocSearchPanel extends javax.swing.JPanel {
 
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
     private final Map<Long, String> dataSourceMap = new HashMap<>();
-    private final List<String> toolTipList = new ArrayList<>();
     private List<DataSource> dataSources = new ArrayList<>();
     private final DefaultListModel<String> dataSourceListModel = new DefaultListModel<>();
 
@@ -53,18 +53,18 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     private void initListeners() {
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                Object newValue = evt.getNewValue();
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        String changed = evt.getPropertyName();
+                        Object newValue = evt.getNewValue();
 
-                if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                    int newFilesIndexed = ((Integer) newValue).intValue();
-                    filesIndexed = newFilesIndexed;
-                    postFilesIndexedChange();
-                }
-            }
-        });
+                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                            int newFilesIndexed = ((Integer) newValue);
+                            filesIndexed = newFilesIndexed;
+                            postFilesIndexedChange();
+                        }
+                    }
+                });
     }
 
     /**
@@ -128,8 +128,6 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
             }
         }
 
-        AdHocSearchDelegator man = null;
-
         final List<KeywordList> keywordLists = getKeywordLists();
         if (keywordLists.isEmpty()) {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
@@ -137,8 +135,8 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
-
+      
+        AdHocSearchDelegator man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
         if (man.validate()) {
             man.execute();
         } else {
@@ -154,14 +152,12 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     synchronized List<String> getDataSourceArray() {
         List<String> dsList = new ArrayList<>();
-        toolTipList.clear();
         Collections.sort(this.dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
         for (DataSource ds : dataSources) {
             String dsName = ds.getName();
             File dataSourceFullName = new File(dsName);
             String displayName = dataSourceFullName.getName();
             dataSourceMap.put(ds.getId(), displayName);
-            toolTipList.add(dsName);
             dsList.add(displayName);
         }
         return dsList;
@@ -183,14 +179,6 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     Map<Long, String> getDataSourceMap() {
         return dataSourceMap;
-    }
-
-    /**
-     * Get a list of tooltip text for data source
-     * @return A list of tool tips 
-     */
-    List<String> getDataSourceToolTipList() {
-        return toolTipList;
     }
     
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
- /*
- * FileSearchPanel.java
- *
- * Created on Mar 5, 2012, 1:51:50 PM
  */
 package org.sleuthkit.autopsy.filesearch;
 
@@ -41,6 +35,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -49,6 +44,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -57,6 +53,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * FileSearchPanel that present search options
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class FileSearchPanel extends javax.swing.JPanel {
 
     private final List<FileSearchFilter> filters = new ArrayList<>();
@@ -171,6 +168,7 @@ class FileSearchPanel extends javax.swing.JPanel {
      * Action when the "Search" button is pressed.
      *
      */
+    @NbBundle.Messages("FileSearchPanel.emptyNode.display.text=No results found.")
     private void search() {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -197,9 +195,16 @@ class FileSearchPanel extends javax.swing.JPanel {
                 }
 
                 SearchNode sn = new SearchNode(contentList);
-                final TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                        new TableFilterNode(sn, true, sn.getName()), contentList.size());
-
+                TableFilterNode tableFilterNode = new TableFilterNode(sn, true, sn.getName());
+                final TopComponent searchResultWin;
+                if (contentList.isEmpty()) {
+                    Node emptyNode = new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text());
+                    searchResultWin = DataResultTopComponent.createInstance(title, pathText,
+                        emptyNode, 0);
+                } else {
+                    searchResultWin = DataResultTopComponent.createInstance(title, pathText,
+                        tableFilterNode, contentList.size());
+                }
                 searchResultWin.requestActive(); // make it the active top component
 
                 /**

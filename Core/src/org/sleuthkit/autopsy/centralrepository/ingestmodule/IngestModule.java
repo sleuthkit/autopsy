@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 
 /**
@@ -102,10 +102,14 @@ final class IngestModule implements FileIngestModule {
             return ProcessResult.ERROR;
         }
 
-        if (!EamArtifactUtil.isValidCentralRepoFile(abstractFile)) {
+        if (!EamArtifactUtil.isSupportedAbstractFileType(abstractFile)) {
             return ProcessResult.OK;
         }
 
+        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
+            return ProcessResult.OK;
+        }
+        
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
@@ -131,9 +135,9 @@ final class IngestModule implements FileIngestModule {
          */
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
-                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Notable artifact query");
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Correlation Engine: Notable artifact query");
                 List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
-                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
+                HealthMonitor.submitTimingMetric(timingMetric);
                 if (!caseDisplayNamesList.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }

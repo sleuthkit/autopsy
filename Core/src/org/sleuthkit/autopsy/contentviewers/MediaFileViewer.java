@@ -30,6 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Media content viewer for videos, sounds and images.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());

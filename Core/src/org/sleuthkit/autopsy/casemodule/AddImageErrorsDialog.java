@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,22 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Frame;
+import javax.swing.JDialog;
+
 /**
  * Dialog to show add image error messages
  */
-public class AddImageErrorsDialog extends javax.swing.JDialog {
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
+public class AddImageErrorsDialog extends JDialog {
 
     /**
      * Creates new form AddImageErrorsDialog
+     * 
+     * @param parent The parent frame.
+     * @param modal Does this dialog act as a modal?
      */
-    public AddImageErrorsDialog(java.awt.Frame parent, boolean modal) {
+    public AddImageErrorsDialog(Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
     }

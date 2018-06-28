@@ -619,6 +619,18 @@
                 <package>org.joda.time.field</package>
                 <package>org.joda.time.format</package>
                 <package>org.joda.time.tz</package>
+                <package>org.opencv.calib3d</package>
+                <package>org.opencv.contrib</package>
+                <package>org.opencv.core</package>
+                <package>org.opencv.features2d</package>
+                <package>org.opencv.gpu</package>
+                <package>org.opencv.highgui</package>
+                <package>org.opencv.imgproc</package>
+                <package>org.opencv.ml</package>
+                <package>org.opencv.objdetect</package>
+                <package>org.opencv.photo</package>
+                <package>org.opencv.utils</package>
+                <package>org.opencv.video</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.chart.impl</package>
                 <package>org.openxmlformats.schemas.drawingml.x2006.main</package>
@@ -732,6 +744,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-common-8.0-r4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jfxtras-common-8.0-r4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>

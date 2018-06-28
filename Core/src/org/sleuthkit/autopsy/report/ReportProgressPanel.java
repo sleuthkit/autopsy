@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.report;
 
 import org.openide.util.NbBundle;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Desktop;
+import java.awt.EventQueue;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -30,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * A panel used by a report generation module to show progress.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ReportProgressPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;

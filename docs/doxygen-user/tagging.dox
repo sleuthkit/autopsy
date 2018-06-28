@@ -12,11 +12,16 @@ Which to choose depends upon the context and what you desire in the final report
 
 \image html tagging-1.PNG
 
-Once you have chosen to tag the file or the result, there are two more options:
-- Quick Tag -- use this if you just want the tag
+At this point there are three options:
+- Use one of the existing tags to add it to the file/result without a comment
 - Tag and Comment -- use this if you need to add a comment about this tag
 
 \image html tagging-2.PNG
+
+- New tag -- Create a new tag and add it to the file/result
+
+\image html tagging_new_tag.png
+
 <br>
 There are several default tag names:
 - Bookmark - Default tag for marking files of interest
@@ -24,9 +29,7 @@ There are several default tag names:
 - Follow Up - Default tag for marking files to follow up on
 - Notable item - Default tag for indicating that an item should be marked as notable in the central repository
 
-You can also create custom tag names. These tag names will be automatically saved for future use. Choose a tag from the list you have created, or create a "New Tag".
-
-\image html tagging-3.PNG
+You can also create custom tag names. These tag names will be automatically saved for future use and will be displayed above the default tag names.
 
 If you just want to tag the item with the default "Bookmark" tag, you can also use the keyboard shortcut control+B instead of going through the menus. 
 

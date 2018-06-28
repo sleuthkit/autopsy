@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class PlatformUtil {
 
     private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules"; //NON-NLS
+    private static final String CLASSIFIERS_SUBDIRECTORY = "object_detection_classifiers"; //NON-NLS
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -114,6 +115,15 @@ public class PlatformUtil {
      */
     public static String getUserPythonModulesPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + PYTHON_MODULES_SUBDIRECTORY;
+    }
+
+    /**
+     * Get root path where the user's object detection classifiers are stored.
+     * 
+     * @return Absolute path to the object detection classifiers root directory. 
+     */
+    public static String getObjectDetectionClassifierPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + CLASSIFIERS_SUBDIRECTORY;
     }
 
     /**
@@ -310,19 +320,17 @@ public class PlatformUtil {
             return (System.getProperty("os.arch").contains("64")); //NON-NLS
         }
     }
-    
-    
+
     /**
-     * Attempts to determine whether the JVM is 64-bit or 32-bit. 
-     * May not be completely reliable for non-Windows operating systems.
+     * Attempts to determine whether the JVM is 64-bit or 32-bit. May not be
+     * completely reliable for non-Windows operating systems.
      *
      * @return True if the JVM is 64-bit. False otherwise.
      */
     public static boolean is64BitJVM() {
         return (System.getProperty("sun.arch.data.model").equals("64"));
     }
-    
-    
+
     /**
      * Get a list of all physical drives attached to the client's machine. Error
      * threshold of 4 non-existent physical drives before giving up.

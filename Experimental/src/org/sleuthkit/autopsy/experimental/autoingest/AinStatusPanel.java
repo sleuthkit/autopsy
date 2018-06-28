@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
  * A panel which displays an outline view with all auto ingest nodes and their
  * status.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
