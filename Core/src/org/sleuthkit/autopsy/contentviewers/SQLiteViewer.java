@@ -562,7 +562,6 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     })
     private void exportTableToCsv(File file) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
-        FileOutputStream out = null;
         try (
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName)) {
@@ -579,33 +578,34 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     csvFile = new File(file.toString() + ".csv");
                 }
 
-                out = new FileOutputStream(csvFile, false);
+                try (FileOutputStream out = new FileOutputStream(csvFile, false)) {
 
-                out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
-                out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
-                // Set up the column names
-                Map<String, Object> row = currentTableRows.get(0);
-                StringBuffer header = new StringBuffer();
-                for (Map.Entry<String, Object> col : row.entrySet()) {
-                    String colName = col.getKey();
-                    if (header.length() > 0) {
-                        header.append(',').append(colName);
-                    } else {
-                        header.append(colName);
-                    }
-                }
-                out.write(header.append('\n').toString().getBytes());
-
-                for (Map<String, Object> maps : currentTableRows) {
-                    StringBuffer valueLine = new StringBuffer();
-                    maps.values().forEach((value) -> {
-                        if (valueLine.length() > 0) {
-                            valueLine.append(',').append(value.toString());
+                    out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
+                    out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
+                    // Set up the column names
+                    Map<String, Object> row = currentTableRows.get(0);
+                    StringBuffer header = new StringBuffer();
+                    for (Map.Entry<String, Object> col : row.entrySet()) {
+                        String colName = col.getKey();
+                        if (header.length() > 0) {
+                            header.append(',').append(colName);
                         } else {
-                            valueLine.append(value.toString());
+                            header.append(colName);
                         }
-                    });
-                    out.write(valueLine.append('\n').toString().getBytes());
+                    }
+                    out.write(header.append('\n').toString().getBytes());
+
+                    for (Map<String, Object> maps : currentTableRows) {
+                        StringBuffer valueLine = new StringBuffer();
+                        maps.values().forEach((value) -> {
+                            if (valueLine.length() > 0) {
+                                valueLine.append(',').append(value.toString());
+                            } else {
+                                valueLine.append(value.toString());
+                            }
+                        });
+                        out.write(valueLine.append('\n').toString().getBytes());
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -614,14 +614,6 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Failed to export table %s to file '%s'", tableName, file.getName()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_exportTableToCsv_write_errText());
-        }finally{
-            try {
-                if (out != null){
-                    out.close();
-                }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING,String.format("unable to properly close the %s after writing to it", file.getName()),ex);
-            }
         }
     }
 
