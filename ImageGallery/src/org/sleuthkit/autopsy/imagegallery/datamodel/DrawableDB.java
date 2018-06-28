@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
@@ -62,8 +63,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.DBAccessManager;
+import org.sleuthkit.datamodel.DBAccessQueryCallback;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.DbType;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
@@ -84,18 +88,14 @@ public final class DrawableDB {
     private static final String OBJ_ID = "obj_id"; //NON-NLS
 
     private static final String HASH_SET_NAME = "hash_set_name"; //NON-NLS
+    
+    private static final String GROUPS_TABLENAME = "ig_groups"; //NON-NLS
 
     private final PreparedStatement insertHashSetStmt;
-
-    private final PreparedStatement groupSeenQueryStmt;
-
-    private final PreparedStatement insertGroupStmt;
 
     private final List<PreparedStatement> preparedStatements = new ArrayList<>();
 
     private final PreparedStatement removeFileStmt;
-
-    private final PreparedStatement updateGroupStmt;
 
     private final PreparedStatement selectHashSetStmt;
 
@@ -219,11 +219,6 @@ public final class DrawableDB {
             modelGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE model  = ? ", DrawableAttribute.MODEL); //NON-NLS
             analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED); //NON-NLS
             hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET); //NON-NLS
-
-            updateGroupStmt = prepareStatement("insert or replace into groups (seen, value, attribute) values( ?, ? , ?)"); //NON-NLS
-            insertGroupStmt = prepareStatement("insert or ignore into groups (value, attribute) values (?,?)"); //NON-NLS
-
-            groupSeenQueryStmt = prepareStatement("SELECT seen FROM groups WHERE value = ? AND attribute = ?"); //NON-NLS
 
             selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets"); //NON-NLS
             insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
@@ -370,16 +365,20 @@ public final class DrawableDB {
             return false;
         }
 
-        try (Statement stmt = con.createStatement()) {
-            String sql = "CREATE TABLE  if not exists groups " //NON-NLS
-                    + "(group_id INTEGER PRIMARY KEY, " //NON-NLS
+        // The ig_groups table is created in the Case Database
+        try {
+            String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "SERIAL" : "INTEGER" ;
+            String tableSchema = 
+                    "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
                     + " value VARCHAR(255) not null, " //NON-NLS
                     + " attribute VARCHAR(255) not null, " //NON-NLS
                     + " seen integer DEFAULT 0, " //NON-NLS
                     + " UNIQUE(value, attribute) )"; //NON-NLS
-            stmt.execute(sql);
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
+            
+            tskCase.getDBAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
+        }
+        catch (TskCoreException ex) {
+             LOGGER.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
             return false;
         }
 
@@ -528,38 +527,52 @@ public final class DrawableDB {
     }
 
     public boolean isGroupSeen(GroupKey<?> groupKey) {
-        dbReadLock();
-        try {
-            groupSeenQueryStmt.clearParameters();
-            groupSeenQueryStmt.setString(1, groupKey.getValueDisplayName());
-            groupSeenQueryStmt.setString(2, groupKey.getAttribute().attrName.toString());
-            try (ResultSet rs = groupSeenQueryStmt.executeQuery()) {
-                while (rs.next()) {
-                    return rs.getBoolean("seen"); //NON-NLS
+
+        // Callback to process result of seen query
+        class GroupSeenQueryResultProcessor implements DBAccessQueryCallback {
+            private boolean seen = false;
+            
+            boolean getGroupSeen() { 
+                return seen;
+            }
+            
+            @Override
+            public void process(ResultSet resultSet) {
+                try {
+                    if (resultSet != null) {
+                        while (resultSet.next()) {
+                            seen = resultSet.getBoolean("seen"); //NON-NLSrn;
+                            return;
+                        }
+                    }
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.WARNING, "failed to get hash set names", ex); //NON-NLS
                 }
             }
-        } catch (SQLException ex) {
+        }
+        
+        try {
+            String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\'",  groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString() );
+            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
+           
+            tskCase.getDBAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
+            return queryResultProcessor.getGroupSeen();
+        }
+        catch (TskCoreException ex) {
             String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
             LOGGER.log(Level.WARNING, msg, ex);
-        } finally {
-            dbReadUnlock();
         }
+
         return false;
     }
 
     public void markGroupSeen(GroupKey<?> gk, boolean seen) {
-        dbWriteLock();
         try {
-            //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = ? where value = ? and attribute = ?");
-            updateGroupStmt.clearParameters();
-            updateGroupStmt.setBoolean(1, seen);
-            updateGroupStmt.setString(2, gk.getValueDisplayName());
-            updateGroupStmt.setString(3, gk.getAttribute().attrName.toString());
-            updateGroupStmt.execute();
-        } catch (SQLException ex) {
+            String updateSQL = String.format("set seen = %d where value = \'%s\' and attribute = \'%s\'", seen ? 1 : 0, 
+                                                            gk.getValueDisplayName(), gk.getAttribute().attrName.toString() );
+            tskCase.getDBAccessManager().update(GROUPS_TABLENAME, updateSQL);
+        } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
-        } finally {
-            dbWriteUnlock();
         }
     }
 
@@ -921,21 +934,21 @@ public final class DrawableDB {
      * @param groupBy Type of the grouping (CATEGORY, MAKE, etc.)
      */
     private void insertGroup(final String value, DrawableAttribute<?> groupBy) {
-        dbWriteLock();
-
+        String insertSQL = "";
         try {
-            //PreparedStatement insertGroup = con.prepareStatement("insert or replace into groups (value, attribute, seen) values (?,?,0)");
-            insertGroupStmt.clearParameters();
-            insertGroupStmt.setString(1, value);
-            insertGroupStmt.setString(2, groupBy.attrName.toString());
-            insertGroupStmt.execute();
-        } catch (SQLException sQLException) {
+            insertSQL = String.format(" (value, attribute) VALUES (\'%s\', \'%s\')", value, groupBy.attrName.toString());;
+
+            if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+                insertSQL += String.format(" ON CONFLICT (value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'", value, groupBy.attrName.toString());
+            }
+
+            tskCase.getDBAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL);
+        } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
-                LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Unable to insert group", ex); //NON-NLS
+
             }
-        } finally {
-            dbWriteUnlock();
         }
     }
 
@@ -1176,9 +1189,15 @@ public final class DrawableDB {
      *
      * @param fileIDs the the files ids to count within
      *
-     * @return the number of files with Cat-0
+     * @return the number of files in the given set with Cat-0
      */
     public long getUncategorizedCount(Collection<Long> fileIDs) {
+        
+        // if the fileset is empty, return count as 0
+        if (fileIDs.isEmpty()) {
+            return 0;
+        }
+        
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
         // get a comma seperated list of TagName ids for non zero categories

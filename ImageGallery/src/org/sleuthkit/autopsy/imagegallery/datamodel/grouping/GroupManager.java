@@ -82,6 +82,7 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * Provides an abstraction layer on top of {@link  DrawableDB} ( and to some
@@ -351,11 +352,21 @@ public class GroupManager {
                 case MIME_TYPE:
                     if (nonNull(db)) {
                         HashSet<String> types = new HashSet<>();
-                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery("select group_concat(obj_id), mime_type from tsk_files group by mime_type "); //NON-NLS
+                        // Use the group_concat function to get a list of files for each mime type.  
+                        // This has sifferent syntax on Postgres vs SQLite
+                        String groupConcatClause;
+                        if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
+                            groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
+                        }
+                        else {
+                            groupConcatClause = "select group_concat(obj_id) as object_ids";
+                        }
+                        String querySQL  = "select " + groupConcatClause + ", mime_type from tsk_files group by mime_type ";
+                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(querySQL); //NON-NLS
                                 ResultSet resultSet = executeQuery.getResultSet();) {
                             while (resultSet.next()) {
                                 final String mimeType = resultSet.getString("mime_type"); //NON-NLS
-                                String objIds = resultSet.getString("group_concat(obj_id)"); //NON-NLS
+                                String objIds = resultSet.getString("object_ids"); //NON-NLS
 
                                 Pattern.compile(",").splitAsStream(objIds)
                                         .map(Long::valueOf)
