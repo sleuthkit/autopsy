@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -82,7 +81,6 @@ public class DataModelActionsFactory {
         actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, fileNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(new HashSearchAction(SEARCH_FOR_FILES_SAME_MD5, fileNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
