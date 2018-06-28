@@ -75,8 +75,6 @@ public class DataModelActionsFactory {
             .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.viewNewWin.text");
     public static final String OPEN_IN_EXTERNAL_VIEWER = NbBundle
             .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.openExtViewer.text");
-    public static final String SEARCH_FOR_FILES_SAME_MD5 = NbBundle
-            .getMessage(DataModelActionsFactory.class, "DataModelActionsFactory.srfFileSameMD5.text");
 
     public static List<Action> getActions(File file, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
@@ -365,7 +363,6 @@ public class DataModelActionsFactory {
         actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(new HashSearchAction(SEARCH_FOR_FILES_SAME_MD5, tagNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -402,7 +399,6 @@ public class DataModelActionsFactory {
         actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(new HashSearchAction(SEARCH_FOR_FILES_SAME_MD5, tagNode));
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
