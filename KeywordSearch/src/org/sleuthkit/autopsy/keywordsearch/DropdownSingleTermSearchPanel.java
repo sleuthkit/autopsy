@@ -88,6 +88,22 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
         });
+        this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
+
+            @Override
+            public void mouseDragged(MouseEvent evt) {
+                //Unused by now
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent evt) {
+                JList<String> DsList = (JList<String>) evt.getSource();
+                int index = DsList.locationToIndex(evt.getPoint());
+                if (index > -1) {
+                    DsList.setToolTipText(getDataSourceToolTipList().get(index));
+                }
+            }
+        });
     }
 
     /**

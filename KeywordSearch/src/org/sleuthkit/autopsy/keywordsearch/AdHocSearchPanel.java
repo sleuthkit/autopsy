@@ -43,6 +43,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
     private final Map<Long, String> dataSourceMap = new HashMap<>();
+    private final List<String> toolTipList = new ArrayList<>();
     private List<DataSource> dataSources = new ArrayList<>();
     private final DefaultListModel<String> dataSourceListModel = new DefaultListModel<>();
 
@@ -152,12 +153,14 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     synchronized List<String> getDataSourceArray() {
         List<String> dsList = new ArrayList<>();
+        toolTipList.clear();
         Collections.sort(this.dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
         for (DataSource ds : dataSources) {
             String dsName = ds.getName();
             File dataSourceFullName = new File(dsName);
             String displayName = dataSourceFullName.getName();
             dataSourceMap.put(ds.getId(), displayName);
+            toolTipList.add(dsName);
             dsList.add(displayName);
         }
         return dsList;
@@ -179,6 +182,14 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     Map<Long, String> getDataSourceMap() {
         return dataSourceMap;
+    }
+
+    /**
+     * Get a list of tooltip text for data source
+     * @return A list of tool tips 
+     */
+    List<String> getDataSourceToolTipList() {
+        return toolTipList;
     }
     
     /**
