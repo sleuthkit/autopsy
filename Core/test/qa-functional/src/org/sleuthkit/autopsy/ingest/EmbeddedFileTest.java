@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
@@ -37,6 +38,7 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -45,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class EmbeddedFileTest extends NbTestCase {
 
     private static final String CASE_NAME = "EmbeddedFileTest";
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "EmbeddedIM_img1_v1.vhd");
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "new_embedded.vhd");
     public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
     private static final int DEEP_FOLDER_COUNT = 25;
     private Case openCase;
@@ -92,13 +94,16 @@ public class EmbeddedFileTest extends NbTestCase {
         CaseUtils.closeCurrentCase(testSucceeded);
     }
     
-    public void testEncryption() {
+    public void testEncryptionAndZipBomb() {
         try {
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");            
             String protectedName1 = "password_protected.zip";
             String protectedName2 = "level1_protected.zip";
             String protectedName3 =  "42.zip";
-            assertEquals(2207, results.size());
+            String depthZipBomb = "DepthTriggerZipBomb.zip";
+            String ratioZipBomb = "RatioTriggerZipBomb.zip";
+            int zipBombs = 0;
+            assertEquals(2221, results.size());
             int passwdProtectedZips = 0;
             for (AbstractFile file : results) {
                 //.zip file has artifact TSK_ENCRYPTION_DETECTED
@@ -109,6 +114,15 @@ public class EmbeddedFileTest extends NbTestCase {
                         assertEquals(artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID());
                         passwdProtectedZips++;
                     }
+                } else if (file.getName().equalsIgnoreCase(depthZipBomb) || file.getName().equalsIgnoreCase(ratioZipBomb)){
+                    ArrayList<BlackboardArtifact> artifacts = file.getAllArtifacts();
+                    assertEquals(1, artifacts.size());
+                    for (BlackboardArtifact artifact : artifacts) {
+                        assertEquals(artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID());
+                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                        assertNotNull("Possible Zip Bomb", attribute);
+                        zipBombs++;
+                    }
                 } else {//No other files have artifact defined
                     assertEquals(0, file.getAllArtifacts().size());
                 }
@@ -117,6 +131,8 @@ public class EmbeddedFileTest extends NbTestCase {
             }
             //Make sure 3 password protected zip files have been tested: password_protected.zip, level1_protected.zip and 42.zip that we download for bomb testing.
             assertEquals(3, passwdProtectedZips);
+            //Make sure 2 zip bomb files have been tested: DepthTriggerZipBomb.zip and RatioTriggerZipBomb.zip.
+            assertEquals(2, zipBombs);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
