@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.logging.Level;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
@@ -33,8 +32,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 final class UnicodeTextExtractor extends ContentTextExtractor {
 
-    //Set an upper limit on the amount of data in a single file to index
-    static final private int MAX_DATA_SIZE_BYTES = 100000000;
     //Set a Minimum confidence value to reject matches that may not have a valid text encoding
     //Values of valid text encodings were generally 100, xml code sometimes had a value around 50, 
     //and pictures and other files with a .txt extention were showing up with a value of 5 or less in limited testing.
@@ -57,28 +54,17 @@ final class UnicodeTextExtractor extends ContentTextExtractor {
     public Reader getReader(Content source) throws TextExtractorException {
         CharsetDetector detector = new CharsetDetector();
         ReadContentInputStream stream = new ReadContentInputStream(source);
-        int size = (int) source.getSize();
-        if (size > MAX_DATA_SIZE_BYTES) {
-            size = MAX_DATA_SIZE_BYTES;
-            logger.log(Level.WARNING, "Text file size exceeded 100 mb, ony the first 100 mb has been indexed");
-        }
-        byte[] byteData = new byte[size];
         try {
-            stream.read(byteData, 0, size);
-            detector.setText(byteData);
-            CharsetMatch match = detector.detect();
-            if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
-                throw new TextExtractorException("Text does not match any character set with a high enough confidence for UnicodeTextExtractor");
-            }
-            try {
-                return new StringReader(match.getString());
-
-            } catch (IOException ex) {
-                throw new TextExtractorException("Unable to get string from detected text in UnicodeTextExtractor", ex);
-            }
-        } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
-            throw new TextExtractorException("Unable to read text stream in UnicodeTextExtractor", ex);
+            detector.setText(stream);
+        } catch (IOException ex) {
+            throw new TextExtractorException("Unable to get string from detected text in UnicodeTextExtractor", ex);
         }
+        CharsetMatch match = detector.detect();
+        if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
+            throw new TextExtractorException("Text does not match any character set with a high enough confidence for UnicodeTextExtractor");
+        }
+
+        return match.getReader();
     }
 
     @Override
