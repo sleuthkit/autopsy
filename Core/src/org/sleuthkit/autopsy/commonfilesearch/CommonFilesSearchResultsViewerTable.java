@@ -40,6 +40,8 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
 
+    private static final int DEFAULT_WIDTH = 100;
+
     static {
         Map<String, Integer> map = new HashMap<>();
         map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
@@ -73,9 +75,16 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
 
             final String headerValue = column.getHeaderValue().toString();
 
-            final Integer get = COLUMN_WIDTHS.get(headerValue);
+            final Integer defaultWidth = COLUMN_WIDTHS.get(headerValue);
 
-            column.setPreferredWidth(get);
+            if (defaultWidth == null) {
+                //this should never happen, but if it did, it is because
+                //  we've added a node to the tree that has columns which are
+                //  not defined in the mapping above
+                column.setPreferredWidth(DEFAULT_WIDTH);
+            } else {
+                column.setPreferredWidth(defaultWidth);
+            }
         }
     }
 }
