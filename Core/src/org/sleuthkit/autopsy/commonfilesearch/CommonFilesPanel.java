@@ -264,7 +264,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     viewers.add(table);
                     progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgressDisplay());
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
-                    progress.finish();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
                     MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
@@ -285,6 +284,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         errorMessage = Bundle.CommonFilesPanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
+                } finally {
+                    progress.finish();
                 }
             }
         }.execute();
