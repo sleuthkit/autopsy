@@ -43,6 +43,8 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchResultsViewerTable.class.getName());
+    
+    private static final int DEFAULT_WIDTH = 100;
 
     static {
         Map<String, Integer> map = new HashMap<>();
@@ -79,10 +81,11 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
 
             final Integer defaultWidth = COLUMN_WIDTHS.get(headerValue);
             
-            try {            
+            if(defaultWidth == null){
+                column.setPreferredWidth(DEFAULT_WIDTH);
+                LOGGER.log(Level.SEVERE, String.format("Tried to set width on a column not supported by the CommonFilesSearchResultsViewerTable: %s", headerValue));
+            } else {
                 column.setPreferredWidth(defaultWidth);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, String.format("Tried to set width on a column not supported by the CommonFilesSearchResultsViewerTable: %s", headerValue), e);
             }
         }
     }
