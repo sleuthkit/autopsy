@@ -460,11 +460,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         // If EXIF, add props for file size and path
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
             
-            String size = ""; //NON-NLS
+            long size = 0;
             String path = ""; //NON-NLS
             if (associated instanceof AbstractFile) {
                 AbstractFile af = (AbstractFile) associated;
-                size = Long.toString(af.getSize());
+                size = af.getSize();
                 try {
                     path = af.getUniquePath();
                 } catch (TskCoreException ex) {
