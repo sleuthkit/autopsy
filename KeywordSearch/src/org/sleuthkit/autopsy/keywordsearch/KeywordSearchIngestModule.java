@@ -91,7 +91,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private boolean startedSearching = false;
     private List<ContentTextExtractor> textExtractors;
     private StringsTextExtractor stringExtractor;
-    private UnicodeTextExtractor unicodeExtractor;
+    private TextFileExtractor txtFileExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private long jobId;
@@ -244,7 +244,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
 
-        unicodeExtractor = new UnicodeTextExtractor();
+        txtFileExtractor = new TextFileExtractor();
 
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
@@ -345,7 +345,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors.clear();
         textExtractors = null;
         stringExtractor = null;
-        unicodeExtractor = null;
+        txtFileExtractor = null;
         initialized = false;
     }
 
@@ -572,7 +572,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt"))) {
                 try {
-                    if (Ingester.getDefault().indexText(unicodeExtractor, aFile, context)) {
+                    if (Ingester.getDefault().indexText(txtFileExtractor, aFile, context)) {
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                         wasTextAdded = true;
                     }

@@ -28,9 +28,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extract text from unicode files
+ * Extract text from .txt files
  */
-final class UnicodeTextExtractor extends ContentTextExtractor {
+final class TextFileExtractor extends ContentTextExtractor {
 
     //Set a Minimum confidence value to reject matches that may not have a valid text encoding
     //Values of valid text encodings were generally 100, xml code sometimes had a value around 50, 
@@ -38,7 +38,7 @@ final class UnicodeTextExtractor extends ContentTextExtractor {
     //This limited information was used to select the current value as one that would filter out clearly non-text 
     //files while hopefully working on all files with a valid text encoding
     static final private int MIN_MATCH_CONFIDENCE = 20;
-    static final private Logger logger = Logger.getLogger(UnicodeTextExtractor.class.getName());
+    static final private Logger logger = Logger.getLogger(TextFileExtractor.class.getName());
 
     @Override
     boolean isContentTypeSpecific() {
