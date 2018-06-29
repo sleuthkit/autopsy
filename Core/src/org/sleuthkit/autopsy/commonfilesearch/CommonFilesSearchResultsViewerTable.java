@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle;
@@ -40,7 +42,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
 
-    private static final int DEFAULT_WIDTH = 100;
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchResultsViewerTable.class.getName());
 
     static {
         Map<String, Integer> map = new HashMap<>();
@@ -76,14 +78,11 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
             final String headerValue = column.getHeaderValue().toString();
 
             final Integer defaultWidth = COLUMN_WIDTHS.get(headerValue);
-
-            if (defaultWidth == null) {
-                //this should never happen, but if it did, it is because
-                //  we've added a node to the tree that has columns which are
-                //  not defined in the mapping above
-                column.setPreferredWidth(DEFAULT_WIDTH);
-            } else {
+            
+            try {            
                 column.setPreferredWidth(defaultWidth);
+            } catch (NullPointerException e) {
+                LOGGER.log(Level.SEVERE, String.format("Tried to set width on a column not supported by the CommonFilesSearchResultsViewerTable: %s", headerValue), e);
             }
         }
     }
