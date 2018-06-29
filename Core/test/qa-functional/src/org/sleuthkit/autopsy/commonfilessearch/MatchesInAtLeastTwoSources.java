@@ -48,8 +48,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author bsweeney
+ * Ensures that matches only are found for files which appear in at least two data sources.
+ * 
+ * The two datasources used here have no common files.  One of the data sources 
+ * has two identical files within it.  This should not count as a match.
+ * 
+ * None of the test files should be found in the results of this test.
  */
 public class MatchesInAtLeastTwoSources extends NbTestCase {
 
