@@ -61,8 +61,8 @@ public class HealthMonitorDashboard {
     private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(), ADMIN_ACCESS_FILE_NAME).toString();
     
-    Map<String, List<EnterpriseHealthMonitor.DatabaseTimingResult>> timingData;
-    List<EnterpriseHealthMonitor.UserData> userData;
+    Map<String, List<HealthMonitor.DatabaseTimingResult>> timingData;
+    List<HealthMonitor.UserData> userData;
 
     private JComboBox<String> timingDateComboBox = null;
     private JComboBox<String> timingHostComboBox = null;
@@ -90,7 +90,7 @@ public class HealthMonitorDashboard {
      * Display the dashboard.
      */
     @NbBundle.Messages({"HealthMonitorDashboard.display.errorCreatingDashboard=Error creating health monitor dashboard",
-                        "HealthMonitorDashboard.display.dashboardTitle=Enterprise Health Monitor"})
+                        "HealthMonitorDashboard.display.dashboardTitle=Health Monitor"})
     public void display() {
         
         // Update the enabled status and get the timing data, then create all
@@ -153,14 +153,14 @@ public class HealthMonitorDashboard {
     private void updateData() throws HealthMonitorException {
         
         // Update the monitor status
-        EnterpriseHealthMonitor.getInstance().updateFromGlobalEnabledStatus();
+        HealthMonitor.getInstance().updateFromGlobalEnabledStatus();
         
-        if(EnterpriseHealthMonitor.monitorIsEnabled()) {
+        if(HealthMonitor.monitorIsEnabled()) {
             // Get a copy of the timing data from the database
-            timingData =  EnterpriseHealthMonitor.getInstance().getTimingMetricsFromDatabase(DateRange.getMaximumTimestampRange()); 
+            timingData =  HealthMonitor.getInstance().getTimingMetricsFromDatabase(DateRange.getMaximumTimestampRange()); 
             
             // Get a copy of the user data from the database
-            userData = EnterpriseHealthMonitor.getInstance().getUserMetricsFromDatabase(DateRange.getMaximumTimestampRange());
+            userData = HealthMonitor.getInstance().getUserMetricsFromDatabase(DateRange.getMaximumTimestampRange());
         }
     }
     
@@ -174,7 +174,7 @@ public class HealthMonitorDashboard {
     private JPanel createTimingPanel() throws HealthMonitorException {
         
         // If the monitor isn't enabled, just add a message
-        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+        if(! HealthMonitor.monitorIsEnabled()) {
             //timingMetricPanel.setPreferredSize(new Dimension(400,100));
             JPanel emptyTimingMetricPanel = new JPanel();
             emptyTimingMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createTimingPanel_timingMetricsTitle()));
@@ -223,7 +223,7 @@ public class HealthMonitorDashboard {
         JPanel timingControlPanel = new JPanel();
         
         // If the monitor is not enabled, don't add any components
-        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+        if(! HealthMonitor.monitorIsEnabled()) {
             return timingControlPanel;
         }
         
@@ -247,7 +247,7 @@ public class HealthMonitorDashboard {
         // Create an array of host names
         Set<String> hostNameSet = new HashSet<>();
         for(String metricType:timingData.keySet()) {
-            for(EnterpriseHealthMonitor.DatabaseTimingResult result: timingData.get(metricType)) {
+            for(HealthMonitor.DatabaseTimingResult result: timingData.get(metricType)) {
                 hostNameSet.add(result.getHostName());
             }
         }
@@ -364,7 +364,7 @@ public class HealthMonitorDashboard {
         for(String metricName:timingData.keySet()) {
             
             // If necessary, trim down the list of results to fit the selected time range
-            List<EnterpriseHealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
+            List<HealthMonitor.DatabaseTimingResult> intermediateTimingDataForDisplay;
             if(timingDateComboBox.getSelectedItem() != null) {
                 DateRange selectedDateRange = DateRange.fromLabel(timingDateComboBox.getSelectedItem().toString());
                 long threshold = System.currentTimeMillis() - selectedDateRange.getTimestampRange();
@@ -403,7 +403,7 @@ public class HealthMonitorDashboard {
                     "HealthMonitorDashboard.createUserPanel.userMetricsTitle=User Metrics"})
     private JPanel createUserPanel() throws HealthMonitorException {
         // If the monitor isn't enabled, just add a message
-        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+        if(! HealthMonitor.monitorIsEnabled()) {
             JPanel emptyUserMetricPanel = new JPanel();
             emptyUserMetricPanel.add(new JLabel(Bundle.HealthMonitorDashboard_createUserPanel_userMetricsTitle()));
             emptyUserMetricPanel.add(new JLabel(" "));
@@ -448,7 +448,7 @@ public class HealthMonitorDashboard {
         JPanel userControlPanel = new JPanel();
         
         // If the monitor is not enabled, don't add any components
-        if(! EnterpriseHealthMonitor.monitorIsEnabled()) {
+        if(! HealthMonitor.monitorIsEnabled()) {
             return userControlPanel;
         }
         
@@ -535,7 +535,7 @@ public class HealthMonitorDashboard {
         JButton enableButton = new JButton(Bundle.HealthMonitorDashboard_createAdminPanel_enableButton());
         JButton disableButton = new JButton(Bundle.HealthMonitorDashboard_createAdminPanel_disableButton());
         
-        boolean isEnabled =  EnterpriseHealthMonitor.monitorIsEnabled();
+        boolean isEnabled =  HealthMonitor.monitorIsEnabled();
         enableButton.setEnabled(! isEnabled);
         disableButton.setEnabled(isEnabled);
 
@@ -545,7 +545,7 @@ public class HealthMonitorDashboard {
             public void actionPerformed(ActionEvent arg0) {
                 try {
                     dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    EnterpriseHealthMonitor.setEnabled(true);
+                    HealthMonitor.setEnabled(true);
                     redisplay();
                 } catch (HealthMonitorException ex) {
                     logger.log(Level.SEVERE, "Error enabling monitoring", ex);
@@ -561,7 +561,7 @@ public class HealthMonitorDashboard {
             public void actionPerformed(ActionEvent arg0) {
                 try {
                     dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    EnterpriseHealthMonitor.setEnabled(false);
+                    HealthMonitor.setEnabled(false);
                     redisplay();
                 } catch (HealthMonitorException ex) {
                     logger.log(Level.SEVERE, "Error disabling monitoring", ex);

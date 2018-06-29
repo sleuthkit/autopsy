@@ -64,7 +64,7 @@ public final class ReplaceContentTagAction extends ReplaceTagAction<ContentTag> 
         "# {1} - content obj id",
         "ReplaceContentTagAction.replaceTag.alert=Unable to replace tag {0} for {1}."})
     @Override
-    protected void replaceTag(ContentTag oldTag, TagName newTagName) {
+    protected void replaceTag(ContentTag oldTag, TagName newTagName, String comment) {
         new SwingWorker<Void, Void>() {
 
             @Override
@@ -84,7 +84,7 @@ public final class ReplaceContentTagAction extends ReplaceTagAction<ContentTag> 
                     logger.log(Level.INFO, "Replacing tag {0}  with tag {1} for artifact {2}", new Object[]{oldTag.getName().getDisplayName(), newTagName.getDisplayName(), oldTag.getContent().getName()}); //NON-NLS
 
                     tagsManager.deleteContentTag(oldTag);
-                    tagsManager.addContentTag(oldTag.getContent(), newTagName);
+                    tagsManager.addContentTag(oldTag.getContent(), newTagName, comment);
 
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Error replacing artifact tag", tskCoreException); //NON-NLS
