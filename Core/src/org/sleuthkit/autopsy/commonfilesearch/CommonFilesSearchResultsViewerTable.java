@@ -81,7 +81,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
             
             try {            
                 column.setPreferredWidth(defaultWidth);
-            } catch (NullPointerException e) {
+            } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, String.format("Tried to set width on a column not supported by the CommonFilesSearchResultsViewerTable: %s", headerValue), e);
             }
         }
