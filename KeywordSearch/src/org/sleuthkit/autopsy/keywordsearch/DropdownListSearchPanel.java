@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -683,11 +685,21 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
      * Set the dataSourceList enabled if the dataSourceCheckBox is selected
      */
     private void setComponentsEnabled() {
-        boolean enabled = this.dataSourceCheckBox.isSelected();
-        this.dataSourceList.setEnabled(enabled);
-        if (enabled) {
-            this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+        
+        if (getDataSourceListModel().size() > 1) {
+            this.dataSourceCheckBox.setEnabled(true);
+            
+            boolean enabled = this.dataSourceCheckBox.isSelected();
+            this.dataSourceList.setEnabled(enabled);
+            if (enabled) {
+                this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+            } else {
+                this.dataSourceList.setSelectedIndices(new int[0]);
+            }
         } else {
+            this.dataSourceCheckBox.setEnabled(false);
+            this.dataSourceCheckBox.setSelected(false);
+            this.dataSourceList.setEnabled(false);
             this.dataSourceList.setSelectedIndices(new int[0]);
         }
     }
