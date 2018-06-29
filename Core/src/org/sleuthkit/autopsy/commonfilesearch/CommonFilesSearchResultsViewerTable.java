@@ -23,8 +23,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle;
@@ -41,8 +39,6 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
 
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
-
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchResultsViewerTable.class.getName());
 
     static {
         Map<String, Integer> map = new HashMap<>();
