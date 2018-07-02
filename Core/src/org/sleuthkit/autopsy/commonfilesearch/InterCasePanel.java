@@ -55,6 +55,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     private void specificCaseSelected(boolean selected) {
         this.specificCentralRepoCaseRadio.setEnabled(selected);
         if (this.specificCentralRepoCaseRadio.isEnabled()) {
+            this.caseComboBox.setEnabled(true);
             this.caseComboBox.setSelectedIndex(0);
         }
     }
@@ -128,15 +129,13 @@ public class InterCasePanel extends javax.swing.JPanel {
 
     private void specificCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specificCentralRepoCaseRadioActionPerformed
         this.caseComboBox.setEnabled(true);
-        if(this.caseComboBox.getSelectedItem() == null){
+        if(this.caseComboBox.isEnabled() && this.caseComboBox.getSelectedItem() == null){
             this.caseComboBox.setSelectedIndex(0);
         }
-        this.parent.handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_specificCentralRepoCaseRadioActionPerformed
 
     private void anyCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_anyCentralRepoCaseRadioActionPerformed
         this.caseComboBox.setEnabled(false);
-        this.parent.handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_anyCentralRepoCaseRadioActionPerformed
 
 
