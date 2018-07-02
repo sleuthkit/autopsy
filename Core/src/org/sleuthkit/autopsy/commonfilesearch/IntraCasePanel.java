@@ -152,12 +152,10 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
         selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
         singleDataSource = false;
-        //this.parent.handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
 
     private void withinDataSourceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withinDataSourceRadioButtonActionPerformed
         withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
-        //this.parent.handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
 
     private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
@@ -190,13 +188,11 @@ public class IntraCasePanel extends javax.swing.JPanel {
     }
 
     void rigForMultipleDataSources(boolean multipleDataSources) {
-        this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
-        this.allDataSourcesRadioButton.setSelected(multipleDataSources);
+        this.withinDataSourceRadioButton.setEnabled(multipleDataSources);
+        this.allDataSourcesRadioButton.setSelected(!multipleDataSources);
+        this.withinDataSourceRadioButton.setSelected(multipleDataSources);
+        this.withinDataSourceSelected(multipleDataSources);
         
-        if(!multipleDataSources){
-            this.withinDataSourceRadioButton.setSelected(true);
-            this.withinDataSourceSelected(true);
-        }
     }
 
     void setDataSourceMap(Map<Long, String> dataSourceMap) {

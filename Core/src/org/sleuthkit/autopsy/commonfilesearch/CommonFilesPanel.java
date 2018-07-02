@@ -268,7 +268,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
 
             private boolean caseHasMultipleSources() {
-                return CommonFilesPanel.this.intraCasePanel.getDataSourceMap().size() >= 3;
+                return CommonFilesPanel.this.intraCasePanel.getDataSourceMap().size() > 2;
             }
 
             @Override

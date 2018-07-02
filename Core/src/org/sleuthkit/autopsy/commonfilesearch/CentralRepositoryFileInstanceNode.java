@@ -51,7 +51,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
     private final AbstractFile md5Reference;
     
     public CentralRepositoryFileInstanceNode(CentralRepositoryFile content, AbstractFile md5Reference) {
-        super(Children.LEAF, Lookups.fixed(content));
+        super(Children.LEAF, Lookups.fixed(content)); // TODO, using md5Reference enables Other Occurances..but for the incorrect file path
 
         this.crFile = content;
         this.setDisplayName(new File(this.crFile.getFilePath()).getName());
