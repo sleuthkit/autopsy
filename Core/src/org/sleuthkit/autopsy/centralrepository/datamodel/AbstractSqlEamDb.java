@@ -2721,6 +2721,19 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // regardless of whether this succeeds.
                 EamDbUtil.insertDefaultOrganization(conn);
             }
+            
+            // Update from 1.1 to 1.2
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
+                String dropInstancesIdx3 = "DROP INDEX IF EXISTS %s_value";
+                String dropInstancesIdx4 = "DROP INDEX IF EXISTS %s_value_known_status";
+                
+                for (CorrelationAttribute.Type type : CorrelationAttribute.getDefaultCorrelationTypes()) {
+                    String instance_table_name = EamDbUtil.correlationTypeToInstanceTableName(type);
+
+                    statement.execute(String.format(dropInstancesIdx3, instance_table_name));
+                    statement.execute(String.format(dropInstancesIdx4, instance_table_name));
+                }
+            }
 
             if (!updateSchemaVersion(conn)) {
                 throw new EamDbException("Error updating schema version");

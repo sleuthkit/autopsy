@@ -409,8 +409,6 @@ public final class PostgresEamDbSettings {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
         String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -457,8 +455,6 @@ public final class PostgresEamDbSettings {
                 stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
 
                 // FUTURE: allow more than the FILES type
                 if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
