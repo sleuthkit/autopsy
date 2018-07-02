@@ -37,6 +37,7 @@ import javax.swing.JMenuItem;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -60,7 +61,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private static final Logger LOGGER = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
     private static DropdownSingleTermSearchPanel defaultInstance = null;
     private boolean ingestRunning;
-    
 
     /**
      * Gets the default instance of a dropdown panel that provides GUI
@@ -191,20 +191,25 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         "DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]"})
     @Override
     List<KeywordList> getKeywordLists() {
+        String name;
         if (regexRadioButton.isSelected()) {
-            if((keywordTextField.getText() != null)  && 
-                    (keywordTextField.getText().startsWith("^") || 
-                    (keywordTextField.getText().endsWith("$") && ! keywordTextField.getText().endsWith("\\$")))) {
+            if ((keywordTextField.getText() != null)
+                    && (keywordTextField.getText().startsWith("^")
+                    || (keywordTextField.getText().endsWith("$") && !keywordTextField.getText().endsWith("\\$")))) {
 
                 KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.title"),
                         NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.text"),
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             }
+            name = NbBundle.getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
+        } else {
+            name = NbBundle.getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
         }
+
         List<Keyword> keywords = new ArrayList<>();
         keywords.add(new Keyword(keywordTextField.getText(), !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
         List<KeywordList> keywordLists = new ArrayList<>();
-        keywordLists.add(new KeywordList(keywords));
+        keywordLists.add(new KeywordList(name, keywords));
         return keywordLists;
     }
 
@@ -390,9 +395,9 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         }
         setComponentsEnabled();
         firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
-        
+
     }
-    
+
     /**
      * Set the dataSourceList enabled if the dataSourceCheckBox is selected
      */
@@ -400,7 +405,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         boolean enabled = this.dataSourceCheckBox.isSelected();
         this.dataSourceList.setEnabled(enabled);
         if (enabled) {
-            this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+            this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize() - 1);
         } else {
             this.dataSourceList.setSelectedIndices(new int[0]);
         }
@@ -408,7 +413,8 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
 
     /**
      * Get a set of data source object ids that are selected.
-     * @return A set of selected object ids. 
+     *
+     * @return A set of selected object ids.
      */
     @Override
     Set<Long> getDataSourcesSelected() {
