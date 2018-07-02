@@ -10,11 +10,24 @@ attributes.
 - Eliminated one tagging sub menu layer for faster tagging.
 - Added Replace Tag item to tagging menus (shortcut for delete tag, add tag).
 - The Other Occurrences content viewer now shows matches in the current case.
-- A listing of cases in the Central Repository is displayed by the 
-Central Repository options panel.
+- A listing of cases in the central repository is displayed by the 
+central repository options panel.
+- An interesting file artifact is now created when a "zip bomb" is detected.
+- Text and queries sent to Solr are now normalized to handle diacritics, 
+ligatures, narrow and wide width Japanese characters, etc.
+- An object detection ingest module that uses OpenCV and user-supplied
+classifiers has been added to the "experimental" Net Beans Module (NBM).
+- A data source processor that runs Volatility on a memory image has been
+added to the "experimental" NBM.
+- Comments can be added to all files (file correlation properties) recorded 
+in the central repository using a results view context menu item.
+- Comments can be added to all correlation properties recorded 
+in the central repository using an Other Occurrences results content viewer 
+context menu item.
 
 Bug Fixes:
 - Expanding the case tree is more efficient.
+- Improved "zip bomb" detection.
 - Assorted small bug fixes are included.
 
 ---------------- VERSION 4.7.0  --------------

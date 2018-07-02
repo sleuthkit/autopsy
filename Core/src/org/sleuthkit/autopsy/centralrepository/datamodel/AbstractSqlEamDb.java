@@ -38,7 +38,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 import org.sleuthkit.datamodel.TskData;
@@ -881,7 +881,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             sql
                     += "+ (SELECT count(*) FROM "
                     + table_name
-                    + " WHERE case_id=(SELECT id FROM cases WHERE case_uid=?) and data_source_id=(SELECT id FROM data_sources WHERE device_id=?))";
+                    + " WHERE data_source_id=(SELECT data_sources.id FROM cases INNER JOIN data_sources ON cases.id = data_sources.case_id WHERE case_uid=? and device_id=?))";
         }
 
         try {
@@ -1004,8 +1004,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                     bulkArtifacts.get(type.getDbTableName()).clear();
                 }
 
-                TimingMetric timingMetric = EnterpriseHealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
-                EnterpriseHealthMonitor.submitTimingMetric(timingMetric);
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
+                HealthMonitor.submitTimingMetric(timingMetric);
 
                 // Reset state
                 bulkArtifactsCount = 0;

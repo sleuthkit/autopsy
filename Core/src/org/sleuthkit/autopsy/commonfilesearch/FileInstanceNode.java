@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -30,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
- * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
  */
 public class FileInstanceNode extends FileNode {
     
@@ -46,6 +44,8 @@ public class FileInstanceNode extends FileNode {
     public FileInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.dataSource = dataSource;
+        
+        this.setDisplayName(fsContent.getName());
     }
 
     @Override
@@ -73,64 +73,16 @@ public class FileInstanceNode extends FileNode {
             sheet.put(sheetSet);
         }
 
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
-
         final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
-        for (CommonFilePropertyType propType : CommonFilePropertyType.values()) {
-            final String propString = propType.toString();
-            final Object property = map.get(propString);
-            final NodeProperty<Object> nodeProperty = new NodeProperty<>(propString, propString, NO_DESCR, property);
-            sheetSet.put(nodeProperty);
-        }
+        
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsForFile(this.getContent())));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, StringUtils.defaultString(this.getContent().getMIMEType())));
 
         this.addTagProperty(sheetSet);
 
         return sheet;
-    }
-
-    /**
-     * Fill map with AbstractFile properties
-     *
-     * @param map map with preserved ordering, where property names/values are
-     * put
-     * @param node The item to get properties for.
-     */
-    static private void fillPropertyMap(Map<String, Object> map, FileInstanceNode node) {
-
-        map.put(CommonFilePropertyType.ParentPath.toString(), node.getContent().getParentPath());
-        map.put(CommonFilePropertyType.HashsetHits.toString(), getHashSetHitsForFile(node.getContent()));
-        map.put(CommonFilePropertyType.DataSource.toString(), node.getDataSource());
-        map.put(CommonFilePropertyType.MimeType.toString(), StringUtils.defaultString(node.getContent().getMIMEType()));
-    }
-
-    /**
-     * Encapsulates the columns to be displayed for reach row represented by an 
-     * instance of this object.
-     */
-    @NbBundle.Messages({
-        "CommonFilePropertyType.pathColLbl=Parent Path",
-        "CommonFilePropertyType.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilePropertyType.dataSourceColLbl=Data Source",
-        "CommonFilePropertyType.caseColLbl=Case",
-        "CommonFilePropertyType.mimeTypeColLbl=MIME Type"
-    })
-    public enum CommonFilePropertyType {
-
-        ParentPath(Bundle.CommonFilePropertyType_pathColLbl()),
-        HashsetHits(Bundle.CommonFilePropertyType_hashsetHitsColLbl()),
-        DataSource(Bundle.CommonFilePropertyType_dataSourceColLbl()),
-        MimeType(Bundle.CommonFilePropertyType_mimeTypeColLbl());
-
-        final private String displayString;
-
-        private CommonFilePropertyType(String displayString) {
-            this.displayString = displayString;
-        }
-
-        @Override
-        public String toString() {
-            return displayString;
-        }
     }
 }

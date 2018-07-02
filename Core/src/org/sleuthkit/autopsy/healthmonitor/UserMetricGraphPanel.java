@@ -38,7 +38,7 @@ import javax.swing.JPanel;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor.UserData;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor.UserData;
 
 /**
  * Creates graphs using the given user metric data

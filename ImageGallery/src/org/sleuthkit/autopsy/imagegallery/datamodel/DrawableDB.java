@@ -1179,6 +1179,12 @@ public final class DrawableDB {
      * @return the number of files with Cat-0
      */
     public long getUncategorizedCount(Collection<Long> fileIDs) {
+        
+        // if the fileset is empty, return count as 0
+        if (fileIDs.isEmpty()) {
+            return 0;
+        }
+        
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
         // get a comma seperated list of TagName ids for non zero categories

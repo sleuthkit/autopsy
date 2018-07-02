@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.openide.nodes.ChildFactory;
@@ -50,7 +49,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * @param md5Metadata 
      */
     @NbBundle.Messages({
-        "InstanceCountNode.displayName=Matches with %s instances"
+        "InstanceCountNode.displayName=Files with %s instances (%s)"
     })
     public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
@@ -58,7 +57,8 @@ final public class InstanceCountNode extends DisplayableItemNode {
         this.instanceCount = instanceCount;
         this.metadataList = md5Metadata;
         
-        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount)));
+        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), md5Metadata.size()));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
     /**
@@ -101,51 +101,13 @@ final public class InstanceCountNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
-
+        
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
-        for (InstanceCountNode.InstanceCountNodePropertyType propType : InstanceCountNode.InstanceCountNodePropertyType.values()) {
-            final String propString = propType.toString();
-            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
-        }
-
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
         return sheet;
     }
 
-    /**
-     * Fill map with AbstractFile properties
-     *
-     * @param map map with preserved ordering, where property names/values are
-     * put
-     * @param node The item to get properties for.
-     */
-    static private void fillPropertyMap(Map<String, Object> map, InstanceCountNode node) {
-        map.put(InstanceCountNodePropertyType.Match.toString(), node.getInstanceCount());
-    }
-    
-    /**
-     * Fields which will appear in the tree table.
-     */
-    @NbBundle.Messages({
-        "InstanceCountNodePropertyType.matchCountColLbl1=Match"
-    })
-    public enum InstanceCountNodePropertyType{
-        
-        Match(Bundle.InstanceCountNodePropertyType_matchCountColLbl1());
-        
-        final private String displayString;
-        
-        private InstanceCountNodePropertyType(String displayName){
-            this.displayString = displayName;
-        }
-        
-        @Override
-        public String toString(){
-            return this.displayString;
-        }
-    }
 
     /**
      * ChildFactory which builds CommonFileParentNodes from the
