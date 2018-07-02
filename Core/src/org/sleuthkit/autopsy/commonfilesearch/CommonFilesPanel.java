@@ -30,6 +30,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -57,6 +58,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private static final Long NO_DATA_SOURCE_SELECTED = -1L;
 
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
+
     private boolean singleDataSource = false;
     private String selectedDataSource = "";
     private boolean pictureViewCheckboxState;
@@ -74,7 +76,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         this.errorText.setVisible(false);
 
         this.intraCasePanel.setParent(this);
-        this.interCasePanel.setParent(this);
 
         this.setupDataSources();
 
@@ -85,77 +86,19 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         }
     }
 
+    private static boolean isEamDbAvailable() {
+        try {
+            EamDb DbManager = EamDb.getInstance();
+            return DbManager != null;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
+        }
+        return false;
+    }
+
     private void disableIntercaseSearch() {
         this.intraCaseRadio.setSelected(true);
         this.interCaseRadio.setEnabled(false);
-    }
-
-                //only enable all this stuff if we actually have datasources
-                if (dataSourcesNames.length > 0) {
-                    dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
-                    CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
-                    CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
-
-                    boolean multipleDataSources = this.caseHasMultipleSources();
-                    
-                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(true);
-                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(true);
-                    
-                    if (!multipleDataSources) {
-                        CommonFilesPanel.this.withinDataSourceRadioButton.setEnabled(false);
-                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(false);
-                        withinDataSourceSelected(false);
-                        CommonFilesPanel.this.selectDataSourceComboBox.setEnabled(false);
-                    }
-
-                    CommonFilesPanel.this.searchButton.setEnabled(true);
-                } else {
-                    MessageNotifyUtil.Message.info(Bundle.CommonFilesPanel_buildDataSourcesMap_updateUi_noDataSources());
-                    CommonFilesPanel.this.cancelButtonActionPerformed(null);
-                }
-            }
-
-            private boolean caseHasMultipleSources() {
-                return CommonFilesPanel.this.dataSourceMap.size() >= 3;
-            }
-
-            @Override
-            protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-                DataSourceLoader loader = new DataSourceLoader();
-                return loader.getDataSourceMap();
-            }
-
-            @Override
-            protected void done() {
-
-                try {
-                    CommonFilesPanel.this.dataSourceMap = this.get();
-
-                    updateUi();
-
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_buildDataSourceMap_done_interupted());
-                } catch (ExecutionException ex) {
-                    String errorMessage;
-                    Throwable inner = ex.getCause();
-                    if (inner instanceof TskCoreException) {
-                        LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_tskCoreException();
-                    } else if (inner instanceof NoCurrentCaseException) {
-                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_noCurrentCaseException();
-                    } else if (inner instanceof SQLException) {
-                        LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_sqlException();
-                    } else {
-                        LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_exception();
-                    }
-                    MessageNotifyUtil.Message.error(errorMessage);
-                }
-            }
-        }.execute();
     }
 
     @NbBundle.Messages({
@@ -176,7 +119,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             private String tabTitle;
             private ProgressHandle progress;
-            
+
             private void setTitleForAllDataSources() {
                 this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
             }
@@ -194,7 +137,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
-                
+
                 Long dataSourceId = CommonFilesPanel.this.intraCasePanel.getSelectedDataSourceId();
                 Integer caseId = CommonFilesPanel.this.interCasePanel.getSelectedCaseId();
 
@@ -213,8 +156,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 }
 
                 if (CommonFilesPanel.this.interCaseRadio.isSelected()) {
-                    
-                    if(caseId == InterCasePanel.NO_CASE_SELECTED){
+
+                    if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         builder = new AllCasesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
                     } else {
                         builder = new SingleCaseEamDbCommonFilesAlgorithm(caseId, CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
@@ -230,11 +173,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         setTitleForSingleSource(dataSourceId);
                     }
                 }
-                
+
                 //TODO set title from one method rathe than two (or more) overloads
-                
                 metadata = builder.findFiles();
-                
+
                 this.tabTitle = builder.buildTabTitle();
 
                 return metadata;
@@ -244,7 +186,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected void done() {
                 try {
                     super.done();
-                    
+
                     CommonFilesMetadata metadata = this.get();
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
@@ -258,11 +200,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
-                    
+
                     progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgressDisplay());
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
                     progress.finish();
-                    
+
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
                     MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
@@ -288,6 +230,73 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         }.execute();
     }
 
+    //only enable all this stuff if we actually have datasources
+//                if (dataSourcesNames.length > 0) {
+//                    dataSourcesNames = CommonFilesPanel.this.dataSourceMap.values().toArray(dataSourcesNames);
+//                    CommonFilesPanel.this.dataSourcesList = new DataSourceComboBoxModel(dataSourcesNames);
+//                    CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
+//
+//                    boolean multipleDataSources = this.caseHasMultipleSources();
+//                    
+//                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(true);
+//                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(true);
+//                    
+//                    if (!multipleDataSources) {
+//                        CommonFilesPanel.this.withinDataSourceRadioButton.setEnabled(false);
+//                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(false);
+//                        withinDataSourceSelected(false);
+//                        CommonFilesPanel.this.selectDataSourceComboBox.setEnabled(false);
+//                    }
+//
+//                    CommonFilesPanel.this.searchButton.setEnabled(true);
+//                } else {
+//                    MessageNotifyUtil.Message.info(Bundle.CommonFilesPanel_buildDataSourcesMap_updateUi_noDataSources());
+//                    CommonFilesPanel.this.cancelButtonActionPerformed(null);
+//                }
+//            }
+//
+//            private boolean caseHasMultipleSources() {
+//                return CommonFilesPanel.this.dataSourceMap.size() >= 3;
+//            }
+//
+//            @Override
+//            protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
+//                DataSourceLoader loader = new DataSourceLoader();
+//                return loader.getDataSourceMap();
+//            }
+//
+//            @Override
+//            protected void done() {
+//
+//                try {
+//                    CommonFilesPanel.this.dataSourceMap = this.get();
+//
+//                    updateUi();
+//
+//                } catch (InterruptedException ex) {
+//                    LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
+//                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_buildDataSourceMap_done_interupted());
+//                } catch (ExecutionException ex) {
+//                    String errorMessage;
+//                    Throwable inner = ex.getCause();
+//                    if (inner instanceof TskCoreException) {
+//                        LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
+//                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_tskCoreException();
+//                    } else if (inner instanceof NoCurrentCaseException) {
+//                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
+//                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_noCurrentCaseException();
+//                    } else if (inner instanceof SQLException) {
+//                        LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
+//                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_sqlException();
+//                    } else {
+//                        LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
+//                        errorMessage = Bundle.CommonFilesPanel_buildDataSourceMap_done_exception();
+//                    }
+//                    MessageNotifyUtil.Message.error(errorMessage);
+//                }
+//            }
+//        }.execute();
+//    }
     /**
      * Sets up the data sources dropdown and returns the data sources map for
      * future usage.
@@ -396,7 +405,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Map<Integer, String> casemap = new HashMap<>();
                 CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
-                    if(currentCorCase.getID() != correlationCase.getID()) { // if not the current Case
+                    if (currentCorCase.getID() != correlationCase.getID()) { // if not the current Case
                         casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
                     }
                 }
@@ -688,7 +697,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
         this.documentsCheckboxState = this.documentsCheckbox.isSelected();
-        
+
         if (this.allFileCategoriesRadioButton.isSelected()) {
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);

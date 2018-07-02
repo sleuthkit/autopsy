@@ -295,9 +295,9 @@ class InterCaseUtils {
         
         int tally = 0;
         
-        for(Map.Entry<String, Md5Metadata> file : searchDomain.getMetadata().entrySet()){
+        for(Map.Entry<Integer, List<Md5Metadata>> file : searchDomain.getMetadata().entrySet()){
             
-            Collection<SleuthkitCaseFileInstanceMetadata> fileInstances = file.getValue().getMetadata();
+            Collection<SleuthkitCaseFileInstanceMetadata> fileInstances = file.getValue();
             
             for(SleuthkitCaseFileInstanceMetadata fileInstance : fileInstances){
                 
