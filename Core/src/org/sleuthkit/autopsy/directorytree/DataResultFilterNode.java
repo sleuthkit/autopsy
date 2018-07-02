@@ -401,10 +401,8 @@ public class DataResultFilterNode extends FilterNode {
             }
             Content c = ban.getLookup().lookup(File.class);
             Node n = null;
-            boolean md5Action = false;
             if (c != null) {
                 n = new FileNode((AbstractFile) c);
-                md5Action = true;
             } else if ((c = ban.getLookup().lookup(Directory.class)) != null) {
                 n = new DirectoryNode((Directory) c);
             } else if ((c = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -438,10 +436,6 @@ public class DataResultFilterNode extends FilterNode {
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(ExtractAction.getInstance());
-                if (md5Action) {
-                    actionsList.add(new HashSearchAction(
-                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.searchFilesSameMd5.text"), n));
-                }
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
