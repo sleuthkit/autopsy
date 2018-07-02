@@ -19,12 +19,10 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
@@ -108,10 +106,10 @@ public abstract class FileInstanceNodeGenerator {
      */
     public abstract DisplayableItemNode generateNode();
 
-    public String getCaseName(){
+    public String getCaseName() {
         return this.caseName;
     }
-    
+
     /**
      * Get string name of the data source where this instance appears.
      *

@@ -49,7 +49,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);;
         
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
     }

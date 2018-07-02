@@ -113,15 +113,16 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         final String name = file.getName();
         final String parent = file.getParent();
         
-        final String caseQualifiedDataSource = String.format("%s: %s", centralRepoFile.getCorrelationCase().getDisplayName(), centralRepoFile.getCorrelationDataSource().getName());
+        final String caseQualifiedDataSource = centralRepoFile.getCorrelationDataSource().getName();
         
-        final String NO_DESCR = "";//Bundle.CommonFilesSearchResultsViewerTable_noDesc();
+        final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, name));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, parent));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, caseQualifiedDataSource));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, caseName));
 
         return sheet;        
     }
