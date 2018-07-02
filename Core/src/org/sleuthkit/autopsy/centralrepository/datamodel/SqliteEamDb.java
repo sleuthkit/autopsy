@@ -736,6 +736,42 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
+    
+    /**
+     * Process a single Artifact instance row in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param id the id of the row to return
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processInstanceTableRow(CorrelationAttribute.Type type, int id, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        try {
+            acquireSharedLock();
+            super.processInstanceTableRow(type, id, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    
+    /**
+     * Process the Artifact md5s in the EamDb for matches of case files which are not known
+     * @param type EamArtifact.Type to search for
+     * @param correlationCase  CorrelationCase to filter by
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        try {
+            acquireSharedLock();
+            super.processCaseInstancesTable(type, correlationCase, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+      
     /**
      * Check whether a reference set with the given name/version is in the central repo.
      * Used to check for name collisions when creating reference sets.
