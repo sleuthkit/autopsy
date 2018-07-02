@@ -41,6 +41,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import static org.sleuthkit.autopsy.casemodule.services.TagsManager.getNotableTagLabel;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -521,7 +522,7 @@ class TableReportGenerator {
      * @param tableModule module to report on
      */
     @SuppressWarnings("deprecation")
-    @NbBundle.Messages ({"ReportGenerator.errList.noOpenCase=No open case available."})
+    @NbBundle.Messages({"ReportGenerator.errList.noOpenCase=No open case available."})
     private void writeKeywordHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
 
         // Query for keyword lists-only so that we can tell modules what lists
@@ -692,7 +693,7 @@ class TableReportGenerator {
      *
      * @param tableModule module to report on
      */
-    @SuppressWarnings("deprecation")
+     @SuppressWarnings("deprecation")
     private void writeHashsetHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
         String orderByClause;
         Case openCase;
@@ -1403,8 +1404,8 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SERVER_NAME)));
 
-        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId  || 
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID() == artifactTypeId) {
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME)));
 
@@ -1623,14 +1624,15 @@ class TableReportGenerator {
     private HashSet<String> getUniqueTagNames(long artifactId) throws TskCoreException {
         HashSet<String> uniqueTagNames = new HashSet<>();
 
-        String query = "SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat "
+        String query = "SELECT display_name, artifact_id, knownStatus FROM tag_names AS tn, blackboard_artifact_tags AS bat "
                 + //NON-NLS 
                 "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId; //NON-NLS
 
         try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
             ResultSet tagNameRows = dbQuery.getResultSet();
             while (tagNameRows.next()) {
-                uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
+                String notableString = tagNameRows.getInt("knownStatus") == TskData.FileKnown.BAD.ordinal() ? getNotableTagLabel() : "";
+                uniqueTagNames.add(tagNameRows.getString("display_name") + notableString); //NON-NLS
             }
         } catch (TskCoreException | SQLException | NoCurrentCaseException ex) {
             throw new TskCoreException("Error getting tag names for artifact: ", ex);
