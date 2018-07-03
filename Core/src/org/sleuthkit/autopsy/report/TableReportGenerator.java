@@ -562,13 +562,13 @@ class TableReportGenerator {
             ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while (listsRs.next()) {
-                String list = listsRs.getString("list"); //NON-NLS
                 long artifactId = listsRs.getLong("artifact_id");
                 HashSet<String> uniqueTagNames = getUniqueTagNames(artifactId); //NON-NLS
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }
                 keywordHitsAndTags.put(artifactId, uniqueTagNames);
+                String list = listsRs.getString("list"); //NON-NLS
                 if (list.isEmpty()) {
                     list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
                 }
@@ -718,7 +718,7 @@ class TableReportGenerator {
             orderByClause = "ORDER BY att.value_text ASC"; //NON-NLS
         }
         String hashsetsQuery
-                = "SELECT att.value_text AS list "
+                = "SELECT art.artifact_id AS artifact_id, att.value_text AS list "
                 + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art "
                 + //NON-NLS
@@ -728,14 +728,25 @@ class TableReportGenerator {
                 + //NON-NLS
                 "AND att.artifact_id = art.artifact_id "
                 + //NON-NLS
-                "GROUP BY list " + orderByClause; //NON-NLS
-
+                orderByClause; //NON-NLS
+        HashMap<Long, HashSet<String>> hashsetHitsAndTags = new HashMap<>();
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(hashsetsQuery)) {
             // Query for hashsets
             ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
+
             while (listsRs.next()) {
-                lists.add(listsRs.getString("list")); //NON-NLS
+
+                long artifactId = listsRs.getLong("artifact_id");
+                HashSet<String> uniqueTagNames = getUniqueTagNames(artifactId); //NON-NLS
+                if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                    continue;
+                }
+                hashsetHitsAndTags.put(artifactId, uniqueTagNames);
+                String list = listsRs.getString("list");
+                if (!lists.contains(list)) {
+                    lists.add(list);
+                }
             }
 
             tableModule.startDataType(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName(), comment);
@@ -783,8 +794,8 @@ class TableReportGenerator {
                 }
 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = getUniqueTagNames(resultSet.getLong("artifact_id")); //NON-NLS
-                if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                HashSet<String> uniqueTagNames = hashsetHitsAndTags.get(resultSet.getLong("artifact_id")); //NON-NLS
+                if (uniqueTagNames == null) {
                     continue;
                 }
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
