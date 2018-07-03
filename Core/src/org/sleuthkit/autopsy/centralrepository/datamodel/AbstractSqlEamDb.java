@@ -553,11 +553,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (eamArtifact.getCorrelationValue() == null) {
             throw new EamDbException("Correlation value is null");
         }
-        
-        // Don't throw an exception here because the calling code may be looping over values.
         if (eamArtifact.getCorrelationValue().length() >= MAX_VALUE_LENGTH) {
-            logger.log(Level.WARNING, "Artifact value too long for central repository: {0}", eamArtifact.getCorrelationValue());
-            return;
+            throw new EamDbException("Artifact value too long for central repository: " + eamArtifact.getCorrelationValue());
         }
 
         Connection conn = connect();
