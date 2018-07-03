@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterState;
@@ -46,18 +45,7 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
 
         //keep expanion map upto date if user expands/collapses filter
         expandedProperty().addListener(expandedProperty -> expansionMap.put(filterState.getFilter(), isExpanded()));
-        Boolean orDefault = expansionMap.getOrDefault(filterState.getFilter(), false);
-//        //listen to changes in the expansion map, and update expansion state of filter object
-//        expansionMap.addListener((MapChangeListener.Change<? extends TimelineFilter, ? extends Boolean> change) -> {
-//            TimelineFilter changedFilter = change.getKey();
-//            if (changedFilter.equals(filterState.getFilter())) {
-//                setExpanded(expansionMap.getOrDefault(changedFilter, false));
-//            }
-////        });
-//        if (orDefault == true) {
-//            System.out.println("");
-//        }
-        setExpanded(orDefault);
+        setExpanded(expansionMap.getOrDefault(filterState.getFilter(), false));
 
         //if the filter is a compound filter, add its subfilters to the tree
         if (filterState instanceof CompoundFilterState<?, ?>) {

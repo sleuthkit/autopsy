@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.beans.binding.BooleanExpression;
-import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;

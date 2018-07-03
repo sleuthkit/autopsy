@@ -22,8 +22,6 @@ import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
@@ -119,7 +117,7 @@ final public class FilterSetPanel extends BorderPane {
 
         //type is the only filter expanded initialy
         expansionMap.put(controller.getEventsModel().getFilterState().getFilter(), true);
-        expansionMap.put(controller.getEventsModel().getFilterState().getTypeFilterModel().getFilter(), true);
+        expansionMap.put(controller.getEventsModel().getFilterState().getTypeFilterState().getFilter(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());

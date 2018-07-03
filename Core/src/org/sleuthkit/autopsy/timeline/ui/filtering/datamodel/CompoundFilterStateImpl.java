@@ -27,7 +27,7 @@ import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 
-final class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
+class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
         extends DefaultFilterState<C>
         implements CompoundFilterState<SubFilterType, C> {
 
@@ -92,7 +92,7 @@ final class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C exte
         subFilterStates.add(newFilterModel);
         newFilterModel.selectedProperty().addListener(selectedProperty -> {
             //set this compound filter model  selected af any of the subfilters are selected.
-            setSelected(getSubFilterStates().parallelStream().anyMatch(FilterState::isSelected));
+            setSelected(getSubFilterStates().stream().anyMatch(FilterState::isSelected));
         });
     }
 

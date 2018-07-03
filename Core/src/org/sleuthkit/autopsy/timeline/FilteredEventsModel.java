@@ -154,13 +154,13 @@ public final class FilteredEventsModel {
         getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilterState rootFilter = filterProperty().get();
-            rootFilter.getDataSourcesFilterModel().getFilter().getSubFilters().add(dataSourceFilter);
+            rootFilter.getDataSourcesFilterState().getFilter().getSubFilters().add(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
             RootFilterState rootFilter = filterProperty().get();
-            rootFilter.getHashHitsFilterModel().getFilter().getSubFilters().add(hashSetFilter);
+            rootFilter.getHashHitsFilterState().getFilter().getSubFilters().add(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
@@ -278,9 +278,9 @@ public final class FilteredEventsModel {
      */
     public void syncTagsFilter(RootFilterState rootFilter) {
         for (TagName tagName : tagNames) {
-            rootFilter.getTagsFilterModel().getFilter().addSubFilter(new TagNameFilter(tagName));
+            rootFilter.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
         }
-        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterModel().getSubFilterStates()) {
+        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
             filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
     }

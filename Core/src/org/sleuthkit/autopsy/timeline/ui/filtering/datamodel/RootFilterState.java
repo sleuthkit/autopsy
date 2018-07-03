@@ -30,8 +30,6 @@ import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
 import org.sleuthkit.datamodel.timeline.filters.HashSetFilter;
 import org.sleuthkit.datamodel.timeline.filters.HideKnownFilter;
 import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
 import org.sleuthkit.datamodel.timeline.filters.TextFilter;
 import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
@@ -40,17 +38,17 @@ import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
  */
 public class RootFilterState implements FilterState<RootFilter>, CompoundFilterState< TimelineFilter, RootFilter> {
 
-    private final CompoundFilterState<TypeFilter, TypeFilter> typeFilterModel;
-    private final DefaultFilterState<HideKnownFilter> knownFilterModel;
-    private final DefaultFilterState<TextFilter> textFilterModel;
-    private final CompoundFilterState<TagNameFilter, TagsFilter> tagsFilterModel;
-    private final CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterModel;
-    private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterModel;
+    private final CompoundFilterState<TypeFilter, TypeFilter> typeFilterState;
+    private final DefaultFilterState<HideKnownFilter> knownFilterState;
+    private final DefaultFilterState<TextFilter> textFilterState;
+    private final TagsFilterState tagsFilterState;
+    private final CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState;
+    private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
 
     private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
     private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
 
-    private final ObservableList<   FilterState< ?>> subFilterModels = FXCollections.observableArrayList();
+    private final ObservableList<   FilterState< ?>> subFilterStates = FXCollections.observableArrayList();
     private final RootFilter delegate;
 
     public RootFilterState(RootFilter delegate) {
@@ -58,90 +56,90 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
                 new CompoundFilterStateImpl<>(delegate.getTypeFilter()),
                 new DefaultFilterState<>(delegate.getKnownFilter()),
                 new DefaultFilterState<>(delegate.getTextFilter()),
-                new CompoundFilterStateImpl<>(delegate.getTagsFilter()),
+                new TagsFilterState(delegate.getTagsFilter()),
                 new CompoundFilterStateImpl<>(delegate.getHashHitsFilter()),
                 new CompoundFilterStateImpl<>(delegate.getDataSourcesFilter())
         );
     }
 
     private RootFilterState(RootFilter delegate,
-                            CompoundFilterState<TypeFilter, TypeFilter> typeFilterModel,
-                            DefaultFilterState<HideKnownFilter> knownFilterModel,
-                            DefaultFilterState<TextFilter> textFilterModel,
-                            CompoundFilterState<TagNameFilter, TagsFilter> tagsFilterModel,
-                            CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterModel,
-                            CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterModel) {
+                            CompoundFilterState<TypeFilter, TypeFilter> typeFilterState,
+                            DefaultFilterState<HideKnownFilter> knownFilterState,
+                            DefaultFilterState<TextFilter> textFilterState,
+                        TagsFilterState tagsFilterState,
+                            CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
+                            CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState) {
         this.delegate = delegate;
-        this.typeFilterModel = typeFilterModel;
-        this.knownFilterModel = knownFilterModel;
-        this.textFilterModel = textFilterModel;
-        this.tagsFilterModel = tagsFilterModel;
-        this.hashHitsFilterModel = hashHitsFilterModel;
-        this.dataSourcesFilterModel = dataSourcesFilterModel;
-        subFilterModels.addAll(
-                knownFilterModel, textFilterModel,
-                tagsFilterModel,
-                hashHitsFilterModel,
-                dataSourcesFilterModel, typeFilterModel);
+        this.typeFilterState = typeFilterState;
+        this.knownFilterState = knownFilterState;
+        this.textFilterState = textFilterState;
+        this.tagsFilterState = tagsFilterState;
+        this.hashHitsFilterState = hashHitsFilterState;
+        this.dataSourcesFilterState = dataSourcesFilterState;
+        subFilterStates.addAll(
+                knownFilterState, textFilterState,
+                tagsFilterState,
+                hashHitsFilterState,
+                dataSourcesFilterState, typeFilterState);
     }
 
     @Override
     public RootFilterState copyOf() {
         return new RootFilterState(getFilter().copyOf(),
-                getTypeFilterModel().copyOf(),
-                getKnownFilterModel().copyOf(),
-                getTextFilterModel().copyOf(),
-                getTagsFilterModel().copyOf(),
-                getHashHitsFilterModel().copyOf(),
-                getDataSourcesFilterModel().copyOf());
+                getTypeFilterState().copyOf(),
+                getKnownFilterState().copyOf(),
+                getTextFilterState().copyOf(),
+                getTagsFilterState().copyOf(),
+                getHashHitsFilterState().copyOf(),
+                getDataSourcesFilterState().copyOf());
     }
 
-    public CompoundFilterState<TypeFilter, TypeFilter> getTypeFilterModel() {
-        return typeFilterModel;
+    public CompoundFilterState<TypeFilter, TypeFilter> getTypeFilterState() {
+        return typeFilterState;
     }
 
-    public DefaultFilterState<HideKnownFilter> getKnownFilterModel() {
-        return knownFilterModel;
+    public DefaultFilterState<HideKnownFilter> getKnownFilterState() {
+        return knownFilterState;
     }
 
-    public DefaultFilterState<TextFilter> getTextFilterModel() {
-        return textFilterModel;
+    public DefaultFilterState<TextFilter> getTextFilterState() {
+        return textFilterState;
     }
 
-    public CompoundFilterState<TagNameFilter, TagsFilter> getTagsFilterModel() {
-        return tagsFilterModel;
+    public TagsFilterState getTagsFilterState() {
+        return tagsFilterState;
     }
 
-    public CompoundFilterState<HashSetFilter, HashHitsFilter> getHashHitsFilterModel() {
-        return hashHitsFilterModel;
+    public CompoundFilterState<HashSetFilter, HashHitsFilter> getHashHitsFilterState() {
+        return hashHitsFilterState;
     }
 
-    public CompoundFilterState<DataSourceFilter, DataSourcesFilter> getDataSourcesFilterModel() {
-        return dataSourcesFilterModel;
+    public CompoundFilterState<DataSourceFilter, DataSourcesFilter> getDataSourcesFilterState() {
+        return dataSourcesFilterState;
     }
 
     @Override
     public RootFilter getActiveFilter() {
-        TypeFilter activeOrNullCompound = typeFilterModel.getActiveFilter();
 
-        return new RootFilter(knownFilterModel.getActiveFilter(),
-                tagsFilterModel.getActiveFilter(),
-                hashHitsFilterModel.getActiveFilter(),
-                textFilterModel.getActiveFilter(), activeOrNullCompound,
-                dataSourcesFilterModel.getActiveFilter(),
+        return new RootFilter(knownFilterState.getActiveFilter(),
+                tagsFilterState.getActiveFilter(),
+                hashHitsFilterState.getActiveFilter(),
+                textFilterState.getActiveFilter(),
+                typeFilterState.getActiveFilter(),
+                dataSourcesFilterState.getActiveFilter(),
                 Collections.emptySet());
     }
 
     @SuppressWarnings("rawtypes")
     public boolean hasActiveHashFilters() {
-        return hashHitsFilterModel.isActive()
-               && hashHitsFilterModel.getSubFilterStates().stream().anyMatch(FilterState::isActive);
+        return hashHitsFilterState.isActive()
+               && hashHitsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
     }
 
     @SuppressWarnings("rawtypes")
     public boolean hasActiveTagsFilters() {
-        return tagsFilterModel.isActive()
-               && tagsFilterModel.getSubFilterStates().stream().anyMatch(FilterState::isActive);
+        return tagsFilterState.isActive()
+               && tagsFilterState.getSubFilterStates().stream().anyMatch(FilterState::isActive);
     }
 
     @Override
@@ -170,7 +168,7 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
 
     @Override
     public ObservableList<  FilterState< ? extends TimelineFilter>> getSubFilterStates() {
-        return subFilterModels;
+        return subFilterStates;
     }
 
     @Override
