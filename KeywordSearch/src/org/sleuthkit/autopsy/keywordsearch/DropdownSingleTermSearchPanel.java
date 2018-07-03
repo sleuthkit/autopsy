@@ -191,7 +191,6 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         "DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]"})
     @Override
     List<KeywordList> getKeywordLists() {
-        String name;
         if (regexRadioButton.isSelected()) {
             if ((keywordTextField.getText() != null)
                     && (keywordTextField.getText().startsWith("^")
@@ -201,15 +200,11 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                         NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.text"),
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             }
-            name = NbBundle.getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
-        } else {
-            name = NbBundle.getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
         }
-
         List<Keyword> keywords = new ArrayList<>();
         keywords.add(new Keyword(keywordTextField.getText(), !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
         List<KeywordList> keywordLists = new ArrayList<>();
-        keywordLists.add(new KeywordList(name, keywords));
+        keywordLists.add(new KeywordList(keywords));
         return keywordLists;
     }
 

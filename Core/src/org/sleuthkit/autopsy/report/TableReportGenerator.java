@@ -61,7 +61,7 @@ class TableReportGenerator {
 
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final HashSet<String> tagNamesFilter = new HashSet<>();
-
+    private final static Type LIST_NAME_ATTRIBUTE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
     private final Set<Content> images = new HashSet<>();
     private final ReportProgressPanel progressPanel;
     private final TableReportModule tableReport;
@@ -530,7 +530,6 @@ class TableReportGenerator {
         // @@@ There is a bug in here.  We should use the tags in the below code
         // so that we only report the lists that we will later provide with real
         // hits.  If no keyord hits are tagged, then we make the page for nothing.
-        String orderByClause;
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
@@ -539,25 +538,15 @@ class TableReportGenerator {
             logger.log(Level.SEVERE, "Exception while getting open case: ", ex); //NON-NLS
             return;
         }
-        if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
-        } else {
-            orderByClause = "ORDER BY list ASC"; //NON-NLS
-        }
         String keywordListQuery
-                = "SELECT art.artifact_id AS artifact_id, att.value_text AS list "
+                = "SELECT art.artifact_id AS artifact_id "
                 + //NON-NLS
-                "FROM blackboard_attributes AS att, blackboard_artifacts AS art "
+                "FROM blackboard_artifacts AS art "
                 + //NON-NLS
-                "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
-                + //NON-NLS
-                "AND art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " "
-                + //NON-NLS
-                "AND att.artifact_id = art.artifact_id "
-                + //NON-NLS
-                orderByClause; //NON-NLS
+                "WHERE art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
+        System.out.println("QUERY: " + keywordListQuery);
+        HashMap<Long, TagsAndListWrapper> keywordHitsAndTags = new HashMap<>();
 
-        HashMap<Long, HashSet<String>> keywordHitsAndTags = new HashMap<>();
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
             ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
@@ -567,11 +556,19 @@ class TableReportGenerator {
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }
-                keywordHitsAndTags.put(artifactId, uniqueTagNames);
-                String list = listsRs.getString("list"); //NON-NLS
-                if (list.isEmpty()) {
-                    list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
+                String tagsString = uniqueTagNames == null ? "" : makeCommaSeparatedList(uniqueTagNames);
+                BlackboardArtifact artifact = openCase.getSleuthkitCase().getArtifactById(artifactId);
+                BlackboardAttribute attr = null;
+                if (artifact != null) {
+                    attr = artifact.getAttribute(LIST_NAME_ATTRIBUTE);
                 }
+                String list;
+                if (attr == null || attr.getValueString().isEmpty()) {
+                    list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
+                } else {
+                    list = attr.getValueString();
+                }
+                keywordHitsAndTags.put(artifactId, new TagsAndListWrapper(tagsString, list));
                 if (!lists.contains(list)) {
                     lists.add(list);
                 }
@@ -585,37 +582,29 @@ class TableReportGenerator {
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
             logger.log(Level.SEVERE, "Failed to query keyword lists: ", ex); //NON-NLS
+            System.out.println("ERROR MESSAGE: " + ex.getMessage());
             return;
         }
-
+        String orderByClause;
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+            orderByClause = "ORDER BY convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(att2.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
-            orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
+            orderByClause = "ORDER BY  keyword ASC, preview ASC"; //NON-NLS
         }
         // Query for keywords, grouped by list
         String keywordsQuery
-                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
+                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview "
                 + //NON-NLS
-                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f "
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2 "
                 + //NON-NLS
                 "WHERE (att1.artifact_id = art.artifact_id) "
                 + //NON-NLS
                 "AND (att2.artifact_id = art.artifact_id) "
                 + //NON-NLS
-                "AND (att3.artifact_id = art.artifact_id) "
-                + //NON-NLS
-                "AND (f.obj_id = art.obj_id) "
-                + //NON-NLS
                 "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") "
                 + //NON-NLS
                 "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") "
-                + //NON-NLS
-                "AND (att3.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
                 + //NON-NLS
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
                 + //NON-NLS
@@ -632,16 +621,13 @@ class TableReportGenerator {
                 }
 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = keywordHitsAndTags.get(resultSet.getLong("artifact_id")); //NON-NLS
-                if (uniqueTagNames == null) {
-                    continue;
-                }
-                String tagsList = makeCommaSeparatedList(uniqueTagNames);
+                TagsAndListWrapper artifactIdTagsAndList = keywordHitsAndTags.get(resultSet.getLong("artifact_id"));
+                String tagsList = artifactIdTagsAndList.getTags(); //NON-NLS
 
                 Long objId = resultSet.getLong("obj_id"); //NON-NLS
                 String keyword = resultSet.getString("keyword"); //NON-NLS
                 String preview = resultSet.getString("preview"); //NON-NLS
-                String list = resultSet.getString("list"); //NON-NLS
+//                String list = resultSet.getString("list"); //NON-NLS
                 String uniquePath = "";
 
                 try {
@@ -654,7 +640,7 @@ class TableReportGenerator {
                             NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
                     logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
                 }
-
+                String list = artifactIdTagsAndList.getList();
                 // If the lists aren't the same, we've started a new list
                 if ((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs")))) {
@@ -1806,6 +1792,25 @@ class TableReportGenerator {
         public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types) {
             // This column doesn't have a type, so nothing to remove
             return types;
+        }
+    }
+
+    private class TagsAndListWrapper {
+
+        private final String tagsString;
+        private final String list;
+
+        TagsAndListWrapper(String tags, String list) {
+            this.tagsString = tags;
+            this.list = list;
+        }
+
+        String getTags() {
+            return tagsString;
+        }
+
+        String getList() {
+            return list;
         }
     }
 }

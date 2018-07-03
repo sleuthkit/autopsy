@@ -96,18 +96,7 @@ public class KeywordList {
     KeywordList(List<Keyword> keywords) {
         this("", new Date(0), new Date(0), false, false, keywords, false);
     }
-    
-    /**
-     * Constructs a temporary list of keywords to be used for ad hoc keyword
-     * search and then discarded.
-     *
-     * @param name the set name for this keyword list
-     * @param keywords the keywords which are part of the list
-     */
-    KeywordList(String name, List<Keyword> keywords) {
-        this(name, new Date(0), new Date(0), false, false, keywords, false);
-    }
-    
+     
     /**
      * Get the name assigned to the keyword list.
      *
