@@ -105,7 +105,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                     dbManager.updateAttributeInstanceComment(correlationAttribute);
                 }
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+                logger.log(Level.SEVERE, "Error adding comment", ex);
             }
         }
         return centralRepoCommentDialog.getComment();
