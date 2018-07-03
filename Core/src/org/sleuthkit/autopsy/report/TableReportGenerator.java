@@ -545,7 +545,7 @@ class TableReportGenerator {
             orderByClause = "ORDER BY list ASC"; //NON-NLS
         }
         String keywordListQuery
-                = "SELECT att.value_text AS list "
+                = "SELECT art.artifact_id AS artifact_id, att.value_text AS list "
                 + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art "
                 + //NON-NLS
@@ -555,20 +555,28 @@ class TableReportGenerator {
                 + //NON-NLS
                 "AND att.artifact_id = art.artifact_id "
                 + //NON-NLS
-                "GROUP BY list " + orderByClause; //NON-NLS
+                orderByClause; //NON-NLS
 
+        HashMap<Long, HashSet<String>> keywordHitsAndTags = new HashMap<>();
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
             ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while (listsRs.next()) {
                 String list = listsRs.getString("list"); //NON-NLS
+                long artifactId = listsRs.getLong("artifact_id");
+                HashSet<String> uniqueTagNames = getUniqueTagNames(artifactId); //NON-NLS
+                if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                    continue;
+                }
+                keywordHitsAndTags.put(artifactId, uniqueTagNames);
                 if (list.isEmpty()) {
                     list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
                 }
-                lists.add(list);
+                if (!lists.contains(list)) {
+                    lists.add(list);
+                }
             }
-
-            // Make keyword data type and give them set index
+//            Make keyword data type and give them set index
             tableModule.startDataType(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);
             tableModule.addSetIndex(lists);
             progressPanel.updateStatusLabel(
@@ -612,12 +620,11 @@ class TableReportGenerator {
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
                 + //NON-NLS
                 orderByClause; //NON-NLS
-
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
-
             String currentKeyword = "";
             String currentList = "";
+
             while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -625,8 +632,8 @@ class TableReportGenerator {
                 }
 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = getUniqueTagNames(resultSet.getLong("artifact_id")); //NON-NLS
-                if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
+                HashSet<String> uniqueTagNames = keywordHitsAndTags.get(resultSet.getLong("artifact_id")); //NON-NLS
+                if (uniqueTagNames == null) {
                     continue;
                 }
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
@@ -686,6 +693,7 @@ class TableReportGenerator {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
             logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
         }
+
     }
 
     /**
@@ -693,7 +701,7 @@ class TableReportGenerator {
      *
      * @param tableModule module to report on
      */
-     @SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
     private void writeHashsetHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
         String orderByClause;
         Case openCase;
