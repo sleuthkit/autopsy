@@ -57,7 +57,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     private int bulkArtifactsCount;
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
-
+    
+    // Maximum length for the value column in the instance tables
+    static final int MAX_VALUE_LENGTH = 128;
+    
     // number of instances to keep in bulk queue before doing an insert.
     // Update Test code if this changes.  It's hard coded there.
     static final int DEFAULT_BULK_THRESHHOLD = 1000;
@@ -432,7 +435,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (eamDataSource.getCaseID() == -1) {
             throw new EamDbException("Case ID is -1");
         } else if (eamDataSource.getID() != -1) {
-            throw new EamDbException("Database ID is already set in object");
+            // This data source is already in the central repo
+            return;
         }
         Connection conn = connect();
 
@@ -549,6 +553,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
         if (eamArtifact.getCorrelationValue() == null) {
             throw new EamDbException("Correlation value is null");
+        }
+        if (eamArtifact.getCorrelationValue().length() >= MAX_VALUE_LENGTH) {
+            throw new EamDbException("Artifact value too long for central repository: " + eamArtifact.getCorrelationValue());
         }
 
         Connection conn = connect();
@@ -984,18 +991,22 @@ abstract class AbstractSqlEamDb implements EamDb {
                                     throw new EamDbException("CorrelationAttributeInstance known status is null");
                                 }
 
-                                bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
-                                bulkPs.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
-                                bulkPs.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
-                                bulkPs.setString(4, eamArtifact.getCorrelationValue());
-                                bulkPs.setString(5, eamInstance.getFilePath());
-                                bulkPs.setByte(6, eamInstance.getKnownStatus().getFileKnownValue());
-                                if ("".equals(eamInstance.getComment())) {
-                                    bulkPs.setNull(7, Types.INTEGER);
+                                if (eamArtifact.getCorrelationValue().length() < MAX_VALUE_LENGTH) {
+                                    bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
+                                    bulkPs.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
+                                    bulkPs.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
+                                    bulkPs.setString(4, eamArtifact.getCorrelationValue());
+                                    bulkPs.setString(5, eamInstance.getFilePath());
+                                    bulkPs.setByte(6, eamInstance.getKnownStatus().getFileKnownValue());
+                                    if ("".equals(eamInstance.getComment())) {
+                                        bulkPs.setNull(7, Types.INTEGER);
+                                    } else {
+                                        bulkPs.setString(7, eamInstance.getComment());
+                                    }
+                                    bulkPs.addBatch();
                                 } else {
-                                    bulkPs.setString(7, eamInstance.getComment());
+                                    logger.log(Level.WARNING, "Artifact value too long for central repository: {0}", eamArtifact.getCorrelationValue());
                                 }
-                                bulkPs.addBatch();
                             }
                         }
                     }

@@ -450,10 +450,10 @@ final class CaseEventListener implements PropertyChangeListener {
                     correlationCase = dbManager.newCase(openCase);
                 }
                 if (null == dbManager.getDataSource(correlationCase, deviceId)) {
-                    dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource));
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Error adding new data source to the central repository", ex); //NON-NLS
             } catch (TskCoreException | TskDataException ex) {
                 LOGGER.log(Level.SEVERE, "Error getting data source from DATA_SOURCE_ADDED event content.", ex); //NON-NLS
             }
