@@ -432,7 +432,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (eamDataSource.getCaseID() == -1) {
             throw new EamDbException("Case ID is -1");
         } else if (eamDataSource.getID() != -1) {
-            throw new EamDbException("Database ID is already set in object");
+            // This data source is already in the central repo
+            return;
         }
         Connection conn = connect();
 
