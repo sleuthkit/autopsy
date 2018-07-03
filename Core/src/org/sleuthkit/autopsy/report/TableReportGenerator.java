@@ -587,24 +587,33 @@ class TableReportGenerator {
         }
         String orderByClause;
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+             orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(att2.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
-            orderByClause = "ORDER BY  keyword ASC, preview ASC"; //NON-NLS
+            orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
         // Query for keywords, grouped by list
         String keywordsQuery
-                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview "
+                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
                 + //NON-NLS
-                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2 "
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f "
                 + //NON-NLS
                 "WHERE (att1.artifact_id = art.artifact_id) "
                 + //NON-NLS
                 "AND (att2.artifact_id = art.artifact_id) "
                 + //NON-NLS
+                "AND (att3.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (f.obj_id = art.obj_id) "
+                + //NON-NLS
                 "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") "
                 + //NON-NLS
                 "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") "
+                + //NON-NLS
+                "AND (att3.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
                 + //NON-NLS
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
                 + //NON-NLS
