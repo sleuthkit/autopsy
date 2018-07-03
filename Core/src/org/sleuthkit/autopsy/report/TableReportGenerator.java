@@ -587,7 +587,7 @@ class TableReportGenerator {
         }
         String orderByClause;
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-             orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+            orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
@@ -649,7 +649,7 @@ class TableReportGenerator {
                             NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
                     logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
                 }
-                String list = artifactIdTagsAndList.getList();
+                String list = artifactIdTagsAndList.getListName();
                 // If the lists aren't the same, we've started a new list
                 if ((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs")))) {
@@ -1804,21 +1804,42 @@ class TableReportGenerator {
         }
     }
 
+    /**
+     * Wrapper for bundling a String representing a list of tags and a name for
+     * the set.
+     */
     private class TagsAndListWrapper {
 
         private final String tagsString;
         private final String list;
 
-        TagsAndListWrapper(String tags, String list) {
+        /**
+         * Construct a TagsAndListWrapper.
+         *
+         * @param tags     - a String representing the tags you want bundled
+         * @param listName - a String represnting the name of the list or set
+         *                 you want bundled
+         */
+        TagsAndListWrapper(String tags, String listName) {
             this.tagsString = tags;
-            this.list = list;
+            this.list = listName;
         }
 
+        /**
+         * Get the string representing a list of tags.
+         *
+         * @return tags
+         */
         String getTags() {
             return tagsString;
         }
 
-        String getList() {
+        /**
+         * Get the string which represents the name of the set or list
+         *
+         * @return
+         */
+        String getListName() {
             return list;
         }
     }
