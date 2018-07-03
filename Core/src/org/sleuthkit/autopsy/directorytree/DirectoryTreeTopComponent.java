@@ -110,9 +110,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private AutopsyTreeChildrenFactory autopsyTreeChildrenFactory;
     private Children autopsyTreeChildren;
-    private final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
-    private final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
-    private final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
+    private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
+    private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
+    private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
     /**
      * the constructor

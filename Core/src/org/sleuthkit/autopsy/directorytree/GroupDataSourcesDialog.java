@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.directorytree;
 import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  *
