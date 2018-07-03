@@ -86,7 +86,7 @@ public class KeywordList {
     KeywordList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords) {
         this(name, created, modified, useForIngest, ingestMessages, keywords, false);
     }
-    
+
     /**
      * Constructs a temporary list of keywords to be used for ad hoc keyword
      * search and then discarded.
@@ -96,7 +96,7 @@ public class KeywordList {
     KeywordList(List<Keyword> keywords) {
         this("", new Date(0), new Date(0), false, false, keywords, false);
     }
-     
+
     /**
      * Get the name assigned to the keyword list.
      *

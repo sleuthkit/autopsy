@@ -37,7 +37,6 @@ import javax.swing.JMenuItem;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -61,6 +60,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private static final Logger LOGGER = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
     private static DropdownSingleTermSearchPanel defaultInstance = null;
     private boolean ingestRunning;
+    
 
     /**
      * Gets the default instance of a dropdown panel that provides GUI
@@ -192,9 +192,9 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     @Override
     List<KeywordList> getKeywordLists() {
         if (regexRadioButton.isSelected()) {
-            if ((keywordTextField.getText() != null)
-                    && (keywordTextField.getText().startsWith("^")
-                    || (keywordTextField.getText().endsWith("$") && !keywordTextField.getText().endsWith("\\$")))) {
+            if((keywordTextField.getText() != null)  && 
+                    (keywordTextField.getText().startsWith("^") || 
+                    (keywordTextField.getText().endsWith("$") && ! keywordTextField.getText().endsWith("\\$")))) {
 
                 KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.title"),
                         NbBundle.getMessage(this.getClass(), "DropdownSingleTermSearchPanel.warning.text"),
@@ -391,13 +391,14 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         setComponentsEnabled();
         firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
     }
-
+    
     /**
      * Set the dataSourceList enabled if the dataSourceCheckBox is selected
      */
     private void setComponentsEnabled() {
         if (getDataSourceListModel().size() > 1) {
-            this.dataSourceCheckBox.setEnabled(true); 
+            this.dataSourceCheckBox.setEnabled(true);
+            
             boolean enabled = this.dataSourceCheckBox.isSelected();
             this.dataSourceList.setEnabled(enabled);
             if (enabled) {
@@ -415,8 +416,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
 
     /**
      * Get a set of data source object ids that are selected.
-     *
-     * @return A set of selected object ids.
+     * @return A set of selected object ids. 
      */
     @Override
     Set<Long> getDataSourcesSelected() {
