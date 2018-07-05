@@ -544,7 +544,6 @@ class TableReportGenerator {
                 "FROM blackboard_artifacts AS art "
                 + //NON-NLS
                 "WHERE art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
-        System.out.println("QUERY: " + keywordListQuery);
         HashMap<Long, String> keywordHitTags = new HashMap<>();
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
@@ -584,7 +583,6 @@ class TableReportGenerator {
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
             logger.log(Level.SEVERE, "Failed to query keyword lists: ", ex); //NON-NLS
-            System.out.println("ERROR MESSAGE: " + ex.getMessage());
             return;
         }
         String orderByClause;
@@ -621,7 +619,6 @@ class TableReportGenerator {
                 + //NON-NLS
                 orderByClause; //NON-NLS
 
-        System.out.println("QUERY2: " + keywordsQuery);
         String currentList = "";
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
@@ -712,7 +709,7 @@ class TableReportGenerator {
                 + //NON-NLS
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") ";
 
-        System.out.println("QUERY3: " + adHocKeywordsQuery);
+        //Perform an additional query to get any Keyword hits which did not have set names 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(adHocKeywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
             String currentKeyword = "";
