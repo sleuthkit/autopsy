@@ -129,6 +129,7 @@ public class Case {
     private static final String EXPORT_FOLDER = "Export"; //NON-NLS
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
+    private static final String CONFIG_FOLDER = "Config"; // NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
@@ -1349,6 +1350,16 @@ public class Case {
      */
     public String getReportDirectory() {
         return getOrCreateSubdirectory(REPORTS_FOLDER);
+    }
+    
+    /**
+     * Gets the full path to the config directory for this case, creating it if
+     * it does not exist.
+     * 
+     * @return The config directory path.
+     */
+    public String getConfigDirectory() {
+        return getOrCreateSubdirectory(CONFIG_FOLDER);
     }
 
     /**
