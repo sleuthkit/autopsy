@@ -54,31 +54,42 @@ public class DataSourcePanel extends javax.swing.JPanel {
      */
     public DataSourcePanel() {
         initComponents();
-        this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
-            firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
-        });
-        this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
 
-            @Override
-            public void mouseDragged(MouseEvent evt) {
-                //Unused by now
-            }
+        if (this.dataSourceList.getModel().getSize() > 1) {
+            this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            });
+            this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
 
-            @Override
-            public void mouseMoved(MouseEvent evt) {
-                if (evt.getSource() instanceof JList<?>) {
-                    JList<?> dsList = (JList<?>) evt.getSource();
-                    int index = dsList.locationToIndex(evt.getPoint());
-                    if (index > -1) {
-                        dsList.setToolTipText(toolTipList.get(index));
+                @Override
+                public void mouseDragged(MouseEvent evt) {
+                    //Unused by now
+                }
+
+                @Override
+                public void mouseMoved(MouseEvent evt) {
+                    if (evt.getSource() instanceof JList<?>) {
+                        JList<?> dsList = (JList<?>) evt.getSource();
+                        int index = dsList.locationToIndex(evt.getPoint());
+                        if (index > -1) {
+                            dsList.setToolTipText(toolTipList.get(index));
+                        }
                     }
                 }
-            }
-    });
+            });
+        } else {
+            /*
+             * Disable data source filtering since there aren't multiple data
+             * sources to choose from.
+             */
+            this.dataSourceCheckBox.setEnabled(false);
+            this.dataSourceList.setEnabled(false);
+        }
     }
 
     /**
-     * Get dataSourceMap with object id and data source display name. Add the data source full name to toolTipList
+     * Get dataSourceMap with object id and data source display name. Add the
+     * data source full name to toolTipList
      *
      * @return The list of data source name
      */
@@ -93,7 +104,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 String dsName = ds.getName();
                 File dataSourceFullName = new File(dsName);
                 String displayName = dataSourceFullName.getName();
-                dataSourceMap.put(ds.getId(), displayName);  
+                dataSourceMap.put(ds.getId(), displayName);
                 toolTipList.add(dsName);
                 dsList.add(displayName);
             }
@@ -107,7 +118,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
     /**
      * Get a set of data source object ids that are selected.
-     * @return A set of selected object ids. 
+     *
+     * @return A set of selected object ids.
      */
     Set<Long> getDataSourcesSelected() {
         Set<Long> dataSourceObjIdSet = new HashSet<>();
@@ -124,6 +136,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
     /**
      * Is dataSourceCheckBox selected
+     *
      * @return true if the dataSoureCheckBox is selected
      */
     boolean isSelected() {
@@ -131,7 +144,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is checked.
+     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is
+     * checked.
      */
     final void setComponentsEnabled() {
         boolean enabled = this.isSelected();
