@@ -114,11 +114,11 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                 originalImage = Highgui.imdecode(new MatOfByte(imageInMemory), Highgui.IMREAD_GRAYSCALE);
             } catch (CvException ex) {
                 //The image was something which could not be decoded by OpenCv, our isImageThumbnailSupported(file) check above failed us
-                logger.log(Level.WARNING, "Unable to decode image from byte array to perform object detection on " + file.getName(), ex); //NON-NLS
+                logger.log(Level.WARNING, "Unable to decode image from byte array to perform object detection on " + file.getParentPath() + file.getName(), ex); //NON-NLS
                 return IngestModule.ProcessResult.ERROR;
             } catch (Exception unexpectedException) {
                 //hopefully an unnecessary generic exception catch but currently present to catch any exceptions OpenCv throws which may not be documented
-                logger.log(Level.SEVERE, "Unexpected Exception encountered attempting to use OpenCV to decode picture: " + file.getName(), unexpectedException);
+                logger.log(Level.SEVERE, "Unexpected Exception encountered attempting to use OpenCV to decode picture: " + file.getParentPath() + file.getName(), unexpectedException);
                 return IngestModule.ProcessResult.ERROR;
             }
 
@@ -133,7 +133,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                     continue;
                 } catch (Exception unexpectedException) {  
                     //hopefully an unnecessary generic exception catch but currently present to catch any exceptions OpenCv throws which may not be documented
-                    logger.log(Level.SEVERE, "Unexpected Exception encountered for image " + file.getName() + " while trying to apply classifier " + classifierKey, unexpectedException);
+                    logger.log(Level.SEVERE, "Unexpected Exception encountered for image " + file.getParentPath() + file.getName() + " while trying to apply classifier " + classifierKey, unexpectedException);
                     continue;
                 }
 
