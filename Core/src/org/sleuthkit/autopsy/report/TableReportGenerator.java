@@ -539,25 +539,26 @@ class TableReportGenerator {
             return;
         }
         String keywordListQuery
-                = "SELECT art.artifact_id AS artifact_id "
+                = "SELECT art.artifact_id AS artifact_id, art.artifact_obj_id AS obj_id "
                 + //NON-NLS
                 "FROM blackboard_artifacts AS art "
                 + //NON-NLS
                 "WHERE art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
         System.out.println("QUERY: " + keywordListQuery);
-        HashMap<Long, TagsAndListWrapper> keywordHitsAndTags = new HashMap<>();
+        HashMap<Long, String> keywordHitTags = new HashMap<>();
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
             ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
             while (listsRs.next()) {
                 long artifactId = listsRs.getLong("artifact_id");
+                long objId = listsRs.getLong("obj_id");
                 HashSet<String> uniqueTagNames = getUniqueTagNames(artifactId); //NON-NLS
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }
-                String tagsString = uniqueTagNames == null ? "" : makeCommaSeparatedList(uniqueTagNames);
-                BlackboardArtifact artifact = openCase.getSleuthkitCase().getArtifactById(artifactId);
+                String tagsString = uniqueTagNames == null ? null : makeCommaSeparatedList(uniqueTagNames);
+                BlackboardArtifact artifact = openCase.getSleuthkitCase().getArtifactById(objId);
                 BlackboardAttribute attr = null;
                 if (artifact != null) {
                     attr = artifact.getAttribute(LIST_NAME_ATTRIBUTE);
@@ -568,11 +569,12 @@ class TableReportGenerator {
                 } else {
                     list = attr.getValueString();
                 }
-                keywordHitsAndTags.put(artifactId, new TagsAndListWrapper(tagsString, list));
+                keywordHitTags.put(artifactId, tagsString);
                 if (!lists.contains(list)) {
                     lists.add(list);
                 }
             }
+            Collections.sort(lists);
 //            Make keyword data type and give them set index
             tableModule.startDataType(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), comment);
             tableModule.addSetIndex(lists);
@@ -618,10 +620,12 @@ class TableReportGenerator {
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
                 + //NON-NLS
                 orderByClause; //NON-NLS
+
+        System.out.println("QUERY2: " + keywordsQuery);
+        String currentList = "";
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
             String currentKeyword = "";
-            String currentList = "";
 
             while (resultSet.next()) {
                 // Check to see if all the TableReportModules have been canceled
@@ -629,16 +633,16 @@ class TableReportGenerator {
                     break;
                 }
 
-                // Get any tags that associated with this artifact and apply the tag filter.
-                TagsAndListWrapper artifactIdTagsAndList = keywordHitsAndTags.get(resultSet.getLong("artifact_id"));
-                String tagsList = artifactIdTagsAndList.getTags(); //NON-NLS
-
+                String tagsString = keywordHitTags.remove(resultSet.getLong("artifact_id"));
+                if (tagsString == null) {
+                    continue;
+                }
                 Long objId = resultSet.getLong("obj_id"); //NON-NLS
                 String keyword = resultSet.getString("keyword"); //NON-NLS
                 String preview = resultSet.getString("preview"); //NON-NLS
-//                String list = resultSet.getString("list"); //NON-NLS
+                String list = resultSet.getString("list"); //NON-NLS
                 String uniquePath = "";
-
+                // Get any tags that associated with this artifact and apply the tag filter.
                 try {
                     AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
                     if (f != null) {
@@ -649,15 +653,14 @@ class TableReportGenerator {
                             NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
                     logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
                 }
-                String list = artifactIdTagsAndList.getListName();
                 // If the lists aren't the same, we've started a new list
-                if ((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals(
+                if (((list != null && !list.isEmpty()) && !list.equals(currentList)) || ((list == null || list.isEmpty()) && !currentList.equals(
                         NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs")))) {
                     if (!currentList.isEmpty()) {
                         tableModule.endTable();
                         tableModule.endSet();
                     }
-                    currentList = list.isEmpty() ? NbBundle
+                    currentList = (list.isEmpty() || list == null) ? NbBundle
                             .getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs") : list;
                     currentKeyword = ""; // reset the current keyword because it's a new list
                     tableModule.startSet(currentList);
@@ -678,17 +681,105 @@ class TableReportGenerator {
                     tableModule.startTable(columnHeaderNames);
                 }
 
-                tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsList}));
+                tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsString}));
             }
-
-            // Finish the current data type
-            progressPanel.increment();
-            tableModule.endDataType();
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
             logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
         }
+        if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
+            orderByClause = "ORDER BY convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(att2.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+        } else {
+            orderByClause = "ORDER BY keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
+        }
+        String adHocKeywordsQuery
+                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, f.name AS name, f.parent_path AS parent_path "
+                + //NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, tsk_files AS f "
+                + //NON-NLS
+                "WHERE (att1.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (att2.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (f.obj_id = art.obj_id) "
+                + //NON-NLS
+                "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") "
+                + //NON-NLS
+                "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") "
+                + //NON-NLS
+                "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") ";
 
+        System.out.println("QUERY3: " + adHocKeywordsQuery);
+        try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(adHocKeywordsQuery)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            String currentKeyword = "";
+            final String list = NbBundle.getMessage(this.getClass(), "ReportGenerator.writeKwHits.userSrchs");
+
+            while (resultSet.next()) {
+                // Check to see if all the TableReportModules have been canceled
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    break;
+                }
+
+                String tagsString = keywordHitTags.remove(resultSet.getLong("artifact_id"));
+                if (tagsString == null) {
+                    continue;
+                }
+                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                String keyword = resultSet.getString("keyword"); //NON-NLS
+                String preview = resultSet.getString("preview"); //NON-NLS
+                String uniquePath = "";
+                // Get any tags that associated with this artifact and apply the tag filter.
+                try {
+                    AbstractFile f = openCase.getSleuthkitCase().getAbstractFileById(objId);
+                    if (f != null) {
+                        uniquePath = openCase.getSleuthkitCase().getAbstractFileById(objId).getUniquePath();
+                    }
+                } catch (TskCoreException ex) {
+                    errorList.add(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedGetAbstractFileByID"));
+                    logger.log(Level.WARNING, "Failed to get Abstract File by ID.", ex); //NON-NLS
+                }
+                // If the lists aren't the same, we've started a new list
+                if (!list.equals(currentList)) {
+                    if (!currentList.isEmpty()) {
+                        tableModule.endTable();
+                        tableModule.endSet();
+                    }
+                    currentList = list;
+                    currentKeyword = ""; // reset the current keyword because it's a new list
+                    tableModule.startSet(currentList);
+                    progressPanel.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportGenerator.progress.processingList",
+                                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), currentList));
+                }
+                if (!keyword.equals(currentKeyword)) {
+                    if (!currentKeyword.equals("")) {
+                        tableModule.endTable();
+                    }
+                    currentKeyword = keyword;
+                    tableModule.addSetElement(currentKeyword);
+                    List<String> columnHeaderNames = new ArrayList<>();
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.preview"));
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.srcFile"));
+                    columnHeaderNames.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"));
+                    tableModule.startTable(columnHeaderNames);
+                }
+
+                tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsString}));
+            }
+        } catch (TskCoreException | SQLException ex) {
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
+            logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
+        }
+        // Finish the current data type
+
+        progressPanel.increment();
+
+        tableModule.endDataType();
     }
 
     /**
@@ -724,7 +815,7 @@ class TableReportGenerator {
                 "AND att.artifact_id = art.artifact_id "
                 + //NON-NLS
                 orderByClause; //NON-NLS
-        HashMap<Long, HashSet<String>> hashsetHitsAndTags = new HashMap<>();
+        HashMap<Long, String> hashsetHitsAndTags = new HashMap<>();
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(hashsetsQuery)) {
             // Query for hashsets
             ResultSet listsRs = dbQuery.getResultSet();
@@ -737,7 +828,8 @@ class TableReportGenerator {
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {
                     continue;
                 }
-                hashsetHitsAndTags.put(artifactId, uniqueTagNames);
+                String tagsString = uniqueTagNames == null ? null : makeCommaSeparatedList(uniqueTagNames);
+                hashsetHitsAndTags.put(artifactId, tagsString);
                 String list = listsRs.getString("list");
                 if (!lists.contains(list)) {
                     lists.add(list);
@@ -789,11 +881,10 @@ class TableReportGenerator {
                 }
 
                 // Get any tags that associated with this artifact and apply the tag filter.
-                HashSet<String> uniqueTagNames = hashsetHitsAndTags.get(resultSet.getLong("artifact_id")); //NON-NLS
-                if (uniqueTagNames == null) {
+                String tagsList = hashsetHitsAndTags.get(resultSet.getLong("artifact_id")); //NON-NLS
+                if (tagsList == null) {
                     continue;
                 }
-                String tagsList = makeCommaSeparatedList(uniqueTagNames);
 
                 Long objId = resultSet.getLong("obj_id"); //NON-NLS
                 String set = resultSet.getString("setname"); //NON-NLS
@@ -848,6 +939,7 @@ class TableReportGenerator {
      */
     List<String> getErrorList() {
         return errorList;
+
     }
 
     /**
@@ -1801,46 +1893,6 @@ class TableReportGenerator {
         public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types) {
             // This column doesn't have a type, so nothing to remove
             return types;
-        }
-    }
-
-    /**
-     * Wrapper for bundling a String representing a list of tags and a name for
-     * the set.
-     */
-    private class TagsAndListWrapper {
-
-        private final String tagsString;
-        private final String list;
-
-        /**
-         * Construct a TagsAndListWrapper.
-         *
-         * @param tags     - a String representing the tags you want bundled
-         * @param listName - a String represnting the name of the list or set
-         *                 you want bundled
-         */
-        TagsAndListWrapper(String tags, String listName) {
-            this.tagsString = tags;
-            this.list = listName;
-        }
-
-        /**
-         * Get the string representing a list of tags.
-         *
-         * @return tags
-         */
-        String getTags() {
-            return tagsString;
-        }
-
-        /**
-         * Get the string which represents the name of the set or list
-         *
-         * @return
-         */
-        String getListName() {
-            return list;
         }
     }
 }
