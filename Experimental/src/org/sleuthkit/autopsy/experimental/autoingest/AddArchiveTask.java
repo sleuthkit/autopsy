@@ -179,7 +179,7 @@ class AddArchiveTask implements Runnable {
                     synchronized (archiveDspLock) {
                         UUID taskId = UUID.randomUUID();
                         currentCase.notifyAddingDataSource(taskId);
-                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(newFilePath.getFileName().toString(), newFilePath);
+                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
                         DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
                         selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
                         archiveDspLock.wait();
