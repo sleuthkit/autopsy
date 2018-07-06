@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
  * Model for cells in data content viewer table
@@ -34,7 +32,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.device=Device",
         "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
         "DataContentViewerOtherCasesTableModel.path=Path",
-        "DataContentViewerOtherCasesTableModel.type=Correlation Type",
+        "DataContentViewerOtherCasesTableModel.property=Correlation Property",
         "DataContentViewerOtherCasesTableModel.value=Correlation Value",
         "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
@@ -44,7 +42,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
         DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
-        TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 100),
+        PROPERTY(Bundle.DataContentViewerOtherCasesTableModel_property(), 125),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
         KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
         FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
@@ -126,38 +124,49 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      */
     private Object mapValueById(int rowIdx, TableColumns colId) {
         OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
+        
+        if (nodeData instanceof OtherOccurrenceNodeMessageData) {
+            if (colId == TableColumns.CASE_NAME) {
+                OtherOccurrenceNodeMessageData messageData = (OtherOccurrenceNodeMessageData) nodeData;
+                return messageData.getDisplayMessage();
+            } else {
+                return "";
+            }
+        }
+        
+        OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) nodeData;
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
         switch (colId) {
             case CASE_NAME:
-                if (null != nodeData.getCaseName()) {
-                    value = nodeData.getCaseName();
+                if (null != instanceData.getCaseName()) {
+                    value = instanceData.getCaseName();
                 }
                 break;
             case DEVICE:
-                if (null != nodeData.getDeviceID()) {
-                    value = nodeData.getDeviceID();
+                if (null != instanceData.getDeviceID()) {
+                    value = instanceData.getDeviceID();
                 }
                 break;
             case DATA_SOURCE:
-                if (null != nodeData.getDataSourceName()) {
-                    value = nodeData.getDataSourceName();
+                if (null != instanceData.getDataSourceName()) {
+                    value = instanceData.getDataSourceName();
                 }
                 break;
             case FILE_PATH:
-                value = nodeData.getFilePath();
+                value = instanceData.getFilePath();
                 break;
-            case TYPE:
-                value = nodeData.getType();
+            case PROPERTY:
+                value = instanceData.getType();
                 break;
             case VALUE:
-                value = nodeData.getValue();
+                value = instanceData.getValue();
                 break;
             case KNOWN:
-                value = nodeData.getKnown().getName();
+                value = instanceData.getKnown().getName();
                 break;
             case COMMENT:
-                value = nodeData.getComment();
+                value = instanceData.getComment();
                 break;
         }
         return value;
@@ -178,6 +187,9 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    /**
+     * Clear the node data table.
+     */
     void clearTable() {
         nodeDataList.clear();
         fireTableDataChanged();

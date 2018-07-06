@@ -126,7 +126,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     showCommonalityDetails();
                 } else if (jmi.equals(addCommentMenuItem)) {
                     try {
-                        OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(otherCasesTable.getSelectedRow());
+                        OtherOccurrenceNodeInstanceData selectedNode = (OtherOccurrenceNodeInstanceData) tableModel.getRow(otherCasesTable.getSelectedRow());
                         AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(selectedNode.createCorrelationAttribute());
                         String currentComment = action.addEditCentralRepoComment();
                         selectedNode.updateComment(currentComment);
@@ -205,7 +205,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
-                OtherOccurrenceNodeData nodeData = (OtherOccurrenceNodeData) tableModel.getRow(selectedRowModelIdx);
+                OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) tableModel.getRow(selectedRowModelIdx);
                 CorrelationCase eamCasePartial = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
                 if (eamCasePartial == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
@@ -504,13 +504,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @return A collection of correlated artifact instances
      */
-    private Map<UniquePathKey,OtherOccurrenceNodeData> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey,OtherOccurrenceNodeInstanceData> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
 
-            HashMap<UniquePathKey,OtherOccurrenceNodeData> nodeDataMap = new HashMap<>();
+            HashMap<UniquePathKey,OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue());
@@ -528,7 +528,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId)
                             || !artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName())) {
 
-                        OtherOccurrenceNodeData newNode = new OtherOccurrenceNodeData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
+                        OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
                         UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                         nodeDataMap.put(uniquePathKey, newNode);
                     }
@@ -592,9 +592,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * @throws TskCoreException
      * @throws EamDbException
      */
-    private void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey,OtherOccurrenceNodeData> nodeDataMap, AbstractFile newFile) throws TskCoreException, EamDbException {
+    private void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey,OtherOccurrenceNodeInstanceData> nodeDataMap, AbstractFile newFile) throws TskCoreException, EamDbException {
         
-        OtherOccurrenceNodeData newNode = new OtherOccurrenceNodeData(newFile, autopsyCase);
+        OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(newFile, autopsyCase);
         
         // If the caseDB object has a notable tag associated with it, update
         // the known status to BAD
@@ -617,7 +617,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // Otherwise this is a new node so add the new node to the map.
         if (nodeDataMap.containsKey(uniquePathKey)) {
             if (newNode.getKnown() == TskData.FileKnown.BAD) {
-                OtherOccurrenceNodeData prevInstance = nodeDataMap.get(uniquePathKey);
+                OtherOccurrenceNodeInstanceData prevInstance = nodeDataMap.get(uniquePathKey);
                 prevInstance.updateKnown(newNode.getKnown());
             }
         } else {
@@ -663,8 +663,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @param node The node being viewed.
      */
-    @Messages({"DataContentViewerOtherCases.table.isempty=There are no associated artifacts or files from other occurrences to display.",
-        "DataContentViewerOtherCases.table.noArtifacts=Correlation cannot be performed on the selected file."})
+    @Messages({
+        "DataContentViewerOtherCases.table.noResultsFound=No results found.",
+        "DataContentViewerOtherCases.table.noArtifacts=Correlation cannot be performed on the selected file."
+    })
     private void populateTable(Node node) {
         String dataSourceName = "";
         String deviceId = "";
@@ -682,7 +684,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
         for (CorrelationAttribute corAttr : correlationAttributes) {
-            Map<UniquePathKey,OtherOccurrenceNodeData> correlatedNodeDataMap = new HashMap<>(0);
+            Map<UniquePathKey,OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
             // get correlation and reference set instances from DB
             correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
@@ -697,7 +699,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             // @@@ BC: We should have a more descriptive message than this.  Mention that the file didn't have a MD5, etc.
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
-            displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_isempty());
+            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
         } else {
             clearMessageOnTableStatusPanel();
             setColumnWidths();
@@ -877,8 +879,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
             int rowIndex = otherCasesTable.getSelectedRow();
             OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(rowIndex);
-            if (selectedNode.isCentralRepoNode()) {
-                enableCentralRepoActions = true;
+            if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
+                OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
+                enableCentralRepoActions = instanceData.isCentralRepoNode();
             }
         }
 
@@ -915,7 +918,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         private final String filePath;
         private final String type;
 
-        UniquePathKey(OtherOccurrenceNodeData nodeData) {
+        UniquePathKey(OtherOccurrenceNodeInstanceData nodeData) {
             super();
             dataSourceID = nodeData.getDeviceID();
             if (nodeData.getFilePath() != null) {
