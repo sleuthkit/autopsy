@@ -33,7 +33,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.LocalDiskDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -180,7 +179,7 @@ class AddArchiveTask implements Runnable {
                     synchronized (archiveDspLock) {
                         UUID taskId = UUID.randomUUID();
                         currentCase.notifyAddingDataSource(taskId);
-                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
+                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(newFilePath.getFileName().toString(), newFilePath);
                         DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
                         selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
                         archiveDspLock.wait();
