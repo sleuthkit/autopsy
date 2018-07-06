@@ -986,13 +986,25 @@ abstract class AbstractSqlEamDb implements EamDb {
                             if (!eamArtifact.getCorrelationValue().isEmpty()) {
 
                                 if (eamInstance.getCorrelationCase() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance case is null for :");
+                                    throw new EamDbException("CorrelationAttributeInstance case is null for: "
+                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
                                 }
                                 if (eamInstance.getCorrelationDataSource() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance data source is null");
+                                    throw new EamDbException("CorrelationAttributeInstance data source is null for: "
+                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
                                 }
                                 if (eamInstance.getKnownStatus() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance known status is null");
+                                    throw new EamDbException("CorrelationAttributeInstance known status is null for: "
+                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue() 
+                                            + "\n\tEam Instance: "
+                                            + "\n\t\tCaseId: " + eamInstance.getCorrelationDataSource().getCaseID()
+                                            + "\n\t\tDeviceID: " + eamInstance.getCorrelationDataSource().getDeviceID());
                                 }
 
                                 if (eamArtifact.getCorrelationValue().length() < MAX_VALUE_LENGTH) {
@@ -1010,13 +1022,13 @@ abstract class AbstractSqlEamDb implements EamDb {
                                     bulkPs.addBatch();
                                 } else {
                                     logger.log(Level.WARNING, ("Artifact value too long for central repository."
-                                            + "\nCorrelationArtifact ID: " + eamArtifact.getID()
-                                            + "\nCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
-                                            + "\nCorrelationArtifact Value: " + eamArtifact.getCorrelationValue())
-                                            + "\nEam Instance: "
-                                            + "\n\tCaseId: " + eamInstance.getCorrelationDataSource().getCaseID()
-                                            + "\n\tDeviceID: " + eamInstance.getCorrelationDataSource().getDeviceID()
-                                            + "\n\tFilePath: " + eamInstance.getFilePath());
+                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue())
+                                            + "\n\tEam Instance: "
+                                            + "\n\t\tCaseId: " + eamInstance.getCorrelationDataSource().getCaseID()
+                                            + "\n\t\tDeviceID: " + eamInstance.getCorrelationDataSource().getDeviceID()
+                                            + "\n\t\tFilePath: " + eamInstance.getFilePath());
                                 }
                             }
                         }

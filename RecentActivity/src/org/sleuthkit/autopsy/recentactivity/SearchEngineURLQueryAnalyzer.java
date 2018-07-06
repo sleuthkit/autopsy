@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,13 +237,19 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         try { //try to decode the url
             String decoded = URLDecoder.decode(x, "UTF-8"); //NON-NLS
             return decoded;
-        } catch (UnsupportedEncodingException | IllegalArgumentException exception) { //if it fails, return the encoded string
+        } catch (UnsupportedEncodingException exception) { //if it fails, return the encoded string
             logger.log(Level.FINE, "Error during URL decoding, returning undecoded value:"
-                    + "\nURL: " + url
-                    + "\nUndecoded value: " + x
-                    + "\nEngine name: " + eng.getEngineName()
-                    + "\nEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
-            
+                    + "\n\tURL: " + url
+                    + "\n\tUndecoded value: " + x
+                    + "\n\tEngine name: " + eng.getEngineName()
+                    + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
+            return x;
+        } catch (IllegalArgumentException exception) { //if it fails, return the encoded string
+            logger.log(Level.SEVERE, "Illegal arguement Exception during URL decoding, returning undecoded value:"
+                    + "\n\tURL: " + url
+                    + "\n\tUndecoded value: " + x
+                    + "\n\tEngine name: " + eng.getEngineName()
+                    + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS)
             return x;
         }
     }
