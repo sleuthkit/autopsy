@@ -32,8 +32,8 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.device=Device",
         "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
         "DataContentViewerOtherCasesTableModel.path=Path",
-        "DataContentViewerOtherCasesTableModel.property=Correlation Property",
-        "DataContentViewerOtherCasesTableModel.value=Correlation Value",
+        "DataContentViewerOtherCasesTableModel.attribute=Matched Attribute",
+        "DataContentViewerOtherCasesTableModel.value=Attribute Value",
         "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
@@ -42,7 +42,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
         DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
-        PROPERTY(Bundle.DataContentViewerOtherCasesTableModel_property(), 125),
+        ATTRIBUTE(Bundle.DataContentViewerOtherCasesTableModel_attribute(), 125),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
         KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
         FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
@@ -156,7 +156,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             case FILE_PATH:
                 value = instanceData.getFilePath();
                 break;
-            case PROPERTY:
+            case ATTRIBUTE:
                 value = instanceData.getType();
                 break;
             case VALUE:

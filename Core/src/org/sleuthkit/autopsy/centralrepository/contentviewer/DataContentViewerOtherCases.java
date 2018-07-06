@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -49,6 +48,7 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
@@ -147,7 +147,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
         otherCasesTable.setDefaultRenderer(Object.class, renderer);
-        tableStatusPanelLabel.setVisible(false);
 
     }
 
@@ -664,8 +663,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * @param node The node being viewed.
      */
     @Messages({
-        "DataContentViewerOtherCases.table.noResultsFound=No results found.",
-        "DataContentViewerOtherCases.table.noArtifacts=Correlation cannot be performed on the selected file."
+        "DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.",
+        "DataContentViewerOtherCases.table.noResultsFound=No results found."
     })
     private void populateTable(Node node) {
         String dataSourceName = "";
@@ -696,17 +695,20 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
 
         if (correlationAttributes.isEmpty()) {
-            // @@@ BC: We should have a more descriptive message than this.  Mention that the file didn't have a MD5, etc.
-            displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
+            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noArtifacts()));
+            //DLG: Removing columns causes problems. Look into resizing columns.
         } else if (0 == tableModel.getRowCount()) {
             tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
+            //DLG: Removing columns causes problems. Look into resizing columns.
         } else {
-            clearMessageOnTableStatusPanel();
             setColumnWidths();
         }
         setEarliestCaseDate();
     }
 
+    /**
+     * Adjust column widths to their preferred values.
+     */
     private void setColumnWidths() {
         for (int idx = 0; idx < tableModel.getColumnCount(); idx++) {
             TableColumn column = otherCasesTable.getColumnModel().getColumn(idx);
@@ -715,15 +717,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 column.setPreferredWidth(colWidth);
             }
         }
-    }
-
-    private void displayMessageOnTableStatusPanel(String message) {
-        tableStatusPanelLabel.setText(message);
-        tableStatusPanelLabel.setVisible(true);
-    }
-
-    private void clearMessageOnTableStatusPanel() {
-        tableStatusPanelLabel.setVisible(false);
     }
 
     /**
