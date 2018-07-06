@@ -245,7 +245,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
             return x;
         } catch (IllegalArgumentException exception) { //if it fails, return the encoded string
-            logger.log(Level.SEVERE, "Illegal arguement Exception during URL decoding, returning undecoded value:"
+            logger.log(Level.SEVERE, "Illegal argument passed to URL decoding, returning undecoded value:"
                     + "\n\tURL: " + url
                     + "\n\tUndecoded value: " + x
                     + "\n\tEngine name: " + eng.getEngineName()
