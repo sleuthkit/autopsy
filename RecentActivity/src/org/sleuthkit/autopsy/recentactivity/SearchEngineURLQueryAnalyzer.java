@@ -237,8 +237,13 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         try { //try to decode the url
             String decoded = URLDecoder.decode(x, "UTF-8"); //NON-NLS
             return decoded;
-        } catch (UnsupportedEncodingException uee) { //if it fails, return the encoded string
-            logger.log(Level.FINE, "Error during URL decoding ", uee); //NON-NLS
+        } catch (UnsupportedEncodingException | IllegalArgumentException exception) { //if it fails, return the encoded string
+            logger.log(Level.FINE, "Error during URL decoding, returning undecoded value:"
+                    + "\nURL: " + url
+                    + "\nUndecoded value: " + x
+                    + "\nEngine name: " + eng.getEngineName()
+                    + "\nEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
+            
             return x;
         }
     }
