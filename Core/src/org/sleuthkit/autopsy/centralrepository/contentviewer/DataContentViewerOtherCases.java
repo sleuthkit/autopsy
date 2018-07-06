@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -127,12 +126,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 } else if (jmi.equals(addCommentMenuItem)) {
                     try {
                         OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(otherCasesTable.getSelectedRow());
-                        AddEditCentralRepoCommentAction action = AddEditCentralRepoCommentAction.createAddEditCommentAction(selectedNode.createCorrelationAttribute());
+                        AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.createCorrelationAttribute());
                         String currentComment = action.addEditCentralRepoComment();
                         selectedNode.updateComment(currentComment);
                         otherCasesTable.repaint();
                     } catch (EamDbException ex) {
-                        logger.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);
+                        logger.log(Level.SEVERE, "Error performing Add/Edit Central Repository Comment action", ex);
                     }
                 }
             }

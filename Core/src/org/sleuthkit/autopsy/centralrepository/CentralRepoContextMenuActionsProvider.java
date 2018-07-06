@@ -47,7 +47,7 @@ public class CentralRepoContextMenuActionsProvider implements ContextMenuActions
 
         for (AbstractFile file : selectedFiles) {
             if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
-                actions.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
+                actions.add(new AddEditCentralRepoCommentAction(file));
             }
         }
 

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -26,21 +27,22 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  * Dialog to allow Central Repository file instance comments to be added and
  * modified.
  */
+@Messages({"CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
     private final CorrelationAttribute correlationAttribute;
     private boolean commentUpdated = false;
     private String currentComment = "";
+    private String originalComment = "";
 
     /**
      * Create an instance.
      *
      * @param correlationAttribute The correlation attribute to be modified.
-     * @param title                The title to assign the dialog.
      */
-    CentralRepoCommentDialog(CorrelationAttribute correlationAttribute, String title) {
-        super(WindowManager.getDefault().getMainWindow(), title);
+    CentralRepoCommentDialog(CorrelationAttribute correlationAttribute) {
+        super(WindowManager.getDefault().getMainWindow(), Bundle.CentralRepoCommentDialog_title_addEditCentralRepoComment());
         
         initComponents();
 
@@ -49,6 +51,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         // Store the original comment
         if (instance.getComment() != null) {
             currentComment = instance.getComment();
+            originalComment = currentComment;
         }
 
         pathLabel.setText(instance.getFilePath());
@@ -82,10 +85,20 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
      * Get the current comment.
      * If the user hit OK, this will be the new comment.
      * If the user canceled, this will be the original comment.
+     * 
      * @return the comment
      */
-    String getComment() {
+    String getNewComment() {
         return currentComment;
+    }
+    
+    /**
+     * Get the original comment.
+     * 
+     * @return the comment
+     */
+    String getOriginalComment() {
+        return originalComment;
     }
 
     /**
