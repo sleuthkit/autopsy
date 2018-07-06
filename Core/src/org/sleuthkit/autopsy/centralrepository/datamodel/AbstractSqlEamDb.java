@@ -57,10 +57,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     private int bulkArtifactsCount;
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
-    
+
     // Maximum length for the value column in the instance tables
     static final int MAX_VALUE_LENGTH = 128;
-    
+
     // number of instances to keep in bulk queue before doing an insert.
     // Update Test code if this changes.  It's hard coded there.
     static final int DEFAULT_BULK_THRESHHOLD = 1000;
@@ -555,7 +555,11 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation value is null");
         }
         if (eamArtifact.getCorrelationValue().length() >= MAX_VALUE_LENGTH) {
-            throw new EamDbException("Artifact value too long for central repository: " + eamArtifact.getCorrelationValue());
+            throw new EamDbException("Artifact value too long for central repository."
+                    + "\nCorrelationArtifact ID: " + eamArtifact.getID()
+                    + "\nCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                    + "\nCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
+
         }
 
         Connection conn = connect();
@@ -982,7 +986,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                             if (!eamArtifact.getCorrelationValue().isEmpty()) {
 
                                 if (eamInstance.getCorrelationCase() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance case is null");
+                                    throw new EamDbException("CorrelationAttributeInstance case is null for :");
                                 }
                                 if (eamInstance.getCorrelationDataSource() == null) {
                                     throw new EamDbException("CorrelationAttributeInstance data source is null");
@@ -1005,7 +1009,14 @@ abstract class AbstractSqlEamDb implements EamDb {
                                     }
                                     bulkPs.addBatch();
                                 } else {
-                                    logger.log(Level.WARNING, "Artifact value too long for central repository: {0}", eamArtifact.getCorrelationValue());
+                                    logger.log(Level.WARNING, ("Artifact value too long for central repository."
+                                            + "\nCorrelationArtifact ID: " + eamArtifact.getID()
+                                            + "\nCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                            + "\nCorrelationArtifact Value: " + eamArtifact.getCorrelationValue())
+                                            + "\nEam Instance: "
+                                            + "\n\tCaseId: " + eamInstance.getCorrelationDataSource().getCaseID()
+                                            + "\n\tDeviceID: " + eamInstance.getCorrelationDataSource().getDeviceID()
+                                            + "\n\tFilePath: " + eamInstance.getFilePath());
                                 }
                             }
                         }
@@ -1751,11 +1762,13 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return 0 < badInstances;
     }
+
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
+     *
      * @throws EamDbException
      */
     @Override
