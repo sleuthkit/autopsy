@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.centralrepository;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
@@ -40,6 +43,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
     private boolean addToDatabase;
     private CorrelationAttribute correlationAttribute;
+    private String comment;
 
     /**
      * Private constructor to create an instance given a CorrelationAttribute.
@@ -54,8 +58,8 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     /**
      * Private constructor to create an instance given an AbstractFile.
      *
-     * @param file  The file from which a correlation attribute to modify is
-     *              derived.
+     * @param file The file from which a correlation attribute to modify is
+     *             derived.
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
@@ -66,25 +70,23 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent event) {
-        addEditCentralRepoComment();
-    }
-
     /**
      * Create a Add/Edit dialog for the correlation attribute file instance
      * comment. The comment will be updated in the database if the file instance
      * exists there, or a new file instance will be added to the database with
      * the comment attached otherwise.
-     * 
-     * The current comment for this instance is returned in case it is needed to 
-     * update the display.
      *
-     * @return the current comment for this instance
+     * The current comment for this instance is is saved in case it is needed to
+     * update the display. If the comment was not changed either due to the
+     * action being canceled or the occurrence of an error, the comment will be
+     * null.
      */
-    public String addEditCentralRepoComment() {
+    @Override
+    public void actionPerformed(ActionEvent event) {
         CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
         centralRepoCommentDialog.display();
+
+        comment = null;
 
         if (centralRepoCommentDialog.isCommentUpdated()) {
             EamDb dbManager;
@@ -97,13 +99,26 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 } else {
                     dbManager.updateAttributeInstanceComment(correlationAttribute);
                 }
+
+                comment = centralRepoCommentDialog.getNewComment();
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error adding comment", ex);
-                //DLG: Create error popup dialog here.
-                return centralRepoCommentDialog.getOriginalComment();
+                NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
+                        "An error occurred while trying to save the comment to the central repository.",
+                        NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDescriptor);
             }
         }
-        
-        return centralRepoCommentDialog.getNewComment();
+    }
+
+    /**
+     * Retrieve the comment that was last saved. If a comment update was
+     * canceled or an error occurred while attempting to save the comment, the
+     * comment will be null.
+     *
+     * @return The comment.
+     */
+    public String getComment() {
+        return comment;
     }
 }
