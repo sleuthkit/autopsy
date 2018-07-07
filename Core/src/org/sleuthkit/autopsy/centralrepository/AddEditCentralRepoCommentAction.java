@@ -46,7 +46,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private String comment;
 
     /**
-     * Private constructor to create an instance given a CorrelationAttribute.
+     * Constructor to create an instance given a CorrelationAttribute.
      *
      * @param correlationAttribute The correlation attribute to modify.
      */
@@ -56,7 +56,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     }
 
     /**
-     * Private constructor to create an instance given an AbstractFile.
+     * Constructor to create an instance given an AbstractFile.
      *
      * @param file The file from which a correlation attribute to modify is
      *             derived.
@@ -76,7 +76,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      * exists there, or a new file instance will be added to the database with
      * the comment attached otherwise.
      *
-     * The current comment for this instance is is saved in case it is needed to
+     * The current comment for this instance is saved in case it is needed to
      * update the display. If the comment was not changed either due to the
      * action being canceled or the occurrence of an error, the comment will be
      * null.
@@ -100,7 +100,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                     dbManager.updateAttributeInstanceComment(correlationAttribute);
                 }
 
-                comment = centralRepoCommentDialog.getNewComment();
+                comment = centralRepoCommentDialog.getComment();
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error adding comment", ex);
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(

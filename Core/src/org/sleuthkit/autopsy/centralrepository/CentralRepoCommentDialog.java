@@ -34,7 +34,6 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     private final CorrelationAttribute correlationAttribute;
     private boolean commentUpdated = false;
     private String currentComment = "";
-    private String originalComment = "";
 
     /**
      * Create an instance.
@@ -51,7 +50,6 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         // Store the original comment
         if (instance.getComment() != null) {
             currentComment = instance.getComment();
-            originalComment = currentComment;
         }
 
         pathLabel.setText(instance.getFilePath());
@@ -88,17 +86,8 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
      * 
      * @return the comment
      */
-    String getNewComment() {
+    String getComment() {
         return currentComment;
-    }
-    
-    /**
-     * Get the original comment.
-     * 
-     * @return the comment
-     */
-    String getOriginalComment() {
-        return originalComment;
     }
 
     /**
