@@ -106,10 +106,22 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
             try {
                 imageInMemory = IOUtils.toByteArray(inputStream);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to perform object detection on " + file.getName(), ex);
+                logger.log(Level.WARNING, "Unable to read image to byte array for performing object detection on " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), ex);
                 return IngestModule.ProcessResult.ERROR;
             }
-            Mat originalImage = Highgui.imdecode(new MatOfByte(imageInMemory), Highgui.IMREAD_GRAYSCALE);
+            Mat originalImage;
+            try {
+                originalImage = Highgui.imdecode(new MatOfByte(imageInMemory), Highgui.IMREAD_GRAYSCALE);
+            } catch (CvException ex) {
+                //The image was something which could not be decoded by OpenCv, our isImageThumbnailSupported(file) check above failed us
+                logger.log(Level.WARNING, "Unable to decode image from byte array to perform object detection on " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), ex); //NON-NLS
+                return IngestModule.ProcessResult.ERROR;
+            } catch (Exception unexpectedException) {
+                //hopefully an unnecessary generic exception catch but currently present to catch any exceptions OpenCv throws which may not be documented
+                logger.log(Level.SEVERE, "Unexpected Exception encountered attempting to use OpenCV to decode picture: " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), unexpectedException);
+                return IngestModule.ProcessResult.ERROR;
+            }
+
             MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
             for (String classifierKey : classifiers.keySet()) {
                 //apply each classifier to the file
@@ -117,7 +129,11 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                     classifiers.get(classifierKey).detectMultiScale(originalImage, detectionRectangles);
                 } catch (CvException ignored) {
                     //The image was likely an image which we are unable to generate a thumbnail for, and the classifier was likely one where that is not acceptable
-                    logger.log(Level.INFO, String.format("Classifier '%s' could not be applied to file '%s'.", classifierKey, file.getParentPath() + file.getName())); //NON-NLS
+                    logger.log(Level.INFO, String.format("Classifier '%s' could not be applied to file '%s'.", classifierKey, file.getParentPath() + file.getName() + " with object id of " + file.getId())); //NON-NLS
+                    continue;
+                } catch (Exception unexpectedException) {  
+                    //hopefully an unnecessary generic exception catch but currently present to catch any exceptions OpenCv throws which may not be documented
+                    logger.log(Level.SEVERE, "Unexpected Exception encountered for image " + file.getParentPath() + file.getName() + " with object id of " + file.getId() +" while trying to apply classifier " + classifierKey, unexpectedException);
                     continue;
                 }
 
