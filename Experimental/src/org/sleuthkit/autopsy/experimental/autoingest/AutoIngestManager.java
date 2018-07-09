@@ -1840,13 +1840,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     setChanged();
                     notifyObservers(Event.RESUMED);
-
-                    /**
-                     * Publish an event to let remote listeners know that the
-                     * node has been resumed.
-                     */
-                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
                 }
+                /**
+                 * Publish an event to let remote listeners know that the node
+                 * has been resumed.
+                 */
+                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
+
                 pauseLock.notifyAll();
             }
         }
