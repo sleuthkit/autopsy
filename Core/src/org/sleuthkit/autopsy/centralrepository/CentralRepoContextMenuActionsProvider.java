@@ -38,19 +38,23 @@ public class CentralRepoContextMenuActionsProvider implements ContextMenuActions
 
     @Override
     public List<Action> getActions() {
-        ArrayList<Action> actions = new ArrayList<>();
+        ArrayList<Action> actionsList = new ArrayList<>();
         Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
 
         if (selectedFiles.size() != 1) {
-            return actions;
+            return actionsList;
         }
 
         for (AbstractFile file : selectedFiles) {
             if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
-                actions.add(new AddEditCentralRepoCommentAction(file));
+                AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(file);
+                if (action.getCorrelationAttribute() == null) {
+                    action.setEnabled(false);
+                }
+                actionsList.add(action);
             }
         }
 
-        return actions;
+        return actionsList;
     }
 }

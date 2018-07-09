@@ -121,4 +121,13 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     public String getComment() {
         return comment;
     }
+    
+    /**
+     * Retrieve the associated correlation attribute.
+     * 
+     * @return The correlation attribute.
+     */
+    public CorrelationAttribute getCorrelationAttribute() {
+        return correlationAttribute;
+    }
 }
