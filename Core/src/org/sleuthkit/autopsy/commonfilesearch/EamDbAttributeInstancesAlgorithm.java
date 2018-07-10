@@ -37,12 +37,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Used to process and return CorrelationCase md5s from the EamDB for
  * CommonFilesSearch.
  */
-class EamDbAttributeInstancesAlgorithm {
+final class EamDbAttributeInstancesAlgorithm {
 
     private static final Logger logger = Logger.getLogger(CommonFilesPanel.class.getName());
 
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
-    private final Map<Integer, String> intercaseCommonDatasourcesMap = new HashMap<>();
+    private final Map<Integer, String> intercaseCommonCasesMap = new HashMap<>();
     
     CorrelationAttribute processCorrelationCaseSingleAttribute(int attrbuteId) {
          try {
@@ -70,7 +70,7 @@ class EamDbAttributeInstancesAlgorithm {
             DbManager.processCaseInstancesTable(fileType, DbManager.getCase(currentCase), instancetableCallback);
 
             intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
-            intercaseCommonDatasourcesMap.putAll(instancetableCallback.getCorrelationIdDatasourceMap());
+            intercaseCommonCasesMap.putAll(instancetableCallback.getCorrelationIdToCaseMap());
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
@@ -81,8 +81,8 @@ class EamDbAttributeInstancesAlgorithm {
         return Collections.unmodifiableMap(intercaseCommonValuesMap);
     }
 
-    Map<Integer, String> getIntercaseCommonDatasourcesMap() {
-        return Collections.unmodifiableMap(intercaseCommonDatasourcesMap);
+    Map<Integer, String> getIntercaseCommonCasesMap() {
+        return Collections.unmodifiableMap(intercaseCommonCasesMap);
     }
 
     /**
@@ -100,7 +100,7 @@ class EamDbAttributeInstancesAlgorithm {
                 while (resultSet.next()) {
                     int resultId = InstanceTableCallback.getId(resultSet);
                     correlationIdToValueMap.put(resultId, InstanceTableCallback.getValue(resultSet));
-                    correlationIdToDatasourceMap.put(resultId, InstanceTableCallback.getValue(resultSet));
+                    correlationIdToDatasourceMap.put(resultId, String.valueOf(InstanceTableCallback.getCaseId(resultSet)));
                 }
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
@@ -111,7 +111,7 @@ class EamDbAttributeInstancesAlgorithm {
             return Collections.unmodifiableMap(correlationIdToValueMap);
         }
 
-        Map<Integer, String> getCorrelationIdDatasourceMap() {
+        Map<Integer, String> getCorrelationIdToCaseMap() {
             return Collections.unmodifiableMap(correlationIdToDatasourceMap);
         }
 

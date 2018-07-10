@@ -19,13 +19,11 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -40,15 +38,22 @@ public abstract class FileInstanceNodeGenerator {
 
     private static final Logger LOGGER = Logger.getLogger(FileInstanceNodeGenerator.class.getName());
     protected Long abstractFileReference;
-    protected Map<Long, AbstractFile> cachedFiles;
-    private final String caseName;
-    private String dataSource;
+    protected static Map<Long, AbstractFile> cachedFiles;
+    String caseName;
+    String dataSource;
 
     public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         this.abstractFileReference = abstractFileReference;
-        this.cachedFiles = cachedFiles;
+        cachedFiles = cachedFiles;
         this.caseName = caseName;
         this.dataSource = dataSource;
+    }
+    
+    public FileInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
+        this.abstractFileReference = null;
+        cachedFiles = cachedFiles;
+        this.caseName = null;
+        this.dataSource = null;
     }
 
     /**
@@ -105,6 +110,14 @@ public abstract class FileInstanceNodeGenerator {
      * @return child row node
      */
     public abstract DisplayableItemNode generateNode();
+    
+    /**
+     * Create a list of nodes which are a child of the MD5Node, to be used to display a
+     * row in the tree table
+     *
+     * @return child row node
+     */
+    public abstract DisplayableItemNode[] generateNodes();
 
     public String getCaseName() {
         return this.caseName;
@@ -129,43 +142,10 @@ public abstract class FileInstanceNodeGenerator {
         return this.abstractFileReference;
     }
 
-    public static FileInstanceNodeGenerator createInstance(Iterator<FileInstanceNodeGenerator> identicalFileNodeGeneratorIterator, CentralRepositoryFile instance, Map<Long, AbstractFile> cachedFiles) throws Exception {
+    public static FileInstanceNodeGenerator createInstance(Iterator<FileInstanceNodeGenerator> identicalFileNodeGeneratorIterator, Integer instanceId) throws Exception {
 
-        Long arbitraryIdenticalAbstractFileId = null;
+        //Long arbitraryIdenticalAbstractFileId = null;
+        return new CentralRepositoryCaseFileInstanceMetadata(instanceId, cachedFiles);
 
-        final String instanceDataSource = instance.getCorrelationDataSource().getName().toLowerCase();
-        final String instanceCase = instance.getCorrelationCase().getDisplayName().toLowerCase();
-        final String instancePath = instance.getFilePath().toLowerCase();
-
-        while (identicalFileNodeGeneratorIterator.hasNext()) {
-
-            FileInstanceNodeGenerator identicalFileNodeGenerator = identicalFileNodeGeneratorIterator.next();
-
-            final Long identicalFileSleuthkitCaseObjectID = identicalFileNodeGenerator.getIdenticalFileSleuthkitCaseObjectID();
-
-            final AbstractFile referenceFile = FileInstanceNodeGenerator.lookupOrCreateAbstractFile(identicalFileSleuthkitCaseObjectID, cachedFiles);
-            final Long referenceFileId = referenceFile.getId();
-            arbitraryIdenticalAbstractFileId = referenceFileId;
-
-            final String referenceFileDataSource = identicalFileNodeGenerator.getDataSource().toLowerCase();
-
-            final String referenceCase = Case.getCurrentCase().getDisplayName().toLowerCase();
-
-            final String referencePath = Paths.get(referenceFile.getParentPath(), referenceFile.getName()).toString().toLowerCase().replace("\\", "/");
-
-            final boolean sameDataSource = referenceFileDataSource.equals(instanceDataSource);
-            final boolean sameCase = referenceCase.equals(instanceCase);
-            final boolean samePathAndName = referencePath.equals(instancePath);
-
-            if (sameDataSource && sameCase && samePathAndName) {
-                return new SleuthkitCaseFileInstanceMetadata(referenceFile.getId(), cachedFiles, referenceFileDataSource, referenceCase);
-            }
-        }
-
-        if (arbitraryIdenticalAbstractFileId != null) {
-            return new CentralRepositoryCaseFileInstanceMetadata(instance, arbitraryIdenticalAbstractFileId, cachedFiles, instanceDataSource, instanceCase);
-        } else {
-            throw new Exception("Unable to get instance.");
-        }
     }
 }

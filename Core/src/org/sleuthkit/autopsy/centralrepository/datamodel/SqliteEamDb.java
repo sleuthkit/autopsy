@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -415,44 +414,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValue(aType, value);
-        } finally {
-            releaseSharedLock();
-        }
-    }
-    
-    /**
-     * Retrieves eamArtiifact instances from the database that match the given
-     * list of MD5 values;
-     *
-     * @param correlationCase Case id to search on
-     * @param values List of ArtifactInstance MD5 values to find matches of.
-     *
-     * @return List of artifact instances for a given list of MD5 values
-     */
-    @Override
-    public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(Collection<String> values) throws EamDbException {
-        try {
-            acquireSharedLock();
-            return super.getArtifactInstancesByCaseValues(null, values, -1);
-        } finally {
-            releaseSharedLock();
-        }
-    }
-
-    /**
-     * Retrieves eamArtiifact instances from the database that match the given
-     * list of MD5 values;
-     *
-     * @param correlationCase Case id to search on
-     * @param values List of ArtifactInstance MD5 values to find matches of.
-     *
-     * @return List of artifact instances for a given list of MD5 values
-     */
-    @Override
-    public List<CentralRepositoryFile> getArtifactInstancesByCaseValues(CorrelationCase correlationCase, Collection<String> values, int currentCaseId) throws EamDbException {
-        try {
-            acquireSharedLock();
-            return super.getArtifactInstancesByCaseValues(correlationCase, values, currentCaseId);
         } finally {
             releaseSharedLock();
         }

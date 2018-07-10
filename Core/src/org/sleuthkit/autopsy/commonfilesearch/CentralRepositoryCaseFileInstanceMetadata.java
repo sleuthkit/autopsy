@@ -19,8 +19,11 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -28,18 +31,37 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
 final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
-
-    private CentralRepositoryFile crFile;
     
-    CentralRepositoryCaseFileInstanceMetadata(CentralRepositoryFile crFile, Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName){
-        super(abstractFileReference, cachedFiles, dataSource, caseName);
-        //TODO should we actually just take an ID instead of the whole object
-        //  like we've done previously, or is this ok?
-        this.crFile = crFile;
+    private final Integer crFileId;
+    private CorrelationAttributeInstance tempAttributeInst;
+    
+    CentralRepositoryCaseFileInstanceMetadata(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
+        super(cachedFiles);
+        this.crFileId = attrInstId;
     }
     
     @Override
     public DisplayableItemNode generateNode() {
-        return new CentralRepositoryFileInstanceNode(this.crFile, this.lookupOrCreateAbstractFile());
+        if (tempAttributeInst != null) {
+            return new CentralRepositoryFileInstanceNode(tempAttributeInst, this.lookupOrCreateAbstractFile());
+        }
+        return null;
+    }
+    
+    @Override
+    public DisplayableItemNode[] generateNodes() {
+        EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
+        CorrelationAttribute corrAttr = eamDbAttrInst.processCorrelationCaseSingleAttribute(crFileId); //TODO which do we want  
+        List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
+        this.abstractFileReference = Long.getLong(corrAttr.getCorrelationValue());
+        
+        for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
+            tempAttributeInst = attrInst;
+            DisplayableItemNode generatedInstNode = generateNode();
+            if (generatedInstNode != null) {
+                attrInstNodeList.add(generatedInstNode);
+            }
+        }
+        return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);
     }
 }

@@ -27,7 +27,7 @@ import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -44,13 +44,13 @@ import org.sleuthkit.datamodel.Content;
  */
 public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
 
-    private final CentralRepositoryFile crFile;
+    private final CorrelationAttributeInstance crFile;
     
     //this may not be the same file, but at least it is identical, 
     //  and we can use this to support certain actions in the tree table and crFile viewer
     private final AbstractFile md5Reference;
     
-    public CentralRepositoryFileInstanceNode(CentralRepositoryFile content, AbstractFile md5Reference) {
+    public CentralRepositoryFileInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
         super(Children.LEAF, Lookups.fixed(content)); // TODO, using md5Reference enables Other Occurances..but for the incorrect file path
 
         this.crFile = content;
@@ -58,7 +58,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
         this.md5Reference = md5Reference;
     }
     
-    public CentralRepositoryFile getCentralRepoFile(){
+    public CorrelationAttributeInstance getCentralRepoFile(){
         return this.crFile;
     }
     
@@ -103,7 +103,7 @@ public class CentralRepositoryFileInstanceNode extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
         
-        final CentralRepositoryFile centralRepoFile = this.getCentralRepoFile();
+        final CorrelationAttributeInstance centralRepoFile = this.getCentralRepoFile();
         
         final String fullPath = centralRepoFile.getFilePath();
         final File file = new File(fullPath);

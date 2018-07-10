@@ -20,29 +20,20 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepositoryFile;
 import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNodeGenerator;
-import org.sleuthkit.autopsy.commonfilesearch.SleuthkitCaseFileInstanceMetadata;
 import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a common files match - two or more files which appear to be the
@@ -148,18 +139,18 @@ public class Md5Node extends DisplayableItemNode {
      */
     static class FileInstanceNodeFactory extends ChildFactory<FileInstanceNodeGenerator> {
 
-        private Map<Long, AbstractFile> cachedFiles;
+        //private final Map<Long, AbstractFile> cachedFiles;
         
         private final Md5Metadata descendants;
 
         FileInstanceNodeFactory(Md5Metadata descendants) {
             this.descendants = descendants;
-            this.cachedFiles = new HashMap<>();
+            //this.cachedFiles = new HashMap<>();
         }
 
         @Override
-        protected Node createNodeForKey(FileInstanceNodeGenerator file) {
-            return file.generateNode();
+        protected Node[] createNodesForKey(FileInstanceNodeGenerator file) {
+            return file.generateNodes();
         }
 
         @Override
