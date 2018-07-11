@@ -107,69 +107,77 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             return Bundle.DataContentViewerOtherCasesTableModel_noData();
         }
 
-        return mapValueById(rowIdx, TableColumns.values()[colIdx]);
+        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
+        TableColumns columnId = TableColumns.values()[colIdx];
+        if (nodeData instanceof OtherOccurrenceNodeMessageData) {
+            return mapNodeMessageData((OtherOccurrenceNodeMessageData) nodeData, columnId);
+        }
+        return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
+    }
+
+    /**
+     * Map a column ID to the value in that cell for node message data.
+     *
+     * @param nodeData    The node message data.
+     * @param columnId The ID of the cell column.
+     *
+     * @return The value in the cell.
+     */
+    private Object mapNodeMessageData(OtherOccurrenceNodeMessageData nodeData, TableColumns columnId) {
+        if (columnId == TableColumns.CASE_NAME) {
+            return nodeData.getDisplayMessage();
+        }
+        return "";
+    }
+
+    /**
+     * Map a column ID to the value in that cell for node instance data.
+     *
+     * @param nodeData    The node instance data.
+     * @param columnId The ID of the cell column.
+     *
+     * @return The value in the cell.
+     */
+    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
+        String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
+
+        switch (columnId) {
+            case CASE_NAME:
+                if (null != nodeData.getCaseName()) {
+                    value = nodeData.getCaseName();
+                }
+                break;
+            case DEVICE:
+                if (null != nodeData.getDeviceID()) {
+                    value = nodeData.getDeviceID();
+                }
+                break;
+            case DATA_SOURCE:
+                if (null != nodeData.getDataSourceName()) {
+                    value = nodeData.getDataSourceName();
+                }
+                break;
+            case FILE_PATH:
+                value = nodeData.getFilePath();
+                break;
+            case ATTRIBUTE:
+                value = nodeData.getType();
+                break;
+            case VALUE:
+                value = nodeData.getValue();
+                break;
+            case KNOWN:
+                value = nodeData.getKnown().getName();
+                break;
+            case COMMENT:
+                value = nodeData.getComment();
+                break;
+        }
+        return value;
     }
 
     Object getRow(int rowIdx) {
         return nodeDataList.get(rowIdx);
-    }
-
-    /**
-     * Map a rowIdx and colId to the value in that cell.
-     *
-     * @param rowIdx Index of row to search
-     * @param colId  ID of column to search
-     *
-     * @return value in the cell
-     */
-    private Object mapValueById(int rowIdx, TableColumns colId) {
-        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
-        
-        if (nodeData instanceof OtherOccurrenceNodeMessageData) {
-            if (colId == TableColumns.CASE_NAME) {
-                OtherOccurrenceNodeMessageData messageData = (OtherOccurrenceNodeMessageData) nodeData;
-                return messageData.getDisplayMessage();
-            } else {
-                return "";
-            }
-        }
-        
-        OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) nodeData;
-        String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
-
-        switch (colId) {
-            case CASE_NAME:
-                if (null != instanceData.getCaseName()) {
-                    value = instanceData.getCaseName();
-                }
-                break;
-            case DEVICE:
-                if (null != instanceData.getDeviceID()) {
-                    value = instanceData.getDeviceID();
-                }
-                break;
-            case DATA_SOURCE:
-                if (null != instanceData.getDataSourceName()) {
-                    value = instanceData.getDataSourceName();
-                }
-                break;
-            case FILE_PATH:
-                value = instanceData.getFilePath();
-                break;
-            case ATTRIBUTE:
-                value = instanceData.getType();
-                break;
-            case VALUE:
-                value = instanceData.getValue();
-                break;
-            case KNOWN:
-                value = instanceData.getKnown().getName();
-                break;
-            case COMMENT:
-                value = instanceData.getComment();
-                break;
-        }
-        return value;
     }
 
     @Override
