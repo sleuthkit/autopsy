@@ -140,10 +140,8 @@ class Util {
 
         //was not a valid URL, try a less picky method
         if (result == null || result.trim().isEmpty()) {
-            System.out.println("getBaseDomain result: " + getBaseDomain(value));
             return getBaseDomain(value);
         }
-        System.out.println("extractDomain result: " + result);
         return result;
     }
 
