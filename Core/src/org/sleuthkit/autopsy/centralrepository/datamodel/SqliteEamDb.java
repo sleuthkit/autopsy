@@ -321,6 +321,24 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
+     * Retrieves Case details based on Case ID
+     *
+     * @param caseID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    @Override
+    public CorrelationCase getCaseById(int caseId) throws EamDbException {
+        try {
+            acquireSharedLock();
+            return super.getCaseById(caseId);
+        } finally {
+            releaseSharedLock();
+        }
+
+    }
+
+    /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases
@@ -593,20 +611,21 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * Gets list of matching eamArtifact instances that have knownStatus =
      * "Bad".
+     *
      * @param aType EamArtifact.Type to search for
      * @return List with 0 or more matching eamArtifact instances.
      * @throws EamDbException
      */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType) throws EamDbException {
-        try{
+        try {
             acquireSharedLock();
             return super.getArtifactInstancesKnownBad(aType);
         } finally {
             releaseSharedLock();
-        }       
+        }
     }
-    
+
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
@@ -697,7 +716,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Process a single Artifact instance row in the EamDb
      *
@@ -715,11 +734,13 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     /**
-     * Process the Artifact md5s in the EamDb for matches of case files which are not known
+     * Process the Artifact md5s in the EamDb for matches of case files which
+     * are not known
+     *
      * @param type EamArtifact.Type to search for
-     * @param correlationCase  CorrelationCase to filter by
+     * @param correlationCase CorrelationCase to filter by
      * @param instanceTableCallback callback to process the instance
      * @throws EamDbException
      */
@@ -732,10 +753,12 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-      
+
     /**
-     * Check whether a reference set with the given name/version is in the central repo.
-     * Used to check for name collisions when creating reference sets.
+     * Check whether a reference set with the given name/version is in the
+     * central repo. Used to check for name collisions when creating reference
+     * sets.
+     *
      * @param referenceSetName
      * @param version
      * @return true if a matching set is found

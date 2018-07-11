@@ -177,6 +177,14 @@ public interface EamDb {
     CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException;
 
     /**
+     * Retrieves Case details based on Case ID
+     *
+     * @param caseID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    CorrelationCase getCaseById(int caseId) throws EamDbException;
+    /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases

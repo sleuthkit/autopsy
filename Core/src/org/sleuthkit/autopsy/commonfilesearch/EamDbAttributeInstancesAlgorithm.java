@@ -42,7 +42,7 @@ final class EamDbAttributeInstancesAlgorithm {
     private static final Logger logger = Logger.getLogger(CommonFilesPanel.class.getName());
 
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
-    private final Map<Integer, String> intercaseCommonCasesMap = new HashMap<>();
+    private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();
     
     CorrelationAttribute processCorrelationCaseSingleAttribute(int attrbuteId) {
          try {
@@ -81,7 +81,7 @@ final class EamDbAttributeInstancesAlgorithm {
         return Collections.unmodifiableMap(intercaseCommonValuesMap);
     }
 
-    Map<Integer, String> getIntercaseCommonCasesMap() {
+    Map<Integer, Integer> getIntercaseCommonCasesMap() {
         return Collections.unmodifiableMap(intercaseCommonCasesMap);
     }
 
@@ -92,7 +92,7 @@ final class EamDbAttributeInstancesAlgorithm {
     private class EamDbAttributeInstancesCallback implements InstanceTableCallback {
 
         private final Map<Integer, String> correlationIdToValueMap = new HashMap<>();
-        private final Map<Integer, String> correlationIdToDatasourceMap = new HashMap<>();
+        private final Map<Integer, Integer> correlationIdToDatasourceMap = new HashMap<>();
 
         @Override
         public void process(ResultSet resultSet) {
@@ -100,7 +100,7 @@ final class EamDbAttributeInstancesAlgorithm {
                 while (resultSet.next()) {
                     int resultId = InstanceTableCallback.getId(resultSet);
                     correlationIdToValueMap.put(resultId, InstanceTableCallback.getValue(resultSet));
-                    correlationIdToDatasourceMap.put(resultId, String.valueOf(InstanceTableCallback.getCaseId(resultSet)));
+                    correlationIdToDatasourceMap.put(resultId, InstanceTableCallback.getCaseId(resultSet));
                 }
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
@@ -111,7 +111,7 @@ final class EamDbAttributeInstancesAlgorithm {
             return Collections.unmodifiableMap(correlationIdToValueMap);
         }
 
-        Map<Integer, String> getCorrelationIdToCaseMap() {
+        Map<Integer, Integer> getCorrelationIdToCaseMap() {
             return Collections.unmodifiableMap(correlationIdToDatasourceMap);
         }
 

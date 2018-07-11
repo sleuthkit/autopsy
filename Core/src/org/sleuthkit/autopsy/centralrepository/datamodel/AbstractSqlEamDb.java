@@ -384,6 +384,46 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return eamCaseResult;
     }
+    /**
+     * Retrieves Case details based on Case ID
+     *
+     * @param caseID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    @Override
+    public CorrelationCase getCaseById(int caseId) throws EamDbException {
+        // @@@ We should have a cache here...
+
+        Connection conn = connect();
+
+        CorrelationCase eamCaseResult = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String sql = "SELECT cases.id as case_id, case_uid, case_name, creation_date, case_number, examiner_name, "
+                + "examiner_email, examiner_phone, notes, organizations.id as org_id, org_name, poc_name, poc_email, poc_phone "
+                + "FROM cases "
+                + "LEFT JOIN organizations ON cases.org_id=organizations.id "
+                + "WHERE cases.id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, caseId);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                eamCaseResult = getEamCaseFromResultSet(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting case details.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return eamCaseResult;
+    }
 
     /**
      * Retrieves cases that are in DB.
@@ -1844,15 +1884,17 @@ abstract class AbstractSqlEamDb implements EamDb {
         ResultSet resultSet = null;
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT id, value, case_id FROM "); // TODO should this select * so any field is available?
+        sql.append("SELECT id, value, case_id FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE value IN (SELECT value FROM "); // TODO should this select * so any field is available?
         sql.append(tableName);
         sql.append(" WHERE value IN (SELECT value FROM ");
         sql.append(tableName);
-        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1 ORDER BY value");
+        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, correlationCase.getCaseUUID());
+            preparedStatement.setInt(1, correlationCase.getID());
             preparedStatement.setByte(2, TskData.FileKnown.KNOWN.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             instanceTableCallback.process(resultSet);

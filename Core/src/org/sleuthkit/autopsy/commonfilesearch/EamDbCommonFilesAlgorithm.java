@@ -94,7 +94,7 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
      * @param commonFiles matches must ultimately have appeared in this collection
      * @return collated map of instance counts to lists of matches
      */
-    private Map<Integer, List<Md5Metadata>> gatherIntercaseResults(Map<Integer, String> commonFiles, Map<Integer, String> commonFileCases) {
+    private Map<Integer, List<Md5Metadata>> gatherIntercaseResults(Map<Integer, String> commonFiles, Map<Integer, Integer> commonFileCases) {
 
         Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
 
@@ -107,21 +107,27 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
 
             try {
                   // TODO, pass proper Case
-                final String correlationCaseDisplayName = dbManager.getCaseByUUID(commonFileCases.get(commonAttrId)).getDisplayName(); 
+                int caseId = commonFileCases.get(commonAttrId);
+                CorrelationCase autopsyCrCase = dbManager.getCaseById(caseId);
+                final String correlationCaseDisplayName = autopsyCrCase.getDisplayName(); 
                 // we don't *have* all the information for the rows in the CR,
                 //  so we need to consult the present case via the SleuthkitCase object
 
-                final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = interCaseCommonFiles.get(md5).getMetadata().iterator();
+                
 
-                FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
+                
 
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
+                    final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = interCaseCommonFiles.get(md5).getMetadata().iterator();
+                    FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
 
                 } else {
                     Md5Metadata md5Metadata = new Md5Metadata(md5);
+                    final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = md5Metadata.getMetadata().iterator();
+                    FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
