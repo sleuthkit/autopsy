@@ -87,11 +87,8 @@ class Util {
     public static String getBaseDomain(String url) {
         String host = null;
         
-        if(url.contains("file/Documents%20and%20Settings")) {
-            System.out.println("Long one: " + url);
-        }
         //strip protocol
-        String cleanUrl = url.replaceFirst("/.*:\\/\\//", "");
+        String cleanUrl = url.replaceFirst(".*:\\/\\/", "");
 
         //strip after slashes
         String dirToks[] = cleanUrl.split("\\/");

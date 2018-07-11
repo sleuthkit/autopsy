@@ -59,7 +59,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     private final Map<String, Collection<CorrelationAttribute>> bulkArtifacts;
 
     // Maximum length for the value column in the instance tables
-    static final int MAX_VALUE_LENGTH = 128;
+    static final int MAX_VALUE_LENGTH = 256;
 
     // number of instances to keep in bulk queue before doing an insert.
     // Update Test code if this changes.  It's hard coded there.
