@@ -386,6 +386,25 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
+    
+    /**
+     * Retrieves Data Source details based on data source ID
+     *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
+     * @param dataSourceId the data source ID number
+     *
+     * @return The data source
+     */
+    @Override
+    public CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException {
+        try {
+            acquireSharedLock();
+            return super.getDataSourceById(correlationCase, dataSourceId);
+        } finally {
+            releaseSharedLock();
+        }
+    }
 
     /**
      * Return a list of data sources in the DB

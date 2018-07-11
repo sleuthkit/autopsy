@@ -28,6 +28,7 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
@@ -132,10 +133,11 @@ final class EamDbAttributeInstancesAlgorithm {
                 CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
                 
                 while (resultSet.next()) {
-                    CorrelationCase correlationCase = DbManager.getCaseByUUID(String.valueOf(InstanceTableCallback.getCaseId(resultSet)));
+                    CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
+                    CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
                     correlationAttribute = DbManager.getCorrelationAttribute(fileType,
                             correlationCase,
-                            DbManager.getDataSource(correlationCase, String.valueOf(InstanceTableCallback.getDataSourceId(resultSet))),
+                            dataSource,
                             InstanceTableCallback.getValue(resultSet),
                             InstanceTableCallback.getFilePath(resultSet));
 

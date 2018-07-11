@@ -47,6 +47,6 @@ final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGen
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        return Arrays.asList(generateNode()).toArray(new DisplayableItemNode[1]);
+        return Arrays.asList(new SleuthkitCaseFileInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource())).toArray(new DisplayableItemNode[1]);
     }
 }

@@ -22,22 +22,49 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
 final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
     
+    private static final Logger LOGGER = Logger.getLogger(CentralRepositoryCaseFileInstanceMetadata.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance tempAttributeInst;
     
     CentralRepositoryCaseFileInstanceMetadata(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
         this.crFileId = attrInstId;
+    }
+    
+    
+    private static AbstractFile loadFileFromSleuthkitCase(String path) {
+
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCaseThrows();
+
+            SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+            String[] splitPath = path.split("/");
+            String fileName = splitPath[splitPath.length -1];
+            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s'", fileName)).get(0); // TODO workaround where we don't need AbstractFile?
+
+            return abstractFile;
+
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{path}), ex);
+            return null;
+        }
     }
     
     @Override
@@ -53,11 +80,10 @@ final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanc
         EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
         CorrelationAttribute corrAttr = eamDbAttrInst.processCorrelationCaseSingleAttribute(crFileId); //TODO which do we want  
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
-        this.abstractFileReference = Long.getLong(corrAttr.getCorrelationValue());
         
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
             tempAttributeInst = attrInst;
-            DisplayableItemNode generatedInstNode = generateNode();
+            DisplayableItemNode generatedInstNode = new CentralRepositoryFileInstanceNode(tempAttributeInst, loadFileFromSleuthkitCase(tempAttributeInst.getFilePath()));
             if (generatedInstNode != null) {
                 attrInstNodeList.add(generatedInstNode);
             }

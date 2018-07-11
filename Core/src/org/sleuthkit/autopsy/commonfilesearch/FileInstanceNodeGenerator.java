@@ -50,10 +50,10 @@ public abstract class FileInstanceNodeGenerator {
     }
     
     public FileInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
-        this.abstractFileReference = null;
+        this.abstractFileReference = -1L;
         cachedFiles = cachedFiles;
-        this.caseName = null;
-        this.dataSource = null;
+        this.caseName = "";
+        this.dataSource = "";
     }
 
     /**
@@ -66,11 +66,11 @@ public abstract class FileInstanceNodeGenerator {
      * implementations of this object
      */
     protected AbstractFile lookupOrCreateAbstractFile() {
-        if (this.cachedFiles.containsKey(this.abstractFileReference)) {
-            return this.cachedFiles.get(this.abstractFileReference);
+        if (cachedFiles.containsKey(this.abstractFileReference)) {
+            return cachedFiles.get(this.abstractFileReference);
         } else {
             AbstractFile file = FileInstanceNodeGenerator.loadFileFromSleuthkitCase(this.abstractFileReference);
-            this.cachedFiles.put(this.abstractFileReference, file);
+            cachedFiles.put(this.abstractFileReference, file);
             return file;
         }
     }
@@ -90,16 +90,6 @@ public abstract class FileInstanceNodeGenerator {
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{objectId}), ex);
             return null;
-        }
-    }
-
-    private static AbstractFile lookupOrCreateAbstractFile(Long objectId, Map<Long, AbstractFile> cachedFiles) {
-        if (cachedFiles.containsKey(objectId)) {
-            return cachedFiles.get(objectId);
-        } else {
-            AbstractFile file = FileInstanceNodeGenerator.loadFileFromSleuthkitCase(objectId);
-            cachedFiles.put(objectId, file);
-            return file;
         }
     }
 

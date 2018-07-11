@@ -538,6 +538,48 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return eamDataSourceResult;
     }
+    
+    /**
+     * Retrieves Data Source details based on data source ID
+     *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
+     * @param dataSourceId the data source ID number
+     *
+     * @return The data source
+     */
+    @Override
+    public CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException {
+        if (correlationCase == null) {
+            throw new EamDbException("Correlation case is null");
+        }
+
+        Connection conn = connect();
+
+        CorrelationDataSource eamDataSourceResult = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String sql = "SELECT * FROM data_sources WHERE id=? AND case_id=?"; // NON-NLS
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, dataSourceId);
+            preparedStatement.setInt(2, correlationCase.getID());
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting data source.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return eamDataSourceResult;
+    }
 
     /**
      * Return a list of data sources in the DB
@@ -1841,7 +1883,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         StringBuilder sql = new StringBuilder();
         sql.append("select * from ");
         sql.append(tableName);
-        sql.append("WHERE id = ?");
+        sql.append(" WHERE id = ?");
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());

@@ -209,6 +209,18 @@ public interface EamDb {
      */
     CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
 
+    
+    /**
+     * Retrieves Data Source details based on data source ID
+     *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
+     * @param dataSourceId the data source ID number
+     *
+     * @return The data source
+     */
+    CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException;
+    
     /**
      * Retrieves data sources that are in DB
      *
