@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
@@ -725,4 +724,16 @@ public interface EamDb {
      * @throws EamDbException
      */
     void processCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, InstanceTableCallback instanceTableCallback) throws EamDbException;
+    
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param correlationCase  CorrelationCase to filter by
+     * @param singleCase Single Case to filter by
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    void processSingleCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, CorrelationCase singleCase,InstanceTableCallback instanceTableCallback) throws EamDbException;
+         
 }

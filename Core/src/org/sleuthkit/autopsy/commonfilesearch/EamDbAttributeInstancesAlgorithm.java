@@ -77,6 +77,22 @@ final class EamDbAttributeInstancesAlgorithm {
         }
 
     }
+    
+        void processSingleCaseCorrelationCaseAttributeValues(Case currentCase, CorrelationCase singleCase) {
+
+        try {
+            EamDbAttributeInstancesCallback instancetableCallback = new EamDbAttributeInstancesCallback();
+            EamDb DbManager = EamDb.getInstance();
+            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            DbManager.processSingleCaseInstancesTable(fileType, DbManager.getCase(currentCase), singleCase, instancetableCallback);
+
+            intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
+            intercaseCommonCasesMap.putAll(instancetableCallback.getCorrelationIdToCaseMap());
+        } catch (EamDbException ex) {
+            logger.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        }
+
+    }
 
     Map<Integer, String> getIntercaseCommonValuesMap() {
         return Collections.unmodifiableMap(intercaseCommonValuesMap);

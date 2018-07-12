@@ -69,25 +69,23 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
 
     protected CommonFilesMetadata findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
 
-        //TODO separate if case for correlationCase
         Map<Integer, List<Md5Metadata>> interCaseCommonFiles = new HashMap<>();
 
-        // Need to include current Cases results for specific case comparison
         EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
-        eamDbAttrInst.processCorrelationCaseAttributeValues(Case.getCurrentCase());       
+        if(correlationCase != null) {
+            // Filter by matches both within current case and a specific case.
+            // TODO, move to Single class
+            eamDbAttrInst.processSingleCaseCorrelationCaseAttributeValues(Case.getCurrentCase(), correlationCase);
+        } else {
+            // Filter by matches of current case md5s.
+            eamDbAttrInst.processCorrelationCaseAttributeValues(Case.getCurrentCase());       
+        }
         interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
 
+        //TODO, only use to filter mimeType in memory against currentCase against, unless mimeType is added to CR
         // Builds intercase-only matches metadata
         return new CommonFilesMetadata(interCaseCommonFiles);
     }
-
-    //TODO, only use to filter mimeType in memory against currentCase against, unless mimeType is added to CR
-//    private Map<Integer, List<Md5Metadata>> getMetadataForCurrentCase() throws NoCurrentCaseException, TskCoreException, SQLException, Exception {
-//        //we need the list of files in the present case so we can compare against the central repo
-//        CommonFilesMetadata metaData = super.findFiles();
-//        Map<Integer, List<Md5Metadata>> commonFiles = metaData.getMetadata();
-//        return commonFiles;
-//    }
 
     /**
      * @param artifactInstances all 'common files' in central repo
@@ -106,16 +104,12 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
             }
 
             try {
-                  // TODO, pass proper Case
                 int caseId = commonFileCases.get(commonAttrId);
                 CorrelationCase autopsyCrCase = dbManager.getCaseById(caseId);
                 final String correlationCaseDisplayName = autopsyCrCase.getDisplayName(); 
                 // we don't *have* all the information for the rows in the CR,
                 //  so we need to consult the present case via the SleuthkitCase object
-
-                
-
-                
+                // Later, when the FileInstanceNodde is built. Therefore, build node generators for now.
 
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData

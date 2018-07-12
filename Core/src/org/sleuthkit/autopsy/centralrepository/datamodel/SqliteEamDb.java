@@ -772,6 +772,25 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
+    
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param correlationCase  CorrelationCase to filter by
+     * @param singleCase Single Case to filter by
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processSingleCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, CorrelationCase singleCase,InstanceTableCallback instanceTableCallback) throws EamDbException {
+         try {
+            acquireSharedLock();
+            super.processSingleCaseInstancesTable(type, correlationCase, singleCase, instanceTableCallback);
+        } finally {
+            releaseSharedLock();
+        }
+    }       
 
     /**
      * Check whether a reference set with the given name/version is in the
