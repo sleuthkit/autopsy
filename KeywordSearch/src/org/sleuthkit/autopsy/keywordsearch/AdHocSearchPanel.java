@@ -172,8 +172,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Get dataSourceMap with object id and data source display name. Add the
-     * data source full name to toolTipList
+     * Get dataSourceMap with object id and data source display name.
      *
      * @return The list of data source name
      */

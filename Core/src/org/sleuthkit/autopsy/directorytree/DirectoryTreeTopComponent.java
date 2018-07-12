@@ -24,6 +24,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -35,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
+import java.util.Properties;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -62,6 +68,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
@@ -103,6 +110,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private AutopsyTreeChildrenFactory autopsyTreeChildrenFactory;
     private Children autopsyTreeChildren;
+    private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
+    private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
+    private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
     /**
      * the constructor
@@ -369,7 +379,51 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public int getPersistenceType() {
         return TopComponent.PERSISTENCE_NEVER;
     }
+    
+    /**
+     * Ask the user if they want to group by data source when opening a large case.
+     * 
+     * @param currentCase
+     * @param dataSourceCount
+     */
+    private void promptForDataSourceGrouping(Case currentCase, int dataSourceCount) {
+        Path settingsFile = Paths.get(currentCase.getConfigDirectory(), SETTINGS_FILE); //NON-NLS
+        if (settingsFile.toFile().exists()) {
+            // Read the setting
+            try (InputStream inputStream = Files.newInputStream(settingsFile)) {
+                Properties props = new Properties();
+                props.load(inputStream);
+                if (props.getProperty("groupByDataSource", "false").equals("true")) {
+                    UserPreferences.setGroupItemsInTreeByDatasource(true);
+                    groupByDatasourceCheckBox.setSelected(true);
+                }
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Error reading settings file", ex);
+            }
+        } else {
+            GroupDataSourcesDialog dialog = new GroupDataSourcesDialog(dataSourceCount);
+            dialog.display();
+            if (dialog.groupByDataSourceSelected()) {
+                UserPreferences.setGroupItemsInTreeByDatasource(true);
+                groupByDatasourceCheckBox.setSelected(true);
+            }
 
+            // Save the response
+            Properties props = new Properties();
+            if(dialog.groupByDataSourceSelected()) {
+                props.setProperty("groupByDataSource", "true");
+            } else {
+                props.setProperty("groupByDataSource", "false");
+            }
+
+            try (OutputStream fos = Files.newOutputStream(settingsFile)) {
+                props.store(fos, ""); //NON-NLS
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Error writing settings file", ex);
+            }
+        }
+    }
+    
     /**
      * Called only when top component was closed on all workspaces before and
      * now is opened for the first time on some workspace. The intent is to
@@ -377,6 +431,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * existing workspaces. Subclasses will usually perform initializing tasks
      * here.
      */
+    @NbBundle.Messages({"# {0} - dataSourceCount",
+                        "DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contains {0} data sources. Would you like to group by data source for faster loading?",
+                        "DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?"})
     @Override
     public void componentOpened() {
         // change the cursor to "waiting cursor" for this operation
@@ -392,6 +449,31 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (null == currentCase || currentCase.hasData() == false) {
             getTree().setRootVisible(false); // hide the root
         } else {
+            // If the case contains a lot of data sources, and they aren't already grouping
+            // by data source, give the user the option to do so before loading the tree.
+            if (RuntimeProperties.runningWithGUI()) {
+                long threshold = DEFAULT_DATASOURCE_GROUPING_THRESHOLD;
+                if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME)) {
+                    try {
+                        threshold = Long.parseLong(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME));
+                    } catch (NumberFormatException ex) {
+                        LOGGER.log(Level.SEVERE, "Group data sources threshold is not a number", ex);
+                    }
+                } else {
+                    ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME, String.valueOf(threshold));
+                }
+                
+                try {
+                    int dataSourceCount = currentCase.getDataSources().size();
+                    if (! UserPreferences.groupItemsInTreeByDatasource() &&
+                        dataSourceCount > threshold) {
+                        promptForDataSourceGrouping(currentCase, dataSourceCount);
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error loading data sources", ex);
+                }
+            }
+            
             // if there's at least one image, load the image and open the top componen
             autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory();
             autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);     

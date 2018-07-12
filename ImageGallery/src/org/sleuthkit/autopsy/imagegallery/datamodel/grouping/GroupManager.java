@@ -352,8 +352,9 @@ public class GroupManager {
                 case MIME_TYPE:
                     if (nonNull(db)) {
                         HashSet<String> types = new HashSet<>();
+                        
                         // Use the group_concat function to get a list of files for each mime type.  
-                        // This has sifferent syntax on Postgres vs SQLite
+                        // This has different syntax on Postgres vs SQLite
                         String groupConcatClause;
                         if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
                             groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
@@ -361,8 +362,8 @@ public class GroupManager {
                         else {
                             groupConcatClause = " group_concat(obj_id) as object_ids";
                         }
-                        String querySQL  = "select " + groupConcatClause + ", mime_type from tsk_files group by mime_type ";
-                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(querySQL); //NON-NLS
+                        String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
+                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
                                 ResultSet resultSet = executeQuery.getResultSet();) {
                             while (resultSet.next()) {
                                 final String mimeType = resultSet.getString("mime_type"); //NON-NLS

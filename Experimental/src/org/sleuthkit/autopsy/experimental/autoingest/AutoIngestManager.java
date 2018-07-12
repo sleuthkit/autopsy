@@ -2790,6 +2790,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
+                                AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
                                 if (!snapshot.isCancelled()) {
                                     List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
                                     if (!cancelledModules.isEmpty()) {
@@ -2798,15 +2799,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                         setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                                         for (String module : snapshot.getCancelledDataSourceIngestModules()) {
                                             sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
-                                            jobLogger.logIngestModuleCancelled(module);
+                                            nestedJobLogger.logIngestModuleCancelled(module);
                                         }
                                     }
-                                    jobLogger.logAnalysisCompleted();
+                                    nestedJobLogger.logAnalysisCompleted();
                                 } else {
                                     currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
                                     currentJob.setErrorsOccurred(true);
                                     setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                                    jobLogger.logAnalysisCancelled();
+                                    nestedJobLogger.logAnalysisCancelled();
                                     CancellationReason cancellationReason = snapshot.getCancellationReason();
                                     if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
                                         throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));

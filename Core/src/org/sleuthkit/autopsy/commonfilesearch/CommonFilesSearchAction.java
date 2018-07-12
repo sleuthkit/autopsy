@@ -24,7 +24,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
