@@ -126,7 +126,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             private void setTitleForSingleSource(Long dataSourceId) {
                 final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
-                final Object[] dataSourceName = new Object[]{CommonFilesPanel.this.intraCasePanel.getDataSourceMap().get(dataSourceId)};
+                final Object[] dataSourceName = new Object[]{intraCasePanel.getDataSourceMap().get(dataSourceId)};
 
                 this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
             }
@@ -138,8 +138,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 progress.start();
                 progress.switchToIndeterminate();
 
-                Long dataSourceId = CommonFilesPanel.this.intraCasePanel.getSelectedDataSourceId();
-                Integer caseId = CommonFilesPanel.this.interCasePanel.getSelectedCaseId();
+                Long dataSourceId = intraCasePanel.getSelectedDataSourceId();
+                Integer caseId = interCasePanel.getSelectedCaseId();
 
                 CommonFilesMetadataBuilder builder;
                 CommonFilesMetadata metadata;
@@ -158,23 +158,23 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 if (CommonFilesPanel.this.interCaseRadio.isSelected()) {
 
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        builder = new AllCasesEamDbCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new AllCasesEamDbCommonFilesAlgorithm(filterByMedia, filterByDocuments);
                     } else {
-                        builder = new SingleCaseEamDbCommonFilesAlgorithm(caseId, CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new SingleCaseEamDbCommonFilesAlgorithm(caseId, filterByMedia, filterByDocuments);
                     }
                 } else {
                     if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                        builder = new AllDataSourcesCommonFilesAlgorithm(CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new AllDataSourcesCommonFilesAlgorithm(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
                         setTitleForAllDataSources();
                     } else {
-                        builder = new SingleDataSource(dataSourceId, CommonFilesPanel.this.intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new SingleDataSource(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
                         setTitleForSingleSource(dataSourceId);
                     }
                 }
 
-                //TODO set title from one method rathe than two (or more) overloads
+                //TODO set title from one method rather than two (or more) overloads
                 metadata = builder.findFiles();
                 this.tabTitle = builder.buildTabTitle();
 

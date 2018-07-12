@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
@@ -28,7 +27,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
  */
 public class AllCasesEamDbCommonFilesAlgorithm extends EamDbCommonFilesAlgorithm {
     
-    public AllCasesEamDbCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    public AllCasesEamDbCommonFilesAlgorithm(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(filterByMediaMimeType, filterByDocMimeType);
     }    
 }

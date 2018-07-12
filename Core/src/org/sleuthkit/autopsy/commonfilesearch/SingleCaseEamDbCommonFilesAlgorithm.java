@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -37,13 +36,12 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends EamDbCommonFilesAlgorit
     /**
      * 
      * @param correlationCaseId
-     * @param dataSourceIdMap
      * @param filterByMediaMimeType
      * @param filterByDocMimeType
      * @throws EamDbException 
      */
-    public SingleCaseEamDbCommonFilesAlgorithm(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    public SingleCaseEamDbCommonFilesAlgorithm(int correlationCaseId, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(filterByMediaMimeType, filterByDocMimeType);
         
         this.corrleationCaseId = correlationCaseId;
     }
@@ -67,4 +65,5 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends EamDbCommonFilesAlgorit
         
         return this.findFiles(cCase);
     }
+    
 }

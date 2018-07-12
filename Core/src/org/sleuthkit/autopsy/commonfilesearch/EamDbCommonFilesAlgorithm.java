@@ -48,7 +48,6 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
      * Implements the algorithm for getting common files across all data sources
      * and all cases. Can filter on mime types conjoined by logical AND.
      *
-     * @param dataSourceIdMap a map of obj_id to datasource name
      * @param filterByMediaMimeType match only on files whose mime types can be
      * broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be
@@ -56,9 +55,8 @@ public abstract class EamDbCommonFilesAlgorithm extends CommonFilesMetadataBuild
      *
      * @throws EamDbException
      */
-    EamDbCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
-        
+    EamDbCommonFilesAlgorithm(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(new HashMap<Long, String>(), filterByMediaMimeType, filterByDocMimeType); // Pass empty datasources. Unused for intercase matches.      
         dbManager = EamDb.getInstance();
     }
 
