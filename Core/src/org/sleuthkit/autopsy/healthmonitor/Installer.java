@@ -45,9 +45,18 @@ public class Installer extends ModuleInstall {
     public void restored() {
         
         try {
-            EnterpriseHealthMonitor.startUpIfEnabled();
+            HealthMonitor.startUpIfEnabled();
         } catch (HealthMonitorException ex) {
             logger.log(Level.SEVERE, "Error starting health services monitor", ex);
+        }
+    }
+    
+    @Override
+    public void close() {
+        try {
+            HealthMonitor.shutdown();
+        } catch (HealthMonitorException ex) {
+            logger.log(Level.SEVERE, "Error stopping health services monitor", ex);
         }
     }
 }

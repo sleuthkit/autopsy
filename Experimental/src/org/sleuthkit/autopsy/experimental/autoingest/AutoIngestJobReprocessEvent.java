@@ -24,9 +24,21 @@ import java.io.Serializable;
  * Event published to reprocess an AutoIngestJob.
  */
 public final class AutoIngestJobReprocessEvent extends AutoIngestJobEvent implements Serializable{
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;    
+    private final String nodeName;
+    private final String userName;
     
-    public AutoIngestJobReprocessEvent(AutoIngestJob job) {
+    public AutoIngestJobReprocessEvent(AutoIngestJob job, String nodeName, String userName) {
         super(AutoIngestManager.Event.REPROCESS_JOB, job);
+        this.nodeName = nodeName;
+        this.userName = userName;
+    }
+    
+    String getNodeName() {
+        return nodeName;
+    }
+    
+    String getUserName() {
+        return userName;
     }
 }

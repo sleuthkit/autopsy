@@ -69,6 +69,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         return visitor.visit(this);
     }
 
+    long filteringDataSourceObjId() {
+        return typesRoot.filteringDataSourceObjId();
+    } 
+    
     /**
      * Listens for case and ingest invest. Updates observers when events are
      * fired. FileType and FileTypes nodes are all listening to this.
@@ -358,6 +362,9 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + (UserPreferences.hideKnownFilesInViewsTree()
                 ? " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")"
+                : " ")
+                + (UserPreferences.groupItemsInTreeByDatasource()
+                ? " AND data_source_obj_id = " + filteringDataSourceObjId()
                 : " ")
                 + " AND (extension IN (" + filter.getFilter().stream()
                         .map(String::toLowerCase)

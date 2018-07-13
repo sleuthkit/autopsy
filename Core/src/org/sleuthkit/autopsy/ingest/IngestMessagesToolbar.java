@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.core.RuntimeProperties;
  * Tool bar for an ingest messages button that allows a user to open the ingest
  * messages inbox top component.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private IngestMessagesButton ingestMessagesButton = new IngestMessagesButton();

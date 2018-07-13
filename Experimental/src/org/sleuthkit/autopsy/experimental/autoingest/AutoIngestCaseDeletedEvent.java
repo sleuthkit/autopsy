@@ -31,6 +31,7 @@ final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Serializa
     private static final long serialVersionUID = 1L;
     private final String caseName;
     private final String nodeName;
+    private final String userName;
 
     /**
      * Constructs an event that is published when a case is deleted by the
@@ -38,11 +39,13 @@ final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Serializa
      *
      * @param caseName The case name.
      * @param nodeName The host name of the node that deleted the case.
+     * @param userName The user that deleted the case
      */
-    AutoIngestCaseDeletedEvent(String caseName, String nodeName) {
+    AutoIngestCaseDeletedEvent(String caseName, String nodeName, String userName) {
         super(AutoIngestManager.Event.CASE_DELETED.toString(), null, null);
         this.caseName = caseName;
         this.nodeName = nodeName;
+        this.userName = userName;
     }
 
     String getCaseName() {
@@ -51,6 +54,10 @@ final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Serializa
 
     String getNodeName() {
         return nodeName;
+    }
+    
+    String getUserName() {
+        return userName;
     }
 
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,6 +63,7 @@ import org.netbeans.swing.etable.ETable;
  * in a JTable representation of its BlackboardAttributes.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 7)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
 
     @NbBundle.Messages({
@@ -484,7 +485,9 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         if ((artifact == null)
                 || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())
                 || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
-                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())) {        
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID())
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_OBJECT_DETECTED.getTypeID())
+                || (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {        
             return 3;
         } else {
             return 6;

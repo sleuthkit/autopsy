@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,14 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JProgressBar;
-import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle;
 
 /**
  * visual component to display progress bar and status updates while adding an
  * image in the wizard
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddImageWizardAddingProgressVisual extends javax.swing.JPanel {
 
     private static final String ADDING_DATA_SOURCE_COMPLETE = NbBundle

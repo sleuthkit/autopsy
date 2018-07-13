@@ -74,6 +74,7 @@ import org.sleuthkit.datamodel.timeline.TimelineEvent;
  * to choose a specific event and a time range around it to show in the Timeline
  * List View.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
     private static final Logger LOGGER = Logger.getLogger(ShowInTimelineDialog.class.getName());

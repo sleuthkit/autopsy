@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JList;
 import javax.swing.event.ListSelectionEvent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -41,12 +38,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Subpanel with controls for data source filtering.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataSourcePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(DataSourcePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final Map<Long, String> dataSourceMap = new HashMap<>();
-    private final List<String> toolTipList = new ArrayList<>();
 
     /**
      * Creates new form DataSourcePanel
@@ -56,26 +53,10 @@ public class DataSourcePanel extends javax.swing.JPanel {
         this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
         });
-        this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent evt) {
-                //Unused by now
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent evt) {
-                JList<String> DsList = (JList<String>) evt.getSource();
-                int index = DsList.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    DsList.setToolTipText(toolTipList.get(index));
-                }
-            }
-    });
     }
 
     /**
-     * Get dataSourceMap with object id and data source display name. Add the data source full name to toolTipList
+     * Get dataSourceMap with object id and data source display name.
      *
      * @return The list of data source name
      */
@@ -90,8 +71,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 String dsName = ds.getName();
                 File dataSourceFullName = new File(dsName);
                 String displayName = dataSourceFullName.getName();
-                dataSourceMap.put(ds.getId(), displayName);  
-                toolTipList.add(dsName);
+                dataSourceMap.put(ds.getId(), displayName);
                 dsList.add(displayName);
             }
         } catch (NoCurrentCaseException ex) {
@@ -151,7 +131,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
         dataSourceNoteLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(150, 150));
-        setPreferredSize(new java.awt.Dimension(100, 100));
+        setPreferredSize(new java.awt.Dimension(150, 150));
 
         dataSourceList.setModel(new javax.swing.AbstractListModel<String>() {
             List<String> strings  = getDataSourceArray();
@@ -194,8 +174,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(dataSourceCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(dataSourceNoteLabel)
                 .addContainerGap())
         );

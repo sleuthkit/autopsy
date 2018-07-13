@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 public class TableFilterNode extends FilterNode {
 
     private final boolean createChildren;
-    private boolean forceUseWrappedDisplayName = false;
+    private final boolean forceUseWrappedDisplayName;
     private String columnOrderKey = "NONE";
 
     /**
@@ -48,34 +48,8 @@ public class TableFilterNode extends FilterNode {
      */
     public TableFilterNode(Node node, boolean createChildren) {
         super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
-        this.createChildren = createChildren;
-    }
-
-    /**
-     * Constructs a filter node that generates children using
-     * TableFilterChildrenWithDescendants. This enables row to have descendants.
-     * 
-     * Enables use of <code>getDisplayName()</code> for children of this node.
-     *
-     * @param node The node to wrap
-     */
-    public TableFilterNode(Node node) {
-        super(node, TableFilterChildrenWithDescendants.createInstance(node, true), Lookups.proxy(node));
-        this.createChildren = true;
         this.forceUseWrappedDisplayName = false;
-    }
-    
-    /**
-     * To be used in TableFilterChildrenWithDescendants.
-     * 
-     * @param node node to wrap
-     * @param createChildren node has children?
-     * @param forceUseWrappedDisplayName  allow use of custom <code>getDisplayName()</code> .
-     */
-    TableFilterNode(Node node, boolean createChildren, boolean forceUseWrappedDisplayName) {
-        super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
-        this.forceUseWrappedDisplayName = forceUseWrappedDisplayName;
     }
 
     /**
@@ -92,8 +66,15 @@ public class TableFilterNode extends FilterNode {
      */
     public TableFilterNode(Node node, boolean createChildren, String columnOrderKey) {
         super(node, TableFilterChildren.createInstance(node, createChildren));
+        this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
         this.columnOrderKey = columnOrderKey;
+    }
+    
+    public TableFilterNode(Node node, int childLayerDepth){
+        super(node, TableFilterChildrenWithDescendants.createInstance(node, childLayerDepth), Lookups.proxy(node));
+        this.createChildren = true;
+        this.forceUseWrappedDisplayName = true;
     }
 
     /**
@@ -111,10 +92,6 @@ public class TableFilterNode extends FilterNode {
         } else {
             return super.getDisplayName();
         }
-    }
-
-    protected String getParentDisplayName() {
-        return super.getDisplayName();
     }
 
     /**
@@ -159,8 +136,7 @@ public class TableFilterNode extends FilterNode {
      * DataResultViewerTable. The key should represent what kinds of items the
      * table is showing.
      */
-    String getColumnOrderKey() {
+    public String getColumnOrderKey() {
         return columnOrderKey;
     }
-
 }

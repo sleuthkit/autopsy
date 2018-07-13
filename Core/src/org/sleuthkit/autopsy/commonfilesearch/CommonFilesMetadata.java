@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,14 +29,15 @@ import java.util.Map;
  */
 final public class CommonFilesMetadata {
     
-    private final Map<String, Md5Metadata> metadata;
-
+    private final Map<Integer, List<Md5Metadata>> metadata;
+    
     /**
-     * Create meta dat object which can be handed off to the node factories
-     *
-     * @param metadata map of md5 to parent-level node meta data
+     * Create a metadata object which can be handed off to the node
+     * factories.
+     * 
+     * @param metadata list of Md5Metadata indexed by size of Md5Metadata
      */
-    CommonFilesMetadata(Map<String, Md5Metadata> metadata) {
+    CommonFilesMetadata(Map<Integer, List<Md5Metadata>> metadata){
         this.metadata = metadata;
     }
 
@@ -48,11 +50,11 @@ final public class CommonFilesMetadata {
      * @param md5 key
      * @return 
      */
-    Md5Metadata getMetadataForMd5(String md5) {
-        return this.metadata.get(md5);
+    List<Md5Metadata> getMetadataForMd5(Integer instanceCount) {
+        return this.metadata.get(instanceCount);
     }
 
-    public Map<String, Md5Metadata> getMetadata() {
+    public Map<Integer, List<Md5Metadata>> getMetadata() {
         return Collections.unmodifiableMap(this.metadata);
     }
 
@@ -61,9 +63,12 @@ final public class CommonFilesMetadata {
      * @return number of file instances
      */
     public int size() {
+                
         int count = 0;
-        for (Md5Metadata data : this.metadata.values()) {
-            count += data.size();
+        for (List<Md5Metadata> data : this.metadata.values()) {
+            for(Md5Metadata md5 : data){
+                count += md5.size();
+            }
         }
         return count;
     }
