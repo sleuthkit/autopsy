@@ -541,12 +541,9 @@ class TableReportGenerator {
             return;
         }
         
-        // First check for ad-hoc keywords
+        // Get a list of all selected tag IDs
         String tagIDList = "";
-        if(tagNamesFilter.isEmpty()) {
-            System.out.println("\n## no tags selected");
-        } else {
-            System.out.println("\n## tags: " + makeCommaSeparatedList(tagNamesFilter));
+        if( ! tagNamesFilter.isEmpty()) {
             try {
                 Map<String, TagName> tagNamesMap = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
                 for(String tagDisplayName : tagNamesFilter) {
@@ -556,7 +553,16 @@ class TableReportGenerator {
                         }
                         tagIDList += tagNamesMap.get(tagDisplayName).getId();
                     } else {
-                        System.out.println("### No key for " + tagDisplayName);
+                        // If the tag name ends with "(Notable)", try stripping that off
+                        if(tagDisplayName.endsWith(getNotableTagLabel())) {
+                            String editedDisplayName = tagDisplayName.substring(0, tagDisplayName.length() - getNotableTagLabel().length());
+                            if(tagNamesMap.containsKey(editedDisplayName)) {
+                                if (! tagIDList.isEmpty()) {
+                                    tagIDList += ",";
+                                }
+                                tagIDList += tagNamesMap.get(editedDisplayName).getId();
+                            }
+                        }
                     }
                 }
             } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -564,8 +570,35 @@ class TableReportGenerator {
                 tagIDList = "";
             }
         }
-        System.out.println("### tag ID list: " + tagIDList);
         
+        // Check if there are any ad-hoc results
+        String adHocCountQuery = "SELECT COUNT(*) FROM " + //NON-NLS
+                "(SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 ";//NON-NLS
+        if (!tagIDList.isEmpty()) {
+            adHocCountQuery += ", blackboard_artifact_tags as tag "; //NON-NLS
+        }
+        adHocCountQuery += "WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "; // NON-NLS
+        if (!tagIDList.isEmpty()) {
+            adHocCountQuery += " AND (art.artifact_id = tag.artifact_id) AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
+        }
+        adHocCountQuery += "EXCEPT " + // NON-NLS
+                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ")) "; //NON-NLS
+
+        int adHocCount = 0;
+        try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(adHocCountQuery)) {
+            ResultSet adHocCountResultSet = dbQuery.getResultSet();
+            if (adHocCountResultSet.next()) {
+                adHocCount = adHocCountResultSet.getInt(1); //NON-NLS
+            } else {
+                throw new TskCoreException("Error counting ad hoc keywords");
+            }
+        } catch (TskCoreException | SQLException ex) {
+            errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
+            logger.log(Level.SEVERE, "Failed to count ad hoc searches with query " + adHocCountQuery, ex); //NON-NLS
+            return;
+        }
+        
+        // Create the query to get the keyword list names
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
@@ -585,9 +618,12 @@ class TableReportGenerator {
             keywordListQuery += "AND (art.artifact_id = tag.artifact_id) " + //NON-NLS
                     "AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
         }
+        if (adHocCount > 0) {
+            keywordListQuery += " UNION SELECT \"\" AS list ";
+        }
         keywordListQuery += "GROUP BY list " + orderByClause; //NON-NLS
-        System.out.println("\n\n### keyword query: " + keywordListQuery + "\n");
 
+        // Make the table of contents links for each list type
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
             ResultSet listsRs = dbQuery.getResultSet();
             List<String> lists = new ArrayList<>();
@@ -611,6 +647,7 @@ class TableReportGenerator {
             return;
         }
 
+        // Query for keywords, grouped by list
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
                     + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
@@ -620,7 +657,7 @@ class TableReportGenerator {
         } else {
             orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
-        // Query for keywords, grouped by list
+        
         // Query for keywords that are part of a list
         String keywordListsQuery
                 = "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
@@ -648,9 +685,9 @@ class TableReportGenerator {
                 "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, \"\" AS list, f.name AS name, f.parent_path AS parent_path " + // NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, tsk_files AS f " + // NON-NLS
                 "WHERE " + // NON-NLS
-                " (art.artifact_id IN (SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = 9) " + // NON-NLS
+                " (art.artifact_id IN (SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + // NON-NLS
                 "EXCEPT " + // NON-NLS
-                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = 9) AND (att1.attribute_type_id = 37))) " + //NON-NLS
+                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "))) " + //NON-NLS
                 "AND (att1.artifact_id = art.artifact_id) " + //NON-NLS
                 "AND (att2.artifact_id = art.artifact_id) " + //NON-NLS
                 "AND (f.obj_id = art.obj_id) " + //NON-NLS 
@@ -659,8 +696,6 @@ class TableReportGenerator {
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "; // NON-NLS
         
         String keywordsQuery = keywordListsQuery + " UNION " + keywordAdHocQuery + orderByClause;
-        
-        System.out.println("\n\n### kw hits query:" + keywordsQuery);
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
