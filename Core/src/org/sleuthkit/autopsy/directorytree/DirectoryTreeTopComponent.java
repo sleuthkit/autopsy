@@ -135,7 +135,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
-        
+
         groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
     }
 
@@ -159,7 +159,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
         });
-        
+
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE, Case.Events.DATA_SOURCE_ADDED), this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
@@ -379,10 +379,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public int getPersistenceType() {
         return TopComponent.PERSISTENCE_NEVER;
     }
-    
+
     /**
-     * Ask the user if they want to group by data source when opening a large case.
-     * 
+     * Ask the user if they want to group by data source when opening a large
+     * case.
+     *
      * @param currentCase
      * @param dataSourceCount
      */
@@ -410,7 +411,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
             // Save the response
             Properties props = new Properties();
-            if(dialog.groupByDataSourceSelected()) {
+            if (dialog.groupByDataSourceSelected()) {
                 props.setProperty("groupByDataSource", "true");
             } else {
                 props.setProperty("groupByDataSource", "false");
@@ -423,7 +424,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }
     }
-    
+
     /**
      * Called only when top component was closed on all workspaces before and
      * now is opened for the first time on some workspace. The intent is to
@@ -432,8 +433,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * here.
      */
     @NbBundle.Messages({"# {0} - dataSourceCount",
-                        "DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contains {0} data sources. Would you like to group by data source for faster loading?",
-                        "DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?"})
+        "DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contains {0} data sources. Would you like to group by data source for faster loading?",
+        "DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?"})
     @Override
     public void componentOpened() {
         // change the cursor to "waiting cursor" for this operation
@@ -462,21 +463,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 } else {
                     ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME, String.valueOf(threshold));
                 }
-                
+
                 try {
                     int dataSourceCount = currentCase.getDataSources().size();
-                    if (! UserPreferences.groupItemsInTreeByDatasource() &&
-                        dataSourceCount > threshold) {
+                    if (!UserPreferences.groupItemsInTreeByDatasource()
+                            && dataSourceCount > threshold) {
                         promptForDataSourceGrouping(currentCase, dataSourceCount);
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading data sources", ex);
                 }
             }
-            
+
             // if there's at least one image, load the image and open the top componen
             autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory();
-            autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);     
+            autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);
             Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
@@ -535,9 +536,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         tree.collapseNode(views);
                     }
                     /*
-                     * JIRA-2806: What is this supposed to do? Right now it selects
-                     * the data sources node, but the comment seems to indicate
-                     * it is supposed to select the first datasource.
+                     * JIRA-2806: What is this supposed to do? Right now it
+                     * selects the data sources node, but the comment seems to
+                     * indicate it is supposed to select the first datasource.
                      */
                     // select the first image node, if there is one
                     // (this has to happen after dataResult is opened, because the event
@@ -566,7 +567,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // dataResult active)
                     try {
                         Node[] selections = get();
-                        if (selections != null && selections.length > 0){
+                        if (selections != null && selections.length > 0) {
                             em.setSelectedNodes(selections);
                         }
                     } catch (PropertyVetoException ex) {
@@ -674,15 +675,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * The "listener" that listens to any changes made in the Case.java class.
-     * It will do something based on the changes in the Case.java class.
+     * The "listener" that monitors changes made in the Case class. This serves
+     * the purpose of keeping the UI in sync with the data as it changes.
      *
-     * @param evt the property change event
+     * @param event The property change event.
      */
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
+    public void propertyChange(PropertyChangeEvent event) {
         if (RuntimeProperties.runningWithGUI()) {
-            String changed = evt.getPropertyName();
+            String changed = event.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
                 // When a case is closed, the old value of this property is the 
                 // closed Case object and the new value is null. When a case is 
@@ -692,15 +693,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 // opened events instead of property change events would be a better
                 // solution. Either way, more probably needs to be done to clean up
                 // data model objects when a case is closed.
-                if (evt.getOldValue() != null && evt.getNewValue() == null) {
+                if (event.getOldValue() != null && event.getNewValue() == null) {
                     // The current case has been closed. Reset the ExplorerManager.
                     SwingUtilities.invokeLater(() -> {
                         Node emptyNode = new AbstractNode(Children.LEAF);
                         em.setRootContext(emptyNode);
                     });
-                } else if (evt.getNewValue() != null) {
+                } else if (event.getNewValue() != null) {
                     // A new case has been opened. Reset the ExplorerManager. 
-                    Case newCase = (Case) evt.getNewValue();
+                    Case newCase = (Case) event.getNewValue();
                     final String newCaseName = newCase.getName();
                     SwingUtilities.invokeLater(() -> {
                         em.getRootContext().setName(newCaseName);
@@ -724,20 +725,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                  * already closed.
                  */
                 try {
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    // We only need to trigger openCoreWindows() when the
-                    // first data source is added.
-                    if (currentCase.getDataSources().size() == 1) {
+                    Case.getCurrentCaseThrows();
+                    /*
+                     * In case the Case 'updateGUIForCaseOpened()' method hasn't
+                     * already done so, open the tree and all other core
+                     * windows.
+                     *
+                     * TODO: (JIRA-4053) DirectoryTreeTopComponent should not be
+                     * responsible for opening core windows. Consider moving
+                     * this to the Case class.
+                     */
+                    if (!this.isOpened()) {
                         SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
                     }
-                } catch (NoCurrentCaseException | TskCoreException notUsed) {
+                } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
                 }
             } // change in node selection
             else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
+                respondSelection((Node[]) event.getOldValue(), (Node[]) event.getNewValue());
             } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 // nothing to do here.
                 // all nodes should be listening for these events and update accordingly.
@@ -882,7 +890,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     /**
      * Rebuilds the autopsy tree.
-     * 
+     *
      * Does nothing if there is no open case.
      */
     private void rebuildTree() {
@@ -895,9 +903,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
         if (null == currentCase || currentCase.hasData() == false) {
-           return;
+            return;
         }
-        
+
         // refresh all children of the root.
         autopsyTreeChildrenFactory.refreshChildren();
 
@@ -924,14 +932,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }.execute();
     }
-    
+
     /**
      * Selects the first node in the tree.
-     * 
+     *
      */
-    private void selectFirstChildNode () {
+    private void selectFirstChildNode() {
         Children rootChildren = em.getRootContext().getChildren();
-        
+
         if (rootChildren.getNodesCount() > 0) {
             Node firstNode = rootChildren.getNodeAt(0);
             if (firstNode != null) {
@@ -940,6 +948,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }
     }
+
     /**
      * Set the selected node using a path to a previously selected node.
      *
