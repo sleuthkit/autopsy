@@ -733,7 +733,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                      *
                      * TODO: (JIRA-4053) DirectoryTreeTopComponent should not be
                      * responsible for opening core windows. Consider moving
-                     * this to the Case class.
+                     * this elsewhere.
                      */
                     if (!this.isOpened()) {
                         SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
