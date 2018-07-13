@@ -607,9 +607,11 @@ class TableReportGenerator {
         String keywordListQuery
                 = "SELECT att.value_text AS list "
                 + //NON-NLS
-                "FROM blackboard_attributes AS att, blackboard_artifacts AS art, blackboard_artifact_tags as tag "
-                + //NON-NLS
-                "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art "; // NON-NLS
+        if(! tagIDList.isEmpty()) {
+            keywordListQuery += ", blackboard_artifact_tags as tag "; //NON-NLS
+        }
+        keywordListQuery += "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
                 + //NON-NLS
                 "AND art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " "
                 + //NON-NLS
