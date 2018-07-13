@@ -50,9 +50,18 @@ public class DataSourcePanel extends javax.swing.JPanel {
      */
     public DataSourcePanel() {
         initComponents();
-        this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
-            firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
-        });
+        if (this.dataSourceList.getModel().getSize() > 1) {
+            this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            });
+        } else {
+            /*
+             * Disable data source filtering since there aren't multiple data
+             * sources to choose from.
+             */
+            this.dataSourceCheckBox.setEnabled(false);
+            this.dataSourceList.setEnabled(false);
+        }
     }
 
     /**
@@ -84,7 +93,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
     /**
      * Get a set of data source object ids that are selected.
-     * @return A set of selected object ids. 
+     *
+     * @return A set of selected object ids.
      */
     Set<Long> getDataSourcesSelected() {
         Set<Long> dataSourceObjIdSet = new HashSet<>();
@@ -101,6 +111,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
     /**
      * Is dataSourceCheckBox selected
+     *
      * @return true if the dataSoureCheckBox is selected
      */
     boolean isSelected() {
@@ -108,7 +119,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is checked.
+     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is
+     * checked.
      */
     final void setComponentsEnabled() {
         boolean enabled = this.isSelected();
