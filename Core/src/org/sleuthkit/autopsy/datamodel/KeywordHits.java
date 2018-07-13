@@ -65,7 +65,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     @NbBundle.Messages("KeywordHits.kwHits.text=Keyword Hits")
     private static final String KEYWORD_HITS = KeywordHits_kwHits_text();
-    @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search")
+    @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Exact/Substring Match Search")
     private static final String SIMPLE_LITERAL_SEARCH = KeywordHits_simpleLiteralSearch_text();
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
     private static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
