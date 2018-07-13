@@ -555,6 +555,7 @@ class TableReportGenerator {
                 "AND att.artifact_id = art.artifact_id "
                 + //NON-NLS
                 "GROUP BY list " + orderByClause; //NON-NLS
+        System.out.println("\n\n### keyword query: " + keywordListQuery + "\n");
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
             ResultSet listsRs = dbQuery.getResultSet();
@@ -589,8 +590,9 @@ class TableReportGenerator {
             orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
         // Query for keywords, grouped by list
-        String keywordsQuery
-                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
+        // Query for keywords that are part of a list
+        String keywordListsQuery
+                = "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
                 + //NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f "
                 + //NON-NLS
@@ -608,9 +610,26 @@ class TableReportGenerator {
                 + //NON-NLS
                 "AND (att3.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
                 + //NON-NLS
-                "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
-                + //NON-NLS
-                orderByClause; //NON-NLS
+                "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") ";
+        
+        // Query for keywords that are not part of a list
+        String keywordAdHocQuery =
+                "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, \"\" AS list, f.name AS name, f.parent_path AS parent_path " + // NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, tsk_files AS f " + // NON-NLS
+                "WHERE " + // NON-NLS
+                " (art.artifact_id IN (SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = 9) " + // NON-NLS
+                "EXCEPT " + // NON-NLS
+                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = 9) AND (att1.attribute_type_id = 37))) " + //NON-NLS
+                "AND (att1.artifact_id = art.artifact_id) " + //NON-NLS
+                "AND (att2.artifact_id = art.artifact_id) " + //NON-NLS
+                "AND (f.obj_id = art.obj_id) " + //NON-NLS 
+                "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " +  // NON-NLS
+                "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + // NON-NLS
+                "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "; // NON-NLS
+        
+        String keywordsQuery = keywordListsQuery + " UNION " + keywordAdHocQuery + orderByClause;
+        
+        System.out.println("\n\n### kw hits query:" + keywordsQuery);
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
