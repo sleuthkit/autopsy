@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import static org.sleuthkit.autopsy.casemodule.services.TagsManager.getNotableTagLabel;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -53,6 +54,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -538,6 +540,32 @@ class TableReportGenerator {
             logger.log(Level.SEVERE, "Exception while getting open case: ", ex); //NON-NLS
             return;
         }
+        
+        // First check for ad-hoc keywords
+        String tagIDList = "";
+        if(tagNamesFilter.isEmpty()) {
+            System.out.println("\n## no tags selected");
+        } else {
+            System.out.println("\n## tags: " + makeCommaSeparatedList(tagNamesFilter));
+            try {
+                Map<String, TagName> tagNamesMap = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
+                for(String tagDisplayName : tagNamesFilter) {
+                    if(tagNamesMap.containsKey(tagDisplayName)) {
+                        if (! tagIDList.isEmpty()) {
+                            tagIDList += ",";
+                        }
+                        tagIDList += tagNamesMap.get(tagDisplayName).getId();
+                    } else {
+                        System.out.println("### No key for " + tagDisplayName);
+                    }
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, "Exception while getting tag info - proceeding without tag filter: ", ex); //NON-NLS
+                tagIDList = "";
+            }
+        }
+        System.out.println("### tag ID list: " + tagIDList);
+        
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
@@ -546,15 +574,18 @@ class TableReportGenerator {
         String keywordListQuery
                 = "SELECT att.value_text AS list "
                 + //NON-NLS
-                "FROM blackboard_attributes AS att, blackboard_artifacts AS art "
+                "FROM blackboard_attributes AS att, blackboard_artifacts AS art, blackboard_artifact_tags as tag "
                 + //NON-NLS
                 "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
                 + //NON-NLS
                 "AND art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " "
                 + //NON-NLS
-                "AND att.artifact_id = art.artifact_id "
-                + //NON-NLS
-                "GROUP BY list " + orderByClause; //NON-NLS
+                "AND att.artifact_id = art.artifact_id ";
+        if (! tagIDList.isEmpty()) {
+            keywordListQuery += "AND (art.artifact_id = tag.artifact_id) " + //NON-NLS
+                    "AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
+        }
+        keywordListQuery += "GROUP BY list " + orderByClause; //NON-NLS
         System.out.println("\n\n### keyword query: " + keywordListQuery + "\n");
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordListQuery)) {
@@ -1642,14 +1673,15 @@ class TableReportGenerator {
     private HashSet<String> getUniqueTagNames(long artifactId) throws TskCoreException {
         HashSet<String> uniqueTagNames = new HashSet<>();
 
-        String query = "SELECT display_name, artifact_id FROM tag_names AS tn, blackboard_artifact_tags AS bat "
+        String query = "SELECT display_name, artifact_id, knownStatus FROM tag_names AS tn, blackboard_artifact_tags AS bat "
                 + //NON-NLS 
                 "WHERE tn.tag_name_id = bat.tag_name_id AND bat.artifact_id = " + artifactId; //NON-NLS
 
         try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
             ResultSet tagNameRows = dbQuery.getResultSet();
             while (tagNameRows.next()) {
-                uniqueTagNames.add(tagNameRows.getString("display_name")); //NON-NLS
+                String notableString = tagNameRows.getInt("knownStatus") == TskData.FileKnown.BAD.ordinal() ? getNotableTagLabel() : "";
+                uniqueTagNames.add(tagNameRows.getString("display_name") + notableString); //NON-NLS
             }
         } catch (TskCoreException | SQLException | NoCurrentCaseException ex) {
             throw new TskCoreException("Error getting tag names for artifact: ", ex);
