@@ -119,7 +119,6 @@ public final class Blackboard implements Closeable {
      */
     @Override
     public synchronized void close() {
-        delegate.close();
         delegate = null;
     }
 

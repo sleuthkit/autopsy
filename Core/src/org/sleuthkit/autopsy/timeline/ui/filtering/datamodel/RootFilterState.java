@@ -120,7 +120,6 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
 
     @Override
     public RootFilter getActiveFilter() {
-
         return new RootFilter(knownFilterState.getActiveFilter(),
                 tagsFilterState.getActiveFilter(),
                 hashHitsFilterState.getActiveFilter(),
