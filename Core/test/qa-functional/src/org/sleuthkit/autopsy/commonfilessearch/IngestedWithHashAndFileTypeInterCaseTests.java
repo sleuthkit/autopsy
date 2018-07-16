@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -86,7 +86,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             //this is proabbly not needed and should be pulled out of the constructor if possible
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
-            CommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
             
             CommonFilesMetadata metadata = builder.findFiles();
             

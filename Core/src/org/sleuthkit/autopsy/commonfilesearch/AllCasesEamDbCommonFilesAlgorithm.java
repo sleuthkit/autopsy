@@ -19,15 +19,39 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Algorithm which finds files anywhere in the Central Repo which also occur in
  * present case.
  */
-public class AllCasesEamDbCommonFilesAlgorithm extends EamDbCommonFilesAlgorithm {
+public class AllCasesEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMetadataBuilder {
     
     public AllCasesEamDbCommonFilesAlgorithm(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         super(filterByMediaMimeType, filterByDocMimeType);
     }    
+    
+    @Override
+    public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+        Map<Integer, List<Md5Metadata>> interCaseCommonFiles = new HashMap<>();
+
+        EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
+        eamDbAttrInst.processCorrelationCaseAttributeValues(Case.getCurrentCase());
+        interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
+
+        return new CommonFilesMetadata(interCaseCommonFiles);
+    }
+
+    @Override
+    String buildCategorySelectionString() {
+        //TODO
+        return "";
+    }
 }

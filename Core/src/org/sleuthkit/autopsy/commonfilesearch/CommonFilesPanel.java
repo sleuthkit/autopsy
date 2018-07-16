@@ -141,7 +141,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Long dataSourceId = intraCasePanel.getSelectedDataSourceId();
                 Integer caseId = interCasePanel.getSelectedCaseId();
 
-                CommonFilesMetadataBuilder builder;
+                IntraCaseCommonFilesMetadataBuilder builder;
                 CommonFilesMetadata metadata;
 
                 boolean filterByMedia = false;
@@ -168,7 +168,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
                         setTitleForAllDataSources();
                     } else {
-                        builder = new SingleDataSource(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new SingleDataSourceCommonFilesAlgorithm(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
                         setTitleForSingleSource(dataSourceId);
                     }

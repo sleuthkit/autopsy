@@ -31,8 +31,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
-import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.SingleDataSourceCommonFilesAlgorithm;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -97,7 +97,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
             CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
@@ -138,7 +138,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
+            IntraCaseCommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
             CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -179,7 +179,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, true);
+            IntraCaseCommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, true);
             CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -221,7 +221,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -263,7 +263,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(first, dataSources, true, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -305,7 +305,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(first, dataSources, false, true);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -347,7 +347,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long second = getDataSourceIdByName(SET2, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(second, dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(second, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -388,7 +388,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long last = getDataSourceIdByName(SET4, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(last, dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(last, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -429,7 +429,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long third = getDataSourceIdByName(SET3, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(third, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);

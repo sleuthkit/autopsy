@@ -28,8 +28,8 @@ import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
-import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.SingleDataSourceCommonFilesAlgorithm;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.SET1;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSourceIdByName;
 
@@ -77,7 +77,7 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
             CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
 
             int resultCount = metadata.size();
@@ -97,7 +97,7 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(first, dataSources, false, false);
             CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
 
             int resultCount = metadata.size();

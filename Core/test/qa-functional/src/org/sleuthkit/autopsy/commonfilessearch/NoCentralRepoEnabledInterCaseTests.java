@@ -30,7 +30,7 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
 
 /**
  *
@@ -75,7 +75,7 @@ public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
+            IntraCaseCommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
 
             CommonFilesMetadata metadata = builder.findFiles();
 
