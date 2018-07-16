@@ -97,7 +97,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     public DefaultFilterState<FilterType> copyOf() {
         @SuppressWarnings("unchecked")
         DefaultFilterState<FilterType> copy = new DefaultFilterState<>((FilterType) delegate.copyOf());
-        copy.setDisabled(isSelected());
+        copy.setSelected(isSelected( ));
         copy.setDisabled(isDisabled());
         return copy;
     }
