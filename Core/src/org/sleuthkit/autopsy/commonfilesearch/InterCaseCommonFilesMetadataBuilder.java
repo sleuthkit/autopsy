@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.HashUtility;
  * Provides logic for selecting common files from all data sources and all cases
  * in the Central Repo.
  */
-public abstract class InterCaseCommonFilesMetadataBuilder extends ICommonFilesMetadataBuilder {
+public abstract class InterCaseCommonFilesMetadataBuilder extends AbstractCommonFilesMetadataBuilder {
     //CONSIDER: we should create an interface which specifies the findFiles feature
     //  instead of an abstract class and then have two abstract classes:
     //  inter- and intra- which implement the interface and then 4 subclasses
@@ -52,7 +52,8 @@ public abstract class InterCaseCommonFilesMetadataBuilder extends ICommonFilesMe
      * @throws EamDbException
      */
     InterCaseCommonFilesMetadataBuilder(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        //TODO these two boolean variables are unused for the intercase feature at the moment
+        filterByMedia = filterByMediaMimeType;
+        filterByDoc = filterByDocMimeType;
         dbManager = EamDb.getInstance();
     }
 
@@ -103,13 +104,6 @@ public abstract class InterCaseCommonFilesMetadataBuilder extends ICommonFilesMe
         Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);        
         
         return instanceCollatedCommonFiles;
-    }
-
-    @Override
-    String buildTabTitle() {
-        final String buildCategorySelectionString = this.buildCategorySelectionString();
-        final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleEamDb();
-        return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
     }
 
     protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException, Exception {

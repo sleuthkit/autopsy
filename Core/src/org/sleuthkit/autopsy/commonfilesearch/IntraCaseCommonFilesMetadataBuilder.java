@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -45,11 +44,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This entire thing runs on a background thread where exceptions are handled.
  */
 @SuppressWarnings("PMD.AbstractNaming")
-public abstract class IntraCaseCommonFilesMetadataBuilder extends ICommonFilesMetadataBuilder {
+public abstract class IntraCaseCommonFilesMetadataBuilder extends AbstractCommonFilesMetadataBuilder {
 
     private final Map<Long, String> dataSourceIdToNameMap;
-    private final boolean filterByMedia;
-    private final boolean filterByDoc;
     private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     /**
@@ -100,6 +97,7 @@ public abstract class IntraCaseCommonFilesMetadataBuilder extends ICommonFilesMe
      * @throws NoCurrentCaseException
      * @throws SQLException
      */
+    @Override
     public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
         //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, Md5Metadata> commonFiles = new HashMap<>();
@@ -173,24 +171,5 @@ public abstract class IntraCaseCommonFilesMetadataBuilder extends ICommonFilesMe
         }
         return mimeTypeString;
     }
-  
-    @NbBundle.Messages({
-        "CommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents",
-        "CommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
-        "CommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
-    })
-    protected String buildCategorySelectionString() {
-        if (!this.filterByDoc && !this.filterByMedia) {
-            return Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_all();
-        } else {
-            List<String> filters = new ArrayList<>();
-            if (this.filterByDoc) {
-                filters.add(Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_doc());
-            }
-            if (this.filterByMedia) {
-                filters.add(Bundle.CommonFilesMetadataBuilder_buildCategorySelectionString_media());
-            }
-            return String.join(", ", filters);
-        }
-    }
+
 }

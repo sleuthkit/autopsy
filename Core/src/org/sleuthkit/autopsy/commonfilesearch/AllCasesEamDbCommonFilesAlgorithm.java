@@ -50,8 +50,10 @@ public class AllCasesEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMetad
     }
 
     @Override
-    String buildCategorySelectionString() {
-        //TODO
-        return "";
+    String buildTabTitle() {
+        final String buildCategorySelectionString = this.buildCategorySelectionString();
+        final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterAll();
+        return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
     }
+
 }

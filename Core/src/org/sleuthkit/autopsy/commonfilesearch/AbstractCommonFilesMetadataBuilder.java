@@ -27,20 +27,44 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author bsweeney
- */
-abstract class ICommonFilesMetadataBuilder {
+abstract class AbstractCommonFilesMetadataBuilder {
+    
+    boolean filterByMedia;
+    boolean filterByDoc;
     
     abstract CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception;
     
+    @NbBundle.Messages({
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraAll=Common Files (All Data Sources, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraSingle=Common Files (Data Source: %s, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleInterAll=Common Files (All Central Repository Cases, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleInterSingle=Common Files (Central Repository Case: %s, %s)",
+    })
     abstract String buildTabTitle();
     
-    abstract String buildCategorySelectionString();
+    @NbBundle.Messages({
+        "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.doc=Documents",
+        "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
+        "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
+    })
+    protected String buildCategorySelectionString() {
+        if (!this.filterByDoc && !this.filterByMedia) {
+            return Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_all();
+        } else {
+            List<String> filters = new ArrayList<>();
+            if (this.filterByDoc) {
+                filters.add(Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_doc());
+            }
+            if (this.filterByMedia) {
+                filters.add(Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_media());
+            }
+            return String.join(", ", filters);
+        }
+    }
     
     static Map<Integer, List<Md5Metadata>> collateMatchesByNumberOfInstances(Map<String, Md5Metadata> commonFiles) {
         //collate matches by number of matching instances - doing this in sql doesnt seem efficient

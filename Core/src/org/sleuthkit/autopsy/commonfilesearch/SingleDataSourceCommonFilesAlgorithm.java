@@ -56,7 +56,7 @@ final public class SingleDataSourceCommonFilesAlgorithm extends IntraCaseCommonF
     @Override
     public String buildTabTitle() {
         final String buildCategorySelectionString = this.buildCategorySelectionString();
-        final String titleTemplate = Bundle.CommonFilesMetadataBuilder_buildTabTitle_titleSingle();
+        final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleIntraSingle();
         return String.format(titleTemplate, new Object[]{this.dataSourceName, buildCategorySelectionString});
     }
 }

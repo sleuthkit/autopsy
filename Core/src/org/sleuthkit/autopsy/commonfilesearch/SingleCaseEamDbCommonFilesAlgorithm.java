@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMetadataBuilder {
     
     private final int corrleationCaseId;
+    private String correlationCaseName;
     
     /**
      * 
@@ -48,6 +49,7 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMet
         super(filterByMediaMimeType, filterByDocMimeType);
         
         this.corrleationCaseId = correlationCaseId;
+        this.correlationCaseName = "";
     }
     
     /**
@@ -66,7 +68,7 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMet
     public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
         
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
-        
+        correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
 
@@ -80,10 +82,12 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMet
 
         return new CommonFilesMetadata(interCaseCommonFiles);
     }
-
+    
     @Override
-    String buildCategorySelectionString() {
-        //TODO
-        return "";
+    String buildTabTitle() {
+        final String buildCategorySelectionString = this.buildCategorySelectionString();
+        final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterSingle();
+        return String.format(titleTemplate, new Object[]{correlationCaseName, buildCategorySelectionString});
     }
+
 }

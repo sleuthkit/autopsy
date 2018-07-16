@@ -30,7 +30,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -58,9 +57,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
     private static final Long NO_DATA_SOURCE_SELECTED = -1L;
 
     private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
-
-    private boolean singleDataSource = false;
-    private String selectedDataSource = "";
     private boolean pictureViewCheckboxState;
     private boolean documentsCheckboxState;
 
@@ -74,9 +70,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         initComponents();
 
         this.errorText.setVisible(false);
-
-        this.intraCasePanel.setParent(this);
-
         this.setupDataSources();
 
         if (CommonFilesPanel.isEamDbAvailable()) {
@@ -141,7 +134,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                 Long dataSourceId = intraCasePanel.getSelectedDataSourceId();
                 Integer caseId = interCasePanel.getSelectedCaseId();
 
-                IntraCaseCommonFilesMetadataBuilder builder;
+                AbstractCommonFilesMetadataBuilder builder;
                 CommonFilesMetadata metadata;
 
                 boolean filterByMedia = false;
@@ -173,8 +166,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         setTitleForSingleSource(dataSourceId);
                     }
                 }
-
-                //TODO set title from one method rather than two (or more) overloads
                 metadata = builder.findFiles();
                 this.tabTitle = builder.buildTabTitle();
 
