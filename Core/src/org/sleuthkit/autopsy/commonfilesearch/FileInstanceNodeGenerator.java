@@ -44,14 +44,14 @@ public abstract class FileInstanceNodeGenerator {
 
     public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         this.abstractFileReference = abstractFileReference;
-        cachedFiles = cachedFiles;
+        FileInstanceNodeGenerator.cachedFiles = cachedFiles;
         this.caseName = caseName;
         this.dataSource = dataSource;
     }
     
     public FileInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
         this.abstractFileReference = -1L;
-        cachedFiles = cachedFiles;
+        FileInstanceNodeGenerator.cachedFiles = cachedFiles;
         this.caseName = "";
         this.dataSource = "";
     }
