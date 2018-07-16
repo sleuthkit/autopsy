@@ -28,9 +28,9 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 
 /**
  *
@@ -75,9 +75,9 @@ public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            IntraCaseCommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
+            IntraCaseCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
 
-            CommonFilesMetadata metadata = builder.findFiles();
+            CommonAttributeSearchResults metadata = builder.findFiles();
 
             assertTrue("Should be no results.", metadata.size() == 0);
         } catch (Exception ex) {

@@ -31,12 +31,12 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.TskCoreException;
 
-abstract class AbstractCommonFilesMetadataBuilder {
+abstract class AbstractCommonAttributeSearcher {
     
     boolean filterByMedia;
     boolean filterByDoc;
     
-    abstract CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception;
+    abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception;
     
     @NbBundle.Messages({
         "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraAll=Common Files (All Data Sources, %s)",
@@ -66,16 +66,16 @@ abstract class AbstractCommonFilesMetadataBuilder {
         }
     }
     
-    static Map<Integer, List<Md5Metadata>> collateMatchesByNumberOfInstances(Map<String, Md5Metadata> commonFiles) {
+    static Map<Integer, List<CommonAttributeValue>> collateMatchesByNumberOfInstances(Map<String, CommonAttributeValue> commonFiles) {
         //collate matches by number of matching instances - doing this in sql doesnt seem efficient
-        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = new TreeMap<>();
-        for(Md5Metadata md5Metadata : commonFiles.values()){
+        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new TreeMap<>();
+        for(CommonAttributeValue md5Metadata : commonFiles.values()){
             Integer size = md5Metadata.size();
             
             if(instanceCollatedCommonFiles.containsKey(size)){
                 instanceCollatedCommonFiles.get(size).add(md5Metadata);
             } else {
-                ArrayList<Md5Metadata> value = new ArrayList<>();
+                ArrayList<CommonAttributeValue> value = new ArrayList<>();
                 value.add(md5Metadata);
                 instanceCollatedCommonFiles.put(size, value);
             }

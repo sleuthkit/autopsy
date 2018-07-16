@@ -39,7 +39,7 @@ public class InterCasePanel extends javax.swing.JPanel {
     private ComboBoxModel<String> casesList = new DataSourceComboBoxModel();
     private final Map<Integer, String> caseMap;
     
-    private CommonFilesPanel parent;
+    private CommonAttributePanel parent;
     
     private String errorMessage;
     
@@ -60,7 +60,7 @@ public class InterCasePanel extends javax.swing.JPanel {
         }
     }
     
-    void setParent(CommonFilesPanel parent) {
+    void setParent(CommonAttributePanel parent) {
         this.parent = parent;
     }
     

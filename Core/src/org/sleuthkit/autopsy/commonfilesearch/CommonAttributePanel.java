@@ -52,13 +52,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * logic. Nested within CommonFilesDialog.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class CommonFilesPanel extends javax.swing.JDialog  {
+public final class CommonAttributePanel extends javax.swing.JDialog  {
 
     private static final long serialVersionUID = 1L;
 
     private static final Long NO_DATA_SOURCE_SELECTED = -1L;
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     private boolean pictureViewCheckboxState;
     private boolean documentsCheckboxState;
 
@@ -70,16 +70,15 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         "CommonFilesPanel.exception=Unexpected Exception loading DataSources.",
         "CommonFilesPanel.frame.title=Find Common Files",
         "CommonFilesPanel.frame.msg=Find Common Files"})
-    public CommonFilesPanel() {
-        super(new JFrame(Bundle.CommonFilesDialog_frame_title()),
-                Bundle.CommonFilesDialog_frame_msg(), true);
+    public CommonAttributePanel() {
+        super(new JFrame(Bundle.CommonFilesPanel_frame_title()),
+                Bundle.CommonFilesPanel_frame_msg(), true);
         initComponents();
-        this.setResizable(false);
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         this.errorText.setVisible(false);
         this.setupDataSources();
 
-        if (CommonFilesPanel.isEamDbAvailable()) {
+        if (CommonAttributePanel.isEamDbAvailable()) {
             this.setupCases();
         } else {
             this.disableIntercaseSearch();
@@ -115,7 +114,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
     private void search() {
         String pathText = Bundle.CommonFilesPanel_search_results_pathText();
 
-        new SwingWorker<CommonFilesMetadata, Void>() {
+        new SwingWorker<CommonAttributeSearchResults, Void>() {
 
             private String tabTitle;
             private ProgressHandle progress;
@@ -133,7 +132,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+            protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
                 progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -141,8 +140,8 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
                 Long dataSourceId = intraCasePanel.getSelectedDataSourceId();
                 Integer caseId = interCasePanel.getSelectedCaseId();
 
-                AbstractCommonFilesMetadataBuilder builder;
-                CommonFilesMetadata metadata;
+                AbstractCommonAttributeSearcher builder;
+                CommonAttributeSearchResults metadata;
 
                 boolean filterByMedia = false;
                 boolean filterByDocuments = false;
@@ -155,20 +154,20 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
                     }
                 }
 
-                if (CommonFilesPanel.this.interCaseRadio.isSelected()) {
+                if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
 
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        builder = new AllCasesEamDbCommonFilesAlgorithm(filterByMedia, filterByDocuments);
+                        builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments);
                     } else {
-                        builder = new SingleCaseEamDbCommonFilesAlgorithm(caseId, filterByMedia, filterByDocuments);
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, filterByMedia, filterByDocuments);
                     }
                 } else {
-                    if (dataSourceId == CommonFilesPanel.NO_DATA_SOURCE_SELECTED) {
-                        builder = new AllDataSourcesCommonFilesAlgorithm(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                    if (dataSourceId == CommonAttributePanel.NO_DATA_SOURCE_SELECTED) {
+                        builder = new AllIntraCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
                         setTitleForAllDataSources();
                     } else {
-                        builder = new SingleDataSourceCommonFilesAlgorithm(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new SingleIntraCaseCommonAttributeSearcher(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
 
                         setTitleForSingleSource(dataSourceId);
                     }
@@ -184,16 +183,16 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
                 try {
                     super.done();
 
-                    CommonFilesMetadata metadata = this.get();
+                    CommonAttributeSearchResults metadata = this.get();
 
-                    CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
+                    CommonAttributeSearchResultNode commonFilesNode = new CommonAttributeSearchResultNode(metadata);
 
                     // #VIK-3969
-                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
+                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
 
-                    DataResultViewerTable table = new CommonFilesSearchResultsViewerTable();
+                    DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
 
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
@@ -248,25 +247,25 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
 
             private void updateUi() {
 
-                final Map<Long, String> dataSourceMap = CommonFilesPanel.this.intraCasePanel.getDataSourceMap();
+                final Map<Long, String> dataSourceMap = CommonAttributePanel.this.intraCasePanel.getDataSourceMap();
 
                 String[] dataSourcesNames = new String[dataSourceMap.size()];
 
                 //only enable all this stuff if we actually have datasources
                 if (dataSourcesNames.length > 0) {
                     dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
-                    CommonFilesPanel.this.intraCasePanel.setDataModel(new DataSourceComboBoxModel(dataSourcesNames));
+                    CommonAttributePanel.this.intraCasePanel.setDataModel(new DataSourceComboBoxModel(dataSourcesNames));
 
                     boolean multipleDataSources = this.caseHasMultipleSources();
-                    CommonFilesPanel.this.intraCasePanel.rigForMultipleDataSources(multipleDataSources);
+                    CommonAttributePanel.this.intraCasePanel.rigForMultipleDataSources(multipleDataSources);
 
                     //TODO this should be attached to the intra/inter radio buttons
-                    CommonFilesPanel.this.setSearchButtonEnabled(true);
+                    CommonAttributePanel.this.setSearchButtonEnabled(true);
                 }
             }
 
             private boolean caseHasMultipleSources() {
-                return CommonFilesPanel.this.intraCasePanel.getDataSourceMap().size() > 2;
+                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 2;
             }
 
             @Override
@@ -279,7 +278,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
             protected void done() {
 
                 try {
-                    CommonFilesPanel.this.intraCasePanel.setDataSourceMap(this.get());
+                    CommonAttributePanel.this.intraCasePanel.setDataSourceMap(this.get());
                     updateUi();
 
                 } catch (InterruptedException ex) {
@@ -316,19 +315,19 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
 
             private void updateUi() {
 
-                final Map<Integer, String> caseMap = CommonFilesPanel.this.interCasePanel.getCaseMap();
+                final Map<Integer, String> caseMap = CommonAttributePanel.this.interCasePanel.getCaseMap();
 
                 String[] caseNames = new String[caseMap.size()];
 
                 if (caseNames.length > 0) {
                     caseNames = caseMap.values().toArray(caseNames);
-                    CommonFilesPanel.this.interCasePanel.setCaseList(new DataSourceComboBoxModel(caseNames));
+                    CommonAttributePanel.this.interCasePanel.setCaseList(new DataSourceComboBoxModel(caseNames));
 
                     boolean multipleCases = this.centralRepoHasMultipleCases();
-                    CommonFilesPanel.this.interCasePanel.rigForMultipleCases(multipleCases);
+                    CommonAttributePanel.this.interCasePanel.rigForMultipleCases(multipleCases);
 
                 } else {
-                    CommonFilesPanel.this.disableIntercaseSearch();
+                    CommonAttributePanel.this.disableIntercaseSearch();
                 }
             }
 
@@ -357,7 +356,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
             protected void done() {
                 try {
                     Map<Integer, String> cases = this.get();
-                    CommonFilesPanel.this.interCasePanel.setCaseMap(cases);
+                    CommonAttributePanel.this.interCasePanel.setCaseMap(cases);
                     this.updateUi();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
@@ -369,7 +368,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
             }
 
             private boolean centralRepoHasMultipleCases() {
-                return CommonFilesPanel.this.interCasePanel.centralRepoHasMultipleCases();
+                return CommonAttributePanel.this.interCasePanel.centralRepoHasMultipleCases();
             }
 
         }.execute();
@@ -386,6 +385,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
 
         fileTypeFilterButtonGroup = new javax.swing.ButtonGroup();
         interIntraButtonGroup = new javax.swing.ButtonGroup();
+        jPanel1 = new javax.swing.JPanel();
         commonFilesSearchLabel2 = new javax.swing.JLabel();
         searchButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
@@ -402,16 +402,21 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
         interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
 
+        setMinimumSize(new java.awt.Dimension(412, 350));
+        setPreferredSize(new java.awt.Dimension(412, 350));
+        setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.commonFilesSearchLabel2.text")); // NOI18N
+        jPanel1.setPreferredSize(new java.awt.Dimension(412, 350));
+
+        org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel2.text")); // NOI18N
         commonFilesSearchLabel2.setFocusable(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.searchButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.searchButton.text")); // NOI18N
         searchButton.setEnabled(false);
         searchButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         searchButton.addActionListener(new java.awt.event.ActionListener() {
@@ -420,8 +425,8 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.cancelButton.text")); // NOI18N
-        cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.cancelButton.actionCommand")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.cancelButton.text")); // NOI18N
+        cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.cancelButton.actionCommand")); // NOI18N
         cancelButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -430,8 +435,8 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         });
 
         fileTypeFilterButtonGroup.add(allFileCategoriesRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allFileCategoriesRadioButton.text")); // NOI18N
-        allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.text")); // NOI18N
+        allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
         allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 allFileCategoriesRadioButtonActionPerformed(evt);
@@ -440,8 +445,8 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
 
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
         selectedFileCategoriesButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.text")); // NOI18N
-        selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.text")); // NOI18N
+        selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 selectedFileCategoriesButtonActionPerformed(evt);
@@ -449,7 +454,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         });
 
         pictureVideoCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.pictureVideoCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.pictureVideoCheckbox.text")); // NOI18N
         pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pictureVideoCheckboxActionPerformed(evt);
@@ -457,25 +462,25 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         });
 
         documentsCheckbox.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.documentsCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.documentsCheckbox.text")); // NOI18N
         documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 documentsCheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.categoriesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.categoriesLabel.text")); // NOI18N
         categoriesLabel.setName(""); // NOI18N
 
         errorText.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.errorText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.errorText.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel1, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.commonFilesSearchLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel1.text")); // NOI18N
         commonFilesSearchLabel1.setFocusable(false);
 
         interIntraButtonGroup.add(intraCaseRadio);
         intraCaseRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(intraCaseRadio, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.intraCaseRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(intraCaseRadio, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.intraCaseRadio.text")); // NOI18N
         intraCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 intraCaseRadioActionPerformed(evt);
@@ -483,7 +488,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         });
 
         interIntraButtonGroup.add(interCaseRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(interCaseRadio, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.jRadioButton2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(interCaseRadio, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonFilesPanel.jRadioButton2.text")); // NOI18N
         interCaseRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 interCaseRadioActionPerformed(evt);
@@ -494,55 +499,55 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
         layoutPanel.add(intraCasePanel, "card3");
         layoutPanel.add(interCasePanel, "card2");
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(pictureVideoCheckbox)
-                                    .addComponent(documentsCheckbox)))
-                            .addComponent(allFileCategoriesRadioButton)
-                            .addComponent(selectedFileCategoriesButton)
-                            .addComponent(interCaseRadio)
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(searchButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(errorText))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(commonFilesSearchLabel2)
                             .addComponent(intraCaseRadio)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(interCaseRadio)
                             .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(categoriesLabel)
-                            .addComponent(commonFilesSearchLabel2)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(searchButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cancelButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(errorText)))
-                        .addContainerGap())))
+                            .addComponent(selectedFileCategoriesButton)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(35, 35, 35)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(documentsCheckbox)
+                            .addComponent(pictureVideoCheckbox)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(allFileCategoriesRadioButton)))
+                .addContainerGap())
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(20, 20, 20)
+                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(10, 10, 10)))
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(commonFilesSearchLabel2)
-                .addGap(2, 2, 2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(intraCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(interCaseRadio)
-                .addGap(0, 0, 0)
-                .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
+                .addGap(79, 79, 79)
                 .addComponent(categoriesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(selectedFileCategoriesButton)
@@ -553,11 +558,19 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(allFileCategoriesRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
-                    .addComponent(errorText)))
+                    .addComponent(cancelButton)
+                    .addComponent(errorText))
+                .addContainerGap())
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addGap(98, 98, 98)
+                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(180, 180, 180)))
         );
+
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
@@ -668,6 +681,7 @@ public final class CommonFilesPanel extends javax.swing.JDialog  {
     private javax.swing.ButtonGroup interIntraButtonGroup;
     private org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel intraCasePanel;
     private javax.swing.JRadioButton intraCaseRadio;
+    private javax.swing.JPanel jPanel1;
     private java.awt.Panel layoutPanel;
     private javax.swing.JCheckBox pictureVideoCheckbox;
     private javax.swing.JButton searchButton;

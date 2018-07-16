@@ -51,10 +51,10 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.SleuthkitCaseFileInstanceMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -291,15 +291,15 @@ class InterCaseUtils {
         }
     }
     
-    static boolean verifyInstanceExistanceAndCount(CommonFilesMetadata searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
+    static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         int tally = 0;
         
-        for(Map.Entry<Integer, List<Md5Metadata>> file : searchDomain.getMetadata().entrySet()){
+        for(Map.Entry<Integer, List<CommonAttributeValue>> file : searchDomain.getMetadata().entrySet()){
             
-            Collection<SleuthkitCaseFileInstanceMetadata> fileInstances = file.getValue();
+            Collection<IntraCaseCommonAttributeSearchResults> fileInstances = file.getValue();
             
-            for(SleuthkitCaseFileInstanceMetadata fileInstance : fileInstances){
+            for(IntraCaseCommonAttributeSearchResults fileInstance : fileInstances){
                 
                 
             }
@@ -308,7 +308,7 @@ class InterCaseUtils {
         return false;
     }
     
-    static Map<Long, String> mapFileInstancesToDataSource(CommonFilesMetadata metadata){
+    static Map<Long, String> mapFileInstancesToDataSource(CommonAttributeSearchResults metadata){
         return IntraCaseUtils.mapFileInstancesToDataSources(metadata);
     }
     

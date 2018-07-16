@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -29,10 +27,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
- MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ * 
+ * Use this type for files which are in the current case.  Contrast with 
+ * <code>CentralRepositoryFileInstanceNode</code> which should be used when the 
+ * FileInstance was found in some case not presently open in Autopsy, but present 
+ * in the Central Repository.
  */
-public class FileInstanceNode extends FileNode {
+public class IntraCaseCommonAttributeInstanceNode extends FileNode {
     
+    private final String caseName;
     private final String dataSource;
 
     /**
@@ -42,11 +46,10 @@ public class FileInstanceNode extends FileNode {
      * @param fsContent
      * @param dataSource 
      */
-    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public IntraCaseCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
         super(fsContent);
+        this.caseName = caseName;
         this.dataSource = dataSource;
-        
-        this.setDisplayName(fsContent.getName());
     }
 
     @Override
@@ -60,11 +63,14 @@ public class FileInstanceNode extends FileNode {
         return visitor.visit(this);
     }
 
+    String getCase(){
+        return this.caseName;
+    }
+    
     String getDataSource() {
         return this.dataSource;
     }
 
-    @NbBundle.Messages({"FileInstanceNode.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -74,15 +80,15 @@ public class FileInstanceNode extends FileNode {
             sheet.put(sheetSet);
         }
 
-        final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
+        final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsForFile(this.getContent())));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, StringUtils.defaultString(this.getContent().getMIMEType())));
+
         this.addTagProperty(sheetSet);
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, Case.getCurrentCase().getDisplayName()));
 
         return sheet;
     }

@@ -36,13 +36,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
-final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
+final public class InterCaseCommonAttributeSearchResults extends FileInstanceNodeGenerator {
     
-    private static final Logger LOGGER = Logger.getLogger(CentralRepositoryCaseFileInstanceMetadata.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResults.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance tempAttributeInst;
     
-    CentralRepositoryCaseFileInstanceMetadata(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
+    InterCaseCommonAttributeSearchResults(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
         this.crFileId = attrInstId;
     }
@@ -70,20 +70,20 @@ final public class CentralRepositoryCaseFileInstanceMetadata extends FileInstanc
     @Override
     public DisplayableItemNode generateNode() {
         if (tempAttributeInst != null) {
-            return new CentralRepositoryFileInstanceNode(tempAttributeInst, this.lookupOrCreateAbstractFile());
+            return new InterCaseCommonAttributeInstanceNode(tempAttributeInst, this.lookupOrCreateAbstractFile());
         }
         return null;
     }
     
     @Override
     public DisplayableItemNode[] generateNodes() {
-        EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         CorrelationAttribute corrAttr = eamDbAttrInst.processCorrelationCaseSingleAttribute(crFileId); //TODO which do we want  
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
             tempAttributeInst = attrInst;
-            DisplayableItemNode generatedInstNode = new CentralRepositoryFileInstanceNode(tempAttributeInst, loadFileFromSleuthkitCase(tempAttributeInst.getFilePath()));
+            DisplayableItemNode generatedInstNode = new InterCaseCommonAttributeInstanceNode(tempAttributeInst, loadFileFromSleuthkitCase(tempAttributeInst.getFilePath()));
             if (generatedInstNode != null) {
                 attrInstNodeList.add(generatedInstNode);
             }

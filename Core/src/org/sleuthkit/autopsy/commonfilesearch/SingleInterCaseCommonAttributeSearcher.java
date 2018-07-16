@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 
  * 
  */
-public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMetadataBuilder {
+public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
     
     private final int corrleationCaseId;
     private String correlationCaseName;
@@ -45,7 +45,7 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMet
      * @param filterByDocMimeType
      * @throws EamDbException 
      */
-    public SingleCaseEamDbCommonFilesAlgorithm(int correlationCaseId, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         super(filterByMediaMimeType, filterByDocMimeType);
         
         this.corrleationCaseId = correlationCaseId;
@@ -65,22 +65,22 @@ public class SingleCaseEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMet
      * @throws Exception 
      */
     @Override
-    public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
         
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
 
-    protected CommonFilesMetadata findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+    protected CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
 
-        Map<Integer, List<Md5Metadata>> interCaseCommonFiles = new HashMap<>();
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
 
-        EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         eamDbAttrInst.processSingleCaseCorrelationCaseAttributeValues(Case.getCurrentCase(), correlationCase);
         interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
 
-        return new CommonFilesMetadata(interCaseCommonFiles);
+        return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
     
     @Override

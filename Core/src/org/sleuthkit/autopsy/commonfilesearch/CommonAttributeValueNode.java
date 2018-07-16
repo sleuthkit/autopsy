@@ -36,9 +36,9 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
  * the MD5 of the matched files, the data sources those files were found within,
  * and a count of the instances represented by the md5.
  */
-public class Md5Node extends DisplayableItemNode {
+public class CommonAttributeValueNode extends DisplayableItemNode {
 
-    private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeValueNode.class.getName());
 
     private final String md5Hash;
     private final int commonFileCount;
@@ -52,7 +52,7 @@ public class Md5Node extends DisplayableItemNode {
      * Create a Match node whose children will all have this object in common.
      * @param data the common feature, and the children
      */
-    public Md5Node(Md5Metadata data) {
+    public CommonAttributeValueNode(CommonAttributeValue data) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true));
         
@@ -130,15 +130,15 @@ public class Md5Node extends DisplayableItemNode {
 
     /**
      * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
-     * <code>Md5Node</code>.
+     * <code>CommonAttributeValueNode</code>.
      */
     static class FileInstanceNodeFactory extends ChildFactory<FileInstanceNodeGenerator> {
 
         //private final Map<Long, AbstractFile> cachedFiles;
         
-        private final Md5Metadata descendants;
+        private final CommonAttributeValue descendants;
 
-        FileInstanceNodeFactory(Md5Metadata descendants) {
+        FileInstanceNodeFactory(CommonAttributeValue descendants) {
             this.descendants = descendants;
             //this.cachedFiles = new HashMap<>();
         }

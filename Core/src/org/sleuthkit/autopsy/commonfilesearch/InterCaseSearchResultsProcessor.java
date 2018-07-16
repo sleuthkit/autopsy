@@ -38,9 +38,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Used to process and return CorrelationCase md5s from the EamDB for
  * CommonFilesSearch.
  */
-final class EamDbAttributeInstancesAlgorithm {
+final class InterCaseSearchResultsProcessor {
 
-    private static final Logger logger = Logger.getLogger(CommonFilesPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(CommonAttributePanel.class.getName());
 
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
     private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();

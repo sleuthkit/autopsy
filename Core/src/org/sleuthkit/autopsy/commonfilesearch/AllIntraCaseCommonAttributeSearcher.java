@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 /**
  * Provides logic for selecting common files from all data sources.
  */
-final public class AllDataSourcesCommonFilesAlgorithm extends IntraCaseCommonFilesMetadataBuilder {
+final public class AllIntraCaseCommonAttributeSearcher extends IntraCaseCommonAttributeSearcher {
 
     private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != "+ FileKnown.KNOWN.getFileKnownValue() + " OR known IS NULL)%s GROUP BY  md5 HAVING COUNT(DISTINCT data_source_obj_id) > 1) order by md5"; //NON-NLS
 
@@ -37,7 +37,7 @@ final public class AllDataSourcesCommonFilesAlgorithm extends IntraCaseCommonFil
      * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
-    public AllDataSourcesCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    public AllIntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
 
     }

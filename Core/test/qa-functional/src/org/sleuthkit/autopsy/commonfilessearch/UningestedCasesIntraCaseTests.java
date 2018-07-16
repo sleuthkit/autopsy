@@ -26,10 +26,10 @@ import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
-import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
-import org.sleuthkit.autopsy.commonfilesearch.SingleDataSourceCommonFilesAlgorithm;
+import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.SET1;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSourceIdByName;
 
@@ -77,8 +77,8 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            IntraCaseCommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findFiles();
+            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
@@ -97,8 +97,8 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            IntraCaseCommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSourceCommonFilesAlgorithm(first, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findFiles();
+            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);

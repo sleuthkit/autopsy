@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * This entire thing runs on a background thread where exceptions are handled.
  */
 @SuppressWarnings("PMD.AbstractNaming")
-public abstract class IntraCaseCommonFilesMetadataBuilder extends AbstractCommonFilesMetadataBuilder {
+public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
     private final Map<Long, String> dataSourceIdToNameMap;
     private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
@@ -58,7 +58,7 @@ public abstract class IntraCaseCommonFilesMetadataBuilder extends AbstractCommon
      * @param filterByDocMimeType match only on files whose mime types can be
      * broadly categorized as document types
      */
-    IntraCaseCommonFilesMetadataBuilder(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         dataSourceIdToNameMap = dataSourceIdMap;
         filterByMedia = filterByMediaMimeType;
         filterByDoc = filterByDocMimeType;
@@ -98,9 +98,9 @@ public abstract class IntraCaseCommonFilesMetadataBuilder extends AbstractCommon
      * @throws SQLException
      */
     @Override
-    public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
         //TODO do we need all those exceptions or can we differentiate when they are caught?
-        Map<String, Md5Metadata> commonFiles = new HashMap<>();
+        Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
         
         final Case currentCase = Case.getCurrentCaseThrows();
         final String caseName = currentCase.getDisplayName();
@@ -126,19 +126,19 @@ public abstract class IntraCaseCommonFilesMetadataBuilder extends AbstractCommon
                 }
 
                 if (commonFiles.containsKey(md5)) {
-                    final Md5Metadata md5Metadata = commonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource, caseName));
+                    final CommonAttributeValue md5Metadata = commonFiles.get(md5);
+                    md5Metadata.addFileInstanceMetadata(new IntraCaseCommonAttributeSearchResults(objectId, fileCache, dataSource, caseName));
                 } else {
-                    final Md5Metadata md5Metadata = new Md5Metadata(md5);
-                    md5Metadata.addFileInstanceMetadata(new SleuthkitCaseFileInstanceMetadata(objectId, fileCache, dataSource, caseName));
+                    final CommonAttributeValue md5Metadata = new CommonAttributeValue(md5);
+                    md5Metadata.addFileInstanceMetadata(new IntraCaseCommonAttributeSearchResults(objectId, fileCache, dataSource, caseName));
                     commonFiles.put(md5, md5Metadata);
                 }
             }
         }
         
-        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
+        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
         
-        return new CommonFilesMetadata(instanceCollatedCommonFiles);
+        return new CommonAttributeSearchResults(instanceCollatedCommonFiles);
     }
 
     /**

@@ -34,13 +34,13 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     static final long NO_DATA_SOURCE_SELECTED = -1;
         
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesPanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
         
     private boolean singleDataSource;
     private String selectedDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
-    private CommonFilesPanel parent;
+    private CommonAttributePanel parent;
     
     private String errorMessage;
 
@@ -52,7 +52,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
         this.errorMessage = "";
     }
     
-    public void setParent(CommonFilesPanel parent){
+    public void setParent(CommonAttributePanel parent){
         this.parent = parent;
     }
     

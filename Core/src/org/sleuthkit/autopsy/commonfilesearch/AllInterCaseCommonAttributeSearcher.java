@@ -32,21 +32,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Algorithm which finds files anywhere in the Central Repo which also occur in
  * present case.
  */
-public class AllCasesEamDbCommonFilesAlgorithm extends InterCaseCommonFilesMetadataBuilder {
+public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
     
-    public AllCasesEamDbCommonFilesAlgorithm(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+    public AllInterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         super(filterByMediaMimeType, filterByDocMimeType);
     }    
     
     @Override
-    public CommonFilesMetadata findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
-        Map<Integer, List<Md5Metadata>> interCaseCommonFiles = new HashMap<>();
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
 
-        EamDbAttributeInstancesAlgorithm eamDbAttrInst = new EamDbAttributeInstancesAlgorithm();
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         eamDbAttrInst.processCorrelationCaseAttributeValues(Case.getCurrentCase());
         interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
 
-        return new CommonFilesMetadata(interCaseCommonFiles);
+        return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
 
     @Override

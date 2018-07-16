@@ -29,9 +29,9 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.commonfilesearch.AllCasesEamDbCommonFilesAlgorithm;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonFilesMetadataBuilder;
+import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -86,9 +86,9 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             //this is proabbly not needed and should be pulled out of the constructor if possible
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
-            IntraCaseCommonFilesMetadataBuilder builder = new AllCasesEamDbCommonFilesAlgorithm(dataSources, false, false);
+            IntraCaseCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
             
-            CommonFilesMetadata metadata = builder.findFiles();
+            CommonAttributeSearchResults metadata = builder.findFiles();
             
             assertTrue("Results should not be empty", metadata.size() != 0);
             

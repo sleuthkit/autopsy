@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.HashUtility;
  * Provides logic for selecting common files from all data sources and all cases
  * in the Central Repo.
  */
-public abstract class InterCaseCommonFilesMetadataBuilder extends AbstractCommonFilesMetadataBuilder {
+public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
     //CONSIDER: we should create an interface which specifies the findFiles feature
     //  instead of an abstract class and then have two abstract classes:
     //  inter- and intra- which implement the interface and then 4 subclasses
@@ -51,7 +51,7 @@ public abstract class InterCaseCommonFilesMetadataBuilder extends AbstractCommon
      *
      * @throws EamDbException
      */
-    InterCaseCommonFilesMetadataBuilder(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+    InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         filterByMedia = filterByMediaMimeType;
         filterByDoc = filterByDocMimeType;
         dbManager = EamDb.getInstance();
@@ -62,9 +62,9 @@ public abstract class InterCaseCommonFilesMetadataBuilder extends AbstractCommon
      * @param commonFiles matches must ultimately have appeared in this collection
      * @return collated map of instance counts to lists of matches
      */
-    Map<Integer, List<Md5Metadata>> gatherIntercaseResults(Map<Integer, String> commonFiles, Map<Integer, Integer> commonFileCases) {
+    Map<Integer, List<CommonAttributeValue>> gatherIntercaseResults(Map<Integer, String> commonFiles, Map<Integer, Integer> commonFileCases) {
 
-        Map<String, Md5Metadata> interCaseCommonFiles = new HashMap<>();
+        Map<String, CommonAttributeValue> interCaseCommonFiles = new HashMap<>();
 
         for (int commonAttrId : commonFiles.keySet()) {
 
@@ -83,13 +83,13 @@ public abstract class InterCaseCommonFilesMetadataBuilder extends AbstractCommon
 
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
-                    final Md5Metadata md5Metadata = interCaseCommonFiles.get(md5);
+                    final CommonAttributeValue md5Metadata = interCaseCommonFiles.get(md5);
                     final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = interCaseCommonFiles.get(md5).getMetadata().iterator();
                     FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
 
                 } else {
-                    Md5Metadata md5Metadata = new Md5Metadata(md5);
+                    CommonAttributeValue md5Metadata = new CommonAttributeValue(md5);
                     final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = md5Metadata.getMetadata().iterator();
                     FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
@@ -101,7 +101,7 @@ public abstract class InterCaseCommonFilesMetadataBuilder extends AbstractCommon
            
         }
         
-        Map<Integer, List<Md5Metadata>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);        
+        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);        
         
         return instanceCollatedCommonFiles;
     }

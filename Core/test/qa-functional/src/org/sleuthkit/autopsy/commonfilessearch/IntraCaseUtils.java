@@ -33,10 +33,10 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.SleuthkitCaseFileInstanceMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -182,12 +182,12 @@ class IntraCaseUtils {
      * @param metadata object returned by the code under test 
      * @return mapping of objectId to data source name
      */
-    static Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
+    static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 
-        for (Map.Entry<Integer, List<Md5Metadata>> entry : metadata.getMetadata().entrySet()) {
-            for (Md5Metadata md : entry.getValue()) {
-                for (SleuthkitCaseFileInstanceMetadata fim : md.getMetadata()) {
+        for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
+            for (CommonAttributeValue md : entry.getValue()) {
+                for (IntraCaseCommonAttributeSearchResults fim : md.getMetadata()) {
                     instanceIdToDataSource.put(fim.getObjectId(), fim.getDataSourceName());
                 }
             }

@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGenerator {
+final public class IntraCaseCommonAttributeSearchResults extends FileInstanceNodeGenerator {
 
     /**
      * Create meta data required to find an abstract file and build a
@@ -36,17 +36,17 @@ final public class SleuthkitCaseFileInstanceMetadata extends FileInstanceNodeGen
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    SleuthkitCaseFileInstanceMetadata(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
+    IntraCaseCommonAttributeSearchResults(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         super(abstractFileReference, cachedFiles, dataSource, caseName);
     }
 
     @Override
     public DisplayableItemNode generateNode() {
-        return new SleuthkitCaseFileInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource());
+        return new IntraCaseCommonAttributeInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource());
     }
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        return Arrays.asList(new SleuthkitCaseFileInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource())).toArray(new DisplayableItemNode[1]);
+        return Arrays.asList(new IntraCaseCommonAttributeInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource())).toArray(new DisplayableItemNode[1]);
     }
 }

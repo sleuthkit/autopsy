@@ -135,7 +135,7 @@ public abstract class FileInstanceNodeGenerator {
     public static FileInstanceNodeGenerator createInstance(Iterator<FileInstanceNodeGenerator> identicalFileNodeGeneratorIterator, Integer instanceId) throws Exception {
 
         //Long arbitraryIdenticalAbstractFileId = null;
-        return new CentralRepositoryCaseFileInstanceMetadata(instanceId, cachedFiles);
+        return new InterCaseCommonAttributeSearchResults(instanceId, cachedFiles);
 
     }
 }

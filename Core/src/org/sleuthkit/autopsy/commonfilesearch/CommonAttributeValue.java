@@ -30,17 +30,17 @@ import java.util.stream.Collectors;
 /**
  * Encapsulates data required to instantiate an <code>Md5Node</code>.
  */
-final public class Md5Metadata {
+final public class CommonAttributeValue {
 
     private final String md5;
     private final List<FileInstanceNodeGenerator> fileInstances;
 
-    Md5Metadata(String md5, List<FileInstanceNodeGenerator> fileInstances) {
+    CommonAttributeValue(String md5, List<FileInstanceNodeGenerator> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
 
-    Md5Metadata(String md5) {
+    CommonAttributeValue(String md5) {
         this.md5 = md5;
         this.fileInstances = new ArrayList<>();
     }

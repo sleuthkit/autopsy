@@ -30,12 +30,12 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 
 /**
  * <code>DataResultViewerTable</code> which overrides the default column
- * header width calculations.  The <code>CommonFilesSearchResultsViewerTable</code>
+ * header width calculations.  The <code>CommonAttributesSearchResultsViewerTable</code>
  * presents multiple tiers of data which are not always present and it may not 
  * make sense to try to calculate the column widths for such tables by sampling 
  * rows and looking for wide cells.  Rather, we just pick some reasonable values.
  */
-public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
+public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTable {
     
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
