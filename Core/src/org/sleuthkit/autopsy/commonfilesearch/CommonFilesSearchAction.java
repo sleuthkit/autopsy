@@ -70,12 +70,12 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        new CommonFilesDialog().setVisible(true);
+        new CommonFilesPanel().setVisible(true);
     }
 
     @Override
     public void performAction() {
-        new CommonFilesDialog().setVisible(true);
+        new CommonFilesPanel().setVisible(true);
     }
 
     @NbBundle.Messages({

@@ -26,11 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -50,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * logic. Nested within CommonFilesDialog.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class CommonFilesPanel extends javax.swing.JPanel {
+public final class CommonFilesPanel extends javax.swing.JDialog  {
 
     private static final long serialVersionUID = 1L;
 
@@ -65,10 +67,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
      */
     @NbBundle.Messages({
         "CommonFilesPanel.title=Common Files Panel",
-        "CommonFilesPanel.exception=Unexpected Exception loading DataSources."})
+        "CommonFilesPanel.exception=Unexpected Exception loading DataSources.",
+        "CommonFilesPanel.frame.title=Find Common Files",
+        "CommonFilesPanel.frame.msg=Find Common Files"})
     public CommonFilesPanel() {
+        super(new JFrame(Bundle.CommonFilesDialog_frame_title()),
+                Bundle.CommonFilesDialog_frame_msg(), true);
         initComponents();
-
+        this.setResizable(false);
+        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         this.errorText.setVisible(false);
         this.setupDataSources();
 
@@ -395,6 +402,12 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
         interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
 
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
+                formWindowClosed(evt);
+            }
+        });
+
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonFilesPanel.class, "CommonFilesPanel.commonFilesSearchLabel2.text")); // NOI18N
         commonFilesSearchLabel2.setFocusable(false);
 
@@ -481,8 +494,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         layoutPanel.add(intraCasePanel, "card3");
         layoutPanel.add(interCasePanel, "card2");
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -495,9 +508,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                                 .addGap(21, 21, 21)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(pictureVideoCheckbox)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(documentsCheckbox)
-                                        .addContainerGap())))
+                                    .addComponent(documentsCheckbox)))
                             .addComponent(allFileCategoriesRadioButton)
                             .addComponent(selectedFileCategoriesButton)
                             .addComponent(interCaseRadio)
@@ -595,6 +606,10 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
         handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_interCaseRadioActionPerformed
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        SwingUtilities.windowForComponent(this).dispose();
+    }//GEN-LAST:event_formWindowClosed
 
     public void handleInterCaseSearchCriteriaChanged() {
         if (this.areInterCaseSearchCriteriaMet()) {
