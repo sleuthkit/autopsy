@@ -129,7 +129,6 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                     classifiers.get(classifierKey).detectMultiScale(originalImage, detectionRectangles);
                 } catch (CvException ignored) {
                     //The image was likely an image which we are unable to generate a thumbnail for, and the classifier was likely one where that is not acceptable
-                    logger.log(Level.INFO, String.format("Classifier '%s' could not be applied to file '%s'.", classifierKey, file.getParentPath() + file.getName() + " with object id of " + file.getId())); //NON-NLS
                     continue;
                 } catch (Exception unexpectedException) {  
                     //hopefully an unnecessary generic exception catch but currently present to catch any exceptions OpenCv throws which may not be documented

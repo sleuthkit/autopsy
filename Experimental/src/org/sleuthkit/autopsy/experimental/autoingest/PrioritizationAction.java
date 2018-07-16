@@ -145,7 +145,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
-            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor.getJobsSnapshot(), getJob());
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor, getJob());
         }
     }
 
@@ -184,7 +184,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
-            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor.getJobsSnapshot(), getJob());
+            return new AutoIngestNodeRefreshEvents.RefreshJobEvent(monitor, getJob());
         }
     }
 
@@ -225,7 +225,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
-            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor.getJobsSnapshot(), getJob().getManifest().getCaseName());
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor, getJob().getManifest().getCaseName());
         }
     }
 
@@ -266,7 +266,7 @@ abstract class PrioritizationAction extends AbstractAction {
 
         @Override
         AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent getRefreshEvent(AutoIngestMonitor monitor) {
-            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor.getJobsSnapshot(), getJob().getManifest().getCaseName());
+            return new AutoIngestNodeRefreshEvents.RefreshCaseEvent(monitor, getJob().getManifest().getCaseName());
         }
     }
 }
