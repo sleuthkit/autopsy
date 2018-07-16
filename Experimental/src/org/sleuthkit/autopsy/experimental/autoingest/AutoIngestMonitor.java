@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,11 +117,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         } catch (AutopsyEventException ex) {
             throw new AutoIngestMonitorException("Failed to open auto ingest event channel", ex); //NON-NLS
         }
-        coordSvcQueryExecutor.scheduleWithFixedDelay(new CoordinationServiceQueryTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
+        coordSvcQueryExecutor.scheduleWithFixedDelay(new StateRefreshTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
         eventPublisher.addSubscriber(EVENT_LIST, this);
 
-        // Publish an event that asks running nodes to send their state.
-        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent(AutoIngestManager.Event.REPORT_STATE));
+        refreshNodeState();
     }
 
     /**
@@ -226,7 +226,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @param event A job/case prioritization event.
      */
     private void handleCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
-        coordSvcQueryExecutor.submit(new CoordinationServiceQueryTask());
+        coordSvcQueryExecutor.submit(new StateRefreshTask());
     }
 
     /**
@@ -235,7 +235,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @param event A job/case deletion event.
      */
     private void handleCaseDeletedEvent(AutoIngestCaseDeletedEvent event) {
-        coordSvcQueryExecutor.submit(new CoordinationServiceQueryTask());
+        coordSvcQueryExecutor.submit(new StateRefreshTask());
     }
 
     /**
@@ -297,7 +297,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return
      */
     List<AutoIngestNodeState> getNodeStates() {
-        return nodeStates.values().stream().collect(Collectors.toList());
+        // We only report the state for nodes for which we have received
+        // a 'state' event in the last 15 minutes.
+        return nodeStates.values()
+                .stream()
+                .filter(s -> s.getLastSeenTime().isAfter(Instant.now().minus(Duration.ofMinutes(15))))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -311,6 +316,14 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         synchronized (jobsLock) {
             jobsSnapshot = queryCoordinationService();
         }
+    }
+
+    /**
+     * Ask running auto ingest nodes to report their state.
+     */
+    private void refreshNodeState() {
+        // Publish an event that asks running nodes to send their state.
+        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent(AutoIngestManager.Event.REPORT_STATE));
     }
 
     /**
@@ -735,25 +748,26 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A task that queries the coordination service for auto ingest manifest
-     * node data and converts it to auto ingest jobs for publication top its
-     * observers.
+     * A task that updates the state maintained by the monitor.
+     * At present this includes auto ingest job and auto ingest node data.
+     * The job data is refreshed by querying the coordination service for
+     * auto ingest manifest nodes.
+     * The auto ingest node data is refreshed by publishing a message asking
+     * all nodes to report their state.
      */
-    private final class CoordinationServiceQueryTask implements Runnable {
+    private final class StateRefreshTask implements Runnable {
 
-        /**
-         * Queries the coordination service for auto ingest manifest node data
-         * and converts it to auto ingest jobs for publication top its
-         * observers.
-         */
         @Override
         public void run() {
             if (!Thread.currentThread().isInterrupted()) {
-                synchronized (jobsLock) {
-                    jobsSnapshot = queryCoordinationService();
-                    setChanged();
-                    notifyObservers();
-                }
+                // Query coordination service for jobs data.
+                refreshJobsSnapshot();
+
+                // Ask running auto ingest nodes to report their status.
+                refreshNodeState();
+
+                setChanged();
+                notifyObservers();
             }
         }
 
@@ -867,6 +881,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
         private final String nodeName;
         private final State nodeState;
+        private final Instant lastSeenTime;
 
         AutoIngestNodeState(String name, Event event) {
             nodeName = name;
@@ -896,6 +911,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     nodeState = State.UNKNOWN;
                     break;
             }
+            lastSeenTime = Instant.now();
         }
 
         String getName() {
@@ -904,6 +920,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
         State getState() {
             return nodeState;
+        }
+
+        Instant getLastSeenTime() {
+            return lastSeenTime;
         }
     }
 
