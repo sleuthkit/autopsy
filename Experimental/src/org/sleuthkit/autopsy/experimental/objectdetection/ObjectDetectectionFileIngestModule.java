@@ -57,6 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter {
 
     private final static Logger logger = Logger.getLogger(ObjectDetectectionFileIngestModule.class.getName());
+    private final static int MAX_FILE_SIZE = 100000000;  //Max size of pictures to perform object detection on  
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private long jobId;
     private Map<String, CascadeClassifier> classifiers;
@@ -97,6 +98,14 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     public ProcessResult process(AbstractFile file) {
         if (!classifiers.isEmpty() && ImageUtils.isImageThumbnailSupported(file)) {
             //Any image we can create a thumbnail for is one we should apply the classifiers to 
+            
+            if (file.getSize() >  MAX_FILE_SIZE){
+            //prevent it from allocating gigabytes of memory for extremely large files
+                logger.log(Level.INFO, "Encountered file "+ file.getParentPath() + file.getName() + " with object id of " + 
+                        file.getId() + " which exceeds max file size of " + MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
+                return IngestModule.ProcessResult.OK;
+            }
+            
             byte[] imageInMemory = new byte[(int)file.getSize()];
 
             try {
