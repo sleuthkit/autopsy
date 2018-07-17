@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
+import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
@@ -535,6 +536,11 @@ public class DataResultFilterNode extends FilterNode {
         
         @Override
         public AbstractAction visit(IntraCaseCommonAttributeInstanceNode fin){
+            return null;
+        }
+        
+        @Override
+        public AbstractAction visit(InterCaseCommonAttributeInstanceNode iccan){
             return null;
         }
         
