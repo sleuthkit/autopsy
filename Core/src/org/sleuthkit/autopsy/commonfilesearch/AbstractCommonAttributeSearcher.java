@@ -48,6 +48,11 @@ abstract class AbstractCommonAttributeSearcher {
     
     abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
     
+    /**
+     * Implement this to create a descriptive string for the tab which will display
+     * this data.
+     * @return an informative string
+     */
     @NbBundle.Messages({
         "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraAll=Common Files (All Data Sources, %s)",
         "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraSingle=Common Files (Data Source: %s, %s)",

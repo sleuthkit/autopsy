@@ -44,20 +44,20 @@ final class InterCaseSearchResultsProcessor {
 
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
     private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();
-    
+
     CorrelationAttribute processCorrelationCaseSingleAttribute(int attrbuteId) {
-         try {
+        try {
             EamDbAttributeInstanceRowCallback instancetableCallback = new EamDbAttributeInstanceRowCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processInstanceTableRow(fileType, attrbuteId, instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
-            
+
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing InstanceTable row.", ex);
         }
-         
+
         return null;
     }
 
@@ -76,8 +76,8 @@ final class InterCaseSearchResultsProcessor {
         }
 
     }
-    
-        void processSingleCaseCorrelationCaseAttributeValues(Case currentCase, CorrelationCase singleCase) {
+
+    void processSingleCaseCorrelationCaseAttributeValues(Case currentCase, CorrelationCase singleCase) {
 
         try {
             EamDbAttributeInstancesCallback instancetableCallback = new EamDbAttributeInstancesCallback();
@@ -90,7 +90,6 @@ final class InterCaseSearchResultsProcessor {
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
-
     }
 
     Map<Integer, String> getIntercaseCommonValuesMap() {
@@ -146,7 +145,7 @@ final class InterCaseSearchResultsProcessor {
             try {
                 EamDb DbManager = EamDb.getInstance();
                 CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-                
+
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
@@ -165,6 +164,5 @@ final class InterCaseSearchResultsProcessor {
         CorrelationAttribute getCorrelationAttribute() {
             return correlationAttribute;
         }
-
     }
 }
