@@ -34,24 +34,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Defines types which can be used to get some sort of File Instance node (a
  * child of the MD5Node) for use in the common files tree table.
  */
-public abstract class FileInstanceNodeGenerator {
+public abstract class CommonAttributeInstanceNodeGenerator {
 
-    private static final Logger LOGGER = Logger.getLogger(FileInstanceNodeGenerator.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeInstanceNodeGenerator.class.getName());
     protected Long abstractFileReference;
     protected static Map<Long, AbstractFile> cachedFiles;
     String caseName;
     String dataSource;
 
-    public FileInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
+    public CommonAttributeInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         this.abstractFileReference = abstractFileReference;
-        FileInstanceNodeGenerator.cachedFiles = cachedFiles;
+        CommonAttributeInstanceNodeGenerator.cachedFiles = cachedFiles;
         this.caseName = caseName;
         this.dataSource = dataSource;
     }
     
-    public FileInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
+    public CommonAttributeInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
         this.abstractFileReference = -1L;
-        FileInstanceNodeGenerator.cachedFiles = cachedFiles;
+        CommonAttributeInstanceNodeGenerator.cachedFiles = cachedFiles;
         this.caseName = "";
         this.dataSource = "";
     }
@@ -69,7 +69,7 @@ public abstract class FileInstanceNodeGenerator {
         if (cachedFiles.containsKey(this.abstractFileReference)) {
             return cachedFiles.get(this.abstractFileReference);
         } else {
-            AbstractFile file = FileInstanceNodeGenerator.loadFileFromSleuthkitCase(this.abstractFileReference);
+            AbstractFile file = CommonAttributeInstanceNodeGenerator.loadFileFromSleuthkitCase(this.abstractFileReference);
             cachedFiles.put(this.abstractFileReference, file);
             return file;
         }
@@ -132,10 +132,8 @@ public abstract class FileInstanceNodeGenerator {
         return this.abstractFileReference;
     }
 
-    public static FileInstanceNodeGenerator createInstance(Iterator<FileInstanceNodeGenerator> identicalFileNodeGeneratorIterator, Integer instanceId) throws Exception {
+    public static CommonAttributeInstanceNodeGenerator createInstance(Iterator<CommonAttributeInstanceNodeGenerator> identicalFileNodeGeneratorIterator, Integer instanceId) throws Exception {
 
-        //Long arbitraryIdenticalAbstractFileId = null;
         return new InterCaseCommonAttributeSearchResults(instanceId, cachedFiles);
-
     }
 }

@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class InterCaseSearchResultsProcessor {
 
-    private static final Logger logger = Logger.getLogger(CommonAttributePanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
 
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
     private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();
@@ -55,11 +55,10 @@ final class InterCaseSearchResultsProcessor {
             return instancetableCallback.getCorrelationAttribute();
             
         } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error accessing EamDb processing InstanceTable row.", ex);
+            LOGGER.log(Level.SEVERE, "Error accessing EamDb processing InstanceTable row.", ex);
         }
          
         return null;
-        
     }
 
     void processCorrelationCaseAttributeValues(Case currentCase) {
@@ -73,7 +72,7 @@ final class InterCaseSearchResultsProcessor {
             intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
             intercaseCommonCasesMap.putAll(instancetableCallback.getCorrelationIdToCaseMap());
         } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+            LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
 
     }
@@ -89,7 +88,7 @@ final class InterCaseSearchResultsProcessor {
             intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
             intercaseCommonCasesMap.putAll(instancetableCallback.getCorrelationIdToCaseMap());
         } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+            LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
 
     }

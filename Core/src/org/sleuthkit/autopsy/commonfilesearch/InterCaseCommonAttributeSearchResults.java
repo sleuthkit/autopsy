@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
-final public class InterCaseCommonAttributeSearchResults extends FileInstanceNodeGenerator {
+final public class InterCaseCommonAttributeSearchResults extends CommonAttributeInstanceNodeGenerator {
     
     private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResults.class.getName());
     private final Integer crFileId;

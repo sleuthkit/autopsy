@@ -59,9 +59,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * broadly categorized as document types
      */
     IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+        super(filterByMediaMimeType, filterByDocMimeType);
         dataSourceIdToNameMap = dataSourceIdMap;
-        filterByMedia = filterByMediaMimeType;
-        filterByDoc = filterByDocMimeType;
     }
 
     /**
@@ -98,7 +97,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @throws SQLException
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception {
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
         //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
         
@@ -155,10 +154,10 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         String mimeTypeString = "";
-        if (filterByMedia) {
+        if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
         }
-        if (filterByDoc) {
+        if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());

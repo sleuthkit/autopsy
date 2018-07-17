@@ -29,14 +29,24 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Prototype for an object which finds files with common attributes.
+ * Subclass this and implement findFiles in order 
+ */
 abstract class AbstractCommonAttributeSearcher {
     
-    boolean filterByMedia;
-    boolean filterByDoc;
+    private boolean filterByMedia;
+    private boolean filterByDoc;
     
-    abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, Exception;
+    AbstractCommonAttributeSearcher(boolean filterByMedia, boolean filterByDoc){
+        this.filterByDoc = filterByDoc;
+        this.filterByMedia = filterByMedia;
+    }
+    
+    abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
     
     @NbBundle.Messages({
         "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraAll=Common Files (All Data Sources, %s)",
@@ -51,15 +61,15 @@ abstract class AbstractCommonAttributeSearcher {
         "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
         "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
     })
-    protected String buildCategorySelectionString() {
-        if (!this.filterByDoc && !this.filterByMedia) {
+    String buildCategorySelectionString() {
+        if (!this.isFilterByDoc() && !this.isFilterByMedia()) {
             return Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_all();
         } else {
             List<String> filters = new ArrayList<>();
-            if (this.filterByDoc) {
+            if (this.isFilterByDoc()) {
                 filters.add(Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_doc());
             }
-            if (this.filterByMedia) {
+            if (this.isFilterByMedia()) {
                 filters.add(Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_media());
             }
             return String.join(", ", filters);
@@ -147,4 +157,32 @@ abstract class AbstractCommonAttributeSearcher {
             "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
             "application/vnd.oasis.opendocument.text" //NON-NLS
     ).collect(Collectors.toSet());
+
+    /**
+     * @return the filterByMedia
+     */
+    boolean isFilterByMedia() {
+        return filterByMedia;
+    }
+
+    /**
+     * @param filterByMedia the filterByMedia to set
+     */
+    void setFilterByMedia(boolean filterByMedia) {
+        this.filterByMedia = filterByMedia;
+    }
+
+    /**
+     * @return the filterByDoc
+     */
+    boolean isFilterByDoc() {
+        return filterByDoc;
+    }
+
+    /**
+     * @param filterByDoc the filterByDoc to set
+     */
+    void setFilterByDoc(boolean filterByDoc) {
+        this.filterByDoc = filterByDoc;
+    }
 }

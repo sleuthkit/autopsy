@@ -35,10 +35,7 @@ import org.sleuthkit.datamodel.HashUtility;
  * in the Central Repo.
  */
 public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
-    //CONSIDER: we should create an interface which specifies the findFiles feature
-    //  instead of an abstract class and then have two abstract classes:
-    //  inter- and intra- which implement the interface and then 4 subclasses
-    //  2 for each abstract class: singlecase/allcase; singledatasource/all datasource
+
     EamDb dbManager;
     /**
      * Implements the algorithm for getting common files across all data sources
@@ -52,8 +49,7 @@ public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @throws EamDbException
      */
     InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        filterByMedia = filterByMediaMimeType;
-        filterByDoc = filterByDocMimeType;
+        super(filterByMediaMimeType, filterByDocMimeType);
         dbManager = EamDb.getInstance();
     }
 
@@ -84,14 +80,14 @@ public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAtt
                 if(interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final CommonAttributeValue md5Metadata = interCaseCommonFiles.get(md5);
-                    final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = interCaseCommonFiles.get(md5).getMetadata().iterator();
-                    FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
+                    final Iterator<CommonAttributeInstanceNodeGenerator> identitcalFileInstanceMetadata = interCaseCommonFiles.get(md5).getMetadata().iterator();
+                    CommonAttributeInstanceNodeGenerator nodeGenerator = CommonAttributeInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
 
                 } else {
                     CommonAttributeValue md5Metadata = new CommonAttributeValue(md5);
-                    final Iterator<FileInstanceNodeGenerator> identitcalFileInstanceMetadata = md5Metadata.getMetadata().iterator();
-                    FileInstanceNodeGenerator nodeGenerator = FileInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
+                    final Iterator<CommonAttributeInstanceNodeGenerator> identitcalFileInstanceMetadata = md5Metadata.getMetadata().iterator();
+                    CommonAttributeInstanceNodeGenerator nodeGenerator = CommonAttributeInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
@@ -106,12 +102,12 @@ public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAtt
         return instanceCollatedCommonFiles;
     }
 
-    protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException, Exception {
+    protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException {
         for (CorrelationCase cCase : this.dbManager.getCases()) {
             if (cCase.getID() == correlationCaseId) {
                 return cCase;
             }
         }
-        throw new Exception("Cannot locate case.");
+        throw new IllegalArgumentException("Cannot locate case.");
     }
 }

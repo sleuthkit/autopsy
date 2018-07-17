@@ -62,17 +62,16 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws NoCurrentCaseException
      * @throws SQLException
      * @throws EamDbException
-     * @throws Exception 
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception { 
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException { 
         
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
 
-    protected CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+    protected CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
 

@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-final public class IntraCaseCommonAttributeSearchResults extends FileInstanceNodeGenerator {
+final public class IntraCaseCommonAttributeSearchResults extends CommonAttributeInstanceNodeGenerator {
 
     /**
      * Create meta data required to find an abstract file and build a

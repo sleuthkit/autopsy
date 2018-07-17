@@ -39,7 +39,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     }    
     
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
 
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
@@ -55,5 +55,4 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterAll();
         return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
     }
-
 }

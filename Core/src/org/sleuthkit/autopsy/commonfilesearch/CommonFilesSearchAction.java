@@ -38,7 +38,6 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
     
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(CommonFilesSearchAction.class.getName());
     
     CommonFilesSearchAction() {
         super();
@@ -54,9 +53,9 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
                     || (EamDb.isEnabled() && EamDb.getInstance().getCases().size() > 1);
                     
         } catch(TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
+            LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
         } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error getting CR cases for action enabled check", ex);
+            LOGGER.log(Level.SEVERE, "Error getting CR cases for action enabled check", ex);
         }
         return super.isEnabled() && shouldBeEnabled;
     }

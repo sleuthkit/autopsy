@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
 final public class CommonAttributeValue {
 
     private final String md5;
-    private final List<FileInstanceNodeGenerator> fileInstances;
+    private final List<CommonAttributeInstanceNodeGenerator> fileInstances;
 
-    CommonAttributeValue(String md5, List<FileInstanceNodeGenerator> fileInstances) {
+    CommonAttributeValue(String md5, List<CommonAttributeInstanceNodeGenerator> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
@@ -50,13 +50,13 @@ final public class CommonAttributeValue {
     }
 
     public String getCases() {
-        final String cases = this.fileInstances.stream().map(FileInstanceNodeGenerator::getCaseName).collect(Collectors.joining(", "));
+        final String cases = this.fileInstances.stream().map(CommonAttributeInstanceNodeGenerator::getCaseName).collect(Collectors.joining(", "));
         return cases;
     }
 
     public String getDataSources() {
         Set<String> sources = new HashSet<>();
-        for (FileInstanceNodeGenerator data : this.fileInstances) {
+        for (CommonAttributeInstanceNodeGenerator data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
         
@@ -64,15 +64,15 @@ final public class CommonAttributeValue {
         return dataSources;
     }
 
-    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata) {
+    void addFileInstanceMetadata(CommonAttributeInstanceNodeGenerator metadata) {
         this.fileInstances.add(metadata);
     }
 
-    void addFileInstanceMetadata(FileInstanceNodeGenerator metadata, String caseName) {
+    void addFileInstanceMetadata(CommonAttributeInstanceNodeGenerator metadata, String caseName) {
         this.fileInstances.add(metadata);
     }
 
-    public Collection<FileInstanceNodeGenerator> getMetadata() {
+    public Collection<CommonAttributeInstanceNodeGenerator> getMetadata() {
         return Collections.unmodifiableCollection(this.fileInstances);
     }
 
