@@ -33,6 +33,7 @@ import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
 import org.opencv.highgui.Highgui;
 import org.opencv.objdetect.CascadeClassifier;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -100,23 +101,15 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     @Override
     public ProcessResult process(AbstractFile file) {
         if (!classifiers.isEmpty() && ImageUtils.isImageThumbnailSupported(file)) {
-            //Any image we can create a thumbnail for is one we should apply the classifiers to
-            InputStream inputStream = new ReadContentInputStream(file);          
-            byte[] imageInMemory;
+            //Any image we can create a thumbnail for is one we should apply the classifiers to 
+            byte[] imageInMemory = new byte[(int)file.getSize()];
+
             try {
-                imageInMemory = IOUtils.toByteArray(inputStream);
-            } catch (IOException ex) {
+                file.read(imageInMemory, 0, file.getSize());
+            } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to read image to byte array for performing object detection on " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), ex);
                 return IngestModule.ProcessResult.ERROR;
             }
-            finally {
-                try {
-                    inputStream.close();
-                } catch (IOException ex) {
-                   logger.log(Level.SEVERE, "Unable to close input stream after attempting to create byte array for " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), ex);
-                   return IngestModule.ProcessResult.ERROR;
-                }
-            } 
                 
             Mat originalImage;
             try {
