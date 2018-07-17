@@ -296,9 +296,10 @@ public class Case {
          */
         ADDING_DATA_SOURCE_FAILED,
         /**
-         * A new data source has been added to the current case. The old value
-         * of the PropertyChangeEvent is null, the new value is the newly-added
-         * data source (type: Content). Cast the PropertyChangeEvent to
+         * A new data source or series of data sources have been added to the
+         * current case. The old value of the PropertyChangeEvent is null, the
+         * new value is the newly-added data source (type: Content). Cast the
+         * PropertyChangeEvent to
          * org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent to
          * access additional event data.
          */
@@ -1116,6 +1117,10 @@ public class Case {
                 /*
                  * Open the top components (windows within the main application
                  * window).
+                 * 
+                 * Note: If the core windows are not opened here, they will be
+                 * opened via the DirectoryTreeTopComponent 'propertyChange()'
+                 * method on a DATA_SOURCE_ADDED event.
                  */
                 if (newCurrentCase.hasData()) {
                     CoreComponentControl.openCoreWindows();
@@ -1368,11 +1373,11 @@ public class Case {
     public String getReportDirectory() {
         return getOrCreateSubdirectory(REPORTS_FOLDER);
     }
-    
+
     /**
      * Gets the full path to the config directory for this case, creating it if
      * it does not exist.
-     * 
+     *
      * @return The config directory path.
      */
     public String getConfigDirectory() {
