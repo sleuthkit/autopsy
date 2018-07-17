@@ -46,6 +46,18 @@ abstract class AbstractCommonAttributeSearcher {
         this.filterByMedia = filterByMedia;
     }
     
+    /**
+     * Implement this to search for files with common attributes.  Creates an
+     * object (CommonAttributeSearchResults) which contains all of the information
+     * required to display a tree view in the UI.  The view will contain 3 layers:
+     * a top level node, indicating the number matches each of it's children possess,
+     * a mid level node indicating the matched attribute,
+     * @return
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     * @throws SQLException
+     * @throws EamDbException 
+     */
     abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
     
     /**

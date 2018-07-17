@@ -37,20 +37,20 @@ import org.sleuthkit.datamodel.TskCoreException;
 public abstract class CommonAttributeInstanceNodeGenerator {
 
     private static final Logger LOGGER = Logger.getLogger(CommonAttributeInstanceNodeGenerator.class.getName());
-    protected Long abstractFileReference;
+    protected Long abstractFileObjectId;
     protected static Map<Long, AbstractFile> cachedFiles;
     String caseName;
     String dataSource;
 
     public CommonAttributeInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
-        this.abstractFileReference = abstractFileReference;
+        this.abstractFileObjectId = abstractFileReference;
         CommonAttributeInstanceNodeGenerator.cachedFiles = cachedFiles;
         this.caseName = caseName;
         this.dataSource = dataSource;
     }
     
     public CommonAttributeInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
-        this.abstractFileReference = -1L;
+        this.abstractFileObjectId = -1L;
         CommonAttributeInstanceNodeGenerator.cachedFiles = cachedFiles;
         this.caseName = "";
         this.dataSource = "";
@@ -66,11 +66,11 @@ public abstract class CommonAttributeInstanceNodeGenerator {
      * implementations of this object
      */
     protected AbstractFile lookupOrCreateAbstractFile() {
-        if (cachedFiles.containsKey(this.abstractFileReference)) {
-            return cachedFiles.get(this.abstractFileReference);
+        if (cachedFiles.containsKey(this.abstractFileObjectId)) {
+            return cachedFiles.get(this.abstractFileObjectId);
         } else {
-            AbstractFile file = CommonAttributeInstanceNodeGenerator.loadFileFromSleuthkitCase(this.abstractFileReference);
-            cachedFiles.put(this.abstractFileReference, file);
+            AbstractFile file = CommonAttributeInstanceNodeGenerator.loadFileFromSleuthkitCase(this.abstractFileObjectId);
+            cachedFiles.put(this.abstractFileObjectId, file);
             return file;
         }
     }
@@ -129,7 +129,7 @@ public abstract class CommonAttributeInstanceNodeGenerator {
     }
 
     public Long getIdenticalFileSleuthkitCaseObjectID() {
-        return this.abstractFileReference;
+        return this.abstractFileObjectId;
     }
 
     public static CommonAttributeInstanceNodeGenerator createInstance(Iterator<CommonAttributeInstanceNodeGenerator> identicalFileNodeGeneratorIterator, Integer instanceId) throws Exception {
