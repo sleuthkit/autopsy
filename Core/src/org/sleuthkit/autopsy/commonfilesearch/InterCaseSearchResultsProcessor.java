@@ -44,49 +44,62 @@ final class InterCaseSearchResultsProcessor {
 
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
     private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();
-    
-    CorrelationAttribute processCorrelationCaseSingleAttribute(int attrbuteId) {
-         try {
-            EamDbAttributeInstanceRowCallback instancetableCallback = new EamDbAttributeInstanceRowCallback();
+
+    /**
+     * Finds a single CorrelationAttribute given an id.
+     *
+     * @param attrbuteId Row of CorrelationAttribute to retrieve from the EamDb
+     * @return CorrelationAttribute object representation of retrieved match
+     */
+    CorrelationAttribute findSingleCorrelationAttribute(int attrbuteId) {
+        try {
+            InterCaseCommonAttributeRowCallback instancetableCallback = new InterCaseCommonAttributeRowCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processInstanceTableRow(fileType, attrbuteId, instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
-            
+
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing InstanceTable row.", ex);
         }
-         
+
         return null;
     }
 
-    void processCorrelationCaseAttributeValues(Case currentCase) {
-
+    /**
+     * Given the current case, fins all intercase common files from the EamDb
+     * and builds maps of obj id to md5 and case.
+     *
+     * @param currentCase The current TSK Case.
+     */
+    void findInterCaseCommonAttributeValues(Case currentCase) {
         try {
-            EamDbAttributeInstancesCallback instancetableCallback = new EamDbAttributeInstancesCallback();
+            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processCaseInstancesTable(fileType, DbManager.getCase(currentCase), instancetableCallback);
 
-            intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
-            intercaseCommonCasesMap.putAll(instancetableCallback.getCorrelationIdToCaseMap());
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
 
     }
-    
-        void processSingleCaseCorrelationCaseAttributeValues(Case currentCase, CorrelationCase singleCase) {
 
+    /**
+     * Given the current case, and a specific case of interest, finds common
+     * files which exist between cases from the EamDb. Builds maps of obj id to
+     * md5 and case.
+     *
+     * @param currentCase The current TSK Case.
+     * @param singleCase The case of interest. Matches must exist in this case.
+     */
+    void findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
         try {
-            EamDbAttributeInstancesCallback instancetableCallback = new EamDbAttributeInstancesCallback();
+            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processSingleCaseInstancesTable(fileType, DbManager.getCase(currentCase), singleCase, instancetableCallback);
-
-            intercaseCommonValuesMap.putAll(instancetableCallback.getCorrelationIdValueMap());
-            intercaseCommonCasesMap.putAll(instancetableCallback.getCorrelationIdToCaseMap());
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
@@ -102,42 +115,31 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with processCaseInstancesTable which generates a list of
-     * md5s for common files search
+     * Callback to use with findInterCaseCommonAttributeValues which generates a
+     * list of md5s for common files search
      */
-    private class EamDbAttributeInstancesCallback implements InstanceTableCallback {
-
-        private final Map<Integer, String> correlationIdToValueMap = new HashMap<>();
-        private final Map<Integer, Integer> correlationIdToDatasourceMap = new HashMap<>();
+    private class InterCaseCommonAttributesCallback implements InstanceTableCallback {
 
         @Override
         public void process(ResultSet resultSet) {
             try {
                 while (resultSet.next()) {
                     int resultId = InstanceTableCallback.getId(resultSet);
-                    correlationIdToValueMap.put(resultId, InstanceTableCallback.getValue(resultSet));
-                    correlationIdToDatasourceMap.put(resultId, InstanceTableCallback.getCaseId(resultSet));
+                    intercaseCommonValuesMap.put(resultId, InstanceTableCallback.getValue(resultSet));
+                    intercaseCommonCasesMap.put(resultId, InstanceTableCallback.getCaseId(resultSet));
                 }
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
             }
         }
 
-        Map<Integer, String> getCorrelationIdValueMap() {
-            return Collections.unmodifiableMap(correlationIdToValueMap);
-        }
-
-        Map<Integer, Integer> getCorrelationIdToCaseMap() {
-            return Collections.unmodifiableMap(correlationIdToDatasourceMap);
-        }
-
     }
 
     /**
-     * Callback to use with processCaseInstancesTable which generates a list of
-     * md5s for common files search
+     * Callback to use with findSingleCorrelationAttribute which retrieves a
+     * single CorrelationAttribute from the EamDb.
      */
-    private class EamDbAttributeInstanceRowCallback implements InstanceTableCallback {
+    private class InterCaseCommonAttributeRowCallback implements InstanceTableCallback {
 
         CorrelationAttribute correlationAttribute = null;
 
@@ -146,7 +148,7 @@ final class InterCaseSearchResultsProcessor {
             try {
                 EamDb DbManager = EamDb.getInstance();
                 CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-                
+
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));

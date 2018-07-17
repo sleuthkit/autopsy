@@ -33,18 +33,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * present case.
  */
 public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
-    
+
     public AllInterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         super(filterByMediaMimeType, filterByDocMimeType);
-    }    
-    
+    }
+
     @Override
     public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
-
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        eamDbAttrInst.processCorrelationCaseAttributeValues(Case.getCurrentCase());
-        interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
+        eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
 
         return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
