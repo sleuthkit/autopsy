@@ -86,7 +86,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
         this.filteredEvents.registerForEvents(this);
-        this.filteredEvents.zoomParametersProperty().addListener(updateListener);
+        this.filteredEvents.zoomStateProperty().addListener(updateListener);
         TimeLineController.getTimeZone().addListener(updateListener);
     }
 
@@ -224,7 +224,7 @@ public abstract class AbstractTimeLineView extends BorderPane {
             updateTask = null;
         }
         //remvoe and gc updateListener
-        this.filteredEvents.zoomParametersProperty().removeListener(updateListener);
+        this.filteredEvents.zoomStateProperty().removeListener(updateListener);
         TimeLineController.getTimeZone().removeListener(updateListener);
         updateListener = null;
         filteredEvents.unRegisterForEvents(this);

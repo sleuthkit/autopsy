@@ -146,7 +146,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         eventsModel.timeRangeProperty().addListener(observable -> clearTimeBasedUIElements());
 
         //if the view paramaters change, clear the selection
-        eventsModel.zoomParametersProperty().addListener(observable -> getSelectedNodes().clear());
+        eventsModel.zoomStateProperty().addListener(observable -> getSelectedNodes().clear());
     }
 
     /**

@@ -350,7 +350,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
 
     /**
      * Task that clears the Chart, fetches new data according to the current
-     * ZoomParams and loads it into the Chart
+     * ZoomState and loads it into the Chart
      *
      */
     @NbBundle.Messages({

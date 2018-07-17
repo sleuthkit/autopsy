@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
@@ -62,7 +62,7 @@ final public class DetailsViewModel {
     private final static Logger logger = Logger.getLogger(DetailsViewModel.class.getName());
 
     private final FilteredEventsModel eventsModel;
-    private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
+    private final LoadingCache<ZoomState, List<EventStripe>> eventStripeCache;
     private final TimelineManager eventManager;
     private final SleuthkitCase sleuthkitCase;
 
@@ -98,7 +98,7 @@ final public class DetailsViewModel {
             zoom = eventsModel.getEventTypeZoom();
             lod = eventsModel.getDescriptionLOD();
         }
-        return getEventStripes(new ZoomParams(range, zoom, filter, lod));
+        return getEventStripes(new ZoomState(range, zoom, filter, lod));
     }
 
     /**
@@ -108,7 +108,7 @@ final public class DetailsViewModel {
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
      */
-    public List<EventStripe> getEventStripes(ZoomParams params) throws TskCoreException {
+    public List<EventStripe> getEventStripes(ZoomState params) throws TskCoreException {
         try {
             return eventStripeCache.get(params);
         } catch (ExecutionException ex) {
@@ -120,7 +120,7 @@ final public class DetailsViewModel {
      * Get a list of EventStripes, clustered according to the given zoom
      * paramaters.
      *
-     * @param params   The ZoomParams that determine the zooming, filtering and
+     * @param zoom     The ZoomState that determine the zooming, filtering and
      *                 clustering.
      * @param timeZone The time zone to use.
      *
@@ -131,12 +131,12 @@ final public class DetailsViewModel {
      * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
      *                                                  querying the db.
      */
-    public List<EventStripe> getEventStripes(ZoomParams params, DateTimeZone timeZone) throws TskCoreException {
+    public List<EventStripe> getEventStripes(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
-        Interval timeRange = params.getTimeRange();
-        RootFilterState filterModel = params.getFilterState();
-        DescriptionLoD descriptionLOD = params.getDescriptionLOD();
-        EventTypeZoomLevel typeZoomLevel = params.getTypeZoomLevel();
+        Interval timeRange = zoom.getTimeRange();
+        RootFilterState filterModel = zoom.getFilterState();
+        DescriptionLoD descriptionLOD = zoom.getDescriptionLOD();
+        EventTypeZoomLevel typeZoomLevel = zoom.getTypeZoomLevel();
 
         long start = timeRange.getStartMillis() / 1000;
         long end = timeRange.getEndMillis() / 1000;

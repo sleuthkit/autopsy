@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.util.Objects;
 import org.joda.time.Interval;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
@@ -29,7 +28,7 @@ import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
  * This class encapsulates all the zoom(and filter) parameters into one object
  * for passing around and as a memento of the zoom/filter state.
  */
-final public class ZoomParams {
+final public class ZoomState {
 
     private final Interval timeRange;
 
@@ -55,31 +54,31 @@ final public class ZoomParams {
         return descrLOD;
     }
 
-    public ZoomParams(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilterState filter, DescriptionLoD descrLOD) {
+    public ZoomState(Interval timeRange, EventTypeZoomLevel zoomLevel, RootFilterState filter, DescriptionLoD descrLOD) {
         this.timeRange = timeRange;
         this.typeZoomLevel = zoomLevel;
         this.filter = filter;
         this.descrLOD = descrLOD;
     }
 
-    public ZoomParams withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
-        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
+    public ZoomState withTimeAndType(Interval timeRange, EventTypeZoomLevel zoomLevel) {
+        return new ZoomState(timeRange, zoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
-        return new ZoomParams(timeRange, zoomLevel, filter, descrLOD);
+    public ZoomState withTypeZoomLevel(EventTypeZoomLevel zoomLevel) {
+        return new ZoomState(timeRange, zoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withTimeRange(Interval timeRange) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
+    public ZoomState withTimeRange(Interval timeRange) {
+        return new ZoomState(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withDescrLOD(DescriptionLoD descrLOD) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
+    public ZoomState withDescrLOD(DescriptionLoD descrLOD) {
+        return new ZoomState(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
-    public ZoomParams withFilterState(RootFilterState filter) {
-        return new ZoomParams(timeRange, typeZoomLevel, filter, descrLOD);
+    public ZoomState withFilterState(RootFilterState filter) {
+        return new ZoomState(timeRange, typeZoomLevel, filter, descrLOD);
     }
 
     public boolean hasFilterState(RootFilterState filterSet) {
@@ -118,7 +117,7 @@ final public class ZoomParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ZoomParams other = (ZoomParams) obj;
+        final ZoomState other = (ZoomState) obj;
         if (!Objects.equals(this.timeRange, other.timeRange)) {
             return false;
         }
@@ -133,6 +132,6 @@ final public class ZoomParams {
 
     @Override
     public String toString() {
-        return "ZoomParams{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter + ", descrLOD=" + descrLOD + '}'; //NON-NLS
+        return "ZoomState{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter + ", descrLOD=" + descrLOD + '}'; //NON-NLS
     }
 }

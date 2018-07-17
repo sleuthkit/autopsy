@@ -78,7 +78,7 @@ import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -205,13 +205,13 @@ public class TimeLineController {
     private final FilteredEventsModel filteredEvents;
 
     @GuardedBy("this")
-    private final ZoomParams InitialZoomState;
+    private final ZoomState InitialZoomState;
 
     @GuardedBy("this")
-    private final History<ZoomParams> historyManager = new History<>();
+    private final History<ZoomState> historyManager = new History<>();
 
     @GuardedBy("this")
-    private final ReadOnlyObjectWrapper<ZoomParams> currentParams = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<ZoomState> currentParams = new ReadOnlyObjectWrapper<>();
 
     //selected events (ie shown in the result viewer)
     @GuardedBy("this")
@@ -290,15 +290,15 @@ public class TimeLineController {
          * TimeLineController. Do we need to do this with datasource or hash hit
          * filters?
          */
-        historyManager.currentState().addListener((ObservableValue<? extends ZoomParams> observable, ZoomParams oldValue, ZoomParams newValue) -> {
-            ZoomParams historyManagerParams = newValue;
+        historyManager.currentState().addListener((ObservableValue<? extends ZoomState> observable, ZoomState oldValue, ZoomState newValue) -> {
+            ZoomState historyManagerParams = newValue;
             filteredEvents.syncTagsFilter(historyManagerParams.getFilterState());
             currentParams.set(historyManagerParams);
         });
  
 
         try {
-            InitialZoomState = new ZoomParams(filteredEvents.getSpanningInterval(),
+            InitialZoomState = new ZoomState(filteredEvents.getSpanningInterval(),
                     EventTypeZoomLevel.BASE_TYPE,
                     filteredEvents.filterProperty().get(),
                     DescriptionLoD.SHORT);
@@ -330,7 +330,7 @@ public class TimeLineController {
 
     public void zoomOutToActivity() throws TskCoreException {
         Interval boundingEventsInterval = filteredEvents.getBoundingEventsInterval(getJodaTimeZone());
-        advance(filteredEvents.zoomParametersProperty().get().withTimeRange(boundingEventsInterval));
+        advance(filteredEvents.zoomStateProperty().get().withTimeRange(boundingEventsInterval));
     }
 
     private final ObservableSet<DetailViewEvent> pinnedEvents = FXCollections.observableSet();
@@ -502,7 +502,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
-        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
+        ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTypeZoomLevel(typeZoomeLevel));
         } else if (currentZoom.hasTypeZoomLevel(typeZoomeLevel) == false) {
@@ -533,7 +533,7 @@ public class TimeLineController {
             }
         }
 
-        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
+        ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeRange(clampedTimeRange));
             return true;
@@ -562,7 +562,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushDescrLOD(DescriptionLoD newLOD) {
-        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
+        ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withDescrLOD(newLOD));
         } else if (currentZoom.hasDescrLOD(newLOD) == false) {
@@ -573,7 +573,7 @@ public class TimeLineController {
     @SuppressWarnings("AssignmentToMethodParameter") //clamp timerange to case
     synchronized public void pushTimeAndType(Interval timeRange, EventTypeZoomLevel typeZoom) throws TskCoreException {
         Interval overlappingTimeRange = this.filteredEvents.getSpanningInterval().overlap(timeRange);
-        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
+        ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withTimeAndType(overlappingTimeRange, typeZoom));
         } else if (currentZoom.hasTimeRange(overlappingTimeRange) == false && currentZoom.hasTypeZoomLevel(typeZoom) == false) {
@@ -586,7 +586,7 @@ public class TimeLineController {
     }
 
     synchronized public void pushFilters(RootFilterState filter) {
-        ZoomParams currentZoom = filteredEvents.zoomParametersProperty().get();
+        ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
             advance(InitialZoomState.withFilterState(filter.copyOf()));
         } else if (currentZoom.hasFilterState(filter) == false) {
@@ -602,7 +602,7 @@ public class TimeLineController {
         historyManager.retreat();
     }
 
-    synchronized private void advance(ZoomParams newState) {
+    synchronized private void advance(ZoomState newState) {
         historyManager.advance(newState);
     }
 

@@ -452,7 +452,7 @@ final public class ViewFrame extends BorderPane {
         //listen for changes in the time range / zoom params
         TimeLineController.getTimeZone().addListener(timeZoneProp -> refreshTimeUI());
         filteredEvents.timeRangeProperty().addListener(timeRangeProp -> refreshTimeUI());
-        filteredEvents.zoomParametersProperty().addListener(zoomListener);
+        filteredEvents.zoomStateProperty().addListener(zoomListener);
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();

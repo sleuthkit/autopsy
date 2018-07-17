@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DescriptionLoD;
 
@@ -96,10 +96,10 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
     private final MappedList<DetailViewEvent, EventNodeBase<?>> selectedEvents;
 
     /**
-     * Local copy of the zoomParams. Used to backout of a zoomParam change
+     * Local copy of the zoomState. Used to backout of a zoomState change
      * without needing to requery/redraw the view.
      */
-    private ZoomParams currentZoomParams;
+    private ZoomState currentZoom;
     private final DetailsViewModel detailsViewModel;
 
     /**
@@ -392,10 +392,10 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
                 return null;
             }
             FilteredEventsModel eventsModel = getEventsModel();
-            ZoomParams newZoomParams = eventsModel.getZoomParamaters();
+            ZoomState newZoom = eventsModel.getZoomState();
 
-            //if the zoomParams haven't actually changed, just bail
-            if (Objects.equals(currentZoomParams, newZoomParams)) {
+            //if the ZoomState haven't actually changed, just bail
+            if (Objects.equals(currentZoom, newZoom)) {
                 return true;
             }
 
@@ -430,8 +430,8 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
             if (isCancelled()) {
                 return null;
             }
-            //we are going to accept the new zoomParams
-            currentZoomParams = newZoomParams;
+            //we are going to accept the new zoom
+            currentZoom = newZoom;
 
             //clear the chart and set the horixontal axis
             resetView(eventsModel.getTimeRange());

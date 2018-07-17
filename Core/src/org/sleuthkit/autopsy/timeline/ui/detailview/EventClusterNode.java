@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
@@ -169,7 +169,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         getChartLane().setCursor(Cursor.WAIT);
 
         /*
-         * make new ZoomParams to query with
+         * make new ZoomState to query with
          *
          * We need to extend end time for the query by one second, because it is
          * treated as an open interval but we want to include events at exactly
@@ -183,7 +183,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 new TypeFilter(getEventType()));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
-        final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
+        final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
         /*
          * task to load sub-stripes in a background thread
@@ -208,7 +208,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(zoom.withDescrLOD(loadedDescriptionLoD));
                     //setup next for subsequent go through the "do" loop
                     next = withRelativeDetail(loadedDescriptionLoD, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.

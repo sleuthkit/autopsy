@@ -61,7 +61,7 @@ public class ZoomOut extends Action {
             private final FilteredEventsModel eventsModel = controller.getEventsModel();
 
             {
-                bind(eventsModel.zoomParametersProperty(), eventsModel.timeRangeProperty());
+                bind(eventsModel.zoomStateProperty(), eventsModel.timeRangeProperty());
             }
 
             @Override

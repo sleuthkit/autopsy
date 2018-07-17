@@ -62,7 +62,7 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
-import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -118,7 +118,7 @@ public final class FilteredEventsModel {
     //Filter and zoome state
     private final ReadOnlyObjectWrapper<RootFilterState> requestedFilter = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
     private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
 
@@ -126,12 +126,12 @@ public final class FilteredEventsModel {
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
-    private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
+    private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
 
-    public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) throws TskCoreException {
+    public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
         this.eventManager = autoCase.getSleuthkitCase().getTimelineManager();
         populateFilterData();
@@ -170,40 +170,40 @@ public final class FilteredEventsModel {
         });
         requestedFilter.set(getDefaultFilter());
 
-        requestedZoomParamters.addListener((Observable observable) -> {
-            final ZoomParams zoomParams = requestedZoomParamters.get();
+        requestedZoomState.addListener((Observable observable) -> {
+            final ZoomState zoomState = requestedZoomState.get();
 
-            if (zoomParams != null) {
+            if (zoomState != null) {
                 synchronized (FilteredEventsModel.this) {
-                    requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                    requestedFilter.set(zoomParams.getFilterState());
-                    requestedTimeRange.set(zoomParams.getTimeRange());
-                    requestedLOD.set(zoomParams.getDescriptionLOD());
+                    requestedTypeZoom.set(zoomState.getTypeZoomLevel());
+                    requestedFilter.set(zoomState.getFilterState());
+                    requestedTimeRange.set(zoomState.getTimeRange());
+                    requestedLOD.set(zoomState.getDescriptionLOD());
                 }
             }
         });
 
-        requestedZoomParamters.bind(currentStateProperty);
+        requestedZoomState.bind(currentStateProperty);
     }
 
     /**
      * get the count of all events that fit the given zoom params organized by
-     * the EvenType of the level specified in the ZoomParams
+     * the EvenType of the level specified in the zoomState
      *
-     * @param params the params that control what events to count and how to
+     * @param zoomState The params that control what events to count and how to
      *               organize the returned map
      *
      * @return a map from event type( of the requested level) to event counts
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    private Map<EventType, Long> countEventsByType(ZoomParams params) throws TskCoreException {
-        if (params.getTimeRange() == null) {
+    private Map<EventType, Long> countEventsByType(ZoomState zoomState) throws TskCoreException {
+        if (zoomState.getTimeRange() == null) {
             return Collections.emptyMap();
         } else {
-            return eventManager.countEventsByType(params.getTimeRange().getStartMillis() / 1000,
-                    params.getTimeRange().getEndMillis() / 1000,
-                    params.getFilterState().getActiveFilter(), params.getTypeZoomLevel());
+            return eventManager.countEventsByType(zoomState.getTimeRange().getStartMillis() / 1000,
+                    zoomState.getTimeRange().getEndMillis() / 1000,
+                    zoomState.getFilterState().getActiveFilter(), zoomState.getTypeZoomLevel());
         }
     }
 
@@ -232,21 +232,21 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * Readonly observable property for the current ZoomParams
+     * Readonly observable property for the current ZoomState
      *
-     * @return A readonly observable property for the current ZoomParams.
+     * @return A readonly observable property for the current ZoomState.
      */
-    synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
-        return requestedZoomParamters.getReadOnlyProperty();
+    synchronized public ReadOnlyObjectProperty<ZoomState> zoomStateProperty() {
+        return requestedZoomState.getReadOnlyProperty();
     }
 
     /**
-     * Get the current ZoomParams
+     * Get the current ZoomState
      *
-     * @return The current ZoomParams
+     * @return The current ZoomState
      */
-    synchronized public ZoomParams getZoomParamaters() {
-        return requestedZoomParamters.get();
+    synchronized public ZoomState getZoomState() {
+        return requestedZoomState.get();
     }
 
     /**
@@ -325,19 +325,19 @@ public final class FilteredEventsModel {
      * @return The time range currently in view.
      */
     synchronized public Interval getTimeRange() {
-        return getZoomParamaters().getTimeRange();
+        return getZoomState().getTimeRange();
     }
 
     synchronized public DescriptionLoD getDescriptionLOD() {
-        return getZoomParamaters().getDescriptionLOD();
+        return getZoomState().getDescriptionLOD();
     }
 
     synchronized public RootFilterState getFilterState() {
-        return getZoomParamaters().getFilterState();
+        return getZoomState().getFilterState();
     }
 
     synchronized public EventTypeZoomLevel getEventTypeZoom() {
-        return getZoomParamaters().getTypeZoomLevel();
+        return getZoomState().getTypeZoomLevel();
     }
 
     /**
@@ -372,7 +372,7 @@ public final class FilteredEventsModel {
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone timeZone) throws TskCoreException {
-        return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), getFilterState().getActiveFilter(), timeZone);
+        return eventManager.getSpanningInterval(zoomStateProperty().get().getTimeRange(), getFilterState().getActiveFilter(), timeZone);
     }
 
     public TimelineEvent getEventById(Long eventID) throws TskCoreException {
@@ -436,7 +436,7 @@ public final class FilteredEventsModel {
             typeZoom = getEventTypeZoom();
         }
         try {
-            return eventCountsCache.get(new ZoomParams(timeRange, typeZoom, filter, null));
+            return eventCountsCache.get(new ZoomState(timeRange, typeZoom, filter, null));
         } catch (ExecutionException executionException) {
             throw new TskCoreException("Error getting cached event counts.`1", executionException);
         }
