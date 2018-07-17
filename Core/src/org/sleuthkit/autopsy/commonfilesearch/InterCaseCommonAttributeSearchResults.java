@@ -78,7 +78,7 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
     @Override
     public DisplayableItemNode[] generateNodes() {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        CorrelationAttribute corrAttr = eamDbAttrInst.processCorrelationCaseSingleAttribute(crFileId); //TODO which do we want  
+        CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId); //TODO which do we want  
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {

@@ -76,7 +76,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
 
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        eamDbAttrInst.processSingleCaseCorrelationCaseAttributeValues(Case.getCurrentCase(), correlationCase);
+        eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
         interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
 
         return new CommonAttributeSearchResults(interCaseCommonFiles);
