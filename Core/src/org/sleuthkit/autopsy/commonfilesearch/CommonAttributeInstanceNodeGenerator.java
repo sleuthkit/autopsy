@@ -69,37 +69,17 @@ public abstract class CommonAttributeInstanceNodeGenerator {
         if (cachedFiles.containsKey(this.abstractFileObjectId)) {
             return cachedFiles.get(this.abstractFileObjectId);
         } else {
-            AbstractFile file = CommonAttributeInstanceNodeGenerator.loadFileFromSleuthkitCase(this.abstractFileObjectId);
+            AbstractFile file = this.loadFileFromSleuthkitCase();
             cachedFiles.put(this.abstractFileObjectId, file);
             return file;
         }
     }
 
-    private static AbstractFile loadFileFromSleuthkitCase(Long objectId) {
-
-        Case currentCase;
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-
-            SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", objectId)).get(0);
-
-            return abstractFile;
-
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{objectId}), ex);
-            return null;
-        }
-    }
-
     /**
-     * Create a node which is a child of the MD5Node, to be used to display a
-     * row in the tree table
-     *
-     * @return child row node
+     * 
+     * @return 
      */
-    public abstract DisplayableItemNode generateNode();
+    abstract protected AbstractFile loadFileFromSleuthkitCase();
     
     /**
      * Create a list of nodes which are a child of the MD5Node, to be used to display a

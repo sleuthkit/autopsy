@@ -40,7 +40,8 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
     
     private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResults.class.getName());
     private final Integer crFileId;
-    private CorrelationAttributeInstance tempAttributeInst;
+    private CorrelationAttributeInstance currentAttributeInst;
+    private String currentFullPath;
     
     InterCaseCommonAttributeSearchResults(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
@@ -48,42 +49,38 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
     }
     
     
-    private static AbstractFile loadFileFromSleuthkitCase(String path) {
+    @Override
+    protected AbstractFile loadFileFromSleuthkitCase() {
 
         Case currentCase;
+        this.currentFullPath = this.currentAttributeInst.getFilePath();
+            
         try {
             currentCase = Case.getCurrentCaseThrows();
 
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            String[] splitPath = path.split("/");
+            String[] splitPath = this.currentFullPath.split("/");
             String fileName = splitPath[splitPath.length -1];
             AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s'", fileName)).get(0); // TODO workaround where we don't need AbstractFile?
 
             return abstractFile;
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{path}), ex);
+            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{this.currentFullPath}), ex);
             return null;
         }
     }
     
     @Override
-    public DisplayableItemNode generateNode() {
-        if (tempAttributeInst != null) {
-            return new InterCaseCommonAttributeInstanceNode(tempAttributeInst, this.lookupOrCreateAbstractFile());
-        }
-        return null;
-    }
-    
-    @Override
     public DisplayableItemNode[] generateNodes() {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId); //TODO which do we want  
+        CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
-            tempAttributeInst = attrInst;
-            DisplayableItemNode generatedInstNode = new InterCaseCommonAttributeInstanceNode(tempAttributeInst, loadFileFromSleuthkitCase(tempAttributeInst.getFilePath()));
+            currentAttributeInst = attrInst;
+            
+            DisplayableItemNode generatedInstNode = new InterCaseCommonAttributeInstanceNode(currentAttributeInst, this.lookupOrCreateAbstractFile());
             if (generatedInstNode != null) {
                 attrInstNodeList.add(generatedInstNode);
             }
