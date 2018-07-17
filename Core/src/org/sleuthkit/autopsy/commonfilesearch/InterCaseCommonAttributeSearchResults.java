@@ -19,6 +19,8 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,30 +39,29 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
 final public class InterCaseCommonAttributeSearchResults extends CommonAttributeInstanceNodeGenerator {
-    
+
     private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResults.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttributeInst;
     private String currentFullPath;
-    
+
     InterCaseCommonAttributeSearchResults(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
         this.crFileId = attrInstId;
     }
-    
-    
+
     @Override
     protected AbstractFile loadFileFromSleuthkitCase() {
 
         Case currentCase;
         this.currentFullPath = this.currentAttributeInst.getFilePath();
-            
+
         try {
             currentCase = Case.getCurrentCaseThrows();
 
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-            String[] splitPath = this.currentFullPath.split("/");
-            String fileName = splitPath[splitPath.length -1];
+            File fileFromPath = new File(this.currentFullPath);
+            String fileName = fileFromPath.getName();
             AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s'", fileName)).get(0); // TODO workaround where we don't need AbstractFile?
 
             return abstractFile;
@@ -70,19 +71,36 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
             return null;
         }
     }
-    
+
     @Override
     public DisplayableItemNode[] generateNodes() {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
+        String currCaseDbName = Case.getCurrentCase().getDisplayName();
         
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
-            currentAttributeInst = attrInst;
-            
-            DisplayableItemNode generatedInstNode = new InterCaseCommonAttributeInstanceNode(currentAttributeInst, this.lookupOrCreateAbstractFile());
-            if (generatedInstNode != null) {
+            try {
+                currentAttributeInst = attrInst;
+                AbstractFile currentAbstractFile = this.lookupOrCreateAbstractFile();
+                DisplayableItemNode generatedInstNode;
+
+                String currAttributeDataSource = currentAttributeInst.getCorrelationDataSource().getName();
+                String currAbstractFileDataSource = currentAbstractFile.getDataSource().getName();
+                
+                if (currentAttributeInst.getCorrelationCase().getDisplayName().equals(currCaseDbName)
+                        && currentAttributeInst.getFilePath().toLowerCase().equals(Paths.get(currentAbstractFile.getParentPath(), currentAbstractFile.getName()).toString())
+                        && currAttributeDataSource.equals(currAbstractFileDataSource)) {
+                    generatedInstNode = new IntraCaseCommonAttributeInstanceNode(currentAbstractFile, currCaseDbName, currAbstractFileDataSource);
+                } else {
+                    generatedInstNode = new InterCaseCommonAttributeInstanceNode(currentAttributeInst, currentAbstractFile);
+                }
+
                 attrInstNodeList.add(generatedInstNode);
+
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Unable to get DataSource for record with filePath: %s.  Node not created.", new Object[]{attrInst.getFilePath()}), ex);
+
             }
         }
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);

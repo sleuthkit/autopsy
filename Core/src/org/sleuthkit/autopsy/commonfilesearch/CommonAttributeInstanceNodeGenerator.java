@@ -19,16 +19,9 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Defines types which can be used to get some sort of File Instance node (a
@@ -36,22 +29,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class CommonAttributeInstanceNodeGenerator {
 
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributeInstanceNodeGenerator.class.getName());
     protected Long abstractFileObjectId;
-    protected static Map<Long, AbstractFile> cachedFiles;
+    protected Map<Long, AbstractFile> cachedFiles;
     String caseName;
     String dataSource;
 
     public CommonAttributeInstanceNodeGenerator(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         this.abstractFileObjectId = abstractFileReference;
-        CommonAttributeInstanceNodeGenerator.cachedFiles = cachedFiles;
+        this.cachedFiles = cachedFiles;
         this.caseName = caseName;
         this.dataSource = dataSource;
     }
     
     public CommonAttributeInstanceNodeGenerator(Map<Long, AbstractFile> cachedFiles) {
         this.abstractFileObjectId = -1L;
-        CommonAttributeInstanceNodeGenerator.cachedFiles = cachedFiles;
+        this.cachedFiles = cachedFiles;
         this.caseName = "";
         this.dataSource = "";
     }
@@ -112,8 +104,4 @@ public abstract class CommonAttributeInstanceNodeGenerator {
         return this.abstractFileObjectId;
     }
 
-    public static CommonAttributeInstanceNodeGenerator createInstance(Iterator<CommonAttributeInstanceNodeGenerator> identicalFileNodeGeneratorIterator, Integer instanceId) throws Exception {
-
-        return new InterCaseCommonAttributeSearchResults(instanceId, cachedFiles);
-    }
 }

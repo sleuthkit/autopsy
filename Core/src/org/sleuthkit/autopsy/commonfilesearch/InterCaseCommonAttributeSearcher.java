@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -28,15 +27,17 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 
 /**
  * Provides logic for selecting common files from all data sources and all cases
  * in the Central Repo.
  */
-public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
+abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
     EamDb dbManager;
+
     /**
      * Implements the algorithm for getting common files across all data sources
      * and all cases. Can filter on mime types conjoined by logical AND.
@@ -55,7 +56,8 @@ public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAtt
 
     /**
      * @param artifactInstances all 'common files' in central repo
-     * @param commonFiles matches must ultimately have appeared in this collection
+     * @param commonFiles matches must ultimately have appeared in this
+     * collection
      * @return collated map of instance counts to lists of matches
      */
     Map<Integer, List<CommonAttributeValue>> gatherIntercaseResults(Map<Integer, String> commonFiles, Map<Integer, Integer> commonFileCases) {
@@ -68,37 +70,36 @@ public abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAtt
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
             }
+            Map<Long, AbstractFile> fileCache = new HashMap<>();
 
             try {
                 int caseId = commonFileCases.get(commonAttrId);
                 CorrelationCase autopsyCrCase = dbManager.getCaseById(caseId);
-                final String correlationCaseDisplayName = autopsyCrCase.getDisplayName(); 
+                final String correlationCaseDisplayName = autopsyCrCase.getDisplayName();
                 // we don't *have* all the information for the rows in the CR,
                 //  so we need to consult the present case via the SleuthkitCase object
                 // Later, when the FileInstanceNodde is built. Therefore, build node generators for now.
 
-                if(interCaseCommonFiles.containsKey(md5)) {
+                if (interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
                     final CommonAttributeValue md5Metadata = interCaseCommonFiles.get(md5);
-                    final Iterator<CommonAttributeInstanceNodeGenerator> identitcalFileInstanceMetadata = interCaseCommonFiles.get(md5).getMetadata().iterator();
-                    CommonAttributeInstanceNodeGenerator nodeGenerator = CommonAttributeInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
+                    CommonAttributeInstanceNodeGenerator nodeGenerator = new InterCaseCommonAttributeSearchResults(commonAttrId, fileCache);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
 
                 } else {
                     CommonAttributeValue md5Metadata = new CommonAttributeValue(md5);
-                    final Iterator<CommonAttributeInstanceNodeGenerator> identitcalFileInstanceMetadata = md5Metadata.getMetadata().iterator();
-                    CommonAttributeInstanceNodeGenerator nodeGenerator = CommonAttributeInstanceNodeGenerator.createInstance(identitcalFileInstanceMetadata, commonAttrId);
+                    CommonAttributeInstanceNodeGenerator nodeGenerator = new InterCaseCommonAttributeSearchResults(commonAttrId, fileCache);
                     md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
                     interCaseCommonFiles.put(md5, md5Metadata);
                 }
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
-           
+
         }
-        
-        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);        
-        
+
+        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);
+
         return instanceCollatedCommonFiles;
     }
 

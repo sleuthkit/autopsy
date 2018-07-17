@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -33,7 +34,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
 final public class IntraCaseCommonAttributeSearchResults extends CommonAttributeInstanceNodeGenerator {
-
+    private static final Logger LOGGER = Logger.getLogger(IntraCaseCommonAttributeSearchResults.class.getName());
+    
     /**
      * Create meta data required to find an abstract file and build a
      * FileInstanceNode.
@@ -50,7 +52,7 @@ final public class IntraCaseCommonAttributeSearchResults extends CommonAttribute
         return Arrays.asList(new IntraCaseCommonAttributeInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource())).toArray(new DisplayableItemNode[1]);
     }
     
-    protected AbstractFile loadFileFromSleuthkitCase(Long objectId) {
+    protected AbstractFile loadFileFromSleuthkitCase() {
 
         Case currentCase;
         try {
@@ -58,12 +60,12 @@ final public class IntraCaseCommonAttributeSearchResults extends CommonAttribute
 
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", objectId)).get(0);
+            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", this.abstractFileObjectId)).get(0);
 
             return abstractFile;
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{objectId}), ex);
+            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{this.abstractFileObjectId}), ex);
             return null;
         }
     }
