@@ -258,7 +258,7 @@ final public class ViewFrame extends BorderPane {
             if (rangeSlider.isHighValueChanging() == false
                 && rangeSlider.isLowValueChanging() == false) {
                 try {
-                    Long minTime = RangeDivision.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
+                    Long minTime = RangeDivision.getRangeDivision(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
                     if (false == controller.pushTimeRange(new Interval(
                             (long) (rangeSlider.getLowValue() + minTime),
                             (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
@@ -566,7 +566,7 @@ final public class ViewFrame extends BorderPane {
                 updateMessage(Bundle.ViewFrame_histogramTask_preparing());
 
                 long max = 0;
-                final RangeDivision rangeInfo = RangeDivision.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+                final RangeDivision rangeInfo = RangeDivision.getRangeDivision(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
                 Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
@@ -642,7 +642,7 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.refreshTimeUI.errorMessage=Error gettig the spanning interval."})
     private void refreshTimeUI() {
         try {
-            RangeDivision rangeDivisionInfo = RangeDivision.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+            RangeDivision rangeDivisionInfo = RangeDivision.getRangeDivision(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
             final long minTime = rangeDivisionInfo.getLowerBound();
             final long maxTime = rangeDivisionInfo.getUpperBound();
 

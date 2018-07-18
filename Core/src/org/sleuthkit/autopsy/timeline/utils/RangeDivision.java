@@ -18,22 +18,17 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
-import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeFieldType;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.joda.time.Hours;
 import org.joda.time.Interval;
 import org.joda.time.Minutes;
 import org.joda.time.Months;
-import org.joda.time.Seconds;
 import org.joda.time.Years;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 
 /**
@@ -49,17 +44,6 @@ final public class RangeDivision {
      * The size of the periods we should divide the interval into.
      */
     private final TimeUnits periodSize;
-
-    /**
-     * The number of periods we are going to divide the interval into.
-     */
-    private final int numberOfBlocks;
-
-    /**
-     * A DateTimeFormatter corresponding to the block size for the tick marks on
-     * the date axis of a graph.
-     */
-    private final DateTimeFormatter tickFormatter;
 
     /**
      * An adjusted lower bound for the range such that it lines up with a period
@@ -78,12 +62,8 @@ final public class RangeDivision {
      */
     private final Interval timeRange;
 
-
-   
-    private RangeDivision(Interval timeRange, int periodsInRange, TimeUnits periodSize, DateTimeFormatter tickformatter, long lowerBound, long upperBound) {
-        this.numberOfBlocks = periodsInRange;
+    private RangeDivision(Interval timeRange, TimeUnits periodSize, long lowerBound, long upperBound) {
         this.periodSize = periodSize;
-        this.tickFormatter = tickformatter;
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
         this.timeRange = timeRange;
@@ -100,57 +80,44 @@ final public class RangeDivision {
      *
      * @return
      */
-    public static RangeDivision getRangeDivisionInfo(Interval timeRange, DateTimeZone timeZone) {
+    public static RangeDivision getRangeDivision(Interval timeRange, DateTimeZone timeZone) {
         //Check from largest to smallest unit
 
         //TODO: make this more generic... reduce code duplication -jm
-        DateTimeFieldType timeUnit;
+        TimeUnits timeUnit;
         final DateTime startWithZone = timeRange.getStart().withZone(timeZone);
         final DateTime endWithZone = timeRange.getEnd().withZone(timeZone);
-
+        long lower;
+        long upper;
         if (Years.yearsIn(timeRange).isGreaterThan(Years.THREE)) {
-            timeUnit = DateTimeFieldType.year();
-            long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
-            long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivision(timeRange, Years.yearsIn(timeRange).get(timeUnit.getDurationType()) + 1, TimeUnits.YEARS, ISODateTimeFormat.year(), lower, upper);
+            timeUnit = TimeUnits.YEARS;
         } else if (Months.monthsIn(timeRange).isGreaterThan(Months.THREE)) {
-            timeUnit = DateTimeFieldType.monthOfYear();
-            long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
-            long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivision(timeRange, Months.monthsIn(timeRange).getMonths() + 1, TimeUnits.MONTHS, DateTimeFormat.forPattern("YYYY'-'MMMM"), lower, upper); // NON-NLS
+            timeUnit = TimeUnits.MONTHS;
         } else if (Days.daysIn(timeRange).isGreaterThan(Days.THREE)) {
-            timeUnit = DateTimeFieldType.dayOfMonth();
-            long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
-            long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivision(timeRange, Days.daysIn(timeRange).getDays() + 1, TimeUnits.DAYS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd"), lower, upper); // NON-NLS
+            timeUnit = TimeUnits.DAYS;
         } else if (Hours.hoursIn(timeRange).isGreaterThan(Hours.THREE)) {
-            timeUnit = DateTimeFieldType.hourOfDay();
-            long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
-            long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivision(timeRange, Hours.hoursIn(timeRange).getHours() + 1, TimeUnits.HOURS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH"), lower, upper); // NON-NLS
+            timeUnit = TimeUnits.HOURS;
         } else if (Minutes.minutesIn(timeRange).isGreaterThan(Minutes.THREE)) {
-            timeUnit = DateTimeFieldType.minuteOfHour();
-            long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
-            long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivision(timeRange, Minutes.minutesIn(timeRange).getMinutes() + 1, TimeUnits.MINUTES, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm"), lower, upper); // NON-NLS
+            timeUnit = TimeUnits.MINUTES;
         } else {
-            timeUnit = DateTimeFieldType.secondOfMinute();
-            long lower = startWithZone.property(timeUnit).roundFloorCopy().getMillis();
-            long upper = endWithZone.property(timeUnit).roundCeilingCopy().getMillis();
-            return new RangeDivision(timeRange, Seconds.secondsIn(timeRange).getSeconds() + 1, TimeUnits.SECONDS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm':'ss"), lower, upper); // NON-NLS
+            timeUnit = TimeUnits.SECONDS;
         }
+        lower = timeUnit.propertyOf(startWithZone).roundFloorCopy().getMillis();
+        upper = timeUnit.propertyOf(endWithZone).roundCeilingCopy().getMillis();
+        return new RangeDivision(timeRange, timeUnit, lower, upper); // NON-NLS
     }
-    
-     public Interval getTimeRange() {
+
+    public Interval getOriginalTimeRange() {
         return timeRange;
     }
 
+    /** Get a DateTimeFormatter corresponding to the block size for the tick
+     * marks on the date axis of a graph.
+     *
+     * @return a DateTimeFormatter
+     */
     public DateTimeFormatter getTickFormatter() {
-        return tickFormatter;
-    }
-
-    public int getPeriodsInRange() {
-        return numberOfBlocks;
+        return periodSize.getTickFormatter();
     }
 
     public TimeUnits getPeriodSize() {
@@ -184,7 +151,4 @@ final public class RangeDivision {
         return intervals;
     }
 
-    public String formatForTick(Interval interval) {
-        return interval.getStart().toString(tickFormatter);
-    }
 }

@@ -376,12 +376,12 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
             }
             FilteredEventsModel eventsModel = getEventsModel();
 
-            final RangeDivision rangeInfo = RangeDivision.getRangeDivisionInfo(eventsModel.getTimeRange(), TimeLineController.getJodaTimeZone());
+            final RangeDivision rangeInfo = RangeDivision.getRangeDivision(eventsModel.getTimeRange(), TimeLineController.getJodaTimeZone());
             getChart().setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
             List<Interval> intervals = rangeInfo.getIntervals(TimeLineController.getJodaTimeZone());
 
             //clear old data, and reset ranges and series
-            resetView(Lists.transform(intervals, rangeInfo::formatForTick));
+            resetView(Lists.transform(intervals, interval -> interval.getStart().toString(rangeInfo.getTickFormatter())));
 
             updateMessage(Bundle.CountsViewPane_loggedTask_updatingCounts());
             int chartMax = 0;
@@ -413,7 +413,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
 
                     final Long count = eventCounts.get(eventType);
                     if (count > 0) {
-                        final String intervalCategory = rangeInfo.formatForTick(interval);
+                        final String intervalCategory = interval.getStart().toString(rangeInfo.getTickFormatter());
                         final double adjustedCount = activeScale.apply(count);
 
                         final XYChart.Data<String, Number> dataItem
@@ -431,10 +431,12 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
             double tickUnit = Scale.LINEAR.equals(activeScale)
                     ? Math.pow(10, Math.max(0, Math.floor(Math.log10(chartMax)) - 1))
                     : Double.MAX_VALUE;
+
             Platform.runLater(() -> {
                 countAxis.setTickUnit(tickUnit);
                 countAxis.setUpperBound(countAxisUpperbound);
             });
+
             return chartMax > 0;  // are there events
         }
 

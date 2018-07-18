@@ -264,7 +264,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         @Override
         protected Interval adjustInterval(Interval i) {
             //extend range to block bounderies (ie day, month, year)
-            RangeDivision iInfo = RangeDivision.getRangeDivisionInfo(i, TimeLineController.getJodaTimeZone());
+            RangeDivision iInfo = RangeDivision.getRangeDivision(i, TimeLineController.getJodaTimeZone());
             final long lowerBound = iInfo.getLowerBound();
             final long upperBound = iInfo.getUpperBound();
             final DateTime lowerDate = new DateTime(lowerBound, TimeLineController.getJodaTimeZone());

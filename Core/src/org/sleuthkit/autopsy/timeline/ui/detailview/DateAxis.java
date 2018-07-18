@@ -263,7 +263,7 @@ final class DateAxis extends Axis<DateTime> {
         if (range == null) {
             return tickDates;
         }
-        rangeDivisionInfo = RangeDivision.getRangeDivisionInfo((Interval) range, TimeLineController.getJodaTimeZone());
+        rangeDivisionInfo = RangeDivision.getRangeDivision((Interval) range, TimeLineController.getJodaTimeZone());
         final DateTime lowerBound1 = getLowerBound();
         final DateTime upperBound1 = getUpperBound();
 
@@ -330,7 +330,7 @@ final class DateAxis extends Axis<DateTime> {
      */
     @Override
     protected void setRange(Object range, boolean animating) {
-        rangeDivisionInfo = RangeDivision.getRangeDivisionInfo((Interval) range, TimeLineController.getJodaTimeZone());
+        rangeDivisionInfo = RangeDivision.getRangeDivision((Interval) range, TimeLineController.getJodaTimeZone());
         setLowerBound(new DateTime(rangeDivisionInfo.getLowerBound(), TimeLineController.getJodaTimeZone()));
         setUpperBound(new DateTime(rangeDivisionInfo.getUpperBound(), TimeLineController.getJodaTimeZone()));
     }

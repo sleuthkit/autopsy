@@ -125,8 +125,8 @@ public class ZoomSettingsPane extends TitledPane {
                 controller::pushTimeUnit,
                 filteredEvents.timeRangeProperty(),
                 TimeUnits.class,
-                //for the purposes of this slider we want the TimeUnit one bigger than RangeDivisionInfo indicates
-                modelTimeRange -> RangeDivision.getRangeDivisionInfo(modelTimeRange, TimeLineController.getJodaTimeZone()).getPeriodSize().ordinal() - 1,
+                //for the purposes of this slider we want the TimeUnit one bigger than RangeDivision indicates
+                modelTimeRange -> RangeDivision.getRangeDivision(modelTimeRange, TimeLineController.getJodaTimeZone()).getPeriodSize().ordinal() - 1,
                 index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
         timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
 
@@ -255,7 +255,7 @@ public class ZoomSettingsPane extends TitledPane {
 
         @Override
         public String toString(Double dbl) {
-            /* get the displayName of the EnumType whose index is the given dbl
+            /* Get the displayName of the EnumType whose index is the given dbl
              * after it has been narrowed and then adjusted. At one point there
              * was an interface, DisplayNameProvider, but that was inappropriate
              * to put in TSK only to support these sliders, so now we use

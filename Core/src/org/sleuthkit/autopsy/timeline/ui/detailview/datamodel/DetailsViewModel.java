@@ -150,7 +150,7 @@ final public class DetailsViewModel {
         end = Math.max(end, start + 1);
 
         //get some info about the time range requested
-        RangeDivision rangeInfo = RangeDivision.getRangeDivisionInfo(timeRange, timeZone);
+        RangeDivision rangeInfo = RangeDivision.getRangeDivision(timeRange, timeZone);
 
         //build dynamic parts of query
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);

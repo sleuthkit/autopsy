@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.timeline.zooming;
 
 import java.time.temporal.ChronoUnit;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeFieldType;
 import org.joda.time.Days;
 import org.joda.time.Hours;
 import org.joda.time.Minutes;
@@ -28,26 +30,45 @@ import org.joda.time.Period;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.Seconds;
 import org.joda.time.Years;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 /**
  * Predefined units of time for use in choosing axis labels and sub intervals.
  */
 public enum TimeUnits {
 
-    FOREVER(null, ChronoUnit.FOREVER),
-    YEARS(Years.ONE, ChronoUnit.YEARS),
-    MONTHS(Months.ONE, ChronoUnit.MONTHS),
-    DAYS(Days.ONE, ChronoUnit.DAYS),
-    HOURS(Hours.ONE, ChronoUnit.HOURS),
-    MINUTES(Minutes.ONE, ChronoUnit.MINUTES),
-    SECONDS(Seconds.ONE, ChronoUnit.SECONDS);
+    FOREVER(null, null, ChronoUnit.FOREVER, null),
+    YEARS(DateTimeFieldType.year(), Years.ONE, ChronoUnit.YEARS, ISODateTimeFormat.year()),
+    MONTHS(DateTimeFieldType.monthOfYear(), Months.ONE, ChronoUnit.MONTHS, DateTimeFormat.forPattern("YYYY'-'MMMM")),
+    DAYS(DateTimeFieldType.dayOfMonth(), Days.ONE, ChronoUnit.DAYS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd")),
+    HOURS(DateTimeFieldType.hourOfDay(), Hours.ONE, ChronoUnit.HOURS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH")),
+    MINUTES(DateTimeFieldType.minuteOfHour(), Minutes.ONE, ChronoUnit.MINUTES, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm")),
+    SECONDS(DateTimeFieldType.secondOfMinute(), Seconds.ONE, ChronoUnit.SECONDS, DateTimeFormat.forPattern("YYYY'-'MMMM'-'dd HH':'mm':'ss"));
 
+    private final DateTimeFieldType fieldType;
     private final Period period;
     private final ChronoUnit chronoUnit;
+    private final DateTimeFormatter tickFormatter;
 
-    private TimeUnits(ReadablePeriod period, ChronoUnit chronoUnit) {
-        this.period = period.toPeriod();
+    public DateTimeFormatter getTickFormatter() {
+        return tickFormatter;
+    }
+
+    private TimeUnits(DateTimeFieldType fieldType, ReadablePeriod period, ChronoUnit chronoUnit, DateTimeFormatter tickFormatter) {
+        this.fieldType = fieldType;
+        if (period != null) {
+            this.period = period.toPeriod();
+        } else {
+            this.period = null;
+        }
         this.chronoUnit = chronoUnit;
+        this.tickFormatter = tickFormatter;
+    }
+
+    public DateTime.Property propertyOf(DateTime dateTime) {
+        return dateTime.property(fieldType);
     }
 
     public Period toUnitPeriod() {
