@@ -423,7 +423,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
                 }).start();
             }
         }
@@ -474,7 +474,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
                 }).start();
             }
         }
@@ -529,7 +529,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
                 }).start();
 
             }
@@ -590,7 +590,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
                 }).start();
 
             }
@@ -748,12 +748,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A task that updates the state maintained by the monitor.
-     * At present this includes auto ingest job and auto ingest node data.
-     * The job data is refreshed by querying the coordination service for
-     * auto ingest manifest nodes.
-     * The auto ingest node data is refreshed by publishing a message asking
-     * all nodes to report their state.
+     * A task that updates the state maintained by the monitor. At present this
+     * includes auto ingest job and auto ingest node data. The job data is
+     * refreshed by querying the coordination service for auto ingest manifest
+     * nodes. The auto ingest node data is refreshed by publishing a message
+     * asking all nodes to report their state.
      */
     private final class StateRefreshTask implements Runnable {
 
@@ -861,100 +860,100 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
     }
 
-    /**
-     * Class that represents the state of an AIN for the dashboard.
-     */
-    static final class AutoIngestNodeState {
-
         /**
-         * The set of AIN states.
+         * Class that represents the state of an AIN for the dashboard.
          */
-        enum State {
-            STARTING_UP,
-            SHUTTING_DOWN,
-            RUNNING,
-            PAUSE_REQUESTED,
-            PAUSED_BY_REQUEST,
-            PAUSED_DUE_TO_SYSTEM_ERROR,
-            UNKNOWN
-        }
+        static final class AutoIngestNodeState {
 
-        private final String nodeName;
-        private final State nodeState;
-        private final Instant lastSeenTime;
-
-        AutoIngestNodeState(String name, Event event) {
-            nodeName = name;
-            switch (event) {
-                case STARTING_UP:
-                    nodeState = State.STARTING_UP;
-                    break;
-                case SHUTTING_DOWN:
-                    nodeState = State.SHUTTING_DOWN;
-                    break;
-                case RUNNING:
-                    nodeState = State.RUNNING;
-                    break;
-                case PAUSED_BY_USER_REQUEST:
-                    nodeState = State.PAUSED_BY_REQUEST;
-                    break;
-                case PAUSED_FOR_SYSTEM_ERROR:
-                    nodeState = State.PAUSED_DUE_TO_SYSTEM_ERROR;
-                    break;
-                case RESUMED:
-                    nodeState = State.RUNNING;
-                    break;
-                case PAUSE_REQUESTED:
-                    nodeState = State.PAUSE_REQUESTED;
-                    break;
-                default:
-                    nodeState = State.UNKNOWN;
-                    break;
+            /**
+             * The set of AIN states.
+             */
+            enum State {
+                STARTING_UP,
+                SHUTTING_DOWN,
+                RUNNING,
+                PAUSE_REQUESTED,
+                PAUSED_BY_REQUEST,
+                PAUSED_DUE_TO_SYSTEM_ERROR,
+                UNKNOWN
             }
-            lastSeenTime = Instant.now();
+
+            private final String nodeName;
+            private final State nodeState;
+            private final Instant lastSeenTime;
+
+            AutoIngestNodeState(String name, Event event) {
+                nodeName = name;
+                switch (event) {
+                    case STARTING_UP:
+                        nodeState = State.STARTING_UP;
+                        break;
+                    case SHUTTING_DOWN:
+                        nodeState = State.SHUTTING_DOWN;
+                        break;
+                    case RUNNING:
+                        nodeState = State.RUNNING;
+                        break;
+                    case PAUSED_BY_USER_REQUEST:
+                        nodeState = State.PAUSED_BY_REQUEST;
+                        break;
+                    case PAUSED_FOR_SYSTEM_ERROR:
+                        nodeState = State.PAUSED_DUE_TO_SYSTEM_ERROR;
+                        break;
+                    case RESUMED:
+                        nodeState = State.RUNNING;
+                        break;
+                    case PAUSE_REQUESTED:
+                        nodeState = State.PAUSE_REQUESTED;
+                        break;
+                    default:
+                        nodeState = State.UNKNOWN;
+                        break;
+                }
+                lastSeenTime = Instant.now();
+            }
+
+            String getName() {
+                return nodeName;
+            }
+
+            State getState() {
+                return nodeState;
+            }
+
+            Instant getLastSeenTime() {
+                return lastSeenTime;
+            }
         }
-
-        String getName() {
-            return nodeName;
-        }
-
-        State getState() {
-            return nodeState;
-        }
-
-        Instant getLastSeenTime() {
-            return lastSeenTime;
-        }
-    }
-
-    /**
-     * Exception type thrown when there is an error completing an auto ingest
-     * monitor operation.
-     */
-    static final class AutoIngestMonitorException extends Exception {
-
-        private static final long serialVersionUID = 1L;
 
         /**
-         * Constructs an instance of the exception type thrown when there is an
-         * error completing an auto ingest monitor operation.
-         *
-         * @param message The exception message.
+         * Exception type thrown when there is an error completing an auto
+         * ingest monitor operation.
          */
-        private AutoIngestMonitorException(String message) {
-            super(message);
-        }
+        static final class AutoIngestMonitorException extends Exception {
 
-        /**
-         * Constructs an instance of the exception type thrown when there is an
-         * error completing an auto ingest monitor operation.
-         *
-         * @param message The exception message.
-         * @param cause   A Throwable cause for the error.
-         */
-        private AutoIngestMonitorException(String message, Throwable cause) {
-            super(message, cause);
-        }
+            private static final long serialVersionUID = 1L;
 
+            /**
+             * Constructs an instance of the exception type thrown when there is
+             * an error completing an auto ingest monitor operation.
+             *
+             * @param message The exception message.
+             */
+            private AutoIngestMonitorException(String message) {
+                super(message);
+            }
+
+            /**
+             * Constructs an instance of the exception type thrown when there is
+             * an error completing an auto ingest monitor operation.
+             *
+             * @param message The exception message.
+             * @param cause   A Throwable cause for the error.
+             */
+            private AutoIngestMonitorException(String message, Throwable cause) {
+                super(message, cause);
+            }
+
+        }
     }
-}
