@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -89,10 +88,9 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
                 String currAbstractFileDataSource = currentAbstractFile.getDataSource().getName();
                 
                 final String displayName = currentAttributeInst.getCorrelationCase().getDisplayName();
-                final String path = currentAttributeInst.getFilePath();
+                final String path = currentAttributeInst.getFilePath().replace("\\", "/");
                 final String currentAbstractFileParentPath = currentAbstractFile.getParentPath();
                 final String currentAbstractFileName = currentAbstractFile.getName();
-                //final String representativeFilePath = Paths.get(currentAbstractFileParentPath, currentAbstractFileName).toString().replace("\\", "/");
                 final String representativeFilePath = (currentAbstractFileParentPath + currentAbstractFileName).replace("\\", "/");
                 
                 final boolean sameCase = displayName.equalsIgnoreCase(currCaseDbName);
