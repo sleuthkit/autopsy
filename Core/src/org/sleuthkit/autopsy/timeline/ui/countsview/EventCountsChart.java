@@ -56,7 +56,7 @@ import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 
@@ -82,7 +82,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * correct the interval provided by intervalSelector by padding the end with
      * one 'period'
      */
-    private RangeDivisionInfo rangeInfo;
+    private RangeDivision rangeInfo;
 
     EventCountsChart(TimeLineController controller, CategoryAxis dateAxis, NumberAxis countAxis, ObservableList<Node> selectedNodes) {
         super(dateAxis, countAxis);
@@ -172,7 +172,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         return selectedNodes;
     }
 
-    void setRangeInfo(RangeDivisionInfo rangeInfo) {
+    void setRangeInfo(RangeDivision rangeInfo) {
         this.rangeInfo = rangeInfo;
     }
 
@@ -264,13 +264,13 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
         @Override
         protected Interval adjustInterval(Interval i) {
             //extend range to block bounderies (ie day, month, year)
-            RangeDivisionInfo iInfo = RangeDivisionInfo.getRangeDivisionInfo(i, TimeLineController.getJodaTimeZone());
+            RangeDivision iInfo = RangeDivision.getRangeDivisionInfo(i, TimeLineController.getJodaTimeZone());
             final long lowerBound = iInfo.getLowerBound();
             final long upperBound = iInfo.getUpperBound();
             final DateTime lowerDate = new DateTime(lowerBound, TimeLineController.getJodaTimeZone());
             final DateTime upperDate = new DateTime(upperBound, TimeLineController.getJodaTimeZone());
             //add extra block to end that gets cut of by conversion from string/category.
-            return new Interval(lowerDate, upperDate.plus(countsChart.rangeInfo.getPeriodSize().getPeriod()));
+            return new Interval(lowerDate, upperDate.plus(countsChart.rangeInfo.getPeriodSize().toUnitPeriod()));
         }
 
         @Override

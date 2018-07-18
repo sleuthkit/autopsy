@@ -41,7 +41,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -85,10 +84,10 @@ import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimeUnits;
 import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -295,7 +294,6 @@ public class TimeLineController {
             filteredEvents.syncTagsFilter(historyManagerParams.getFilterState());
             currentParams.set(historyManagerParams);
         });
- 
 
         try {
             InitialZoomState = new ZoomState(filteredEvents.getSpanningInterval(),
@@ -552,12 +550,14 @@ public class TimeLineController {
      * @param timeUnit The unit of time to view
      *
      * @return true if the view actually changed.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     synchronized public boolean pushTimeUnit(TimeUnits timeUnit) throws TskCoreException {
         if (timeUnit == TimeUnits.FOREVER) {
             return showFullRange();
         } else {
-            return pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), timeUnit.getPeriod()));
+            return pushTimeRange(IntervalUtils.getIntervalAroundMiddle(filteredEvents.getTimeRange(), timeUnit.toUnitPeriod()));
         }
     }
 

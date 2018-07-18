@@ -25,6 +25,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ import static org.sleuthkit.autopsy.timeline.FilteredEventsModel.unGroupConcat;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -86,6 +87,8 @@ final public class DetailsViewModel {
      *
      * @return a list of event clusters at the requested zoom levels that are
      *         within the requested time range and pass the requested filter
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<EventStripe> getEventStripes() throws TskCoreException {
         final Interval range;
@@ -107,6 +110,8 @@ final public class DetailsViewModel {
      * @return a list of aggregated events that are within the requested time
      *         range and pass the requested filter, using the given aggregation
      *         to control the grouping of events
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<EventStripe> getEventStripes(ZoomState params) throws TskCoreException {
         try {
@@ -145,7 +150,7 @@ final public class DetailsViewModel {
         end = Math.max(end, start + 1);
 
         //get some info about the time range requested
-        RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(timeRange, timeZone);
+        RangeDivision rangeInfo = RangeDivision.getRangeDivisionInfo(timeRange, timeZone);
 
         //build dynamic parts of query
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
@@ -153,8 +158,7 @@ final public class DetailsViewModel {
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
         final boolean needsTags = filterModel.hasActiveTagsFilters();
         final boolean needsHashSets = filterModel.hasActiveHashFilters();
-        //compose query string, the new-lines are only for nicer formatting if printing the entire query
-        String querySql = "SELECT " + eventManager.formatTimeFunction(rangeInfo.getPeriodSize(), timeZone) + " AS interval, " // NON-NLS
+        String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
                           + eventManager.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
                           + eventManager.csvAggFunction("CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
                           + eventManager.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
@@ -176,7 +180,7 @@ final public class DetailsViewModel {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
         }
 
-        return mergeClustersToStripes(rangeInfo.getPeriodSize().getPeriod(), events);
+        return mergeClustersToStripes(rangeInfo.getPeriodSize().toUnitPeriod(), events);
     }
 
     /**
@@ -272,5 +276,89 @@ final public class DetailsViewModel {
         }
 
         return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
+    }
+
+    /**
+     * Get a column specification that will allow us to group by the requested
+     * period size. That is, with all info more granular than that requested
+     * dropped (replaced with zeros). For use in the select clause of a sql
+     * query.
+     *
+     * @param periodSize The ChronoUnit describing what granularity to use.
+     * @param timeZone
+     *
+     * @return
+     */
+    private String formatTimeFunctionHelper(ChronoUnit periodSize, DateTimeZone timeZone) {
+        switch (sleuthkitCase.getDatabaseType()) {
+            case SQLITE:
+                String strfTimeFormat = getSQLIteTimeFormat(periodSize);
+                String useLocalTime = timeZone.equals(DateTimeZone.getDefault()) ? ", 'localtime'" : ""; // NON-NLS
+                return "strftime('" + strfTimeFormat + "', time , 'unixepoch'" + useLocalTime + ")";
+            case POSTGRESQL:
+                String formatString = getPostgresTimeFormat(periodSize);
+                return "to_char(to_timestamp(time) AT TIME ZONE '" + timeZone.getID() + "', '" + formatString + "')";
+            default:
+                throw new UnsupportedOperationException("Unsupported DB type: " + sleuthkitCase.getDatabaseType().name());
+        }
+    }
+
+    /*
+     * Get a format string that will allow us to group by the requested period
+     * size. That is, with all info more granular than that requested dropped
+     * (replaced with zeros).
+     *
+     * @param timeUnit The ChronoUnit describing what granularity to build a
+     * strftime string for
+     *
+     * @return a String formatted according to the sqlite strftime spec
+     *
+     * @see https://www.sqlite.org/lang_datefunc.html
+     */
+    private static String getSQLIteTimeFormat(ChronoUnit timeUnit) {
+        switch (timeUnit) {
+            case YEARS:
+                return "%Y-01-01T00:00:00"; // NON-NLS
+            case MONTHS:
+                return "%Y-%m-01T00:00:00"; // NON-NLS
+            case DAYS:
+                return "%Y-%m-%dT00:00:00"; // NON-NLS
+            case HOURS:
+                return "%Y-%m-%dT%H:00:00"; // NON-NLS
+            case MINUTES:
+                return "%Y-%m-%dT%H:%M:00"; // NON-NLS
+            case SECONDS:
+            default:    //seconds - should never happen
+                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS  
+        }
+    }
+
+    /**
+     * Get a format string that will allow us to group by the requested period
+     * size. That is, with all info more granular than that requested dropped
+     * (replaced with zeros).
+     *
+     * @param timeUnit The ChronoUnit describing what granularity to build a
+     *                 strftime string for
+     *
+     * @return a String formatted according to the Postgres
+     *         to_char(to_timestamp(time) ... ) spec
+     */
+    private static String getPostgresTimeFormat(ChronoUnit timeUnit) {
+        switch (timeUnit) {
+            case YEARS:
+                return "YYYY-01-01T00:00:00"; // NON-NLS
+            case MONTHS:
+                return "YYYY-MM-01T00:00:00"; // NON-NLS
+            case DAYS:
+                return "YYYY-MM-DDT00:00:00"; // NON-NLS
+            case HOURS:
+                return "YYYY-MM-DDTHH24:00:00"; // NON-NLS
+            case MINUTES:
+                return "YYYY-MM-DDTHH24:MI:00"; // NON-NLS
+            case SECONDS:
+            default:    //seconds - should never happen
+                return "YYYY-MM-DDTHH24:MI:SS"; // NON-NLS  
+        }
     }
 }

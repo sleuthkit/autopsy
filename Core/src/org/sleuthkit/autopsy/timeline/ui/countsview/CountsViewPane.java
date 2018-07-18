@@ -60,7 +60,7 @@ import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
@@ -376,7 +376,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
             }
             FilteredEventsModel eventsModel = getEventsModel();
 
-            final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(eventsModel.getTimeRange(), TimeLineController.getJodaTimeZone());
+            final RangeDivision rangeInfo = RangeDivision.getRangeDivisionInfo(eventsModel.getTimeRange(), TimeLineController.getJodaTimeZone());
             getChart().setRangeInfo(rangeInfo);  //do we need this.  It seems like a hack.
             List<Interval> intervals = rangeInfo.getIntervals(TimeLineController.getJodaTimeZone());
 

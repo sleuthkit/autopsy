@@ -95,7 +95,7 @@ import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -258,7 +258,7 @@ final public class ViewFrame extends BorderPane {
             if (rangeSlider.isHighValueChanging() == false
                 && rangeSlider.isLowValueChanging() == false) {
                 try {
-                    Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
+                    Long minTime = RangeDivision.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
                     if (false == controller.pushTimeRange(new Interval(
                             (long) (rangeSlider.getLowValue() + minTime),
                             (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
@@ -566,7 +566,7 @@ final public class ViewFrame extends BorderPane {
                 updateMessage(Bundle.ViewFrame_histogramTask_preparing());
 
                 long max = 0;
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+                final RangeDivision rangeInfo = RangeDivision.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
                 Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
@@ -587,7 +587,7 @@ final public class ViewFrame extends BorderPane {
                     if (isCancelled()) {
                         return null;
                     }
-                    DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
+                    DateTime end = start.plus(rangeInfo.getPeriodSize().toUnitPeriod());
                     final Interval interval = new Interval(start, end);
                     //increment for next iteration
 
@@ -642,7 +642,7 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.refreshTimeUI.errorMessage=Error gettig the spanning interval."})
     private void refreshTimeUI() {
         try {
-            RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+            RangeDivision rangeDivisionInfo = RangeDivision.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
             final long minTime = rangeDivisionInfo.getLowerBound();
             final long maxTime = rangeDivisionInfo.getUpperBound();
 
