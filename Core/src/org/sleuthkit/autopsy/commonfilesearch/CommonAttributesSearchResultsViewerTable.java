@@ -42,7 +42,7 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchResultsViewerTable.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributesSearchResultsViewerTable.class.getName());
     
     private static final int DEFAULT_WIDTH = 100;
 
