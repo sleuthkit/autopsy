@@ -98,15 +98,15 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
     public ProcessResult process(AbstractFile file) {
         if (!classifiers.isEmpty() && ImageUtils.isImageThumbnailSupported(file)) {
             //Any image we can create a thumbnail for is one we should apply the classifiers to 
-            
-            if (file.getSize() >  MAX_FILE_SIZE){
-            //prevent it from allocating gigabytes of memory for extremely large files
-                logger.log(Level.INFO, "Encountered file "+ file.getParentPath() + file.getName() + " with object id of " + 
-                        file.getId() + " which exceeds max file size of " + MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
+
+            if (file.getSize() > MAX_FILE_SIZE) {
+                //prevent it from allocating gigabytes of memory for extremely large files
+                logger.log(Level.INFO, "Encountered file " + file.getParentPath() + file.getName() + " with object id of "
+                        + file.getId() + " which exceeds max file size of " + MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
                 return IngestModule.ProcessResult.OK;
             }
-            
-            byte[] imageInMemory = new byte[(int)file.getSize()];
+
+            byte[] imageInMemory = new byte[(int) file.getSize()];
 
             try {
                 file.read(imageInMemory, 0, file.getSize());
@@ -114,7 +114,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                 logger.log(Level.WARNING, "Unable to read image to byte array for performing object detection on " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), ex);
                 return IngestModule.ProcessResult.ERROR;
             }
-                
+
             Mat originalImage;
             try {
                 originalImage = Highgui.imdecode(new MatOfByte(imageInMemory), Highgui.IMREAD_GRAYSCALE);
@@ -127,7 +127,6 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                 logger.log(Level.SEVERE, "Unexpected Exception encountered attempting to use OpenCV to decode picture: " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), unexpectedException);
                 return IngestModule.ProcessResult.ERROR;
             }
-
             MatOfRect detectionRectangles = new MatOfRect(); //the rectangles which reprent the coordinates on the image for where objects were detected
             for (String classifierKey : classifiers.keySet()) {
                 //apply each classifier to the file
@@ -136,9 +135,9 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                 } catch (CvException ignored) {
                     //The image was likely an image which we are unable to generate a thumbnail for, and the classifier was likely one where that is not acceptable
                     continue;
-                } catch (Exception unexpectedException) {  
+                } catch (Exception unexpectedException) {
                     //hopefully an unnecessary generic exception catch but currently present to catch any exceptions OpenCv throws which may not be documented
-                    logger.log(Level.SEVERE, "Unexpected Exception encountered for image " + file.getParentPath() + file.getName() + " with object id of " + file.getId() +" while trying to apply classifier " + classifierKey, unexpectedException);
+                    logger.log(Level.SEVERE, "Unexpected Exception encountered for image " + file.getParentPath() + file.getName() + " with object id of " + file.getId() + " while trying to apply classifier " + classifierKey, unexpectedException);
                     continue;
                 }
 
@@ -169,10 +168,14 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
 
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
+                        detectionRectangles.release();
+                        originalImage.release();
                         return IngestModule.ProcessResult.ERROR;
                     }
                 }
             }
+            detectionRectangles.release();
+            originalImage.release();
         }
 
         return IngestModule.ProcessResult.OK;
