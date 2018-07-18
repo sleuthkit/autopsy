@@ -91,15 +91,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     }
     
     /**
-     * Get the list of file extensions supported by this DSP.
-     * 
-     * @return A list of all supported file extensions.
-     */
-    static List<String> getFileExtensions() {
-        return allExt;
-    }
-    
-    /**
      * Get the list of file filters supported by this DSP.
      * 
      * @return A list of all supported file filters.
