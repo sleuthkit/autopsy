@@ -88,9 +88,15 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
                 String currAttributeDataSource = currentAttributeInst.getCorrelationDataSource().getName();
                 String currAbstractFileDataSource = currentAbstractFile.getDataSource().getName();
                 
-                if (currentAttributeInst.getCorrelationCase().getDisplayName().equals(currCaseDbName)
-                        && currentAttributeInst.getFilePath().toLowerCase().equals(Paths.get(currentAbstractFile.getParentPath(), currentAbstractFile.getName()).toString())
-                        && currAttributeDataSource.equals(currAbstractFileDataSource)) {
+                final String displayName = currentAttributeInst.getCorrelationCase().getDisplayName();
+                final String path = currentAttributeInst.getFilePath();
+                final String representativeFilePath = Paths.get(currentAbstractFile.getParentPath(), currentAbstractFile.getName()).toString().replace("\\", "/");
+                
+                final boolean sameCase = displayName.equalsIgnoreCase(currCaseDbName);
+                final boolean sameFileName = path.equalsIgnoreCase(representativeFilePath);
+                final boolean sameDataSource = currAttributeDataSource.equalsIgnoreCase(currAbstractFileDataSource);
+                
+                if (sameCase && sameFileName && sameDataSource) {
                     generatedInstNode = new IntraCaseCommonAttributeInstanceNode(currentAbstractFile, currCaseDbName, currAbstractFileDataSource);
                 } else {
                     generatedInstNode = new InterCaseCommonAttributeInstanceNode(currentAttributeInst, currentAbstractFile);

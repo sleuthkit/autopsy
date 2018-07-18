@@ -103,5 +103,4 @@ public abstract class CommonAttributeInstanceNodeGenerator {
     public Long getIdenticalFileSleuthkitCaseObjectID() {
         return this.abstractFileObjectId;
     }
-
 }
