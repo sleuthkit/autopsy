@@ -90,7 +90,10 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
                 
                 final String displayName = currentAttributeInst.getCorrelationCase().getDisplayName();
                 final String path = currentAttributeInst.getFilePath();
-                final String representativeFilePath = Paths.get(currentAbstractFile.getParentPath(), currentAbstractFile.getName()).toString().replace("\\", "/");
+                final String currentAbstractFileParentPath = currentAbstractFile.getParentPath();
+                final String currentAbstractFileName = currentAbstractFile.getName();
+                //final String representativeFilePath = Paths.get(currentAbstractFileParentPath, currentAbstractFileName).toString().replace("\\", "/");
+                final String representativeFilePath = (currentAbstractFileParentPath + currentAbstractFileName).replace("\\", "/");
                 
                 final boolean sameCase = displayName.equalsIgnoreCase(currCaseDbName);
                 final boolean sameFileName = path.equalsIgnoreCase(representativeFilePath);
@@ -106,7 +109,6 @@ final public class InterCaseCommonAttributeSearchResults extends CommonAttribute
 
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to get DataSource for record with filePath: %s.  Node not created.", new Object[]{attrInst.getFilePath()}), ex);
-
             }
         }
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);

@@ -95,7 +95,6 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
-
         }
 
         Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);
