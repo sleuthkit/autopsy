@@ -276,12 +276,12 @@ public class IngestEventsListener {
                 }
             }
             if (FALSE == eamArtifacts.isEmpty()) {
-                try {
-                    for (CorrelationAttribute eamArtifact : eamArtifacts) {
+                for (CorrelationAttribute eamArtifact : eamArtifacts) {
+                    try {
                         dbManager.addArtifact(eamArtifact);
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.SEVERE, "Error adding artifact to database.", ex); //NON-NLS
                     }
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
                 }
             } // DATA_ADDED
         }

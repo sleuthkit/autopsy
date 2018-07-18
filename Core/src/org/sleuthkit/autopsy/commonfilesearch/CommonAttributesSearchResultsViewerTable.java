@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle;
@@ -36,10 +38,14 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
  * rows and looking for wide cells.  Rather, we just pick some reasonable values.
  */
 public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTable {
-    
+
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
+
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchResultsViewerTable.class.getName());
     
+    private static final int DEFAULT_WIDTH = 100;
+
     static {
         Map<String, Integer> map = new HashMap<>();
         map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
@@ -50,10 +56,10 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);;
-        
+
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
     }
-    
+
     @NbBundle.Messages({
         "CommonFilesSearchResultsViewerTable.noDescText= ",
         "CommonFilesSearchResultsViewerTable.filesColLbl=Files",
@@ -66,18 +72,24 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
         "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
     })
     @Override
-    protected void setColumnWidths(){
+    protected void setColumnWidths() {
         TableColumnModel model = this.getColumnModel();
-        
+
         Enumeration<TableColumn> columnsEnumerator = model.getColumns();
-        while(columnsEnumerator.hasMoreElements()){
-            
+        while (columnsEnumerator.hasMoreElements()) {
+
             TableColumn column = columnsEnumerator.nextElement();
-            
+
             final String headerValue = column.getHeaderValue().toString();
-            final Integer get = COLUMN_WIDTHS.get(headerValue);
-                        
-            column.setPreferredWidth(get);
+
+            final Integer defaultWidth = COLUMN_WIDTHS.get(headerValue);
+            
+            if(defaultWidth == null){
+                column.setPreferredWidth(DEFAULT_WIDTH);
+                LOGGER.log(Level.SEVERE, String.format("Tried to set width on a column not supported by the CommonFilesSearchResultsViewerTable: %s", headerValue));
+            } else {
+                column.setPreferredWidth(defaultWidth);
+            }
         }
     }
 }

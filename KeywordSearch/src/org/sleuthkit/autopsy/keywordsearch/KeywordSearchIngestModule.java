@@ -28,7 +28,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -92,6 +91,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private boolean startedSearching = false;
     private List<ContentTextExtractor> textExtractors;
     private StringsTextExtractor stringExtractor;
+    private TextFileExtractor txtFileExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private long jobId;
@@ -244,6 +244,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
         stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
 
+        txtFileExtractor = new TextFileExtractor();
+
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
         textExtractors.add(new HtmlTextExtractor());
@@ -343,7 +345,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors.clear();
         textExtractors = null;
         stringExtractor = null;
-
+        txtFileExtractor = null;
         initialized = false;
     }
 
@@ -566,6 +568,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", " //NON-NLS
                         + aFile.getName(), e);
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
+            }
+
+            if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt"))) {
+                try {
+                    if (Ingester.getDefault().indexText(txtFileExtractor, aFile, context)) {
+                        putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
+                        wasTextAdded = true;
+                    }
+                } catch (IngesterException ex) {
+                    logger.log(Level.WARNING, "Unable to index as unicode", ex);
+                }
             }
 
             // if it wasn't supported or had an error, default to strings

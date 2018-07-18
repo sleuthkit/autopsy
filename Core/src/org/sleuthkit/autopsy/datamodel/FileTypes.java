@@ -249,7 +249,7 @@ public final class FileTypes implements AutopsyVisitableItem {
             if (typesRoot.showCounts) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? Bundle.FileTypes_bgCounting_placeholder()
-                        : ("(" + childCount + ")"))); //NON-NLS
+                        : (" (" + childCount + ")"))); //NON-NLS
                 new SwingWorker<Long, Void>() {
                     @Override
                     protected Long doInBackground() throws Exception {

@@ -490,6 +490,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     break;
                 case RESUME:
                     resume();
+
+                    /**
+                     * Kick off an immediate scan so that the next pending job
+                     * will be picked up sooner than having to wait for the
+                     * InputDirScannerTask to run again.
+                     */
+                    scanInputDirsNow();
+
                     break;
                 case SHUTDOWN:
                     shutDown();
@@ -1840,13 +1848,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                      */
                     setChanged();
                     notifyObservers(Event.RESUMED);
-
-                    /**
-                     * Publish an event to let remote listeners know that the
-                     * node has been resumed.
-                     */
-                    eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
                 }
+                /**
+                 * Publish an event to let remote listeners know that the node
+                 * has been resumed.
+                 */
+                eventPublisher.publishRemotely(lastPublishedStateEvent = new AutoIngestNodeStateEvent(Event.RESUMED, AutoIngestManager.LOCAL_HOST_NAME));
+
                 pauseLock.notifyAll();
             }
         }
@@ -2790,6 +2798,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
+                                AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
                                 if (!snapshot.isCancelled()) {
                                     List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
                                     if (!cancelledModules.isEmpty()) {
@@ -2798,15 +2807,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                         setCaseNodeDataErrorsOccurred(caseDirectoryPath);
                                         for (String module : snapshot.getCancelledDataSourceIngestModules()) {
                                             sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
-                                            jobLogger.logIngestModuleCancelled(module);
+                                            nestedJobLogger.logIngestModuleCancelled(module);
                                         }
                                     }
-                                    jobLogger.logAnalysisCompleted();
+                                    nestedJobLogger.logAnalysisCompleted();
                                 } else {
                                     currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
                                     currentJob.setErrorsOccurred(true);
                                     setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                                    jobLogger.logAnalysisCancelled();
+                                    nestedJobLogger.logAnalysisCancelled();
                                     CancellationReason cancellationReason = snapshot.getCancellationReason();
                                     if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
                                         throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));

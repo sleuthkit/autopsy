@@ -360,7 +360,7 @@ public class GroupManager {
                             groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
                         }
                         else {
-                            groupConcatClause = "select group_concat(obj_id) as object_ids";
+                            groupConcatClause = " group_concat(obj_id) as object_ids";
                         }
                         String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
                         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS

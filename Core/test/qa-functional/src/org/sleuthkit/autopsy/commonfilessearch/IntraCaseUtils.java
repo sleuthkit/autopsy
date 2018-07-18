@@ -104,14 +104,34 @@ class IntraCaseUtils {
     }
 
     void setUp() {
-        CaseUtils.createAsCurrentCase(this.caseName);
+        this.createAsCurrentCase();
 
         final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
 
-        IngestUtils.addDataSource(imageDSProcessor, imagePath1);
-        IngestUtils.addDataSource(imageDSProcessor, imagePath2);
-        IngestUtils.addDataSource(imageDSProcessor, imagePath3);
+        this.addImageOne(imageDSProcessor);
+        this.addImageTwo(imageDSProcessor);
+        this.addImageThree(imageDSProcessor);
+        this.addImageFour(imageDSProcessor);
+    }
+
+    void addImageFour(final ImageDSProcessor imageDSProcessor) {
         IngestUtils.addDataSource(imageDSProcessor, imagePath4);
+    }
+
+    void addImageThree(final ImageDSProcessor imageDSProcessor) {
+        IngestUtils.addDataSource(imageDSProcessor, imagePath3);
+    }
+
+    void addImageTwo(final ImageDSProcessor imageDSProcessor) {
+        IngestUtils.addDataSource(imageDSProcessor, imagePath2);
+    }
+
+    void addImageOne(final ImageDSProcessor imageDSProcessor) {
+        IngestUtils.addDataSource(imageDSProcessor, imagePath1);
+    }
+
+    void createAsCurrentCase() {
+        CaseUtils.createAsCurrentCase(this.caseName);
     }
 
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
