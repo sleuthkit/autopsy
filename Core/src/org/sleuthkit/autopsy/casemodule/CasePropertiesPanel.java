@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,10 +31,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * A panel that allows the user to view various properties of a case and change
  * the display name of the case.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CasePropertiesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(CasePropertiesPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(CasePropertiesPanel.class.getName());
     private Case theCase;
 
     /**
@@ -52,7 +53,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         try {
             theCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) { 
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
         }
         lbCaseNameText.setText(theCase.getDisplayName());
@@ -90,7 +91,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                     currentOrg = correlationCase.getOrg();
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to access Correlation Case when Central Repo is enabled", ex);
+                logger.log(Level.SEVERE, "Unable to access Correlation Case when Central Repo is enabled", ex);
             }
         }
         if (currentOrg != null) {

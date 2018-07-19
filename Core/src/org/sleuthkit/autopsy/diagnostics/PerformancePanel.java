@@ -42,6 +42,10 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Display statistics on system performance.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class PerformancePanel extends javax.swing.JDialog {
 
     /**

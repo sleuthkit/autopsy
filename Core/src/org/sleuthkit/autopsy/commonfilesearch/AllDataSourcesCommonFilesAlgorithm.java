@@ -20,13 +20,14 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Map;
+import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * Provides logic for selecting common files from all data sources.
  */
-final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
+final public class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilder {
 
-    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != 1 OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(*) > 1) order by md5"; //NON-NLS
+    private static final String WHERE_CLAUSE = "%s md5 in (select md5 from tsk_files where (known != "+ FileKnown.KNOWN.getFileKnownValue() + " OR known IS NULL)%s GROUP BY  md5 HAVING  COUNT(DISTINCT data_source_obj_id) > 1) order by md5"; //NON-NLS
 
     /**
      * Implements the algorithm for getting common files across all data
@@ -36,7 +37,7 @@ final class AllDataSourcesCommonFilesAlgorithm extends CommonFilesMetadataBuilde
      * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
-    AllDataSourcesCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
+    public AllDataSourcesCommonFilesAlgorithm(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
 
     }

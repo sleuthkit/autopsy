@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -38,8 +36,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
 /**
  * Dialog to handle management of artifact types handled by the Central
- *  Repository
+ * Repository
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
 
     private static final Logger LOGGER = Logger.getLogger(ManageCorrelationPropertiesDialog.class.getName());

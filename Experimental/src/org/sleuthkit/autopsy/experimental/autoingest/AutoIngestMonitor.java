@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,11 +117,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
         } catch (AutopsyEventException ex) {
             throw new AutoIngestMonitorException("Failed to open auto ingest event channel", ex); //NON-NLS
         }
-        coordSvcQueryExecutor.scheduleWithFixedDelay(new CoordinationServiceQueryTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
+        coordSvcQueryExecutor.scheduleWithFixedDelay(new StateRefreshTask(), 0, CORRD_SVC_QUERY_INERVAL_MINS, TimeUnit.MINUTES);
         eventPublisher.addSubscriber(EVENT_LIST, this);
 
-        // Publish an event that asks running nodes to send their state.
-        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent(AutoIngestManager.Event.REPORT_STATE));
+        refreshNodeState();
     }
 
     /**
@@ -172,7 +172,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             jobsSnapshot.removePendingJob(event.getJob());
             jobsSnapshot.addOrReplaceRunningJob(event.getJob());
             setChanged();
-            notifyObservers(jobsSnapshot);
+            notifyObservers();
         }
     }
 
@@ -190,7 +190,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             jobsSnapshot.removePendingJob(job);
 
             // Update the state of the existing job in the running jobs table
-            for (AutoIngestJob runningJob : jobsSnapshot.getRunningJobs()) {
+            for (AutoIngestJob runningJob : getRunningJobs()) {
                 if (runningJob.equals(job)) {
                     runningJob.setIngestJobsSnapshot(job.getIngestJobSnapshots());
                     runningJob.setIngestThreadSnapshot(job.getIngestThreadActivitySnapshots());
@@ -200,7 +200,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 }
             }
             setChanged();
-            notifyObservers(jobsSnapshot);
+            notifyObservers();
         }
     }
 
@@ -216,7 +216,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             jobsSnapshot.removeRunningJob(job);
             jobsSnapshot.addOrReplaceCompletedJob(job);
             setChanged();
-            notifyObservers(jobsSnapshot);
+            notifyObservers();
         }
     }
 
@@ -226,7 +226,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @param event A job/case prioritization event.
      */
     private void handleCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
-        coordSvcQueryExecutor.submit(new CoordinationServiceQueryTask());
+        coordSvcQueryExecutor.submit(new StateRefreshTask());
     }
 
     /**
@@ -235,7 +235,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @param event A job/case deletion event.
      */
     private void handleCaseDeletedEvent(AutoIngestCaseDeletedEvent event) {
-        coordSvcQueryExecutor.submit(new CoordinationServiceQueryTask());
+        coordSvcQueryExecutor.submit(new StateRefreshTask());
     }
 
     /**
@@ -259,15 +259,35 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * Gets the auto ingest monitor's current snapshot of the pending jobs
-     * queue, running jobs list, and completed jobs list for an auto ingest
-     * cluster.
+     * Gets the snapshot of the pending jobs queue for an auto ingest cluster.
      *
-     * @return The snapshot.
+     * @return The pending jobs queue.
      */
-    JobsSnapshot getJobsSnapshot() {
+    List<AutoIngestJob> getPendingJobs() {
         synchronized (jobsLock) {
-            return jobsSnapshot;
+            return new ArrayList<>(jobsSnapshot.pendingJobs);
+        }
+    }
+
+    /**
+     * Gets the snapshot of the running jobs list for an auto ingest cluster.
+     *
+     * @return The running jobs list.
+     */
+    List<AutoIngestJob> getRunningJobs() {
+        synchronized (jobsLock) {
+            return new ArrayList<>(jobsSnapshot.runningJobs);
+        }
+    }
+
+    /**
+     * Gets the snapshot of the completed jobs list for an auto ingest cluster.
+     *
+     * @return The completed jobs list.
+     */
+    List<AutoIngestJob> getCompletedJobs() {
+        synchronized (jobsLock) {
+            return new ArrayList<>(jobsSnapshot.completedJobs);
         }
     }
 
@@ -277,7 +297,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return
      */
     List<AutoIngestNodeState> getNodeStates() {
-        return nodeStates.values().stream().collect(Collectors.toList());
+        // We only report the state for nodes for which we have received
+        // a 'state' event in the last 15 minutes.
+        return nodeStates.values()
+                .stream()
+                .filter(s -> s.getLastSeenTime().isAfter(Instant.now().minus(Duration.ofMinutes(15))))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -287,11 +312,18 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      *
      * @return The refreshed snapshot.
      */
-    JobsSnapshot refreshJobsSnapshot() {
+    void refreshJobsSnapshot() {
         synchronized (jobsLock) {
             jobsSnapshot = queryCoordinationService();
-            return jobsSnapshot;
         }
+    }
+
+    /**
+     * Ask running auto ingest nodes to report their state.
+     */
+    private void refreshNodeState() {
+        // Publish an event that asks running nodes to send their state.
+        eventPublisher.publishRemotely(new AutoIngestRequestNodeStateEvent(AutoIngestManager.Event.REPORT_STATE));
     }
 
     /**
@@ -358,13 +390,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @throws AutoIngestMonitorException If there is an error removing the
      *                                    priority of the jobs for the case.
      *
-     * @return The latest jobs snapshot.
      */
-    JobsSnapshot deprioritizeCase(final String caseName) throws AutoIngestMonitorException {
+    void deprioritizeCase(final String caseName) throws AutoIngestMonitorException {
         List<AutoIngestJob> jobsToDeprioritize = new ArrayList<>();
 
         synchronized (jobsLock) {
-            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+            for (AutoIngestJob pendingJob : getPendingJobs()) {
                 if (pendingJob.getManifest().getCaseName().equals(caseName)) {
                     jobsToDeprioritize.add(pendingJob);
                 }
@@ -380,16 +411,21 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                         throw new AutoIngestMonitorException("Error removing priority for job " + job.toString(), ex);
                     }
                     job.setPriority(DEFAULT_PRIORITY);
+
+                    /**
+                     * Update job object in pending jobs queue
+                     */
+                    jobsSnapshot.addOrReplacePendingJob(job);
                 }
 
                 /*
                  * Publish a deprioritization event.
                  */
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
                 }).start();
             }
-            return jobsSnapshot;
         }
     }
 
@@ -401,13 +437,12 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @throws AutoIngestMonitorException If there is an error bumping the
      *                                    priority of the jobs for the case.
      *
-     * @return The latest jobs snapshot.
      */
-    JobsSnapshot prioritizeCase(final String caseName) throws AutoIngestMonitorException {
+    void prioritizeCase(final String caseName) throws AutoIngestMonitorException {
         List<AutoIngestJob> jobsToPrioritize = new ArrayList<>();
         int highestPriority = 0;
         synchronized (jobsLock) {
-            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+            for (AutoIngestJob pendingJob : getPendingJobs()) {
                 if (pendingJob.getPriority() > highestPriority) {
                     highestPriority = pendingJob.getPriority();
                 }
@@ -427,16 +462,21 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                         throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
                     }
                     job.setPriority(highestPriority);
+
+                    /**
+                     * Update job object in pending jobs queue
+                     */
+                    jobsSnapshot.addOrReplacePendingJob(job);
                 }
 
                 /*
                  * Publish a prioritization event.
                  */
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
                 }).start();
             }
-            return jobsSnapshot;
         }
     }
 
@@ -448,15 +488,14 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @throws AutoIngestMonitorException If there is an error removing the
      *                                    priority of the job.
      *
-     * @return The latest jobs snapshot.
      */
-    JobsSnapshot deprioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
+    void deprioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
         synchronized (jobsLock) {
             AutoIngestJob jobToDeprioritize = null;
             /*
              * Make sure the job is still in the pending jobs queue.
              */
-            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+            for (AutoIngestJob pendingJob : getPendingJobs()) {
                 if (pendingJob.equals(job)) {
                     jobToDeprioritize = job;
                     break;
@@ -464,7 +503,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             }
 
             /*
-             * If the job was still in the pending jobs queue, bump its
+             * If the job was still in the pending jobs queue, reset its
              * priority.
              */
             if (null != jobToDeprioritize) {
@@ -478,16 +517,22 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 }
                 jobToDeprioritize.setPriority(DEFAULT_PRIORITY);
 
+                /**
+                 * Update job object in pending jobs queue
+                 */
+                jobsSnapshot.addOrReplacePendingJob(jobToDeprioritize);
+
                 /*
                  * Publish a deprioritization event.
                  */
                 final String caseName = job.getManifest().getCaseName();
+                final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
                 }).start();
 
             }
-            return jobsSnapshot;
         }
     }
 
@@ -499,9 +544,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @throws AutoIngestMonitorException If there is an error bumping the
      *                                    priority of the job.
      *
-     * @return The latest jobs snapshot.
      */
-    JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
+    void prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
         synchronized (jobsLock) {
             int highestPriority = 0;
             AutoIngestJob jobToPrioritize = null;
@@ -509,7 +553,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
              * Get the highest known priority and make sure the job is still in
              * the pending jobs queue.
              */
-            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+            for (AutoIngestJob pendingJob : getPendingJobs()) {
                 if (pendingJob.getPriority() > highestPriority) {
                     highestPriority = pendingJob.getPriority();
                 }
@@ -534,16 +578,22 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 }
                 jobToPrioritize.setPriority(highestPriority);
 
+                /**
+                 * Update job object in pending jobs queue
+                 */
+                jobsSnapshot.addOrReplacePendingJob(jobToPrioritize);
+
                 /*
                  * Publish a prioritization event.
                  */
                 final String caseName = job.getManifest().getCaseName();
+                final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
+                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
                 }).start();
 
             }
-            return jobsSnapshot;
         }
     }
 
@@ -554,7 +604,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     void cancelJob(AutoIngestJob job) {
         new Thread(() -> {
-            eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job));
+            eventPublisher.publishRemotely(new AutoIngestJobCancelEvent(job, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }).start();
     }
 
@@ -565,7 +615,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     void reprocessJob(AutoIngestJob job) throws AutoIngestMonitorException {
         synchronized (jobsLock) {
-            if (!jobsSnapshot.getCompletedJobs().contains(job)) {
+            if (!getCompletedJobs().contains(job)) {
                 return;
             }
 
@@ -599,7 +649,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  * Publish a reprocess event.
                  */
                 new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestJobReprocessEvent(job));
+                    eventPublisher.publishRemotely(new AutoIngestJobReprocessEvent(job, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
                 }).start();
 
             }
@@ -634,7 +684,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
             // Update the state of completed jobs associated with this case to indicate
             // that the case has been deleted
-            for (AutoIngestJob completedJob : jobsSnapshot.getCompletedJobs()) {
+            for (AutoIngestJob completedJob : getCompletedJobs()) {
                 if (caseName.equals(completedJob.getManifest().getCaseName())) {
                     try {
                         completedJob.setProcessingStatus(DELETED);
@@ -652,7 +702,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 completedJob.getManifest().getCaseName().equals(caseName));
 
             // Publish a message to update auto ingest nodes.
-            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME));
+            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }
 
         return CaseDeletionResult.FULLY_DELETED;
@@ -666,7 +716,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      */
     private void sendControlEventToNode(ControlEventType eventType, String nodeName) {
         new Thread(() -> {
-            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName, LOCAL_HOST_NAME, System.getProperty("user.name")));
+            eventPublisher.publishRemotely(new AutoIngestNodeControlEvent(eventType, nodeName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
         }).start();
     }
 
@@ -698,25 +748,26 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A task that queries the coordination service for auto ingest manifest
-     * node data and converts it to auto ingest jobs for publication top its
-     * observers.
+     * A task that updates the state maintained by the monitor.
+     * At present this includes auto ingest job and auto ingest node data.
+     * The job data is refreshed by querying the coordination service for
+     * auto ingest manifest nodes.
+     * The auto ingest node data is refreshed by publishing a message asking
+     * all nodes to report their state.
      */
-    private final class CoordinationServiceQueryTask implements Runnable {
+    private final class StateRefreshTask implements Runnable {
 
-        /**
-         * Queries the coordination service for auto ingest manifest node data
-         * and converts it to auto ingest jobs for publication top its
-         * observers.
-         */
         @Override
         public void run() {
             if (!Thread.currentThread().isInterrupted()) {
-                synchronized (jobsLock) {
-                    jobsSnapshot = queryCoordinationService();
-                    setChanged();
-                    notifyObservers(jobsSnapshot);
-                }
+                // Query coordination service for jobs data.
+                refreshJobsSnapshot();
+
+                // Ask running auto ingest nodes to report their status.
+                refreshNodeState();
+
+                setChanged();
+                notifyObservers();
             }
         }
 
@@ -726,41 +777,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * A snapshot of the pending jobs queue, running jobs list and completed
      * jobs list for an auto ingest cluster.
      */
-    static final class JobsSnapshot {
+    private static final class JobsSnapshot {
 
         private final Set<AutoIngestJob> pendingJobs = new HashSet<>();
         private final Set<AutoIngestJob> runningJobs = new HashSet<>();
         private final Set<AutoIngestJob> completedJobs = new HashSet<>();
-
-        /**
-         * Gets the snapshot of the pending jobs queue for an auto ingest
-         * cluster.
-         *
-         * @return The pending jobs queue.
-         */
-        List<AutoIngestJob> getPendingJobs() {
-            return new ArrayList<>(this.pendingJobs);
-        }
-
-        /**
-         * Gets the snapshot of the running jobs list for an auto ingest
-         * cluster.
-         *
-         * @return The running jobs list.
-         */
-        List<AutoIngestJob> getRunningJobs() {
-            return new ArrayList<>(this.runningJobs);
-        }
-
-        /**
-         * Gets the snapshot of the completed jobs list for an auto ingest
-         * cluster.
-         *
-         * @return The completed jobs list.
-         */
-        List<AutoIngestJob> getCompletedJobs() {
-            return new ArrayList<>(this.completedJobs);
-        }
 
         /**
          * Adds an auto job to the snapshot of the pending jobs queue for an
@@ -860,6 +881,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
         private final String nodeName;
         private final State nodeState;
+        private final Instant lastSeenTime;
 
         AutoIngestNodeState(String name, Event event) {
             nodeName = name;
@@ -889,6 +911,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     nodeState = State.UNKNOWN;
                     break;
             }
+            lastSeenTime = Instant.now();
         }
 
         String getName() {
@@ -897,6 +920,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
         State getState() {
             return nodeState;
+        }
+
+        Instant getLastSeenTime() {
+            return lastSeenTime;
         }
     }
 

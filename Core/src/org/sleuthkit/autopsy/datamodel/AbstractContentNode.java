@@ -110,6 +110,17 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      */
     public static boolean contentHasVisibleContentChildren(Content c){
         if (c != null) {
+            
+            try {
+                if( ! c.hasChildren()) {
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                
+                logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+                return false;
+            }
+            
             String query = "SELECT COUNT(obj_id) AS count FROM "
  			+ " ( SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + c.getId() + " AND type = " 
                         +       TskData.ObjectType.ARTIFACT.getObjectType()

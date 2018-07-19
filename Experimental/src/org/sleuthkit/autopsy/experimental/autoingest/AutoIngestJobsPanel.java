@@ -30,12 +30,12 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
@@ -171,7 +171,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh(refreshEvent);
             } else {
                 //Make a new AutoIngestJobsNode with it's own EventBus and set it as the root context
-                explorerManager.setRootContext(new AutoIngestJobsNode(status, new EventBus("AutoIngestJobsNodeEventBus")));
+                explorerManager.setRootContext(new AutoIngestJobsNode(refreshEvent.getMonitor(), status, new EventBus("AutoIngestJobsNodeEventBus")));
             }
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);

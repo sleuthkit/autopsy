@@ -33,8 +33,11 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.python.util.PythonInterpreter;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -66,12 +69,22 @@ public final class JythonModuleLoader {
     public static List<GeneralReportModule> getGeneralReportModules() {
         return getInterfaceImplementations(new GeneralReportModuleDefFilter(), GeneralReportModule.class);
     }
-
+    @Messages({"JythonModuleLoader.pythonInterpreterError.title=Python Modules",
+                "JythonModuleLoader.pythonInterpreterError.msg=Failed to load python modules, See log for more details"})
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
         List<T> objects = new ArrayList<>();
         Set<File> pythonModuleDirs = new HashSet<>();
-        PythonInterpreter interpreter = new PythonInterpreter();
-
+        PythonInterpreter interpreter = null;
+        // This method has previously thrown unchecked exceptions when it could not load because of non-latin characters.
+        try {
+            interpreter = new PythonInterpreter();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed to load python Intepreter. Cannot load python modules", ex);
+            if(RuntimeProperties.runningWithGUI()){
+                MessageNotifyUtil.Notify.show(Bundle.JythonModuleLoader_pythonInterpreterError_title(),Bundle.JythonModuleLoader_pythonInterpreterError_msg(), MessageNotifyUtil.MessageType.ERROR);
+            }
+            return objects;
+        }
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
         // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
         for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", "org.sleuthkit.autopsy.core", false)) { //NON-NLS

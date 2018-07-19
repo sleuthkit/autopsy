@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.concurrent.ConcurrentHashMap;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -30,6 +31,8 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
 
 /**
  * A file level ingest module that extracts embedded files from supported
@@ -44,12 +47,13 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
-    static final String[] SUPPORTED_EXTENSIONS = {"zip", "rar", "arj", "7z", "7zip", "gzip", "gz", "bzip2", "tar", "tgz",}; // "iso"}; NON-NLS
-    private String moduleDirRelative;
-    private String moduleDirAbsolute;
+    //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
+    private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private MSOfficeEmbeddedContentExtractor officeExtractor;
     private SevenZipExtractor archiveExtractor;
     private FileTypeDetector fileTypeDetector;
+    private long jobId;
 
     /**
      * Constructs a file level ingest module that extracts embedded files from
@@ -66,10 +70,14 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * case database for extracted (derived) file paths. The absolute path
          * is used to write the extracted (derived) files to local storage.
          */
+        jobId = context.getJobId();
+        String moduleDirRelative = null;
+        String moduleDirAbsolute = null;
+
         try {
-        final Case currentCase = Case.getCurrentCaseThrows();
-        moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+            final Case currentCase = Case.getCurrentCaseThrows();
+            moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
+            moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_NoOpenCase_errMsg(), ex);
         }
@@ -93,16 +101,18 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
-
-        /*
-         * Construct a 7Zip file extractor for processing archive files.
-         */
         try {
             this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
         } catch (SevenZipNativeInitializationException ex) {
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
-
+        if (refCounter.incrementAndGet(jobId) == 1) {
+            /*
+             * Construct a concurrentHashmap to keep track of depth in archives
+             * while processing archive files.
+             */
+            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
+        }
         /*
          * Construct an embedded content extractor for processing Microsoft
          * Office documents.
@@ -112,6 +122,7 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
         }
+
     }
 
     @Override
@@ -143,11 +154,18 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
          * type/format.
          */
         if (archiveExtractor.isSevenZipExtractionSupported(abstractFile)) {
-            archiveExtractor.unpack(abstractFile);
+            archiveExtractor.unpack(abstractFile, mapOfDepthTrees.get(jobId));
         } else if (officeExtractor.isContentExtractionSupported(abstractFile)) {
             officeExtractor.extractEmbeddedContent(abstractFile);
         }
         return ProcessResult.OK;
+    }
+
+    @Override
+    public void shutDown() {
+        if (refCounter.decrementAndGet(jobId) == 0) {
+            mapOfDepthTrees.remove(jobId);
+        }
     }
 
     /**

@@ -41,6 +41,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Allow examiner to select artifacts on which to report.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ArtifactSelectionDialog extends javax.swing.JDialog {
 
     private ArtifactModel model;

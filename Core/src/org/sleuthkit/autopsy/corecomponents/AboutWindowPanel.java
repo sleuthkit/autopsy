@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,12 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
-import java.awt.Image;
 import java.awt.Window;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Locale;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
@@ -45,6 +43,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 /**
  * Custom "About" window panel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class AboutWindowPanel extends JPanel implements HyperlinkListener {
 
     private static final long serialVersionUID = 1L;
@@ -212,7 +211,7 @@ private void logoLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private void showUrl() {
         if (url != null) {
             org.openide.awt.StatusDisplayer.getDefault().setStatusText(
-                    NbBundle.getBundle(HTMLViewAction.class).getString("CTL_OpeningBrowser")); //NON-NLS
+                    NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
             HtmlBrowser.URLDisplayer.getDefault().showURL(url);
         }
     }

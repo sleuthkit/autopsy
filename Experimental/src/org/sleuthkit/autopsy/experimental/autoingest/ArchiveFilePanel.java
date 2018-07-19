@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  * "zip", "rar", "arj", "7z", "7zip", "gzip, etc). Allows the user to select a
  * file.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ArchiveFilePanel extends JPanel implements DocumentListener {
 
     private static final Logger logger = Logger.getLogger(ArchiveFilePanel.class.getName());

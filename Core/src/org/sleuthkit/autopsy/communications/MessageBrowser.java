@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-18 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
  * messages and other account details, and a ContentViewer to show individual
  * messages.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class MessageBrowser extends JPanel implements ExplorerManager.Provider, Lookup.Provider {
 
     private static final long serialVersionUID = 1L;

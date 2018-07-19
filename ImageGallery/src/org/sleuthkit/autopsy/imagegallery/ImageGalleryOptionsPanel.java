@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Uses {@link ImageGalleryPreferences} and {@link PerCaseProperties} to persist
  * settings
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
     ImageGalleryOptionsPanel(ImageGalleryOptionsPanelController controller) {
@@ -202,17 +203,20 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
     }
 
     void store() {
-        Case openCase;
-        try {
-            openCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ImageGalleryOptionsPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            return;
-        }
         ImageGalleryPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
         ImageGalleryController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
-        new PerCaseProperties(openCase).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         ImageGalleryPreferences.setGroupCategorizationWarningDisabled(groupCategorizationWarningBox.isSelected());
+
+        // If a case is open, save the per case setting
+        try {
+            Case openCase = Case.getCurrentCaseThrows();
+            new PerCaseProperties(openCase).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
+        } catch (NoCurrentCaseException ex) {
+            // It's not an error if there's no case open
+        }
+        
+        
+        
     }
 
     /**

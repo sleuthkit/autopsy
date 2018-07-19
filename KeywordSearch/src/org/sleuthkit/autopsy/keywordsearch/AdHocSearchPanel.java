@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,20 +20,31 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.openide.util.NbBundle;
-
+import org.sleuthkit.datamodel.DataSource;
+import javax.swing.DefaultListModel;
 /**
  * Common functionality among keyword search widgets / panels. This is extended
  * by the various panels and interfaces that perform the keyword searches. This
  * class and extended classes model the user's intentions, not necessarily how
  * the search manager and 3rd party tools actually perform the search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 abstract class AdHocSearchPanel extends javax.swing.JPanel {
 
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
+    private final Map<Long, String> dataSourceMap = new HashMap<>();
+    private List<DataSource> dataSources = new ArrayList<>();
+    private final DefaultListModel<String> dataSourceListModel = new DefaultListModel<>();
 
     AdHocSearchPanel() {
         initListeners();
@@ -48,7 +59,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                         Object newValue = evt.getNewValue();
 
                         if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                            int newFilesIndexed = ((Integer) newValue).intValue();
+                            int newFilesIndexed = ((Integer) newValue);
                             filesIndexed = newFilesIndexed;
                             postFilesIndexedChange();
                         }
@@ -67,6 +78,13 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      * @return
      */
     abstract List<KeywordList> getKeywordLists();
+
+    /**
+     * Get a set of data source object ids that are selected.
+     *
+     * @return A set of selected object ids.
+     */
+    abstract Set<Long> getDataSourcesSelected();
 
     /**
      * Set the number of files that have been indexed
@@ -110,8 +128,6 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
             }
         }
 
-        AdHocSearchDelegator man = null;
-
         final List<KeywordList> keywordLists = getKeywordLists();
         if (keywordLists.isEmpty()) {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
@@ -119,13 +135,56 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        man = new AdHocSearchDelegator(keywordLists);
-
+      
+        AdHocSearchDelegator man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
         if (man.validate()) {
             man.execute();
         } else {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
                     "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
         }
+    }
+
+    /**
+     * Get a list of data source display name.
+     *
+     * @return The list of data source name
+     */
+    synchronized List<String> getDataSourceArray() {
+        List<String> dsList = new ArrayList<>();
+        Collections.sort(this.dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
+        for (DataSource ds : dataSources) {
+            String dsName = ds.getName();
+            File dataSourceFullName = new File(dsName);
+            String displayName = dataSourceFullName.getName();
+            dataSourceMap.put(ds.getId(), displayName);
+            dsList.add(displayName);
+        }
+        return dsList;
+    }
+
+    /**
+     * Set dataSources
+     * @param dataSources A list of DataSource 
+     */
+    synchronized void setDataSources(List<DataSource> dataSources) {
+        this.dataSources = dataSources;
+    }
+
+    /**
+     * Get dataSourceMap with object id and data source display name.
+     *
+     * @return The list of data source name
+     */
+    Map<Long, String> getDataSourceMap() {
+        return dataSourceMap;
+    }
+    
+    /**
+     * Get a list of DataSourceListModel
+     * @return A list of DataSourceListModel
+     */
+    final DefaultListModel<String> getDataSourceListModel() {
+        return dataSourceListModel;
     }
 }

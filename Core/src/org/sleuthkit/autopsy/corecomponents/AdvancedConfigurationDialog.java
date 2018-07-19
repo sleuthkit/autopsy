@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,26 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * AdvancedConfigurationDialog.java
- *
- * Created on Feb 28, 2012, 4:47:31 PM
- */
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.windows.WindowManager;
 
 /**
- *
- * @author dfickling
+ * Advanced configuration dialog.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
     /**
@@ -47,6 +39,8 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AdvancedConfigurationDialog
+     * 
+     * @param resizable Is the dialog resizable?
      */
     public AdvancedConfigurationDialog(boolean resizable) {
         super((JFrame) WindowManager.getDefault().getMainWindow(), true);

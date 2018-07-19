@@ -24,16 +24,23 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
+import java.util.Properties;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -61,11 +68,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
-import org.sleuthkit.autopsy.datamodel.DataSources;
-import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
@@ -73,12 +79,8 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
-import org.sleuthkit.autopsy.datamodel.Reports;
-import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
-import org.sleuthkit.autopsy.datamodel.RootContentChildren;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.Views;
+import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildrenFactory;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -87,7 +89,6 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -97,6 +98,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({
     "DirectoryTreeTopComponent.resultsView.title=Listing"
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
 
     private final transient ExplorerManager em = new ExplorerManager();
@@ -106,7 +108,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private RootContentChildren contentChildren;
+    private AutopsyTreeChildrenFactory autopsyTreeChildrenFactory;
+    private Children autopsyTreeChildren;
+    private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
+    private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
+    private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
     /**
      * the constructor
@@ -129,6 +135,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
+
+        groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
     }
 
     /**
@@ -141,6 +149,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 switch (evt.getKey()) {
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
+                    case UserPreferences.GROUP_ITEMS_IN_TREE_BY_DATASOURCE:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
@@ -150,7 +159,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
         });
-        
+
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE, Case.Events.DATA_SOURCE_ADDED), this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
@@ -181,35 +190,36 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         backButton = new javax.swing.JButton();
         forwardButton = new javax.swing.JButton();
         showRejectedCheckBox = new javax.swing.JCheckBox();
+        groupByDatasourceCheckBox = new javax.swing.JCheckBox();
 
         treeView.setBorder(null);
 
-        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back.png"))); // NOI18N
+        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_large.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(backButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.backButton.text")); // NOI18N
         backButton.setBorderPainted(false);
         backButton.setContentAreaFilled(false);
-        backButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled.png"))); // NOI18N
+        backButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled_large.png"))); // NOI18N
         backButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         backButton.setMaximumSize(new java.awt.Dimension(55, 100));
         backButton.setMinimumSize(new java.awt.Dimension(5, 5));
-        backButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_hover.png"))); // NOI18N
+        backButton.setPreferredSize(new java.awt.Dimension(32, 32));
+        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_hover_large.png"))); // NOI18N
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 backButtonActionPerformed(evt);
             }
         });
 
-        forwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward.png"))); // NOI18N
+        forwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_large.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(forwardButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.forwardButton.text")); // NOI18N
         forwardButton.setBorderPainted(false);
         forwardButton.setContentAreaFilled(false);
-        forwardButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled.png"))); // NOI18N
+        forwardButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled_large.png"))); // NOI18N
         forwardButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         forwardButton.setMaximumSize(new java.awt.Dimension(55, 100));
         forwardButton.setMinimumSize(new java.awt.Dimension(5, 5));
-        forwardButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        forwardButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover.png"))); // NOI18N
+        forwardButton.setPreferredSize(new java.awt.Dimension(32, 32));
+        forwardButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover_large.png"))); // NOI18N
         forwardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 forwardButtonActionPerformed(evt);
@@ -218,30 +228,44 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         org.openide.awt.Mnemonics.setLocalizedText(showRejectedCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showRejectedCheckBox.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(groupByDatasourceCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.groupByDatasourceCheckBox.text")); // NOI18N
+        groupByDatasourceCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                groupByDatasourceCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
+            .addComponent(treeView)
             .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
-                .addComponent(showRejectedCheckBox)
+                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 51, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(showRejectedCheckBox)
+                    .addComponent(groupByDatasourceCheckBox))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(5, 5, 5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(showRejectedCheckBox))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(5, 5, 5)
+                        .addComponent(showRejectedCheckBox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(groupByDatasourceCheckBox))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(forwardButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 854, Short.MAX_VALUE)
+                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 843, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -295,9 +319,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setCursor(null);
     }//GEN-LAST:event_forwardButtonActionPerformed
 
+    private void groupByDatasourceCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupByDatasourceCheckBoxActionPerformed
+        UserPreferences.setGroupItemsInTreeByDatasource(this.groupByDatasourceCheckBox.isSelected());
+    }//GEN-LAST:event_groupByDatasourceCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
+    private javax.swing.JCheckBox groupByDatasourceCheckBox;
     private javax.swing.JCheckBox showRejectedCheckBox;
     private javax.swing.JScrollPane treeView;
     // End of variables declaration//GEN-END:variables
@@ -352,12 +381,60 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
+     * Ask the user if they want to group by data source when opening a large
+     * case.
+     *
+     * @param currentCase
+     * @param dataSourceCount
+     */
+    private void promptForDataSourceGrouping(Case currentCase, int dataSourceCount) {
+        Path settingsFile = Paths.get(currentCase.getConfigDirectory(), SETTINGS_FILE); //NON-NLS
+        if (settingsFile.toFile().exists()) {
+            // Read the setting
+            try (InputStream inputStream = Files.newInputStream(settingsFile)) {
+                Properties props = new Properties();
+                props.load(inputStream);
+                if (props.getProperty("groupByDataSource", "false").equals("true")) {
+                    UserPreferences.setGroupItemsInTreeByDatasource(true);
+                    groupByDatasourceCheckBox.setSelected(true);
+                }
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Error reading settings file", ex);
+            }
+        } else {
+            GroupDataSourcesDialog dialog = new GroupDataSourcesDialog(dataSourceCount);
+            dialog.display();
+            if (dialog.groupByDataSourceSelected()) {
+                UserPreferences.setGroupItemsInTreeByDatasource(true);
+                groupByDatasourceCheckBox.setSelected(true);
+            }
+
+            // Save the response
+            Properties props = new Properties();
+            if (dialog.groupByDataSourceSelected()) {
+                props.setProperty("groupByDataSource", "true");
+            } else {
+                props.setProperty("groupByDataSource", "false");
+            }
+
+            try (OutputStream fos = Files.newOutputStream(settingsFile)) {
+                props.store(fos, ""); //NON-NLS
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Error writing settings file", ex);
+            }
+        }
+    }
+
+    /**
      * Called only when top component was closed on all workspaces before and
      * now is opened for the first time on some workspace. The intent is to
      * provide subclasses information about TopComponent's life cycle across all
      * existing workspaces. Subclasses will usually perform initializing tasks
      * here.
      */
+    @NbBundle.Messages({"# {0} - dataSourceCount",
+        "DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contains {0} data sources. Would you like to group by data source for faster loading?",
+        "DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?"})
     @Override
     public void componentOpened() {
         // change the cursor to "waiting cursor" for this operation
@@ -373,15 +450,35 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (null == currentCase || currentCase.hasData() == false) {
             getTree().setRootVisible(false); // hide the root
         } else {
-            // if there's at least one image, load the image and open the top component
-            final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-            contentChildren = new RootContentChildren(Arrays.asList(
-                    new DataSources(),
-                    new Views(tskCase),
-                    new Results(tskCase),
-                    new Tags(),
-                    new Reports()));
-            Node root = new AbstractNode(contentChildren) {
+            // If the case contains a lot of data sources, and they aren't already grouping
+            // by data source, give the user the option to do so before loading the tree.
+            if (RuntimeProperties.runningWithGUI()) {
+                long threshold = DEFAULT_DATASOURCE_GROUPING_THRESHOLD;
+                if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME)) {
+                    try {
+                        threshold = Long.parseLong(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME));
+                    } catch (NumberFormatException ex) {
+                        LOGGER.log(Level.SEVERE, "Group data sources threshold is not a number", ex);
+                    }
+                } else {
+                    ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, GROUPING_THRESHOLD_NAME, String.valueOf(threshold));
+                }
+
+                try {
+                    int dataSourceCount = currentCase.getDataSources().size();
+                    if (!UserPreferences.groupItemsInTreeByDatasource()
+                            && dataSourceCount > threshold) {
+                        promptForDataSourceGrouping(currentCase, dataSourceCount);
+                    }
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Error loading data sources", ex);
+                }
+            }
+
+            // if there's at least one image, load the image and open the top componen
+            autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory();
+            autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);
+            Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
                  * to override the right click action in the white blank space
@@ -421,21 +518,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     TreeView tree = getTree();
 
                     Node results = rootChildren.findChild(ResultsNode.NAME);
-                    tree.expandNode(results);
-                    Children resultsChildren = results.getChildren();
-                    Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
+                    if (!Objects.isNull(results)) {
+                        tree.expandNode(results);
+                        Children resultsChildren = results.getChildren();
+                        Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
 
-                    Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
-                    showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
-                    showRejectedCheckBox.setSelected(false);
+                        Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
+                        if (!Objects.isNull(accounts)) {
+                            showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
+                            showRejectedCheckBox.setSelected(false);
+                        }
+                    }
 
                     Node views = rootChildren.findChild(ViewsNode.NAME);
-                    Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
-                    tree.collapseNode(views);
+                    if (!Objects.isNull(views)) {
+                        Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
+                        tree.collapseNode(views);
+                    }
                     /*
-                     * JIRA-2806: What is this supposed to do? Right now it selects
-                     * the data sources node, but the comment seems to indicate
-                     * it is supposed to select the first datasource.
+                     * JIRA-2806: What is this supposed to do? Right now it
+                     * selects the data sources node, but the comment seems to
+                     * indicate it is supposed to select the first datasource.
                      */
                     // select the first image node, if there is one
                     // (this has to happen after dataResult is opened, because the event
@@ -463,7 +566,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // of changing the selected node fires a handler that tries to make
                     // dataResult active)
                     try {
-                        em.setSelectedNodes(get());
+                        Node[] selections = get();
+                        if (selections != null && selections.length > 0) {
+                            em.setSelectedNodes(selections);
+                        }
                     } catch (PropertyVetoException ex) {
                         LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
                     } catch (InterruptedException | ExecutionException ex) {
@@ -485,7 +591,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     @Override
     public void componentClosed() {
         //@@@ push the selection node to null?
-        contentChildren = null;
+        autopsyTreeChildren = null;
     }
 
     void writeProperties(java.util.Properties p) {
@@ -569,15 +675,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * The "listener" that listens to any changes made in the Case.java class.
-     * It will do something based on the changes in the Case.java class.
+     * The "listener" that monitors changes made in the Case class. This serves
+     * the purpose of keeping the UI in sync with the data as it changes.
      *
-     * @param evt the property change event
+     * @param event The property change event.
      */
     @Override
-    public void propertyChange(PropertyChangeEvent evt) {
+    public void propertyChange(PropertyChangeEvent event) {
         if (RuntimeProperties.runningWithGUI()) {
-            String changed = evt.getPropertyName();
+            String changed = event.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
                 // When a case is closed, the old value of this property is the 
                 // closed Case object and the new value is null. When a case is 
@@ -587,15 +693,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 // opened events instead of property change events would be a better
                 // solution. Either way, more probably needs to be done to clean up
                 // data model objects when a case is closed.
-                if (evt.getOldValue() != null && evt.getNewValue() == null) {
+                if (event.getOldValue() != null && event.getNewValue() == null) {
                     // The current case has been closed. Reset the ExplorerManager.
                     SwingUtilities.invokeLater(() -> {
                         Node emptyNode = new AbstractNode(Children.LEAF);
                         em.setRootContext(emptyNode);
                     });
-                } else if (evt.getNewValue() != null) {
+                } else if (event.getNewValue() != null) {
                     // A new case has been opened. Reset the ExplorerManager. 
-                    Case newCase = (Case) evt.getNewValue();
+                    Case newCase = (Case) event.getNewValue();
                     final String newCaseName = newCase.getName();
                     SwingUtilities.invokeLater(() -> {
                         em.getRootContext().setName(newCaseName);
@@ -619,20 +725,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                  * already closed.
                  */
                 try {
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    // We only need to trigger openCoreWindows() when the
-                    // first data source is added.
-                    if (currentCase.getDataSources().size() == 1) {
+                    Case.getCurrentCaseThrows();
+                    /*
+                     * In case the Case 'updateGUIForCaseOpened()' method hasn't
+                     * already done so, open the tree and all other core
+                     * windows.
+                     *
+                     * TODO: (JIRA-4053) DirectoryTreeTopComponent should not be
+                     * responsible for opening core windows. Consider moving
+                     * this elsewhere.
+                     */
+                    if (!this.isOpened()) {
                         SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
                     }
-                } catch (NoCurrentCaseException | TskCoreException notUsed) {
+                } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
                      */
                 }
             } // change in node selection
             else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
+                respondSelection((Node[]) event.getOldValue(), (Node[]) event.getNewValue());
             } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 // nothing to do here.
                 // all nodes should be listening for these events and update accordingly.
@@ -728,7 +841,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
          */
         String[] currentLast = backList.peekLast();
         String lastNodeName = null;
-        if (currentLast != null) {
+        if (currentLast != null && currentLast.length > 0) {
             lastNodeName = currentLast[currentLast.length - 1];
         }
 
@@ -772,25 +885,68 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refresh the content node part of the dir tree safely in the EDT thread
      */
     public void refreshContentTreeSafe() {
-        SwingUtilities.invokeLater(this::refreshDataSourceTree);
+        SwingUtilities.invokeLater(this::rebuildTree);
     }
 
     /**
-     * Refreshes changed content nodes
+     * Rebuilds the autopsy tree.
+     *
+     * Does nothing if there is no open case.
      */
-    private void refreshDataSourceTree() {
-        Node selectedNode = getSelectedNode();
-        final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-        Children rootChildren = em.getRootContext().getChildren();
-        Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
-        if (dataSourcesFilterNode == null) {
-            LOGGER.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
+    private void rebuildTree() {
+
+        // if no open case or has no data then there is no tree to rebuild
+        Case currentCase;
+        try {
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
             return;
         }
-        Node dataSourcesNode = ((DirectoryTreeFilterNode) dataSourcesFilterNode).getOriginal();
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) dataSourcesNode.getChildren();
-        contentRootChildren.refreshContentKeys();
-        setSelectedNode(selectedPath, DataSourcesNode.NAME);
+        if (null == currentCase || currentCase.hasData() == false) {
+            return;
+        }
+
+        // refresh all children of the root.
+        autopsyTreeChildrenFactory.refreshChildren();
+
+        // Select the first node and reset the selection history
+        // This should happen on the EDT once the tree has been rebuilt.
+        // hence the SwingWorker that does this in the done() method
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    get();
+                    selectFirstChildNode();
+                    resetHistory();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Error selecting tree node.", ex); //NON-NLS
+                } //NON-NLS
+            }
+        }.execute();
+    }
+
+    /**
+     * Selects the first node in the tree.
+     *
+     */
+    private void selectFirstChildNode() {
+        Children rootChildren = em.getRootContext().getChildren();
+
+        if (rootChildren.getNodesCount() > 0) {
+            Node firstNode = rootChildren.getNodeAt(0);
+            if (firstNode != null) {
+                final String[] selectedPath = NodeOp.createPath(firstNode, em.getRootContext());
+                setSelectedNode(selectedPath, null);
+            }
+        }
     }
 
     /**
@@ -1059,10 +1215,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
         undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
         getTree().expandNode(treeNode);
-        try {
-            em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
-        } catch (PropertyVetoException ex) {
-            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        if (this.getSelectedNode().equals(treeNode)) {
+            this.setDirectoryListingActive();
+            this.respondSelection(em.getSelectedNodes(), new Node[]{treeNode});
+        } else {
+            try {
+                em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
+            } catch (PropertyVetoException ex) {
+                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            }
         }
         // Another thread is needed because we have to wait for dataResult to populate
     }

@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCond
  */
 public final class FilesSetsManager extends Observable {
 
-    @NbBundle.Messages({"FilesSetsManager.allFilesAndDirectories=All Files and Directories",
+    @NbBundle.Messages({"FilesSetsManager.allFilesAndDirectories=All Files and Directories (Not Unallocated Space)",
         "FilesSetsManager.allFilesDirectoriesAndUnallocated=All Files, Directories, and Unallocated Space"})
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
     private static final List<String> ILLEGAL_FILE_PATH_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", ":", "*", "?", "\"", "<", ">")));

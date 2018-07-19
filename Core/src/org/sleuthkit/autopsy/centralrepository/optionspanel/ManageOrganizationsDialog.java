@@ -37,6 +37,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Configuration dialog to manage organizations for the Central Repository.
+ */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class ManageOrganizationsDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
