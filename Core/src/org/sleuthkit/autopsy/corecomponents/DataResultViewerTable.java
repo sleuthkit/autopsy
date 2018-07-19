@@ -208,6 +208,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode) {
+        if (! SwingUtilities.isEventDispatchThread()) {
+            LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
+            return;
+        }
+        
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -252,10 +257,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * persisted column order, sorting and visibility is used.
      */
     private void setupTable() {
-        if (! SwingUtilities.isEventDispatchThread()) {
-            LOGGER.log(Level.SEVERE, "Attempting to run setupTable() from non-EDT thread");
-            return;
-        }
         /*
          * Since we are modifying the columns, we don't want to listen to
          * added/removed events as un-hide/hide, until the table setup is done.
