@@ -50,7 +50,7 @@ public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
     //  and we can use this to support certain actions in the tree table and crFile viewer
     private final AbstractFile md5Reference;
     
-    public InterCaseCommonAttributeInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
+    InterCaseCommonAttributeInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
         super(Children.LEAF, Lookups.fixed(content)); // Using md5Reference enables Other Occurances, but for the current file path
         this.crFile = content;
         this.setDisplayName(new File(this.crFile.getFilePath()).getName());
