@@ -141,7 +141,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * Configure the child OutlineView (explorer view) component.
          */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
-        
+
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -252,6 +252,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * persisted column order, sorting and visibility is used.
      */
     private void setupTable() {
+        if (! SwingUtilities.isEventDispatchThread()) {
+            LOGGER.log(Level.SEVERE, "Attempting to run setupTable() from non-EDT thread");
+            return;
+        }
         /*
          * Since we are modifying the columns, we don't want to listen to
          * added/removed events as un-hide/hide, until the table setup is done.
@@ -281,7 +285,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * let the table resize itself.
          */
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
-
+       
         assignColumns(props); // assign columns to match the properties
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
