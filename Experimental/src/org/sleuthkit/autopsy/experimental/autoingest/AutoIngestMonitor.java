@@ -423,7 +423,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
                 }).start();
             }
         }
@@ -474,7 +474,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                  */
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
                 }).start();
             }
         }
@@ -529,7 +529,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
                 }).start();
 
             }
@@ -590,7 +590,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                 final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                        AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
+                            AutoIngestManager.getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
                 }).start();
 
             }
@@ -698,8 +698,8 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             }
 
             // Remove jobs associated with this case from the completed jobs collection.
-            jobsSnapshot.completedJobs.removeIf((AutoIngestJob completedJob) -> 
-                completedJob.getManifest().getCaseName().equals(caseName));
+            jobsSnapshot.completedJobs.removeIf((AutoIngestJob completedJob)
+                    -> completedJob.getManifest().getCaseName().equals(caseName));
 
             // Publish a message to update auto ingest nodes.
             eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
@@ -748,12 +748,11 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
     }
 
     /**
-     * A task that updates the state maintained by the monitor.
-     * At present this includes auto ingest job and auto ingest node data.
-     * The job data is refreshed by querying the coordination service for
-     * auto ingest manifest nodes.
-     * The auto ingest node data is refreshed by publishing a message asking
-     * all nodes to report their state.
+     * A task that updates the state maintained by the monitor. At present this
+     * includes auto ingest job and auto ingest node data. The job data is
+     * refreshed by querying the coordination service for auto ingest manifest
+     * nodes. The auto ingest node data is refreshed by publishing a message
+     * asking all nodes to report their state.
      */
     private final class StateRefreshTask implements Runnable {
 
