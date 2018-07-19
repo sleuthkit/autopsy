@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Generic Application content viewer
  */
 @ServiceProvider(service = DataContentViewer.class, position = 3)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class FileViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final int CONFIDENCE_LEVEL = 5;

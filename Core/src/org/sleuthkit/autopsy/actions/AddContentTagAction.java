@@ -38,8 +38,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this Action allow users to apply tags to content.
  */
 @NbBundle.Messages({
-    "AddContentTagAction.singularTagFile=Tag File",
-    "AddContentTagAction.pluralTagFile=Tag Files",
+    "AddContentTagAction.singularTagFile=Add File Tag",
+    "AddContentTagAction.pluralTagFile=Add File Tags",
     "# {0} - fileName",
     "AddContentTagAction.unableToTag.msg=Unable to tag {0}, not a regular file.",
     "AddContentTagAction.cannotApplyTagErr=Cannot Apply Tag",

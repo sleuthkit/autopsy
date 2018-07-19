@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Details panel within IngestMessagePanel
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
     private final IngestMessageMainPanel mainPanel;
@@ -240,7 +241,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 this.messageDetailsPane.setText("");
             }
             //show artifact/content only for a message group with a single message
-            BlackboardArtifact artifact = messageGroup.getData();;
+            BlackboardArtifact artifact = messageGroup.getData();
             if (artifact != null && messageGroup.getCount() == 1) {
                 viewArtifactButton.setEnabled(true);
 

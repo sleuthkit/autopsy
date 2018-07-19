@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordListsManager;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -103,6 +102,7 @@ public class SharedConfiguration {
     private boolean hideKnownFilesInViews;
     private boolean hideSlackFilesInDataSource;
     private boolean hideSlackFilesInViews;
+    private boolean groupDatasources;
     private boolean keepPreferredViewer;
 
     /**
@@ -207,6 +207,8 @@ public class SharedConfiguration {
             uploadHashDbSettings(remoteFolder);
             uploadFileExporterSettings(remoteFolder);
             uploadCentralRepositorySettings(remoteFolder);
+            uploadObjectDetectionClassifiers(remoteFolder);
+            uploadPythonModules(remoteFolder);
 
             try {
                 Files.deleteIfExists(uploadInProgress.toPath());
@@ -272,6 +274,8 @@ public class SharedConfiguration {
             downloadAndroidTriageSettings(remoteFolder);
             downloadFileExporterSettings(remoteFolder);
             downloadCentralRepositorySettings(remoteFolder);
+            downloadObjectDetectionClassifiers(remoteFolder);
+            downloadPythonModules(remoteFolder);
 
             // Download general settings, then restore the current
             // values for the unshared fields
@@ -349,6 +353,7 @@ public class SharedConfiguration {
         fileIngestThreads = UserPreferences.numberOfFileIngestThreads();
         hideSlackFilesInDataSource = UserPreferences.hideSlackFilesInDataSourcesTree();
         hideSlackFilesInViews = UserPreferences.hideSlackFilesInViewsTree();
+        groupDatasources = UserPreferences.groupItemsInTreeByDatasource();
     }
 
     /**
@@ -365,6 +370,7 @@ public class SharedConfiguration {
         UserPreferences.setNumberOfFileIngestThreads(fileIngestThreads);
         UserPreferences.setHideSlackFilesInDataSourcesTree(hideSlackFilesInDataSource);
         UserPreferences.setHideSlackFilesInViewsTree(hideSlackFilesInViews); 
+        UserPreferences.setGroupItemsInTreeByDatasource(groupDatasources);
     }
 
     /**
@@ -512,6 +518,71 @@ public class SharedConfiguration {
             throw new SharedConfigurationException(String.format("Failed to copy %s to %s", remoteFile.getAbsolutePath(), localSettingsFolder.getAbsolutePath()), ex);
         }
     }
+    
+    /**
+     * Copy an entire local settings folder to the remote folder, deleting any existing files.
+     * 
+     * @param localFolder      The local folder to copy
+     * @param remoteBaseFolder The remote folder that will hold a copy of the original folder
+     * 
+     * @throws SharedConfigurationException 
+     */
+    private void copyLocalFolderToRemoteFolder(File localFolder, File remoteBaseFolder) throws SharedConfigurationException {
+        logger.log(Level.INFO, "Uploading {0} to {1}", new Object[]{localFolder.getAbsolutePath(), remoteBaseFolder.getAbsolutePath()});
+        
+        File newRemoteFolder = new File(remoteBaseFolder, localFolder.getName());
+        
+        if(newRemoteFolder.exists()) {
+            try {
+                FileUtils.deleteDirectory(newRemoteFolder);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Failed to delete remote folder {0}", newRemoteFolder.getAbsolutePath());
+                throw new SharedConfigurationException(String.format("Failed to delete remote folder {0}", newRemoteFolder.getAbsolutePath()), ex);
+            }
+        }
+        
+        try {
+            FileUtils.copyDirectoryToDirectory(localFolder, remoteBaseFolder);
+        } catch (IOException ex) {
+            throw new SharedConfigurationException(String.format("Failed to copy %s to %s", localFolder, remoteBaseFolder.getAbsolutePath()), ex);
+        } 
+    }
+    
+    /**
+     * Copy an entire remote settings folder to the local folder, deleting any existing files.
+     * No error if the remote folder does not exist.
+     * 
+     * @param localFolder      The local folder that will be overwritten.
+     * @param remoteBaseFolder The remote folder holding the folder that will be copied
+     * 
+     * @throws SharedConfigurationException 
+     */
+    private void copyRemoteFolderToLocalFolder(File localFolder, File remoteBaseFolder) throws SharedConfigurationException {
+        logger.log(Level.INFO, "Downloading {0} from {1}", new Object[]{localFolder.getAbsolutePath(), remoteBaseFolder.getAbsolutePath()});
+        
+        // Clean out the local folder regardless of whether the remote version exists. leave the 
+        // folder in place since Autopsy expects it to exist.
+        if(localFolder.exists()) {
+            try {
+                FileUtils.cleanDirectory(localFolder);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Failed to delete files from local folder {0}", localFolder.getAbsolutePath());
+                throw new SharedConfigurationException(String.format("Failed to delete files from local folder {0}", localFolder.getAbsolutePath()), ex);
+            }
+        }
+        
+        File remoteSubFolder = new File(remoteBaseFolder, localFolder.getName());
+        if(! remoteSubFolder.exists()) {
+            logger.log(Level.INFO, "{0} does not exist", remoteSubFolder.getAbsolutePath());
+            return;
+        }
+        
+        try {
+            FileUtils.copyDirectory(remoteSubFolder, localFolder);
+        } catch (IOException ex) {
+            throw new SharedConfigurationException(String.format("Failed to copy %s from %s", localFolder, remoteBaseFolder.getAbsolutePath()), ex);
+        } 
+    }    
 
     /**
      * Upload the basic set of auto-ingest settings to the shared folder.
@@ -829,6 +900,58 @@ public class SharedConfiguration {
         copyToLocalFolder(AUTO_INGEST_PROPERTIES, moduleDirPath, remoteFolder, false);
     }
 
+    /**
+     * Upload the object detection classifiers.
+     * 
+     * @param remoteFolder Shared settings folder
+     * 
+     * @throws SharedConfigurationException 
+     */
+    private void uploadObjectDetectionClassifiers(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Uploading object detection classfiers");
+        File classifiersFolder = new File(PlatformUtil.getObjectDetectionClassifierPath());
+        copyLocalFolderToRemoteFolder(classifiersFolder, remoteFolder);
+    }
+    
+    /**
+     * Download the object detection classifiers.
+     * 
+     * @param remoteFolder Shared settings folder
+     * 
+     * @throws SharedConfigurationException 
+     */
+    private void downloadObjectDetectionClassifiers(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Downloading object detection classfiers");
+        File classifiersFolder = new File(PlatformUtil.getObjectDetectionClassifierPath());
+        copyRemoteFolderToLocalFolder(classifiersFolder, remoteFolder);
+    }
+    
+        /**
+     * Upload the Python modules.
+     * 
+     * @param remoteFolder Shared settings folder
+     * 
+     * @throws SharedConfigurationException 
+     */
+    private void uploadPythonModules(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Uploading python modules");
+        File classifiersFolder = new File(PlatformUtil.getUserPythonModulesPath());
+        copyLocalFolderToRemoteFolder(classifiersFolder, remoteFolder);
+    }
+    
+    /**
+     * Download the Python modules.
+     * 
+     * @param remoteFolder Shared settings folder
+     * 
+     * @throws SharedConfigurationException 
+     */
+    private void downloadPythonModules(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Downloading python modules");
+        File classifiersFolder = new File(PlatformUtil.getUserPythonModulesPath());
+        copyRemoteFolderToLocalFolder(classifiersFolder, remoteFolder);
+    }
+    
     /**
      * Upload settings and hash databases to the shared folder. The general
      * algorithm is: - Copy the general settings in hashsets.xml - For each hash

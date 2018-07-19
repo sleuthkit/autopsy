@@ -35,6 +35,7 @@ import org.openide.windows.WindowManager;
 /**
  * A dialog for adding or editing an external viewer rule
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class AddExternalViewerRuleDialog extends JDialog {
 
     private ExternalViewerRule rule;

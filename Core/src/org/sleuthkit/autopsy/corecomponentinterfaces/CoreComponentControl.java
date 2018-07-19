@@ -88,7 +88,21 @@ final public class CoreComponentControl {
         TopComponent directoryTree = null;
         TopComponent favorites = null;
         final WindowManager windowManager = WindowManager.getDefault();
+        
+        // Set the UI selections to null before closing the top components.
+        // Otherwise it may experience errors trying to load data for the closed case.
         for (Mode mode : windowManager.getModes()) {
+            for (TopComponent tc : windowManager.getOpenedTopComponents(mode)) {
+                if(tc instanceof DataContent) {
+                    ((DataContent) tc).setNode(null);
+                } else if(tc instanceof DataResult) {
+                    ((DataResult) tc).setNode(null);
+                }
+            }
+        }
+        
+        for (Mode mode : windowManager.getModes()) {
+            
             for (TopComponent tc : windowManager.getOpenedTopComponents(mode)) {
                 String tcName = tc.getName();
 
@@ -105,7 +119,7 @@ final public class CoreComponentControl {
                 }
             }
         }
-
+        
         if (directoryTree != null) {
             directoryTree.close();
         }

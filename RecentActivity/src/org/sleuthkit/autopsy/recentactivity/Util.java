@@ -86,11 +86,12 @@ class Util {
 
     public static String getBaseDomain(String url) {
         String host = null;
+        
         //strip protocol
-        String cleanUrl = url.replaceFirst("/.*:\\/\\//", "");
+        String cleanUrl = url.replaceFirst(".*:\\/\\/", "");
 
         //strip after slashes
-        String dirToks[] = cleanUrl.split("/\\//");
+        String dirToks[] = cleanUrl.split("\\/");
         if (dirToks.length > 0) {
             host = dirToks[0];
         } else {
@@ -141,7 +142,6 @@ class Util {
         if (result == null || result.trim().isEmpty()) {
             return getBaseDomain(value);
         }
-
         return result;
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * GlobalEditListPanel widget to manage keywords in lists
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(GlobalEditListPanel.class.getName());

@@ -113,6 +113,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
     "AutoIngestControlPanel.ConfigLockedTitle=Configuration directory locked",
     "AutoIngestControlPanel.PauseDueToSystemError=Paused due to system error, please consult the auto ingest system log"
 })
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class AutoIngestControlPanel extends JPanel implements Observer {
 
     private static final long serialVersionUID = 1L;
@@ -141,6 +142,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
+    private static final String RUNNING_AS_SERVICE_PROPERTY = "autoingest.runningasservice";    
     private static final Logger sysLogger = AutoIngestSystemLogger.getLogger();
     private static AutoIngestControlPanel instance;
     private final DefaultTableModel pendingTableModel;
@@ -268,6 +270,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         initCompletedJobsTable();
         initButtons();
         completedTable.getRowSorter().toggleSortOrder(JobsTableModelColumns.COMPLETED_TIME.ordinal());
+
+        // Start auto ingest immediately if we are running as a service.
+        if (System.getProperty(RUNNING_AS_SERVICE_PROPERTY, "false").equalsIgnoreCase("true")) {
+            startUp();
+        }
+
         /*
          * Must set this flag, otherwise pop up menus don't close properly.
          */

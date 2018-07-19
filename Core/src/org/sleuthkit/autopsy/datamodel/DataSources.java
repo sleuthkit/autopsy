@@ -23,9 +23,20 @@ package org.sleuthkit.autopsy.datamodel;
  */
 public class DataSources implements AutopsyVisitableItem {
 
+    private final long datasourceObjId;
+     
     public DataSources() {
+        this(0);
     }
 
+    public DataSources(long datasourceObjId) {
+        this.datasourceObjId = datasourceObjId;
+    }
+    
+    long filteringDataSourceObjId() {
+        return this.datasourceObjId;
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
