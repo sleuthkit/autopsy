@@ -70,7 +70,6 @@ public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
         List<Action> actionsList = new ArrayList<>();
         
         actionsList.addAll(Arrays.asList(super.getActions(true)));
-        //TODO probably can support more than just this
         
         return actionsList.toArray(new Action[actionsList.size()]);
     }

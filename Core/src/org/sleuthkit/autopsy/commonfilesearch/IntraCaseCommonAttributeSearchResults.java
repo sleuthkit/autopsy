@@ -51,7 +51,8 @@ final public class IntraCaseCommonAttributeSearchResults extends AbstractCommonA
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        return Arrays.asList(new IntraCaseCommonAttributeInstanceNode(this.lookupOrCreateAbstractFile(), this.getCaseName(), this.getDataSource())).toArray(new DisplayableItemNode[1]);
+        final IntraCaseCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new IntraCaseCommonAttributeInstanceNode(this.lookupOrLoadAbstractFile(), this.getCaseName(), this.getDataSource());
+        return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
     
     protected AbstractFile loadFileFromSleuthkitCase() {
@@ -62,12 +63,12 @@ final public class IntraCaseCommonAttributeSearchResults extends AbstractCommonA
 
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", this.abstractFileObjectId)).get(0);
+            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", this.getAbstractFileObjectId())).get(0);
 
             return abstractFile;
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{this.abstractFileObjectId}), ex);
+            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{this.getAbstractFileObjectId()}), ex);
             return null;
         }
     }

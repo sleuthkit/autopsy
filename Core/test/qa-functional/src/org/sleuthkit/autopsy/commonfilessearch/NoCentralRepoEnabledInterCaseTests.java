@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.io.IOException;
 import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
@@ -42,7 +41,6 @@ import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
 
     private final InterCaseUtils utils;
-    private Case currentCase;       //TODO do we need this???
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledInterCaseTests.class).

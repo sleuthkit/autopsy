@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -55,7 +54,6 @@ import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Utilities for testing intercase correlation feature.

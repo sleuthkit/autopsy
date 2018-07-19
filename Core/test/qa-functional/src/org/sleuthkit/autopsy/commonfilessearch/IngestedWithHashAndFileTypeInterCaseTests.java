@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.sql.SQLException;
 import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
@@ -27,12 +26,9 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * If I use the search all cases option: One node for Hash A (1_1_A.jpg,

@@ -61,7 +61,7 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
             File fileFromPath = new File(this.currentFullPath);
             String fileName = fileFromPath.getName();
-            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s'", fileName)).get(0); // TODO workaround where we don't need AbstractFile?
+            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s'", fileName)).get(0);
 
             return abstractFile;
 
@@ -81,7 +81,7 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
             try {
                 currentAttributeInst = attrInst;
-                AbstractFile currentAbstractFile = this.lookupOrCreateAbstractFile();
+                AbstractFile currentAbstractFile = this.lookupOrLoadAbstractFile();
                 DisplayableItemNode generatedInstNode;
 
                 String currAttributeDataSource = currentAttributeInst.getCorrelationDataSource().getName();
