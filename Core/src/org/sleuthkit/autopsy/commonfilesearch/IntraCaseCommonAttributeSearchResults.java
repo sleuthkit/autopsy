@@ -33,8 +33,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
  */
-final public class IntraCaseCommonAttributeSearchResults extends CommonAttributeInstanceNodeGenerator {
+final public class IntraCaseCommonAttributeSearchResults extends AbstractCommonAttributeInstanceNode {
+    
     private static final Logger LOGGER = Logger.getLogger(IntraCaseCommonAttributeSearchResults.class.getName());
+    
     
     /**
      * Create meta data required to find an abstract file and build a

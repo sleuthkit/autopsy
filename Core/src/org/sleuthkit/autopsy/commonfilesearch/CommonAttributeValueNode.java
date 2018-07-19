@@ -132,7 +132,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
      * <code>CommonAttributeValueNode</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<CommonAttributeInstanceNodeGenerator> {
+    static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstanceNode> {
 
         //private final Map<Long, AbstractFile> cachedFiles;
         
@@ -144,12 +144,12 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
         }
 
         @Override
-        protected Node[] createNodesForKey(CommonAttributeInstanceNodeGenerator file) {
+        protected Node[] createNodesForKey(AbstractCommonAttributeInstanceNode file) {
             return file.generateNodes();
         }
 
         @Override
-        protected boolean createKeys(List<CommonAttributeInstanceNodeGenerator> list) {
+        protected boolean createKeys(List<AbstractCommonAttributeInstanceNode> list) {
             list.addAll(this.descendants.getMetadata());
             return true;
         }

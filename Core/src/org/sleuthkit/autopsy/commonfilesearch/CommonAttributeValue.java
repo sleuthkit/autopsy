@@ -33,9 +33,9 @@ import java.util.stream.Collectors;
 final public class CommonAttributeValue {
 
     private final String md5;
-    private final List<CommonAttributeInstanceNodeGenerator> fileInstances;
+    private final List<AbstractCommonAttributeInstanceNode> fileInstances;
 
-    CommonAttributeValue(String md5, List<CommonAttributeInstanceNodeGenerator> fileInstances) {
+    CommonAttributeValue(String md5, List<AbstractCommonAttributeInstanceNode> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
@@ -50,13 +50,13 @@ final public class CommonAttributeValue {
     }
 
     public String getCases() {
-        final String cases = this.fileInstances.stream().map(CommonAttributeInstanceNodeGenerator::getCaseName).collect(Collectors.joining(", "));
+        final String cases = this.fileInstances.stream().map(AbstractCommonAttributeInstanceNode::getCaseName).collect(Collectors.joining(", "));
         return cases;
     }
 
     public String getDataSources() {
         Set<String> sources = new HashSet<>();
-        for (CommonAttributeInstanceNodeGenerator data : this.fileInstances) {
+        for (AbstractCommonAttributeInstanceNode data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
         
@@ -64,15 +64,15 @@ final public class CommonAttributeValue {
         return dataSources;
     }
 
-    void addFileInstanceMetadata(CommonAttributeInstanceNodeGenerator metadata) {
+    void addFileInstanceMetadata(AbstractCommonAttributeInstanceNode metadata) {
         this.fileInstances.add(metadata);
     }
 
-    void addFileInstanceMetadata(CommonAttributeInstanceNodeGenerator metadata, String caseName) {
+    void addFileInstanceMetadata(AbstractCommonAttributeInstanceNode metadata, String caseName) {
         this.fileInstances.add(metadata);
     }
 
-    public Collection<CommonAttributeInstanceNodeGenerator> getMetadata() {
+    public Collection<AbstractCommonAttributeInstanceNode> getMetadata() {
         return Collections.unmodifiableCollection(this.fileInstances);
     }
 
