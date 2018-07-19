@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Child panel of the global settings panel (Languages tab).
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();

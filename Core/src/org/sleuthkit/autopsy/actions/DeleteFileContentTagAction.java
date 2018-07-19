@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -136,7 +137,7 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
      * creating or selecting a tag name for a tag and specifying an optional tag
      * comment.
      */
-    private class TagMenu extends JMenu {
+    private final class TagMenu extends JMenu {
 
         private static final long serialVersionUID = 1L;
 
@@ -150,6 +151,8 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 AbstractFile file = selectedAbstractFilesList.iterator().next();
                 
                 Map<String, TagName> tagNamesMap = null;
+                List<String> standardTagNames = TagsManager.getStandardTagNames();
+                List<JMenuItem> standardTagMenuitems = new ArrayList<>();
                 try {
                     // Get the current set of tag names.
                     TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
@@ -179,7 +182,13 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, contentTag, file.getId());
                                     });
-                                    add(tagNameItem);
+                                    
+                                    // Show custom tags before predefined tags in the menu
+                                    if (standardTagNames.contains(tagDisplayName)) {
+                                        standardTagMenuitems.add(tagNameItem);
+                                    } else {
+                                        add(tagNameItem);
+                                    }
                                 }
                             }
                         }
@@ -189,6 +198,13 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                     }
                 }
 
+                if ((getItemCount() > 0) &&  !standardTagMenuitems.isEmpty() ){
+                    addSeparator();
+                }
+                standardTagMenuitems.forEach((menuItem) -> {
+                    add(menuItem);
+                });
+            
                 if(getItemCount() == 0) {
                     setEnabled(false);
                 }

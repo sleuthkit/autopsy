@@ -70,7 +70,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.Content;
@@ -710,9 +710,9 @@ public class Server {
             if (null == currentCore) {
                 throw new NoOpenCoreException();
             }
-            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Index chunk");
+            TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
             currentCore.addDocument(doc);
-            EnterpriseHealthMonitor.submitTimingMetric(metric);
+            HealthMonitor.submitTimingMetric(metric);
         } finally {
             currentCoreLock.readLock().unlock();
         }
@@ -781,9 +781,9 @@ public class Server {
                 IndexingServerProperties properties = getMultiUserServerProperties(theCase.getCaseDirectory());
                 currentSolrServer = new HttpSolrServer("http://" + properties.getHost() + ":" + properties.getPort() + "/solr"); //NON-NLS
             }
-            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Connectivity check");
+            TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");
             connectToSolrServer(currentSolrServer);
-            EnterpriseHealthMonitor.submitTimingMetric(metric);
+            HealthMonitor.submitTimingMetric(metric);
 
         } catch (SolrServerException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
@@ -1325,13 +1325,13 @@ public class Server {
      * @throws IOException
      */
     void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
-        TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Connectivity check");            
+        TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Connectivity check");            
         CoreAdminRequest statusRequest = new CoreAdminRequest();
         statusRequest.setCoreName( null );
         statusRequest.setAction( CoreAdminParams.CoreAdminAction.STATUS );
         statusRequest.setIndexInfoNeeded(false);
         statusRequest.process(solrServer);
-        EnterpriseHealthMonitor.submitTimingMetric(metric);
+        HealthMonitor.submitTimingMetric(metric);
     }
 
     /**

@@ -105,7 +105,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()
                     blackboard.indexArtifact(artifact)
                 except Blackboard.BlackboardException as ex:
-                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactTypeName(), ex)
+                    self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactTypeName()), ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index GPS trackpoint artifact for keyword search.", artifact.getDisplayName())
 

@@ -49,6 +49,7 @@ import org.openide.util.actions.Presenter;
 /**
  * Panel to display a SQLite table
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class SQLiteTableView extends JPanel implements ExplorerManager.Provider {
 
     private final org.openide.explorer.view.OutlineView outlineView;

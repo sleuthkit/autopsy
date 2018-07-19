@@ -47,6 +47,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
+/**
+ * Functional tests for Encryption Detection.
+ */
 public class EncryptionDetectionTest extends NbTestCase {
 
     private static final String BITLOCKER_DETECTION_CASE_NAME = "testBitlockerEncryption";
@@ -54,10 +57,10 @@ public class EncryptionDetectionTest extends NbTestCase {
     private static final String VERACRYPT_DETECTION_CASE_NAME = "VeraCryptDetectionTest";
     private static final String SQLCIPHER_DETECTION_CASE_NAME = "SQLCipherDetectionTest";
 
-    private final Path BITLOCKER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_bitlocker_test.vhd");
-    private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "password_detection_test.img");
-    private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "veracrypt_detection_test.vhd");
-    private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "encryption_detection_sqlcipher_test.vhd");
+    private final Path BITLOCKER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "BitlockerDetection_img1_v1.vhd");
+    private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "PasswordDetection_img1_v1.img");
+    private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "VeracryptDetection_img1_v1.vhd");
+    private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "SqlCipherDetection_img1_v1.vhd");
     
     private boolean testSucceeded;
   

@@ -39,11 +39,13 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Functional tests for embedded files.
+ */
 public class EmbeddedFileTest extends NbTestCase {
 
     private static final String CASE_NAME = "EmbeddedFileTest";
-    private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(),"embedded.vhd");
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "EmbeddedIM_img1_v1.vhd");
     public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
     private static final int DEEP_FOLDER_COUNT = 25;
     private Case openCase;

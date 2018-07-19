@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
- /*
- * NameSearchPanel.java
- *
- * Created on Oct 19, 2011, 11:58:53 AM
- */
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
@@ -33,9 +27,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 /**
- *
- * @author pmartel
+ * Provide a name for search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class NameSearchPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -146,7 +140,9 @@ class NameSearchPanel extends javax.swing.JPanel {
         searchTextField.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
 
         noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(noteNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
+        noteNameLabel.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
+        noteNameLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         noteNameLabel.setMaximumSize(new java.awt.Dimension(250, 30));
         noteNameLabel.setMinimumSize(new java.awt.Dimension(250, 30));
         noteNameLabel.setPreferredSize(new java.awt.Dimension(250, 40));
@@ -155,14 +151,15 @@ class NameSearchPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(0, 0, 0)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(noteNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(noteNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(nameCheckBox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(searchTextField)))
+                        .addComponent(searchTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 191, Short.MAX_VALUE)))
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(

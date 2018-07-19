@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JTextPane;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
@@ -44,11 +42,12 @@ import org.sleuthkit.datamodel.TskException;
  * Viewer displays strings extracted from contents.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 2)
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
 
     private static long currentOffset = 0;
-    private static final long pageLength = 16384;
-    private final byte[] data = new byte[(int) pageLength];
+    private static final long PAGE_LENGTH = 16384;
+    private final byte[] data = new byte[(int) PAGE_LENGTH];
     private static int currentPage = 1;
     private Content dataSource;
     //string extract utility
@@ -62,7 +61,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         initComponents();
         customizeComponents();
         this.resetComponent();
-        logger.log(Level.INFO, "Created StringView instance: " + this); //NON-NLS
+        logger.log(Level.INFO, "Created StringView instance: {0}", this); //NON-NLS
     }
 
     private void customizeComponents() {
@@ -264,7 +263,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
-        currentOffset -= pageLength;
+        currentOffset -= PAGE_LENGTH;
         currentPage = currentPage - 1;
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset);
@@ -272,7 +271,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
-        currentOffset += pageLength;
+        currentOffset += PAGE_LENGTH;
         currentPage = currentPage + 1;
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset);
@@ -281,7 +280,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
         int pageNumber;
-        int maxPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+        int maxPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
@@ -297,7 +296,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        currentOffset = (pageNumber - 1) * pageLength;
+        currentOffset = (pageNumber - 1) * PAGE_LENGTH;
         currentPage = pageNumber;
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset);
@@ -352,11 +351,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         String text = "";
         if (dataSource.getSize() > 0) {
             try {
-                bytesRead = dataSource.read(data, offset, pageLength); // read the data
+                bytesRead = dataSource.read(data, offset, PAGE_LENGTH); // read the data
             } catch (TskException ex) {
                 text = NbBundle.getMessage(this.getClass(),
                         "DataContentViewerString.setDataView.errorText", currentOffset,
-                        currentOffset + pageLength);
+                        currentOffset + PAGE_LENGTH);
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
             }
         }
@@ -370,15 +369,15 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             if (text.trim().isEmpty()) {
                 text = NbBundle.getMessage(this.getClass(),
                         "DataContentViewerString.setDataView.errorNoText", currentOffset,
-                        currentOffset + pageLength);
+                        currentOffset + PAGE_LENGTH);
             }
         } else {
             text = NbBundle.getMessage(this.getClass(), "DataContentViewerString.setDataView.errorText", currentOffset,
-                    currentOffset + pageLength);
+                    currentOffset + PAGE_LENGTH);
         }
 
         // disable or enable the next button
-        if (offset + pageLength < dataSource.getSize()) {
+        if (offset + PAGE_LENGTH < dataSource.getSize()) {
             nextPageButton.setEnabled(true);
         } else {
             nextPageButton.setEnabled(false);
@@ -391,7 +390,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             prevPageButton.setEnabled(true);
         }
 
-        int totalPage = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+        int totalPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
         totalPageLabel.setText(Integer.toString(totalPage));
         currentPageLabel.setText(Integer.toString(currentPage));
         outputViewPane.setText(text); // set the output view
@@ -500,11 +499,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             return false;
         }
         Content content = node.getLookup().lookup(Content.class);
-        if (content != null && content.getSize() > 0) {
-            return true;
-        }
-
-        return false;
+        return (content != null && content.getSize() > 0);
     }
 
     @Override

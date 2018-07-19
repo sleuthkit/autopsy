@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,8 +39,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.autoingest.StatusDatabaseLogger;
 
 /**
- *
+ * Node status log panel.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class NodeStatusLogPanel extends javax.swing.JPanel {
 
     private static final String HOST_NAME_OR_IP_PROMPT = NbBundle.getMessage(NodeStatusLogPanel.class, "NodeStatusLogPanel.tbDbHostname.toolTipText");
@@ -57,6 +58,7 @@ public class NodeStatusLogPanel extends javax.swing.JPanel {
     
     /**
      * Creates new form DatabaseLogPanell
+     * @param jDialog
      */
     public NodeStatusLogPanel(JDialog jDialog) {
         initComponents();

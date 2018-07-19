@@ -23,6 +23,7 @@ import com.google.common.eventbus.Subscribe;
 import javax.swing.Action;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
@@ -32,7 +33,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
  * Each job with the specified status will have a child node representing it.
  */
 final class AutoIngestJobsNode extends AbstractNode {
-    
+
     //Event bus is non static so that each instance of this will only listen to events sent to that instance
     private final EventBus refreshChildrenEventBus;
 
@@ -59,9 +59,14 @@ final class AutoIngestJobsNode extends AbstractNode {
 
     /**
      * Construct a new AutoIngestJobsNode.
+     *
+     * @param monitor  the monitor which gives access to the AutoIngestJobs
+     * @param status   the status of the jobs being displayed
+     * @param eventBus the event bus which will be used to send and receive
+     *                 refresh events
      */
-    AutoIngestJobsNode(AutoIngestJobStatus status, EventBus eventBus) {
-        super(Children.create(new AutoIngestNodeChildren(status, eventBus), false));
+    AutoIngestJobsNode(AutoIngestMonitor monitor, AutoIngestJobStatus status, EventBus eventBus) {
+        super(Children.create(new AutoIngestNodeChildren(monitor, status, eventBus), false));
         refreshChildrenEventBus = eventBus;
     }
 
@@ -78,7 +83,7 @@ final class AutoIngestJobsNode extends AbstractNode {
     static final class AutoIngestNodeChildren extends ChildFactory<AutoIngestJob> {
 
         private final AutoIngestJobStatus autoIngestJobStatus;
-        private JobsSnapshot jobsSnapshot;
+        private AutoIngestMonitor monitor;
         private final RefreshChildrenSubscriber refreshChildrenSubscriber = new RefreshChildrenSubscriber();
         private final EventBus refreshEventBus;
 
@@ -86,11 +91,13 @@ final class AutoIngestJobsNode extends AbstractNode {
          * Create children nodes for the AutoIngestJobsNode which will each
          * represent a single AutoIngestJob
          *
-         * @param snapshot the snapshot which contains the AutoIngestJobs
+         * @param monitor  the monitor which gives access to the AutoIngestJobs
          * @param status   the status of the jobs being displayed
+         * @param eventBus the event bus which the class registers to for
+         *                 refresh events
          */
-        AutoIngestNodeChildren(AutoIngestJobStatus status, EventBus eventBus) {
-            jobsSnapshot = new JobsSnapshot();
+        AutoIngestNodeChildren(AutoIngestMonitor monitor, AutoIngestJobStatus status, EventBus eventBus) {
+            this.monitor = monitor;
             autoIngestJobStatus = status;
             refreshEventBus = eventBus;
             refreshChildrenSubscriber.register(refreshEventBus);
@@ -101,14 +108,14 @@ final class AutoIngestJobsNode extends AbstractNode {
             List<AutoIngestJob> jobs;
             switch (autoIngestJobStatus) {
                 case PENDING_JOB:
-                    jobs = jobsSnapshot.getPendingJobs();
-                    jobs.sort(new AutoIngestJob.PriorityComparator());
+                    jobs = monitor.getPendingJobs();
+                    Collections.sort(jobs);
                     break;
                 case RUNNING_JOB:
-                    jobs = jobsSnapshot.getRunningJobs();
+                    jobs = monitor.getRunningJobs();
                     break;
                 case COMPLETED_JOB:
-                    jobs = jobsSnapshot.getCompletedJobs();
+                    jobs = monitor.getCompletedJobs();
                     break;
                 default:
                     jobs = new ArrayList<>();
@@ -159,7 +166,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                 //Ignore netbeans suggesting this isn't being used, it is used behind the scenes by the EventBus
                 //RefreshChildrenEvents can change which children are present however
                 //RefreshJobEvents and RefreshCaseEvents can still change the order we want to display them in
-                jobsSnapshot = refreshEvent.getJobsSnapshot();
+                monitor = refreshEvent.getMonitor();
                 refresh(true);
             }
 

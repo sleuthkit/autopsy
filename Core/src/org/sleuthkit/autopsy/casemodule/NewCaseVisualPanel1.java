@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Component;
 import org.openide.util.NbBundle;
 
-import java.awt.*;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  * The JPanel for the first page of the new case wizard.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
 
     private final JFileChooser fileChooser = new JFileChooser();

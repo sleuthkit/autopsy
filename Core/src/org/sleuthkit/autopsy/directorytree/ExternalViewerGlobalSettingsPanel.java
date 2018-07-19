@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * opening files in external viewers. Users can associate a file by either MIME
  * type or by extension to an executable file.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(ExternalViewerGlobalSettingsPanel.class.getName());

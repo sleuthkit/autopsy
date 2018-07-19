@@ -24,6 +24,7 @@ import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
@@ -33,6 +34,8 @@ import org.openide.explorer.view.TreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
@@ -44,9 +47,12 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
@@ -122,7 +128,9 @@ public class ViewContextAction extends AbstractAction {
     @Override
     @Messages({
         "ViewContextAction.errorMessage.cannotFindDirectory=Failed to locate directory.",
-        "ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.",})
+        "ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.",
+        "ViewContextAction.errorMessage.cannotFindNode=Failed to locate data source node in tree."
+    })
     public void actionPerformed(ActionEvent event) {
         EventQueue.invokeLater(() -> {
             /*
@@ -130,7 +138,40 @@ public class ViewContextAction extends AbstractAction {
              */
             DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
             ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
-            Node parentTreeViewNode = treeViewExplorerMgr.getRootContext().getChildren().findChild(DataSourcesNode.NAME);
+
+            Node parentTreeViewNode;
+            if (UserPreferences.groupItemsInTreeByDatasource()) { // 'Group by Data Source' view
+
+                SleuthkitCase skCase;
+                String dsname;
+                try {
+                    // get the objid/name of the datasource of the selected content.
+                    skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                    long contentDSObjid = content.getDataSource().getId();
+                    DataSource datasource = skCase.getDataSource(contentDSObjid);
+                    dsname = datasource.getName();
+                    
+                    Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
+                    Node datasourceGroupingNode = rootChildren.findChild(dsname);
+                    if (! Objects.isNull(datasourceGroupingNode) ) {
+                        Children dsChildren = datasourceGroupingNode.getChildren();
+                        parentTreeViewNode = dsChildren.findChild(DataSourcesNode.NAME);
+                    }
+                    else {
+                        MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
+                        logger.log(Level.SEVERE, "Failed to locate data source node in tree."); //NON-NLS
+                        return;
+                    }
+                }  catch (NoCurrentCaseException| TskDataException | TskCoreException ex) {
+                    MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
+                    logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
+                    return;
+                }
+            } else {  // Classic view 
+                // Start the search at the DataSourcesNode
+                parentTreeViewNode = treeViewExplorerMgr.getRootContext().getChildren().findChild(DataSourcesNode.NAME);
+            }
+
             /*
              * Get the parent content for the content to be selected in the
              * results view. If the parent content is null, then the specified

@@ -54,7 +54,7 @@ final class TagNameDefinition implements Comparable<TagNameDefinition> {
     private static final List<String> STANDARD_TAG_DISPLAY_NAMES = Arrays.asList(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), Bundle.TagNameDefinition_predefTagNames_followUp_text(),
             Bundle.TagNameDefinition_predefTagNames_notableItem_text(), DhsImageCategory.ONE.getDisplayName(),
             DhsImageCategory.TWO.getDisplayName(), DhsImageCategory.THREE.getDisplayName(),
-            DhsImageCategory.FOUR.getDisplayName(), DhsImageCategory.FIVE.getDisplayName());
+            DhsImageCategory.FOUR.getDisplayName(), DhsImageCategory.FIVE.getDisplayName(), DhsImageCategory.ZERO.getDisplayName());
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;

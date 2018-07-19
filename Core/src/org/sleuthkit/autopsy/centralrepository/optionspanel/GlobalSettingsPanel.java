@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 /**
  * Main settings panel for the Central Repository
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
@@ -123,6 +124,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         manageOrganizationButton = new javax.swing.JButton();
         organizationScrollPane = new javax.swing.JScrollPane();
         organizationTextArea = new javax.swing.JTextArea();
+        casesPanel = new javax.swing.JPanel();
+        showCasesButton = new javax.swing.JButton();
+        casesScrollPane = new javax.swing.JScrollPane();
+        casesTextArea = new javax.swing.JTextArea();
         tbOops = new javax.swing.JTextField();
 
         setName(""); // NOI18N
@@ -275,7 +280,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(organizationPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(organizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(organizationScrollPane)
+                    .addComponent(organizationScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 992, Short.MAX_VALUE)
                     .addGroup(organizationPanelLayout.createSequentialGroup()
                         .addComponent(manageOrganizationButton)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -291,6 +296,52 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGap(8, 8, 8))
         );
 
+        casesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        casesPanel.setName("Case Details"); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(showCasesButton, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.showCasesButton.text")); // NOI18N
+        showCasesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showCasesButtonActionPerformed(evt);
+            }
+        });
+
+        casesScrollPane.setBorder(null);
+
+        casesTextArea.setEditable(false);
+        casesTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        casesTextArea.setColumns(20);
+        casesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        casesTextArea.setLineWrap(true);
+        casesTextArea.setRows(2);
+        casesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesTextArea.text")); // NOI18N
+        casesTextArea.setWrapStyleWord(true);
+        casesTextArea.setBorder(null);
+        casesScrollPane.setViewportView(casesTextArea);
+
+        javax.swing.GroupLayout casesPanelLayout = new javax.swing.GroupLayout(casesPanel);
+        casesPanel.setLayout(casesPanelLayout);
+        casesPanelLayout.setHorizontalGroup(
+            casesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(casesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(casesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(casesScrollPane)
+                    .addGroup(casesPanelLayout.createSequentialGroup()
+                        .addComponent(showCasesButton)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        casesPanelLayout.setVerticalGroup(
+            casesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, casesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(casesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(showCasesButton)
+                .addGap(8, 8, 8))
+        );
+
         tbOops.setEditable(false);
         tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
         tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
@@ -300,20 +351,21 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lbCentralRepository, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(lbCentralRepository, javax.swing.GroupLayout.DEFAULT_SIZE, 1022, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(cbUseCentralRepo)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 974, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(36, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 1012, Short.MAX_VALUE)
-                    .addComponent(organizationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.DEFAULT_SIZE, 1016, Short.MAX_VALUE)
+                    .addComponent(organizationPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(casesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cbUseCentralRepo)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 974, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -328,9 +380,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(organizationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(casesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 92, Short.MAX_VALUE))
+                .addContainerGap())
         );
+
+        casesPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.Case Details.AccessibleContext.accessibleName")); // NOI18N
 
         jScrollPane1.setViewportView(jPanel1);
 
@@ -342,13 +398,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
         store();
-        ManageCorrelationPropertiesDialog dialog = new ManageCorrelationPropertiesDialog();
+        ManageCorrelationPropertiesDialog manageCorrelationDialog = new ManageCorrelationPropertiesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
 
@@ -373,8 +429,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed
         store();
-        ManageOrganizationsDialog dialog = new ManageOrganizationsDialog();
+        ManageOrganizationsDialog manageOrganizationsDialog = new ManageOrganizationsDialog();
     }//GEN-LAST:event_manageOrganizationButtonActionPerformed
+
+    private void showCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showCasesButtonActionPerformed
+        store();
+        ShowCasesDialog showCasesDialog = new ShowCasesDialog();
+    }//GEN-LAST:event_showCasesButtonActionPerformed
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
@@ -552,12 +613,18 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         organizationPanel.setEnabled(enable && !ingestRunning);
         organizationTextArea.setEnabled(enable && !ingestRunning);
         manageOrganizationButton.setEnabled(enable && !ingestRunning);
+        showCasesButton.setEnabled(enable && !ingestRunning);
+        casesPanel.setEnabled(enable && !ingestRunning);
+        casesTextArea.setEnabled(enable && !ingestRunning);
         return true;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnDbConfigure;
     private javax.swing.JButton bnManageTypes;
+    private javax.swing.JPanel casesPanel;
+    private javax.swing.JScrollPane casesScrollPane;
+    private javax.swing.JTextArea casesTextArea;
     private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
     private javax.swing.JTextArea correlationPropertiesTextArea;
@@ -576,6 +643,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JTextArea organizationTextArea;
     private javax.swing.JPanel pnCorrelationProperties;
     private javax.swing.JPanel pnDatabaseConfiguration;
+    private javax.swing.JButton showCasesButton;
     private javax.swing.JTextField tbOops;
     // End of variables declaration//GEN-END:variables
 }

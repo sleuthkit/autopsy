@@ -24,8 +24,6 @@ import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Central Repository database implementation using Postgres as a
  * backend
  */
-public class PostgresEamDb extends AbstractSqlEamDb {
+final class PostgresEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDb.class.getName());
 
@@ -116,7 +114,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
             String instancesTemplate = "TRUNCATE TABLE %s_instances RESTART IDENTITY CASCADE";
             String referencesTemplate = "TRUNCATE TABLE reference_%s RESTART IDENTITY CASCADE";
-            for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
+            for (CorrelationAttribute.Type type : defaultCorrelationTypes) {
                 dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
                 // FUTURE: support other reference types
                 if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Imports a hash set into the central repository and updates a progress dialog
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
 
     private CentralRepoImportWorker worker;   // Swing worker that will import the file and send updates to the dialog

@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.io.File;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -31,10 +28,11 @@ import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -42,8 +40,6 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -76,7 +72,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         initComponents();
 
         this.setupDataSources();
-        
+
         this.errorText.setVisible(false);
     }
 
@@ -97,10 +93,6 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
         new SwingWorker<Map<Long, String>, Void>() {
 
-            private static final String SELECT_DATA_SOURCES_LOGICAL = "select obj_id, name from tsk_files where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
-            private static final String SELECT_DATA_SOURCES_IMAGE = "select obj_id, name from tsk_image_names where obj_id in (SELECT obj_id FROM tsk_objects WHERE obj_id in (select obj_id from data_source_info))";
-
             private void updateUi() {
 
                 String[] dataSourcesNames = new String[CommonFilesPanel.this.dataSourceMap.size()];
@@ -112,12 +104,15 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                     CommonFilesPanel.this.selectDataSourceComboBox.setModel(CommonFilesPanel.this.dataSourcesList);
 
                     boolean multipleDataSources = this.caseHasMultipleSources();
-                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(multipleDataSources);
-                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(multipleDataSources);
-
+                    
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setEnabled(true);
+                    CommonFilesPanel.this.allDataSourcesRadioButton.setSelected(true);
+                    
                     if (!multipleDataSources) {
-                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(true);
-                        withinDataSourceSelected(true);
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setEnabled(false);
+                        CommonFilesPanel.this.withinDataSourceRadioButton.setSelected(false);
+                        withinDataSourceSelected(false);
+                        CommonFilesPanel.this.selectDataSourceComboBox.setEnabled(false);
                     }
 
                     CommonFilesPanel.this.searchButton.setEnabled(true);
@@ -128,51 +123,13 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             }
 
             private boolean caseHasMultipleSources() {
-                return CommonFilesPanel.this.dataSourceMap.size() >= 2;
-            }
-
-            private void loadLogicalSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws TskCoreException, SQLException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_LOGICAL);
-                        ResultSet resultSet = query.getResultSet()) {
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        dataSouceMap.put(objectId, dataSourceName);
-                    }
-                }
-            }
-
-            private void loadImageSources(SleuthkitCase tskDb, Map<Long, String> dataSouceMap) throws SQLException, TskCoreException {
-                //try block releases resources - exceptions are handled in done()
-                try (
-                        CaseDbQuery query = tskDb.executeQuery(SELECT_DATA_SOURCES_IMAGE);
-                        ResultSet resultSet = query.getResultSet()) {
-                    
-                    while (resultSet.next()) {
-                        Long objectId = resultSet.getLong(1);
-                        String dataSourceName = resultSet.getString(2);
-                        File image = new File(dataSourceName);
-                        String dataSourceNameTrimmed = image.getName();
-                        dataSouceMap.put(objectId, dataSourceNameTrimmed);
-                    }
-                }
+                return CommonFilesPanel.this.dataSourceMap.size() >= 3;
             }
 
             @Override
             protected Map<Long, String> doInBackground() throws NoCurrentCaseException, TskCoreException, SQLException {
-
-                Map<Long, String> dataSouceMap = new HashMap<>();
-
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-
-                loadLogicalSources(tskDb, dataSouceMap);
-
-                loadImageSources(tskDb, dataSouceMap);
-
-                return dataSouceMap;
+                DataSourceLoader loader = new DataSourceLoader();
+                return loader.getDataSourceMap();
             }
 
             @Override
@@ -212,6 +169,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
         "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
         "CommonFilesPanel.search.results.pathText=Common Files Search Results",
+        "CommonFilesPanel.search.done.searchProgressGathering=Gathering Common Files Search Results.",
+        "CommonFilesPanel.search.done.searchProgressDisplay=Displaying Common Files Search Results.",
         "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
         "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
@@ -223,7 +182,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
         new SwingWorker<CommonFilesMetadata, Void>() {
 
             private String tabTitle;
-
+            private ProgressHandle progress;
+            
             private void setTitleForAllDataSources() {
                 this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
             }
@@ -250,7 +210,11 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException {
+            protected CommonFilesMetadata doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+                progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
+                progress.start();
+                progress.switchToIndeterminate();
+                
                 Long dataSourceId = determineDataSourceId();
 
                 CommonFilesMetadataBuilder builder;
@@ -285,22 +249,21 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
             protected void done() {
                 try {
                     super.done();
-
                     CommonFilesMetadata metadata = get();
 
                     CommonFilesNode commonFilesNode = new CommonFilesNode(metadata);
 
+                    //TODO this could be enumerating the children!!!
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonFilesPanel.this));
 
-                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode);
+                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
 
-                    DataResultViewerTable table = new DataResultViewerTable();
-                    
+                    DataResultViewerTable table = new CommonFilesSearchResultsViewerTable();
+
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
-                                        
+                    progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgressDisplay());
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
-
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
                     MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
@@ -321,6 +284,8 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
                         errorMessage = Bundle.CommonFilesPanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
+                } finally {
+                    progress.finish();
                 }
             }
         }.execute();
@@ -590,7 +555,7 @@ public final class CommonFilesPanel extends javax.swing.JPanel {
 
             this.pictureVideoCheckbox.setEnabled(true);
             this.documentsCheckbox.setEnabled(true);
-                        
+
             this.toggleErrorTextAndSearchBox();
         }
     }

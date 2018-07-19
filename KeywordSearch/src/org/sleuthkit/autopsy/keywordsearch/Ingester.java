@@ -27,7 +27,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.healthmonitor.EnterpriseHealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
@@ -237,9 +237,9 @@ class Ingester {
 
         try {
             //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
-            TimingMetric metric = EnterpriseHealthMonitor.getTimingMetric("Solr: Index chunk");
+            TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
             solrServer.addDocument(updateDoc);
-            EnterpriseHealthMonitor.submitTimingMetric(metric);
+            HealthMonitor.submitTimingMetric(metric);
             uncommitedIngests = true;
 
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
