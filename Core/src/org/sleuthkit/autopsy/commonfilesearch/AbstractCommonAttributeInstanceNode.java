@@ -92,7 +92,7 @@ abstract class AbstractCommonAttributeInstanceNode {
 
     /**
      * Implement this in subclasses to find the AbstractFile by whatever means
-     * necessary. This will be called by this.lookupOrLoadAbstractFile. In some
+     * available. This will be called by this.lookupOrLoadAbstractFile. In some
      * cases we may have the object abstractFileId, in other cases we may need 
      * to use the file name.
      *
