@@ -141,7 +141,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * Configure the child OutlineView (explorer view) component.
          */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
-        
+
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -208,6 +208,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode) {
+        if (! SwingUtilities.isEventDispatchThread()) {
+            LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
+            return;
+        }
+        
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -281,7 +286,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * let the table resize itself.
          */
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
-
+       
         assignColumns(props); // assign columns to match the properties
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
