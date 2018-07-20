@@ -73,7 +73,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         } else {
             setDefaultCloseOperation(0);
         }
-        AddValuesToHashDatabaseButton.setEnabled(enable);
+        okButton.setEnabled(enable);
         cancelButton.setEnabled(enable);
         pasteFromClipboardButton.setEnabled(enable);
     }
@@ -91,7 +91,7 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         jScrollPane1 = new javax.swing.JScrollPane();
         hashValuesTextArea = new javax.swing.JTextArea();
         pasteFromClipboardButton = new javax.swing.JButton();
-        AddValuesToHashDatabaseButton = new javax.swing.JButton();
+        okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -115,10 +115,10 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(AddValuesToHashDatabaseButton, org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.AddValuesToHashDatabaseButton.text_2")); // NOI18N
-        AddValuesToHashDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(AddHashValuesToDatabaseDialog.class, "AddHashValuesToDatabaseDialog.okButton.text_2")); // NOI18N
+        okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                AddValuesToHashDatabaseButtonActionPerformed(evt);
+                okButtonActionPerformed(evt);
             }
         });
 
@@ -136,31 +136,30 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(instructionLabel)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(AddValuesToHashDatabaseButton, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cancelButton, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pasteFromClipboardButton, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(pasteFromClipboardButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 121, Short.MAX_VALUE)
+                        .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(instructionLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(AddValuesToHashDatabaseButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(pasteFromClipboardButton))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(pasteFromClipboardButton)
+                    .addComponent(okButton)
+                    .addComponent(cancelButton))
                 .addContainerGap())
         );
 
@@ -213,17 +212,17 @@ public class AddHashValuesToDatabaseDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_hashValuesTextAreaMouseClicked
 
-    private void AddValuesToHashDatabaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddValuesToHashDatabaseButtonActionPerformed
+    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         AddHashValuesToDatabaseProgressDialog progressDialog = new AddHashValuesToDatabaseProgressDialog(this, hashDb, hashValuesTextArea.getText());
         progressDialog.addHashValuesToDatabase();
-    }//GEN-LAST:event_AddValuesToHashDatabaseButtonActionPerformed
+    }//GEN-LAST:event_okButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton AddValuesToHashDatabaseButton;
     private javax.swing.JButton cancelButton;
     private javax.swing.JTextArea hashValuesTextArea;
     private javax.swing.JLabel instructionLabel;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton okButton;
     private javax.swing.JButton pasteFromClipboardButton;
     // End of variables declaration//GEN-END:variables
 }
