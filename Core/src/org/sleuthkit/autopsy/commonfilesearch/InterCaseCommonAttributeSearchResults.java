@@ -64,6 +64,7 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
             File fileFromPath = new File(currentFullPath);
             String fileName = fileFromPath.getName();
+            //TODO this seems like a bug - we maybe need to look at all of these not just the first
             AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s'", fileName)).get(0);
 
             return abstractFile;

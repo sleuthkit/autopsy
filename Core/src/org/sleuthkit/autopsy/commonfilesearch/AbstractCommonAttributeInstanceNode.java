@@ -67,6 +67,7 @@ abstract class AbstractCommonAttributeInstanceNode {
      * already so we can avoid extra roundtrips to the case db
      */
     AbstractCommonAttributeInstanceNode(Map<Long, AbstractFile> cachedFiles) {
+        this.abstractFileObjectId = -1L;
         this.cachedFiles = cachedFiles;
         this.caseName = "";
         this.dataSource = "";
@@ -80,12 +81,18 @@ abstract class AbstractCommonAttributeInstanceNode {
      * implementations of this object
      */
     AbstractFile lookupOrLoadAbstractFile() {
+        //TODO this is broken
         if (getCachedFiles().containsKey(this.getAbstractFileObjectId())) {
             return getCachedFiles().get(this.getAbstractFileObjectId());
         } else {
-            AbstractFile file = this.loadFileFromSleuthkitCase();
-            getCachedFiles().put(this.getAbstractFileObjectId(), file);
-            return file;
+            try {
+                AbstractFile file = this.loadFileFromSleuthkitCase();
+                final long id = file.getId();
+                this.cachedFiles.put(id, file);
+                return file;
+            } catch (Exception e) {
+                throw e;
+            }
         }
     }
 
@@ -132,10 +139,21 @@ abstract class AbstractCommonAttributeInstanceNode {
     }
 
     /**
+     * ObjectId of the AbstractFile that is equivalent to the file from which
+     * this common attribute instance
+     *
      * @return the abstractFileObjectId
      */
     Long getAbstractFileObjectId() {
         return abstractFileObjectId;
+    }
+
+    /**
+     * Set the ObjectId of the AbstractFile that is equaivalent to the file from
+     * which this common attribute instance
+     */
+    void setAbstractFileObjectId(Long abstractFileObjectId) {
+        this.abstractFileObjectId = abstractFileObjectId;
     }
 
     /**
@@ -149,34 +167,37 @@ abstract class AbstractCommonAttributeInstanceNode {
     }
 
     /**
-     * Use this to create an AbstractCommonAttributeInstanceNode of the 
-     * appropriate type.  In any case, we'll get something which extends 
-     * DisplayableItemNode which can be used to populate the tree.  
-     * 
+     * Use this to create an AbstractCommonAttributeInstanceNode of the
+     * appropriate type. In any case, we'll get something which extends
+     * DisplayableItemNode which can be used to populate the tree.
+     *
      * If the common attribute in question could be derived from an AbstractFile
-     * in the present SleuthkitCase, we can use an 
-     * IntraCaseCommonAttributeInstanceNode which enables extended functionality 
+     * in the present SleuthkitCase, we can use an
+     * IntraCaseCommonAttributeInstanceNode which enables extended functionality
      * in the context menu and in the content viewer.
-     * 
-     * Otherwise, we will get an InterCaseCommonAttributeInstanceNode which 
+     *
+     * Otherwise, we will get an InterCaseCommonAttributeInstanceNode which
      * supports only baseline functionality.
-     * 
-     * @param attributeInstance common file attribute instance form the central repo
-     * @param equivalentAbstractFile an AbstractFile which is equivalent to the file in which the attribute instance was found
-     * @param currentCaseName 
+     *
+     * @param attributeInstance common file attribute instance form the central
+     * repo
+     * @param equivalentAbstractFile an AbstractFile which is equivalent to the
+     * file in which the attribute instance was found
+     * @param currentCaseName
      * @return the appropriate leaf node for the results tree
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
     static DisplayableItemNode createInstance(CorrelationAttributeInstance attributeInstance, AbstractFile equivalentAbstractFile, String currentCaseName) throws TskCoreException {
+
         DisplayableItemNode leafNode;
 
         final String attributeDataSourceName = attributeInstance.getCorrelationDataSource().getName();
         final String abstractFileDataSourceName = equivalentAbstractFile.getDataSource().getName();
 
         final String attributeInstanceCaseName = attributeInstance.getCorrelationCase().getDisplayName();
-        
+
         final String attributeInstanceFullPath = attributeInstance.getFilePath().replace("\\", "/");
-        
+
         final String currentAbstractFileParentPath = equivalentAbstractFile.getParentPath();
         final String currentAbstractFileName = equivalentAbstractFile.getName();
         final String abstractFileFullPath = (currentAbstractFileParentPath + currentAbstractFileName).replace("\\", "/");
