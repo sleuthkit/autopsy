@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.Collections;
 import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
@@ -37,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 abstract class AbstractCommonAttributeInstanceNode {
 
-    private Long abstractFileObjectId;
+    private final Long abstractFileObjectId;
     private final Map<Long, AbstractFile> cachedFiles;
     private final String caseName;
     private final String dataSource;
@@ -81,26 +80,21 @@ abstract class AbstractCommonAttributeInstanceNode {
      * implementations of this object
      */
     AbstractFile lookupOrLoadAbstractFile() {
-        //TODO this is broken
-        if (getCachedFiles().containsKey(this.getAbstractFileObjectId())) {
-            return getCachedFiles().get(this.getAbstractFileObjectId());
+        if (this.cachedFiles.containsKey(this.getAbstractFileObjectId())) {
+            return this.cachedFiles.get(this.getAbstractFileObjectId());
         } else {
-            try {
-                AbstractFile file = this.loadFileFromSleuthkitCase();
-                final long id = file.getId();
-                this.cachedFiles.put(id, file);
-                return file;
-            } catch (Exception e) {
-                throw e;
-            }
+            AbstractFile file = this.loadFileFromSleuthkitCase();
+            final long abstractFileId = file.getId();
+            this.cachedFiles.put(abstractFileId, file);
+            return file;
         }
     }
 
     /**
      * Implement this in subclasses to find the AbstractFile by whatever means
      * necessary. This will be called by this.lookupOrLoadAbstractFile. In some
-     * cases we may have the object id, in other cases we may need to use the
-     * file name.
+     * cases we may have the object abstractFileId, in other cases we may need 
+     * to use the file name.
      *
      * @return AbstractFile corresponding to this common attribute
      */
@@ -146,24 +140,6 @@ abstract class AbstractCommonAttributeInstanceNode {
      */
     Long getAbstractFileObjectId() {
         return abstractFileObjectId;
-    }
-
-    /**
-     * Set the ObjectId of the AbstractFile that is equaivalent to the file from
-     * which this common attribute instance
-     */
-    void setAbstractFileObjectId(Long abstractFileObjectId) {
-        this.abstractFileObjectId = abstractFileObjectId;
-    }
-
-    /**
-     * Get the map of AbstractFile which we use to avoid loading the same file
-     * from the SleuthkitCase more than necessary.
-     *
-     * @return the cachedFiles
-     */
-    Map<Long, AbstractFile> getCachedFiles() {
-        return Collections.unmodifiableMap(cachedFiles);
     }
 
     /**
