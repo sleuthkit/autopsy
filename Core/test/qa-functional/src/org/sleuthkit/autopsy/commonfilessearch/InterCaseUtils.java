@@ -189,7 +189,7 @@ class InterCaseUtils {
         } else {
             //it is reasonable that this might happen...
             //  for example when we test the feature in the absence of an enabled eamdb 
-            return new HashMap<Integer, String>(0);
+            return new HashMap<>(0);
         }
     }
 
@@ -295,12 +295,12 @@ class InterCaseUtils {
         
         for(Map.Entry<Integer, List<CommonAttributeValue>> file : searchDomain.getMetadata().entrySet()){
             
-            Collection<IntraCaseCommonAttributeSearchResults> fileInstances = file.getValue();
+            //Collection<IntraCaseCommonAttributeSearchResults> fileInstances = file.getValue();
             
-            for(IntraCaseCommonAttributeSearchResults fileInstance : fileInstances){
-                
-                
-            }
+//            for(IntraCaseCommonAttributeSearchResults fileInstance : fileInstances){
+//                
+//                
+//            }
         }
         
         return false;
