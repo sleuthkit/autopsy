@@ -33,9 +33,9 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
@@ -207,8 +207,8 @@ class IntraCaseUtils {
 
         for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
             for (CommonAttributeValue md : entry.getValue()) {
-                for (IntraCaseCommonAttributeSearchResults fim : md.getMetadata()) {
-                    instanceIdToDataSource.put(fim.getObjectId(), fim.getDataSourceName());
+                for (AbstractCommonAttributeInstanceNode fim : md.getMetadata()) {
+                    instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
                 }
             }
         }
