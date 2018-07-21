@@ -27,8 +27,8 @@ import javax.swing.ComboBoxModel;
 import org.openide.util.NbBundle;
 
 /**
- *
- * @author bsweeney
+ * UI controls for Common Files Search scenario where the user intends to find
+ * common files between cases in addition to the present case.
  */
 public class InterCasePanel extends javax.swing.JPanel {
     

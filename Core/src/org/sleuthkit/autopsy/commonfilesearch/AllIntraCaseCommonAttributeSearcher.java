@@ -49,7 +49,7 @@ final public class AllIntraCaseCommonAttributeSearcher extends IntraCaseCommonAt
     }
 
     @Override
-    protected String buildTabTitle() {
+     String buildTabTitle() {
         final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleIntraAll();
         return String.format(titleTemplate, new Object[]{buildCategorySelectionString});

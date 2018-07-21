@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.HashUtility;
  */
 abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
-    EamDb dbManager;
+    private final EamDb dbManager;
 
     /**
      * Implements the algorithm for getting common files across all data sources
