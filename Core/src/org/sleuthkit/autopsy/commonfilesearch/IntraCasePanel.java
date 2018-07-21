@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
@@ -69,7 +70,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
     }
     
     public Map<Long, String> getDataSourceMap(){
-        return this.dataSourceMap;
+        return Collections.unmodifiableMap(this.dataSourceMap);
     }
     
     Long getSelectedDataSourceId(){
@@ -196,7 +197,8 @@ public class IntraCasePanel extends javax.swing.JPanel {
     }
 
     void setDataSourceMap(Map<Long, String> dataSourceMap) {
-        this.dataSourceMap = dataSourceMap;
+        this.dataSourceMap.clear();
+        this.dataSourceMap.putAll(dataSourceMap);
     }
 
     @NbBundle.Messages({

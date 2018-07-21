@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -73,11 +72,9 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
 
     protected CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
-        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = new HashMap<>();
-
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
-        interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
 
         return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
@@ -88,5 +85,4 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterSingle();
         return String.format(titleTemplate, new Object[]{correlationCaseName, buildCategorySelectionString});
     }
-
 }

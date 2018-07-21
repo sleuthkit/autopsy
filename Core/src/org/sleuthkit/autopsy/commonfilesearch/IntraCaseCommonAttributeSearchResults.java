@@ -55,7 +55,8 @@ final public class IntraCaseCommonAttributeSearchResults extends AbstractCommonA
         return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
     
-    protected AbstractFile loadFileFromSleuthkitCase() {
+    @Override
+    AbstractFile loadFileFromSleuthkitCase() {
 
         Case currentCase;
         try {
