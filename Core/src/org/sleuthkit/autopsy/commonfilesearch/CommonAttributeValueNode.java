@@ -134,13 +134,10 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      */
     static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstanceNode> {
 
-        //private final Map<Long, AbstractFile> cachedFiles;
-        
         private final CommonAttributeValue descendants;
 
         FileInstanceNodeFactory(CommonAttributeValue descendants) {
             this.descendants = descendants;
-            //this.cachedFiles = new HashMap<>();
         }
 
         @Override
@@ -154,5 +151,4 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
             return true;
         }
     }
-
 }
