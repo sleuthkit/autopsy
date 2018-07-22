@@ -19,16 +19,15 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 
 /**
  * If I use the search all cases option: One node for Hash A (1_1_A.jpg,
@@ -79,10 +78,8 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
-            //this is proabbly not needed and should be pulled out of the constructor if possible
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
-            IntraCaseCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             

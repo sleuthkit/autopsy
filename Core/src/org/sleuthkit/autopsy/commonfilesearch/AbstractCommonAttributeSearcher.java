@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Prototype for an object which finds files with common attributes.
  * Subclass this and implement findFiles in order 
  */
-abstract class AbstractCommonAttributeSearcher {
+public abstract class AbstractCommonAttributeSearcher {
     
     private boolean filterByMedia;
     private boolean filterByDoc;
@@ -58,7 +58,7 @@ abstract class AbstractCommonAttributeSearcher {
      * @throws SQLException
      * @throws EamDbException 
      */
-    abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
     
     /**
      * Implement this to create a descriptive string for the tab which will display

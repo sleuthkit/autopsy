@@ -30,6 +30,11 @@ import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -94,34 +99,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(IntraCaseUtils.verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -135,34 +140,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -176,34 +181,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, true);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, true);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -218,34 +223,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -260,34 +265,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, true, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, true, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -302,34 +307,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, true);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, true);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -344,34 +349,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long second = getDataSourceIdByName(SET2, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(second, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(second, dataSources, false, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -385,34 +390,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long last = getDataSourceIdByName(SET4, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(last, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(last, dataSources, false, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -426,34 +431,34 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long third = getDataSourceIdByName(SET3, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, false, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 
             List<AbstractFile> files = getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, DOC, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, PDF, SET4, 0));
 
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
-            assertTrue(verifyFileExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }

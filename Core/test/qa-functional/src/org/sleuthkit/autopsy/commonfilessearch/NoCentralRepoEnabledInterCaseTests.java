@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
@@ -27,9 +26,9 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 
 /**
  *
@@ -41,6 +40,8 @@ import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
 
     private final InterCaseUtils utils;
+    
+    private Case currentCase;
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledInterCaseTests.class).
@@ -71,9 +72,7 @@ public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
 
     public void testOne() {
         try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
-
-            IntraCaseCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false);
 
             CommonAttributeSearchResults metadata = builder.findFiles();
 
