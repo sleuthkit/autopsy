@@ -40,24 +40,24 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 final public class InstanceCountNode extends DisplayableItemNode {
 
     final private int instanceCount;
-    final private List<CommonAttributeValue> metadataList;
+    final private List<CommonAttributeValue> attributeValues;
 
     /**
      * Create a node with the given number of instances, and the given
      * selection of metadata.
      * @param instanceCount
-     * @param md5Metadata 
+     * @param attributeValues 
      */
     @NbBundle.Messages({
         "InstanceCountNode.displayName=Files with %s instances (%s)"
     })
-    public InstanceCountNode(int instanceCount, List<CommonAttributeValue> md5Metadata) {
-        super(Children.create(new Md5NodeFactory(md5Metadata), true));
+    public InstanceCountNode(int instanceCount, List<CommonAttributeValue> attributeValues) {
+        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues), true));
 
         this.instanceCount = instanceCount;
-        this.metadataList = md5Metadata;
+        this.attributeValues = attributeValues;
         
-        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), md5Metadata.size()));
+        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), attributeValues.size()));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
@@ -73,8 +73,8 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * Get a list of metadata for the MD5s which are children of this object.
      * @return List<Md5Metadata>
      */
-    List<CommonAttributeValue> getMetadata() {
-        return Collections.unmodifiableList(this.metadataList);
+    List<CommonAttributeValue> getAttributeValues() {
+        return Collections.unmodifiableList(this.attributeValues);
     }
 
     @Override
@@ -113,34 +113,36 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * ChildFactory which builds CommonFileParentNodes from the
      * CommonFilesMetaaData models.
      */
-    static class Md5NodeFactory extends ChildFactory<String> {
+    static class CommonAttributeValueNodeFactory extends ChildFactory<String> {
 
         /**
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
+        // maps sting version of value to value Object (??)
         private final Map<String, CommonAttributeValue> metadata;
 
-        Md5NodeFactory(List<CommonAttributeValue> metadata) {
+        CommonAttributeValueNodeFactory(List<CommonAttributeValue> attributeValues) {
             this.metadata = new HashMap<>();
 
-            Iterator<CommonAttributeValue> iterator = metadata.iterator();
+            Iterator<CommonAttributeValue> iterator = attributeValues.iterator();
             while (iterator.hasNext()) {
-                CommonAttributeValue md5Metadata = iterator.next();
-                this.metadata.put(md5Metadata.getMd5(), md5Metadata);
+                CommonAttributeValue attributeValue = iterator.next();
+                this.metadata.put(attributeValue.getValue(), attributeValue);
             }
         }
 
         @Override
-        protected Node createNodeForKey(String md5) {
-            CommonAttributeValue md5Metadata = this.metadata.get(md5);
-            return new CommonAttributeValueNode(md5Metadata);
-        }
-
-        @Override
         protected boolean createKeys(List<String> list) {
+            // @@@ We should just use CommonAttributeValue as the key...
             list.addAll(this.metadata.keySet());
             return true;
+        }
+        
+        @Override
+        protected Node createNodeForKey(String attributeValue) {
+            CommonAttributeValue md5Metadata = this.metadata.get(attributeValue);
+            return new CommonAttributeValueNode(md5Metadata);
         }
     }
 }

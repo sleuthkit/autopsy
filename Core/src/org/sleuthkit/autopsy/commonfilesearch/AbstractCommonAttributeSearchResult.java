@@ -34,9 +34,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * multiple types of leaf nodes are required to represent Common Attribute
  * Instance nodes.
  */
-public abstract class AbstractCommonAttributeInstanceNode {
+public abstract class AbstractCommonAttributeSearchResult {
 
     private final Long abstractFileObjectId;
+    // maps object ID to file
     private final Map<Long, AbstractFile> cachedFiles;
     private final String caseName;
     private final String dataSource;
@@ -51,7 +52,7 @@ public abstract class AbstractCommonAttributeInstanceNode {
      * @param dataSource datasource where this attribute appears
      * @param caseName case where this attribute appears
      */
-    AbstractCommonAttributeInstanceNode(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
+    AbstractCommonAttributeSearchResult(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         this.abstractFileObjectId = abstractFileReference;
         this.cachedFiles = cachedFiles;
         this.caseName = caseName;
@@ -65,7 +66,7 @@ public abstract class AbstractCommonAttributeInstanceNode {
      * @param cachedFiles storage for abstract files which have been used
      * already so we can avoid extra roundtrips to the case db
      */
-    AbstractCommonAttributeInstanceNode(Map<Long, AbstractFile> cachedFiles) {
+    AbstractCommonAttributeSearchResult(Map<Long, AbstractFile> cachedFiles) {
         this.abstractFileObjectId = -1L;
         this.cachedFiles = cachedFiles;
         this.caseName = "";

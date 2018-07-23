@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeInstanceNode;
@@ -118,7 +118,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(CommonAttributeValueNode mn);
 
-    T visit(CommonAttributeSearchResultNode cfn);
+    T visit(CommonAttributeSearchResultRootNode cfn);
 
     T visit(IntraCaseCommonAttributeInstanceNode fin);
     
@@ -205,7 +205,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(CommonAttributeSearchResultNode cfn) {
+        public T visit(CommonAttributeSearchResultRootNode cfn) {
             return defaultVisit(cfn);
         }
         

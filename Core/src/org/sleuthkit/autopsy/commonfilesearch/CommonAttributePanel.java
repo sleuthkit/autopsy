@@ -185,9 +185,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
                     CommonAttributeSearchResults metadata = this.get();
 
-                    CommonAttributeSearchResultNode commonFilesNode = new CommonAttributeSearchResultNode(metadata);
+                    CommonAttributeSearchResultRootNode commonFilesNode = new CommonAttributeSearchResultRootNode(metadata);
 
-                    // #VIK-3969
+                    // -3969
                     DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
 
                     TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);

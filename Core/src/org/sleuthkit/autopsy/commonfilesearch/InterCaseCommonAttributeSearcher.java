@@ -56,17 +56,18 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
 
     /**
      * @param artifactInstances all 'common files' in central repo
-     * @param commonFiles matches must ultimately have appeared in this
+     * @param commonValues matches must ultimately have appeared in this
      * collection
      * @return collated map of instance counts to lists of matches
      */
-    Map<Integer, List<CommonAttributeValue>> gatherIntercaseResults(Map<Integer, String> commonFiles, Map<Integer, Integer> commonFileCases) {
+    Map<Integer, List<CommonAttributeValue>> gatherIntercaseResults(Map<Integer, String> commonValues, Map<Integer, Integer> commonFileCases) {
 
+        // keyis string of value
         Map<String, CommonAttributeValue> interCaseCommonFiles = new HashMap<>();
 
-        for (int commonAttrId : commonFiles.keySet()) {
+        for (int commonAttrId : commonValues.keySet()) {
 
-            String md5 = commonFiles.get(commonAttrId);
+            String md5 = commonValues.get(commonAttrId);
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
             }
@@ -82,15 +83,18 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
 
                 if (interCaseCommonFiles.containsKey(md5)) {
                     //Add to intercase metaData
-                    final CommonAttributeValue md5Metadata = interCaseCommonFiles.get(md5);
-                    AbstractCommonAttributeInstanceNode nodeGenerator = new InterCaseCommonAttributeSearchResults(commonAttrId, fileCache);
-                    md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
+                    final CommonAttributeValue commonAttributeValue = interCaseCommonFiles.get(md5);
+                    
+                    AbstractCommonAttributeSearchResult searchResult = new InterCaseCommonAttributeSearchResult(commonAttrId, fileCache);
+                    commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
 
                 } else {
-                    CommonAttributeValue md5Metadata = new CommonAttributeValue(md5);
-                    AbstractCommonAttributeInstanceNode nodeGenerator = new InterCaseCommonAttributeSearchResults(commonAttrId, fileCache);
-                    md5Metadata.addFileInstanceMetadata(nodeGenerator, correlationCaseDisplayName);
-                    interCaseCommonFiles.put(md5, md5Metadata);
+                    CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
+                    interCaseCommonFiles.put(md5, commonAttributeValue);
+                    
+                    AbstractCommonAttributeSearchResult searchResult = new InterCaseCommonAttributeSearchResult(commonAttrId, fileCache);
+                    commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
+                    
                 }
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS

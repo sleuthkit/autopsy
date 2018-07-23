@@ -35,15 +35,17 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
+ * Represents that a row in the CR was found in multiple cases. 
+ * 
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
-final public class InterCaseCommonAttributeSearchResults extends AbstractCommonAttributeInstanceNode {
+final public class InterCaseCommonAttributeSearchResult extends AbstractCommonAttributeSearchResult {
 
-    private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResults.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResult.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttributeInstance;
 
-    InterCaseCommonAttributeSearchResults(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
+    InterCaseCommonAttributeSearchResult(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
         this.crFileId = attrInstId;
     }
@@ -79,6 +81,8 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
     @Override
     public DisplayableItemNode[] generateNodes() {
         
+        // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
+        
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
@@ -90,7 +94,7 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
                 
                 AbstractFile equivalentAbstractFile = this.lookupOrLoadAbstractFile();
                 
-                DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstanceNode.createInstance(attrInst, equivalentAbstractFile, currCaseDbName);
+                DisplayableItemNode generatedInstNode = AbstractCommonAttributeSearchResult.createInstance(attrInst, equivalentAbstractFile, currCaseDbName);
 
                 attrInstNodeList.add(generatedInstNode);
 
