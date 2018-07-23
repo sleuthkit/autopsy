@@ -131,7 +131,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
      * <code>CommonAttributeValueNode</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeSearchResult> {
+    static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstance> {
 
         private final CommonAttributeValue descendants;
 
@@ -140,13 +140,13 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
         }
 
         @Override
-        protected boolean createKeys(List<AbstractCommonAttributeSearchResult> list) {
+        protected boolean createKeys(List<AbstractCommonAttributeInstance> list) {
             list.addAll(this.descendants.getInstances());
             return true;
         }
         
         @Override
-        protected Node[] createNodesForKey(AbstractCommonAttributeSearchResult searchResult) {
+        protected Node[] createNodesForKey(AbstractCommonAttributeInstance searchResult) {
             return searchResult.generateNodes();
         }
 

@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -120,9 +120,9 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(CommonAttributeSearchResultRootNode cfn);
 
-    T visit(IntraCaseCommonAttributeInstanceNode fin);
+    T visit(CaseDBCommonAttributeInstanceNode fin);
     
-    T visit(InterCaseCommonAttributeInstanceNode crfin);
+    T visit(CentralRepoCommonAttributeInstanceNode crfin);
     
     T visit(InstanceCountNode icn);
 
@@ -195,7 +195,7 @@ public interface DisplayableItemNodeVisitor<T> {
         protected abstract T defaultVisit(DisplayableItemNode c);
 
         @Override
-        public T visit(IntraCaseCommonAttributeInstanceNode fin) {
+        public T visit(CaseDBCommonAttributeInstanceNode fin) {
             return defaultVisit(fin);
         }
 
@@ -215,7 +215,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(InterCaseCommonAttributeInstanceNode crfin){
+        public T visit(CentralRepoCommonAttributeInstanceNode crfin){
             return defaultVisit(crfin);
         }
 

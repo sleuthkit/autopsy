@@ -33,7 +33,7 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearchResult;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
@@ -207,7 +207,7 @@ class IntraCaseUtils {
 
         for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
             for (CommonAttributeValue md : entry.getValue()) {
-                for (AbstractCommonAttributeSearchResult fim : md.getInstances()) {
+                for (AbstractCommonAttributeInstance fim : md.getInstances()) {
                     instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
                 }
             }

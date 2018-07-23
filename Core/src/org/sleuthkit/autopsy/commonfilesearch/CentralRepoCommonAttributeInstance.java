@@ -39,13 +39,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
-final public class InterCaseCommonAttributeSearchResult extends AbstractCommonAttributeSearchResult {
+final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttributeInstance {
 
-    private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResult.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttributeInstance;
 
-    InterCaseCommonAttributeSearchResult(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
         this.crFileId = attrInstId;
     }
@@ -55,9 +55,10 @@ final public class InterCaseCommonAttributeSearchResult extends AbstractCommonAt
     }
 
     @Override
-    AbstractFile loadFileFromSleuthkitCase() {
+    AbstractFile getAbstractFile() {
 
         Case currentCase;
+        // @@@ Need to CHeck for NULL.  This seems to depend on generateNodes to be called first
         String currentFullPath = this.currentAttributeInstance.getFilePath();
 
         try {
@@ -88,13 +89,14 @@ final public class InterCaseCommonAttributeSearchResult extends AbstractCommonAt
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
         
+        // @@@ This seems wrong that we are looping here, but only setting one attrInst in the class, which is then used by getAbstractFile().
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
             try {
                 this.setCurrentAttributeInst(attrInst);                
                 
                 AbstractFile equivalentAbstractFile = this.lookupOrLoadAbstractFile();
                 
-                DisplayableItemNode generatedInstNode = AbstractCommonAttributeSearchResult.createInstance(attrInst, equivalentAbstractFile, currCaseDbName);
+                DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createInstance(attrInst, equivalentAbstractFile, currCaseDbName);
 
                 attrInstNodeList.add(generatedInstNode);
 
