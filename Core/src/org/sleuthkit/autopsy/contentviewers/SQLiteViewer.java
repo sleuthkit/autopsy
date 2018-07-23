@@ -302,7 +302,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     return;
                 }            
             }
-         
+            openCase.setExportDirectory(file.getParent());
+            
             exportTableToCsv(file);
         }
     }//GEN-LAST:event_exportCsvButtonActionPerformed

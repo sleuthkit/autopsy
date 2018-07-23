@@ -137,6 +137,8 @@ public class Case {
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
+    private static String userDefinedExportPath;
+    private static boolean useCaseExportPath = true;
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
@@ -1334,7 +1336,29 @@ public class Case {
      * @return The export directory path.
      */
     public String getExportDirectory() {
-        return getOrCreateSubdirectory(EXPORT_FOLDER);
+        String caseExportPath = getOrCreateSubdirectory(EXPORT_FOLDER);
+        
+        if (useCaseExportPath) {
+            return caseExportPath;
+        }
+        
+        File file = new File(userDefinedExportPath);
+        if (!file.exists() || !file.isDirectory()) {
+            return caseExportPath;
+        }
+        
+        return userDefinedExportPath;
+    }
+    
+    /**
+     * Set the default export directory.
+     * 
+     * @param exportPath The export directory path.
+     */
+    public void setExportDirectory(String exportPath) {
+        String caseExportPath = getOrCreateSubdirectory(EXPORT_FOLDER);
+        useCaseExportPath = exportPath.equalsIgnoreCase(caseExportPath);
+        Case.userDefinedExportPath = exportPath;
     }
 
     /**

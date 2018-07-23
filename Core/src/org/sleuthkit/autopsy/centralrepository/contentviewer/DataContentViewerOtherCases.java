@@ -260,6 +260,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 if (!selectedFile.getName().endsWith(".csv")) { // NON-NLS
                     selectedFile = new File(selectedFile.toString() + ".csv"); // NON-NLS
                 }
+                Case openCase = Case.getCurrentCase();
+                openCase.setExportDirectory(selectedFile.getParent());
 
                 writeSelectedRowsToFileAsCSV(selectedFile);
             }

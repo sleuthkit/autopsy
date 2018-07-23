@@ -214,6 +214,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
             if (!selectedFile.getName().endsWith(".xml")) { // NON-NLS
                 selectedFile = new File(selectedFile.toString() + ".xml"); // NON-NLS
             }
+            openCase.setExportDirectory(selectedFile.getParent());
 
             try {
                 //Save the propery list as XML
