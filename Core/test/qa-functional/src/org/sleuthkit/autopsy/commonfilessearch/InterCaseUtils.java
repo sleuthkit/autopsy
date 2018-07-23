@@ -50,14 +50,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
-import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeSearchResults;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -299,19 +298,19 @@ class InterCaseUtils {
         
         int tally = 0;
         
-        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getValues().entrySet()){
+        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getMetadata().entrySet()){
             
-            for(CommonAttributeValue values : entry.getValue()){
+            for(CommonAttributeValue value : entry.getValue()){
                 
-                for(AbstractCommonAttributeInstanceNode commonAttribute : values.getMetadata()){
+                for(AbstractCommonAttributeInstance commonAttribute : value.getInstances()){
                     
-                    if(commonAttribute instanceof InterCaseCommonAttributeSearchResults){
-                        InterCaseCommonAttributeSearchResults results = (InterCaseCommonAttributeSearchResults) commonAttribute;
+                    if(commonAttribute instanceof CentralRepoCommonAttributeInstance){
+                        CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
                         for (DisplayableItemNode din : results.generateNodes()){
                             
-                            if(din instanceof InterCaseCommonAttributeInstanceNode){
+                            if(din instanceof CentralRepoCommonAttributeInstanceNode){
                                 
-                                InterCaseCommonAttributeInstanceNode node = (InterCaseCommonAttributeInstanceNode) din;
+                                CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
                                 CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
                                 
                                 final String fullPath = instance.getFilePath();
@@ -332,9 +331,9 @@ class InterCaseUtils {
                                 } 
                             }
                             
-                            if(din instanceof IntraCaseCommonAttributeInstanceNode){
+                            if(din instanceof CaseDBCommonAttributeInstanceNode){
                                 
-                                IntraCaseCommonAttributeInstanceNode node = (IntraCaseCommonAttributeInstanceNode) din;
+                                CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
                                 AbstractFile file = node.getContent();
                                 
                                 final String testFileName = file.getName();

@@ -205,7 +205,7 @@ class IntraCaseUtils {
     static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 
-        for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getValues().entrySet()) {
+        for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
             for (CommonAttributeValue md : entry.getValue()) {
                 for (AbstractCommonAttributeInstance fim : md.getInstances()) {
                     instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
