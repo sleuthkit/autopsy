@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.Content;
  * Central Repo.  Contrast with <code>SleuthkitCase</code> which should be used 
  * when the FileInstance was found in the case presently open in Autopsy.
  */
-public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
+public class CentralRepoCommonAttributeInstanceNode extends DisplayableItemNode {
 
     private final CorrelationAttributeInstance crFile;
     
@@ -50,7 +50,7 @@ public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
     //  and we can use this to support certain actions in the tree table and crFile viewer
     private final AbstractFile md5Reference;
     
-    InterCaseCommonAttributeInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
+    CentralRepoCommonAttributeInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
         super(Children.LEAF, Lookups.fixed(content)); // Using md5Reference enables Other Occurances, but for the current file path
         this.crFile = content;
         this.setDisplayName(new File(this.crFile.getFilePath()).getName());
@@ -88,7 +88,7 @@ public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
     public String getItemType() {
         //objects of type FileNode will co-occur in the treetable with objects
         //  of this type and they will need to provide the same key
-        return IntraCaseCommonAttributeInstanceNode.class.getName();
+        return CaseDBCommonAttributeInstanceNode.class.getName();
     }
     
     @Override

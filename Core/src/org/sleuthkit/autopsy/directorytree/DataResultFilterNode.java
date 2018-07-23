@@ -56,14 +56,14 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
-import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.DataResultFilterNode_viewSourceArtifact_text;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
@@ -535,12 +535,12 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public AbstractAction visit(IntraCaseCommonAttributeInstanceNode fin){
+        public AbstractAction visit(CaseDBCommonAttributeInstanceNode fin){
             return null;
         }
         
         @Override
-        public AbstractAction visit(InterCaseCommonAttributeInstanceNode iccan){
+        public AbstractAction visit(CentralRepoCommonAttributeInstanceNode iccan){
             return null;
         }
         

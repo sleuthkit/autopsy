@@ -42,7 +42,9 @@ final class InterCaseSearchResultsProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
 
+    // maps row ID to value
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
+    // maps row ID to case ID
     private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();
 
     /**

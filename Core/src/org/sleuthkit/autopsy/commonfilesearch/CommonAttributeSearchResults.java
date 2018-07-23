@@ -24,12 +24,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility and wrapper model around data required for Common Files Search results.
- * Subclass this to implement different selections of files from the case.
+ * Stores the results from the various types of common attribute searching
+ * Stores results based on how they are currently displayed in the UI
  */
 final public class CommonAttributeSearchResults {
     
-    private final Map<Integer, List<CommonAttributeValue>> metadata;
+    // maps instance count to list of attribute values. 
+    private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
     
     /**
      * Create a metadata object which can be handed off to the node
@@ -38,7 +39,7 @@ final public class CommonAttributeSearchResults {
      * @param metadata list of CommonAttributeValue indexed by size of CommonAttributeValue
      */
     CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
-        this.metadata = metadata;
+        this.instanceCountToAttributeValues = metadata;
     }
 
     /**
@@ -50,12 +51,12 @@ final public class CommonAttributeSearchResults {
      * @param md5 key
      * @return 
      */
-    List<CommonAttributeValue> getMetadataForMd5(Integer instanceCount) {
-        return this.metadata.get(instanceCount);
+    List<CommonAttributeValue> getAttributeValuesForInstanceCount(Integer instanceCount) {
+        return this.instanceCountToAttributeValues.get(instanceCount);
     }
 
     public Map<Integer, List<CommonAttributeValue>> getMetadata() {
-        return Collections.unmodifiableMap(this.metadata);
+        return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
     /**
@@ -65,9 +66,9 @@ final public class CommonAttributeSearchResults {
     public int size() {
                 
         int count = 0;
-        for (List<CommonAttributeValue> data : this.metadata.values()) {
+        for (List<CommonAttributeValue> data : this.instanceCountToAttributeValues.values()) {
             for(CommonAttributeValue md5 : data){
-                count += md5.size();
+                count += md5.getInstanceCount();
             }
         }
         return count;

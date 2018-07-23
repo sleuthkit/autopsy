@@ -97,7 +97,7 @@ public abstract class AbstractCommonAttributeSearcher {
         //collate matches by number of matching instances - doing this in sql doesnt seem efficient
         Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new TreeMap<>();
         for(CommonAttributeValue md5Metadata : commonFiles.values()){
-            Integer size = md5Metadata.size();
+            Integer size = md5Metadata.getInstanceCount();
             
             if(instanceCollatedCommonFiles.containsKey(size)){
                 instanceCollatedCommonFiles.get(size).add(md5Metadata);
