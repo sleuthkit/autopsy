@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +51,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 
 /**
@@ -243,7 +241,7 @@ class InterCaseUtils {
 
         String lastCaseName = null;
         Path[] lastPathsForCase = null;
-        //iterate over the collecitons above, creating cases, and storing
+        //iterate over the collections above, creating cases, and storing
         //  just one of them for future reference
         for (int i = 0; i < cases.length; i++) {
             String caseName = cases[i];
@@ -293,7 +291,7 @@ class InterCaseUtils {
         
         int tally = 0;
         
-        for(Map.Entry<Integer, List<CommonAttributeValue>> file : searchDomain.getMetadata().entrySet()){
+        for(Map.Entry<Integer, List<CommonAttributeValue>> file : searchDomain.getValues().entrySet()){
             
             //Collection<IntraCaseCommonAttributeSearchResults> fileInstances = file.getValue();
             

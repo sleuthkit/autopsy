@@ -77,14 +77,14 @@ final public class CommonAttributeSearchResultNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<Integer> list) {
-            list.addAll(this.metadata.getMetadata().keySet());
+            list.addAll(this.metadata.getValues().keySet());
             return true;
         }
         
         @Override
         protected Node createNodeForKey(Integer instanceCount){
-            List<CommonAttributeValue> md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
+            List<CommonAttributeValue> md5Metadata =  this.metadata.getValuesByChildSize(instanceCount);
             return new InstanceCountNode(instanceCount, md5Metadata);
-        }        
+        }
     }
 }

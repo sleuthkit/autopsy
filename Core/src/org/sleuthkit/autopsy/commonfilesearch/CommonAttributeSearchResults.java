@@ -29,45 +29,51 @@ import java.util.Map;
  */
 final public class CommonAttributeSearchResults {
     
-    private final Map<Integer, List<CommonAttributeValue>> metadata;
+    private final Map<Integer, List<CommonAttributeValue>> values;
     
     /**
-     * Create a metadata object which can be handed off to the node
-     * factories.
+     * Create a values object which can be handed off to the node factories.
      * 
-     * @param metadata list of CommonAttributeValue indexed by size of CommonAttributeValue
+     * @param values list of CommonAttributeValue indexed by size of 
+     * CommonAttributeValue
      */
-    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
-        this.metadata = metadata;
+    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> values){
+        this.values = values;
     }
 
     /**
-     * Find the meta data for the given md5.
+     * Find the child node whose children have the specified number of children.
      *
      * This is a convenience method - you can also iterate over
-     * <code>getMetadata()</code>.
+     * <code>getValues()</code>.
      *
-     * @param md5 key
-     * @return 
+     * @param isntanceCound key
+     * @return list of values which represent matches
      */
-    List<CommonAttributeValue> getMetadataForMd5(Integer instanceCount) {
-        return this.metadata.get(instanceCount);
-    }
-
-    public Map<Integer, List<CommonAttributeValue>> getMetadata() {
-        return Collections.unmodifiableMap(this.metadata);
+    List<CommonAttributeValue> getValuesByChildSize(Integer instanceCount) {
+        return this.values.get(instanceCount);
     }
 
     /**
-     * How many distinct file instances exist for this metadata?
-     * @return number of file instances
+     * Get an unmodifiable collection of values, indexed by number of 
+     * grandchildren, which represents the common attributes found in the 
+     * search.
+     * @return map of sizes of children to list of matches
+     */
+    public Map<Integer, List<CommonAttributeValue>> getValues() {
+        return Collections.unmodifiableMap(this.values);
+    }
+
+    /**
+     * How many distinct common files exist for this search results?
+     * @return number of common files
      */
     public int size() {
                 
         int count = 0;
-        for (List<CommonAttributeValue> data : this.metadata.values()) {
-            for(CommonAttributeValue md5 : data){
-                count += md5.size();
+        for (List<CommonAttributeValue> data : this.values.values()) {
+            for(CommonAttributeValue value : data){
+                count += value.size();
             }
         }
         return count;
