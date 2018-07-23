@@ -28,14 +28,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Defines a value that is used for correlation, such as file MD5 or email address. 
+ * Defines a value that was in the common file search results 
+ * as well as information about its instances.
  */
 final public class CommonAttributeValue {
 
     private final String md5;
-    private final List<AbstractCommonAttributeSearchResult> fileInstances;
+    private final List<AbstractCommonAttributeInstance> fileInstances;
 
-    CommonAttributeValue(String md5, List<AbstractCommonAttributeSearchResult> fileInstances) {
+    CommonAttributeValue(String md5, List<AbstractCommonAttributeInstance> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
@@ -55,13 +56,13 @@ final public class CommonAttributeValue {
      * @return 
      */
     public String getCases() {
-        final String cases = this.fileInstances.stream().map(AbstractCommonAttributeSearchResult::getCaseName).collect(Collectors.joining(", "));
+        final String cases = this.fileInstances.stream().map(AbstractCommonAttributeInstance::getCaseName).collect(Collectors.joining(", "));
         return cases;
     }
 
     public String getDataSources() {
         Set<String> sources = new HashSet<>();
-        for (AbstractCommonAttributeSearchResult data : this.fileInstances) {
+        for (AbstractCommonAttributeInstance data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
         
@@ -69,15 +70,16 @@ final public class CommonAttributeValue {
         return dataSources;
     }
 
-    void addFileInstanceMetadata(AbstractCommonAttributeSearchResult metadata) {
+    void addInstance(AbstractCommonAttributeInstance metadata) {
         this.fileInstances.add(metadata);
     }
 
-    void addFileInstanceMetadata(AbstractCommonAttributeSearchResult metadata, String caseName) {
+    void addFileInstanceMetadata(AbstractCommonAttributeInstance metadata, String caseName) {
         this.fileInstances.add(metadata);
+        // @@@ Why are we ignoring caseName?
     }
 
-    public Collection<AbstractCommonAttributeSearchResult> getInstances() {
+    public Collection<AbstractCommonAttributeInstance> getInstances() {
         return Collections.unmodifiableCollection(this.fileInstances);
     }
 

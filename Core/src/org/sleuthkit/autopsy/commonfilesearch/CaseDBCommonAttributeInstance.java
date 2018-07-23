@@ -31,11 +31,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Encapsulates data required to instantiate a <code>FileInstanceNode</code>.
+ * Encapsulates data required to instantiate a <code>FileInstanceNode</code> for an instance in the CaseDB
  */
-final public class IntraCaseCommonAttributeSearchResults extends AbstractCommonAttributeSearchResult {
+final public class CaseDBCommonAttributeInstance extends AbstractCommonAttributeInstance {
     
-    private static final Logger LOGGER = Logger.getLogger(IntraCaseCommonAttributeSearchResults.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CaseDBCommonAttributeInstance.class.getName());
     
     
     /**
@@ -45,18 +45,18 @@ final public class IntraCaseCommonAttributeSearchResults extends AbstractCommonA
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    IntraCaseCommonAttributeSearchResults(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
+    CaseDBCommonAttributeInstance(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
         super(abstractFileReference, cachedFiles, dataSource, caseName);
     }
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        final IntraCaseCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new IntraCaseCommonAttributeInstanceNode(this.lookupOrLoadAbstractFile(), this.getCaseName(), this.getDataSource());
+        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.lookupOrLoadAbstractFile(), this.getCaseName(), this.getDataSource());
         return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
     
     @Override
-    AbstractFile loadFileFromSleuthkitCase() {
+    AbstractFile getAbstractFile() {
 
         Case currentCase;
         try {
