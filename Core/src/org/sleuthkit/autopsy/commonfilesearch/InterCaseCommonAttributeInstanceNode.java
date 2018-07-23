@@ -57,7 +57,7 @@ public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
         this.md5Reference = md5Reference;
     }
     
-    public CorrelationAttributeInstance getCentralRepoFile(){
+    public CorrelationAttributeInstance getCorrelationAttributeInstance(){
         return this.crFile;
     }
     
@@ -101,24 +101,24 @@ public class InterCaseCommonAttributeInstanceNode extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
         
-        final CorrelationAttributeInstance centralRepoFile = this.getCentralRepoFile();
+        final CorrelationAttributeInstance centralRepoFile = this.getCorrelationAttributeInstance();
         
         final String fullPath = centralRepoFile.getFilePath();
         final File file = new File(fullPath);
-        
+
         final String caseName = centralRepoFile.getCorrelationCase().getDisplayName();
-        
+
         final String name = file.getName();
         final String parent = file.getParent();
-        
-        final String caseQualifiedDataSource = centralRepoFile.getCorrelationDataSource().getName();
+
+        final String dataSourceName = centralRepoFile.getCorrelationDataSource().getName();
         
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, name));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, parent));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, ""));
-        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, caseQualifiedDataSource));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, dataSourceName));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, caseName));
 

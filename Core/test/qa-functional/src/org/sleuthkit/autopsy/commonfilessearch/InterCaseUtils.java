@@ -6,7 +6,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this testFile except in compliance with the License.
  * You may obtain a copy of the License at
  * 
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -47,47 +47,54 @@ import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Utilities for testing intercase correlation feature.
  * 
  * Description of Test Data:
- * (Note: files of the same name and extension are identical; 
- * files of the same name and differing extension are not identical.)
- * 
- * Case 1
- *  +Data Set 1
- *      - Hash-0.dat    [file of size 0]
- *      - Hash-A.jpg
- *      - Hash-A.pdf
- *  +Data Set2
- *      - Hash-0.dat    [file of size -0]
- *      - Hash-A.jpg
- *      - Hash-A.pdf
- * Case 2
- *  +Data Set 1
- *      - Hash-A.jpg
- *      - Hash-A.pdf
- *  +Data Set 2
- *      - Hash-A.jpg
- *      - Hash-A.pdf
- *      - Hash_D.doc
- * Case 3
- *  +Data Set 1
- *      - Hash-A.jpg
- *      - Hash-A.pdf
- *      - Hash-C.jpg    [we should never find these!]
- *      - Hash-C.pdf    [we should never find these!]
- *      - Hash-D.jpg
- *  +Data Set 2
- *      - Hash-C.jpg    [we should never find these!]
- *      - Hash-C.pdf
- *      - Hash.D-doc
+ (Note: files of the same name and extension are identical; 
+ files of the same name and differing extension are not identical.)
+ 
+ Case 1
+  +Data Set 1
+      - Hash-0.dat    [testFile of size 0]
+      - Hash-A.jpg
+      - Hash-A.pdf
+  +Data Set2
+      - Hash-0.dat    [testFile of size -0]
+      - Hash-A.jpg
+      - Hash-A.pdf
+ Case 2
+  +Data Set 1
+      - Hash-A.jpg
+      - Hash-A.pdf
+  +Data Set 2
+      - Hash-A.jpg
+      - Hash-A.pdf
+      - Hash_D.doc
+ Case 3
+  +Data Set 1
+      - Hash-A.jpg
+      - Hash-A.pdf
+      - Hash-C.jpg    [we should never find these!]
+      - Hash-C.pdf    [we should never find these!]
+      - Hash-D.jpg
+  +Data Set 2
+      - Hash-C.jpg    [we should never find these!]
+      - Hash-C.pdf
+      - Hash.D-doc
  */
 class InterCaseUtils {
 
@@ -291,26 +298,66 @@ class InterCaseUtils {
         
         int tally = 0;
         
-        for(Map.Entry<Integer, List<CommonAttributeValue>> file : searchDomain.getValues().entrySet()){
+        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getValues().entrySet()){
             
-            //Collection<IntraCaseCommonAttributeSearchResults> fileInstances = file.getValue();
-            
-//            for(IntraCaseCommonAttributeSearchResults fileInstance : fileInstances){
-//                
-//                
-//            }
+            for(CommonAttributeValue values : entry.getValue()){
+                
+                for(AbstractCommonAttributeInstanceNode commonAttribute : values.getMetadata()){
+                    
+                    if(commonAttribute instanceof InterCaseCommonAttributeSearchResults){
+                        InterCaseCommonAttributeSearchResults results = (InterCaseCommonAttributeSearchResults) commonAttribute;
+                        for (DisplayableItemNode din : results.generateNodes()){
+                            
+                            if(din instanceof InterCaseCommonAttributeInstanceNode){
+                                
+                                InterCaseCommonAttributeInstanceNode node = (InterCaseCommonAttributeInstanceNode) din;
+                                CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
+                                
+                                final String fullPath = instance.getFilePath();
+                                final File testFile = new File(fullPath);
+
+                                final String testCaseName = instance.getCorrelationCase().getDisplayName();
+
+                                final String testFileName = testFile.getName();
+
+                                final String testDataSource = instance.getCorrelationDataSource().getName();
+
+                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+                                boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
+
+                                if( sameFileName && sameDataSource && sameCrCase){
+                                    tally++;
+                                } 
+                            }
+                            
+                            if(din instanceof IntraCaseCommonAttributeInstanceNode){
+                                
+                                IntraCaseCommonAttributeInstanceNode node = (IntraCaseCommonAttributeInstanceNode) din;
+                                AbstractFile file = node.getContent();
+                                
+                                final String testFileName = file.getName();
+                                final String testCaseName = node.getCase();
+                                final String testDataSource = node.getDataSource();
+                                
+                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
+                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+                                
+                                if(sameFileName && sameDataSource && sameCaseName){
+                                    tally++;
+                                }
+                            }
+                        }
+                    } else {
+                        Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
+                    }
+                }                
+            }
         }
         
-        return false;
+        return tally == instanceCount;
     }
-    
-    static Map<Long, String> mapFileInstancesToDataSource(CommonAttributeSearchResults metadata){
-        return IntraCaseUtils.mapFileInstancesToDataSources(metadata);
-    }
-    
-//    static List<AbstractFile> getFiles(Set<String> md5s){
-//        
-//    }
 
     /**
      * Close the currently open case, delete the case directory, delete the

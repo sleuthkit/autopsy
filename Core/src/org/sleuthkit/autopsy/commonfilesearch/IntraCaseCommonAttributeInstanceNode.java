@@ -63,11 +63,11 @@ public class IntraCaseCommonAttributeInstanceNode extends FileNode {
         return visitor.visit(this);
     }
 
-    String getCase(){
+    public String getCase(){
         return this.caseName;
     }
     
-    String getDataSource() {
+    public String getDataSource() {
         return this.dataSource;
     }
 
