@@ -24,12 +24,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility and wrapper model around data required for Common Files Search results.
- * Subclass this to implement different selections of files from the case.
+ * Stores the results from the various types of common attribute searching
+ * Stores results based on how they are currently displayed in the UI
  */
 final public class CommonAttributeSearchResults {
     
-    private final Map<Integer, List<CommonAttributeValue>> values;
+    // maps instance count to list of attribute values. 
+    private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
     
     /**
      * Create a values object which can be handed off to the node factories.
@@ -37,8 +38,8 @@ final public class CommonAttributeSearchResults {
      * @param values list of CommonAttributeValue indexed by size of 
      * CommonAttributeValue
      */
-    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> values){
-        this.values = values;
+    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
+        this.instanceCountToAttributeValues = metadata;
     }
 
     /**
@@ -50,18 +51,18 @@ final public class CommonAttributeSearchResults {
      * @param isntanceCound key
      * @return list of values which represent matches
      */
-    List<CommonAttributeValue> getValuesByChildSize(Integer instanceCount) {
-        return this.values.get(instanceCount);
+    List<CommonAttributeValue> getAttributeValuesForInstanceCount(Integer instanceCount) {
+        return this.instanceCountToAttributeValues.get(instanceCount);
     }
 
-    /**
+ /**
      * Get an unmodifiable collection of values, indexed by number of 
      * grandchildren, which represents the common attributes found in the 
      * search.
      * @return map of sizes of children to list of matches
-     */
-    public Map<Integer, List<CommonAttributeValue>> getValues() {
-        return Collections.unmodifiableMap(this.values);
+     */    
+public Map<Integer, List<CommonAttributeValue>> getMetadata() {
+        return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
     /**
@@ -71,9 +72,9 @@ final public class CommonAttributeSearchResults {
     public int size() {
                 
         int count = 0;
-        for (List<CommonAttributeValue> data : this.values.values()) {
-            for(CommonAttributeValue value : data){
-                count += value.size();
+        for (List<CommonAttributeValue> data : this.instanceCountToAttributeValues.values()) {
+            for(CommonAttributeValue md5 : data){
+                count += md5.getInstanceCount();
             }
         }
         return count;

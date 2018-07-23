@@ -31,16 +31,14 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Represents a common files match - two or more files which appear to be the
- * same file and appear as children of this node. This node will simply contain
- * the MD5 of the matched files, the data sources those files were found within,
- * and a count of the instances represented by the md5.
+ * Represents the layer in the tree for the value (such as MD5) that was in multiple places. 
+ * Children are instances of that value. 
  */
 public class CommonAttributeValueNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(CommonAttributeValueNode.class.getName());
 
-    private final String md5Hash;
+    private final String value;
     private final int commonFileCount;
     private final String cases;
     private final String dataSources;
@@ -56,12 +54,13 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true));
         
-        this.commonFileCount = data.size();
+        this.commonFileCount = data.getInstanceCount();
         this.cases = data.getCases();
+        // @@ We seem to be doing this string concat twice.  We also do it in getDataSources()
         this.dataSources = String.join(", ", data.getDataSources());
-        this.md5Hash = data.getMd5();
+        this.value = data.getValue();
         
-        this.setDisplayName(String.format(Bundle.Md5Node_Md5Node_format(), this.md5Hash));
+        this.setDisplayName(String.format(Bundle.Md5Node_Md5Node_format(), this.value));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
@@ -89,8 +88,8 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      * MD5 which is common to these matches
      * @return string md5 hash
      */
-    public String getMd5() {
-        return this.md5Hash;
+    public String getValue() {
+        return this.value;
     }
 
     @NbBundle.Messages({"Md5Node.createSheet.noDescription= "})
@@ -132,7 +131,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
      * <code>CommonAttributeValueNode</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstanceNode> {
+    static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstance> {
 
         private final CommonAttributeValue descendants;
 
@@ -141,14 +140,16 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
         }
 
         @Override
-        protected Node[] createNodesForKey(AbstractCommonAttributeInstanceNode file) {
-            return file.generateNodes();
-        }
-
-        @Override
-        protected boolean createKeys(List<AbstractCommonAttributeInstanceNode> list) {
-            list.addAll(this.descendants.getMetadata());
+        protected boolean createKeys(List<AbstractCommonAttributeInstance> list) {
+            list.addAll(this.descendants.getInstances());
             return true;
         }
+        
+        @Override
+        protected Node[] createNodesForKey(AbstractCommonAttributeInstance searchResult) {
+            return searchResult.generateNodes();
+        }
+
+        
     }
 }

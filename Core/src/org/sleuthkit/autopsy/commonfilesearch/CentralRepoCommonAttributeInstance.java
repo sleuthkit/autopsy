@@ -35,15 +35,17 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
+ * Represents that a row in the CR was found in multiple cases. 
+ * 
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
-final public class InterCaseCommonAttributeSearchResults extends AbstractCommonAttributeInstanceNode {
+final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttributeInstance {
 
-    private static final Logger LOGGER = Logger.getLogger(InterCaseCommonAttributeSearchResults.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttributeInstance;
 
-    InterCaseCommonAttributeSearchResults(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
         super(cachedFiles);
         this.crFileId = attrInstId;
     }
@@ -53,9 +55,10 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
     }
 
     @Override
-    AbstractFile loadFileFromSleuthkitCase() {
+    AbstractFile getAbstractFile() {
 
         Case currentCase;
+        // @@@ Need to CHeck for NULL.  This seems to depend on generateNodes to be called first
         String currentFullPath = this.currentAttributeInstance.getFilePath();
 
         try {
@@ -79,18 +82,21 @@ final public class InterCaseCommonAttributeSearchResults extends AbstractCommonA
     @Override
     public DisplayableItemNode[] generateNodes() {
         
+        // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
+        
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
         
+        // @@@ This seems wrong that we are looping here, but only setting one attrInst in the class, which is then used by getAbstractFile().
         for (CorrelationAttributeInstance attrInst : corrAttr.getInstances()) {
             try {
                 this.setCurrentAttributeInst(attrInst);                
                 
                 AbstractFile equivalentAbstractFile = this.lookupOrLoadAbstractFile();
                 
-                DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstanceNode.createInstance(attrInst, equivalentAbstractFile, currCaseDbName);
+                DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createInstance(attrInst, equivalentAbstractFile, currCaseDbName);
 
                 attrInstNodeList.add(generatedInstNode);
 

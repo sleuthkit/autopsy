@@ -124,12 +124,12 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
                 }
 
                 if (commonFiles.containsKey(md5)) {
-                    final CommonAttributeValue md5Metadata = commonFiles.get(md5);
-                    md5Metadata.addFileInstanceMetadata(new IntraCaseCommonAttributeSearchResults(objectId, fileCache, dataSource, caseName));
+                    final CommonAttributeValue commonAttributeValue = commonFiles.get(md5);
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, fileCache, dataSource, caseName));
                 } else {
-                    final CommonAttributeValue md5Metadata = new CommonAttributeValue(md5);
-                    md5Metadata.addFileInstanceMetadata(new IntraCaseCommonAttributeSearchResults(objectId, fileCache, dataSource, caseName));
-                    commonFiles.put(md5, md5Metadata);
+                    final CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, fileCache, dataSource, caseName));
+                    commonFiles.put(md5, commonAttributeValue);
                 }
             }
         }

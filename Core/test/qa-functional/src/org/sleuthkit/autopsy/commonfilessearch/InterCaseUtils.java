@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.InterCaseCommonAttributeSearchResults;
