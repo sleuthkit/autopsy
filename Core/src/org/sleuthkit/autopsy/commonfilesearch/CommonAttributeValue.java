@@ -28,14 +28,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Encapsulates data required to instantiate an <code>Md5Node</code>.
+ * Defines a value that is used for correlation, such as file MD5 or email address. 
  */
 final public class CommonAttributeValue {
 
     private final String md5;
-    private final List<AbstractCommonAttributeInstanceNode> fileInstances;
+    private final List<AbstractCommonAttributeSearchResult> fileInstances;
 
-    CommonAttributeValue(String md5, List<AbstractCommonAttributeInstanceNode> fileInstances) {
+    CommonAttributeValue(String md5, List<AbstractCommonAttributeSearchResult> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
     }
@@ -45,18 +45,23 @@ final public class CommonAttributeValue {
         this.fileInstances = new ArrayList<>();
     }
 
-    public String getMd5() {
+    public String getValue() {
         return this.md5;
     }
 
+    /**
+     * concatenate cases this value was seen into a single string
+     * 
+     * @return 
+     */
     public String getCases() {
-        final String cases = this.fileInstances.stream().map(AbstractCommonAttributeInstanceNode::getCaseName).collect(Collectors.joining(", "));
+        final String cases = this.fileInstances.stream().map(AbstractCommonAttributeSearchResult::getCaseName).collect(Collectors.joining(", "));
         return cases;
     }
 
     public String getDataSources() {
         Set<String> sources = new HashSet<>();
-        for (AbstractCommonAttributeInstanceNode data : this.fileInstances) {
+        for (AbstractCommonAttributeSearchResult data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
         
@@ -64,15 +69,15 @@ final public class CommonAttributeValue {
         return dataSources;
     }
 
-    void addFileInstanceMetadata(AbstractCommonAttributeInstanceNode metadata) {
+    void addFileInstanceMetadata(AbstractCommonAttributeSearchResult metadata) {
         this.fileInstances.add(metadata);
     }
 
-    void addFileInstanceMetadata(AbstractCommonAttributeInstanceNode metadata, String caseName) {
+    void addFileInstanceMetadata(AbstractCommonAttributeSearchResult metadata, String caseName) {
         this.fileInstances.add(metadata);
     }
 
-    public Collection<AbstractCommonAttributeInstanceNode> getMetadata() {
+    public Collection<AbstractCommonAttributeSearchResult> getInstances() {
         return Collections.unmodifiableCollection(this.fileInstances);
     }
 
@@ -82,7 +87,7 @@ final public class CommonAttributeValue {
      *
      * @return number of instances
      */
-    public int size() {
+    public int getInstanceCount() {
         return this.fileInstances.size();
     }
 }
