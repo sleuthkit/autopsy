@@ -33,10 +33,10 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Metadata;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -91,13 +91,13 @@ class IntraCaseUtils {
     private final DataSourceLoader dataSourceLoader;
 
     private final String caseName;
-
-    IntraCaseUtils(NbTestCase nbTestCase, String caseName) {
-        imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), SET1);
-        imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
-        imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);
-        imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), SET4);
-
+    
+    IntraCaseUtils(NbTestCase nbTestCase, String caseName){
+        this.imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), SET1);
+        this.imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
+        this.imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);
+        this.imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), SET4);
+        
         this.dataSourceLoader = new DataSourceLoader();
 
         this.caseName = caseName;
@@ -152,32 +152,32 @@ class IntraCaseUtils {
      * Verify that the given file appears a precise number times in the given
      * data source.
      *
-     * @param files search domain
-     * @param objectIdToDataSource mapping of file ids to data source names
-     * @param name name of file to search for
+     * @param searchDomain search domain
+     * @param objectIdToDataSourceMap mapping of file ids to data source names
+     * @param fileName name of file to search for
      * @param dataSource name of data source where file should appear
-     * @param count number of appearances of the given file
+     * @param instanceCount number of appearances of the given file
      * @return true if a file with the given name exists the specified number of
      * times in the given data source
      */
-    static boolean verifyFileExistanceAndCount(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource, int count) {
+    static boolean verifyInstanceExistanceAndCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource, int instanceCount) {
 
         int tally = 0;
 
-        for (AbstractFile file : files) {
+        for (AbstractFile file : searchDomain) {
 
             Long objectId = file.getId();
 
-            String fileName = file.getName();
+            String name = file.getName();
 
-            String dataSourceName = objectIdToDataSource.get(objectId);
+            String dataSourceName = objectIdToDataSourceMap.get(objectId);
 
-            if (fileName.equals(name) && dataSourceName.equals(dataSource)) {
+            if (name.equals(name) && dataSourceName.equals(dataSource)) {
                 tally++;
             }
         }
 
-        return tally == count;
+        return tally == instanceCount;
     }
 
     /**
@@ -191,17 +191,24 @@ class IntraCaseUtils {
      * @return true if a file with the given name exists once in the given data
      * source
      */
-    static boolean verifySingularFileExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
-        return verifyFileExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
+    static boolean verifySingularInstanceExistance(List<AbstractFile> files, Map<Long, String> objectIdToDataSource, String name, String dataSource) {
+        return verifyInstanceExistanceAndCount(files, objectIdToDataSource, name, dataSource, 1);
     }
 
-    static Map<Long, String> mapFileInstancesToDataSources(CommonFilesMetadata metadata) {
+    /**
+     * Create a convenience lookup table mapping file instance object ids to 
+     * the data source they appear in.
+     * 
+     * @param metadata object returned by the code under test 
+     * @return mapping of objectId to data source name
+     */
+    static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 
-        for (Map.Entry<Integer, List<Md5Metadata>> entry : metadata.getMetadata().entrySet()) {
-            for (Md5Metadata md : entry.getValue()) {
-                for (FileInstanceMetadata fim : md.getMetadata()) {
-                    instanceIdToDataSource.put(fim.getObjectId(), fim.getDataSourceName());
+        for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
+            for (CommonAttributeValue md : entry.getValue()) {
+                for (AbstractCommonAttributeInstanceNode fim : md.getMetadata()) {
+                    instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
                 }
             }
         }
@@ -209,6 +216,7 @@ class IntraCaseUtils {
         return instanceIdToDataSource;
     }
 
+    
     static List<AbstractFile> getFiles(Set<Long> objectIds) {
         List<AbstractFile> files = new ArrayList<>(objectIds.size());
 

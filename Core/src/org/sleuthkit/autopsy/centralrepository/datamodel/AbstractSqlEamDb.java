@@ -387,6 +387,46 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return eamCaseResult;
     }
+    /**
+     * Retrieves Case details based on Case ID
+     *
+     * @param caseID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    @Override
+    public CorrelationCase getCaseById(int caseId) throws EamDbException {
+        // @@@ We should have a cache here...
+
+        Connection conn = connect();
+
+        CorrelationCase eamCaseResult = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String sql = "SELECT cases.id as case_id, case_uid, case_name, creation_date, case_number, examiner_name, "
+                + "examiner_email, examiner_phone, notes, organizations.id as org_id, org_name, poc_name, poc_email, poc_phone "
+                + "FROM cases "
+                + "LEFT JOIN organizations ON cases.org_id=organizations.id "
+                + "WHERE cases.id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, caseId);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                eamCaseResult = getEamCaseFromResultSet(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting case details.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return eamCaseResult;
+    }
 
     /**
      * Retrieves cases that are in DB.
@@ -487,6 +527,48 @@ abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, dataSourceDeviceId);
+            preparedStatement.setInt(2, correlationCase.getID());
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting data source.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return eamDataSourceResult;
+    }
+    
+    /**
+     * Retrieves Data Source details based on data source ID
+     *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
+     * @param dataSourceId the data source ID number
+     *
+     * @return The data source
+     */
+    @Override
+    public CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException {
+        if (correlationCase == null) {
+            throw new EamDbException("Correlation case is null");
+        }
+
+        Connection conn = connect();
+
+        CorrelationDataSource eamDataSourceResult = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String sql = "SELECT * FROM data_sources WHERE id=? AND case_id=?"; // NON-NLS
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, dataSourceId);
             preparedStatement.setInt(2, correlationCase.getID());
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -670,7 +752,6 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return artifactInstances;
     }
-
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
@@ -1813,6 +1894,151 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
+    
+        /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processInstanceTableRow(CorrelationAttribute.Type type, int id, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        if (type == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        if (instanceTableCallback == null) {
+            throw new EamDbException("Callback interface is null");
+        }
+
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+        StringBuilder sql = new StringBuilder(3);
+        sql.append("select * from ");
+        sql.append(tableName);
+        sql.append(" WHERE id = ?");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setInt(1, id);
+            resultSet = preparedStatement.executeQuery();
+            instanceTableCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting all artifact instances from instances table", ex);
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+    
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param correlationCase  CorrelationCase to filter by
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, InstanceTableCallback instanceTableCallback) throws EamDbException {
+        if (type == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        if (instanceTableCallback == null) {
+            throw new EamDbException("Callback interface is null");
+        }
+        
+        if(correlationCase == null) {
+            throw new EamDbException("Correlation Case is null");
+        }
+
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+        StringBuilder sql = new StringBuilder(7);
+        sql.append("SELECT id, value, case_id FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE value IN (SELECT value FROM "); // TODO should this select * so any field is available?
+        sql.append(tableName);
+        sql.append(" WHERE value IN (SELECT value FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setInt(1, correlationCase.getID());
+            preparedStatement.setByte(2, TskData.FileKnown.KNOWN.getFileKnownValue());
+            resultSet = preparedStatement.executeQuery();
+            instanceTableCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting all artifact instances from instances table", ex);
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+    
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param correlationCase  CorrelationCase to filter by
+     * @param singleCase Single Case to filter by
+     * @param instanceTableCallback callback to process the instance
+     * @throws EamDbException
+     */
+    @Override
+    public void processSingleCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, CorrelationCase singleCase,InstanceTableCallback instanceTableCallback) throws EamDbException {
+        if (type == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+
+        if (instanceTableCallback == null) {
+            throw new EamDbException("Callback interface is null");
+        }
+        
+        if(correlationCase == null) {
+            throw new EamDbException("Correlation Case is null");
+        }
+
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+        StringBuilder sql = new StringBuilder(8);
+        sql.append("SELECT id, value, case_id FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE value IN (SELECT value FROM "); // TODO should this select * so any field is available?
+        sql.append(tableName);
+        sql.append(" WHERE value IN (SELECT value FROM ");
+        sql.append(tableName);
+        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value)");
+        sql.append(" AND (case_id=? OR case_id=?) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
+
+        try {
+            preparedStatement = conn.prepareStatement(sql.toString());
+            preparedStatement.setInt(1, correlationCase.getID());
+            preparedStatement.setByte(2, TskData.FileKnown.KNOWN.getFileKnownValue());
+            preparedStatement.setInt(3, correlationCase.getID());
+            preparedStatement.setInt(4, singleCase.getID());
+            resultSet = preparedStatement.executeQuery();
+            instanceTableCallback.process(resultSet);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting all artifact instances from instances table", ex);
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+    
 
     @Override
     public EamOrganization newOrganization(EamOrganization eamOrg) throws EamDbException {

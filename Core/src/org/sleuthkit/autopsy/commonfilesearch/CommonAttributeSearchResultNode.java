@@ -30,10 +30,10 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  * Wrapper node for <code>Md5Node</code> used to display common files search
  * results in the top right pane. Calls <code>InstanceCountNodeFactory</code>.
  */
-final public class CommonFilesNode extends DisplayableItemNode {
+final public class CommonAttributeSearchResultNode extends DisplayableItemNode {
     
 
-    CommonFilesNode(CommonFilesMetadata metadataList) {
+    CommonAttributeSearchResultNode(CommonAttributeSearchResults metadataList) {
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
@@ -64,17 +64,17 @@ final public class CommonFilesNode extends DisplayableItemNode {
      */
     static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
-        private final CommonFilesMetadata metadata;
+        private final CommonAttributeSearchResults metadata;
         
         /**
-         * Build a factory which converts a <code>CommonFilesMetadata</code> 
+         * Build a factory which converts a <code>CommonAttributeSearchResults</code> 
          * object into <code>DisplayableItemNode</code>s.
          * @param metadata 
          */
-        InstanceCountNodeFactory(CommonFilesMetadata metadata){
+        InstanceCountNodeFactory(CommonAttributeSearchResults metadata){
             this.metadata = metadata;
         }
-        
+
         @Override
         protected boolean createKeys(List<Integer> list) {
             list.addAll(this.metadata.getMetadata().keySet());
@@ -83,7 +83,7 @@ final public class CommonFilesNode extends DisplayableItemNode {
         
         @Override
         protected Node createNodeForKey(Integer instanceCount){
-            List<Md5Metadata> md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
+            List<CommonAttributeValue> md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
             return new InstanceCountNode(instanceCount, md5Metadata);
         }        
     }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -30,7 +31,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Used by the Common Files search feature to encapsulate instances of a given 
  MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
  */
-public class FileInstanceNode extends FileNode {
+public class CommonAttributeInstanceNode extends FileNode {
     
     private final String dataSource;
 
@@ -41,7 +42,7 @@ public class FileInstanceNode extends FileNode {
      * @param fsContent
      * @param dataSource 
      */
-    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public CommonAttributeInstanceNode(AbstractFile fsContent, String dataSource) {
         super(fsContent);
         this.dataSource = dataSource;
         
@@ -80,8 +81,8 @@ public class FileInstanceNode extends FileNode {
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsForFile(this.getContent())));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, StringUtils.defaultString(this.getContent().getMIMEType())));
-
         this.addTagProperty(sheetSet);
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, Case.getCurrentCase().getDisplayName()));
 
         return sheet;
     }

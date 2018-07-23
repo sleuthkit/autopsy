@@ -27,17 +27,17 @@ import java.util.Map;
  * Utility and wrapper model around data required for Common Files Search results.
  * Subclass this to implement different selections of files from the case.
  */
-final public class CommonFilesMetadata {
+final public class CommonAttributeSearchResults {
     
-    private final Map<Integer, List<Md5Metadata>> metadata;
+    private final Map<Integer, List<CommonAttributeValue>> metadata;
     
     /**
      * Create a metadata object which can be handed off to the node
      * factories.
      * 
-     * @param metadata list of Md5Metadata indexed by size of Md5Metadata
+     * @param metadata list of CommonAttributeValue indexed by size of CommonAttributeValue
      */
-    CommonFilesMetadata(Map<Integer, List<Md5Metadata>> metadata){
+    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
         this.metadata = metadata;
     }
 
@@ -50,11 +50,11 @@ final public class CommonFilesMetadata {
      * @param md5 key
      * @return 
      */
-    List<Md5Metadata> getMetadataForMd5(Integer instanceCount) {
+    List<CommonAttributeValue> getMetadataForMd5(Integer instanceCount) {
         return this.metadata.get(instanceCount);
     }
 
-    public Map<Integer, List<Md5Metadata>> getMetadata() {
+    public Map<Integer, List<CommonAttributeValue>> getMetadata() {
         return Collections.unmodifiableMap(this.metadata);
     }
 
@@ -65,8 +65,8 @@ final public class CommonFilesMetadata {
     public int size() {
                 
         int count = 0;
-        for (List<Md5Metadata> data : this.metadata.values()) {
-            for(Md5Metadata md5 : data){
+        for (List<CommonAttributeValue> data : this.metadata.values()) {
+            for(CommonAttributeValue md5 : data){
                 count += md5.size();
             }
         }

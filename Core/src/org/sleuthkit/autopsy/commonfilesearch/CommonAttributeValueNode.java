@@ -20,34 +20,29 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
-import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a common files match - two or more files which appear to be the
- * same file and appear as children of this node.  This node will simply contain
+ * same file and appear as children of this node. This node will simply contain
  * the MD5 of the matched files, the data sources those files were found within,
  * and a count of the instances represented by the md5.
  */
-public class Md5Node extends DisplayableItemNode {
-    
-    private static final Logger LOGGER = Logger.getLogger(Md5Node.class.getName());    
-    
+public class CommonAttributeValueNode extends DisplayableItemNode {
+
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeValueNode.class.getName());
+
     private final String md5Hash;
     private final int commonFileCount;
+    private final String cases;
     private final String dataSources;
 
     @NbBundle.Messages({
@@ -57,11 +52,12 @@ public class Md5Node extends DisplayableItemNode {
      * Create a Match node whose children will all have this object in common.
      * @param data the common feature, and the children
      */
-    public Md5Node(Md5Metadata data) {
+    public CommonAttributeValueNode(CommonAttributeValue data) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true));
         
         this.commonFileCount = data.size();
+        this.cases = data.getCases();
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
         
@@ -75,6 +71,10 @@ public class Md5Node extends DisplayableItemNode {
      */
     int getCommonFileCount() {
         return this.commonFileCount;
+    }
+    
+    String getCases(){
+        return this.cases;
     }
 
     /**
@@ -129,35 +129,26 @@ public class Md5Node extends DisplayableItemNode {
     }
 
     /**
-     * Child generator for <code>FileInstanceNode</code> of <code>Md5Node</code>.
+     * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
+     * <code>CommonAttributeValueNode</code>.
      */
-    static class FileInstanceNodeFactory extends ChildFactory<FileInstanceMetadata> {
+    static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstanceNode> {
 
-        private final Md5Metadata descendants;
+        private final CommonAttributeValue descendants;
 
-        FileInstanceNodeFactory(Md5Metadata descendants) {
+        FileInstanceNodeFactory(CommonAttributeValue descendants) {
             this.descendants = descendants;
         }
 
         @Override
-        protected Node createNodeForKey(FileInstanceMetadata file) {
-            try {
-                Case currentCase = Case.getCurrentCaseThrows();
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", file.getObjectId())).get(0);
-                
-                return new FileInstanceNode(abstractFile, file.getDataSourceName());
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to create node for file with obj_id: %s.", new Object[]{file.getObjectId()}), ex);
-            }
-            return null;
+        protected Node[] createNodesForKey(AbstractCommonAttributeInstanceNode file) {
+            return file.generateNodes();
         }
 
         @Override
-        protected boolean createKeys(List<FileInstanceMetadata> list) {            
+        protected boolean createKeys(List<AbstractCommonAttributeInstanceNode> list) {
             list.addAll(this.descendants.getMetadata());
             return true;
         }
     }
-
 }

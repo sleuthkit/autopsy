@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 final public class InstanceCountNode extends DisplayableItemNode {
 
     final private int instanceCount;
-    final private List<Md5Metadata> metadataList;
+    final private List<CommonAttributeValue> metadataList;
 
     /**
      * Create a node with the given number of instances, and the given
@@ -51,7 +51,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
     @NbBundle.Messages({
         "InstanceCountNode.displayName=Files with %s instances (%s)"
     })
-    public InstanceCountNode(int instanceCount, List<Md5Metadata> md5Metadata) {
+    public InstanceCountNode(int instanceCount, List<CommonAttributeValue> md5Metadata) {
         super(Children.create(new Md5NodeFactory(md5Metadata), true));
 
         this.instanceCount = instanceCount;
@@ -73,7 +73,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
      * Get a list of metadata for the MD5s which are children of this object.
      * @return List<Md5Metadata>
      */
-    List<Md5Metadata> getMetadata() {
+    List<CommonAttributeValue> getMetadata() {
         return Collections.unmodifiableList(this.metadataList);
     }
 
@@ -119,22 +119,22 @@ final public class InstanceCountNode extends DisplayableItemNode {
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
-        private final Map<String, Md5Metadata> metadata;
+        private final Map<String, CommonAttributeValue> metadata;
 
-        Md5NodeFactory(List<Md5Metadata> metadata) {
+        Md5NodeFactory(List<CommonAttributeValue> metadata) {
             this.metadata = new HashMap<>();
 
-            Iterator<Md5Metadata> iterator = metadata.iterator();
+            Iterator<CommonAttributeValue> iterator = metadata.iterator();
             while (iterator.hasNext()) {
-                Md5Metadata md5Metadata = iterator.next();
+                CommonAttributeValue md5Metadata = iterator.next();
                 this.metadata.put(md5Metadata.getMd5(), md5Metadata);
             }
         }
 
         @Override
         protected Node createNodeForKey(String md5) {
-            Md5Metadata md5Metadata = this.metadata.get(md5);
-            return new Md5Node(md5Metadata);
+            CommonAttributeValue md5Metadata = this.metadata.get(md5);
+            return new CommonAttributeValueNode(md5Metadata);
         }
 
         @Override
