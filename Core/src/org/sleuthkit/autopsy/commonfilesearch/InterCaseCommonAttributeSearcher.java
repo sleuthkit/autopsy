@@ -86,14 +86,14 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
                     final CommonAttributeValue commonAttributeValue = interCaseCommonFiles.get(md5);
                     
                     AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, fileCache);
-                    commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
+                    commonAttributeValue.addFileInstanceMetadata(searchResult);
 
                 } else {
                     CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
                     interCaseCommonFiles.put(md5, commonAttributeValue);
                     
                     AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, fileCache);
-                    commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
+                    commonAttributeValue.addFileInstanceMetadata(searchResult);
                     
                 }
             } catch (Exception ex) {
