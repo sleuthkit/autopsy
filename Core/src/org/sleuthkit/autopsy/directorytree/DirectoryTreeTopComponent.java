@@ -81,7 +81,6 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildrenFactory;
-import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -911,7 +910,19 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     private void refreshTagsTree() {
-        ((Tags.RootNode)autopsyTreeChildren.findChild("Tags")).refresh();
+        SwingUtilities.invokeLater(() -> {
+            // if no open case or has no data then there is no tree to rebuild
+            Case currentCase;
+            try {
+                currentCase = Case.getCurrentCaseThrows();
+            } catch (NoCurrentCaseException ex) {
+                return;
+            }
+            if (null == currentCase || currentCase.hasData() == false) {
+                return;
+            }
+            currentCase.notifyTagsTreeRefresh();
+        });
     }
 
     /**

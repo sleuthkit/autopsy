@@ -644,7 +644,19 @@ public class TagsManager implements Closeable {
      *                          the case database.
      */
     public long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
-        return caseDb.getBlackboardArtifactTagsCountByTagName(tagName);
+        if (UserPreferences.showOnlyCurrentUserTags()) {
+            String userName = System.getProperty("user.name");
+            long count = 0;
+            List<BlackboardArtifactTag> artifactTags = getBlackboardArtifactTagsByTagName(tagName);
+            for (BlackboardArtifactTag tag : artifactTags) {
+                if (userName.equals(tag.getUserName())) {
+                    count++;
+                }
+            }
+            return count;
+        } else {
+            return caseDb.getBlackboardArtifactTagsCountByTagName(tagName);
+        }
     }
 
     /**
@@ -662,7 +674,19 @@ public class TagsManager implements Closeable {
      *                          the case database.
      */
     public long getBlackboardArtifactTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
-        return caseDb.getBlackboardArtifactTagsCountByTagName(tagName, dsObjId);
+        if (UserPreferences.showOnlyCurrentUserTags()) {
+            String userName = System.getProperty("user.name");
+            long count = 0;
+            List<BlackboardArtifactTag> artifactTags = getBlackboardArtifactTagsByTagName(tagName, dsObjId);
+            for (BlackboardArtifactTag tag : artifactTags) {
+                if (userName.equals(tag.getUserName())) {
+                    count++;
+                }
+            }
+            return count;
+        } else {
+            return caseDb.getBlackboardArtifactTagsCountByTagName(tagName, dsObjId);
+        }
     }
 
     /**
