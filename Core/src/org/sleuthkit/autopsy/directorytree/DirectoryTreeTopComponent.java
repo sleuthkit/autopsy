@@ -81,6 +81,7 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -152,6 +153,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.GROUP_ITEMS_IN_TREE_BY_DATASOURCE:
                         refreshContentTreeSafe();
+                        break;
+                    case UserPreferences.SHOW_ONLY_CURRENT_USER_TAGS:
+                        refreshTagsTree();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:
@@ -906,6 +910,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     public void refreshContentTreeSafe() {
         SwingUtilities.invokeLater(this::rebuildTree);
+    }
+
+    private void refreshTagsTree() {
+        ((Tags.RootNode)autopsyTreeChildren.findChild("Tags")).refresh();
     }
 
     /**

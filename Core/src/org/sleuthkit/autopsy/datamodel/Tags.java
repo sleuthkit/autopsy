@@ -103,7 +103,6 @@ public class Tags implements AutopsyVisitableItem {
             super.setName(DISPLAY_NAME);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension(ICON_PATH);
-
         }
 
         @Override
@@ -133,6 +132,11 @@ public class Tags implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
+        
+        public void refresh(){
+            tagResults.update();
+        }
+        
     }
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
