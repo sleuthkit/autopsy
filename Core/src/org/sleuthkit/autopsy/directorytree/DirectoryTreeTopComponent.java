@@ -137,6 +137,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         forwardButton.setEnabled(false);
 
         groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
+        showOnlyCurrentUserTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
     }
 
     /**
@@ -191,6 +192,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         forwardButton = new javax.swing.JButton();
         showRejectedCheckBox = new javax.swing.JCheckBox();
         groupByDatasourceCheckBox = new javax.swing.JCheckBox();
+        showOnlyCurrentUserTagsCheckbox = new javax.swing.JCheckBox();
 
         treeView.setBorder(null);
 
@@ -235,6 +237,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(showOnlyCurrentUserTagsCheckbox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showOnlyCurrentUserTagsCheckbox.text")); // NOI18N
+        showOnlyCurrentUserTagsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showOnlyCurrentUserTagsCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -244,7 +253,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 51, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(showOnlyCurrentUserTagsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(showRejectedCheckBox)
                     .addComponent(groupByDatasourceCheckBox))
@@ -256,7 +267,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(5, 5, 5)
-                        .addComponent(showRejectedCheckBox)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(showRejectedCheckBox)
+                            .addComponent(showOnlyCurrentUserTagsCheckbox))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(groupByDatasourceCheckBox))
                     .addGroup(layout.createSequentialGroup()
@@ -323,10 +336,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         UserPreferences.setGroupItemsInTreeByDatasource(this.groupByDatasourceCheckBox.isSelected());
     }//GEN-LAST:event_groupByDatasourceCheckBoxActionPerformed
 
+    private void showOnlyCurrentUserTagsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showOnlyCurrentUserTagsCheckboxActionPerformed
+        UserPreferences.setShowOnlyCurrentUserTags(this.showOnlyCurrentUserTagsCheckbox.isSelected());
+    }//GEN-LAST:event_showOnlyCurrentUserTagsCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
     private javax.swing.JCheckBox groupByDatasourceCheckBox;
+    private javax.swing.JCheckBox showOnlyCurrentUserTagsCheckbox;
     private javax.swing.JCheckBox showRejectedCheckBox;
     private javax.swing.JScrollPane treeView;
     // End of variables declaration//GEN-END:variables

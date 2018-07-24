@@ -70,7 +70,8 @@ public final class UserPreferences {
     private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
     private static final int LOG_FILE_NUM_INT = 10;
     public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
-    
+    private static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -194,6 +195,14 @@ public final class UserPreferences {
 
     public static void setGroupItemsInTreeByDatasource(boolean value) {
         preferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
+    }
+
+    public static boolean showOnlyCurrentUserTags() {
+        return preferences.getBoolean(SHOW_ONLY_CURRENT_USER_TAGS, false);
+    }
+
+    public static void setShowOnlyCurrentUserTags(boolean value) {
+        preferences.putBoolean(SHOW_ONLY_CURRENT_USER_TAGS, value);
     }
 
     /**
@@ -379,21 +388,25 @@ public final class UserPreferences {
 
     /**
      * get the maximum number of log files to save
+     *
      * @return Number of log files
      */
     public static int getLogFileCount() {
         return preferences.getInt(MAX_NUM_OF_LOG_FILE, LOG_FILE_NUM_INT);
     }
-    
+
     /**
      * get the default number of log files to save
+     *
      * @return LOG_FILE_COUNT
      */
     public static int getDefaultLogFileCount() {
         return LOG_FILE_NUM_INT;
     }
+
     /**
      * Set the maximum number of log files to save
+     *
      * @param count number of log files
      */
     public static void setLogFileCount(int count) {

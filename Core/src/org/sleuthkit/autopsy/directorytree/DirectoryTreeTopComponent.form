@@ -21,7 +21,9 @@
               <Component id="backButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="forwardButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="51" max="32767" attributes="0"/>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Component id="showOnlyCurrentUserTagsCheckbox" pref="33" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="showRejectedCheckBox" min="-2" max="-2" attributes="0"/>
                   <Component id="groupByDatasourceCheckBox" min="-2" max="-2" attributes="0"/>
@@ -36,7 +38,10 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
-                      <Component id="showRejectedCheckBox" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="showRejectedCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="showOnlyCurrentUserTagsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="groupByDatasourceCheckBox" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -149,6 +154,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="groupByDatasourceCheckBoxActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="showOnlyCurrentUserTagsCheckbox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.showOnlyCurrentUserTagsCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showOnlyCurrentUserTagsCheckboxActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
