@@ -28,6 +28,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1_DATASET_1;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.HASH_A_JPG;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.verifyInstanceExistanceAndCount;
 
 /**
  * If I use the search all cases option: One node for Hash A (1_1_A.jpg,
@@ -72,7 +76,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     }
     
     /**
-     * Search All
+     * Search All cases
      * 
      * One node for Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg)
      */
@@ -85,7 +89,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             assertTrue("Results should not be empty", metadata.size() != 0);
             
-            //assertTrue("")
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
             
             
         } catch (Exception ex) {
