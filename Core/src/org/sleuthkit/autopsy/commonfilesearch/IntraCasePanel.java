@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
@@ -41,7 +42,6 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private String selectedDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private Map<Long, String> dataSourceMap;
-    private CommonAttributePanel parent;
     
     private String errorMessage;
 
@@ -51,10 +51,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
     public IntraCasePanel() {
         initComponents();
         this.errorMessage = "";
-    }
-    
-    public void setParent(CommonAttributePanel parent){
-        this.parent = parent;
+        this.dataSourceMap = new HashMap<>();
     }
     
     public boolean isSingleDataSource(){
