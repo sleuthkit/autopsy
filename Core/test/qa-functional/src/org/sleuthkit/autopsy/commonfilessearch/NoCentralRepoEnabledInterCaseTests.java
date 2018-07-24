@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
  */
 public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
 
-    private final InterCaseUtils utils;
+    private final InterCaseTestUtils utils;
     
     private Case currentCase;
 
@@ -52,13 +52,13 @@ public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
 
     public NoCentralRepoEnabledInterCaseTests(String name) {
         super(name);
-        this.utils = new InterCaseUtils(this);
+        this.utils = new InterCaseTestUtils(this);
     }
 
     @Override
     public void setUp() {
         try {
-            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
+            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE1);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);

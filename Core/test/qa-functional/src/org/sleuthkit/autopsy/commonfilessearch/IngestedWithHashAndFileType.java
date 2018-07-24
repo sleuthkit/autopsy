@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.*;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
@@ -57,12 +57,12 @@ public class IngestedWithHashAndFileType extends NbTestCase {
         return conf.suite();
     }
 
-    private final IntraCaseUtils utils;
+    private final IntraCaseTestUtils utils;
 
     public IngestedWithHashAndFileType(String name) {
         super(name);
 
-        this.utils = new IntraCaseUtils(this, "IngestedWithHashAndFileTypeTests");
+        this.utils = new IntraCaseTestUtils(this, "IngestedWithHashAndFileTypeTests");
     }
 
     @Override
@@ -102,9 +102,9 @@ public class IngestedWithHashAndFileType extends NbTestCase {
             AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET1, 2));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, IMG, SET2, 1));

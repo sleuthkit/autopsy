@@ -63,7 +63,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
             return selectedDataSource;            
         } else {
             return "";
-        }        
+        }
     }
     
     public Map<Long, String> getDataSourceMap(){
@@ -207,7 +207,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
             return false;
         } else {
             return true;
-        }            
+        }
     }
 
     String getErrorMessage() {

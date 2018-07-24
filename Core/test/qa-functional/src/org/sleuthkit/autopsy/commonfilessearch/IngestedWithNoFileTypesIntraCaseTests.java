@@ -59,12 +59,12 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
         return conf.suite();
     }
 
-    private final IntraCaseUtils utils;
+    private final IntraCaseTestUtils utils;
     
     public IngestedWithNoFileTypesIntraCaseTests(String name) {
         super(name);
         
-        this.utils = new IntraCaseUtils(this, "IngestedWithNoFileTypes");
+        this.utils = new IntraCaseTestUtils(this, "IngestedWithNoFileTypes");
     }
 
     @Override
@@ -102,9 +102,9 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
             IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(files.isEmpty());
 
@@ -121,14 +121,14 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
     public void testTwo() {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
-            Long third = IntraCaseUtils.getDataSourceIdByName(IntraCaseUtils.SET3, dataSources);
+            Long third = IntraCaseTestUtils.getDataSourceIdByName(IntraCaseTestUtils.SET3, dataSources);
 
             IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, true, false);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(files.isEmpty());
 

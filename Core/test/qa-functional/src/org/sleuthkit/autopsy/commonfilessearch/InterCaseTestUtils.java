@@ -96,7 +96,7 @@ import org.sleuthkit.datamodel.AbstractFile;
       - Hash-C.pdf
       - Hash.D-doc
  */
-class InterCaseUtils {
+class InterCaseTestUtils {
 
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "InterCaseCommonFilesSearchTest");
     private static final String CR_DB_NAME = "testcentralrepo.db";
@@ -136,7 +136,7 @@ class InterCaseUtils {
     private final IngestJobSettings hashAndNoFileType;
     private final DataSourceLoader dataSourceLoader;
 
-    InterCaseUtils(NbTestCase testCase) {
+    InterCaseTestUtils(NbTestCase testCase) {
 
         this.case1DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_1);
         this.case1DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_2);
@@ -156,13 +156,13 @@ class InterCaseUtils {
         hashAndMimeTemplate.add(mimeTypeLookupTemplate);
         hashAndMimeTemplate.add(eamDbTemplate);
 
-        this.hashAndFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
+        this.hashAndFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
 
         ArrayList<IngestModuleTemplate> hashAndNoMimeTemplate = new ArrayList<>(1);
         hashAndNoMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(eamDbTemplate);
 
-        this.hashAndNoFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
+        this.hashAndNoFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 
         this.dataSourceLoader = new DataSourceLoader();
     }

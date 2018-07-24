@@ -68,7 +68,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * set 4 
  *  - file.dat (empty file)
  */
-class IntraCaseUtils {
+class IntraCaseTestUtils {
 
     private static final String CASE_NAME = "IntraCaseCommonFilesSearchTest";
     static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), CASE_NAME);
@@ -92,7 +92,7 @@ class IntraCaseUtils {
 
     private final String caseName;
     
-    IntraCaseUtils(NbTestCase nbTestCase, String caseName){
+    IntraCaseTestUtils(NbTestCase nbTestCase, String caseName){
         this.imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), SET1);
         this.imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
         this.imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);

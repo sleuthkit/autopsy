@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
  */
 public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     
-    private final InterCaseUtils utils;
+    private final InterCaseTestUtils utils;
     
     private Case currentCase;
     
@@ -51,7 +51,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     
     public IngestedWithHashAndFileTypeInterCaseTests(String name) {
         super(name);
-        this.utils = new InterCaseUtils(this);
+        this.utils = new InterCaseTestUtils(this);
     }
     
     @Override
@@ -59,7 +59,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
         this.utils.clearTestDir();
         try {
             this.utils.enableCentralRepo();
-            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE3);
+            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);

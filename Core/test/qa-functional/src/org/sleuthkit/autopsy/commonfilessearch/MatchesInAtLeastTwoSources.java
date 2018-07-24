@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.*;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
@@ -62,12 +62,12 @@ public class MatchesInAtLeastTwoSources extends NbTestCase {
         return conf.suite();
     }
 
-    private final IntraCaseUtils utils;
+    private final IntraCaseTestUtils utils;
 
     public MatchesInAtLeastTwoSources(String name) {
         super(name);
 
-        this.utils = new IntraCaseUtils(this, "MatchesInAtLeastTwoSources");
+        this.utils = new IntraCaseTestUtils(this, "MatchesInAtLeastTwoSources");
     }
 
     @Override
@@ -108,18 +108,18 @@ public class MatchesInAtLeastTwoSources extends NbTestCase {
             AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET1, 0));
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET4, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET1, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET4, 0));
 
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET1, 0));
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET4, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET1, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET4, 0));
 
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
-            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
