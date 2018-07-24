@@ -132,11 +132,7 @@ public class Tags implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
-        public void refresh(){
-            tagResults.update();
-        }
-        
+
     }
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
@@ -147,7 +143,8 @@ public class Tags implements AutopsyVisitableItem {
                 Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
                 Case.Events.CONTENT_TAG_ADDED,
                 Case.Events.CONTENT_TAG_DELETED,
-                Case.Events.CURRENT_CASE);
+                Case.Events.CURRENT_CASE,
+                Case.Events.REFRESH_TAG_TREE);
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -156,7 +153,8 @@ public class Tags implements AutopsyVisitableItem {
                 if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
                         || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
                         || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())
+                        || eventType.equals(Case.Events.REFRESH_TAG_TREE.toString())) {
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
@@ -451,14 +449,13 @@ public class Tags implements AutopsyVisitableItem {
                         : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
                 if (UserPreferences.showOnlyCurrentUserTags()) {
                     String userName = System.getProperty("user.name");
-                    for (ContentTag tag : contentTags){
-                        if (userName.equals(tag.getUserName())){
+                    for (ContentTag tag : contentTags) {
+                        if (userName.equals(tag.getUserName())) {
                             keys.add(tag);
-                        }       
+                        }
                     }
-                }
-                else {
-                   keys.addAll(contentTags);
+                } else {
+                    keys.addAll(contentTags);
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
@@ -566,14 +563,13 @@ public class Tags implements AutopsyVisitableItem {
                         : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
                 if (UserPreferences.showOnlyCurrentUserTags()) {
                     String userName = System.getProperty("user.name");
-                    for (BlackboardArtifactTag tag : artifactTags){
-                        if (userName.equals(tag.getUserName())){
+                    for (BlackboardArtifactTag tag : artifactTags) {
+                        if (userName.equals(tag.getUserName())) {
                             keys.add(tag);
-                        }       
+                        }
                     }
-                }
-                else {
-                   keys.addAll(artifactTags);
+                } else {
+                    keys.addAll(artifactTags);
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS

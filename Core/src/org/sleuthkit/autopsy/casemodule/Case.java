@@ -75,6 +75,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagTreeRefreshEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
@@ -372,7 +373,9 @@ public class Case {
          * old value of the PropertyChangeEvent is the display name of the tag
          * definition that has changed.
          */
-        TAG_DEFINITION_CHANGED;
+        TAG_DEFINITION_CHANGED,
+        
+        REFRESH_TAG_TREE;
 
     };
 
@@ -1510,6 +1513,10 @@ public class Case {
         eventPublisher.publish(new ContentTagAddedEvent(newTag));
     }
 
+    public void notifyTagsTreeRefresh(){
+        eventPublisher.publish(new TagTreeRefreshEvent());
+    }
+    
     /**
      * Notifies case event subscribers that a content tag has been deleted.
      *

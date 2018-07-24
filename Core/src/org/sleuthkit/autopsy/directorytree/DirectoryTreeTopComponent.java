@@ -913,7 +913,19 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     private void refreshTagsTree() {
-        ((Tags.RootNode)autopsyTreeChildren.findChild("Tags")).refresh();
+        SwingUtilities.invokeLater(() -> {
+            // if no open case or has no data then there is no tree to rebuild
+            Case currentCase;
+            try {
+                currentCase = Case.getCurrentCaseThrows();
+            } catch (NoCurrentCaseException ex) {
+                return;
+            }
+            if (null == currentCase || currentCase.hasData() == false) {
+                return;
+            }
+            currentCase.notifyTagsTreeRefresh();
+        });
     }
 
     /**
