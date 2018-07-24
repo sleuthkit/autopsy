@@ -28,10 +28,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1;
-import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1_DATASET_1;
-import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.HASH_A_JPG;
-import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.verifyInstanceExistanceAndCount;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.*;
 
 /**
  * If I use the search all cases option: One node for Hash A (1_1_A.jpg,
