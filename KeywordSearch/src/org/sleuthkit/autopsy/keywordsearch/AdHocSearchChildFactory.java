@@ -83,9 +83,11 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
                     .collect(Collectors.toList());
 
     private final Collection<AdHocQueryRequest> queryRequests;
+    private final boolean saveResults;
 
-    AdHocSearchChildFactory(Collection<AdHocQueryRequest> queryRequests) {
+    AdHocSearchChildFactory(Collection<AdHocQueryRequest> queryRequests, boolean saveResults) {
         this.queryRequests = queryRequests;
+        this.saveResults = saveResults;
     }
 
     /**
@@ -223,7 +225,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
         //cannot reuse snippet in BlackboardResultWriter
         //because for regex searches in UI we compress results by showing a content per regex once (even if multiple term hits)
         //whereas in bb we write every hit per content separately
-        new BlackboardResultWriter(queryResults, queryRequest.getKeywordList().getName()).execute();
+        new BlackboardResultWriter(queryResults, queryRequest.getKeywordList().getName(), saveResults).execute();
 
         return true;
     }
@@ -396,10 +398,12 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
         private final KeywordSearchQuery query;
         private final QueryResults hits;
         private static final int QUERY_DISPLAY_LEN = 40;
+        private final boolean saveResults;
 
-        BlackboardResultWriter(QueryResults hits, String listName) {
+        BlackboardResultWriter(QueryResults hits, String listName, boolean saveResults) {
             this.hits = hits;
             this.query = hits.getQuery();
+            this.saveResults = saveResults;
         }
 
         protected void finalizeWorker() {
@@ -414,7 +418,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
             final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             try {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), () -> BlackboardResultWriter.this.cancel(true));
-                hits.process(progress, null, this, false);
+                hits.process(progress, null, this, false, saveResults);
             } finally {
                 finalizeWorker();
             }

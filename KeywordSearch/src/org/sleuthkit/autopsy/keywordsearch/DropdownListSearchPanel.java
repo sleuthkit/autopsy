@@ -333,7 +333,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            search();
+            search(true); // ELTOD do we always want o save these?
         } finally {
             setCursor(null);
         }

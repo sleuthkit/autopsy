@@ -340,7 +340,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
      */
     private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordTextFieldActionPerformed
         try {
-            search();
+            search(false); // ELTODO get the checkbox value
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error performing ad hoc single keyword search", e); //NON-NLS
         }

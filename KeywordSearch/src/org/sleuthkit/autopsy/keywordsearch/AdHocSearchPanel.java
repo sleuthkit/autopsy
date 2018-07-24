@@ -99,7 +99,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      * Performs the search using the selected keywords. Creates a
      * DataResultTopComponent with the results.
      */
-    public void search() {
+    public void search(boolean saveResults) {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
         if (filesIndexed == 0) {
@@ -138,7 +138,7 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
       
         AdHocSearchDelegator man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
         if (man.validate()) {
-            man.execute();
+            man.execute(saveResults);
         } else {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
                     "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);

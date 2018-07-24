@@ -143,7 +143,7 @@ class QueryResults {
      *                    exrtacted from the text source object.
      *
      */
-    void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox) {
+    void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults) {
         /*
          * Initialize the progress indicator to the number of keywords that will
          * be processed.
@@ -218,22 +218,25 @@ class QueryResults {
                 } catch (TskCoreException | NoCurrentCaseException tskCoreException) {
                     logger.log(Level.SEVERE, "Failed to get text source object for ", tskCoreException); //NON-NLS
                 }
+                
+                if (saveResults) {
 
-                /*
+                    /*
                  * Post an artifact for the hit to the blackboard.
-                 */
-                BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
+                     */
+                    BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
 
-                /*
+                    /*
                  * Send an ingest inbox message for the hit.
-                 */
-                if (null != artifact) {
-                    hitArtifacts.add(artifact);
-                    if (notifyInbox) {
-                        try {
-                            writeSingleFileInboxMessage(artifact, content);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Error sending message to ingest messages inbox", ex); //NON-NLS
+                     */
+                    if (null != artifact) {
+                        hitArtifacts.add(artifact);
+                        if (notifyInbox) {
+                            try {
+                                writeSingleFileInboxMessage(artifact, content);
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Error sending message to ingest messages inbox", ex); //NON-NLS
+                            }
                         }
                     }
                 }
