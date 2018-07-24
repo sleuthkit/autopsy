@@ -53,10 +53,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * None of the test files should be found in the results of this test.
  */
-public class MatchesInAtLeastTwoSources extends NbTestCase {
+public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(MatchesInAtLeastTwoSources.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(MatchesInAtLeastTwoSourcesIntraCaseTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
@@ -64,7 +64,7 @@ public class MatchesInAtLeastTwoSources extends NbTestCase {
 
     private final IntraCaseTestUtils utils;
 
-    public MatchesInAtLeastTwoSources(String name) {
+    public MatchesInAtLeastTwoSourcesIntraCaseTests(String name) {
         super(name);
 
         this.utils = new IntraCaseTestUtils(this, "MatchesInAtLeastTwoSources");
@@ -86,7 +86,7 @@ public class MatchesInAtLeastTwoSources extends NbTestCase {
         templates.add(hashLookupTemplate);
         templates.add(mimeTypeLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileType.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileTypeIntraCaseTests.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);

@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +30,10 @@ import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -97,7 +99,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
@@ -124,7 +126,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -138,7 +140,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false);
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -165,7 +167,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -179,7 +181,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, true);
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, true);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -206,7 +208,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -221,7 +223,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false);
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -248,7 +250,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -263,7 +265,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, true, false);
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, true, false);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -290,7 +292,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -305,7 +307,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, true);
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, true);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -332,7 +334,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -347,7 +349,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long second = getDataSourceIdByName(SET2, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(second, dataSources, false, false);
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(second, dataSources, false, false);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -374,7 +376,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -388,7 +390,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long last = getDataSourceIdByName(SET4, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(last, dataSources, false, false);
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(last, dataSources, false, false);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -415,7 +417,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -429,7 +431,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long third = getDataSourceIdByName(SET3, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, false, false);
+            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, false, false);
             CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
@@ -456,7 +458,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET3, 0));
             assertTrue(verifyInstanceExistanceAndCount(files, objectIdToDataSource, EMPTY, SET4, 0));
 
-        } catch (Exception ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
