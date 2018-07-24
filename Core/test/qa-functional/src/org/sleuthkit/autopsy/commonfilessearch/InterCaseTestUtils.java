@@ -73,13 +73,13 @@ import org.sleuthkit.datamodel.AbstractFile;
       - Hash-A.jpg
       - Hash-A.pdf
   +Data Set2
-      - Hash-0.dat    [testFile of size -0]
+      - Hash-0.dat    [testFile of size 0]
       - Hash-A.jpg
       - Hash-A.pdf
  Case 2
   +Data Set 1
-      - Hash-A.jpg
-      - Hash-A.pdf
+      - Hash-B.jpg
+      - Hash-B.pdf
   +Data Set 2
       - Hash-A.jpg
       - Hash-A.pdf
@@ -94,7 +94,7 @@ import org.sleuthkit.datamodel.AbstractFile;
   +Data Set 2
       - Hash-C.jpg    [we should never find these!]
       - Hash-C.pdf
-      - Hash.D-doc
+      - Hash-D.doc
  */
 class InterCaseTestUtils {
 

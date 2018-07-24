@@ -853,6 +853,51 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail(ex);
         }
         
+<<<<<<< HEAD
+=======
+//        // Test getting common instances with expected results
+//        try {
+//            List<CentralRepositoryFile> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash));
+//            assertTrue("getArtifactInstancesByCaseValues returned " + instances.size() + " results - expected 5", instances.size() == 5);
+//
+//            // This test works because all the instances of this hash were set to the same path
+//            for (CentralRepositoryFile inst : instances) {
+//                if(inst.getValue().equals(inAllDataSourcesHash)) {
+//                    assertTrue("getArtifactInstancesByCaseValues returned instance with unexpected path " + inst.getFilePath(),
+//                            inAllDataSourcesPath.equalsIgnoreCase(inst.getFilePath()));
+//                }
+//                else if(inst.getValue().equals(inDataSource1twiceHash)) {
+//                    assertTrue("getArtifactInstancesByCaseValues returned instance with unexpected path " + inst.getFilePath(),
+//                            inDataSource1twicePath1.equalsIgnoreCase(inst.getFilePath()) || inDataSource1twicePath2.equalsIgnoreCase(inst.getFilePath()));
+//                }
+//            }
+//        } catch (EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex);
+//        }
+//        
+//        // Test getting instances expecting no results because they are not in the case 
+//        try {
+//            CorrelationCase badCase = new CorrelationCase("badCaseUuid", "badCaseName");
+//            List<CentralRepositoryFile> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(badCase, Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash), 0);
+//            
+//            assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
+//        } catch (EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex);
+//        }
+//        
+//                
+//        // Test getting instances expecting no results because of bad hashes
+//        try {
+//            List<CentralRepositoryFile> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(Arrays.asList("xyz", "123"));
+//            
+//            assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
+//        } catch (EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex);
+//        }
+>>>>>>> 0468b6bd597a63c424d81b8569bb3df3bf8f7530
 
        
 
@@ -883,6 +928,20 @@ public class CentralRepoDatamodelTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+<<<<<<< HEAD
+=======
+        
+//        // Test getting instances with null value
+//        // Should just return nothing
+//        try {
+//           List<CentralRepositoryFile> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(null);
+//            
+//            assertTrue("getArtifactInstancesByTypeValue returned non-empty list for null value", instances.isEmpty());
+//        } catch (EamDbException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex);
+//        }
+>>>>>>> 0468b6bd597a63c424d81b8569bb3df3bf8f7530
 
         // Test getting instances with path that should produce results
         try {
