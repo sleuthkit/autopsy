@@ -86,7 +86,36 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             assertTrue("Results should not be empty", metadata.size() != 0);
             
+            //case 1 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            
+            //case 1 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            
+            //case 2 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            
+            //case 2 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
+            
+            //case 3 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));            
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            
+            //case 3 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
             
         } catch (Exception ex) {
