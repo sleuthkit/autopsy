@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Map;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -168,10 +169,10 @@ public abstract class AbstractCommonAttributeInstance {
      * @return the appropriate leaf node for the results tree
      * @throws TskCoreException
      */
-    static DisplayableItemNode createInstance(CorrelationAttributeInstance attributeInstance, AbstractFile equivalentAbstractFile, String currentCaseName) throws TskCoreException {
+    static DisplayableItemNode createInstance(CorrelationAttribute attribute, AbstractFile equivalentAbstractFile, String currentCaseName) throws TskCoreException {
 
         DisplayableItemNode leafNode;
-
+        CorrelationAttributeInstance attributeInstance = attribute.getInstances().get(0);
         final String attributeDataSourceName = attributeInstance.getCorrelationDataSource().getName();
         final String abstractFileDataSourceName = equivalentAbstractFile.getDataSource().getName();
 
