@@ -78,8 +78,8 @@ import org.sleuthkit.datamodel.AbstractFile;
       - Hash-A.pdf
  Case 2
   +Data Set 1
-      - Hash-B.jpg
-      - Hash-B.pdf
+      - Hash-B.jpg      
+      - Hash-B.pdf      
   +Data Set 2
       - Hash-A.jpg
       - Hash-A.pdf
@@ -88,11 +88,11 @@ import org.sleuthkit.datamodel.AbstractFile;
   +Data Set 1
       - Hash-A.jpg
       - Hash-A.pdf
-      - Hash-C.jpg    [we should never find these!]
-      - Hash-C.pdf    [we should never find these!]
+      - Hash-C.jpg    
+      - Hash-C.pdf    
       - Hash-D.jpg
   +Data Set 2
-      - Hash-C.jpg    [we should never find these!]
+      - Hash-C.jpg    
       - Hash-C.pdf
       - Hash-D.doc
  */
@@ -170,8 +170,10 @@ class InterCaseTestUtils {
     void clearTestDir(){
         if(CASE_DIRECTORY_PATH.toFile().exists()){
             try{
+                EamDb.getInstance().shutdownConnections();
                 FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
-            } catch(IOException  ex){
+            } catch(IOException | EamDbException ex){
+                Exceptions.printStackTrace(ex);
                 Assert.fail(ex);
             }
         }
@@ -182,13 +184,13 @@ class InterCaseTestUtils {
         return this.dataSourceLoader.getDataSourceMap();
     }
 
-    Map<Integer, String> getCaseMap() throws EamDbException {
+    Map<String, Integer> getCaseMap() throws EamDbException {
 
         if (EamDb.isEnabled()) {
-            Map<Integer, String> mapOfCaseIdsToCase = new HashMap<>();
+            Map<String, Integer> mapOfCaseIdsToCase = new HashMap<>();
 
             for (CorrelationCase caze : EamDb.getInstance().getCases()) {
-                mapOfCaseIdsToCase.put(caze.getID(), caze.getDisplayName());
+                mapOfCaseIdsToCase.put(caze.getDisplayName(), caze.getID());
             }
             return mapOfCaseIdsToCase;
         } else {
@@ -294,6 +296,7 @@ class InterCaseTestUtils {
         }
     }
     
+    //TODO refactor
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         int tally = 0;
