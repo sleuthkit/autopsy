@@ -63,6 +63,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 /**
  * Utilities for testing intercase correlation feature.
  * 
+ * This will be more useful when we add more flush out the intercase
+ * correlation features and need to add more tests.  In particular,
+ * testing scenarios where we need different cases to be the current case
+ * will suggest that we create additional test classes, and we will want to
+ * import this utility in each new intercase test file.
+ * 
  * Description of Test Data:
  (Note: files of the same name and extension are identical; 
  files of the same name and differing extension are not identical.)
