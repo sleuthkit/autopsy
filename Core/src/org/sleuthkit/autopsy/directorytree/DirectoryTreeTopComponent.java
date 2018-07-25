@@ -914,8 +914,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private void refreshTagsTree() {
         SwingUtilities.invokeLater(() -> {
-            // if no open case or has no data then there is no tree to rebuild     
-            ((Tags.RootNode) autopsyTreeChildren.findChild("Tags")).refresh();
+            // if no open case or has no data then there is no tree to rebuild
+            if (UserPreferences.groupItemsInTreeByDatasource()) {
+                for (Node dataSource : autopsyTreeChildren.getNodes()) {
+                    Node tagsNode = dataSource.getChildren().findChild("Tags");
+                    if (tagsNode != null) {
+                        //Reports is at the same level as the data sources so we want to ignore it
+                        ((Tags.RootNode)tagsNode).refresh();
+                    }
+                }
+            } else {
+                 Node tagsNode = autopsyTreeChildren.findChild("Tags");
+                    if (tagsNode != null) {
+                        ((Tags.RootNode)tagsNode).refresh();
+                    }
+            }
         });
     }
 
