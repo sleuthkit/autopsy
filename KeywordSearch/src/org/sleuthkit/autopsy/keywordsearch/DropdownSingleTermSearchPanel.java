@@ -221,6 +221,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
         ingestIndexLabel = new javax.swing.JLabel();
+        jSaveSearchResults = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(cutMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.cutMenuItem.text")); // NOI18N
         rightClickMenu.add(cutMenuItem);
@@ -280,6 +281,9 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         ingestIndexLabel.setFont(ingestIndexLabel.getFont().deriveFont(ingestIndexLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
         org.openide.awt.Mnemonics.setLocalizedText(ingestIndexLabel, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSingleTermSearchPanel.ingestIndexLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jSaveSearchResults, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSingleTermSearchPanel.jSaveSearchResults.text")); // NOI18N
+        jSaveSearchResults.setToolTipText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSingleTermSearchPanel.jSaveSearchResults.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -287,32 +291,35 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSaveSearchResults)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(exactRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(substringRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(regexRadioButton))
-                    .addComponent(dataSourceCheckBox)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(ingestIndexLabel))
-                    .addComponent(keywordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(keywordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(dataSourceCheckBox))
+                .addContainerGap(39, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(keywordTextField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(keywordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exactRadioButton)
                     .addComponent(substringRadioButton)
                     .addComponent(regexRadioButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSaveSearchResults)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(dataSourceCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -320,7 +327,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(ingestIndexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addGap(29, 29, 29))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -340,7 +347,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
      */
     private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordTextFieldActionPerformed
         try {
-            search(false); // ELTODO get the checkbox value
+            search(jSaveSearchResults.isSelected()); // ELTODO get the checkbox value
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error performing ad hoc single keyword search", e); //NON-NLS
         }
@@ -431,6 +438,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
     private javax.swing.JList<String> dataSourceList;
     private javax.swing.JRadioButton exactRadioButton;
     private javax.swing.JLabel ingestIndexLabel;
+    private javax.swing.JCheckBox jSaveSearchResults;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField keywordTextField;
     private javax.swing.JMenuItem pasteMenuItem;
