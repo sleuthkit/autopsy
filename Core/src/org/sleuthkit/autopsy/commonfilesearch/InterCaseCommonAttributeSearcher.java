@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 
 /**
@@ -71,12 +70,8 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
             }
-            Map<Long, AbstractFile> fileCache = new HashMap<>();
 
             try {
-                int caseId = commonFileCases.get(commonAttrId);
-                CorrelationCase autopsyCrCase = dbManager.getCaseById(caseId);
-                final String correlationCaseDisplayName = autopsyCrCase.getDisplayName();
                 // we don't *have* all the information for the rows in the CR,
                 //  so we need to consult the present case via the SleuthkitCase object
                 // Later, when the FileInstanceNodde is built. Therefore, build node generators for now.
@@ -85,14 +80,14 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
                     //Add to intercase metaData
                     final CommonAttributeValue commonAttributeValue = interCaseCommonFiles.get(md5);
                     
-                    AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, fileCache);
+                    AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId);
                     commonAttributeValue.addFileInstanceMetadata(searchResult);
 
                 } else {
                     CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
                     interCaseCommonFiles.put(md5, commonAttributeValue);
                     
-                    AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, fileCache);
+                    AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId);
                     commonAttributeValue.addFileInstanceMetadata(searchResult);
                     
                 }

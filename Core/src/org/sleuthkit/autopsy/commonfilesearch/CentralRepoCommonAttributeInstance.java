@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,8 +43,8 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private final Integer crFileId;
     private CorrelationAttribute currentAttribute;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
-        super(cachedFiles);
+    CentralRepoCommonAttributeInstance(Integer attrInstId) {
+        super();
         this.crFileId = attrInstId;
     }
 
@@ -103,8 +102,8 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         try {
             this.setCurrentAttributeInst(corrAttr);
 
-            AbstractFile equivalentAbstractFile = this.lookupOrLoadAbstractFile();
-            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createInstance(corrAttr, equivalentAbstractFile, currCaseDbName);
+            AbstractFile abstractFileForAttributeInstance = this.getAbstractFile();
+            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createInstance(corrAttr, abstractFileForAttributeInstance, currCaseDbName);
             attrInstNodeList.add(generatedInstNode);
 
         } catch (TskCoreException ex) {

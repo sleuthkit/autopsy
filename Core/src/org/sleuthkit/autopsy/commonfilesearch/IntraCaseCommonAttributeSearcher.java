@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -97,7 +96,6 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      */
     @Override
     public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
-        //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
         
         final Case currentCase = Case.getCurrentCaseThrows();
@@ -106,8 +104,6 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
         
         String selectStatement = this.buildSqlSelectStatement();
-        
-        Map<Long, AbstractFile> fileCache = new HashMap<>();
 
         try (
                 CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement);
@@ -125,10 +121,10 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
                 if (commonFiles.containsKey(md5)) {
                     final CommonAttributeValue commonAttributeValue = commonFiles.get(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, fileCache, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
                 } else {
                     final CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, fileCache, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
                     commonFiles.put(md5, commonAttributeValue);
                 }
             }
@@ -169,5 +165,4 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         }
         return mimeTypeString;
     }
-
 }
