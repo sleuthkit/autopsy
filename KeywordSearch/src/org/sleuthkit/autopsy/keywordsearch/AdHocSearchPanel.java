@@ -98,6 +98,8 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     /**
      * Performs the search using the selected keywords. Creates a
      * DataResultTopComponent with the results.
+     *
+     * @param saveResults Flag whether to save search results as KWS artifacts.
      */
     public void search(boolean saveResults) {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();

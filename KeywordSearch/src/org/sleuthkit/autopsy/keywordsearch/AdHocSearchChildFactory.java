@@ -85,6 +85,12 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
     private final Collection<AdHocQueryRequest> queryRequests;
     private final boolean saveResults;
 
+    /**
+     * Constructor
+     *
+     * @param queryRequests Query results
+     * @param saveResults Flag whether to save search results as KWS artifacts.
+     */
     AdHocSearchChildFactory(Collection<AdHocQueryRequest> queryRequests, boolean saveResults) {
         this.queryRequests = queryRequests;
         this.saveResults = saveResults;

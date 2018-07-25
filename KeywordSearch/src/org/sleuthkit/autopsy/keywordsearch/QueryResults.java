@@ -141,6 +141,7 @@ class QueryResults {
      * @param notifyInbox Whether or not to write a message to the ingest
      *                    messages inbox if there is a keyword hit in the text
      *                    exrtacted from the text source object.
+     * @param saveResults Flag whether to save search results as KWS artifacts.
      *
      */
     void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults) {
@@ -220,14 +221,13 @@ class QueryResults {
                 }
                 
                 if (saveResults) {
-
                     /*
-                 * Post an artifact for the hit to the blackboard.
+                    * Post an artifact for the hit to the blackboard.
                      */
                     BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
 
                     /*
-                 * Send an ingest inbox message for the hit.
+                    * Send an ingest inbox message for the hit.
                      */
                     if (null != artifact) {
                         hitArtifacts.add(artifact);
