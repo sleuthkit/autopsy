@@ -86,7 +86,9 @@ public class ImageGalleryModule {
     public static boolean isDrawableDBStale(Case c) {
         if (c != null) {
             String stale = new PerCaseProperties(c).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.STALE);
-            return StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : true;
+            
+            return ( ImageGalleryController.getDefault().isDataSourcesTableStale() || 
+                     (StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : true) );
         } else {
             return false;
         }

@@ -329,6 +329,7 @@
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
+                <package>org.sleuthkit.autopsy.ingest.events</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>
@@ -499,7 +500,7 @@
                 <runtime-relative-path>ext/xmpcore-5.1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmpcore-5.1.3.jar</binary-origin>
             </class-path-extension>
-			<class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
             </class-path-extension>

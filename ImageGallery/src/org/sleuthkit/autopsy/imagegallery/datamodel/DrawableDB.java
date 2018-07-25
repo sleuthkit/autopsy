@@ -103,6 +103,8 @@ public final class DrawableDB {
 
     private final PreparedStatement insertHashHitStmt;
 
+    private final PreparedStatement insertDataSourceStmt;
+     
     private final PreparedStatement updateFileStmt;
     private final PreparedStatement insertFileStmt;
 
@@ -209,6 +211,10 @@ public final class DrawableDB {
                     "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
                     + "VALUES (?,?,?,?,?,?,?,?)"); //NON-NLS
 
+            insertDataSourceStmt = prepareStatement(
+                    "INSERT OR IGNORE INTO datasources (ds_obj_id) " //NON-NLS
+                    + "VALUES (?)"); //NON-NLS
+             
             removeFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
 
             pathGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? ", DrawableAttribute.PATH); //NON-NLS
@@ -349,6 +355,17 @@ public final class DrawableDB {
             LOGGER.log(Level.SEVERE, "problem accessing database", ex); //NON-NLS
             return false;
         }
+        
+         try (Statement stmt = con.createStatement()) {
+            String sql = "CREATE TABLE if not exists datasources " //NON-NLS
+                    + "( id INTEGER PRIMARY KEY, " //NON-NLS
+                    + " ds_obj_id integer UNIQUE NOT NULL)"; //NON-NLS
+            stmt.execute(sql);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "problem creating datasources table", ex); //NON-NLS
+            return false;
+        }
+         
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
                     + "( obj_id INTEGER PRIMARY KEY, " //NON-NLS
@@ -689,6 +706,65 @@ public final class DrawableDB {
         }
     }
 
+
+   /**
+     * Gets all known data source object ids from data_sources table
+     *
+     * @return list of known data source object ids
+     */
+    public Set<Long> getKnownDataSourceIds() throws TskCoreException {
+        Statement statement = null;
+        ResultSet rs = null;
+        Set<Long> ret = new HashSet<>();
+        dbReadLock();
+        try {
+            statement = con.createStatement();
+            rs = statement.executeQuery("SELECT ds_obj_id FROM datasources "); //NON-NLS
+            while (rs.next()) {
+                ret.add(rs.getLong(1));
+            }
+        } catch (SQLException e) {
+            throw new TskCoreException("SQLException thrown when calling 'DrawableDB.getKnownDataSourceIds()", e);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error closing result set after executing  getKnownDataSourceIds", ex); //NON-NLS
+                }
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "Error closing statement after executing  getKnownDataSourceIds", ex); //NON-NLS
+                }
+            }
+            dbReadUnlock();
+        }
+        return ret;
+    }
+    
+    
+    /**
+     * Insert given data source object id into data_sources table
+     * 
+     * @param dsObjectId data source object id to insert
+     */
+    public void  insertDataSource(long dsObjectId) {
+        dbWriteLock();
+        try {
+            // "INSERT OR IGNORE/ INTO datasources (ds_obj_id)"
+            insertDataSourceStmt.setLong(1,dsObjectId);
+          
+            insertDataSourceStmt.executeUpdate();
+        } catch (SQLException | NullPointerException ex) {
+            LOGGER.log(Level.SEVERE, "failed to insert/update datasources table", ex); //NON-NLS
+        } finally {
+            dbWriteUnlock();
+        }
+    }
+    
     public DrawableTransaction beginTransaction() {
         return new DrawableTransaction();
     }

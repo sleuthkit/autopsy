@@ -172,7 +172,15 @@ public final class OpenAction extends CallableSystemAction {
 
             switch (answer) {
                 case JOptionPane.YES_OPTION:
-                    ImageGalleryController.getDefault().setListeningEnabled(true);
+                    
+                    if (currentCase.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                        // toggling listening to ON automatically triggers a rebuild
+                        ImageGalleryController.getDefault().setListeningEnabled(true);
+                    }
+                    else {
+                        ImageGalleryController.getDefault().rebuildDB();
+                    }
+                
                 //fall through
                 case JOptionPane.NO_OPTION:
                     ImageGalleryTopComponent.openTopComponent();
