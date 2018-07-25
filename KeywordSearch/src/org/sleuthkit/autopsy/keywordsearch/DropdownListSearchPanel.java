@@ -206,6 +206,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         dataSourceCheckBox = new javax.swing.JCheckBox();
         jScrollPane1 = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
+        jSaveSearchResults = new javax.swing.JCheckBox();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -265,6 +266,9 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         dataSourceList.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(dataSourceList);
 
+        jSaveSearchResults.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "DropdownListSearchPanel.jSaveSearchResults.text")); // NOI18N
+        jSaveSearchResults.setToolTipText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "DropdownListSearchPanel.jSaveSearchResults.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -278,10 +282,12 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ingestIndexLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(dataSourceCheckBox)
-                .addGap(0, 0, Short.MAX_VALUE))
             .addComponent(jScrollPane1)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(dataSourceCheckBox)
+                    .addComponent(jSaveSearchResults))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {manageListsButton, searchAddButton});
@@ -291,6 +297,8 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSaveSearchResults)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(dataSourceCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -319,6 +327,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
     private javax.swing.JCheckBox dataSourceCheckBox;
     private javax.swing.JList<String> dataSourceList;
     private javax.swing.JLabel ingestIndexLabel;
+    private javax.swing.JCheckBox jSaveSearchResults;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTable keywordsTable;
@@ -333,7 +342,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            search(true); // ELTOD do we always want o save these?
+            search(jSaveSearchResults.isSelected());
         } finally {
             setCursor(null);
         }
