@@ -181,7 +181,7 @@ public class TagsManager implements Closeable {
                     tagNameSet.add(tag.getName());
                 }
             }
-            return new ArrayList(tagNameSet);
+            return new ArrayList<TagName>(tagNameSet);
         } else {
             return caseDb.getTagNamesInUse();
         }
@@ -216,7 +216,7 @@ public class TagsManager implements Closeable {
                     tagNameSet.add(tag.getName());
                 }
             }
-            return new ArrayList(tagNameSet);
+            return new ArrayList<TagName>(tagNameSet);
         } else {
             return caseDb.getTagNamesInUse(dsObjId);
         }
