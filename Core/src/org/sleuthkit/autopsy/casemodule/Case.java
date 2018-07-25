@@ -373,9 +373,7 @@ public class Case {
          * old value of the PropertyChangeEvent is the display name of the tag
          * definition that has changed.
          */
-        TAG_DEFINITION_CHANGED,
-        
-        REFRESH_TAG_TREE;
+        TAG_DEFINITION_CHANGED;
 
     };
 

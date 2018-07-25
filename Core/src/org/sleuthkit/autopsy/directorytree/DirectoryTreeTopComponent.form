@@ -22,7 +22,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="forwardButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="showOnlyCurrentUserTagsCheckbox" pref="33" max="32767" attributes="0"/>
+              <Component id="showOnlyCurrentUserTagsCheckbox" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="showRejectedCheckBox" min="-2" max="-2" attributes="0"/>

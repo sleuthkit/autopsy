@@ -132,6 +132,10 @@ public class Tags implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
+        
+        public void refresh(){
+             tagResults.update();
+        }
 
     }
 
@@ -143,8 +147,7 @@ public class Tags implements AutopsyVisitableItem {
                 Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
                 Case.Events.CONTENT_TAG_ADDED,
                 Case.Events.CONTENT_TAG_DELETED,
-                Case.Events.CURRENT_CASE,
-                Case.Events.REFRESH_TAG_TREE);
+                Case.Events.CURRENT_CASE);
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -153,8 +156,7 @@ public class Tags implements AutopsyVisitableItem {
                 if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
                         || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
                         || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())
-                        || eventType.equals(Case.Events.REFRESH_TAG_TREE.toString())) {
+                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked
