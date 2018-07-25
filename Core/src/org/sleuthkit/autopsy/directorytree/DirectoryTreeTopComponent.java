@@ -917,14 +917,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             // if no open case or has no data then there is no tree to rebuild
             if (UserPreferences.groupItemsInTreeByDatasource()) {
                 for (Node dataSource : autopsyTreeChildren.getNodes()) {
-                    Node tagsNode = dataSource.getChildren().findChild("Tags");
+                    Node tagsNode = dataSource.getChildren().findChild(Tags.getTagsDisplayName());
                     if (tagsNode != null) {
                         //Reports is at the same level as the data sources so we want to ignore it
                         ((Tags.RootNode)tagsNode).refresh();
                     }
                 }
             } else {
-                 Node tagsNode = autopsyTreeChildren.findChild("Tags");
+                 Node tagsNode = autopsyTreeChildren.findChild(Tags.getTagsDisplayName());
                     if (tagsNode != null) {
                         ((Tags.RootNode)tagsNode).refresh();
                     }

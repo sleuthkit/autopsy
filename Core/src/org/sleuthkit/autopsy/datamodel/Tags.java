@@ -55,7 +55,7 @@ public class Tags implements AutopsyVisitableItem {
     // override of Children.Keys<T>.createNodes().
 
     private final TagResults tagResults = new TagResults();
-    private final String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
+    private final static String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     private final long datasourceObjId;
@@ -68,6 +68,10 @@ public class Tags implements AutopsyVisitableItem {
         this.datasourceObjId = dsObjId;
     }
 
+    public static String getTagsDisplayName(){
+        return DISPLAY_NAME;
+    }
+    
     long filteringDataSourceObjId() {
         return this.datasourceObjId;
     }
