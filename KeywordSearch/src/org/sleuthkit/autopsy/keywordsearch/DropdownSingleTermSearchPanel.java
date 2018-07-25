@@ -120,6 +120,8 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
         };
         ingestRunning = IngestManager.getInstance().isIngestRunning();
         updateIngestIndexLabel();
+        
+        jSaveSearchResults.setSelected(true);
 
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override

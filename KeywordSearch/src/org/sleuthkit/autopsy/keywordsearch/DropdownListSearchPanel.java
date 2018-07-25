@@ -164,6 +164,8 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         }
         listsTableModel.resync();
         updateIngestIndexLabel();
+        
+        jSaveSearchResults.setSelected(true);
     }
 
     private void updateIngestIndexLabel() {
