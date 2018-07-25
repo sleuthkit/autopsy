@@ -31,7 +31,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard.BlackboardException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -275,21 +274,23 @@ public class HashDbIngestModule implements FileIngestModule {
                      */
                     Map<BlackboardAttribute.Type, String> attributeMap = new HashMap<>();
                     attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME), hashSetName);
-                    if (!Blackboard.checkIfArtifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributeMap)) {
-                        postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
+                    try {
+                        if (!org.sleuthkit.datamodel.Blackboard.checkIfArtifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributeMap)) {
+                            postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format(
+                                "A problem occurred while checking for existing artifacts for file '%s' (id=%d).", name, fileId), ex); //NON-NLS
+                        services.postMessage(IngestMessage.createErrorMessage(
+                                HashLookupModuleFactory.getModuleName(),
+                                Bundle.HashDbIngestModule_dialogTitle_errorFindingArtifacts(name),
+                                Bundle.HashDbIngestModule_errorMessage_lookingForFileArtifacts(name)));
+                        ret = ProcessResult.ERROR;
                     }
                 }
                 long delta = (System.currentTimeMillis() - lookupstart);
                 totals.totalLookuptime.addAndGet(delta);
 
-            } catch (BlackboardException ex) {
-                logger.log(Level.SEVERE, String.format(
-                        "A problem occurred while checking for existing artifacts for file '%s' (id=%d).", name, fileId), ex); //NON-NLS
-                services.postMessage(IngestMessage.createErrorMessage(
-                        HashLookupModuleFactory.getModuleName(),
-                        Bundle.HashDbIngestModule_dialogTitle_errorFindingArtifacts(name),
-                        Bundle.HashDbIngestModule_errorMessage_lookingForFileArtifacts(name)));
-                ret = ProcessResult.ERROR;
             } catch (TskException ex) {
                 logger.log(Level.WARNING, String.format(
                         "Couldn't lookup notable hash for file '%s' (id=%d) - see sleuthkit log for details", name, fileId), ex); //NON-NLS
