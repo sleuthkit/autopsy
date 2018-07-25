@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -33,6 +32,10 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  * A factory that creates file ingest modules that do hash database lookups.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
+@NbBundle.Messages({
+    "HashLookupModuleFactory.moduleName.text=Hash Lookup",
+    "HashLookupModuleFactory.moduleDescription.text=Identifies known and notable files using supplied hash sets, such as a standard NSRL hash set."
+})
 public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     private HashLookupModuleSettingsPanel moduleSettingsPanel = null;
@@ -42,13 +45,18 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
         return getModuleName();
     }
 
+    /**
+     * Get the name of the module.
+     *
+     * @return The module name.
+     */
     static String getModuleName() {
-        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashDbIngestModule.moduleName");
+        return Bundle.HashLookupModuleFactory_moduleName_text();
     }
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashDbIngestModule.moduleDescription");
+        return Bundle.HashLookupModuleFactory_moduleDescription_text();
     }
 
     @Override
@@ -70,8 +78,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
-            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                    "HashLookupModuleFactory.getIngestJobSettingsPanel.exception.msg"));
+            throw new IllegalArgumentException("Expected settings argument to be an instance of HashLookupModuleSettings.");
         }
         if (moduleSettingsPanel == null) {
             moduleSettingsPanel = new HashLookupModuleSettingsPanel((HashLookupModuleSettings) settings);
@@ -101,13 +108,8 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "HashLookupModuleFactory.createFileIngestModule.exception.msg"));
+            throw new IllegalArgumentException("Expected settings argument to be an instance of HashLookupModuleSettings.");
         }
-        try {
-            return new HashDbIngestModule((HashLookupModuleSettings) settings);
-        } catch (NoCurrentCaseException ex) {
-            throw new IllegalArgumentException("Exception while getting open case.", ex);
-        }
+        return new HashDbIngestModule((HashLookupModuleSettings) settings);
     }
 }
