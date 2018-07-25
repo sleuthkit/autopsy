@@ -34,8 +34,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Represents that a row in the CR was found in multiple cases. 
- * 
+ * Represents that a row in the CR was found in multiple cases.
+ *
  * Generates a DisplayableItmeNode using a CentralRepositoryFile.
  */
 final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttributeInstance {
@@ -48,7 +48,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         super(cachedFiles);
         this.crFileId = attrInstId;
     }
-    
+
     void setCurrentAttributeInst(CorrelationAttribute attribute) {
         this.currentAttribute = attribute;
     }
@@ -63,13 +63,25 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                 currentCase = Case.getCurrentCaseThrows();
 
                 SleuthkitCase tskDb = currentCase.getSleuthkitCase();
-                
+
                 File fileFromPath = new File(currentFullPath);
                 String fileName = fileFromPath.getName();
+                String parentPath = fileFromPath.getParent() + File.separator;
+                List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(String.format("lower(name) = '%s' AND md5 = '%s'", fileName, currentAttribute.getCorrelationValue()));
+                AbstractFile finalAbstractFile = null;
+                for (AbstractFile aFile : potentialAbstractFiles) {
+                    // If a direct match exists, return that and we'll create a CaseDb instance node from it
+                    if (aFile.getParentPath().equalsIgnoreCase(parentPath)) {
+                        finalAbstractFile = aFile;
+                        break;
+                    }
+                }
+                // If not direct match exists, return first md5 match, only used as a backing file for CR instance node.
+                if (finalAbstractFile == null) {
+                    finalAbstractFile = potentialAbstractFiles.get(0);
+                }
 
-                AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("lower(name) = '%s' AND md5 = '%s'", fileName, currentAttribute.getCorrelationValue())).get(0);
-
-                return abstractFile;
+                return finalAbstractFile;
 
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentFullPath}), ex);
@@ -81,16 +93,15 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        
+
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
-        
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
         CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
 
         try {
-            this.setCurrentAttributeInst(corrAttr);                
+            this.setCurrentAttributeInst(corrAttr);
 
             AbstractFile equivalentAbstractFile = this.lookupOrLoadAbstractFile();
             DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createInstance(corrAttr, equivalentAbstractFile, currCaseDbName);
