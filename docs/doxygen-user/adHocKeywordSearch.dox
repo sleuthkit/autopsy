@@ -72,7 +72,7 @@ In general all three types of keyword searches will work as expected but the fea
 
 \section ad_hoc_kw_search Keyword Search
 
-Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.  The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+right click or control+right click.
+Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.  The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click.
 
 \image html keyword-search-bar.PNG
 
@@ -84,7 +84,7 @@ Results will be opened in a separate Results Viewer for every search executed an
 
 In addition to being selected during ingest, keyword lists can also be run through the Keyword Lists button. For information on setting up these keyword lists, see the \ref keywordListsTab section of the ingest module documentation.
 
-Lists created using the Keyword Search Configuration Dialog can be manually searched by the user by pressing on the 'Keyword Lists' button and selecting the check boxes corresponding to the lists to be searched. The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+right click or control+right click. Once everything has been configured, press "Search" to begin the search.
+Lists created using the Keyword Search Configuration Dialog can be manually searched by the user by pressing on the 'Keyword Lists' button and selecting the check boxes corresponding to the lists to be searched. The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. Once everything has been configured, press "Search" to begin the search.
 
 \image html keyword-search-list.PNG
 

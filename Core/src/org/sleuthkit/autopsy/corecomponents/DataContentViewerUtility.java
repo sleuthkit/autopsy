@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * but the initial method was needed only be viewers in 
  * corecomponents and therefore can stay out of public API.
  */
-class DataContentViewerUtility {
+public class DataContentViewerUtility {
     /**
      * Returns the first non-Blackboard Artifact from a Node.
      * Needed for (at least) Hex and Strings that want to view
@@ -39,7 +39,7 @@ class DataContentViewerUtility {
      * @param node Node passed into content viewer
      * @return highest priority content or null if there is no content
      */
-    static Content getDefaultContent(Node node) {
+    public static Content getDefaultContent(Node node) {
         Content bbContentSeen = null;
         for (Content content :  (node).getLookup().lookupAll(Content.class)) {
             if (content instanceof BlackboardArtifact) {

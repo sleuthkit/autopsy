@@ -19,9 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -52,6 +50,9 @@ public class Md5Node extends DisplayableItemNode {
     private final int commonFileCount;
     private final String dataSources;
 
+    @NbBundle.Messages({
+        "Md5Node.Md5Node.format=MD5: %s"
+    })
     /**
      * Create a Match node whose children will all have this object in common.
      * @param data the common feature, and the children
@@ -64,7 +65,8 @@ public class Md5Node extends DisplayableItemNode {
         this.dataSources = String.join(", ", data.getDataSources());
         this.md5Hash = data.getMd5();
         
-        this.setDisplayName(this.md5Hash);
+        this.setDisplayName(String.format(Bundle.Md5Node_Md5Node_format(), this.md5Hash));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
     /**
@@ -101,29 +103,15 @@ public class Md5Node extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
 
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, this);
-
         final String NO_DESCR = Bundle.Md5Node_createSheet_noDescription();
-        for (Md5Node.CommonFileParentPropertyType propType : Md5Node.CommonFileParentPropertyType.values()) {
-            final String propString = propType.toString();
-            sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
-        }
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSources()));
 
         return sheet;
     }
 
-    /**
-     * Fill map with AbstractFile properties
-     *
-     * @param map map with preserved ordering, where property names/values are
-     * put
-     * @param node The item to get properties for.
-     */
-    static private void fillPropertyMap(Map<String, Object> map, Md5Node node) {
-        //map.put(CommonFileParentPropertyType.Case.toString(), "");
-        map.put(CommonFileParentPropertyType.DataSource.toString(), node.getDataSources());
-    }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
@@ -172,24 +160,4 @@ public class Md5Node extends DisplayableItemNode {
         }
     }
 
-    @NbBundle.Messages({
-        "CommonFileParentPropertyType.fileColLbl=File",
-        "CommonFileParentPropertyType.instanceColLbl=Instance Count",
-        "CommonFileParentPropertyType.caseColLbl=Case",
-        "CommonFileParentPropertyType.dataSourceColLbl=Data Source"})
-    public enum CommonFileParentPropertyType {
-
-        DataSource(Bundle.CommonFileParentPropertyType_dataSourceColLbl());
-
-        final private String displayString;
-
-        private CommonFileParentPropertyType(String displayString) {
-            this.displayString = displayString;
-        }
-
-        @Override
-        public String toString() {
-            return this.displayString;
-        }
-    }
 }

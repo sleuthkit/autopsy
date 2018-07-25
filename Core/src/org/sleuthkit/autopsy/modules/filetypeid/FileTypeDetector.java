@@ -95,7 +95,7 @@ public class FileTypeDetector {
     private static SortedSet<String> getTikaDetectedTypes() {
         if (null == tikaDetectedTypes) {
             tikaDetectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
-                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
+                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString().replace("tika-", "")).collect(Collectors.toCollection(TreeSet::new));
         }
         return Collections.unmodifiableSortedSet(tikaDetectedTypes);
     }

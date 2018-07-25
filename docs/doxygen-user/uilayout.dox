@@ -21,12 +21,16 @@ The major areas in the Autopsy User Interface (UI) are:
 <br>
 
 
-The tree on the left-hand side is find saved results from automated procedures (ingest). The tree has four main areas:
+The tree on the left-hand side is where you can browse the files in the image and find saved results from automated procedures (ingest). The tree has five main areas:
 - <b>Data Sources:</b> This shows the directory tree hierarchy of the file systems in the images. You can navigate to a specific file or directory here. Each data source added is represented as a drive. If you add a data source multiple times, it shows up multiple times.
 - <b>Views:</b> Specific types of files from the data sources are shown here, aggregated by type or other properties. Files here can come from more than one data source. Look here for files of a specific type or property.
 - <b>Results:</b> Where you can see the results from the background ingest tasks and you can see your previous search results. Go here to see what was found by the ingest modules and to find your previous search results.
+- <b>Tags:</b> Where files and results that have been \ref tagging_page "tagged" are shown
 - <b>Reports:</b> References to reports that you have generated or that ingest modules have created show up here
 
+You can also use the "Group by Data Source" option at the upper left of the tree display to move the views, results, and tags subtrees under their corresponding data sources. This can be helpful on very large cases to reduce the size of each node.
+
+\image html ui_layout_group_tree.PNG
 
 \subsection ui_tree_ds Data Sources
 
