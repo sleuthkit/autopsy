@@ -21,12 +21,9 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -174,7 +171,7 @@ public final class Blackboard implements Closeable {
             try {
                 if (checkIfAttributesMatch(artifact.getAttributes(), attributesMap)) {
                     /*
-                     * The exact artifact exists, so we don't need to look at
+                     * The exact artifact exists, so we don't need to look any
                      * further.
                      */
                     return true;
@@ -187,18 +184,20 @@ public final class Blackboard implements Closeable {
 
         /*
          * None of the artifacts have the exact set of attribute type/value
-         * combinations. The provided file does not the artifact being sought.
+         * combinations. The provided file does not have the artifact being
+         * sought.
          */
         return false;
     }
 
     /**
-     * Determine if a list of attributes all match a given set of values.
+     * Determine if the supplied attribute type/value combinations can all be
+     * found in the supplied attributes list.
      *
      * @param attributesList The list of attributes to analyze.
-     * @param attributesMap  The attribute values with which to compare.
+     * @param attributesMap  The attribute type/value combinations to check for.
      *
-     * @return True if all attributes match; otherwise false.
+     * @return True if all attributes are found; otherwise false.
      */
     private static boolean checkIfAttributesMatch(List<BlackboardAttribute> attributesList, Map<BlackboardAttribute.Type, String> attributesMap) {
         for (Map.Entry<BlackboardAttribute.Type, String> mapEntry : attributesMap.entrySet()) {
@@ -222,7 +221,7 @@ public final class Blackboard implements Closeable {
                  */
                 return false;
             }
-        };
+        }
 
         /*
          * All attribute type/value combinations were found in the provided

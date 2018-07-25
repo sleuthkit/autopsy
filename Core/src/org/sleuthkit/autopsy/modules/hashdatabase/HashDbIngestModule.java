@@ -160,22 +160,16 @@ public class HashDbIngestModule implements FileIngestModule {
     @Messages({
         "# {0} - File name",
         "HashDbIngestModule.fileReadErrorMsg=Read Error: {0}",
-        
         "# {0} - File name",
         "HashDbIngestModule.calcHashValueErr=Error encountered while calculating the hash value for {0}.",
-        
         "# {0} - File name",
         "HashDbIngestModule.hashLookupErrorMsg=Hash Lookup Error: {0}",
-        
         "# {0} - File name",
         "HashDbIngestModule.lookingUpKnownBadHashValueErr=Error encountered while looking up notable hash value for {0}.",
-        
         "# {0} - File name",
         "HashDbIngestModule.lookingUpKnownHashValueErr=Error encountered while looking up known hash value for {0}.",
-        
         "# {0} - File name",
         "HashDbIngestModule.dialogTitle.errorFindingArtifacts=Error Finding Artifacts: {0}",
-        
         "# {0} - File name",
         "HashDbIngestModule.errorMessage.lookingForFileArtifacts=Error encountered while looking for existing artifacts for {0}."
     })
@@ -276,7 +270,7 @@ public class HashDbIngestModule implements FileIngestModule {
                     }
 
                     /*
-                     * We have a match! Now create an artifact for it is
+                     * We have a match. Now create an artifact if it is
                      * determined that one hasn't been created yet.
                      */
                     Map<BlackboardAttribute.Type, String> attributeMap = new HashMap<>();
@@ -290,7 +284,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
             } catch (BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format(
-                        "A problem occurred while trying checking for existing artifacts for file '%s' (id=%d).", name, fileId), ex); //NON-NLS
+                        "A problem occurred while checking for existing artifacts for file '%s' (id=%d).", name, fileId), ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(
                         HashLookupModuleFactory.getModuleName(),
                         Bundle.HashDbIngestModule_dialogTitle_errorFindingArtifacts(name),
@@ -337,7 +331,7 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     /**
-     * Post hash set hit to the blackboard.
+     * Post a hash set hit to the blackboard.
      *
      * @param abstractFile     The file to be processed.
      * @param md5Hash          The MD5 hash value of the file.
@@ -351,7 +345,6 @@ public class HashDbIngestModule implements FileIngestModule {
         "HashDbIngestModule.postToBB.fileName=File Name",
         "HashDbIngestModule.postToBB.md5Hash=MD5 Hash",
         "HashDbIngestModule.postToBB.hashsetName=Hash Set Name",
-        
         "# {0} - File name",
         "HashDbIngestModule.postToBB.knownBadMsg=Notable: {0}"
     })
