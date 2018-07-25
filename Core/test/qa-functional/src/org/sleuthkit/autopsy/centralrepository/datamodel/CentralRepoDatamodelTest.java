@@ -853,6 +853,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail(ex);
         }
         
+<<<<<<< HEAD
+=======
 //        // Test getting common instances with expected results
 //        try {
 //            List<CentralRepositoryFile> instances = EamDb.getInstance().getArtifactInstancesByCaseValues(Arrays.asList(inAllDataSourcesHash, inDataSource1twiceHash));
@@ -895,7 +897,9 @@ public class CentralRepoDatamodelTest extends TestCase {
 //            Exceptions.printStackTrace(ex);
 //            Assert.fail(ex);
 //        }
+>>>>>>> 0468b6bd597a63c424d81b8569bb3df3bf8f7530
 
+       
 
         // Test getting instances expecting no results
         try {
@@ -924,6 +928,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
+<<<<<<< HEAD
+=======
         
 //        // Test getting instances with null value
 //        // Should just return nothing
@@ -935,6 +941,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 //            Exceptions.printStackTrace(ex);
 //            Assert.fail(ex);
 //        }
+>>>>>>> 0468b6bd597a63c424d81b8569bb3df3bf8f7530
 
         // Test getting instances with path that should produce results
         try {
