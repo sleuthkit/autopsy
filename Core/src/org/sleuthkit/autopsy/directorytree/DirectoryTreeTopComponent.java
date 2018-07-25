@@ -81,6 +81,7 @@ import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildrenFactory;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -257,7 +258,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(showOnlyCurrentUserTagsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
+                .addComponent(showOnlyCurrentUserTagsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(showRejectedCheckBox)
@@ -911,17 +912,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     private void refreshTagsTree() {
         SwingUtilities.invokeLater(() -> {
-            // if no open case or has no data then there is no tree to rebuild
-            Case currentCase;
-            try {
-                currentCase = Case.getCurrentCaseThrows();
-            } catch (NoCurrentCaseException ex) {
-                return;
-            }
-            if (null == currentCase || currentCase.hasData() == false) {
-                return;
-            }
-            currentCase.notifyTagsTreeRefresh();
+            // if no open case or has no data then there is no tree to rebuild     
+            ((Tags.RootNode) autopsyTreeChildren.findChild("Tags")).refresh();
         });
     }
 
