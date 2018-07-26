@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -275,10 +274,11 @@ public class HashDbIngestModule implements FileIngestModule {
                     List<BlackboardAttribute> attributesList = new ArrayList<>();
                     attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, HashLookupModuleFactory.getModuleName(), hashSetName));
                     try {
-                        if (!org.sleuthkit.datamodel.Blackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributesList)) {
+                        org.sleuthkit.datamodel.Blackboard tskBlackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+                        if (tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributesList) == false) {
                             postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                         }
-                    } catch (TskCoreException ex) {
+                    } catch (NoCurrentCaseException | TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format(
                                 "A problem occurred while checking for existing artifacts for file '%s' (id=%d).", name, fileId), ex); //NON-NLS
                         services.postMessage(IngestMessage.createErrorMessage(
