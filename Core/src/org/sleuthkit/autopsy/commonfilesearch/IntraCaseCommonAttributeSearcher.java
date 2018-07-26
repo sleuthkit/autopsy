@@ -44,7 +44,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 @SuppressWarnings("PMD.AbstractNaming")
 public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
-    private final Map<Long, String> dataSourceIdToNameMap;
     private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     /**
@@ -57,8 +56,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * broadly categorized as document types
      */
     IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
-        super(filterByMediaMimeType, filterByDocMimeType);
-        dataSourceIdToNameMap = dataSourceIdMap;
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
     }
 
     /**
@@ -113,7 +111,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
                 Long objectId = resultSet.getLong(1);
                 String md5 = resultSet.getString(2);
                 Long dataSourceId = resultSet.getLong(3);
-                String dataSource = this.dataSourceIdToNameMap.get(dataSourceId);
+                String dataSource = this.getDataSourceIdToNameMap().get(dataSourceId);
 
                 if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                     continue;

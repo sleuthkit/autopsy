@@ -153,26 +153,8 @@ public abstract class AbstractCommonAttributeInstance {
         if (abstractFile == null) {
             leafNode = new CentralRepoCommonAttributeInstanceNode(attributeInstance);
         } else {
-            final String attributeDataSourceName = attributeInstance.getCorrelationDataSource().getName();
             final String abstractFileDataSourceName = abstractFile.getDataSource().getName();
-
-            final String attributeInstanceCaseName = attributeInstance.getCorrelationCase().getDisplayName();
-
-            final String attributeInstanceFullPath = attributeInstance.getFilePath().replace("\\", "/");
-
-            final String currentAbstractFileParentPath = abstractFile.getParentPath();
-            final String currentAbstractFileName = abstractFile.getName();
-            final String abstractFileFullPath = (currentAbstractFileParentPath + currentAbstractFileName).replace("\\", "/");
-
-            final boolean sameCase = attributeInstanceCaseName.equalsIgnoreCase(currentCaseName);
-            final boolean sameFileName = attributeInstanceFullPath.equalsIgnoreCase(abstractFileFullPath);
-            final boolean sameDataSource = attributeDataSourceName.equalsIgnoreCase(abstractFileDataSourceName);
-
-            if (sameCase && sameFileName && sameDataSource) {
-                leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName);
-            } else {
-                leafNode = new CentralRepoCommonAttributeInstanceNode(attributeInstance);
-            }
+            leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName);
         }
 
         return leafNode;

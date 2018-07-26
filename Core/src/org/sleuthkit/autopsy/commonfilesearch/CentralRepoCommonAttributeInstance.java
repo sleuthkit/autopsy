@@ -21,11 +21,14 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -42,10 +45,12 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttribute currentAttribute;
+    private Map<String, Long> dataSourceNameToIdMap;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap) {
         super();
         this.crFileId = attrInstId;
+        this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
     }
 
     void setCurrentAttributeInst(CorrelationAttribute attribute) {
@@ -57,39 +62,44 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         Case currentCase;
         if (this.currentAttribute != null) {
-            String currentFullPath = this.currentAttribute.getInstances().get(0).getFilePath();
-            try {
-                currentCase = Case.getCurrentCaseThrows();
+            
+            final CorrelationAttributeInstance currentAttributeInstance = this.currentAttribute.getInstances().get(0);
+            
+            String currentFullPath = currentAttributeInstance.getFilePath();
+            String currentDataSource = currentAttributeInstance.getCorrelationDataSource().getName();
+            
+            
+            if(this.dataSourceNameToIdMap.containsKey(currentDataSource)){
+                Long dataSourceObjectId = this.dataSourceNameToIdMap.get(currentDataSource);
+            
+                try {
+                    currentCase = Case.getCurrentCaseThrows();
 
-                SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+                    SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-                File fileFromPath = new File(currentFullPath);
-                String fileName = fileFromPath.getName();
-                String parentPath = fileFromPath.getParent() + File.separator;
-                List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(String.format("lower(name) = '%s' AND md5 = '%s'", fileName, currentAttribute.getCorrelationValue()));
-                AbstractFile finalAbstractFile = null;
-                for (AbstractFile aFile : potentialAbstractFiles) {
-                    // If a direct match exists, return that and we'll create a CaseDb instance node from it
-                    if (aFile.getParentPath().equalsIgnoreCase(parentPath)) {
-                        finalAbstractFile = aFile;
-                        break;
-                    }
-                }
-                // If not direct match exists, return first md5 match, only used as a backing file for CR instance node.
-                if (finalAbstractFile == null) {
+                    File fileFromPath = new File(currentFullPath);
+                    String fileName = fileFromPath.getName();
+                    String parentPath = (fileFromPath.getParent() + File.separator).replace("\\", "/");
+
+                    final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSourceObjectId);
+                    List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
+
                     if(potentialAbstractFiles.isEmpty()){
                         return null;
+                    } else if(potentialAbstractFiles.size() > 1){
+                        LOGGER.log(Level.WARNING, String.format("Unable to find an exact match for AbstractFile for record with filePath: %s.  May have returned the wrong file.", new Object[]{currentFullPath}));
+                        return potentialAbstractFiles.get(0);
                     } else {
-                        finalAbstractFile = potentialAbstractFiles.get(0);
+                        return potentialAbstractFiles.get(0);
                     }
+
+                } catch (TskCoreException | NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentFullPath}), ex);
+                    return null;
                 }
-
-                return finalAbstractFile;
-
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentFullPath}), ex);
+            } else {
                 return null;
-            }
+            }            
         }
         return null;
     }
@@ -115,5 +125,13 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         }
 
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);
+    }
+
+    private Map<String, Long> invertMap(Map<Long, String> dataSourceIdToNameMap) {
+        HashMap<String, Long> invertedMap = new HashMap<>();
+        for (Map.Entry<Long, String> entry : dataSourceIdToNameMap.entrySet()){
+            invertedMap.put(entry.getValue(), entry.getKey());
+        }
+        return invertedMap;
     }
 }

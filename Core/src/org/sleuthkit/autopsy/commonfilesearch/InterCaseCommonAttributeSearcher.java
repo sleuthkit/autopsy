@@ -46,8 +46,8 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
      *
      * @throws EamDbException
      */
-    InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(filterByMediaMimeType, filterByDocMimeType);
+    InterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         dbManager = EamDb.getInstance();
     }
 
@@ -77,14 +77,14 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
                 //Add to intercase metaData
                 final CommonAttributeValue commonAttributeValue = interCaseCommonFiles.get(md5);
 
-                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId);
+                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, this.getDataSourceIdToNameMap());
                 commonAttributeValue.addInstance(searchResult);
 
             } else {
                 CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
                 interCaseCommonFiles.put(md5, commonAttributeValue);
 
-                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId);
+                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, this.getDataSourceIdToNameMap());
                 commonAttributeValue.addInstance(searchResult);
             }
         }
