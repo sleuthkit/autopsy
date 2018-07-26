@@ -27,9 +27,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents an instance in either the CaseDB or CR that had a common match.
- * Different implementations know how to get the instance details from either 
+ * Different implementations know how to get the instance details from either
  * CaseDB or CR.
- * 
+ *
  * Defines leaf-type nodes used in the Common Files Search results tree. Leaf
  * nodes, may describe common attributes which exist in the current case DB or
  * in the Central Repo. When a reference to the AbstractFile is lacking (such as
@@ -74,11 +74,11 @@ public abstract class AbstractCommonAttributeInstance {
     }
 
     /**
-     * Get an AbstractFile for this instance if it can be retrieved from
-     * the CaseDB.  
+     * Get an AbstractFile for this instance if it can be retrieved from the
+     * CaseDB.
      *
-     * @return AbstractFile corresponding to this common attribute or null if
-     * it cannot be found
+     * @return AbstractFile corresponding to this common attribute or null if it
+     * cannot be found
      * @@@ Consider throwing exception instead of NULL
      */
     abstract AbstractFile getAbstractFile();
@@ -140,7 +140,7 @@ public abstract class AbstractCommonAttributeInstance {
      *
      * @param attributeInstance common file attribute instance form the central
      * repo
-     * @param abstractFile an AbstractFile from which the attribute instance was 
+     * @param abstractFile an AbstractFile from which the attribute instance was
      * found - applies to CaseDbCommonAttributeInstance only
      * @param currentCaseName
      * @return the appropriate leaf node for the results tree
@@ -150,26 +150,32 @@ public abstract class AbstractCommonAttributeInstance {
 
         DisplayableItemNode leafNode;
         CorrelationAttributeInstance attributeInstance = attribute.getInstances().get(0);
-        final String attributeDataSourceName = attributeInstance.getCorrelationDataSource().getName();
-        final String abstractFileDataSourceName = abstractFile.getDataSource().getName();
 
-        final String attributeInstanceCaseName = attributeInstance.getCorrelationCase().getDisplayName();
-
-        final String attributeInstanceFullPath = attributeInstance.getFilePath().replace("\\", "/");
-
-        final String currentAbstractFileParentPath = abstractFile.getParentPath();
-        final String currentAbstractFileName = abstractFile.getName();
-        final String abstractFileFullPath = (currentAbstractFileParentPath + currentAbstractFileName).replace("\\", "/");
-
-        final boolean sameCase = attributeInstanceCaseName.equalsIgnoreCase(currentCaseName);
-        final boolean sameFileName = attributeInstanceFullPath.equalsIgnoreCase(abstractFileFullPath);
-        final boolean sameDataSource = attributeDataSourceName.equalsIgnoreCase(abstractFileDataSourceName);
-
-        if (sameCase && sameFileName && sameDataSource) {
-            leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName);
-        } else {
+        if (abstractFile == null) {
             leafNode = new CentralRepoCommonAttributeInstanceNode(attributeInstance);
+        } else {
+            final String attributeDataSourceName = attributeInstance.getCorrelationDataSource().getName();
+            final String abstractFileDataSourceName = abstractFile.getDataSource().getName();
+
+            final String attributeInstanceCaseName = attributeInstance.getCorrelationCase().getDisplayName();
+
+            final String attributeInstanceFullPath = attributeInstance.getFilePath().replace("\\", "/");
+
+            final String currentAbstractFileParentPath = abstractFile.getParentPath();
+            final String currentAbstractFileName = abstractFile.getName();
+            final String abstractFileFullPath = (currentAbstractFileParentPath + currentAbstractFileName).replace("\\", "/");
+
+            final boolean sameCase = attributeInstanceCaseName.equalsIgnoreCase(currentCaseName);
+            final boolean sameFileName = attributeInstanceFullPath.equalsIgnoreCase(abstractFileFullPath);
+            final boolean sameDataSource = attributeDataSourceName.equalsIgnoreCase(abstractFileDataSourceName);
+
+            if (sameCase && sameFileName && sameDataSource) {
+                leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName);
+            } else {
+                leafNode = new CentralRepoCommonAttributeInstanceNode(attributeInstance);
+            }
         }
+
         return leafNode;
     }
 }

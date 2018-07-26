@@ -77,7 +77,11 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                 }
                 // If not direct match exists, return first md5 match, only used as a backing file for CR instance node.
                 if (finalAbstractFile == null) {
-                    finalAbstractFile = potentialAbstractFiles.get(0);
+                    if(potentialAbstractFiles.isEmpty()){
+                        return null;
+                    } else {
+                        finalAbstractFile = potentialAbstractFiles.get(0);
+                    }
                 }
 
                 return finalAbstractFile;
