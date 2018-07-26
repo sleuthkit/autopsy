@@ -19,12 +19,12 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
@@ -79,8 +79,10 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            
             //note that the params false and false are presently meaningless because that feature is not supported yet
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
@@ -129,10 +131,11 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testTwo() {
         try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
                         
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
