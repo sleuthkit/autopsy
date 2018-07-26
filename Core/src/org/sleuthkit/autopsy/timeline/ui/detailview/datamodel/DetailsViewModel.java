@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
+import org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -158,10 +159,11 @@ final public class DetailsViewModel {
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
         final boolean needsTags = filterModel.hasActiveTagsFilters();
         final boolean needsHashSets = filterModel.hasActiveHashFilters();
+        TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
-                          + eventManager.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
-                          + eventManager.csvAggFunction("CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
-                          + eventManager.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
+                          + dbUtils.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
+                          + dbUtils.csvAggFunction("CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
+                          + dbUtils.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
                           + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets) // NON-NLS
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + filterModel.getSQLWhere(eventManager) // NON-NLS

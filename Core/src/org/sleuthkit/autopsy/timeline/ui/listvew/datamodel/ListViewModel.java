@@ -29,6 +29,7 @@ import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import static org.sleuthkit.autopsy.timeline.FilteredEventsModel.unGroupConcat;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -87,9 +88,10 @@ public class ListViewModel {
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
         final boolean needsTags = filterModel.hasActiveTagsFilters();
         final boolean needsHashSets = filterModel.hasActiveHashFilters();
+        TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         final String querySql = "SELECT full_description, time, file_id, "
-                                + eventManager.csvAggFunction("CAST(events.event_id AS VARCHAR)") + " AS eventIDs, "
-                                + eventManager.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
+                                + dbUtils.csvAggFunction("CAST(events.event_id AS VARCHAR)") + " AS eventIDs, "
+                                + dbUtils.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
                                 + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets)
                                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + filterModel.getSQLWhere(eventManager)
                                 + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description";
