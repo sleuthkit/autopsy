@@ -272,10 +272,10 @@ public class HashDbIngestModule implements FileIngestModule {
                      * We have a match. Now create an artifact if it is
                      * determined that one hasn't been created yet.
                      */
-                    Map<BlackboardAttribute.Type, String> attributeMap = new HashMap<>();
-                    attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME), hashSetName);
+                    List<BlackboardAttribute> attributesList = new ArrayList<>();
+                    attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, HashLookupModuleFactory.getModuleName(), hashSetName));
                     try {
-                        if (!org.sleuthkit.datamodel.Blackboard.checkIfArtifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributeMap)) {
+                        if (!org.sleuthkit.datamodel.Blackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributesList)) {
                             postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                         }
                     } catch (TskCoreException ex) {
