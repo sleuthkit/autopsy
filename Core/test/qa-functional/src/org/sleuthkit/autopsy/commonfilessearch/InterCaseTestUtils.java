@@ -176,7 +176,9 @@ class InterCaseTestUtils {
     void clearTestDir(){
         if(CASE_DIRECTORY_PATH.toFile().exists()){
             try{
-                EamDb.getInstance().shutdownConnections();
+                if(EamDb.isEnabled()) {
+                    EamDb.getInstance().shutdownConnections();
+                }
                 FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
             } catch(IOException | EamDbException ex){
                 Exceptions.printStackTrace(ex);
