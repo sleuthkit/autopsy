@@ -472,8 +472,8 @@ public final class ImageGalleryController {
         
         try {
             List<DataSource> dataSources = sleuthKitCase.getDataSources();
-            dataSources.forEach((ds) -> {
-                db.insertDataSource(ds.getId());
+            dataSources.forEach((dataSource) -> {
+                db.insertDataSource(dataSource.getId());
             });
         }
         catch (TskCoreException ex) {

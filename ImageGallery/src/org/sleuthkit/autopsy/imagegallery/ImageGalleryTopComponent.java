@@ -107,12 +107,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     /**
      * Returns the top component window.
      * 
-     * @return Image gallery top component window
+     * @return Image gallery top component window, null if it's not open
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public static TopComponent getTopComponent() {
-        final TopComponent topComponent =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        return topComponent;   
+        return WindowManager.getDefault().findTopComponent(PREFERRED_ID);  
     }
     
     public static void openTopComponent() {
