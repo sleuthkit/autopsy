@@ -1509,7 +1509,7 @@ public class Case {
     public void notifyContentTagAdded(ContentTag newTag) {
         eventPublisher.publish(new ContentTagAddedEvent(newTag));
     }
-   
+
     /**
      * Notifies case event subscribers that a content tag has been deleted.
      *

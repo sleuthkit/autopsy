@@ -68,10 +68,15 @@ public class Tags implements AutopsyVisitableItem {
         this.datasourceObjId = dsObjId;
     }
 
-    public static String getTagsDisplayName(){
+    /**
+     * Return the display name used by the tags node in the tree.
+     *
+     * @return - DISPLAY_NAME
+     */
+    public static String getTagsDisplayName() {
         return DISPLAY_NAME;
     }
-    
+
     long filteringDataSourceObjId() {
         return this.datasourceObjId;
     }
@@ -136,9 +141,12 @@ public class Tags implements AutopsyVisitableItem {
         public String getItemType() {
             return getClass().getName();
         }
-        
-        public void refresh(){
-             tagResults.update();
+
+        /**
+         * Cause the contents of the RootNode and its children to be updated.
+         */
+        public void refresh() {
+            tagResults.update();
         }
 
     }
