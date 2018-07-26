@@ -1913,6 +1913,10 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (instanceTableCallback == null) {
             throw new EamDbException("Callback interface is null");
         }
+        
+        if(whereClause == null) {
+            throw new EamDbException("Where clause is null");
+        }
 
         Connection conn = connect();
         PreparedStatement preparedStatement = null;
