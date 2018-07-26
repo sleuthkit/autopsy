@@ -220,15 +220,15 @@ public final class ImageGalleryController {
 
         listeningEnabled.addListener((observable, oldValue, newValue) -> {
             try {
-                // rebuild drawable db automatically only for single-user cases.
+                // if we just turned on listening and a single-user case is open and that case is not up to date, then rebuild it
                 // For multiuser cases, we defer DB rebuild till the user actually opens Image Gallery
-                if (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE) {
-                    //if we just turned on listening and a case is open and that case is not up to date
-                    if (newValue && !oldValue && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCaseThrows())) {
-                        //populate the db
-                        this.rebuildDB();
-                    }
+                if ( newValue && !oldValue && 
+                    ImageGalleryModule.isDrawableDBStale(Case.getCurrentCaseThrows()) && 
+                    (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE) ) {
+                    //populate the db
+                    this.rebuildDB();
                 }
+
             } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.WARNING, "Exception while getting open case.", ex);
             }
@@ -446,8 +446,8 @@ public final class ImageGalleryController {
             Set<Long> knownDataSourceIds= db.getKnownDataSourceIds();
             List<DataSource> dataSources = sleuthKitCase.getDataSources();
             Set<Long> caseDataSourceIds = new HashSet<>();
-            dataSources.forEach((ds) -> {
-                caseDataSourceIds.add(ds.getId());
+            dataSources.forEach((dataSource) -> {
+                caseDataSourceIds.add(dataSource.getId());
             });
             
             return !(knownDataSourceIds.containsAll(caseDataSourceIds) && caseDataSourceIds.containsAll(knownDataSourceIds));
@@ -1060,7 +1060,10 @@ public final class ImageGalleryController {
         }
     }
     
-     
+    
+    /**
+     * Listener for Ingest Job events.
+     */
     private class IngestJobEventListener implements PropertyChangeListener {
 
         @NbBundle.Messages({
@@ -1071,47 +1074,45 @@ public final class ImageGalleryController {
         })
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
-                case DATA_SOURCE_ANALYSIS_COMPLETED:
-                    if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
-                        // A remote node added a new data source and just finished ingest on it. 
-                        //drawable db is stale, and if ImageGallery is open, ask user what to do
-                        setStale(true);
-                    
-                        SwingUtilities.invokeLater(() -> {
-                            if (isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-                                
-                                int answer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(), 
-                                        Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                        Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(), 
-                                        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+            String eventName = evt.getPropertyName();
+            if ( eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
+                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
+                    // A remote node added a new data source and just finished ingest on it. 
+                    //drawable db is stale, and if ImageGallery is open, ask user what to do
+                    setStale(true);
 
-                                switch (answer) {
-                                    case JOptionPane.YES_OPTION:
-                                         rebuildDB();
-                                         break;
-                                    case JOptionPane.NO_OPTION:
-                                    case JOptionPane.CANCEL_OPTION:
-                                        break; //do nothing
-                                }
+                    SwingUtilities.invokeLater(() -> {
+                        if (isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+
+                            int answer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(), 
+                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(), 
+                                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                            switch (answer) {
+                                case JOptionPane.YES_OPTION:
+                                     rebuildDB();
+                                     break;
+                                case JOptionPane.NO_OPTION:
+                                case JOptionPane.CANCEL_OPTION:
+                                default:
+                                    break; //do nothing
                             }
-                        });
-                        
-                    } else { 
-                        // received event from local node
-                        // add the datasource to drawable db
-                        long dsObjId = 0;
-                        DataSourceAnalysisCompletedEvent event = (DataSourceAnalysisCompletedEvent)evt;
-                        if(event.getDataSource() != null) {
-                            dsObjId = event.getDataSource().getId();
-                            db.insertDataSource(dsObjId);
-                        } else {
-                           LOGGER.log(Level.SEVERE, "DataSourceAnalysisCompletedEvent does not contain a dataSource object"); //NON-NLS
                         }
+                    });
+                } else { 
+                    // received event from local node
+                    // add the datasource to drawable db
+                    long dsObjId = 0;
+                    DataSourceAnalysisCompletedEvent event = (DataSourceAnalysisCompletedEvent)evt;
+                    if(event.getDataSource() != null) {
+                        dsObjId = event.getDataSource().getId();
+                        db.insertDataSource(dsObjId);
+                    } else {
+                       LOGGER.log(Level.SEVERE, "DataSourceAnalysisCompletedEvent does not contain a dataSource object"); //NON-NLS
                     }
-                    break;
+                }
             }
         }
-
     }
 }
