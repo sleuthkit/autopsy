@@ -912,6 +912,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         SwingUtilities.invokeLater(this::rebuildTree);
     }
 
+    /**
+     * Refresh only the tags subtree(s) of the tree view.
+     */
     private void refreshTagsTree() {
         SwingUtilities.invokeLater(() -> {
             // if no open case or has no data then there is no tree to rebuild

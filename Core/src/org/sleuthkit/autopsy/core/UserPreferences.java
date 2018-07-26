@@ -197,10 +197,23 @@ public final class UserPreferences {
         preferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
     }
 
+    /**
+     * Get the user preference which identifies whether tags should be shown for
+     * only the current user or all users.
+     *
+     * @return true for just the current user, false for all users
+     */
     public static boolean showOnlyCurrentUserTags() {
         return preferences.getBoolean(SHOW_ONLY_CURRENT_USER_TAGS, false);
     }
 
+
+    /**
+     * Set the user preference which identifies whether tags should be shown for
+     * only the current user or all users.
+     * 
+     * @param value - true for just the current user, false for all users
+     */
     public static void setShowOnlyCurrentUserTags(boolean value) {
         preferences.putBoolean(SHOW_ONLY_CURRENT_USER_TAGS, value);
     }

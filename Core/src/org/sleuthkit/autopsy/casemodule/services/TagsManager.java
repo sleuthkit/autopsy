@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskData;
 public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
-
+    private static final String USER_NAME_PROPERTY = "user.name";
     private final SleuthkitCase caseDb;
 
     /**
@@ -166,9 +166,8 @@ public class TagsManager implements Closeable {
      */
     public List<TagName> getTagNamesInUse() throws TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
-//            return caseDb.getTagNamesInUse(System.getProperty("user.name"));
             Set<TagName> tagNameSet = new HashSet<>();
-            String userName = System.getProperty("user.name");
+            String userName = System.getProperty(USER_NAME_PROPERTY);
             List<BlackboardArtifactTag> artifactTags = caseDb.getAllBlackboardArtifactTags();
             for (BlackboardArtifactTag tag : artifactTags) {
                 if (tag.getUserName().equals(userName)) {
@@ -201,9 +200,8 @@ public class TagsManager implements Closeable {
      */
     public List<TagName> getTagNamesInUse(long dsObjId) throws TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
-//            return caseDb.getTagNamesInUse(dsObjId, System.getProperty("user.name"));
             Set<TagName> tagNameSet = new HashSet<>();
-            String userName = System.getProperty("user.name");
+            String userName = System.getProperty(USER_NAME_PROPERTY);
             List<BlackboardArtifactTag> artifactTags = caseDb.getAllBlackboardArtifactTags();
             for (BlackboardArtifactTag tag : artifactTags) {
                 if (tag.getUserName().equals(userName) && tag.getArtifact().getDataSource().getId() == dsObjId) {
@@ -455,7 +453,7 @@ public class TagsManager implements Closeable {
      */
     public long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
-            String userName = System.getProperty("user.name");
+            String userName = System.getProperty(USER_NAME_PROPERTY);
             long count = 0;
             List<ContentTag> contentTags = getContentTagsByTagName(tagName);
             for (ContentTag tag : contentTags) {
@@ -486,7 +484,7 @@ public class TagsManager implements Closeable {
      */
     public long getContentTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
-            String userName = System.getProperty("user.name");
+            String userName = System.getProperty(USER_NAME_PROPERTY);
             long count = 0;
             List<ContentTag> contentTags = getContentTagsByTagName(tagName, dsObjId);
             for (ContentTag tag : contentTags) {
@@ -645,7 +643,7 @@ public class TagsManager implements Closeable {
      */
     public long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
-            String userName = System.getProperty("user.name");
+            String userName = System.getProperty(USER_NAME_PROPERTY);
             long count = 0;
             List<BlackboardArtifactTag> artifactTags = getBlackboardArtifactTagsByTagName(tagName);
             for (BlackboardArtifactTag tag : artifactTags) {
@@ -675,7 +673,7 @@ public class TagsManager implements Closeable {
      */
     public long getBlackboardArtifactTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
-            String userName = System.getProperty("user.name");
+            String userName = System.getProperty(USER_NAME_PROPERTY);
             long count = 0;
             List<BlackboardArtifactTag> artifactTags = getBlackboardArtifactTagsByTagName(tagName, dsObjId);
             for (BlackboardArtifactTag tag : artifactTags) {
