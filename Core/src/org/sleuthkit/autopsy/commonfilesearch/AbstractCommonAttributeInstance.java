@@ -78,8 +78,7 @@ public abstract class AbstractCommonAttributeInstance {
      * CaseDB.
      *
      * @return AbstractFile corresponding to this common attribute or null if it
-     * cannot be found
-     * @@@ Consider throwing exception instead of NULL
+     * cannot be found (for example, in the event that this is a central repo file)
      */
     abstract AbstractFile getAbstractFile();
 
