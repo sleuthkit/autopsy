@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
-
 /**
  * Class which contains events to identify what should be refreshed in the
  * AutoIngestJobsNode
@@ -31,19 +29,20 @@ class AutoIngestNodeRefreshEvents {
      */
     static class AutoIngestRefreshEvent {
 
-        private final JobsSnapshot jobsSnapshot;
+        private final AutoIngestMonitor monitor;
 
-        AutoIngestRefreshEvent(JobsSnapshot jobs) {
-            this.jobsSnapshot = jobs;
+        AutoIngestRefreshEvent(AutoIngestMonitor monitor) {
+            this.monitor = monitor;
         }
 
         /**
-         * Get the state of the jobs lists when the event was fired.
+         * Get the monitor which will provide access to the state of
+         * the jobs.
          *
          * @return
          */
-        JobsSnapshot getJobsSnapshot() {
-            return this.jobsSnapshot;
+        AutoIngestMonitor getMonitor() {
+            return this.monitor;
         }
     }
 
@@ -56,8 +55,8 @@ class AutoIngestNodeRefreshEvents {
         /**
          * Constructs a RefreshChildrenEvent.
          */
-        RefreshChildrenEvent(JobsSnapshot jobs) {
-            super(jobs);
+        RefreshChildrenEvent(AutoIngestMonitor monitor) {
+            super(monitor);
         }
     }
 
@@ -72,11 +71,11 @@ class AutoIngestNodeRefreshEvents {
         /**
          * Contructs a RefreshCaseEvent
          *
-         * @param jobs The current state of the jobs lists.
+         * @param monitor The monitor that will provide access to the current state of the jobs lists.
          * @param name The name of the case whose nodes should be refreshed.
          */
-        RefreshCaseEvent(JobsSnapshot jobs, String name) {
-            super(jobs);
+        RefreshCaseEvent(AutoIngestMonitor monitor, String name) {
+            super(monitor);
             caseName = name;
         }
 
@@ -103,11 +102,11 @@ class AutoIngestNodeRefreshEvents {
         /**
          * Constructs a RefreshJobEvent.
          *
-         * @param jobs The curent state of the jobs lists.
+         * @param monitor The monitor which will provide access to the current state of the jobs lists.
          * @param job  The job which should be refreshed.
          */
-        RefreshJobEvent(JobsSnapshot jobs, AutoIngestJob job) {
-            super(jobs);
+        RefreshJobEvent(AutoIngestMonitor monitor, AutoIngestJob job) {
+            super(monitor);
             autoIngestJob = job;
         }
 

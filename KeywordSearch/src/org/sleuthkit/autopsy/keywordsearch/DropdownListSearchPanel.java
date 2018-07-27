@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JCheckBox;
-import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -72,22 +71,6 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
 
         dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
-        });
-        dataSourceList.addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent evt) {
-                //Unused by now
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent evt) {
-                JList<String> dsList = (JList<String>) evt.getSource();
-                int index = dsList.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    dsList.setToolTipText(getDataSourceToolTipList().get(index));
-                }
-            }
         });
     }
 
@@ -683,11 +666,21 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
      * Set the dataSourceList enabled if the dataSourceCheckBox is selected
      */
     private void setComponentsEnabled() {
-        boolean enabled = this.dataSourceCheckBox.isSelected();
-        this.dataSourceList.setEnabled(enabled);
-        if (enabled) {
-            this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+        
+        if (getDataSourceListModel().size() > 1) {
+            this.dataSourceCheckBox.setEnabled(true);
+            
+            boolean enabled = this.dataSourceCheckBox.isSelected();
+            this.dataSourceList.setEnabled(enabled);
+            if (enabled) {
+                this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+            } else {
+                this.dataSourceList.setSelectedIndices(new int[0]);
+            }
         } else {
+            this.dataSourceCheckBox.setEnabled(false);
+            this.dataSourceCheckBox.setSelected(false);
+            this.dataSourceList.setEnabled(false);
             this.dataSourceList.setSelectedIndices(new int[0]);
         }
     }

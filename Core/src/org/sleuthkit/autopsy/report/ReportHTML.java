@@ -556,17 +556,29 @@ class ReportHTML implements TableReportModule {
     }
 
     /**
-     * Add a row to the current table.
+     * Add a row to the current table, escaping the text to be contained in the
+     * row.
      *
      * @param row values for each cell in the row
      */
     @Override
     public void addRow(List<String> row) {
+        addRow(row, true);
+    }
+
+    /**
+     * Add a row to the current table.
+     *
+     * @param row        values for each cell in the row
+     * @param escapeText whether or not the text of the row should be escaped,
+     *                   true for escaped, false for not escaped
+     */
+    private void addRow(List<String> row, boolean escapeText) {
         StringBuilder builder = new StringBuilder();
         builder.append("\t<tr>\n"); //NON-NLS
         for (String cell : row) {
-            String escapeHTMLCell = EscapeUtil.escapeHtml(cell);
-            builder.append("\t\t<td>").append(escapeHTMLCell).append("</td>\n"); //NON-NLS
+            String cellText = escapeText ? EscapeUtil.escapeHtml(cell) : cell;
+            builder.append("\t\t<td>").append(cellText).append("</td>\n"); //NON-NLS
         }
         builder.append("\t</tr>\n"); //NON-NLS
         rowCount++;
@@ -593,7 +605,7 @@ class ReportHTML implements TableReportModule {
     public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
         Content content = contentTag.getContent();
         if (content instanceof AbstractFile == false) {
-            addRow(row);
+            addRow(row, true);
             return;
         }
         AbstractFile file = (AbstractFile) content;
@@ -647,7 +659,7 @@ class ReportHTML implements TableReportModule {
         int pages = 1;
         for (Content content : images) {
             if (currentRow.size() == THUMBNAIL_COLUMNS) {
-                addRow(currentRow);
+                addRow(currentRow, false);
                 currentRow.clear();
             }
 
@@ -727,7 +739,7 @@ class ReportHTML implements TableReportModule {
                 // Finish out the row.
                 currentRow.add("");
             }
-            addRow(currentRow);
+            addRow(currentRow, false);
         }
 
         // manually set rowCount to be the total number of images.
@@ -1094,8 +1106,8 @@ class ReportHTML implements TableReportModule {
             summary.append("<div class=\"title\">\n"); //NON-NLS
             summary.append(writeSummaryCaseDetails());
             summary.append(writeSummaryImageInfo());
-            summary.append(writeSummarySoftwareInfo(skCase,ingestJobs));
-            summary.append(writeSummaryIngestHistoryInfo(skCase,ingestJobs));
+            summary.append(writeSummarySoftwareInfo(skCase, ingestJobs));
+            summary.append(writeSummaryIngestHistoryInfo(skCase, ingestJobs));
             if (generatorLogoSet) {
                 summary.append("<div class=\"left\">\n"); //NON-NLS
                 summary.append("<img src=\"generator_logo.png\" />\n"); //NON-NLS
@@ -1126,14 +1138,13 @@ class ReportHTML implements TableReportModule {
             }
         }
     }
-    
+
     /**
      * Write the case details section of the summary for this report.
-     * 
+     *
      * @return StringBuilder updated html report with case details
      */
-    
-    private StringBuilder writeSummaryCaseDetails(){
+    private StringBuilder writeSummaryCaseDetails() {
         StringBuilder summary = new StringBuilder();
         String caseName = currentCase.getDisplayName();
         String caseNumber = currentCase.getNumber();
@@ -1146,40 +1157,39 @@ class ReportHTML implements TableReportModule {
             imagecount = 0;
         }
         summary.append("<div class=\"title\">\n"); //NON-NLS
-            if (agencyLogoSet) {
-                summary.append("<div class=\"left\">\n"); //NON-NLS
-                summary.append("<img src=\"");
-                summary.append(Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString());
-                summary.append("\" />\n"); //NON-NLS
-                summary.append("</div>\n"); //NON-NLS
-            }
-            final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS
-            summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
-            summary.append("<table>\n"); //NON-NLS
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName")) //NON-NLS
-                    .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
-                    .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
-                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
-                    .append(!examiner.isEmpty() ? examiner : NbBundle
-                            .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
-                    .append("</td></tr>\n"); //NON-NLS
-            summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
-                    .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
-            summary.append("</table>\n"); //NON-NLS
+        if (agencyLogoSet) {
+            summary.append("<div class=\"left\">\n"); //NON-NLS
+            summary.append("<img src=\"");
+            summary.append(Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString());
+            summary.append("\" />\n"); //NON-NLS
             summary.append("</div>\n"); //NON-NLS
-            summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
-            summary.append("</div>\n"); //NON-NLS
-            return summary;
+        }
+        final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS
+        summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
+        summary.append("<table>\n"); //NON-NLS
+        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName")) //NON-NLS
+                .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
+        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
+                .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
+                .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
+                .append(!examiner.isEmpty() ? examiner : NbBundle
+                        .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
+                .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
+        summary.append("</table>\n"); //NON-NLS
+        summary.append("</div>\n"); //NON-NLS
+        summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
+        summary.append("</div>\n"); //NON-NLS
+        return summary;
     }
-    
+
     /**
      * Write the Image Information section of the summary for this report.
-     * 
+     *
      * @return StringBuilder updated html report with Image Information
      */
-    
     private StringBuilder writeSummaryImageInfo() {
         StringBuilder summary = new StringBuilder();
         summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.imageInfoHeading"));
@@ -1208,13 +1218,12 @@ class ReportHTML implements TableReportModule {
         summary.append("</div>\n"); //NON-NLS
         return summary;
     }
-    
+
     /**
      * Write the software information section of the summary for this report.
-     * 
+     *
      * @return StringBuilder updated html report with software information
      */
-    
     private StringBuilder writeSummarySoftwareInfo(SleuthkitCase skCase, List<IngestJobInfo> ingestJobs) {
         StringBuilder summary = new StringBuilder();
         summary.append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.softwareInfoHeading"));
@@ -1244,13 +1253,12 @@ class ReportHTML implements TableReportModule {
         summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
         return summary;
     }
-    
+
     /**
      * Write the Ingest History section of the summary for this report.
-     * 
+     *
      * @return StringBuilder updated html report with ingest history
      */
-
     private StringBuilder writeSummaryIngestHistoryInfo(SleuthkitCase skCase, List<IngestJobInfo> ingestJobs) {
         StringBuilder summary = new StringBuilder();
         try {

@@ -38,7 +38,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.RefreshChildrenEvent;
 
 /**
@@ -257,7 +256,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        if (arg instanceof JobsSnapshot) {
+        if (arg == null ) {
             EventQueue.invokeLater(() -> {
                 refreshTables();
             });
@@ -271,9 +270,9 @@ final class AutoIngestDashboard extends JPanel implements Observer {
      * @param nodeStateSnapshot The jobs snapshot.
      */
     void refreshTables() {
-        pendingJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor.getJobsSnapshot()));
-        runningJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor.getJobsSnapshot()));
-        completedJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor.getJobsSnapshot()));
+        pendingJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor));
+        runningJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor));
+        completedJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor));
     }
 
     /**

@@ -171,7 +171,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 ((AutoIngestJobsNode) explorerManager.getRootContext()).refresh(refreshEvent);
             } else {
                 //Make a new AutoIngestJobsNode with it's own EventBus and set it as the root context
-                explorerManager.setRootContext(new AutoIngestJobsNode(refreshEvent.getJobsSnapshot(), status, new EventBus("AutoIngestJobsNodeEventBus")));
+                explorerManager.setRootContext(new AutoIngestJobsNode(refreshEvent.getMonitor(), status, new EventBus("AutoIngestJobsNodeEventBus")));
             }
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);

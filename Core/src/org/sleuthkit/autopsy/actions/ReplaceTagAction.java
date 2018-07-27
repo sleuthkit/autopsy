@@ -141,7 +141,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                     // Add action to replace the tag
                     tagNameItem.addActionListener((ActionEvent event) -> {
                         selectedTags.forEach((oldtag) -> {
-                            replaceTag(oldtag, entry.getValue(), "");
+                            replaceTag(oldtag, entry.getValue(), oldtag.getComment());
                         });
                     });
 
@@ -178,7 +178,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
                 TagName newTagName = GetTagNameDialog.doDialog();
                 if (null != newTagName) {
                     selectedTags.forEach((oldtag) -> {
-                        replaceTag(oldtag, newTagName, "");
+                        replaceTag(oldtag, newTagName, oldtag.getComment());
                     });
                 }
             });

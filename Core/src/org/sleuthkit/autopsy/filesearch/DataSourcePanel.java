@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JList;
 import javax.swing.event.ListSelectionEvent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -47,38 +44,28 @@ public class DataSourcePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(DataSourcePanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final Map<Long, String> dataSourceMap = new HashMap<>();
-    private final List<String> toolTipList = new ArrayList<>();
 
     /**
      * Creates new form DataSourcePanel
      */
     public DataSourcePanel() {
         initComponents();
-        this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
-            firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
-        });
-        this.dataSourceList.addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent evt) {
-                //Unused by now
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent evt) {
-                if (evt.getSource() instanceof JList<?>) {
-                    JList<?> dsList = (JList<?>) evt.getSource();
-                    int index = dsList.locationToIndex(evt.getPoint());
-                    if (index > -1) {
-                        dsList.setToolTipText(toolTipList.get(index));
-                    }
-                }
-            }
-    });
+        if (this.dataSourceList.getModel().getSize() > 1) {
+            this.dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+            });
+        } else {
+            /*
+             * Disable data source filtering since there aren't multiple data
+             * sources to choose from.
+             */
+            this.dataSourceCheckBox.setEnabled(false);
+            this.dataSourceList.setEnabled(false);
+        }
     }
 
     /**
-     * Get dataSourceMap with object id and data source display name. Add the data source full name to toolTipList
+     * Get dataSourceMap with object id and data source display name.
      *
      * @return The list of data source name
      */
@@ -93,8 +80,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
                 String dsName = ds.getName();
                 File dataSourceFullName = new File(dsName);
                 String displayName = dataSourceFullName.getName();
-                dataSourceMap.put(ds.getId(), displayName);  
-                toolTipList.add(dsName);
+                dataSourceMap.put(ds.getId(), displayName);
                 dsList.add(displayName);
             }
         } catch (NoCurrentCaseException ex) {
@@ -107,7 +93,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
     /**
      * Get a set of data source object ids that are selected.
-     * @return A set of selected object ids. 
+     *
+     * @return A set of selected object ids.
      */
     Set<Long> getDataSourcesSelected() {
         Set<Long> dataSourceObjIdSet = new HashSet<>();
@@ -124,6 +111,7 @@ public class DataSourcePanel extends javax.swing.JPanel {
 
     /**
      * Is dataSourceCheckBox selected
+     *
      * @return true if the dataSoureCheckBox is selected
      */
     boolean isSelected() {
@@ -131,7 +119,8 @@ public class DataSourcePanel extends javax.swing.JPanel {
     }
 
     /**
-     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is checked.
+     * Enable the dsList and dataSourceNoteLable if the dataSourceCheckBox is
+     * checked.
      */
     final void setComponentsEnabled() {
         boolean enabled = this.isSelected();
