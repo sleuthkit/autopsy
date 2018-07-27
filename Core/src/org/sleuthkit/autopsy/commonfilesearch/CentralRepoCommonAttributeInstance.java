@@ -117,7 +117,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
             this.setCurrentAttributeInst(corrAttr);
 
             AbstractFile abstractFileForAttributeInstance = this.getAbstractFile();
-            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createInstance(corrAttr, abstractFileForAttributeInstance, currCaseDbName);
+            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(corrAttr, abstractFileForAttributeInstance, currCaseDbName);
             attrInstNodeList.add(generatedInstNode);
 
         } catch (TskCoreException ex) {

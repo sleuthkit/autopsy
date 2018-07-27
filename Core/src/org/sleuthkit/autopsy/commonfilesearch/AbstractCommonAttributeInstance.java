@@ -145,7 +145,7 @@ public abstract class AbstractCommonAttributeInstance {
      * @return the appropriate leaf node for the results tree
      * @throws TskCoreException
      */
-    static DisplayableItemNode createInstance(CorrelationAttribute attribute, AbstractFile abstractFile, String currentCaseName) throws TskCoreException {
+    static DisplayableItemNode createNode(CorrelationAttribute attribute, AbstractFile abstractFile, String currentCaseName) throws TskCoreException {
 
         DisplayableItemNode leafNode;
         CorrelationAttributeInstance attributeInstance = attribute.getInstances().get(0);
