@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -47,7 +48,6 @@ import org.sleuthkit.datamodel.TskData;
 public class TagsManager implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(TagsManager.class.getName());
-
     private final SleuthkitCase caseDb;
 
     /**
@@ -71,13 +71,14 @@ public class TagsManager implements Closeable {
                 || tagDisplayName.contains(";"));
 
     }
+
     @NbBundle.Messages({"TagsManager.notableTagEnding.text= (Notable)"})
     /**
-     * Get String of text which is used to label tags as notable to the user. 
-     * 
+     * Get String of text which is used to label tags as notable to the user.
+     *
      * @return Bundle message TagsManager.notableTagEnding.text
      */
-    public static String getNotableTagLabel(){
+    public static String getNotableTagLabel() {
         return Bundle.TagsManager_notableTagEnding_text();
     }
 
@@ -123,13 +124,13 @@ public class TagsManager implements Closeable {
 
     /**
      * Returns a list of names of standard/predefined tags
-     * 
+     *
      * @return list of predefined tag names
      */
     public static List<String> getStandardTagNames() {
         return TagNameDefinition.getStandardTagNames();
     }
-    
+
     /**
      * Constructs a per case Autopsy service that manages the addition of
      * content and artifact tags to the case database.
@@ -167,20 +168,78 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets a list of all tag names currently in use in the case database for
+     * tagging content or artifacts by the specified user.
+     *
+     * @param userName - the user name that you want to get tags for
+     *
+     * @return A list, possibly empty, of TagName objects.
+     *
+     * @throws TskCoreException If there is an error querying the case database.
+     */
+    public List<TagName> getTagNamesInUseForUser(String userName) throws TskCoreException {
+        Set<TagName> tagNameSet = new HashSet<>();
+        List<BlackboardArtifactTag> artifactTags = caseDb.getAllBlackboardArtifactTags();
+        for (BlackboardArtifactTag tag : artifactTags) {
+            if (tag.getUserName().equals(userName)) {
+                tagNameSet.add(tag.getName());
+            }
+        }
+        List<ContentTag> contentTags = caseDb.getAllContentTags();
+        for (ContentTag tag : contentTags) {
+            if (tag.getUserName().equals(userName)) {
+                tagNameSet.add(tag.getName());
+            }
+        }
+        return new ArrayList<>(tagNameSet);
+    }
+
+    /**
      * Selects all of the rows from the tag_names table in the case database for
      * which there is at least one matching row in the content_tags or
      * blackboard_artifact_tags tables, for the given data source object id.
      *
      * @param dsObjId data source object id
-     * 
+     *
      * @return A list, possibly empty, of TagName data transfer objects (DTOs)
-     * for the rows.
+     *         for the rows.
      *
      * @throws TskCoreException
      */
     public List<TagName> getTagNamesInUse(long dsObjId) throws TskCoreException {
         return caseDb.getTagNamesInUse(dsObjId);
     }
+
+    /**
+     * Selects all of the rows from the tag_names table in the case database for
+     * which there is at least one matching row in the content_tags or
+     * blackboard_artifact_tags tables, for the given data source object id and user.
+     *
+     * @param dsObjId  data source object id
+     * @param userName - the user name that you want to get tags for
+     *
+     * @return A list, possibly empty, of TagName data transfer objects (DTOs)
+     *         for the rows.
+     *
+     * @throws TskCoreException
+     */
+    public List<TagName> getTagNamesInUseForUser(long dsObjId, String userName) throws TskCoreException {
+        Set<TagName> tagNameSet = new HashSet<>();
+        List<BlackboardArtifactTag> artifactTags = caseDb.getAllBlackboardArtifactTags();
+        for (BlackboardArtifactTag tag : artifactTags) {
+            if (tag.getUserName().equals(userName) && tag.getArtifact().getDataSource().getId() == dsObjId) {
+                tagNameSet.add(tag.getName());
+            }
+        }
+        List<ContentTag> contentTags = caseDb.getAllContentTags();
+        for (ContentTag tag : contentTags) {
+            if (tag.getUserName().equals(userName) && tag.getContent().getDataSource().getId() == dsObjId) {
+                tagNameSet.add(tag.getName());
+            }
+        }
+        return new ArrayList<>(tagNameSet);
+    }
+
     /**
      * Gets a map of tag display names to tag name entries in the case database.
      * It has keys for the display names of the standard tag types, the current
@@ -417,23 +476,76 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets content tags count by tag name for the specified user.
+     *
+     * @param tagName  The representation of the desired tag type in the case
+     *                 database, which can be obtained by calling getTagNames
+     *                 and/or addTagName.
+     * @param userName - the user name that you want to get tags for
+     *
+     * @return A count of the content tags with the specified tag name for the
+     *         specified user.
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     *                          the case database.
+     */
+    public long getContentTagsCountByTagNameForUser(TagName tagName, String userName) throws TskCoreException {
+        long count = 0;
+        List<ContentTag> contentTags = getContentTagsByTagName(tagName);
+        for (ContentTag tag : contentTags) {
+            if (userName.equals(tag.getUserName())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
      * Gets content tags count by tag name, for the given data source
      *
      * @param tagName The representation of the desired tag type in the case
-     * database, which can be obtained by calling getTagNames and/or addTagName.
-     * 
+     *                database, which can be obtained by calling getTagNames
+     *                and/or addTagName.
+     *
      * @param dsObjId data source object id
      *
      * @return A count of the content tags with the specified tag name, and for
-     * the given data source
+     *         the given data source
      *
      * @throws TskCoreException If there is an error getting the tags count from
-     * the case database.
+     *                          the case database.
      */
     public long getContentTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
         return caseDb.getContentTagsCountByTagName(tagName, dsObjId);
     }
-    
+
+    /**
+     * Gets content tags count by tag name, for the given data source and user
+     *
+     * @param tagName  The representation of the desired tag type in the case
+     *                 database, which can be obtained by calling getTagNames
+     *                 and/or addTagName.
+     *
+     * @param dsObjId  data source object id
+     * @param userName - the user name that you want to get tags for
+     *
+     * @return A count of the content tags with the specified tag name, and for
+     *         the given data source and user
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     *                          the case database.
+     */
+    public long getContentTagsCountByTagNameForUser(TagName tagName, long dsObjId, String userName) throws TskCoreException {
+        long count = 0;
+        List<ContentTag> contentTags = getContentTagsByTagName(tagName, dsObjId);
+        for (ContentTag tag : contentTags) {
+            if (userName.equals(tag.getUserName())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /**
      * Gets a content tag by tag id.
      *
@@ -463,11 +575,11 @@ public class TagsManager implements Closeable {
         return caseDb.getContentTagsByTagName(tagName);
     }
 
-     /**
+    /**
      * Gets content tags by tag name, for the given data source.
      *
      * @param tagName The tag name of interest.
-     * 
+     *
      * @param dsObjId data source object id
      *
      * @return A list, possibly empty, of the content tags with the specified
@@ -479,7 +591,7 @@ public class TagsManager implements Closeable {
     public List<ContentTag> getContentTagsByTagName(TagName tagName, long dsObjId) throws TskCoreException {
         return caseDb.getContentTagsByTagName(tagName, dsObjId);
     }
-    
+
     /**
      * Gets content tags count by content.
      *
@@ -582,6 +694,31 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets an artifact tags count by tag name for a specific user.
+     *
+     * @param tagName  The representation of the desired tag type in the case
+     *                 database, which can be obtained by calling getTagNames
+     *                 and/or addTagName.
+     * @param userName - the user name that you want to get tags for
+     *
+     * @return A count of the artifact tags with the specified tag name for the
+     *         specified user.
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     *                          the case database.
+     */
+    public long getBlackboardArtifactTagsCountByTagNameForUser(TagName tagName, String userName) throws TskCoreException {
+        long count = 0;
+        List<BlackboardArtifactTag> artifactTags = getBlackboardArtifactTagsByTagName(tagName);
+        for (BlackboardArtifactTag tag : artifactTags) {
+            if (userName.equals(tag.getUserName())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
      * Gets an artifact tags count by tag name, for the given data source.
      *
      * @param tagName The representation of the desired tag type in the case
@@ -589,8 +726,8 @@ public class TagsManager implements Closeable {
      *                and/or addTagName.
      * @param dsObjId data source object id
      *
-     * @return A count of the artifact tags with the specified tag name, 
-     *         for the given data source.
+     * @return A count of the artifact tags with the specified tag name, for the
+     *         given data source.
      *
      * @throws TskCoreException If there is an error getting the tags count from
      *                          the case database.
@@ -598,7 +735,34 @@ public class TagsManager implements Closeable {
     public long getBlackboardArtifactTagsCountByTagName(TagName tagName, long dsObjId) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsCountByTagName(tagName, dsObjId);
     }
-    
+
+    /**
+     * Gets an artifact tags count by tag name, for the given data source and
+     * user.
+     *
+     * @param tagName  The representation of the desired tag type in the case
+     *                 database, which can be obtained by calling getTagNames
+     *                 and/or addTagName.
+     * @param dsObjId  data source object id
+     * @param userName - the user name that you want to get tags for
+     *
+     * @return A count of the artifact tags with the specified tag name, for the
+     *         given data source and user.
+     *
+     * @throws TskCoreException If there is an error getting the tags count from
+     *                          the case database.
+     */
+    public long getBlackboardArtifactTagsCountByTagNameForUser(TagName tagName, long dsObjId, String userName) throws TskCoreException {
+        long count = 0;
+        List<BlackboardArtifactTag> artifactTags = getBlackboardArtifactTagsByTagName(tagName, dsObjId);
+        for (BlackboardArtifactTag tag : artifactTags) {
+            if (userName.equals(tag.getUserName())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /**
      * Gets an artifact tag by tag id.
      *
@@ -647,7 +811,7 @@ public class TagsManager implements Closeable {
     public List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName, long dsObjId) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsByTagName(tagName, dsObjId);
     }
-    
+
     /**
      * Gets artifact tags for a particular artifact.
      *

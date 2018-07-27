@@ -859,13 +859,14 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO content_tags (tag_id, obj_id, tag_name_id, comment, begin_byte_offset, end_byte_offset) VALUES (" //NON-NLS
+                outputStatement.executeUpdate("INSERT INTO content_tags (tag_id, obj_id, tag_name_id, comment, begin_byte_offset, end_byte_offset, user_name) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ",'"
                         + inputResultSet.getString(4) + "',"
                         + inputResultSet.getLong(5) + ","
-                        + inputResultSet.getLong(6) + ")"); //NON-NLS
+                        + inputResultSet.getLong(6) + ",'"
+                        + inputResultSet.getString(7)+ "')"); //NON-NLS
 
             } catch (SQLException ex) {
                 if (ex.getErrorCode() != 0) { // 0 if the entry already exists
@@ -892,7 +893,8 @@ public class SingleUserCaseConverter {
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ",'"
-                        + inputResultSet.getString(4) + "')"); //NON-NLS
+                        + inputResultSet.getString(4) + "','"
+                        + inputResultSet.getString(5) + "')"); //NON-NLS
 
             } catch (SQLException ex) {
                 if (ex.getErrorCode() != 0) { // 0 if the entry already exists
