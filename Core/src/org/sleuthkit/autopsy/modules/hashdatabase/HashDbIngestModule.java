@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -54,6 +55,12 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * File ingest module to mark files based on hash values.
  */
+@Messages({
+    "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash set.",
+    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
+    "HashDbIngestModule.noKnownHashDbSetMsg=No known hash set.",
+    "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
+})
 public class HashDbIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
@@ -98,12 +105,6 @@ public class HashDbIngestModule implements FileIngestModule {
         this.settings = settings;
     }
 
-    @Messages({
-        "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash set.",
-        "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
-        "HashDbIngestModule.noKnownHashDbSetMsg=No known hash set.",
-        "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
-    })
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
@@ -121,7 +122,7 @@ public class HashDbIngestModule implements FileIngestModule {
             if (knownBadHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
                         HashLookupModuleFactory.getModuleName(),
-                        Bundle.HashDbIngestModule_noKnownBadHashDbSetMsg(),
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.noKnownBadHashDbSetMsg"),
                         Bundle.HashDbIngestModule_knownBadFileSearchWillNotExecuteWarn()));
             }
 
@@ -156,16 +157,6 @@ public class HashDbIngestModule implements FileIngestModule {
     }
 
     @Messages({
-        "# {0} - File name",
-        "HashDbIngestModule.fileReadErrorMsg=Read Error: {0}",
-        "# {0} - File name",
-        "HashDbIngestModule.calcHashValueErr=Error encountered while calculating the hash value for {0}.",
-        "# {0} - File name",
-        "HashDbIngestModule.hashLookupErrorMsg=Hash Lookup Error: {0}",
-        "# {0} - File name",
-        "HashDbIngestModule.lookingUpKnownBadHashValueErr=Error encountered while looking up notable hash value for {0}.",
-        "# {0} - File name",
-        "HashDbIngestModule.lookingUpKnownHashValueErr=Error encountered while looking up known hash value for {0}.",
         "# {0} - File name",
         "HashDbIngestModule.dialogTitle.errorFindingArtifacts=Error Finding Artifacts: {0}",
         "# {0} - File name",
@@ -232,8 +223,8 @@ public class HashDbIngestModule implements FileIngestModule {
                 logger.log(Level.WARNING, String.format("Error calculating hash of file '%s' (id=%d).", name, fileId), ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(
                         HashLookupModuleFactory.getModuleName(),
-                        Bundle.HashDbIngestModule_fileReadErrorMsg(name),
-                        Bundle.HashDbIngestModule_calcHashValueErr(name)));
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.fileReadErrorMsg", name),
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.calcHashValueErr", name)));
                 return ProcessResult.ERROR;
             }
         }
@@ -296,8 +287,8 @@ public class HashDbIngestModule implements FileIngestModule {
                         "Couldn't lookup notable hash for file '%s' (id=%d) - see sleuthkit log for details", name, fileId), ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(
                         HashLookupModuleFactory.getModuleName(),
-                        Bundle.HashDbIngestModule_hashLookupErrorMsg(name),
-                        Bundle.HashDbIngestModule_lookingUpKnownBadHashValueErr(name)));
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.hashLookupErrorMsg", name),
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.lookingUpKnownBadHashValueErr", name)));
                 ret = ProcessResult.ERROR;
             }
         }
@@ -321,8 +312,8 @@ public class HashDbIngestModule implements FileIngestModule {
                             "Couldn't lookup known hash for file '%s' (id=%d) - see sleuthkit log for details", name, fileId), ex); //NON-NLS
                     services.postMessage(IngestMessage.createErrorMessage(
                             HashLookupModuleFactory.getModuleName(),
-                            Bundle.HashDbIngestModule_hashLookupErrorMsg(name),
-                            Bundle.HashDbIngestModule_lookingUpKnownHashValueErr(name)));
+                            NbBundle.getMessage(this.getClass(), "HashDbIngestModule.hashLookupErrorMsg", name),
+                            NbBundle.getMessage(this.getClass(), "HashDbIngestModule.lookingUpKnownHashValueErr", name)));
                     ret = ProcessResult.ERROR;
                 }
             }
@@ -342,12 +333,7 @@ public class HashDbIngestModule implements FileIngestModule {
      * @param showInboxMessage Show a message in the inbox?
      */
     @Messages({
-        "HashDbIngestModule.indexError.message=Failed to index hashset hit artifact for keyword search.",
-        "HashDbIngestModule.postToBB.fileName=File Name",
-        "HashDbIngestModule.postToBB.md5Hash=MD5 Hash",
-        "HashDbIngestModule.postToBB.hashsetName=Hash Set Name",
-        "# {0} - File name",
-        "HashDbIngestModule.postToBB.knownBadMsg=Notable: {0}"
+        "HashDbIngestModule.indexError.message=Failed to index hashset hit artifact for keyword search."
     })
     private void postHashSetHitToBlackboard(AbstractFile abstractFile, String md5Hash, String hashSetName, String comment, boolean showInboxMessage) {
         try {
@@ -378,7 +364,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 //hit
                 detailsSb.append("<tr>"); //NON-NLS
                 detailsSb.append("<th>") //NON-NLS
-                        .append(Bundle.HashDbIngestModule_postToBB_fileName())
+                        .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.postToBB.fileName"))
                         .append("</th>"); //NON-NLS
                 detailsSb.append("<td>") //NON-NLS
                         .append(abstractFile.getName())
@@ -387,14 +373,14 @@ public class HashDbIngestModule implements FileIngestModule {
 
                 detailsSb.append("<tr>"); //NON-NLS
                 detailsSb.append("<th>") //NON-NLS
-                        .append(Bundle.HashDbIngestModule_postToBB_md5Hash())
+                        .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.postToBB.md5Hash"))
                         .append("</th>"); //NON-NLS
                 detailsSb.append("<td>").append(md5Hash).append("</td>"); //NON-NLS
                 detailsSb.append("</tr>"); //NON-NLS
 
                 detailsSb.append("<tr>"); //NON-NLS
                 detailsSb.append("<th>") //NON-NLS
-                        .append(Bundle.HashDbIngestModule_postToBB_hashsetName())
+                        .append(NbBundle.getMessage(this.getClass(), "HashDbIngestModule.postToBB.hashsetName"))
                         .append("</th>"); //NON-NLS
                 detailsSb.append("<td>").append(hashSetName).append("</td>"); //NON-NLS
                 detailsSb.append("</tr>"); //NON-NLS
@@ -402,7 +388,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 detailsSb.append("</table>"); //NON-NLS
 
                 services.postMessage(IngestMessage.createDataMessage(HashLookupModuleFactory.getModuleName(),
-                        Bundle.HashDbIngestModule_postToBB_knownBadMsg(abstractFile.getName()),
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.postToBB.knownBadMsg", abstractFile.getName()),
                         detailsSb.toString(),
                         abstractFile.getName() + md5Hash,
                         badFile));
@@ -420,13 +406,6 @@ public class HashDbIngestModule implements FileIngestModule {
      * @param knownBadHashSets The list of hash sets for "known bad" files.
      * @param knownHashSets    The list of hash sets for "known" files.
      */
-    @Messages({
-        "HashDbIngestModule.complete.knownBadsFound=Notables found:",
-        "HashDbIngestModule.complete.totalCalcTime=Total Calculation Time",
-        "HashDbIngestModule.complete.totalLookupTime=Total Lookup Time",
-        "HashDbIngestModule.complete.databasesUsed=Hash Sets Used:",
-        "HashDbIngestModule.complete.hashLookupResults=Hash Lookup Results"
-    })
     private static synchronized void postSummary(long jobId,
             List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
         IngestJobTotals jobTotals = getTotalsForIngestJobs(jobId);
@@ -438,20 +417,20 @@ public class HashDbIngestModule implements FileIngestModule {
             detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
 
             detailsSb.append("<tr><td>") //NON-NLS
-                    .append(Bundle.HashDbIngestModule_complete_knownBadsFound())
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.knownBadsFound"))
                     .append("</td>"); //NON-NLS
             detailsSb.append("<td>").append(jobTotals.totalKnownBadCount.get()).append("</td></tr>"); //NON-NLS
 
             detailsSb.append("<tr><td>") //NON-NLS
-                    .append(Bundle.HashDbIngestModule_complete_totalCalcTime())
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalCalcTime"))
                     .append("</td><td>").append(jobTotals.totalCalctime.get()).append("</td></tr>\n"); //NON-NLS
             detailsSb.append("<tr><td>") //NON-NLS
-                    .append(Bundle.HashDbIngestModule_complete_totalLookupTime())
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.totalLookupTime"))
                     .append("</td><td>").append(jobTotals.totalLookuptime.get()).append("</td></tr>\n"); //NON-NLS
             detailsSb.append("</table>"); //NON-NLS
 
             detailsSb.append("<p>") //NON-NLS
-                    .append(Bundle.HashDbIngestModule_complete_databasesUsed())
+                    .append(NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.databasesUsed"))
                     .append("</p>\n<ul>"); //NON-NLS
             for (HashDb db : knownBadHashSets) {
                 detailsSb.append("<li>").append(db.getHashSetName()).append("</li>\n"); //NON-NLS
@@ -462,7 +441,7 @@ public class HashDbIngestModule implements FileIngestModule {
             IngestServices.getInstance().postMessage(IngestMessage.createMessage(
                     IngestMessage.MessageType.INFO,
                     HashLookupModuleFactory.getModuleName(),
-                    Bundle.HashDbIngestModule_complete_hashLookupResults(),
+                    NbBundle.getMessage(HashDbIngestModule.class, "HashDbIngestModule.complete.hashLookupResults"),
                     detailsSb.toString()));
         }
     }

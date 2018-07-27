@@ -32,10 +32,6 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  * A factory that creates file ingest modules that do hash database lookups.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-@NbBundle.Messages({
-    "HashLookupModuleFactory.moduleName.text=Hash Lookup",
-    "HashLookupModuleFactory.moduleDescription.text=Identifies known and notable files using supplied hash sets, such as a standard NSRL hash set."
-})
 public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
 
     private HashLookupModuleSettingsPanel moduleSettingsPanel = null;
@@ -51,12 +47,12 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
      * @return The module name.
      */
     static String getModuleName() {
-        return Bundle.HashLookupModuleFactory_moduleName_text();
+        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashLookupModuleFactory.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
-        return Bundle.HashLookupModuleFactory_moduleDescription_text();
+        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashLookupModuleFactory.moduleDescription.text");
     }
 
     @Override
