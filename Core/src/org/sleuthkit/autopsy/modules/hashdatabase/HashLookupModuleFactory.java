@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -108,6 +109,10 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
             throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
                     "HashLookupModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
-        return new HashDbIngestModule((HashLookupModuleSettings) settings);
+        try {
+            return new HashDbIngestModule((HashLookupModuleSettings) settings);
+        } catch (NoCurrentCaseException ex) {
+            throw new IllegalArgumentException("Exception while getting open case.", ex);
+        }
     }
 }

@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.HashHitInfo;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
@@ -66,6 +67,7 @@ public class HashDbIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private static final int MAX_COMMENT_SIZE = 500;
     private final IngestServices services = IngestServices.getInstance();
+    private final SleuthkitCase skCase;
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final HashLookupModuleSettings settings;
     private final List<HashDb> knownBadHashSets = new ArrayList<>();
@@ -100,9 +102,12 @@ public class HashDbIngestModule implements FileIngestModule {
      * object is used to configure the module.
      *
      * @param settings The module settings.
+     * 
+     * @throws NoCurrentCaseException If there is no open case.
      */
-    HashDbIngestModule(HashLookupModuleSettings settings) {
+    HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
         this.settings = settings;
+        skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
     @Override
@@ -122,7 +127,7 @@ public class HashDbIngestModule implements FileIngestModule {
             if (knownBadHashSets.isEmpty()) {
                 services.postMessage(IngestMessage.createWarningMessage(
                         HashLookupModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.noKnownBadHashDbSetMsg"),
+                        Bundle.HashDbIngestModule_noKnownBadHashDbSetMsg(),
                         Bundle.HashDbIngestModule_knownBadFileSearchWillNotExecuteWarn()));
             }
 
@@ -265,11 +270,11 @@ public class HashDbIngestModule implements FileIngestModule {
                     List<BlackboardAttribute> attributesList = new ArrayList<>();
                     attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, HashLookupModuleFactory.getModuleName(), hashSetName));
                     try {
-                        org.sleuthkit.datamodel.Blackboard tskBlackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+                        org.sleuthkit.datamodel.Blackboard tskBlackboard = skCase.getBlackboard();
                         if (tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributesList) == false) {
                             postHashSetHitToBlackboard(file, md5Hash, hashSetName, comment, db.getSendIngestMessages());
                         }
-                    } catch (NoCurrentCaseException | TskCoreException ex) {
+                    } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format(
                                 "A problem occurred while checking for existing artifacts for file '%s' (id=%d).", name, fileId), ex); //NON-NLS
                         services.postMessage(IngestMessage.createErrorMessage(
