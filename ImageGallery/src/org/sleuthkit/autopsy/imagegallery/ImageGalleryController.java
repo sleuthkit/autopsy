@@ -729,12 +729,12 @@ public final class ImageGalleryController {
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
     /* Base abstract class for various methods of copying data into the Image gallery DB */
     abstract static private class BulkTransferTask extends BackgroundTask {
-
+     
         static private final String FILE_EXTENSION_CLAUSE =
-                "(name LIKE '%." //NON-NLS
-                + String.join("' OR name LIKE '%.", FileTypeUtils.getAllSupportedExtensions()) //NON-NLS
-                + "')";
-
+                "(extension LIKE '" //NON-NLS
+                + String.join("' OR extension LIKE '", FileTypeUtils.getAllSupportedExtensions()) //NON-NLS
+                + "') ";
+        
         static private final String MIMETYPE_CLAUSE =
                 "(mime_type LIKE '" //NON-NLS
                 + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
