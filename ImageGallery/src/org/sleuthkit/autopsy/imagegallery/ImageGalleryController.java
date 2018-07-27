@@ -1108,6 +1108,8 @@ public final class ImageGalleryController {
                     if(event.getDataSource() != null) {
                         dsObjId = event.getDataSource().getId();
                         db.insertDataSource(dsObjId);
+                        // All files for the data source have been analyzed.
+                        setStale(false);
                     } else {
                        LOGGER.log(Level.SEVERE, "DataSourceAnalysisCompletedEvent does not contain a dataSource object"); //NON-NLS
                     }
