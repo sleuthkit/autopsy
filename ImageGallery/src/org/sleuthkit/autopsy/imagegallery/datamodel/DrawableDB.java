@@ -545,7 +545,7 @@ public final class DrawableDB {
                         }
                     }
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.WARNING, "failed to get group seen", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
                 }
             }
         }
