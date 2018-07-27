@@ -107,7 +107,7 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
             throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
-                    "HashLookupModuleFactory.getIngestJobSettingsPanel.exception.msg"));
+                    "HashLookupModuleFactory.createFileIngestModule.exception.msg"));
         }
         try {
             return new HashDbIngestModule((HashLookupModuleSettings) settings);
