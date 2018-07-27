@@ -56,6 +56,7 @@ public class Tags implements AutopsyVisitableItem {
 
     private final TagResults tagResults = new TagResults();
     private final static String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
+    private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
     private final long datasourceObjId;
@@ -240,10 +241,17 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<TagName> keys) {
             try {
-
-                List<TagName> tagNamesInUse = UserPreferences.groupItemsInTreeByDatasource()
-                        ? Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse(datasourceObjId)
-                        : Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+                List<TagName> tagNamesInUse;
+                if (UserPreferences.showOnlyCurrentUserTags()) {
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
+                    tagNamesInUse = UserPreferences.groupItemsInTreeByDatasource()
+                            ? Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUseForUser(datasourceObjId, userName)
+                            : Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUseForUser(userName);
+                } else {
+                    tagNamesInUse = UserPreferences.groupItemsInTreeByDatasource()
+                            ? Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse(datasourceObjId)
+                            : Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+                }
                 Collections.sort(tagNamesInUse);
                 keys.addAll(tagNamesInUse);
             } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -291,14 +299,24 @@ public class Tags implements AutopsyVisitableItem {
             long tagsCount = 0;
             try {
                 TagsManager tm = Case.getCurrentCaseThrows().getServices().getTagsManager();
-                if (UserPreferences.groupItemsInTreeByDatasource()) {
-                    tagsCount = tm.getContentTagsCountByTagName(tagName, datasourceObjId);
-                    tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName, datasourceObjId);
+                if (UserPreferences.showOnlyCurrentUserTags()) {
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
+                    if (UserPreferences.groupItemsInTreeByDatasource()) {
+                        tagsCount = tm.getContentTagsCountByTagNameForUser(tagName, datasourceObjId, userName);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagNameForUser(tagName, datasourceObjId, userName);
+                    } else {
+                        tagsCount = tm.getContentTagsCountByTagNameForUser(tagName, userName);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagNameForUser(tagName, userName);
+                    }
                 } else {
-                    tagsCount = tm.getContentTagsCountByTagName(tagName);
-                    tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
+                    if (UserPreferences.groupItemsInTreeByDatasource()) {
+                        tagsCount = tm.getContentTagsCountByTagName(tagName, datasourceObjId);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName, datasourceObjId);
+                    } else {
+                        tagsCount = tm.getContentTagsCountByTagName(tagName);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
+                    }
                 }
-
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(TagNameNode.class.getName()).log(Level.SEVERE, "Failed to get tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -401,9 +419,17 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                tagsCount = UserPreferences.groupItemsInTreeByDatasource()
-                        ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName, datasourceObjId)
-                        : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+
+                if (UserPreferences.showOnlyCurrentUserTags()) {
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
+                    tagsCount = UserPreferences.groupItemsInTreeByDatasource()
+                            ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagNameForUser(tagName, datasourceObjId, userName)
+                            : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagNameForUser(tagName, userName);
+                } else {
+                    tagsCount = UserPreferences.groupItemsInTreeByDatasource()
+                            ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName, datasourceObjId)
+                            : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+                }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(ContentTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get content tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -462,7 +488,7 @@ public class Tags implements AutopsyVisitableItem {
                         ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName, datasourceObjId)
                         : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
                 if (UserPreferences.showOnlyCurrentUserTags()) {
-                    String userName = System.getProperty("user.name");
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
                     for (ContentTag tag : contentTags) {
                         if (userName.equals(tag.getUserName())) {
                             keys.add(tag);
@@ -501,7 +527,6 @@ public class Tags implements AutopsyVisitableItem {
 
         private final TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
-        private int displayCount = 0;
 
         public BlackboardArtifactTagTypeNode(TagName tagName) {
             super(Children.create(new BlackboardArtifactTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + ARTIFACT_DISPLAY_NAME));
@@ -515,9 +540,16 @@ public class Tags implements AutopsyVisitableItem {
         private void updateDisplayName() {
             long tagsCount = 0;
             try {
-                tagsCount = UserPreferences.groupItemsInTreeByDatasource()
-                        ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName, datasourceObjId)
-                        : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+                if (UserPreferences.showOnlyCurrentUserTags()) {
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
+                    tagsCount = UserPreferences.groupItemsInTreeByDatasource()
+                            ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagNameForUser(tagName, datasourceObjId, userName)
+                            : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagNameForUser(tagName, userName);
+                } else {
+                    tagsCount = UserPreferences.groupItemsInTreeByDatasource()
+                            ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName, datasourceObjId)
+                            : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+                }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 Logger.getLogger(BlackboardArtifactTagTypeNode.class.getName()).log(Level.SEVERE, "Failed to get blackboard artifact tags count for " + tagName.getDisplayName() + " tag name", ex); //NON-NLS
             }
@@ -576,7 +608,7 @@ public class Tags implements AutopsyVisitableItem {
                         ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, datasourceObjId)
                         : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
                 if (UserPreferences.showOnlyCurrentUserTags()) {
-                    String userName = System.getProperty("user.name");
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
                     for (BlackboardArtifactTag tag : artifactTags) {
                         if (userName.equals(tag.getUserName())) {
                             keys.add(tag);
