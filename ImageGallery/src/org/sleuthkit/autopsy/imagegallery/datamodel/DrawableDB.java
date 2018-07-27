@@ -62,7 +62,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.DBAccessQueryCallback;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -87,7 +87,7 @@ public final class DrawableDB {
 
     private static final String HASH_SET_NAME = "hash_set_name"; //NON-NLS
     
-    private static final String GROUPS_TABLENAME = "ig_groups"; //NON-NLS
+    private static final String GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
 
     private final PreparedStatement insertHashSetStmt;
 
@@ -390,7 +390,7 @@ public final class DrawableDB {
                     + " seen integer DEFAULT 0, " //NON-NLS
                     + " UNIQUE(value, attribute) )"; //NON-NLS
             
-            tskCase.getDBAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
+            tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
         }
         catch (TskCoreException ex) {
              LOGGER.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
@@ -544,7 +544,7 @@ public final class DrawableDB {
     public boolean isGroupSeen(GroupKey<?> groupKey) {
 
         // Callback to process result of seen query
-        class GroupSeenQueryResultProcessor implements DBAccessQueryCallback {
+        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
             private boolean seen = false;
             
             boolean getGroupSeen() { 
@@ -556,12 +556,12 @@ public final class DrawableDB {
                 try {
                     if (resultSet != null) {
                         while (resultSet.next()) {
-                            seen = resultSet.getBoolean("seen"); //NON-NLSrn;
+                            seen = resultSet.getBoolean("seen"); //NON-NLS;
                             return;
                         }
                     }
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.WARNING, "failed to get hash set names", ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "failed to get group seen", ex); //NON-NLS
                 }
             }
         }
@@ -570,7 +570,7 @@ public final class DrawableDB {
             String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\'",  groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString() );
             GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
            
-            tskCase.getDBAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
+            tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
             return queryResultProcessor.getGroupSeen();
         }
         catch (TskCoreException ex) {
@@ -585,7 +585,7 @@ public final class DrawableDB {
         try {
             String updateSQL = String.format("set seen = %d where value = \'%s\' and attribute = \'%s\'", seen ? 1 : 0, 
                                                             gk.getValueDisplayName(), gk.getAttribute().attrName.toString() );
-            tskCase.getDBAccessManager().update(GROUPS_TABLENAME, updateSQL);
+            tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
         }
@@ -1016,7 +1016,7 @@ public final class DrawableDB {
                 insertSQL += String.format(" ON CONFLICT (value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'", value, groupBy.attrName.toString());
             }
 
-            tskCase.getDBAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL);
+            tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL);
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
