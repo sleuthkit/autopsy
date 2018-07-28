@@ -22,8 +22,8 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javafx.collections.ListChangeListener;
-import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 
 /**
  *

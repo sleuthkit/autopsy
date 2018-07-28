@@ -24,15 +24,15 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.TimelineManager;
-import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
-import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
-import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
-import org.sleuthkit.datamodel.timeline.filters.HashSetFilter;
-import org.sleuthkit.datamodel.timeline.filters.HideKnownFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TextFilter;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
 /**
  */
@@ -66,7 +66,7 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
                             CompoundFilterState<TypeFilter, TypeFilter> typeFilterState,
                             DefaultFilterState<HideKnownFilter> knownFilterState,
                             DefaultFilterState<TextFilter> textFilterState,
-                        TagsFilterState tagsFilterState,
+                            TagsFilterState tagsFilterState,
                             CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
                             CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState) {
         this.delegate = delegate;
@@ -188,11 +188,6 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
     @Override
     public RootFilter getFilter() {
         return delegate;
-    }
-
-    @Override
-    public String getSQLWhere(TimelineManager timelineManager) {
-        return getActiveFilter().getSQLWhere(timelineManager);
     }
 
     @Override

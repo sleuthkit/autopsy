@@ -84,10 +84,10 @@ import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.

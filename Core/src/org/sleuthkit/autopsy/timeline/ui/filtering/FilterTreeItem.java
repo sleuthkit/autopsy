@@ -23,7 +23,7 @@ import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
  * A TreeItem for a FilterState.

@@ -77,17 +77,18 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
-import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
-import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
-import org.sleuthkit.datamodel.timeline.filters.HashSetFilter;
-import org.sleuthkit.datamodel.timeline.filters.HideKnownFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
-import org.sleuthkit.datamodel.timeline.filters.TextFilter;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
+
 
 /**
  * This class acts as the model for a TimelineView

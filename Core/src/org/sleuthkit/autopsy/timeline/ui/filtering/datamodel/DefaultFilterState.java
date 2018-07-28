@@ -23,8 +23,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.sleuthkit.datamodel.TimelineManager;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
  *
@@ -87,12 +86,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     public String getDisplayName() {
         return delegate.getDisplayName();
     }
-
-    @Override
-    public String getSQLWhere(TimelineManager tm) {
-        return getActiveFilter().getSQLWhere(tm);
-    }
-
+ 
     @Override
     public DefaultFilterState<FilterType> copyOf() {
         @SuppressWarnings("unchecked")

@@ -20,11 +20,10 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import org.sleuthkit.datamodel.TimelineManager;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
- *
+ * 
  *
  * @param <FilterType>
  */
@@ -37,8 +36,6 @@ public interface FilterState<FilterType extends TimelineFilter> {
     FilterType getActiveFilter();
 
     FilterState<FilterType> copyOf();
-
-    String getSQLWhere(TimelineManager timelineManager);
 
     BooleanExpression activeProperty();
 

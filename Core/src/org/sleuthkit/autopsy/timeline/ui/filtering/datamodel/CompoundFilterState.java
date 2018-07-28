@@ -19,8 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.collections.ObservableList;
-import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
 
 /**
  *

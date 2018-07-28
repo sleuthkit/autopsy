@@ -34,7 +34,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
 
 /**
  * Model for the ListView.
@@ -70,14 +69,14 @@ public class ListViewModel {
      * system events for the same file, with the same timestamp, are combined
      * together.
      *
-     * @param timeRange The Interval that all returned events must be within.
-     * @param filterModel    The Filter that all returned events must pass.
+     * @param timeRange   The Interval that all returned events must be within.
+     * @param filterState The Filter that all returned events must pass.
      *
      * @return A List of combined events, sorted by timestamp.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterState filterModel) throws TskCoreException {
+    public List<CombinedEvent> getCombinedEvents(Interval timeRange, RootFilterState filterState) throws TskCoreException {
         Long startTime = timeRange.getStartMillis() / 1000;
         Long endTime = timeRange.getEndMillis() / 1000;
 
@@ -86,14 +85,14 @@ public class ListViewModel {
         }
 
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
-        final boolean needsTags = filterModel.hasActiveTagsFilters();
-        final boolean needsHashSets = filterModel.hasActiveHashFilters();
+        final boolean needsTags = filterState.hasActiveTagsFilters();
+        final boolean needsHashSets = filterState.hasActiveHashFilters();
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         final String querySql = "SELECT full_description, time, file_id, "
                                 + dbUtils.csvAggFunction("CAST(events.event_id AS VARCHAR)") + " AS eventIDs, "
                                 + dbUtils.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
                                 + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets)
-                                + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + filterModel.getSQLWhere(eventManager)
+                                + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter())
                                 + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description";
 
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);

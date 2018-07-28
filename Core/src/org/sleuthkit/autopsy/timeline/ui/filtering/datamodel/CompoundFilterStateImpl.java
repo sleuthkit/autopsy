@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import org.sleuthkit.datamodel.timeline.filters.CompoundFilter;
-import org.sleuthkit.datamodel.timeline.filters.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
 
 class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
         extends DefaultFilterState<C>

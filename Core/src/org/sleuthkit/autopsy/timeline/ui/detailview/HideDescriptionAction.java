@@ -12,8 +12,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import static org.sleuthkit.datamodel.timeline.filters.DescriptionFilter.FilterMode.EXCLUDE;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
+import static org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter.FilterMode.EXCLUDE;
 
 /**
  * An Action that hides, in the given chart, events that have the given
