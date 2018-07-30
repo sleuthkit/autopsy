@@ -1595,7 +1595,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, value);
+            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -1796,7 +1796,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(correlationTypeID, value));
+            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value));
             preparedStatement.setInt(2, referenceSetID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
