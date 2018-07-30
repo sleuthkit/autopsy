@@ -68,10 +68,12 @@ final public class CentralRepoIONormalizer {
     }
 
     private static String normalizeDomain(String data) {
+        //commons or guava
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private static String normalizeEmail(String data) {
+        //commons
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
