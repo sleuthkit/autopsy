@@ -438,13 +438,13 @@ public final class ImageGalleryController {
     boolean isDataSourcesTableStale() {
         
         // no current case open to check
-        if ((null == db) || (null == sleuthKitCase)) {
+        if ((null == getDatabase()) || (null == getSleuthKitCase())) {
             return false;
         }
         
         try {
-            Set<Long> knownDataSourceIds= db.getKnownDataSourceIds();
-            List<DataSource> dataSources = sleuthKitCase.getDataSources();
+            Set<Long> knownDataSourceIds= getDatabase().getDataSourceIds();
+            List<DataSource> dataSources = getSleuthKitCase().getDataSources();
             Set<Long> caseDataSourceIds = new HashSet<>();
             dataSources.forEach((dataSource) -> {
                 caseDataSourceIds.add(dataSource.getId());
@@ -462,18 +462,17 @@ public final class ImageGalleryController {
     /**
      * Update the datasources table in drawable DB.
      * 
-     * @return true if data_sources table is stale
      */
-    void updateDataSourcesTable() {
+    private void updateDataSourcesTable() {
         // no current case open to update
-        if ((null == db) || (null == sleuthKitCase)) {
-            return ;
+        if ((null == getDatabase()) || (null == getSleuthKitCase())) {
+            return;
         }
         
         try {
-            List<DataSource> dataSources = sleuthKitCase.getDataSources();
+            List<DataSource> dataSources = getSleuthKitCase().getDataSources();
             dataSources.forEach((dataSource) -> {
-                db.insertDataSource(dataSource.getId());
+                getDatabase().insertDataSource(dataSource.getId());
             });
         }
         catch (TskCoreException ex) {
@@ -833,7 +832,7 @@ public final class ImageGalleryController {
 
         abstract ProgressHandle getInitialProgressHandle();
         
-        void setTaskCompletionStatus(boolean status) {
+        protected void setTaskCompletionStatus(boolean status) {
             taskCompletionStatus = status;
         }
     }
@@ -874,10 +873,13 @@ public final class ImageGalleryController {
             } else {
 
                 try {
-                    if (FileTypeUtils.hasDrawableMIMEType(f)) {  //supported mimetype => analyzed
+                    //supported mimetype => analyzed
+                    if ( null != f.getMIMEType() && FileTypeUtils.hasDrawableMIMEType(f)) {
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr);
-                    } else { //unsupported mimtype => analyzed but shouldn't include
-                        // if mimetype of the file hasnt been ascertained, ingest might not have completed yet.
+                    }
+                    else { //unsupported mimtype => analyzed but shouldn't include
+                        
+                        // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
                         if (null == f.getMIMEType()) {
                             this.setTaskCompletionStatus(false);
                         }

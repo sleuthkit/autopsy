@@ -94,7 +94,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      * 
      * @return true, if Image gallery is opened, false otherwise
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public static boolean isImageGalleryOpen() {
          
         final TopComponent topComponent =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
@@ -109,7 +108,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      * 
      * @return Image gallery top component window, null if it's not open
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     public static TopComponent getTopComponent() {
         return WindowManager.getDefault().findTopComponent(PREFERRED_ID);  
     }

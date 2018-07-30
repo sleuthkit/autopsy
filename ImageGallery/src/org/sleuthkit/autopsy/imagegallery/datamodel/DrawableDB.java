@@ -706,11 +706,11 @@ public final class DrawableDB {
 
 
    /**
-     * Gets all known data source object ids from data_sources table
+     * Gets all data source object ids from datasources table
      *
      * @return list of known data source object ids
      */
-    public Set<Long> getKnownDataSourceIds() throws TskCoreException {
+    public Set<Long> getDataSourceIds() throws TskCoreException {
         Statement statement = null;
         ResultSet rs = null;
         Set<Long> ret = new HashSet<>();
@@ -722,20 +722,20 @@ public final class DrawableDB {
                 ret.add(rs.getLong(1));
             }
         } catch (SQLException e) {
-            throw new TskCoreException("SQLException thrown when calling 'DrawableDB.getKnownDataSourceIds()", e);
+            throw new TskCoreException("SQLException while getting data source object ids", e);
         } finally {
             if (rs != null) {
                 try {
                     rs.close();
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing result set after executing  getKnownDataSourceIds", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Error closing resultset", ex); //NON-NLS
                 }
             }
             if (statement != null) {
                 try {
                     statement.close();
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing statement after executing  getKnownDataSourceIds", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Error closing statement ", ex); //NON-NLS
                 }
             }
             dbReadUnlock();
@@ -745,7 +745,9 @@ public final class DrawableDB {
     
     
     /**
-     * Insert given data source object id into data_sources table
+     * Insert given data source object id into datasources table
+     * 
+     * If the object id exists in the table already, it does nothing.
      * 
      * @param dsObjectId data source object id to insert
      */

@@ -173,8 +173,11 @@ public final class OpenAction extends CallableSystemAction {
             switch (answer) {
                 case JOptionPane.YES_OPTION:
                     
+                    // For a single-user case, we favor user experience, and rebuild the database 
+                    // as soon as Image Gallery is enabled for the case.
+                    // For a multi-user case, we favor overall performance and user experience, not every user may want to review images, 
+                    // so we rebuild the database only when a user launches Image Gallery
                     if (currentCase.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                        // toggling listening to ON automatically triggers a rebuild
                         ImageGalleryController.getDefault().setListeningEnabled(true);
                     }
                     else {
