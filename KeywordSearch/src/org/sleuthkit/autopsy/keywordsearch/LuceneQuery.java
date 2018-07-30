@@ -32,6 +32,8 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -40,6 +42,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
@@ -203,15 +206,44 @@ class LuceneQuery implements KeywordSearchQuery {
      * @param listName     The name of the keyword list that contained the
      *                     keyword for which the hit was found.
      *
-     *
-     * @return The newly created artifact or null if there was a problem
-     *         creating it.
+     * @return The newly created artifact, or null if one wasn't created due to
+     *         either the artifact already existing or an error while trying to
+     *         create it.
      */
     @Override
     public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        List<BlackboardAttribute> attributesList = new ArrayList<>();
+        attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+        if (originalKeyword != null) {
+            BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKeyword.getArtifactAttributeType();
+            if (selType != null) {
+                attributesList.add(new BlackboardAttribute(selType, MODULE_NAME, foundKeyword.getSearchTerm()));
+            }
+
+            if (originalKeyword.searchTermIsWholeWord()) {
+                attributesList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.LITERAL.ordinal()));
+            } else {
+                attributesList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+            }
+        }
+        if (StringUtils.isNotBlank(listName)) {
+            attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+        }
+
+        try {
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+            if (tskBlackboard.artifactExists(content, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, attributesList)) {
+                return null;
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format(
+                    "A problem occurred while checking for existing artifacts for file '%s' (id=%d).",
+                    content.getName(), content.getId()), ex); //NON-NLS
+        }
+
         BlackboardArtifact bba;
         try {
             bba = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
@@ -221,32 +253,15 @@ class LuceneQuery implements KeywordSearchQuery {
         }
 
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
-        }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
-        if (StringUtils.isNotBlank(listName)) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-        }
-
-        if (originalKeyword != null) {
-            BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKeyword.getArtifactAttributeType();
-            if (selType != null) {
-                attributes.add(new BlackboardAttribute(selType, MODULE_NAME, foundKeyword.getSearchTerm()));
-            }
-
-            if (originalKeyword.searchTermIsWholeWord()) {
-                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.LITERAL.ordinal()));
-            } else {
-                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
-            }
+            attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
 
         hit.getArtifactID().ifPresent(artifactID
-                -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+                -> attributesList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
         try {
-            bba.addAttributes(attributes); //write out to bb
+            bba.addAttributes(attributesList); //write out to bb
             return bba;
         } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb attributes to artifact", e); //NON-NLS

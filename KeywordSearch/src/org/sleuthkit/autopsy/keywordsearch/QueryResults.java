@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -65,7 +66,7 @@ class QueryResults {
      * and publishing an event to notify subscribers of the blackboard posts.
      *
      * The KeywordSearchQuery is used to do the blackboard posts.
-     * 
+     *
      * @param query The query.
      */
     QueryResults(KeywordSearchQuery query) {
@@ -220,8 +221,14 @@ class QueryResults {
                 }
 
                 /*
-                 * Post an artifact for the hit to the blackboard.
+                 * Create an artifact if it is determined that one hasn't been
+                 * created yet.
                  */
+                if (content == null) {
+                    logger.log(Level.WARNING, "Cannot add artifact for keyword hit to blackboard without a Content object."); //NON-NLS
+                    continue; // Cycle to the next KeywordHit.
+                }
+                
                 BlackboardArtifact artifact = query.postKeywordHitToBlackboard(content, keyword, hit, snippet, query.getKeywordList().getName());
 
                 /*
