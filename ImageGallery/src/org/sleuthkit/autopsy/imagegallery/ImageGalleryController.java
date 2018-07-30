@@ -476,7 +476,7 @@ public final class ImageGalleryController {
             });
         }
         catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Image Gallery failed to update data_sources table.", ex);
+            LOGGER.log(Level.SEVERE, "Image Gallery failed to update data_sources table.", ex);
         }
     }
     
