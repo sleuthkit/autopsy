@@ -41,6 +41,8 @@ public class CentralRepoIONormalizerTest extends NbTestCase {
     }
     
     public void testNormalizeMd5(){
+        final String aValidHash = "e34a8899ef6468b74f8a1048419ccc8b";
+        final String anInValidHash = "e34a8899ef6468b74f8a1048419ccc8b";
         
     }
     
