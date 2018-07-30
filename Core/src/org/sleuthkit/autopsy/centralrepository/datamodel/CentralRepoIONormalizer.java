@@ -19,11 +19,13 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Provides functions for normalizing data by type before insertion and querying.
+ * Provides functions for normalizing data by attribute type before insertion or querying.
  */
 final public class CentralRepoIONormalizer {
     
@@ -31,10 +33,13 @@ final public class CentralRepoIONormalizer {
     private static final String EMPTY_STRING = "";
     
     /**
-     * Normalize the data.
+     * Normalize the data.  To lower, in addition to various domain specific 
+     * checks and transformations:
      * 
-     * @param attributeType type of data
-     * @param data data to normalize.
+     * //TODO other specifics here...
+     * 
+     * @param attributeType correlation type of data
+     * @param data data to normalize
      * 
      * @return normalized data
      */
@@ -52,8 +57,44 @@ final public class CentralRepoIONormalizer {
             case CorrelationAttribute.USBID_TYPE_ID:
                 return normalizeUsbId(data);
             default:
-                throw new IllegalArgumentException("Normalizer not found for attribute type: " + attributeType.getDisplayName());            
+                Exception exception = new IllegalArgumentException("Normalizer not found for attribute type: " + attributeType.getDisplayName());    
+                log(exception);
+                return data;
         }        
+    }
+    
+    /**
+     * Normalize the data.  To lower, in addition to various domain specific 
+     * checks and transformations:
+     * 
+     * //TODO other specifics here...
+     * 
+     * @param attributeTypeId correlation type of data
+     * @param data data to normalize
+     * 
+     * @return normalized data
+     */
+    static String normalize(int attributeTypeId, String data){
+        try {
+            List<CorrelationAttribute.Type> defaultTypes = CorrelationAttribute.getDefaultCorrelationTypes();
+            Optional<CorrelationAttribute.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
+            
+            if(typeOption.isPresent()){
+                CorrelationAttribute.Type type = typeOption.get();
+                return CentralRepoIONormalizer.normalize(type, data);
+            } else {
+                Exception exception = new IllegalArgumentException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
+                log(exception);
+                return data;
+            }
+        } catch (EamDbException ex) {
+            log(ex);
+            return data;
+        }
+    }
+    
+    private static void log(Throwable throwable){
+        LOGGER.log(Level.WARNING, "Data not normalized - using original data.", throwable);
     }
 
     private static String normalizeMd5(String data) {
