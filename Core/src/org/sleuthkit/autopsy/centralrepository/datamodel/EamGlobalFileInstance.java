@@ -54,8 +54,7 @@ public class EamGlobalFileInstance {
         }
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
-        // Normalize hashes by lower casing
-        this.MD5Hash = MD5Hash.toLowerCase();
+        this.MD5Hash = CentralRepoIONormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
         this.knownStatus = knownStatus;
         this.comment = comment;
     }
@@ -121,8 +120,7 @@ public class EamGlobalFileInstance {
         if(MD5Hash == null){
             throw new EamDbException("null MD5 hash");
         }
-        // Normalize hashes by lower casing
-        this.MD5Hash = MD5Hash.toLowerCase();
+        this.MD5Hash = CentralRepoIONormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
     }
 
     /**

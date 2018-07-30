@@ -179,21 +179,7 @@ public class EamArtifactUtil {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                 }
 
-                // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
-                if (value != null) {
-                    String newValue = value.replaceAll("\\D", "");
-                    if (value.startsWith("+")) {
-                        newValue = "+" + newValue;
-                    }
-
-                    value = newValue;
-
-                    // If the resulting phone number is too small to be of use, return null
-                    // (these 3-5 digit numbers can be valid, but are not useful for correlation)
-                    if (value.length() <= 5) {
-                        return null;
-                    }
-                }
+                value = CentralRepoIONormalizer.normalize(CorrelationAttribute.PHONE_TYPE_ID, value);
 
             } else if (correlationType.getId() == CorrelationAttribute.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
