@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+//import org.apache.commons.validator.routines;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or querying.
@@ -109,6 +110,7 @@ final public class CentralRepoIONormalizer {
     }
 
     private static String normalizeDomain(String data) {
+        //org.apache.commons.validation.DomainValidator validator;
         //commons or guava
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
