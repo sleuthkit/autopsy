@@ -45,8 +45,8 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttributeInstance;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, AbstractFile> cachedFiles) {
-        super(cachedFiles);
+    CentralRepoCommonAttributeInstance(Integer attrInstId) {
+        super();
         this.crFileId = attrInstId;
     }
     

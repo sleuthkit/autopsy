@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
@@ -70,9 +71,9 @@ public abstract class AbstractCommonAttributeInstance {
      * @param cachedFiles storage for abstract files which have been used
      * already so we can avoid extra roundtrips to the case db
      */
-    AbstractCommonAttributeInstance(Map<Long, AbstractFile> cachedFiles) {
+    AbstractCommonAttributeInstance() {
         this.abstractFileObjectId = -1L;
-        this.cachedFiles = cachedFiles;
+        this.cachedFiles = new HashMap<>();
         this.caseName = "";
         this.dataSource = "";
     }

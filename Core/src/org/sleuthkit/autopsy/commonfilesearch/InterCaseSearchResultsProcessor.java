@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
@@ -32,7 +34,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
+import static org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher.collateMatchesByNumberOfInstances;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.HashUtility;
 
 /**
  * Used to process and return CorrelationCase md5s from the EamDB for
@@ -123,14 +129,49 @@ final class InterCaseSearchResultsProcessor {
 
         @Override
         public void process(ResultSet resultSet) {
+            Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new HashMap<>();
+
             try {
+                String previousRowMd5 = "";
+                EamDb dbManager = EamDb.getInstance();
+                CommonAttributeValue commonAttributeValue = null;
                 while (resultSet.next()) {
                     int resultId = InstanceTableCallback.getId(resultSet);
-                    intercaseCommonValuesMap.put(resultId, InstanceTableCallback.getValue(resultSet));
-                    intercaseCommonCasesMap.put(resultId, InstanceTableCallback.getCaseId(resultSet));
+                    String md5Value = InstanceTableCallback.getValue(resultSet);
+                    if (md5Value == null || HashUtility.isNoDataMd5(md5Value)) {
+                        continue;
+                    }
+                    int caseId = InstanceTableCallback.getCaseId(resultSet);
+                    CorrelationCase autopsyCrCase = dbManager.getCaseById(caseId);
+                    final String correlationCaseDisplayName = autopsyCrCase.getDisplayName();
+                    
+                    if(commonAttributeValue == null) {
+                        commonAttributeValue = new CommonAttributeValue(md5Value);
+                    }
+                    // we don't *have* all the information for the rows in the CR,
+                    //  so we need to consult the present case via the SleuthkitCase object
+                    // Later, when the FileInstanceNodde is built. Therefore, build node generators for now.
+                    if (!md5Value.equals(previousRowMd5)) {
+                        int size = commonAttributeValue.getInstanceCount();
+                        if (instanceCollatedCommonFiles.containsKey(size)) {
+                            instanceCollatedCommonFiles.get(size).add(commonAttributeValue);
+                        } else {
+                            ArrayList<CommonAttributeValue> value = new ArrayList<>();
+                            value.add(commonAttributeValue);
+                            instanceCollatedCommonFiles.put(size, value);
+                        }
+
+                        commonAttributeValue = new CommonAttributeValue(md5Value);
+                        previousRowMd5 = md5Value;
+                    }
+                    AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId);
+                    commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
+
                 }
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
         }
 
