@@ -36,7 +36,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -450,6 +449,14 @@ final class RegexQuery implements KeywordSearchQuery {
             logger.log(Level.WARNING, "Error adding artifact for keyword hit to blackboard"); //NON-NLS
             return null;
         }
+
+        /*
+         * Credit Card number hits are handled differently
+         */
+        if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            createCCNAccount(content, foundKeyword, hit, snippet, listName);
+            return null;
+        }
         
         List<BlackboardAttribute> attributesList = new ArrayList<>();
         attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
@@ -469,14 +476,6 @@ final class RegexQuery implements KeywordSearchQuery {
             logger.log(Level.SEVERE, String.format(
                     "A problem occurred while checking for existing artifacts for file '%s' (id=%d).",
                     content.getName(), content.getId()), ex); //NON-NLS
-        }
-
-        /*
-         * Credit Card number hits are handled differently
-         */
-        if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            createCCNAccount(content, foundKeyword, hit, snippet, listName);
-            return null;
         }
         
         /*
