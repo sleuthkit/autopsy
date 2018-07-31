@@ -747,7 +747,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     public void processInstanceTableWhere(CorrelationAttribute.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
         try {
             acquireSharedLock();
-            super.processInstanceTable(type, instanceTableCallback);
+            super.processInstanceTableWhere(type, whereClause, instanceTableCallback);
         } finally {
             releaseSharedLock();
         }
