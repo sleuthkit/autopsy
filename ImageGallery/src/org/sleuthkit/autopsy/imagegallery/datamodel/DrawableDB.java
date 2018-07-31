@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -230,9 +231,16 @@ public final class DrawableDB {
 
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
 
-            for (DhsImageCategory cat : DhsImageCategory.values()) {
-                insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY);
+            try {
+                CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+                for (DhsImageCategory cat : DhsImageCategory.values()) {
+                    insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
+                }
+                caseDbTransaction.commit();
+            } catch (TskCoreException ex) {
+                throw new ExceptionInInitializerError(ex);
             }
+            
             initializeImageList();
         } else {
             throw new ExceptionInInitializerError();
@@ -599,23 +607,38 @@ public final class DrawableDB {
     }
 
     public void updateFile(DrawableFile f) {
-        DrawableTransaction trans = beginTransaction();
-        updateFile(f, trans);
-        commitTransaction(trans, true);
+        try {
+            DrawableTransaction trans = beginTransaction();
+            CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+            updateFile(f, trans, caseDbTransaction);
+            commitTransaction(trans, true);
+            caseDbTransaction.commit();
+        }
+        catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
+        }
+        
     }
 
     public void insertFile(DrawableFile f) {
-        DrawableTransaction trans = beginTransaction();
-        insertFile(f, trans);
-        commitTransaction(trans, true);
+        try {
+            DrawableTransaction trans = beginTransaction();
+            CaseDbTransaction caseDbTransaction = this.tskCase.beginTransaction();
+            insertFile(f, trans, caseDbTransaction);
+            commitTransaction(trans, true);
+            caseDbTransaction.commit();
+        }
+        catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error inserting file", ex); //NON-NLS
+        }
     }
 
-    public void insertFile(DrawableFile f, DrawableTransaction tr) {
-        insertOrUpdateFile(f, tr, insertFileStmt);
+    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+        insertOrUpdateFile(f, tr, insertFileStmt, caseDbTransaction);
     }
 
-    public void updateFile(DrawableFile f, DrawableTransaction tr) {
-        insertOrUpdateFile(f, tr, updateFileStmt);
+    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+        insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
 
     /**
@@ -631,7 +654,7 @@ public final class DrawableDB {
      * @param tr   a transaction to use, must not be null
      * @param stmt the statement that does the actull inserting
      */
-    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt) {
+    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
 
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
@@ -683,7 +706,7 @@ public final class DrawableDB {
                 for (Comparable<?> val : vals) {
                     //use empty string for null values (mime_type), this shouldn't happen!
                     if (null != val) {
-                        insertGroup(val.toString(), attr);
+                        insertGroup(val.toString(), attr, caseDbTransaction);
                     }
                 }
             }
@@ -1008,8 +1031,9 @@ public final class DrawableDB {
      * Insert new group into DB
      * @param value Value of the group (unique to the type)
      * @param groupBy Type of the grouping (CATEGORY, MAKE, etc.)
+     * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
-    private void insertGroup(final String value, DrawableAttribute<?> groupBy) {
+    private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
         String insertSQL = "";
         try {
             insertSQL = String.format(" (value, attribute) VALUES (\'%s\', \'%s\')", value, groupBy.attrName.toString());;
@@ -1018,7 +1042,7 @@ public final class DrawableDB {
                 insertSQL += String.format(" ON CONFLICT (value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'", value, groupBy.attrName.toString());
             }
 
-            tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL);
+            tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {

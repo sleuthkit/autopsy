@@ -88,6 +88,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -769,7 +770,7 @@ public final class ImageGalleryController {
 
         abstract List<AbstractFile> getFiles() throws TskCoreException;
 
-        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException;
+        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
 
         @Override
         public void run() {
@@ -788,6 +789,7 @@ public final class ImageGalleryController {
 
                 //do in transaction
                 DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
+                CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
                 int workDone = 0;
                 for (final AbstractFile f : files) {
                     if (isCancelled()) {
@@ -800,7 +802,7 @@ public final class ImageGalleryController {
                         LOGGER.log(Level.WARNING, "BulkTransferTask interrupted. Ignoring it to update the contents of drawable database."); //NON-NLS
                     }
 
-                    processFile(f, tr);
+                    processFile(f, tr, caseDbTransaction);
 
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
@@ -815,6 +817,7 @@ public final class ImageGalleryController {
 
                 progressHandle.start();
                 taskDB.commitTransaction(tr, true);
+                caseDbTransaction.commit();
 
             } catch (TskCoreException ex) {
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
@@ -865,7 +868,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException {
+        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException {
             final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
             if (known) {
@@ -875,7 +878,7 @@ public final class ImageGalleryController {
                 try {
                     //supported mimetype => analyzed
                     if ( null != f.getMIMEType() && FileTypeUtils.hasDrawableMIMEType(f)) {
-                        taskDB.updateFile(DrawableFile.create(f, true, false), tr);
+                        taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction );
                     }
                     else { //unsupported mimtype => analyzed but shouldn't include
                         
@@ -927,8 +930,8 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) {
-            taskDB.insertFile(DrawableFile.create(f, false, false), tr);
+        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
+            taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
         }
 
         @Override
