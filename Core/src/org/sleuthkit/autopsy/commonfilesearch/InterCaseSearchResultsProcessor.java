@@ -34,10 +34,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
-import static org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher.collateMatchesByNumberOfInstances;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.timeline.datamodel.eventtype.ArtifactEventType.LOGGER;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 
 /**
@@ -81,17 +78,17 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    void findInterCaseCommonAttributeValues(Case currentCase) {
+    Map<Integer, List<CommonAttributeValue>> findInterCaseCommonAttributeValues(Case currentCase) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processCaseInstancesTable(fileType, DbManager.getCase(currentCase), instancetableCallback);
-
+            return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
-
+        return new HashMap<>();
     }
 
     /**
@@ -102,15 +99,17 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase The case of interest. Matches must exist in this case.
      */
-    void findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, List<CommonAttributeValue>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             DbManager.processSingleCaseInstancesTable(fileType, DbManager.getCase(currentCase), singleCase, instancetableCallback);
+            return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
+        return new HashMap<>();
     }
 
     Map<Integer, String> getIntercaseCommonValuesMap() {
@@ -127,17 +126,23 @@ final class InterCaseSearchResultsProcessor {
      */
     private class InterCaseCommonAttributesCallback implements InstanceTableCallback {
 
+        final Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new HashMap<>();
+        
         @Override
         public void process(ResultSet resultSet) {
-            Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new HashMap<>();
+            
 
             try {
                 String previousRowMd5 = "";
                 EamDb dbManager = EamDb.getInstance();
                 CommonAttributeValue commonAttributeValue = null;
                 while (resultSet.next()) {
+
                     int resultId = InstanceTableCallback.getId(resultSet);
                     String md5Value = InstanceTableCallback.getValue(resultSet);
+                    if(previousRowMd5.isEmpty()) {
+                        previousRowMd5 = md5Value;
+                    }
                     if (md5Value == null || HashUtility.isNoDataMd5(md5Value)) {
                         continue;
                     }
@@ -173,6 +178,11 @@ final class InterCaseSearchResultsProcessor {
             } catch (EamDbException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
+            
+        }
+        
+        Map<Integer, List<CommonAttributeValue>> getInstanceCollatedCommonFiles() {
+            return Collections.unmodifiableMap(instanceCollatedCommonFiles);
         }
 
     }
