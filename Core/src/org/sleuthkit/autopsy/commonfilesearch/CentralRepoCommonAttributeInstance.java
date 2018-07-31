@@ -45,7 +45,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttribute currentAttribute;
-    private Map<String, Long> dataSourceNameToIdMap;
+    private final Map<String, Long> dataSourceNameToIdMap;
 
     CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap) {
         super();

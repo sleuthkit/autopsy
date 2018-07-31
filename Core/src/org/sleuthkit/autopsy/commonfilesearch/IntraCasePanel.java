@@ -41,7 +41,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private boolean singleDataSource;
     private String selectedDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
-    private Map<Long, String> dataSourceMap;
+    private final Map<Long, String> dataSourceMap;
     
     private String errorMessage;
 
