@@ -582,7 +582,7 @@ class TableReportGenerator {
             adHocCountQuery += " AND (art.artifact_id = tag.artifact_id) AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
         }
         adHocCountQuery += "EXCEPT " + // NON-NLS
-                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ")) "; //NON-NLS
+                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ")) AS adHocHits"; //NON-NLS
 
         int adHocCount = 0;
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(adHocCountQuery)) {
@@ -600,7 +600,7 @@ class TableReportGenerator {
         
         // Create the query to get the keyword list names
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(att.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+            orderByClause = "ORDER BY convert_to(list, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
             orderByClause = "ORDER BY list ASC"; //NON-NLS
         }
@@ -621,8 +621,9 @@ class TableReportGenerator {
                     "AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
         }
         if (adHocCount > 0) {
-            keywordListQuery += " UNION SELECT \"\" AS list ";
+            keywordListQuery += " UNION SELECT \'\' AS list ";
         }
+        keywordListQuery = "SELECT * FROM ( " + keywordListQuery + " ) kwListNames ";
         keywordListQuery += "GROUP BY list " + orderByClause; //NON-NLS
 
         // Make the table of contents links for each list type
@@ -645,17 +646,17 @@ class TableReportGenerator {
                             BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()));
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWLists"));
-            logger.log(Level.SEVERE, "Failed to query keyword lists: ", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to query keyword lists with query " + keywordListQuery, ex); //NON-NLS
             return;
         }
 
         // Query for keywords, grouped by list
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
-            orderByClause = "ORDER BY convert_to(att3.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(att1.value_text, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(f.parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(f.name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
-                    + "convert_to(att2.value_text, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
+            orderByClause = "ORDER BY convert_to(list, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(keyword, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(parent_path, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(name, 'SQL_ASCII') ASC NULLS FIRST, " //NON-NLS
+                    + "convert_to(preview, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
         } else {
             orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
@@ -684,7 +685,7 @@ class TableReportGenerator {
         
         // Query for keywords that are not part of a list
         String keywordAdHocQuery =
-                "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, \"\" AS list, f.name AS name, f.parent_path AS parent_path " + // NON-NLS
+                "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, \'\' AS list, f.name AS name, f.parent_path AS parent_path " + // NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, tsk_files AS f " + // NON-NLS
                 "WHERE " + // NON-NLS
                 " (art.artifact_id IN (SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + // NON-NLS
@@ -697,7 +698,7 @@ class TableReportGenerator {
                 "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + // NON-NLS
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "; // NON-NLS
         
-        String keywordsQuery = keywordListsQuery + " UNION " + keywordAdHocQuery + orderByClause;
+        String keywordsQuery = "SELECT * FROM ( " + keywordListsQuery + " UNION " + keywordAdHocQuery + " ) kwHits " + orderByClause;
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
             ResultSet resultSet = dbQuery.getResultSet();
@@ -770,7 +771,7 @@ class TableReportGenerator {
             tableModule.endDataType();
         } catch (TskCoreException | SQLException ex) {
             errorList.add(NbBundle.getMessage(this.getClass(), "ReportGenerator.errList.failedQueryKWs"));
-            logger.log(Level.SEVERE, "Failed to query keywords: ", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to query keywords with query " + keywordsQuery, ex); //NON-NLS
         }
     }
 
