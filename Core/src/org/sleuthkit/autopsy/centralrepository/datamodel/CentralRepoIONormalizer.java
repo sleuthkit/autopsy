@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.validator.routines.DomainValidator;
+import org.apache.commons.validator.routines.EmailValidator;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or querying.
@@ -32,6 +33,11 @@ final public class CentralRepoIONormalizer {
     
     private static final Logger LOGGER = Logger.getLogger(CentralRepoIONormalizer.class.getName());
     private static final String EMPTY_STRING = "";
+    
+    /**
+     * This is a utility class - no need for constructing or subclassing, etc...
+     */
+    private CentralRepoIONormalizer() { }
     
     /**
      * Normalize the data.  To lower, in addition to various domain specific 
@@ -120,8 +126,13 @@ final public class CentralRepoIONormalizer {
     }
 
     private static String normalizeEmail(String data) {
-        //commons
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        EmailValidator validator = EmailValidator.getInstance(true, true);
+        if(validator.isValid(data)){
+            return data.toLowerCase();
+        } else {
+            LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid email address: %s", data)); //non-nls
+            return EMPTY_STRING;
+        }
     }
 
     private static String normalizePhone(String data) {
@@ -130,11 +141,13 @@ final public class CentralRepoIONormalizer {
     }
 
     private static String normalizeUsbId(String data) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //usbId is of the form: hhhh:hhhh where h is a hex digit
+        String validUsbIdRegex = "^(0[Xx])?[A-Fa-f0-9]{4}[:\\s-\\.](0[Xx])?[A-Fa-f0-9]{4}$";
+        if(data.matches(validUsbIdRegex)){
+            return data.toLowerCase();
+        } else {
+            LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid USB Device ID: %s", data)); //non-nls
+            return EMPTY_STRING;
+        }
     }
-
-    private CentralRepoIONormalizer() {
-    }
-    
-    
 }
