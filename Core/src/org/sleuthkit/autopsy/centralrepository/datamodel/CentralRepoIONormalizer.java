@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-//import org.apache.commons.validator.routines;
+import org.apache.commons.validator.routines.DomainValidator;
 
 /**
  * Provides functions for normalizing data by attribute type before insertion or querying.
@@ -104,13 +104,19 @@ final public class CentralRepoIONormalizer {
         if(dataLowered.matches(validMd5Regex)){
             return dataLowered;
         } else {
-            LOGGER.log(Level.WARNING, "Data purporting to be an MD5 was found not to comform to expected format."); //non-nls
+            LOGGER.log(Level.WARNING, String.format("Data purporting to be an MD5 was found not to comform to expected format: %s", data)); //non-nls
             return EMPTY_STRING;
         }
     }
 
     private static String normalizeDomain(String data) {
-        //org.apache.commons.validation.DomainValidator validator;
+        DomainValidator validator = DomainValidator.getInstance(true);
+        if(validator.isValid(data)){
+            return data.toLowerCase();
+        } else {
+            LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid domain: %s", data)); //non-nls
+            return EMPTY_STRING;
+        }
         //commons or guava
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
