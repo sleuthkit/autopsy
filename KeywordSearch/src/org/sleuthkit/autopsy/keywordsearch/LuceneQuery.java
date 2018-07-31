@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -234,8 +235,8 @@ class LuceneQuery implements KeywordSearchQuery {
 
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
-            if (tskBlackboard.artifactExists(content, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, attributesList)) {
+            Blackboard blackboard = tskCase.getBlackboard();
+            if (blackboard.artifactExists(content, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, attributesList)) {
                 return null;
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
