@@ -28,8 +28,10 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- *
- * @author bsweeney
+ * UI controls for Common Files Search scenario where the user intends to find
+ * common files between datasources. It is an inner panel which provides the ability
+ * to select all datasources or a single datasource from a dropdown list of
+ * sources in the current case.
  */
 public class IntraCasePanel extends javax.swing.JPanel {
     
@@ -41,6 +43,8 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private boolean singleDataSource;
     private String selectedDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
+    
+    // A map of data source Ids to their string names for the current case.
     private final Map<Long, String> dataSourceMap;
     private CommonAttributePanel parent;
     
