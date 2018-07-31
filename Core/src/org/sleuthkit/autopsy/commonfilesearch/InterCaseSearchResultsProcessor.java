@@ -114,12 +114,15 @@ final class InterCaseSearchResultsProcessor {
 
         final Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new HashMap<>();
 
+        private CommonAttributeValue commonAttributeValue = null;
+        private String previousRowMd5 = "";
+
         @Override
         public void process(ResultSet resultSet) {
             try {
-                String previousRowMd5 = "";
+
                 EamDb dbManager = EamDb.getInstance();
-                CommonAttributeValue commonAttributeValue = null;
+
                 while (resultSet.next()) {
 
                     int resultId = InstanceTableCallback.getId(resultSet);
@@ -134,33 +137,37 @@ final class InterCaseSearchResultsProcessor {
                     CorrelationCase autopsyCrCase = dbManager.getCaseById(caseId);
                     final String correlationCaseDisplayName = autopsyCrCase.getDisplayName();
 
-                    if (commonAttributeValue == null) {
-                        commonAttributeValue = new CommonAttributeValue(md5Value);
-                    }
-                    if (!md5Value.equals(previousRowMd5)) {
-                        int size = commonAttributeValue.getInstanceCount();
-                        if (instanceCollatedCommonFiles.containsKey(size)) {
-                            instanceCollatedCommonFiles.get(size).add(commonAttributeValue);
-                        } else {
-                            ArrayList<CommonAttributeValue> value = new ArrayList<>();
-                            value.add(commonAttributeValue);
-                            instanceCollatedCommonFiles.put(size, value);
-                        }
-
-                        commonAttributeValue = new CommonAttributeValue(md5Value);
-                        previousRowMd5 = md5Value;
-                    }
-                    // we don't *have* all the information for the rows in the CR,
-                    //  so we need to consult the present case via the SleuthkitCase object
-                    // Later, when the FileInstanceNode is built. Therefore, build node generators for now.
-                    AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId);
-                    commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
+                    countAndAddCommonAttributes(md5Value, resultId, correlationCaseDisplayName);
 
                 }
             } catch (SQLException | EamDbException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
 
+        }
+
+        private void countAndAddCommonAttributes(String md5Value, int resultId, String correlationCaseDisplayName) {
+            if (commonAttributeValue == null) {
+                commonAttributeValue = new CommonAttributeValue(md5Value);
+            }
+            if (!md5Value.equals(previousRowMd5)) {
+                int size = commonAttributeValue.getInstanceCount();
+                if (instanceCollatedCommonFiles.containsKey(size)) {
+                    instanceCollatedCommonFiles.get(size).add(commonAttributeValue);
+                } else {
+                    ArrayList<CommonAttributeValue> value = new ArrayList<>();
+                    value.add(commonAttributeValue);
+                    instanceCollatedCommonFiles.put(size, value);
+                }
+
+                commonAttributeValue = new CommonAttributeValue(md5Value);
+                previousRowMd5 = md5Value;
+            }
+            // we don't *have* all the information for the rows in the CR,
+            //  so we need to consult the present case via the SleuthkitCase object
+            // Later, when the FileInstanceNode is built. Therefore, build node generators for now.
+            AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId);
+            commonAttributeValue.addFileInstanceMetadata(searchResult, correlationCaseDisplayName);
         }
 
         Map<Integer, List<CommonAttributeValue>> getInstanceCollatedCommonFiles() {
