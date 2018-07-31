@@ -117,8 +117,6 @@ final public class CentralRepoIONormalizer {
             LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid domain: %s", data)); //non-nls
             return EMPTY_STRING;
         }
-        //commons or guava
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     private static String normalizeEmail(String data) {
