@@ -40,11 +40,15 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.textextraction.SQLiteExtractor;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * A file content viewer for SQLite database files.
@@ -363,8 +367,13 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         tablesDropdownList.removeAllItems();
 
         try {
-            connection = SQLiteExtractor.getDatabaseConnection(sqliteDbFile);
+            String tmpDBPathName = Case.getCurrentCaseThrows().getTempDirectory() + 
+                    File.separator + sqliteDbFile.getName();
+            moveDbToTempFile(sqliteDbFile, tmpDBPathName);
+            
+            connection = SQLiteExtractor.getDatabaseConnection(tmpDBPathName);
             Map<String, String> dbTablesMap = SQLiteExtractor.getTableNameAndSchemaPairs(connection);
+            
             if (dbTablesMap.isEmpty()) {
                 tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
                 tablesDropdownList.setEnabled(false);
@@ -479,6 +488,48 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     "Failed to export table %s to file '%s'", tableName, file.getName()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(
                     Bundle.SQLiteViewer_exportTableToCsv_write_errText());
+        }
+    }
+    
+    private static void moveDbToTempFile(AbstractFile sqliteDbFile, String tempDbPath) 
+            throws IOException, NoCurrentCaseException, TskCoreException {
+        
+        File tmpDbFile = new File(tempDbPath);
+        if (!tmpDbFile.exists()) {
+            ContentUtils.writeToFile(sqliteDbFile, tmpDbFile);
+
+            // Look for any meta files associated with this DB - WAL, SHM, etc. 
+            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
+            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
+        }
+    }
+    
+    /**
+     * Searches for a meta file associated with the give SQLite db If found,
+     * copies the file to the temp folder
+     *
+     * @param sqliteFile   - SQLIte db file being processed
+     * @param metaFileName name of meta file to look for
+     */
+    private static void findAndCopySQLiteMetaFile(AbstractFile sqliteFile,
+            String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
+        
+        Case openCase = Case.getCurrentCaseThrows();
+        SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
+        Services services = new Services(sleuthkitCase);
+        FileManager fileManager = services.getFileManager();
+        
+        List<AbstractFile> metaFiles = fileManager.findFiles(
+                sqliteFile.getDataSource(), metaFileName, 
+                sqliteFile.getParent().getName());
+        
+        if (metaFiles != null) {
+            for (AbstractFile metaFile : metaFiles) {
+                String tmpMetafilePathName = openCase.getTempDirectory() + 
+                        File.separator + metaFile.getName();
+                File tmpMetafile = new File(tmpMetafilePathName);
+                ContentUtils.writeToFile(metaFile, tmpMetafile);
+            }
         }
     }
 }
