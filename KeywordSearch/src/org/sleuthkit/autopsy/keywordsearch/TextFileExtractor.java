@@ -59,11 +59,11 @@ final class TextFileExtractor extends ContentTextExtractor {
         try {
             detector.setText(stream);
         } catch (IOException ex) {
-            throw new TextExtractorException("Unable to get string from detected text in UnicodeTextExtractor", ex);
+            throw new TextExtractorException("Unable to get string from detected text in TextFileExtractor", ex);
         }
         CharsetMatch match = detector.detect();
         if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
-            throw new TextExtractorException("Text does not match any character set with a high enough confidence for UnicodeTextExtractor");
+            throw new TextExtractorException("Text does not match any character set with a high enough confidence for TextFileExtractor");
         }
 
         return match.getReader();
