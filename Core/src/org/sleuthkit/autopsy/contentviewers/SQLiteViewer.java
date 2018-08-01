@@ -22,22 +22,14 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -48,14 +40,11 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.textextraction.SQLiteExtractor;
 
 /**
  * A file content viewer for SQLite database files.
@@ -370,41 +359,12 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         "SQLiteViewer.errorMessage.failedToQueryDatabase=The database tables in the file could not be read.",
         "SQLiteViewer.errorMessage.failedToinitJDBCDriver=The JDBC driver for SQLite could not be loaded.",
         "# {0} - exception message", "SQLiteViewer.errorMessage.unexpectedError=An unexpected error occurred:\n{0).",})
-    private void processSQLiteFile() {
-                
+    private void processSQLiteFile() {       
         tablesDropdownList.removeAllItems();
 
-        // Copy the file to temp folder
-        String tmpDBPathName;
         try {
-            tmpDBPathName = Case.getCurrentCaseThrows().getTempDirectory() + File.separator + sqliteDbFile.getName();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
-            return;
-        }
-
-        tmpDbFile = new File(tmpDBPathName);
-        if (! tmpDbFile.exists()) {
-            try {
-                ContentUtils.writeToFile(sqliteDbFile, tmpDbFile);
-
-                // Look for any meta files associated with this DB - WAL, SHM, etc. 
-                findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
-                findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
-            } catch (IOException | NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create temp copy of DB file '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-                MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_failedToExtractFile());
-                return;
-            }
-        }
-                
-        try {
-            // Load the SQLite JDBC driver, if necessary.
-            Class.forName("org.sqlite.JDBC"); //NON-NLS  
-            connection = DriverManager.getConnection("jdbc:sqlite:" + tmpDBPathName); //NON-NLS
-
-            Map<String, String> dbTablesMap = getTables();
+            connection = SQLiteExtractor.getDatabaseConnection(sqliteDbFile);
+            Map<String, String> dbTablesMap = SQLiteExtractor.getTableNameAndSchemaPairs(connection);
             if (dbTablesMap.isEmpty()) {
                 tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
                 tablesDropdownList.setEnabled(false);
@@ -413,78 +373,36 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     tablesDropdownList.addItem(tableName);
                 });
             }
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
+        } catch (IOException | TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to create temp copy of DB file '%s' (objId=%d)", //NON-NLS
+                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_errorMessage_failedToExtractFile());
         } catch (ClassNotFoundException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to initialize JDBC SQLite '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_failedToinitJDBCDriver());
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to initialize JDBC SQLite '%s' (objId=%d)", //NON-NLS
+                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_errorMessage_failedToinitJDBCDriver());
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to get tables from DB file  '%s' (objId=%d)", sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase());
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to get tables from DB file  '%s' (objId=%d)", //NON-NLS
+                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase());
         }
-    }
-
-    /**
-     * Searches for a meta file associated with the give SQLite db If found,
-     * copies the file to the temp folder
-     *
-     * @param sqliteFile   - SQLIte db file being processed
-     * @param metaFileName name of meta file to look for
-     */
-    private void findAndCopySQLiteMetaFile(AbstractFile sqliteFile, String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
-        Case openCase = Case.getCurrentCaseThrows();
-        SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
-        Services services = new Services(sleuthkitCase);
-        FileManager fileManager = services.getFileManager();
-        List<AbstractFile> metaFiles = fileManager.findFiles(sqliteFile.getDataSource(), metaFileName, sqliteFile.getParent().getName());
-        if (metaFiles != null) {
-            for (AbstractFile metaFile : metaFiles) {
-                String tmpMetafilePathName = openCase.getTempDirectory() + File.separator + metaFile.getName();
-                File tmpMetafile = new File(tmpMetafilePathName);
-                ContentUtils.writeToFile(metaFile, tmpMetafile);
-            }
-        }
-    }
-
-    /**
-     * Gets the table names and schemas from the SQLite database file.
-     *
-     * @return A mapping of table names to SQL CREATE TABLE statements.
-     */
-    private Map<String, String> getTables() throws SQLException {
-        Map<String, String> dbTablesMap = new TreeMap<>();
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(
-                    "SELECT name, sql FROM sqlite_master "
-                    + " WHERE type= 'table' "
-                    + " ORDER BY name;"); //NON-NLS
-            while (resultSet.next()) {
-                String tableName = resultSet.getString("name"); //NON-NLS
-                String tableSQL = resultSet.getString("sql"); //NON-NLS
-                dbTablesMap.put(tableName, tableSQL);
-            }
-        } finally {
-            if (null != resultSet) {
-                resultSet.close();
-            }
-            if (null != statement) {
-                statement.close();
-            }
-        }
-        return dbTablesMap;
     }
 
     @NbBundle.Messages({"# {0} - tableName",
         "SQLiteViewer.selectTable.errorText=Error getting row count for table: {0}"
     })
     private void selectTable(String tableName) {
-
-        try (Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(
-                    "SELECT count (*) as count FROM " + tableName)) { //NON-NLS{
-
-            numRows = resultSet.getInt("count");
+        try {
+            numRows = SQLiteExtractor.getTableRowCount(connection, tableName);
             numEntriesField.setText(numRows + " entries");
 
             currPage = 1;
@@ -504,8 +422,11 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             }
             
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to load table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_selectTable_errorText(tableName));
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to load table %s from DB file '%s' (objId=%d)", tableName, //NON-NLS
+                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_selectTable_errorText(tableName));
         }
     }
 
@@ -513,47 +434,21 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         "SQLiteViewer.readTable.errorText=Error getting rows for table: {0}"})
     private void readTable(String tableName, int startRow, int numRowsToRead) {
 
-        try (
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    "SELECT * FROM " + tableName
-                    + " LIMIT " + Integer.toString(numRowsToRead)
-                    + " OFFSET " + Integer.toString(startRow - 1))) {
-
-            ArrayList<Map<String, Object>> rows = resultSetToArrayList(resultSet);
+        try {
+            List<Map<String, Object>> rows = SQLiteExtractor.getRowsFromTable(
+                    connection, tableName, startRow, numRowsToRead);
             if (Objects.nonNull(rows)) {
                 selectedTableView.setupTable(rows);
             } else {
                 selectedTableView.setupTable(Collections.emptyList());
             }
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to read table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to read table %s from DB file '%s' (objId=%d)", tableName, //NON-NLS
+                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_readTable_errorText(tableName));
         }
-    }
-
-    @NbBundle.Messages("SQLiteViewer.BlobNotShown.message=BLOB Data not shown")
-    private ArrayList<Map<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
-        ResultSetMetaData metaData = rs.getMetaData();
-        int columns = metaData.getColumnCount();
-        ArrayList<Map<String, Object>> rowlist = new ArrayList<>();
-        while (rs.next()) {
-            Map<String, Object> row = new LinkedHashMap<>(columns);
-            for (int i = 1; i <= columns; ++i) {
-                if (rs.getObject(i) == null) {
-                    row.put(metaData.getColumnName(i), "");
-                } else {
-                    if (metaData.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
-                        row.put(metaData.getColumnName(i), Bundle.SQLiteViewer_BlobNotShown_message());
-                    } else {
-                        row.put(metaData.getColumnName(i), rs.getObject(i));
-                    }
-                }
-            }
-            rowlist.add(row);
-        }
-
-        return rowlist;
     }
     
     @NbBundle.Messages({"SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.",
@@ -562,60 +457,28 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     })
     private void exportTableToCsv(File file) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
-        try (
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName)) {
-            List<Map<String, Object>> currentTableRows = resultSetToArrayList(resultSet);
+        try {
+            List<Map<String, Object>> currentTableRows = 
+                    SQLiteExtractor.getRowsFromTable(connection, tableName);
 
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
-                logger.log(Level.INFO, String.format("The table %s is empty. (objId=%d)", tableName, sqliteDbFile.getId())); //NON-NLS
+                logger.log(Level.INFO, String.format(
+                        "The table %s is empty. (objId=%d)", tableName, //NON-NLS
+                        sqliteDbFile.getId()));
             } else {
-                File csvFile;
-                String fileName = file.getName();
-                if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
-                    csvFile = file;
-                } else {
-                    csvFile = new File(file.toString() + ".csv");
-                }
-
-                try (FileOutputStream out = new FileOutputStream(csvFile, false)) {
-
-                    out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
-                    out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
-                    // Set up the column names
-                    Map<String, Object> row = currentTableRows.get(0);
-                    StringBuffer header = new StringBuffer();
-                    for (Map.Entry<String, Object> col : row.entrySet()) {
-                        String colName = col.getKey();
-                        if (header.length() > 0) {
-                            header.append(',').append(colName);
-                        } else {
-                            header.append(colName);
-                        }
-                    }
-                    out.write(header.append('\n').toString().getBytes());
-
-                    for (Map<String, Object> maps : currentTableRows) {
-                        StringBuffer valueLine = new StringBuffer();
-                        maps.values().forEach((value) -> {
-                            if (valueLine.length() > 0) {
-                                valueLine.append(',').append(value.toString());
-                            } else {
-                                valueLine.append(value.toString());
-                            }
-                        });
-                        out.write(valueLine.append('\n').toString().getBytes());
-                    }
-                }
+                SQLiteExtractor.exportTableToCSV(file, tableName, currentTableRows);
             }
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to read table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to read table %s from DB file '%s' (objId=%d)", //NON-NLS
+                    tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); 
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_readTable_errorText(tableName));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, String.format("Failed to export table %s to file '%s'", tableName, file.getName()), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_exportTableToCsv_write_errText());
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to export table %s to file '%s'", tableName, file.getName()), ex); //NON-NLS
+            MessageNotifyUtil.Message.error(
+                    Bundle.SQLiteViewer_exportTableToCsv_write_errText());
         }
     }
-
-    
 }
