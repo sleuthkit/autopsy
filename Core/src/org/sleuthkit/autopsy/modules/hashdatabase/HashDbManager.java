@@ -39,6 +39,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoValidationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -1238,8 +1239,8 @@ public class HashDbManager implements PropertyChangeListener {
                         EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
                             type, comment);
                         EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
-                    } catch (EamDbException ex){
-                        throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
+                    } catch (EamDbException | CentralRepoValidationException ex){
+                        throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);	//NON-NLS
                     }
                 }
             }
@@ -1264,7 +1265,7 @@ public class HashDbManager implements PropertyChangeListener {
                 }       
                 try {
                     globalFileInstances.add(new EamGlobalFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
-                } catch (EamDbException ex){
+                } catch (EamDbException | CentralRepoValidationException ex){
                     throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
                 }
             }

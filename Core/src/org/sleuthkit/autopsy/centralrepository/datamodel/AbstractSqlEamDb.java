@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -742,7 +743,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -849,7 +850,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting count of artifact instances by artifactType and artifactValue.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -907,7 +908,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1335,7 +1336,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
                 correlationAttribute.addInstance(artifactInstance);
             }
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1497,7 +1498,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1600,7 +1601,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting count of notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1656,7 +1657,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             while (resultSet.next()) {
                 caseNames.add(resultSet.getString("case_name"));
             }
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1801,7 +1802,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             matchingInstances = resultSet.getLong(1);
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error determining if value (" + value + ") is in reference set " + referenceSetID, ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1845,7 +1846,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error determining if artifact is notable by reference.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -2543,7 +2544,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             return globalFileInstances;
 
-        } catch (SQLException ex) {
+        } catch (CentralRepoValidationException | SQLException ex) {
             throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement1);
@@ -2913,7 +2914,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         );
     }
 
-    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
+    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException, CentralRepoValidationException {
         if (null == resultSet) {
             return null;
         }

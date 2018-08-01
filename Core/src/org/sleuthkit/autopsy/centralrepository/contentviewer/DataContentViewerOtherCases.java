@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -57,6 +56,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoValidationException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -131,8 +131,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         String currentComment = action.addEditCentralRepoComment();
                         selectedNode.updateComment(currentComment);
                         otherCasesTable.repaint();
-                    } catch (EamDbException ex) {
-                        logger.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);
+                    } catch (CentralRepoValidationException ex) {
+                        logger.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);	//NON-NLS
                     }
                 }
             }
@@ -432,7 +432,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
                     for (CorrelationAttribute.Type aType : artifactTypes) {
                         if (aType.getId() == CorrelationAttribute.FILES_TYPE_ID) {
-                            ret.add(new CorrelationAttribute(aType, md5));
+                            try {
+                                ret.add(new CorrelationAttribute(aType, md5));
+                            } catch (CentralRepoValidationException ex) {
+                                logger.log(Level.WARNING, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
+                            }
                             break;
                         }
                     }
@@ -447,7 +451,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 if (this.file != null) {
                     String md5 = this.file.getMd5Hash();
                     if (md5 != null && !md5.isEmpty()) {
-                        ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), md5));
+                        try {
+                            ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), md5));
+                        } catch (CentralRepoValidationException ex) {
+                            logger.log(Level.WARNING, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
+                        }
                     }
                 }
             } catch (EamDbException ex) {

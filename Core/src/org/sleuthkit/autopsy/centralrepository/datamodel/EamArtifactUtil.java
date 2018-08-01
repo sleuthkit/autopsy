@@ -82,7 +82,7 @@ public class EamArtifactUtil {
                     }
                 }
             }
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             logger.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
             return eamArtifacts;
         }
@@ -137,7 +137,7 @@ public class EamArtifactUtil {
      *         bbArtifact did not contain the needed data
      */
     private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType,
-            BlackboardArtifact bbArtifact) throws EamDbException {
+            BlackboardArtifact bbArtifact) throws EamDbException, CentralRepoValidationException {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
 
@@ -286,8 +286,8 @@ public class EamArtifactUtil {
                     af.getParentPath() + af.getName());
             eamArtifact.addInstance(cei);
             return eamArtifact;
-        } catch (TskCoreException | EamDbException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
+        } catch (TskCoreException | EamDbException | NoCurrentCaseException | CentralRepoValidationException ex) {
+            logger.log(Level.SEVERE, "Error making correlation attribute.", ex);	//NON-NLS
             return null;
         }
     }
