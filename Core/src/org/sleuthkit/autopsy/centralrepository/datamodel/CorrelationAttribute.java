@@ -66,10 +66,7 @@ public class CorrelationAttribute implements Serializable {
         return DEFAULT_CORRELATION_TYPES;
     }
 
-    public CorrelationAttribute(Type correlationType, String correlationValue) throws EamDbException {
-        if(correlationValue == null) { 
-            throw new EamDbException ("Correlation value is null");
-        }
+    public CorrelationAttribute(Type correlationType, String correlationValue) throws CentralRepoValidationException {
         this.ID = "";
         this.correlationType = correlationType;
         this.correlationValue = CentralRepoIONormalizer.normalize(correlationType, correlationValue);
@@ -121,7 +118,7 @@ public class CorrelationAttribute implements Serializable {
      * 
      * @param correlationValue the correlationValue to set
      */
-    public void setCorrelationValue(String correlationValue) {
+    public void setCorrelationValue(String correlationValue) throws CentralRepoValidationException {
         if(this.getCorrelationType() == null){
             throw new IllegalStateException("Correlation Type must be set before calling setCorrelationValue");
         }
