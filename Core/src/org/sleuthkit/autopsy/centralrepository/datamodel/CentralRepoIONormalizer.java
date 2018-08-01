@@ -50,7 +50,7 @@ final public class CentralRepoIONormalizer {
      * 
      * @return normalized data
      */
-    static String normalize(CorrelationAttribute.Type attributeType, String data){
+    public static String normalize(CorrelationAttribute.Type attributeType, String data){
         
         switch(attributeType.getId()){
             case CorrelationAttribute.FILES_TYPE_ID:
@@ -81,7 +81,7 @@ final public class CentralRepoIONormalizer {
      * 
      * @return normalized data
      */
-    static String normalize(int attributeTypeId, String data){
+    public static String normalize(int attributeTypeId, String data){
         try {
             List<CorrelationAttribute.Type> defaultTypes = CorrelationAttribute.getDefaultCorrelationTypes();
             Optional<CorrelationAttribute.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
@@ -105,7 +105,7 @@ final public class CentralRepoIONormalizer {
     }
 
     private static String normalizeMd5(String data) {
-        final String validMd5Regex = "/^[a-f0-9]{32}$/";
+        final String validMd5Regex = "^[a-fA-F0-9]{32}$";
         final String dataLowered = data.toLowerCase();
         if(dataLowered.matches(validMd5Regex)){
             return dataLowered;
