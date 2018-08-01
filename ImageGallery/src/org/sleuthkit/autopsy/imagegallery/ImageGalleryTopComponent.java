@@ -39,6 +39,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
@@ -88,6 +89,29 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     private VBox leftPane;
     private Scene myScene;
 
+    /**
+     * Returns whether the ImageGallery window is open or not.
+     * 
+     * @return true, if Image gallery is opened, false otherwise
+     */
+    public static boolean isImageGalleryOpen() {
+         
+        final TopComponent topComponent =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (topComponent != null) {
+            return topComponent.isOpened();
+        }
+        return false;   
+    }
+    
+    /**
+     * Returns the top component window.
+     * 
+     * @return Image gallery top component window, null if it's not open
+     */
+    public static TopComponent getTopComponent() {
+        return WindowManager.getDefault().findTopComponent(PREFERRED_ID);  
+    }
+    
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
         //        synchronized (OpenTimelineAction.class) {
