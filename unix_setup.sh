@@ -2,7 +2,7 @@
 
 # Verifies programs are installed and copies native code into the Autopsy folder structure
 
-TSK_VERSION=4.6.1
+TSK_VERSION=4.6.2
 
 # Verify PhotoRec was installed
 photorec_filepath=/usr/bin/photorec

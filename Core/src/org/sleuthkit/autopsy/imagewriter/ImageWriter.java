@@ -134,7 +134,7 @@ class ImageWriter implements PropertyChangeListener{
     
     @Messages({
         "# {0} - data source name", 
-        "ImageWriter.progressBar.message=Finishing acquisition of {0}"
+        "ImageWriter.progressBar.message=Finishing acquisition of {0} (unplug device to cancel)"
     })
     private void startFinishImage(String dataSourceName){
       
