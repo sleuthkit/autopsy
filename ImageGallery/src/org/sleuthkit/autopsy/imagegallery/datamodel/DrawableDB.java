@@ -231,13 +231,22 @@ public final class DrawableDB {
 
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
 
+            CaseDbTransaction caseDbTransaction = null;
             try {
-                CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+                caseDbTransaction = tskCase.beginTransaction();
                 for (DhsImageCategory cat : DhsImageCategory.values()) {
                     insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
                 }
                 caseDbTransaction.commit();
             } catch (TskCoreException ex) {
+                if (null != caseDbTransaction) {
+                    try {
+                        caseDbTransaction.rollback();
+                    }
+                    catch(TskCoreException ex2) {
+                         LOGGER.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); 
+                    }
+                }
                 throw new ExceptionInInitializerError(ex);
             }
             
@@ -607,28 +616,53 @@ public final class DrawableDB {
     }
 
     public void updateFile(DrawableFile f) {
-        try {
-            DrawableTransaction trans = beginTransaction();
-            CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+        DrawableTransaction trans = null;
+        CaseDbTransaction caseDbTransaction = null;
+        
+        try {       
+            trans = beginTransaction();
+            caseDbTransaction = tskCase.beginTransaction();
             updateFile(f, trans, caseDbTransaction);
             commitTransaction(trans, true);
             caseDbTransaction.commit();
         }
         catch (TskCoreException ex) {
+            if (null != trans) {
+                rollbackTransaction(trans);
+            }
+            if (null != caseDbTransaction) {
+                try {
+                        caseDbTransaction.rollback();
+                    } catch (TskCoreException ex2) {
+                        LOGGER.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
+                    }
+            }
             LOGGER.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
         }
         
     }
 
     public void insertFile(DrawableFile f) {
+        DrawableTransaction trans = null;
+        CaseDbTransaction caseDbTransaction = null;
         try {
-            DrawableTransaction trans = beginTransaction();
-            CaseDbTransaction caseDbTransaction = this.tskCase.beginTransaction();
+            trans = beginTransaction();
+            caseDbTransaction = tskCase.beginTransaction();
             insertFile(f, trans, caseDbTransaction);
             commitTransaction(trans, true);
             caseDbTransaction.commit();
         }
         catch (TskCoreException ex) {
+            if (null != trans) {
+                rollbackTransaction(trans);
+            }
+            if (null != caseDbTransaction) {
+                try {
+                        caseDbTransaction.rollback();
+                    } catch (TskCoreException ex2) {
+                        LOGGER.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
+                    }
+            }
             LOGGER.log(Level.SEVERE, "Error inserting file", ex); //NON-NLS
         }
     }
@@ -799,6 +833,13 @@ public final class DrawableDB {
         tr.commit(notify);
     }
 
+    public void rollbackTransaction(DrawableTransaction tr) {
+        if (tr.isClosed()) {
+            throw new IllegalArgumentException("can't rollback already closed transaction");
+        }
+        tr.rollback();
+    }
+    
     public Boolean isFileAnalyzed(DrawableFile f) {
         return isFileAnalyzed(f.getId());
     }

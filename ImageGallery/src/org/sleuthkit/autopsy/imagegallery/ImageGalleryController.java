@@ -778,6 +778,9 @@ public final class ImageGalleryController {
             progressHandle.start();
             updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status());
 
+            
+            DrawableDB.DrawableTransaction drawableDbTransaction = null;
+            CaseDbTransaction caseDbTransaction = null;
             try {
                 //grab all files with supported extension or detected mime types
                 final List<AbstractFile> files = getFiles();
@@ -785,24 +788,23 @@ public final class ImageGalleryController {
 
                 updateProgress(0.0);
                 
-               taskCompletionStatus = true;
-
-                //do in transaction
-                DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
-                CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+                taskCompletionStatus = true;
                 int workDone = 0;
+                
+                //do in transaction
+                drawableDbTransaction = taskDB.beginTransaction();
+                caseDbTransaction = tskCase.beginTransaction();
                 for (final AbstractFile f : files) {
-                    if (isCancelled()) {
-                        LOGGER.log(Level.WARNING, "Task cancelled: not all contents may be transfered to drawable database."); //NON-NLS
+                    if (isCancelled() || Thread.interrupted()) {
+                        LOGGER.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
+                        taskCompletionStatus = false;
                         progressHandle.finish();
+                       
                         break;
                     }
                     
-                    if (Thread.interrupted()) {
-                        LOGGER.log(Level.WARNING, "BulkTransferTask interrupted. Ignoring it to update the contents of drawable database."); //NON-NLS
-                    }
 
-                    processFile(f, tr, caseDbTransaction);
+                    processFile(f, drawableDbTransaction, caseDbTransaction);
 
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
@@ -816,10 +818,20 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                taskDB.commitTransaction(tr, true);
+                taskDB.commitTransaction(drawableDbTransaction, true);
                 caseDbTransaction.commit();
 
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException ex) { 
+                if (null != drawableDbTransaction) {
+                    taskDB.rollbackTransaction(drawableDbTransaction);
+                }
+                if (null != caseDbTransaction) {
+                    try {
+                        caseDbTransaction.rollback();
+                    } catch (TskCoreException ex2) {
+                         LOGGER.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
+                    }
+                }
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 LOGGER.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
@@ -880,13 +892,14 @@ public final class ImageGalleryController {
                     if ( null != f.getMIMEType() && FileTypeUtils.hasDrawableMIMEType(f)) {
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction );
                     }
-                    else { //unsupported mimtype => analyzed but shouldn't include
-                        
+                    else { 
                         // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
                         if (null == f.getMIMEType()) {
                             this.setTaskCompletionStatus(false);
+                        } else { 
+                            //unsupported mimtype => analyzed but shouldn't include
+                            taskDB.removeFile(f.getId(), tr);
                         }
-                        taskDB.removeFile(f.getId(), tr);
                     }
                 } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                     throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);
@@ -999,13 +1012,12 @@ public final class ImageGalleryController {
                                         }
                                     }
                                 } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
-                                    //TODO: What to do here?
                                     LOGGER.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
                                     MessageNotifyUtil.Notify.error("Image Gallery Error",
                                             "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
                                 }
                             }
-                        } else {   //TODO: keep track of what we missed for later
+                        } else {
                             setStale(true);
                         }
                     }
@@ -1044,7 +1056,7 @@ public final class ImageGalleryController {
                         Content newDataSource = (Content) evt.getNewValue();
                         if (isListeningEnabled()) {
                             queueDBTask(new PrePopulateDataSourceFiles(newDataSource, ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
-                        } else {//TODO: keep track of what we missed for later
+                        } else {
                             setStale(true);
                         }
                     }
