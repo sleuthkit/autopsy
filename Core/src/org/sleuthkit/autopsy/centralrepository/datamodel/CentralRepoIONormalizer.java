@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.EmailValidator;
 
@@ -30,9 +28,6 @@ import org.apache.commons.validator.routines.EmailValidator;
  * Provides functions for normalizing data by attribute type before insertion or querying.
  */
 final public class CentralRepoIONormalizer {
-    
-    private static final Logger LOGGER = Logger.getLogger(CentralRepoIONormalizer.class.getName());
-    private static final String EMPTY_STRING = "";
     
     /**
      * This is a utility class - no need for constructing or subclassing, etc...
