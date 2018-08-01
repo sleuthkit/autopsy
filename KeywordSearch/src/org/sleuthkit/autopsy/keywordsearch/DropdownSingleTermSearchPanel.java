@@ -307,7 +307,7 @@ public class DropdownSingleTermSearchPanel extends AdHocSearchPanel {
                         .addComponent(ingestIndexLabel))
                     .addComponent(keywordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(dataSourceCheckBox))
-                .addContainerGap(39, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
