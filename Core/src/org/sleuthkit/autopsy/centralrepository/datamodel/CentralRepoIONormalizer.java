@@ -50,7 +50,7 @@ final public class CentralRepoIONormalizer {
      * 
      * @return normalized data
      */
-    public static String normalize(CorrelationAttribute.Type attributeType, String data){
+    public static String normalize(CorrelationAttribute.Type attributeType, String data) throws CentralRepoValidationException {
         
         switch(attributeType.getId()){
             case CorrelationAttribute.FILES_TYPE_ID:
@@ -64,10 +64,8 @@ final public class CentralRepoIONormalizer {
             case CorrelationAttribute.USBID_TYPE_ID:
                 return normalizeUsbId(data);
             default:
-                Exception exception = new IllegalArgumentException("Normalizer not found for attribute type: " + attributeType.getDisplayName());    
-                log(exception);
-                return data;
-        }        
+                throw new CentralRepoValidationException("Normalizer function not found for attribute type: " + attributeType.getDisplayName());   
+        }
     }
     
     /**
@@ -81,7 +79,7 @@ final public class CentralRepoIONormalizer {
      * 
      * @return normalized data
      */
-    public static String normalize(int attributeTypeId, String data){
+    public static String normalize(int attributeTypeId, String data) throws CentralRepoValidationException {
         try {
             List<CorrelationAttribute.Type> defaultTypes = CorrelationAttribute.getDefaultCorrelationTypes();
             Optional<CorrelationAttribute.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
@@ -90,64 +88,58 @@ final public class CentralRepoIONormalizer {
                 CorrelationAttribute.Type type = typeOption.get();
                 return CentralRepoIONormalizer.normalize(type, data);
             } else {
-                Exception exception = new IllegalArgumentException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
-                log(exception);
-                return data;
+                throw new CentralRepoValidationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
             }
         } catch (EamDbException ex) {
-            log(ex);
-            return data;
+            throw new CentralRepoValidationException(ex);
         }
     }
-    
-    private static void log(Throwable throwable){
-        LOGGER.log(Level.WARNING, "Data not normalized - using original data.", throwable);
-    }
 
-    private static String normalizeMd5(String data) {
+    private static String normalizeMd5(String data) throws CentralRepoValidationException {
         final String validMd5Regex = "^[a-fA-F0-9]{32}$";
         final String dataLowered = data.toLowerCase();
         if(dataLowered.matches(validMd5Regex)){
             return dataLowered;
         } else {
-            LOGGER.log(Level.WARNING, String.format("Data purporting to be an MD5 was found not to comform to expected format: %s", data)); //non-nls
-            return EMPTY_STRING;
+            throw new CentralRepoValidationException(String.format("Data purporting to be an MD5 was found not to comform to expected format: %s", data));
         }
     }
 
-    private static String normalizeDomain(String data) {
+    private static String normalizeDomain(String data) throws CentralRepoValidationException {
         DomainValidator validator = DomainValidator.getInstance(true);
         if(validator.isValid(data)){
             return data.toLowerCase();
         } else {
-            LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid domain: %s", data)); //non-nls
-            return EMPTY_STRING;
+            throw new CentralRepoValidationException(String.format("Data was expected to be a valid domain: %s", data));
         }
     }
 
-    private static String normalizeEmail(String data) {
+    private static String normalizeEmail(String data) throws CentralRepoValidationException {
         EmailValidator validator = EmailValidator.getInstance(true, true);
         if(validator.isValid(data)){
             return data.toLowerCase();
         } else {
-            LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid email address: %s", data)); //non-nls
-            return EMPTY_STRING;
+            throw new CentralRepoValidationException(String.format("Data was expected to be a valid email address: %s", data));
         }
     }
 
-    private static String normalizePhone(String data) {
-        //TODO implement for real
-        return data;
+    @SuppressWarnings("DeadBranch")
+    private static String normalizePhone(String data) throws CentralRepoValidationException {
+        //TODO implement for real and get rid of suppression
+        if(true){
+            return data;
+        } else {
+            throw new CentralRepoValidationException(String.format("Data was expected to be a valid phone number: %s", data));
+        }
     }
 
-    private static String normalizeUsbId(String data) {
+    private static String normalizeUsbId(String data) throws CentralRepoValidationException {
         //usbId is of the form: hhhh:hhhh where h is a hex digit
         String validUsbIdRegex = "^(0[Xx])?[A-Fa-f0-9]{4}[:\\s-\\.](0[Xx])?[A-Fa-f0-9]{4}$";
         if(data.matches(validUsbIdRegex)){
             return data.toLowerCase();
         } else {
-            LOGGER.log(Level.WARNING, String.format("Data was expected to be a valid USB Device ID: %s", data)); //non-nls
-            return EMPTY_STRING;
+            throw new CentralRepoValidationException(String.format("Data was expected to be a valid USB device ID: %s", data));
         }
     }
 }
