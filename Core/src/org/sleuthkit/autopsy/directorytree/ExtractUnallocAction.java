@@ -153,6 +153,7 @@ final class ExtractUnallocAction extends AbstractAction {
             int returnValue = fileChooser.showSaveDialog((Component) e.getSource());
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 String destination = fileChooser.getSelectedFile().getPath();
+                openCase.setExportDirectory(destination);
                 for (OutputFileData outputFileData : filesToExtract) {
                     outputFileData.setPath(destination);
                     

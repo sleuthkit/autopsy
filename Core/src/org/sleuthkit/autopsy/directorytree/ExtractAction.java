@@ -112,6 +112,8 @@ public final class ExtractAction extends AbstractAction {
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
+            openCase.setExportDirectory(fileChooser.getSelectedFile().getParent());
+            
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
             runExtractionTasks(e, fileExtractionTasks);
@@ -148,6 +150,7 @@ public final class ExtractAction extends AbstractAction {
                     return;
                 }
             }
+            openCase.setExportDirectory(destinationFolder.getPath());
 
             /* get the unique set of files from the list. A user once reported extraction taking
              * days because it was extracting the same PST file 20k times.  They selected 20k 
