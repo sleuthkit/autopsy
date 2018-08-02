@@ -88,7 +88,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -770,7 +769,7 @@ public final class ImageGalleryController {
 
         abstract List<AbstractFile> getFiles() throws TskCoreException;
 
-        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
+        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException;
 
         @Override
         public void run() {
@@ -780,7 +779,6 @@ public final class ImageGalleryController {
 
             
             DrawableDB.DrawableTransaction drawableDbTransaction = null;
-            CaseDbTransaction caseDbTransaction = null;
             try {
                 //grab all files with supported extension or detected mime types
                 final List<AbstractFile> files = getFiles();
@@ -793,7 +791,6 @@ public final class ImageGalleryController {
                 
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
-                caseDbTransaction = tskCase.beginTransaction();
                 for (final AbstractFile f : files) {
                     if (isCancelled() || Thread.interrupted()) {
                         LOGGER.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
@@ -804,7 +801,7 @@ public final class ImageGalleryController {
                     }
                     
 
-                    processFile(f, drawableDbTransaction, caseDbTransaction);
+                    processFile(f, drawableDbTransaction);
 
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
@@ -819,18 +816,10 @@ public final class ImageGalleryController {
 
                 progressHandle.start();
                 taskDB.commitTransaction(drawableDbTransaction, true);
-                caseDbTransaction.commit();
 
             } catch (TskCoreException ex) { 
                 if (null != drawableDbTransaction) {
                     taskDB.rollbackTransaction(drawableDbTransaction);
-                }
-                if (null != caseDbTransaction) {
-                    try {
-                        caseDbTransaction.rollback();
-                    } catch (TskCoreException ex2) {
-                         LOGGER.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
-                    }
                 }
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 LOGGER.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
@@ -880,7 +869,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException {
+        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr) throws TskCoreException {
             final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
             if (known) {
@@ -890,7 +879,7 @@ public final class ImageGalleryController {
                 try {
                     //supported mimetype => analyzed
                     if ( null != f.getMIMEType() && FileTypeUtils.hasDrawableMIMEType(f)) {
-                        taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction );
+                        taskDB.updateFile(DrawableFile.create(f, true, false), tr);
                     }
                     else { 
                         // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
@@ -943,8 +932,8 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
-            taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
+        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr) {
+            taskDB.insertFile(DrawableFile.create(f, false, false), tr);
         }
 
         @Override
