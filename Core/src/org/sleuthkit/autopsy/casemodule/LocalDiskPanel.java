@@ -257,6 +257,7 @@ final class LocalDiskPanel extends JPanel {
         pathTextField.setEnabled(copyImageCheckbox.isSelected());
         browseButton.setEnabled(copyImageCheckbox.isSelected());
         changeDatabasePathCheckbox.setEnabled(copyImageCheckbox.isSelected());
+        changeDatabasePathCheckbox.setSelected(copyImageCheckbox.isSelected());
         fireUpdateEvent();
     }//GEN-LAST:event_copyImageCheckboxActionPerformed
 

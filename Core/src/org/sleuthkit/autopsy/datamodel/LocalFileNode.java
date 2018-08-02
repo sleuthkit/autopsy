@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
@@ -107,8 +106,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         actionsList.add(null); // creates a menu separator
 
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(new HashSearchAction(
-                NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.searchFilesSameMd5.text"), this));
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
 

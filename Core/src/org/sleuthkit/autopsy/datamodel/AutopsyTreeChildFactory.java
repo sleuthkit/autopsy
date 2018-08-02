@@ -41,9 +41,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Child factory to create the top level children of the autopsy tree
  *  
  */
-public class AutopsyTreeChildrenFactory extends ChildFactory.Detachable<Object> { 
+public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Object> { 
     
-    private static final Logger logger = Logger.getLogger(AutopsyTreeChildrenFactory.class.getName());
+    private static final Logger logger = Logger.getLogger(AutopsyTreeChildFactory.class.getName());
     
     /**
      * Listener for handling DATA_SOURCE_ADDED events.

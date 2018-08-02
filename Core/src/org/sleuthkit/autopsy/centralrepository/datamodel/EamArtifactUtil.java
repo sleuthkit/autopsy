@@ -235,21 +235,37 @@ public class EamArtifactUtil {
             return null;
         }
 
-        CorrelationAttribute correlationAttribute = null;
-
+        CorrelationAttribute correlationAttribute;
+        CorrelationAttribute.Type type;
+        CorrelationCase correlationCase;
+        CorrelationDataSource correlationDataSource;
+        String value;
+        String filePath;
+        
         try {
-            CorrelationAttribute.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+            type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
-            CorrelationDataSource correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-            String value = file.getMd5Hash();
-            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
-
-            correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
-        } catch (TskCoreException | EamDbException | NoCurrentCaseException ex) {
+            correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
+            value = file.getMd5Hash();
+            filePath = (file.getParentPath() + file.getName()).toLowerCase();
+        } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error retrieving correlation attribute.", ex);
+            return null;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Case is closed.", ex);
+            return null;
+        }
+        
+        try {
+            correlationAttribute = EamDb.getInstance().getCorrelationAttribute(type, correlationCase, correlationDataSource, value, filePath);
+        } catch (EamDbException ex) {
+            logger.log(Level.WARNING, String.format(
+                    "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
+                    content.getName(), content.getId(), ex.getMessage()));
+            return null;
         }
 
         return correlationAttribute;
@@ -300,8 +316,11 @@ public class EamArtifactUtil {
                     af.getParentPath() + af.getName());
             eamArtifact.addInstance(cei);
             return eamArtifact;
-        } catch (TskCoreException | EamDbException | NoCurrentCaseException ex) {
+        } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
+            return null;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Case is closed.", ex);
             return null;
         }
     }
