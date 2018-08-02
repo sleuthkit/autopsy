@@ -251,7 +251,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>3</release-version>
-                        <specification-version>1.1</specification-version>
+                        <specification-version>1.2</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
@@ -413,8 +413,8 @@
                 <binary-origin>release/modules/ext/metadata-extractor-2.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.1.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.17.jar</runtime-relative-path>
