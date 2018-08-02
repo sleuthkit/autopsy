@@ -66,6 +66,7 @@ final class ExtractUnallocAction extends AbstractAction {
     private final List<OutputFileData> filesToExtract = new ArrayList<>();
     private static final Set<String> volumesInProgress = new HashSet<>();
     private static final Set<Long> imagesInProgress = new HashSet<>();
+    private static String userDefinedExportPath;
     private long currentImage = 0L;
     private final boolean isImage;
 
@@ -145,7 +146,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 }
             };
 
-            fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
+            fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
             fileChooser.setDialogTitle(
                     NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -153,6 +154,9 @@ final class ExtractUnallocAction extends AbstractAction {
             int returnValue = fileChooser.showSaveDialog((Component) e.getSource());
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 String destination = fileChooser.getSelectedFile().getPath();
+                
+                updateExportDirectory(destination, openCase);
+                
                 for (OutputFileData outputFileData : filesToExtract) {
                     outputFileData.setPath(destination);
                     
@@ -214,7 +218,45 @@ final class ExtractUnallocAction extends AbstractAction {
                 }
             }
         }
+    }
+    
+    /**
+     * Get the export directory path.
+     *
+     * @param openCase The current case.
+     *
+     * @return The export directory path.
+     */
+    private String getExportDirectory(Case openCase) {
+        String caseExportPath = openCase.getExportDirectory();
 
+        if (userDefinedExportPath == null) {
+            return caseExportPath;
+        }
+
+        File file = new File(userDefinedExportPath);
+        if (file.exists() == false || file.isDirectory() == false) {
+            return caseExportPath;
+        }
+
+        return userDefinedExportPath;
+    }
+
+    /**
+     * Update the default export directory. If the directory path matches the
+     * case export directory, then the directory used will always match the
+     * export directory of any given case. Otherwise, the path last used will be
+     * saved.
+     *
+     * @param exportPath The export path.
+     * @param openCase   The current case.
+     */
+    private void updateExportDirectory(String exportPath, Case openCase) {
+        if (exportPath.equalsIgnoreCase(openCase.getExportDirectory())) {
+            userDefinedExportPath = null;
+        } else {
+            userDefinedExportPath = exportPath;
+        }
     }
 
     /**

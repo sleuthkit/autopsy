@@ -33,7 +33,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -53,6 +52,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class ExtractAction extends AbstractAction {
 
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
+
+    private String userDefinedExportPath;
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -97,7 +98,7 @@ public final class ExtractAction extends AbstractAction {
      * @param e
      * @param selectedFile Selected file
      */
-    @NbBundle.Messages ({"ExtractAction.noOpenCase.errMsg=No open case available."})
+    @NbBundle.Messages({"ExtractAction.noOpenCase.errMsg=No open case available."})
     private void extractFile(ActionEvent e, AbstractFile selectedFile) {
         Case openCase;
         try {
@@ -108,10 +109,12 @@ public final class ExtractAction extends AbstractAction {
             return;
         }
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
+        fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
+            updateExportDirectory(fileChooser.getSelectedFile().getParent(), openCase);
+
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
             runExtractionTasks(e, fileExtractionTasks);
@@ -135,7 +138,7 @@ public final class ExtractAction extends AbstractAction {
         }
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        folderChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
+        folderChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         if (folderChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {
@@ -148,12 +151,16 @@ public final class ExtractAction extends AbstractAction {
                     return;
                 }
             }
+            updateExportDirectory(destinationFolder.getPath(), openCase);
 
-            /* get the unique set of files from the list. A user once reported extraction taking
-             * days because it was extracting the same PST file 20k times.  They selected 20k 
-             * email messages in the tree and chose to extract them. */
+            /*
+             * get the unique set of files from the list. A user once reported
+             * extraction taking days because it was extracting the same PST
+             * file 20k times. They selected 20k email messages in the tree and
+             * chose to extract them.
+             */
             Set<AbstractFile> uniqueFiles = new HashSet<>(selectedFiles);
-            
+
             // make a task for each file
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             for (AbstractFile source : uniqueFiles) {
@@ -161,6 +168,45 @@ public final class ExtractAction extends AbstractAction {
                 fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + FileUtil.escapeFileName(source.getName()))));
             }
             runExtractionTasks(e, fileExtractionTasks);
+        }
+    }
+
+    /**
+     * Get the export directory path.
+     *
+     * @param openCase The current case.
+     *
+     * @return The export directory path.
+     */
+    private String getExportDirectory(Case openCase) {
+        String caseExportPath = openCase.getExportDirectory();
+
+        if (userDefinedExportPath == null) {
+            return caseExportPath;
+        }
+
+        File file = new File(userDefinedExportPath);
+        if (file.exists() == false || file.isDirectory() == false) {
+            return caseExportPath;
+        }
+
+        return userDefinedExportPath;
+    }
+
+    /**
+     * Update the default export directory. If the directory path matches the
+     * case export directory, then the directory used will always match the
+     * export directory of any given case. Otherwise, the path last used will be
+     * saved.
+     *
+     * @param exportPath The export path.
+     * @param openCase   The current case.
+     */
+    private void updateExportDirectory(String exportPath, Case openCase) {
+        if (exportPath.equalsIgnoreCase(openCase.getExportDirectory())) {
+            userDefinedExportPath = null;
+        } else {
+            userDefinedExportPath = exportPath;
         }
     }
 
@@ -177,8 +223,8 @@ public final class ExtractAction extends AbstractAction {
             }
 
             /*
-             * This code assumes that each destination is unique.  We previously satisfied
-             * that by adding the unique ID.
+             * This code assumes that each destination is unique. We previously
+             * satisfied that by adding the unique ID.
              */
             if (task.destination.exists()) {
                 if (JOptionPane.showConfirmDialog((Component) e.getSource(),
