@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-class TableReportGenerator {
+class TableReportGenerator { 
 
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final HashSet<String> tagNamesFilter = new HashSet<>();
