@@ -627,12 +627,12 @@ class SevenZipExtractor {
                             try {
                                 localFile.createNewFile();
                             } catch (IOException e) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: "
-                                        + localFile.getAbsolutePath(), e); //NON-NLS
+                                logger.log(Level.SEVERE, "Error creating extracted file: "//NON-NLS
+                                        + localFile.getAbsolutePath(), e);
                             }
                         }
                     } catch (SecurityException e) {
-                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}",
+                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", //NON-NLS
                                 pathInArchive); //NON-NLS
                         //TODO consider bail out / msg to the user
                     }
