@@ -737,7 +737,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
@@ -846,7 +846,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
@@ -904,7 +904,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
@@ -1323,7 +1323,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, correlationCase.getID());
             preparedStatement.setInt(2, correlationDataSource.getID());
-            preparedStatement.setString(3, CentralRepoIONormalizer.normalize(type, value));
+            preparedStatement.setString(3, CentralRepoDataValidator.validate(type, value));
             preparedStatement.setString(4, filePath.toLowerCase());
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -1491,7 +1491,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1596,7 +1596,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -1651,7 +1651,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1797,7 +1797,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(this.getCorrelationTypeById(correlationTypeID), value));
             preparedStatement.setInt(2, referenceSetID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -1841,7 +1841,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(aType)));
-            preparedStatement.setString(1, CentralRepoIONormalizer.normalize(aType, value));
+            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -2537,7 +2537,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement1 = conn.prepareStatement(String.format(sql1, EamDbUtil.correlationTypeToReferenceTableName(aType)));
-            preparedStatement1.setString(1, CentralRepoIONormalizer.normalize(aType, aValue));
+            preparedStatement1.setString(1, CentralRepoDataValidator.validate(aType, aValue));
             resultSet = preparedStatement1.executeQuery();
             while (resultSet.next()) {
                 globalFileInstances.add(getEamGlobalFileInstanceFromResultSet(resultSet));

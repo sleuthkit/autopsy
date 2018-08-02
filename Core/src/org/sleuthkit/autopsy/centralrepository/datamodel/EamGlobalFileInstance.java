@@ -54,7 +54,7 @@ public class EamGlobalFileInstance {
         }
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
-        this.MD5Hash = CentralRepoIONormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
+        this.MD5Hash = CentralRepoDataValidator.validate(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
         this.knownStatus = knownStatus;
         this.comment = comment;
     }
@@ -120,7 +120,7 @@ public class EamGlobalFileInstance {
         if(MD5Hash == null){
             throw new EamDbException("null MD5 hash");	//NON-NLS
         }
-        this.MD5Hash = CentralRepoIONormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
+        this.MD5Hash = CentralRepoDataValidator.validate(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
     }
 
     /**
