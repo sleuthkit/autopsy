@@ -469,7 +469,6 @@ class SevenZipExtractor {
         boolean hasEncrypted = false;
         boolean fullEncryption = true;
         boolean progressStarted = false;
-        int processedItems = 0;
         final String archiveFilePath = getArchiveFilePath(archiveFile);
         final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
@@ -651,7 +650,7 @@ class SevenZipExtractor {
                         unpackedNode, localAbsPath, localRelPath));
             }
 
-            int[] extractionIndices = getExtractableFilesFromArchiveDetails(archiveDetailsMap);
+            int[] extractionIndices = getExtractableFilesFromDetailsMap(archiveDetailsMap);
 
             StandardIArchiveExtractCallback archiveCallBack
                     = new StandardIArchiveExtractCallback(
@@ -768,7 +767,7 @@ class SevenZipExtractor {
      * Produce a list of archive indices needed for the call to extract, which
      * will open the archive and begin unpacking the files.
      */
-    private int[] getExtractableFilesFromArchiveDetails(
+    private int[] getExtractableFilesFromDetailsMap(
             Map<Integer, InArchiveItemDetails> archiveDetailsMap) {
 
         Integer[] wrappedExtractionIndices = archiveDetailsMap.keySet()
@@ -950,19 +949,20 @@ class SevenZipExtractor {
     private static class StandardIArchiveExtractCallback
             implements IArchiveExtractCallback, ICryptoGetTextPassword {
 
-        private int inArchiveItemIndex;
+        private AbstractFile archiveFile;
         private ISevenZipInArchive inArchive;
         private SevenZipExtractor.UnpackStream unpackStream = null;
-        private long freeDiskSpace;
         private Map<Integer, InArchiveItemDetails> archiveDetailsMap;
         private ProgressHandle progressHandle;
-        private AbstractFile archiveFile;
+        
+        private int inArchiveItemIndex;
+        private long freeDiskSpace;
 
         private long createTimeInSeconds;
         private long modTimeInSeconds;
         private long accessTimeInSeconds;
 
-        private boolean skipExtraction;
+        private boolean isFolder;
         private String password;
 
         private boolean unpackSuccessful = true;
@@ -981,14 +981,14 @@ class SevenZipExtractor {
         }
 
         @Override
-        public ISequentialOutStream getStream(
-                int i, ExtractAskMode EAM) throws SevenZipException {
+        public ISequentialOutStream getStream(int inArchiveItemIndex, 
+                ExtractAskMode mode) throws SevenZipException {
 
-            inArchiveItemIndex = i;
+            this.inArchiveItemIndex = inArchiveItemIndex;
 
-            skipExtraction = (Boolean) inArchive
+            isFolder = (Boolean) inArchive
                     .getProperty(inArchiveItemIndex, PropID.IS_FOLDER);
-            if (skipExtraction || EAM != ExtractAskMode.EXTRACT) {
+            if (isFolder || mode != ExtractAskMode.EXTRACT) {
                 return null;
             }
 
@@ -1009,7 +1009,7 @@ class SevenZipExtractor {
         }
 
         @Override
-        public void prepareOperation(ExtractAskMode eam) throws SevenZipException {
+        public void prepareOperation(ExtractAskMode mode) throws SevenZipException {
             final Date createTime = (Date) inArchive.getProperty(
                     inArchiveItemIndex, PropID.CREATION_TIME);
             final Date accessTime = (Date) inArchive.getProperty(
@@ -1035,7 +1035,7 @@ class SevenZipExtractor {
          * @throws SevenZipException
          */
         @Override
-        public void setOperationResult(ExtractOperationResult EOR) throws SevenZipException {
+        public void setOperationResult(ExtractOperationResult result) throws SevenZipException {
             final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode
                     = archiveDetailsMap.get(inArchiveItemIndex).getUnpackedNode();
             final String localRelPath = archiveDetailsMap.get(
@@ -1047,7 +1047,7 @@ class SevenZipExtractor {
                     + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
                     inArchiveItemIndex);
 
-            if (skipExtraction) {
+            if (isFolder) {
                 unpackedNode.addDerivedInfo(0,
                         !(Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER),
                         0L, createTimeInSeconds, accessTimeInSeconds, modTimeInSeconds,
@@ -1055,10 +1055,9 @@ class SevenZipExtractor {
                 return;
             }
 
-            //TODO - causes unpack to be unsuccessful, implement fix.
-            if (EOR != ExtractOperationResult.OK) {
+            if (result != ExtractOperationResult.OK) {
                 logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
-                        new Object[]{localAbsPath, EOR});
+                        new Object[]{localAbsPath, result});
                 unpackSuccessful = false;
             }
 
