@@ -26,6 +26,8 @@ public class RuntimeProperties {
 
     private static boolean runningWithGUI = true;
     private static boolean runningWithGUIFlagHasBeenSet = false;
+    private static boolean runningLive = false;
+    private static boolean runningLiveFlagHasBeenSet = false;
 
     /**
      * Sets or unsets a flag indicating whether or not the application is
@@ -43,6 +45,19 @@ public class RuntimeProperties {
         } else {
             throw new RuntimePropertiesException("The runningWithGUI flag has already been set and cannot be changed");
         }
+    }
+    
+    public synchronized static void setAutopsyLive(boolean runningLive) throws RuntimePropertiesException{
+        if(!runningLiveFlagHasBeenSet){
+            RuntimeProperties.runningLive = runningLive;
+            runningLiveFlagHasBeenSet = true;
+        } else {
+            throw new RuntimePropertiesException("The runningLive Flag has already been set and cannot be changed");
+        }
+    }
+    
+    public synchronized static boolean runningLive() {
+        return runningLive;
     }
 
     /**

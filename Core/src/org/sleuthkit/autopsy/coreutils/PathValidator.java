@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
  * Validates absolute path (e.g. to a data source or case output folder)
@@ -60,12 +61,19 @@ public final class PathValidator {
         return true;
     }
     
+    /**
+     * Checks whether Autopsy is running from the external disk
+     * @return true if Autopsy is running from external USB or CD
+     */
     private static boolean checkForLiveAutopsy() {
-        
-        String envValue = System.getenv("AUTOPSY_LIVE_TRIAGE");
-        return "True".equals(envValue);
+        return RuntimeProperties.runningLive();
     }
     
+    /**
+     * Checks whether a file path contains "/mnt" or "/media"  
+     * @param filePath Input file absolute path
+     * @return true if path matches the pattern, false otherwise 
+     */
     private static boolean pathIsMedia(String filePath) {
         Matcher m = unixMediaDrivePattern.matcher(filePath);
         return m.find();

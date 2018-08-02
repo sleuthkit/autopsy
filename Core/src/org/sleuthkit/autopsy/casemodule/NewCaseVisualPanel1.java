@@ -29,6 +29,7 @@ import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * The JPanel for the first page of the new case wizard.
@@ -156,9 +157,17 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
         }
         
+        /**
+         * Check the base case directory if it can persist data and show a 
+         * warning if it is a wrong choice
+         */
         if(!PathValidator.isCasedataPersistable(parentDir)){
             caseParentDirWarningLabel.setVisible(true);
-            caseParentDirWarningLabel.setText("Please make the case directory in a mounted drive to save case progress");
+            if(PlatformUtil.isWindowsOS()){
+                caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text" ));
+            } else if(System.getProperty("os.name").toLowerCase().contains("nux")) {
+                caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnInternalDriveLinuxError.text"));
+            }
         }
 
         /**
