@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class EmbeddedFileTest extends NbTestCase {
 
     private static final String CASE_NAME = "EmbeddedFileTest";
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "EmbeddedIM_img2_v1.vhd");
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "EmbeddedIM_img1_v2.vhd");
     public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
     private static final int DEEP_FOLDER_COUNT = 25;
     private Case openCase;
