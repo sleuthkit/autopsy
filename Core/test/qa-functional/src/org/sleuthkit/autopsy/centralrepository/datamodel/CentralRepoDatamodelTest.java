@@ -232,7 +232,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             for (CorrelationAttributeInstance a : attrs) {
                 assertTrue("Artifact did not have expected BAD status", a.getKnownStatus().equals(TskData.FileKnown.BAD));
             }
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -257,7 +257,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     Assert.fail("getArtifactInstancesByTypeValue returned unexpected case");
                 }
             }
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -274,7 +274,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             List<CorrelationAttributeInstance> attrs = EamDb.getInstance().getArtifactInstancesByTypeValue(fileType, hashToChangeToNotable);
             assertTrue("getArtifactInstancesByTypeValue returned " + attrs.size() + " values - expected 1", attrs.size() == 1);
             assertTrue("Artifact status did not change to BAD", attrs.get(0).getKnownStatus().equals(TskData.FileKnown.BAD));
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -291,6 +291,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("setArtifactInstanceKnownStatus failed to throw exception for multiple Correlation Attribute Instances");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Try to update null artifact
@@ -311,6 +314,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("setArtifactInstanceKnownStatus failed to throw exception for null known status");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Try to update artifact with null case
@@ -323,6 +329,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("setArtifactInstanceKnownStatus failed to throw exception for null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Try to update artifact with null data source
@@ -335,6 +344,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("setArtifactInstanceKnownStatus failed to throw exception for null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test getting two notable instances
@@ -518,7 +530,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             int expectedCount = list1.size() + list2.size();
             assertTrue("Artifact count " + count + " does not match expected count " + expectedCount, count == expectedCount);
 
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -530,6 +542,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("prepareBulkArtifact failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test preparing artifact with null case
@@ -541,6 +556,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("bulkInsertArtifacts failed to throw exception for null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test preparing artifact with null data source
@@ -552,6 +570,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("prepareBulkArtifact failed to throw exception for null data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test preparing artifact with null path
@@ -562,6 +583,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test preparing artifact with null known status
@@ -573,6 +597,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("prepareBulkArtifact failed to throw exception for null known status");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
     }
 
@@ -666,7 +693,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case2, dataSource1fromCase2, onlyInDataSource3Path);
             attr.addInstance(inst);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -681,7 +708,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst3 = new CorrelationAttributeInstance(case2, dataSource1fromCase2, inAllDataSourcesPath);
             attr.addInstance(inst3);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -694,7 +721,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst2 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, inDataSource1twicePath2);
             attr.addInstance(inst2);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -706,7 +733,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, dataSource1fromCase1, emailPath);
             attr.addInstance(inst);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -718,7 +745,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, dataSource1fromCase1, phonePath);
             attr.addInstance(inst);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -730,7 +757,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, dataSource1fromCase1, domainPath);
             attr.addInstance(inst);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -742,7 +769,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance inst = new CorrelationAttributeInstance(case1, dataSource1fromCase1, devIdPath);
             attr.addInstance(inst);
             EamDb.getInstance().addArtifact(attr);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -752,7 +779,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         CorrelationAttribute failAttr;
         try {
             failAttr = new CorrelationAttribute(fileType, "badInstances");
-        } catch (EamDbException ex) {
+        } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
             return;
@@ -827,6 +854,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("addArtifact failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test null value
@@ -834,7 +864,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             new CorrelationAttribute(fileType, null);
             Assert.fail("addArtifact failed to throw exception for null value");
-        } catch (EamDbException ex) {
+        } catch (CentralRepoValidationException ex) {
             // This is the expected behavior
         }
 
@@ -954,7 +984,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttribute attr = new CorrelationAttribute(fileType, inAllDataSourcesHash);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 100", freq == 100);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -964,7 +994,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttribute attr = new CorrelationAttribute(fileType, inDataSource1twiceHash);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -974,7 +1004,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttribute attr = new CorrelationAttribute(emailType, emailValue);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -984,7 +1014,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttribute attr = new CorrelationAttribute(fileType, "randomValue");
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 0", freq == 0);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -994,7 +1024,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttribute attr = new CorrelationAttribute(null, "randomValue");
             EamDb.getInstance().getFrequencyPercentage(attr);
             Assert.fail("getFrequencyPercentage failed to throw exception for null type");
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             // This is the expected behavior
         }
 
@@ -1112,7 +1142,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             int count2 = instancetableCallback.getCounterNamingConvention();
             assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
             assertTrue("Process Instance count with filepath without naming convention: " + count1 + "-expected greater than 0", count1 > 0);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
         }
 
@@ -1616,7 +1646,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             temp = new EamGlobalFileInstance(knownSet1id, knownHash1, TskData.FileKnown.KNOWN, "comment5");
             EamDb.getInstance().addReferenceInstance(temp, fileType);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -1628,6 +1658,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("addReferenceInstance failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test creating file instance with null hash
@@ -1638,6 +1671,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("EamGlobalFileInstance failed to throw exception for null hash");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test adding file instance with null known status
@@ -1648,6 +1684,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("EamGlobalFileInstance failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test adding file instance with null correlation type
@@ -1657,6 +1696,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("addReferenceInstance failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test bulk insert with large valid set
@@ -1677,7 +1719,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 String hash = bulkTestHash + "10";
                 assertTrue("Sample bulk insert instance not found", EamDb.getInstance().isFileHashInReferenceSet(hash, notableSet2id));
             }
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -1697,6 +1739,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("bulkInsertReferenceTypeEntries failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test bulk add file instance with null correlation type
@@ -1706,6 +1751,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("bulkInsertReferenceTypeEntries failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
 
         // Test getting reference instances with valid data
