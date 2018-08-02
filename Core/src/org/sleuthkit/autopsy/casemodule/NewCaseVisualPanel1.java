@@ -155,6 +155,15 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             caseParentDirWarningLabel.setVisible(true);
             caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
         }
+        
+        /**
+         * Check the base case directory if it can persist case data, 
+         * incase the Autopsy is run from the USB disk
+         */
+        if(checkForLiveAutopsy() && !PathValidator.isCasedataPersistable(parentDir)){
+            caseParentDirWarningLabel.setVisible(true);
+            caseParentDirWarningLabel.setText("Please make the case directory in a mounted drive to save case progress");
+        }
 
         /**
          * Enable the "Next" button for the wizard if there is text entered for
@@ -169,6 +178,12 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
             caseDirTextField.setText("");
             wizPanel.setIsFinish(false);
         }
+    }
+    
+    private static boolean checkForLiveAutopsy() {
+
+        String envValue = System.getenv("AUTOPSY_LIVE_TRIAGE");
+        return "True".equals(envValue);
     }
 
     /**

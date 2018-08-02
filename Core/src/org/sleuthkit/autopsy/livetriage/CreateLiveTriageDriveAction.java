@@ -213,6 +213,7 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction impl
                 + "@cd /d \"%~dp0\""
                 + "\n"
                 + "SET appName=\"" + appName + "\"\n"
+                + "SET AUTOPSY_LIVE_TRIAGE=\"True\"\n"
                 + "\n"
                 + "REM Create the configData directory. Exit if it does not exist after attempting to create it\n"
                 + "if not exist configData mkdir configData\n"

@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public final class PathValidator {
 
     private static final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
+    private static final Pattern unixMediaDrivePattern = Pattern.compile("^\\/(media|mnt)\\/.*$");
 
     public static boolean isValid(String path, Case.CaseType caseType) {
 
@@ -39,11 +40,34 @@ public final class PathValidator {
             }
         } else {
             // single user case - no validation needed
-        }
+            }
 
         return true;
     }
-
+    
+    public static boolean isCasedataPersistable(String path) {
+        if (PlatformUtil.isWindowsOS()) {
+            if (pathOnCDrive(path)) {
+                return false;
+            }
+        } else if (System.getProperty("os.name").toLowerCase().contains("nux") && !pathIsMedia(path)) {
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Checks whether the file path starts /media or /mnt
+     * 
+     * @param filePath Input file absolute path
+     * 
+     * @return true if path the matches the pattern, false otherwise
+     */
+    private static boolean pathIsMedia(String filePath) {
+        Matcher match = unixMediaDrivePattern.matcher(filePath);
+        return match.find();
+    }
+    
     /**
      * Checks whether a file path contains drive letter defined by pattern.
      *
