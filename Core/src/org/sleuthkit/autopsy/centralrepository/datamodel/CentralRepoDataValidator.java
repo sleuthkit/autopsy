@@ -27,61 +27,57 @@ import org.apache.commons.validator.routines.EmailValidator;
 /**
  * Provides functions for normalizing data by attribute type before insertion or querying.
  */
-final public class CentralRepoIONormalizer {
+final public class CentralRepoDataValidator {
     
     /**
      * This is a utility class - no need for constructing or subclassing, etc...
      */
-    private CentralRepoIONormalizer() { }
+    private CentralRepoDataValidator() { }
     
     /**
-     * Normalize the data.  To lower, in addition to various domain specific 
-     * checks and transformations:
-     * 
-     * //TODO other specifics here...
-     * 
+     * Validate the data.  Converts text to lower case, and ensures that the
+     * data is a valid string of the format expected given the attributeType.
+     *  
      * @param attributeType correlation type of data
-     * @param data data to normalize
+     * @param data data to validate
      * 
      * @return normalized data
      */
-    public static String normalize(CorrelationAttribute.Type attributeType, String data) throws CentralRepoValidationException {
+    public static String validate(CorrelationAttribute.Type attributeType, String data) throws CentralRepoValidationException {
         
         switch(attributeType.getId()){
             case CorrelationAttribute.FILES_TYPE_ID:
-                return normalizeMd5(data);
+                return validateMd5(data);
             case CorrelationAttribute.DOMAIN_TYPE_ID:
-                return normalizeDomain(data);
+                return validateDomain(data);
             case CorrelationAttribute.EMAIL_TYPE_ID:
-                return normalizeEmail(data);
+                return validateEmail(data);
             case CorrelationAttribute.PHONE_TYPE_ID:
-                return normalizePhone(data);
+                return validatePhone(data);
             case CorrelationAttribute.USBID_TYPE_ID:
-                return normalizeUsbId(data);
+                return validateUsbId(data);
             default:
                 throw new CentralRepoValidationException("Normalizer function not found for attribute type: " + attributeType.getDisplayName());   
         }
     }
     
     /**
-     * Normalize the data.  To lower, in addition to various domain specific 
-     * checks and transformations:
-     * 
-     * //TODO other specifics here...
-     * 
+     * Validate the data.  Converts text to lower case, and ensures that the
+     * data is a valid string of the format expected given the attributeType.
+     *  
      * @param attributeTypeId correlation type of data
-     * @param data data to normalize
+     * @param data data to validate
      * 
      * @return normalized data
      */
-    public static String normalize(int attributeTypeId, String data) throws CentralRepoValidationException {
+    public static String validate(int attributeTypeId, String data) throws CentralRepoValidationException {
         try {
             List<CorrelationAttribute.Type> defaultTypes = CorrelationAttribute.getDefaultCorrelationTypes();
             Optional<CorrelationAttribute.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
             
             if(typeOption.isPresent()){
                 CorrelationAttribute.Type type = typeOption.get();
-                return CentralRepoIONormalizer.normalize(type, data);
+                return CentralRepoDataValidator.validate(type, data);
             } else {
                 throw new CentralRepoValidationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
             }
@@ -90,17 +86,21 @@ final public class CentralRepoIONormalizer {
         }
     }
 
-    private static String normalizeMd5(String data) throws CentralRepoValidationException {
+    private static String validateMd5(String data) throws CentralRepoValidationException {
+        final String errorMessage = "Data purporting to be an MD5 was found not to comform to expected format: %s";
+        if(data == null){
+            throw new CentralRepoValidationException(String.format(errorMessage, data));
+        }
         final String validMd5Regex = "^[a-fA-F0-9]{32}$";
         final String dataLowered = data.toLowerCase();
         if(dataLowered.matches(validMd5Regex)){
             return dataLowered;
         } else {
-            throw new CentralRepoValidationException(String.format("Data purporting to be an MD5 was found not to comform to expected format: %s", data));
+            throw new CentralRepoValidationException(String.format(errorMessage, data));
         }
     }
 
-    private static String normalizeDomain(String data) throws CentralRepoValidationException {
+    private static String validateDomain(String data) throws CentralRepoValidationException {
         DomainValidator validator = DomainValidator.getInstance(true);
         if(validator.isValid(data)){
             return data.toLowerCase();
@@ -109,7 +109,7 @@ final public class CentralRepoIONormalizer {
         }
     }
 
-    private static String normalizeEmail(String data) throws CentralRepoValidationException {
+    private static String validateEmail(String data) throws CentralRepoValidationException {
         EmailValidator validator = EmailValidator.getInstance(true, true);
         if(validator.isValid(data)){
             return data.toLowerCase();
@@ -119,7 +119,7 @@ final public class CentralRepoIONormalizer {
     }
 
     @SuppressWarnings("DeadBranch")
-    private static String normalizePhone(String data) throws CentralRepoValidationException {
+    private static String validatePhone(String data) throws CentralRepoValidationException {
         //TODO implement for real and get rid of suppression
         if(true){
             return data;
@@ -128,13 +128,17 @@ final public class CentralRepoIONormalizer {
         }
     }
 
-    private static String normalizeUsbId(String data) throws CentralRepoValidationException {
+    private static String validateUsbId(String data) throws CentralRepoValidationException {
+        final String errorMessage = "Data was expected to be a valid USB device ID: %s";
+        if(data == null){
+            throw new CentralRepoValidationException(String.format(errorMessage, data));
+        }
         //usbId is of the form: hhhh:hhhh where h is a hex digit
-        String validUsbIdRegex = "^(0[Xx])?[A-Fa-f0-9]{4}[:\\s-\\.](0[Xx])?[A-Fa-f0-9]{4}$";
+        String validUsbIdRegex = "^(0[Xx])?[A-Fa-f0-9]{4}[:\\\\\\ \\-.]?(0[Xx])?[A-Fa-f0-9]{4}$";
         if(data.matches(validUsbIdRegex)){
             return data.toLowerCase();
         } else {
-            throw new CentralRepoValidationException(String.format("Data was expected to be a valid USB device ID: %s", data));
+            throw new CentralRepoValidationException(String.format(errorMessage, data));
         }
     }
 }

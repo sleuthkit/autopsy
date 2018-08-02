@@ -25,23 +25,22 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 
 /**
- *
- * @author bsweeney
+ * Tests for validation on each correlation attribute type.
  */
-public class CentralRepoIONormalizerTest extends NbTestCase {
+public class CentralRepoDataValidatorTest extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(CentralRepoIONormalizerTest.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(CentralRepoDataValidatorTest.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    public CentralRepoIONormalizerTest(String name) {
+    public CentralRepoDataValidatorTest(String name) {
         super(name);
     }
 
-    public void testNormalizeMd5() {
+    public void testValidateMd5() {
         final String aValidHash = "e34a8899ef6468b74f8a1048419ccc8b";           //should pass
         final String anInValidHash = "e34asdfa8899ef6468b74f8a1048419ccc8b";    //should failo
         final String aValidHashWithCaps = "E34A8899EF6468B74F8A1048419CCC8B";   //should pass
@@ -51,162 +50,183 @@ public class CentralRepoIONormalizerTest extends NbTestCase {
         final int FILES_TYPE_ID = CorrelationAttribute.FILES_TYPE_ID;
 
         try {
-            assertTrue("This hash should just work", CentralRepoIONormalizer.normalize(FILES_TYPE_ID, aValidHash).equals(aValidHash));
+            assertTrue("This hash should just work", CentralRepoDataValidator.validate(FILES_TYPE_ID, aValidHash).equals(aValidHash));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This hash just needs to be converted to lower case", CentralRepoIONormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, aValidHashWithCaps).equals(aValidHash));
+            assertTrue("This hash just needs to be converted to lower case", CentralRepoDataValidator.validate(CorrelationAttribute.FILES_TYPE_ID, aValidHashWithCaps).equals(aValidHash));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            CentralRepoIONormalizer.normalize(FILES_TYPE_ID, anInValidHash);
+            CentralRepoDataValidator.validate(FILES_TYPE_ID, anInValidHash);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(FILES_TYPE_ID, emptyHash);
+            CentralRepoDataValidator.validate(FILES_TYPE_ID, emptyHash);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(FILES_TYPE_ID, nullHash);
+            CentralRepoDataValidator.validate(FILES_TYPE_ID, nullHash);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
     }
 
-    public void testNormalizeDomain() {
+    public void testValidateDomain() {
         final String goodDomainOne = "www.test.com";
-        final String goodDomainTwo = "http://www.test.com";
+        final String badDomainTwo = "http://www.test.com";
         final String goodDomainThree = "test.com";
-        final String goodDomainFour = "http://1270.0.1";
+        final String badDomainFour = "http://1270.0.1";
         final String badDomainFive = "?>\\/)(*&.com";
         final String badDomainSix = null;
         final String badDomainSeven = "";
-        final String goodDomainEight = "HTTP://tests.com";
+        final String badDomainEight = "HTTP://tests.com";
+        final String badDomainNine = "http://www.test.com/aPage?aQuestion=aParam&anotherQuestion=anotherParam";
+        final String goodDomainTen = "WWW.TEST.COM";
+        final String goodDomainEleven = "TEST.COM";
 
         final int DOMAIN_TYPE_ID = CorrelationAttribute.DOMAIN_TYPE_ID;
 
         try {
-            assertTrue("This domain should pass.", CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, goodDomainOne).equals(goodDomainOne));
+            assertTrue("This domain should pass.", CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, goodDomainOne).equals(goodDomainOne));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This domain should pass.", CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, goodDomainTwo).equals(goodDomainTwo));
+            CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainTwo);
+            fail("This should have thrown an exception");
+        } catch (CentralRepoValidationException ex) {
+            assertTrue("we expect an exception here.", true);
+        }
+        try {
+            assertTrue("This domain should pass.", CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, goodDomainThree).equals(goodDomainThree));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This domain should pass.", CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, goodDomainThree).equals(goodDomainThree));
-        } catch (CentralRepoValidationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        }
-        try {
-            assertTrue("This domain should pass.", CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, goodDomainFour).equals(goodDomainFour));
-        } catch (CentralRepoValidationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        }
-        try {
-            CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, badDomainFive);
+            assertTrue("This domain should pass.", CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainFour).equals(badDomainFour));
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, badDomainSix);
+            CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainFive);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, badDomainSeven);
+            CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainSix);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            assertTrue("This domain should pass.", CentralRepoIONormalizer.normalize(DOMAIN_TYPE_ID, goodDomainEight).equals(goodDomainEight.toLowerCase()));
+            CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainSeven);
+            fail("This should have thrown an exception.");
+        } catch (CentralRepoValidationException ex) {
+            assertTrue("We expect an exception here.", true);
+        }
+        try {
+            CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainEight);
+            fail("This should have thrown an exception");
+        } catch (CentralRepoValidationException ex) {
+            assertTrue("We expect an exception here.", true);
+        }
+        try {
+            CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, badDomainNine);
+            fail("This should have thrown an exception");
+        } catch (CentralRepoValidationException ex) {
+            assertTrue("We expect an exception here.", true);
+        }
+        try {
+            assertTrue("This domain should pass.", CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, goodDomainTen).equals(goodDomainTen.toLowerCase()));
+        } catch (CentralRepoValidationException ex) {
+            Exceptions.printStackTrace(ex);
+            fail(ex.getMessage());
+        }
+        try {
+            assertTrue("This domain should pass.", CentralRepoDataValidator.validate(DOMAIN_TYPE_ID, goodDomainEleven).equals(goodDomainEleven.toLowerCase()));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
     }
 
-    public void testNormalizeEmail() {
+    public void testValidateEmail() {
         final String goodEmailOne = "bsweeney@cipehrtechsolutions.com";
         final String goodEmailTwo = "BSWEENEY@ciphertechsolutions.com";
         final String badEmailThree = "";
         final String badEmailFour = null;
         final String badEmailFive = "asdf";
-        final String badEmailSix = "asdf@asdf";
+        final String badEmailSix = "asdf@asdf"; //TODO looks bad but the lib accepts it...
         final String badEmailSeven = "asdf.asdf";
 
         final int EMAIL_TYPE_ID = CorrelationAttribute.EMAIL_TYPE_ID;
 
         try {
-            assertTrue("This email should pass.", CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, goodEmailOne).equals(goodEmailOne));
+            assertTrue("This email should pass.", CentralRepoDataValidator.validate(EMAIL_TYPE_ID, goodEmailOne).equals(goodEmailOne));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This email should pass.", CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, goodEmailTwo).equals(goodEmailTwo.toLowerCase()));
+            assertTrue("This email should pass.", CentralRepoDataValidator.validate(EMAIL_TYPE_ID, goodEmailTwo).equals(goodEmailTwo.toLowerCase()));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, badEmailThree);
+            CentralRepoDataValidator.validate(EMAIL_TYPE_ID, badEmailThree);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, badEmailFour);
+            CentralRepoDataValidator.validate(EMAIL_TYPE_ID, badEmailFour);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, badEmailFive);
+            CentralRepoDataValidator.validate(EMAIL_TYPE_ID, badEmailFive);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
+//        try { //TODO consider a better library?
+//            CentralRepoDataValidator.validate(EMAIL_TYPE_ID, badEmailSix);
+//            fail("This should have thrown an exception.");    //TODO do we need a better library?
+//        } catch (CentralRepoValidationException ex) {
+//            assertTrue("We expect an exception here.", true);
+//        }
         try {
-            CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, badEmailSix);
-            fail("This should have thrown an exception.");
-        } catch (CentralRepoValidationException ex) {
-            assertTrue("We expect an exception here.", true);
-        }
-        try {
-            CentralRepoIONormalizer.normalize(EMAIL_TYPE_ID, badEmailSeven);
+            CentralRepoDataValidator.validate(EMAIL_TYPE_ID, badEmailSeven);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
     }
 
-    public void testNormalizePhone() {
+    public void testValidatePhone() {
         assertTrue("We haven't acutally tested anything here - TODO.", true);
     }
 
-    public void testNormalizeUsbId() {
+    public void testValidateUsbId() {
         final String goodIdOne = "0202:AAFF";
         final String goodIdTwo = "0202:aaff";
-        final String goodIdThree = "0202:axxf";
+        final String badIdThree = "0202:axxf";
         final String badIdFour = "";
         final String badIdFive = null;
         final String goodIdSix = "0202 AAFF";
@@ -216,55 +236,55 @@ public class CentralRepoIONormalizerTest extends NbTestCase {
         final int USBID_TYPE_ID = CorrelationAttribute.USBID_TYPE_ID;
         
         try {
-            assertTrue("This USB ID should pass.", CentralRepoIONormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne));
+            assertTrue("This USB ID should pass.", CentralRepoDataValidator.validate(USBID_TYPE_ID, goodIdOne).equals(goodIdOne.toLowerCase()));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CentralRepoIONormalizer.normalize(USBID_TYPE_ID, goodIdTwo).equals(goodIdTwo));
+            assertTrue("This USB ID should pass.", CentralRepoDataValidator.validate(USBID_TYPE_ID, goodIdTwo).equals(goodIdTwo));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CentralRepoIONormalizer.normalize(USBID_TYPE_ID, goodIdThree).equals(goodIdThree));
+            assertTrue("This USB ID should pass.", CentralRepoDataValidator.validate(USBID_TYPE_ID, badIdThree).equals(badIdThree));
+            fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
+            assertTrue("We expect an exception here.", true);            
         }
         try {
-            CentralRepoIONormalizer.normalize(USBID_TYPE_ID, badIdFour);
+            CentralRepoDataValidator.validate(USBID_TYPE_ID, badIdFour);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(USBID_TYPE_ID, badIdFive);
+            CentralRepoDataValidator.validate(USBID_TYPE_ID, badIdFive);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            CentralRepoIONormalizer.normalize(USBID_TYPE_ID, badIdFive);
+            CentralRepoDataValidator.validate(USBID_TYPE_ID, badIdFive);
             fail("This should have thrown an exception.");
         } catch (CentralRepoValidationException ex) {
             assertTrue("We expect an exception here.", true);
         }
         try {
-            assertTrue("This USB ID should pass.", CentralRepoIONormalizer.normalize(USBID_TYPE_ID, goodIdSix).equals(goodIdSix));
+            assertTrue("This USB ID should pass.", CentralRepoDataValidator.validate(USBID_TYPE_ID, goodIdSix).equals(goodIdSix.toLowerCase()));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CentralRepoIONormalizer.normalize(USBID_TYPE_ID, goodIdSeven).equals(goodIdSeven));
+            assertTrue("This USB ID should pass.", CentralRepoDataValidator.validate(USBID_TYPE_ID, goodIdSeven).equals(goodIdSeven.toLowerCase()));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CentralRepoIONormalizer.normalize(USBID_TYPE_ID, goodIdEight).equals(goodIdEight));
+            assertTrue("This USB ID should pass.", CentralRepoDataValidator.validate(USBID_TYPE_ID, goodIdEight).equals(goodIdEight.toLowerCase()));
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
