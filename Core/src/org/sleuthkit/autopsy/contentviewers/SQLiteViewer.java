@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.textextraction.SQLiteExtractor;
+import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -371,8 +371,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     File.separator + sqliteDbFile.getName();
             moveDbToTempFile(sqliteDbFile, tmpDBPathName);
             
-            connection = SQLiteExtractor.getDatabaseConnection(tmpDBPathName);
-            Map<String, String> dbTablesMap = SQLiteExtractor.getTableNameAndSchemaPairs(connection);
+            connection = SQLiteReader.getDatabaseConnection(tmpDBPathName);
+            Map<String, String> dbTablesMap = SQLiteReader.getTableNameAndSchemaPairs(connection);
             
             if (dbTablesMap.isEmpty()) {
                 tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
@@ -411,7 +411,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     })
     private void selectTable(String tableName) {
         try {
-            numRows = SQLiteExtractor.getTableRowCount(connection, tableName);
+            numRows = SQLiteReader.getTableRowCount(connection, tableName);
             numEntriesField.setText(numRows + " entries");
 
             currPage = 1;
@@ -444,7 +444,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private void readTable(String tableName, int startRow, int numRowsToRead) {
 
         try {
-            List<Map<String, Object>> rows = SQLiteExtractor.getRowsFromTable(
+            List<Map<String, Object>> rows = SQLiteReader.getRowsFromTable(
                     connection, tableName, startRow, numRowsToRead);
             if (Objects.nonNull(rows)) {
                 selectedTableView.setupTable(rows);
@@ -468,14 +468,14 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         try {
             List<Map<String, Object>> currentTableRows = 
-                    SQLiteExtractor.getRowsFromTable(connection, tableName);
+                    SQLiteReader.getRowsFromTable(connection, tableName);
 
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
                 logger.log(Level.INFO, String.format(
                         "The table %s is empty. (objId=%d)", tableName, //NON-NLS
                         sqliteDbFile.getId()));
             } else {
-                SQLiteExtractor.exportTableToCSV(file, tableName, currentTableRows);
+                SQLiteReader.exportTableToCSV(file, tableName, currentTableRows);
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, String.format(

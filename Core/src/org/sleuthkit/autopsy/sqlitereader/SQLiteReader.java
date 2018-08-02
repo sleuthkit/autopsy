@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextraction;
+package org.sleuthkit.autopsy.sqlitereader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,9 +42,9 @@ import org.openide.util.NbBundle;
  * JDBC. Classes using the SQLiteExtractor must maintain a reference to the 
  * Connection object generated in getDatabaseConnection.
  */
-public final class SQLiteExtractor {
+public final class SQLiteReader {
     
-    private SQLiteExtractor(){}
+    private SQLiteReader(){}
 
     public static Connection getDatabaseConnection(String dbPath) 
             throws ClassNotFoundException, SQLException {
