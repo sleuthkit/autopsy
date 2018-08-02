@@ -128,8 +128,7 @@ class ContentTagNode extends DisplayableItemNode {
         List<Action> actions = new ArrayList<>();
         actions.addAll(Arrays.asList(super.getActions(context)));
 
-        AbstractFile file = getLookup().lookup(AbstractFile.class
-        );
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
