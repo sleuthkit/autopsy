@@ -127,7 +127,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.11</specification-version>
+                        <specification-version>10.12</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -136,7 +136,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>3</release-version>
-                        <specification-version>1.1</specification-version>
+                        <specification-version>1.2</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>

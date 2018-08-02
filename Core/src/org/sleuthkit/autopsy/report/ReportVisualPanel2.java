@@ -109,7 +109,7 @@ final class ReportVisualPanel2 extends JPanel {
         }
 
         for (TagName tagName : tagNamesInUse) {
-              String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
             tagStates.put(tagName.getDisplayName() + notableString, Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());
@@ -124,7 +124,9 @@ final class ReportVisualPanel2 extends JPanel {
         tagsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent evt) {
-
+                if (!taggedResultsRadioButton.isSelected()) {
+                    return;
+                }
                 int index = tagsList.locationToIndex(evt.getPoint());
                 if (index < tagsModel.getSize() && index >= 0) {
                     String value = tagsModel.getElementAt(index);
@@ -184,16 +186,26 @@ final class ReportVisualPanel2 extends JPanel {
         return tagStates;
     }
 
+    /**
+     * Are any tags selected?
+     *
+     * @return True if any tags are selected; otherwise false.
+     */
     private boolean areTagsSelected() {
         boolean result = false;
         for (Entry<String, Boolean> entry : tagStates.entrySet()) {
             if (entry.getValue()) {
                 result = true;
+                break;
             }
         }
         return result;
     }
 
+    /**
+     * Set the Finish button as either enabled or disabled depending on the UI
+     * component selections.
+     */
     private void updateFinishButton() {
         if (taggedResultsRadioButton.isSelected()) {
             wizPanel.setFinish(areTagsSelected());
@@ -207,6 +219,19 @@ final class ReportVisualPanel2 extends JPanel {
      */
     boolean isTaggedResultsRadioButtonSelected() {
         return taggedResultsRadioButton.isSelected();
+    }
+
+    /**
+     * Set all tagged results as either selected or unselected.
+     *
+     * @param selected Should all tagged results be selected?
+     */
+    void setAllTaggedResultsSelected(boolean selected) {
+        for (String tag : tags) {
+            tagStates.put(tag, (selected ? Boolean.TRUE : Boolean.FALSE));
+        }
+        tagsList.repaint();
+        wizPanel.setFinish(selected);
     }
 
     /**
@@ -234,6 +259,11 @@ final class ReportVisualPanel2 extends JPanel {
 
         optionsButtonGroup.add(allResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(allResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.allResultsRadioButton.text")); // NOI18N
+        allResultsRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                allResultsRadioButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(dataLabel, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.dataLabel.text")); // NOI18N
 
@@ -312,24 +342,20 @@ final class ReportVisualPanel2 extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
-        for (String tag : tags) {
-            tagStates.put(tag, Boolean.TRUE);
-        }
-        tagsList.repaint();
-        wizPanel.setFinish(true);
+        setAllTaggedResultsSelected(true);
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
     private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
-        for (String tag : tags) {
-            tagStates.put(tag, Boolean.FALSE);
-        }
-        tagsList.repaint();
-        wizPanel.setFinish(false);
+        setAllTaggedResultsSelected(false);
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
         artifactStates = dialog.display();
     }//GEN-LAST:event_advancedButtonActionPerformed
+
+    private void allResultsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allResultsRadioButtonActionPerformed
+        setAllTaggedResultsSelected(false);
+    }//GEN-LAST:event_allResultsRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
