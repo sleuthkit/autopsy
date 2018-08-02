@@ -80,8 +80,8 @@ import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
-import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildrenFactory;
 import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -109,7 +109,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private AutopsyTreeChildrenFactory autopsyTreeChildrenFactory;
+    private AutopsyTreeChildFactory autopsyTreeChildFactory;
     private Children autopsyTreeChildren;
     private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
@@ -498,8 +498,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
 
             // if there's at least one image, load the image and open the top componen
-            autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory();
-            autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);
+            autopsyTreeChildFactory = new AutopsyTreeChildFactory();
+            autopsyTreeChildren = Children.create(autopsyTreeChildFactory, true);
             Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
@@ -757,9 +757,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                      * responsible for opening core windows. Consider moving
                      * this elsewhere.
                      */
-                    if (!this.isOpened()) {
-                        SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
-                    }
+                    SwingUtilities.invokeLater(() -> {
+                        if (! DirectoryTreeTopComponent.this.isOpened()) {
+                            CoreComponentControl.openCoreWindows();
+                        }
+                    });
                 } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
@@ -952,7 +954,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         // refresh all children of the root.
-        autopsyTreeChildrenFactory.refreshChildren();
+        autopsyTreeChildFactory.refreshChildren();
 
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.

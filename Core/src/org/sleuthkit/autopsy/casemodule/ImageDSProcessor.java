@@ -89,6 +89,15 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public ImageDSProcessor() {
         configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
+    
+    /**
+     * Get the list of file filters supported by this DSP.
+     * 
+     * @return A list of all supported file filters.
+     */
+    static List<FileFilter> getFileFiltersList() {
+        return filtersList;
+    }
 
     /**
      * Gets a string that describes the type of data sources this processor is
