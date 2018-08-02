@@ -172,6 +172,8 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             case COMMENT:
                 value = nodeData.getComment();
                 break;
+            default: // This shouldn't occur! Use default "No data" value.
+                break;
         }
         return value;
     }
