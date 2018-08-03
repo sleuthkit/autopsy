@@ -20,8 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
-import java.util.HashMap;
-import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -71,7 +69,6 @@ public abstract class AbstractCommonAttributeInstance {
      */
     AbstractCommonAttributeInstance() {
         this.abstractFileObjectId = -1L;
-        this.cachedFiles = new HashMap<>();
         this.caseName = "";
         this.dataSource = "";
     }
@@ -81,7 +78,8 @@ public abstract class AbstractCommonAttributeInstance {
      * CaseDB.
      *
      * @return AbstractFile corresponding to this common attribute or null if it
-     * cannot be found (for example, in the event that this is a central repo file)
+     * cannot be found (for example, in the event that this is a central repo
+     * file)
      */
     abstract AbstractFile getAbstractFile();
 

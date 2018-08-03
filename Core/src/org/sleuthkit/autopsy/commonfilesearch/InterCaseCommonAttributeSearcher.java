@@ -19,13 +19,10 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.datamodel.HashUtility;
 
 /**
  * Provides logic for selecting common files from all data sources and all cases
