@@ -19,17 +19,21 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.SingleInterCaseCommonAttributeSearcher;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.*;
 
 /**
+ * Tests with case 3 as the current case.
+ * 
  * If I use the search all cases option: One node for Hash A (1_1_A.jpg,
  * 1_2_A.jpg, 3_1_A.jpg) If I search for matches only in Case 1: One node for
  * Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg) If I search for matches only in Case
@@ -38,10 +42,8 @@ import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
  */
 public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     
-    private final InterCaseUtils utils;
-    
-    private Case currentCase;
-    
+    private final InterCaseTestUtils utils;
+        
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileTypeInterCaseTests.class).
                 clusters(".*").
@@ -51,7 +53,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     
     public IngestedWithHashAndFileTypeInterCaseTests(String name) {
         super(name);
-        this.utils = new InterCaseUtils(this);
+        this.utils = new InterCaseTestUtils(this);
     }
     
     @Override
@@ -59,7 +61,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
         this.utils.clearTestDir();
         try {
             this.utils.enableCentralRepo();
-            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE3);
+            this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -68,24 +70,107 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 
     @Override
     public void tearDown(){
+        this.utils.clearTestDir();
         this.utils.tearDown();
     }
     
     /**
-     * Search All
-     * 
-     * One node for Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg)
+     * Search All cases with no file type filtering.
      */
     public void testOne() {
         try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false);
+            //note that the params false and false are presently meaningless because that feature is not supported yet
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
             assertTrue("Results should not be empty", metadata.size() != 0);
             
-            //assertTrue("")
+            //case 1 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            
+            //case 1 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            
+            //case 2 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            
+            //case 2 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
+            
+            //case 3 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));            
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            
+            //case 3 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
+            
+            
+        } catch (Exception ex) {
+            Exceptions.printStackTrace(ex); 
+            Assert.fail(ex);
+        }
+    }
+    
+    /**
+     * Search All cases with no file type filtering.
+     */
+    public void testTwo() {
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            
+            int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
+                        
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false);
+            
+            CommonAttributeSearchResults metadata = builder.findFiles();
+            
+            assertTrue("Results should not be empty", metadata.size() != 0);
+            
+            //case 1 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            
+            //case 1 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            
+            //case 2 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            
+            //case 2 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
+            
+            //case 3 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));            
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            
+            //case 3 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
             
         } catch (Exception ex) {

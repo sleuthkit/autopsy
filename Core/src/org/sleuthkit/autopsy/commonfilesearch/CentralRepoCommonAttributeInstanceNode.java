@@ -31,8 +31,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
@@ -46,23 +44,14 @@ public class CentralRepoCommonAttributeInstanceNode extends DisplayableItemNode 
 
     private final CorrelationAttributeInstance crFile;
     
-    //this may not be the same file, but at least it is identical, 
-    //  and we can use this to support certain actions in the tree table and crFile viewer
-    private final AbstractFile md5Reference;
-    
-    CentralRepoCommonAttributeInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
-        super(Children.LEAF, Lookups.fixed(content)); // Using md5Reference enables Other Occurances, but for the current file path
+    CentralRepoCommonAttributeInstanceNode(CorrelationAttributeInstance content) {
+        super(Children.LEAF, Lookups.fixed(content));
         this.crFile = content;
         this.setDisplayName(new File(this.crFile.getFilePath()).getName());
-        this.md5Reference = md5Reference;
     }
     
-    public CorrelationAttributeInstance getCentralRepoFile(){
+    public CorrelationAttributeInstance getCorrelationAttributeInstance(){
         return this.crFile;
-    }
-    
-    public Content getContent(){
-        return this.md5Reference;
     }
     
     @Override
@@ -101,24 +90,24 @@ public class CentralRepoCommonAttributeInstanceNode extends DisplayableItemNode 
             sheet.put(sheetSet);
         }
         
-        final CorrelationAttributeInstance centralRepoFile = this.getCentralRepoFile();
+        final CorrelationAttributeInstance centralRepoFile = this.getCorrelationAttributeInstance();
         
         final String fullPath = centralRepoFile.getFilePath();
         final File file = new File(fullPath);
-        
+
         final String caseName = centralRepoFile.getCorrelationCase().getDisplayName();
-        
+
         final String name = file.getName();
         final String parent = file.getParent();
-        
-        final String caseQualifiedDataSource = centralRepoFile.getCorrelationDataSource().getName();
+
+        final String dataSourceName = centralRepoFile.getCorrelationDataSource().getName();
         
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, name));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, parent));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, ""));
-        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, caseQualifiedDataSource));
+        sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, dataSourceName));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), org.sleuthkit.autopsy.commonfilesearch.Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, caseName));
 
