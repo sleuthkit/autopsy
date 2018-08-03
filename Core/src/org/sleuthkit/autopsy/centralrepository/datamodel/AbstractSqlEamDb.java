@@ -713,6 +713,10 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (aType == null) {
             throw new EamDbException("Correlation type is null");
         }
+        if(value == null){
+            value = "";
+        }
+        
         Connection conn = connect();
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
@@ -743,8 +747,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex){
+            //this is fine, we'll just return any empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -850,8 +856,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error getting count of artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex){
+            //this is ok, we'll just return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -908,8 +916,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex){
+            //this is ok - we'll return 0
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1466,6 +1476,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (aType == null) {
             throw new EamDbException("Correlation type is null");
         }
+        if(value == null){
+            value = "";
+        }
 
         Connection conn = connect();
 
@@ -1498,8 +1511,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex){
+            //we'll just return an empty list
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1601,8 +1616,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error getting count of notable artifact instances.", ex); // NON-NLS
+        } catch (CentralRepoValidationException ex) {
+            //this is ok - we'll return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1657,8 +1674,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             while (resultSet.next()) {
                 caseNames.add(resultSet.getString("case_name"));
             }
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex){
+            //this is ok - we'll return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1802,8 +1821,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             matchingInstances = resultSet.getLong(1);
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error determining if value (" + value + ") is in reference set " + referenceSetID, ex); // NON-NLS
+        } catch (CentralRepoValidationException ex) {
+            //this is ok - we'll just return false
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1846,8 +1867,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error determining if artifact is notable by reference.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex) { 
+            //this is ok  - we'll return false
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -2542,15 +2565,18 @@ abstract class AbstractSqlEamDb implements EamDb {
             while (resultSet.next()) {
                 globalFileInstances.add(getEamGlobalFileInstanceFromResultSet(resultSet));
             }
-            return globalFileInstances;
 
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (SQLException ex) {
             throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
+        } catch(CentralRepoValidationException ex) {
+            //this is ok - we'll return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
+        
+        return globalFileInstances;
     }
 
     /**

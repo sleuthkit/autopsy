@@ -29,7 +29,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
@@ -281,7 +285,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with two CorrelationAttributeInstance instances
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "badHash");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN));
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase2, "badPath",
@@ -306,7 +310,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null known status
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "badHash");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN));
 
@@ -321,7 +325,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null case
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "badHash");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
             attr.addInstance(new CorrelationAttributeInstance(null, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN));
 
@@ -336,7 +340,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null data source
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "badHash");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
             attr.addInstance(new CorrelationAttributeInstance(case1, null, "badPath",
                     "", TskData.FileKnown.KNOWN));
 
@@ -487,7 +491,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Create the first list, which will have (bulkThreshold / 2) entries
             List<CorrelationAttribute> list1 = new ArrayList<>();
             for (int i = 0; i < DEFAULT_BULK_THRESHOLD / 2; i++) {
-                String value = "bulkInsertValue1_" + String.valueOf(i);
+                String value = randomHash();
                 String path = "C:\\bulkInsertPath1\\file" + String.valueOf(i);
 
                 CorrelationAttribute attr = new CorrelationAttribute(fileType, value);
@@ -507,7 +511,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // Make a second list with length equal to bulkThreshold
             List<CorrelationAttribute> list2 = new ArrayList<>();
             for (int i = 0; i < DEFAULT_BULK_THRESHOLD; i++) {
-                String value = "bulkInsertValue2_" + String.valueOf(i);
+                String value = randomHash();
                 String path = "C:\\bulkInsertPath2\\file" + String.valueOf(i);
 
                 CorrelationAttribute attr = new CorrelationAttribute(fileType, value);
@@ -537,19 +541,19 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test preparing artifact with null type
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(null, "value");
+            CorrelationAttribute attr = new CorrelationAttribute(null, randomHash());
             EamDb.getInstance().prepareBulkArtifact(attr);
             Assert.fail("prepareBulkArtifact failed to throw exception for null type");
         } catch (EamDbException ex) {
-            // This is the expected behavior
-        } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
+        } catch (CentralRepoValidationException ex) {
+            // This is the expected behavior
         }
 
         // Test preparing artifact with null case
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "value");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(null, dataSource1fromCase1, "path"));
             EamDb.getInstance().prepareBulkArtifact(attr);
             EamDb.getInstance().bulkInsertArtifacts();
@@ -563,7 +567,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test preparing artifact with null data source
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "value");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(case1, null, "path"));
             EamDb.getInstance().prepareBulkArtifact(attr);
             EamDb.getInstance().bulkInsertArtifacts();
@@ -578,7 +582,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test preparing artifact with null path
         // CorrelationAttributeInstance will throw an exception
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "value");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, null));
             Assert.fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
@@ -590,7 +594,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test preparing artifact with null known status
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "value");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, "path", "comment", null));
             EamDb.getInstance().prepareBulkArtifact(attr);
             EamDb.getInstance().bulkInsertArtifacts();
@@ -778,7 +782,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Create an attribute to use in the next few tests
         CorrelationAttribute failAttr;
         try {
-            failAttr = new CorrelationAttribute(fileType, "badInstances");
+            failAttr = new CorrelationAttribute(fileType, "bad11111111111111111111111111112");
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -849,14 +853,14 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test CorrelationAttribute failure cases
         // Test null type
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(null, "badInstances");
+            CorrelationAttribute attr = new CorrelationAttribute(null, "bad11111111111111111111111111113");
             EamDb.getInstance().addArtifact(attr);
             Assert.fail("addArtifact failed to throw exception for null type");
         } catch (EamDbException ex) {
-            // This is the expected behavior
-        } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
+        } catch (CentralRepoValidationException ex) {
+            // This is the expected behavior
         }
 
         // Test null value
@@ -1011,7 +1015,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting frequency of non-existent value
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "randomValue");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 0", freq == 0);
         } catch (EamDbException | CentralRepoValidationException ex) {
@@ -1102,7 +1106,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting data source count for entry that is not in any data sources
         try {
-            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, "abcdef");
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, randomHash());
             assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 0", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -1111,7 +1115,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting data source count for null type
         try {
-            EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, "abcdef");
+            EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, randomHash());
             Assert.fail("getCountUniqueCaseDataSourceTuplesHavingTypeValue failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -1705,9 +1709,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             // Create a list of global file instances. Make enough that the bulk threshold should be hit once.
             Set<EamGlobalFileInstance> instances = new HashSet<>();
-            String bulkTestHash = "bulktesthash_";
             for (int i = 0; i < DEFAULT_BULK_THRESHOLD * 1.5; i++) {
-                String hash = bulkTestHash + String.valueOf(i);
+                String hash = randomHash();
                 instances.add(new EamGlobalFileInstance(notableSet2id, hash, TskData.FileKnown.BAD, null));
             }
 
@@ -1716,7 +1719,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
             // There's no way to get a count of the number of entries in the database, so just do a spot check
             if (DEFAULT_BULK_THRESHOLD > 10) {
-                String hash = bulkTestHash + "10";
+                String hash = instances.stream().findFirst().get().getMD5Hash();
                 assertTrue("Sample bulk insert instance not found", EamDb.getInstance().isFileHashInReferenceSet(hash, notableSet2id));
             }
         } catch (EamDbException | CentralRepoValidationException ex) {
@@ -1767,7 +1770,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting reference instances with non-existent data
         try {
-            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(fileType, "testHash");
+            List<EamGlobalFileInstance> temp = EamDb.getInstance().getReferenceInstancesByTypeValue(fileType, randomHash());
             assertTrue("getReferenceInstancesByTypeValue returned " + temp.size() + " instances for non-existent value - expected 0", temp.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -1896,7 +1899,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test known bad with non-existent data
         try {
             assertFalse("isArtifactKnownBadByReference returned true for non-existent value",
-                    EamDb.getInstance().isArtifactKnownBadByReference(fileType, "abcdef"));
+                    EamDb.getInstance().isArtifactKnownBadByReference(fileType, randomHash()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -2719,6 +2722,26 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             // This is the expected behavior
         }
+    }
+
+    private static String randomHash() {
+        
+        String[] chars = {"a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+        
+        Random random = new Random();
+        IntStream ints = random.ints(32, 0, chars.length - 1);
+        
+        Iterator<Integer> it = ints.iterator();
+        
+        StringBuilder md5 = new StringBuilder(32);
+        
+        while(it.hasNext()){
+            Integer i = it.next();
+            String character = chars[i];
+            md5.append(character);
+        }
+        
+        return md5.toString();
     }
 
     public class AttributeInstanceTableCallback implements InstanceTableCallback {

@@ -45,6 +45,12 @@ final public class CentralRepoDataValidator {
      */
     public static String validate(CorrelationAttribute.Type attributeType, String data) throws CentralRepoValidationException {
         
+        final String errorMessage = "Validator function not found for attribute type: %s";
+        
+        if(attributeType == null){
+            throw new CentralRepoValidationException(String.format(errorMessage, "null"));
+        }
+        
         switch(attributeType.getId()){
             case CorrelationAttribute.FILES_TYPE_ID:
                 return validateMd5(data);
@@ -57,7 +63,7 @@ final public class CentralRepoDataValidator {
             case CorrelationAttribute.USBID_TYPE_ID:
                 return validateUsbId(data);
             default:
-                throw new CentralRepoValidationException("Normalizer function not found for attribute type: " + attributeType.getDisplayName());   
+                throw new CentralRepoValidationException(String.format(errorMessage, attributeType.getDisplayName()));   
         }
     }
     
