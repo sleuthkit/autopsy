@@ -563,7 +563,7 @@ final class IngestSearchRunner {
                         subProgresses[keywordsSearched].progress(keywordList.getName() + ": " + queryDisplayStr, unitProgress);
 
                         // Create blackboard artifacts                
-                        newResults.process(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages());
+                        newResults.process(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages(), true);
 
                     } //if has results
 
