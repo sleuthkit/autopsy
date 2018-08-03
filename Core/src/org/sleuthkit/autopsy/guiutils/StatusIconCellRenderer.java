@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,19 @@
 package org.sleuthkit.autopsy.guiutils;
 
 import java.awt.Component;
+import java.lang.reflect.InvocationTargetException;
 import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.CENTER;
+import org.openide.nodes.Node;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * A JTable cell renderer that represents a status as a center-aligned icon, and
- * grays out the cell if the table is disabled. The statuses represented are OK,
- * WARNING, and ERROR.
+ * A JTable and outline view cell renderer that represents a status as a
+ * center-aligned icon, and grays out the cell if the table is disabled. The
+ * statuses represented are OK, WARNING, and ERROR.
  */
 public class StatusIconCellRenderer extends GrayableCellRenderer {
 
@@ -45,8 +48,20 @@ public class StatusIconCellRenderer extends GrayableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         setHorizontalAlignment(CENTER);
-        if ((value instanceof Status)) {
-            switch((Status) value) {
+        Object switchValue = null;
+        if ((value instanceof NodeProperty)) {
+            //The Outline view has properties in the cell, the value contained in the property is what we want
+            try {
+                switchValue = ((Node.Property) value).getValue();
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                //Unable to get the value from the NodeProperty no Icon will be displayed
+            }
+        } else {
+            //JTables contain the value we want directly in the cell
+            switchValue = value;
+        }
+        if ((switchValue instanceof Status)) {
+            switch ((Status) switchValue) {
                 case OK:
                     setIcon(OK_ICON);
                     setToolTipText(org.openide.util.NbBundle.getMessage(StatusIconCellRenderer.class, "StatusIconCellRenderer.tooltiptext.ok"));
@@ -60,8 +75,7 @@ public class StatusIconCellRenderer extends GrayableCellRenderer {
                     setToolTipText(org.openide.util.NbBundle.getMessage(StatusIconCellRenderer.class, "StatusIconCellRenderer.tooltiptext.error"));
                     break;
             }
-        }
-        else {
+        } else {
             setIcon(null);
             setText("");
         }
@@ -69,7 +83,7 @@ public class StatusIconCellRenderer extends GrayableCellRenderer {
 
         return this;
     }
-    
+
     public enum Status {
         OK,
         WARNING,
