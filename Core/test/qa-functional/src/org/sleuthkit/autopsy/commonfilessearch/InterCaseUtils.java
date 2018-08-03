@@ -6,7 +6,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this testFile except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,62 +48,50 @@ import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Utilities for testing intercase correlation feature.
  * 
- * This will be more useful when we add more flush out the intercase
- * correlation features and need to add more tests.  In particular,
- * testing scenarios where we need different cases to be the current case
- * will suggest that we create additional test classes, and we will want to
- * import this utility in each new intercase test file.
- * 
  * Description of Test Data:
- (Note: files of the same name and extension are identical; 
- files of the same name and differing extension are not identical.)
- 
- Case 1
-  +Data Set 1
-      - Hash-0.dat    [testFile of size 0]
-      - Hash-A.jpg
-      - Hash-A.pdf
-  +Data Set2
-      - Hash-0.dat    [testFile of size 0]
-      - Hash-A.jpg
-      - Hash-A.pdf
- Case 2
-  +Data Set 1
-      - Hash-B.jpg      
-      - Hash-B.pdf      
-  +Data Set 2
-      - Hash-A.jpg
-      - Hash-A.pdf
-      - Hash_D.doc
- Case 3
-  +Data Set 1
-      - Hash-A.jpg
-      - Hash-A.pdf
-      - Hash-C.jpg    
-      - Hash-C.pdf    
-      - Hash-D.jpg
-  +Data Set 2
-      - Hash-C.jpg    
-      - Hash-C.pdf
-      - Hash-D.doc
+ * (Note: files of the same name and extension are identical; 
+ * files of the same name and differing extension are not identical.)
+ * 
+ * Case 1
+ *  +Data Set 1
+ *      - Hash-0.dat    [file of size 0]
+ *      - Hash-A.jpg
+ *      - Hash-A.pdf
+ *  +Data Set2
+ *      - Hash-0.dat    [file of size -0]
+ *      - Hash-A.jpg
+ *      - Hash-A.pdf
+ * Case 2
+ *  +Data Set 1
+ *      - Hash-A.jpg
+ *      - Hash-A.pdf
+ *  +Data Set 2
+ *      - Hash-A.jpg
+ *      - Hash-A.pdf
+ *      - Hash_D.doc
+ * Case 3
+ *  +Data Set 1
+ *      - Hash-A.jpg
+ *      - Hash-A.pdf
+ *      - Hash-C.jpg    [we should never find these!]
+ *      - Hash-C.pdf    [we should never find these!]
+ *      - Hash-D.jpg
+ *  +Data Set 2
+ *      - Hash-C.jpg    [we should never find these!]
+ *      - Hash-C.pdf
+ *      - Hash.D-doc
  */
-class InterCaseTestUtils {
+class InterCaseUtils {
 
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "InterCaseCommonFilesSearchTest");
     private static final String CR_DB_NAME = "testcentralrepo.db";
@@ -142,7 +131,7 @@ class InterCaseTestUtils {
     private final IngestJobSettings hashAndNoFileType;
     private final DataSourceLoader dataSourceLoader;
 
-    InterCaseTestUtils(NbTestCase testCase) {
+    InterCaseUtils(NbTestCase testCase) {
 
         this.case1DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_1);
         this.case1DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_2);
@@ -162,13 +151,13 @@ class InterCaseTestUtils {
         hashAndMimeTemplate.add(mimeTypeLookupTemplate);
         hashAndMimeTemplate.add(eamDbTemplate);
 
-        this.hashAndFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
+        this.hashAndFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
 
         ArrayList<IngestModuleTemplate> hashAndNoMimeTemplate = new ArrayList<>(1);
         hashAndNoMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(eamDbTemplate);
 
-        this.hashAndNoFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
+        this.hashAndNoFileType = new IngestJobSettings(InterCaseUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 
         this.dataSourceLoader = new DataSourceLoader();
     }
@@ -176,12 +165,8 @@ class InterCaseTestUtils {
     void clearTestDir(){
         if(CASE_DIRECTORY_PATH.toFile().exists()){
             try{
-                if(EamDb.isEnabled()) {
-                    EamDb.getInstance().shutdownConnections();
-                }
                 FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
-            } catch(IOException | EamDbException ex){
-                Exceptions.printStackTrace(ex);
+            } catch(IOException  ex){
                 Assert.fail(ex);
             }
         }
@@ -192,13 +177,13 @@ class InterCaseTestUtils {
         return this.dataSourceLoader.getDataSourceMap();
     }
 
-    Map<String, Integer> getCaseMap() throws EamDbException {
+    Map<Integer, String> getCaseMap() throws EamDbException {
 
         if (EamDb.isEnabled()) {
-            Map<String, Integer> mapOfCaseIdsToCase = new HashMap<>();
+            Map<Integer, String> mapOfCaseIdsToCase = new HashMap<>();
 
             for (CorrelationCase caze : EamDb.getInstance().getCases()) {
-                mapOfCaseIdsToCase.put(caze.getDisplayName(), caze.getID());
+                mapOfCaseIdsToCase.put(caze.getID(), caze.getDisplayName());
             }
             return mapOfCaseIdsToCase;
         } else {
@@ -258,7 +243,7 @@ class InterCaseTestUtils {
 
         String lastCaseName = null;
         Path[] lastPathsForCase = null;
-        //iterate over the collections above, creating cases, and storing
+        //iterate over the collecitons above, creating cases, and storing
         //  just one of them for future reference
         for (int i = 0; i < cases.length; i++) {
             String caseName = cases[i];
@@ -304,71 +289,30 @@ class InterCaseTestUtils {
         }
     }
     
-    //TODO refactor
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         int tally = 0;
         
-        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getMetadata().entrySet()){
+        for(Map.Entry<Integer, List<CommonAttributeValue>> file : searchDomain.getMetadata().entrySet()){
             
-            for(CommonAttributeValue value : entry.getValue()){
-                
-                for(AbstractCommonAttributeInstance commonAttribute : value.getInstances()){
-                    
-                    if(commonAttribute instanceof CentralRepoCommonAttributeInstance){
-                        CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
-                        for (DisplayableItemNode din : results.generateNodes()){
-                            
-                            if(din instanceof CentralRepoCommonAttributeInstanceNode){
-                                
-                                CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
-                                CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
-                                
-                                final String fullPath = instance.getFilePath();
-                                final File testFile = new File(fullPath);
-
-                                final String testCaseName = instance.getCorrelationCase().getDisplayName();
-
-                                final String testFileName = testFile.getName();
-
-                                final String testDataSource = instance.getCorrelationDataSource().getName();
-
-                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
-
-                                if( sameFileName && sameDataSource && sameCrCase){
-                                    tally++;
-                                } 
-                            }
-                            
-                            if(din instanceof CaseDBCommonAttributeInstanceNode){
-                                
-                                CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
-                                AbstractFile file = node.getContent();
-                                
-                                final String testFileName = file.getName();
-                                final String testCaseName = node.getCase();
-                                final String testDataSource = node.getDataSource();
-                                
-                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
-                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                
-                                if(sameFileName && sameDataSource && sameCaseName){
-                                    tally++;
-                                }
-                            }
-                        }
-                    } else {
-                        Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
-                    }
-                }                
-            }
+            //Collection<IntraCaseCommonAttributeSearchResults> fileInstances = file.getValue();
+            
+//            for(IntraCaseCommonAttributeSearchResults fileInstance : fileInstances){
+//                
+//                
+//            }
         }
         
-        return tally == instanceCount;
+        return false;
     }
+    
+    static Map<Long, String> mapFileInstancesToDataSource(CommonAttributeSearchResults metadata){
+        return IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+    }
+    
+//    static List<AbstractFile> getFiles(Set<String> md5s){
+//        
+//    }
 
     /**
      * Close the currently open case, delete the case directory, delete the

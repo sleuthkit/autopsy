@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.*;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
@@ -53,21 +53,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * None of the test files should be found in the results of this test.
  */
-public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
+public class MatchesInAtLeastTwoSources extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(MatchesInAtLeastTwoSourcesIntraCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(MatchesInAtLeastTwoSources.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    private final IntraCaseTestUtils utils;
+    private final IntraCaseUtils utils;
 
-    public MatchesInAtLeastTwoSourcesIntraCaseTests(String name) {
+    public MatchesInAtLeastTwoSources(String name) {
         super(name);
 
-        this.utils = new IntraCaseTestUtils(this, "MatchesInAtLeastTwoSources");
+        this.utils = new IntraCaseUtils(this, "MatchesInAtLeastTwoSources");
     }
 
     @Override
@@ -86,7 +86,7 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
         templates.add(hashLookupTemplate);
         templates.add(mimeTypeLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileTypeIntraCaseTests.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileType.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
@@ -108,18 +108,18 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
             AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
             CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
 
-            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET1, 0));
-            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET4, 0));
+            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET1, 0));
+            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET4, 0));
 
-            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET1, 0));
-            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET4, 0));
+            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET1, 0));
+            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET4, 0));
 
-            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
-            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
+            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
+            assertTrue(IntraCaseUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);

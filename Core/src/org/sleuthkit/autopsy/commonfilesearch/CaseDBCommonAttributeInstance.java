@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,13 +45,13 @@ final public class CaseDBCommonAttributeInstance extends AbstractCommonAttribute
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    CaseDBCommonAttributeInstance(Long abstractFileReference, String dataSource, String caseName) {
-        super(abstractFileReference, dataSource, caseName);
+    CaseDBCommonAttributeInstance(Long abstractFileReference, Map<Long, AbstractFile> cachedFiles, String dataSource, String caseName) {
+        super(abstractFileReference, cachedFiles, dataSource, caseName);
     }
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.getAbstractFile(), this.getCaseName(), this.getDataSource());
+        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.lookupOrLoadAbstractFile(), this.getCaseName(), this.getDataSource());
         return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
     

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -44,6 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @SuppressWarnings("PMD.AbstractNaming")
 public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
+    private final Map<Long, String> dataSourceIdToNameMap;
     private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     /**
@@ -56,7 +58,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * broadly categorized as document types
      */
     IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+        super(filterByMediaMimeType, filterByDocMimeType);
+        dataSourceIdToNameMap = dataSourceIdMap;
     }
 
     /**
@@ -94,6 +97,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      */
     @Override
     public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+        //TODO do we need all those exceptions or can we differentiate when they are caught?
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
         
         final Case currentCase = Case.getCurrentCaseThrows();
@@ -102,6 +106,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
         
         String selectStatement = this.buildSqlSelectStatement();
+        
+        Map<Long, AbstractFile> fileCache = new HashMap<>();
 
         try (
                 CaseDbQuery query = sleuthkitCase.executeQuery(selectStatement);
@@ -111,7 +117,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
                 Long objectId = resultSet.getLong(1);
                 String md5 = resultSet.getString(2);
                 Long dataSourceId = resultSet.getLong(3);
-                String dataSource = this.getDataSourceIdToNameMap().get(dataSourceId);
+                String dataSource = this.dataSourceIdToNameMap.get(dataSourceId);
 
                 if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                     continue;
@@ -119,10 +125,10 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
                 if (commonFiles.containsKey(md5)) {
                     final CommonAttributeValue commonAttributeValue = commonFiles.get(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, fileCache, dataSource, caseName));
                 } else {
                     final CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, fileCache, dataSource, caseName));
                     commonFiles.put(md5, commonAttributeValue);
                 }
             }
@@ -163,4 +169,5 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         }
         return mimeTypeString;
     }
+
 }

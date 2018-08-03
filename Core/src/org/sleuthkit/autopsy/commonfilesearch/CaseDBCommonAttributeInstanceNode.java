@@ -58,11 +58,11 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         return visitor.visit(this);
     }
 
-    public String getCase(){
+    String getCase(){
         return this.caseName;
     }
     
-    public String getDataSource() {
+    String getDataSource() {
         return this.dataSource;
     }
 

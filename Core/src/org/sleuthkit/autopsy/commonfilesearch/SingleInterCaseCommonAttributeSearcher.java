@@ -44,8 +44,8 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @param filterByDocMimeType
      * @throws EamDbException 
      */
-    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap,filterByMediaMimeType, filterByDocMimeType);
+    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(filterByMediaMimeType, filterByDocMimeType);
         
         this.corrleationCaseId = correlationCaseId;
         this.correlationCaseName = "";

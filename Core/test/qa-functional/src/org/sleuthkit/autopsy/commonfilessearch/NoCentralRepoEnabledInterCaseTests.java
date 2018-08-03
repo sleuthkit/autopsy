@@ -23,6 +23,7 @@ import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
@@ -30,66 +31,54 @@ import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearche
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 
 /**
- * If I use the search all cases option: One node for Hash A (1_1_A.jpg,
- * 1_2_A.jpg, 3_1_A.jpg) If I search for matches only in Case 1: One node for
- * Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg) If I search for matches only in Case
- * 2: No matches If I only search in the current case (existing mode), allowing
- * all data sources: One node for Hash C (3_1_C.jpg, 3_2_C.jpg)
+ *
+ * Just make sure nothing explodes when we run the feature in the absence of 
+ * the Central Repo.  This should be considered 'defensive' as it should not be 
+ * possible to even run the feature if the CR is not available.
+ *
  */
-public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
-    
+public class NoCentralRepoEnabledInterCaseTests extends NbTestCase {
+
     private final InterCaseUtils utils;
     
     private Case currentCase;
-    
+
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithHashAndFileTypeInterCaseTests.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(NoCentralRepoEnabledInterCaseTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
-    
-    public IngestedWithHashAndFileTypeInterCaseTests(String name) {
+
+    public NoCentralRepoEnabledInterCaseTests(String name) {
         super(name);
         this.utils = new InterCaseUtils(this);
     }
-    
+
     @Override
-    public void setUp(){
-        this.utils.clearTestDir();
+    public void setUp() {
         try {
-            this.utils.enableCentralRepo();
-            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE3);
-        } catch (Exception ex) {
+            this.currentCase = this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseUtils.CASE1);
+        } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
     }
 
     @Override
-    public void tearDown(){
+    public void tearDown() {
         this.utils.tearDown();
     }
-    
-    /**
-     * Search All
-     * 
-     * One node for Hash A (1_1_A.jpg, 1_2_A.jpg, 3_1_A.jpg)
-     */
+
     public void testOne() {
         try {
-            
             AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false);
-            
+
             CommonAttributeSearchResults metadata = builder.findFiles();
-            
-            assertTrue("Results should not be empty", metadata.size() != 0);
-            
-            //assertTrue("")
-            
-            
+
+            assertTrue("Should be no results.", metadata.size() == 0);
         } catch (Exception ex) {
-            Exceptions.printStackTrace(ex); 
+            Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
     }
