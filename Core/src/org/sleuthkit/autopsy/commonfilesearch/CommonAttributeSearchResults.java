@@ -33,35 +33,41 @@ final public class CommonAttributeSearchResults {
     private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
     
     /**
-     * Create a metadata object which can be handed off to the node
-     * factories.
+     * Create a values object which can be handed off to the node factories.
      * 
-     * @param metadata list of CommonAttributeValue indexed by size of CommonAttributeValue
+     * @param values list of CommonAttributeValue indexed by size of 
+     * CommonAttributeValue
      */
     CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
         this.instanceCountToAttributeValues = metadata;
     }
 
     /**
-     * Find the meta data for the given md5.
+     * Find the child node whose children have the specified number of children.
      *
      * This is a convenience method - you can also iterate over
-     * <code>getMetadata()</code>.
+     * <code>getValues()</code>.
      *
-     * @param md5 key
-     * @return 
+     * @param isntanceCound key
+     * @return list of values which represent matches
      */
     List<CommonAttributeValue> getAttributeValuesForInstanceCount(Integer instanceCount) {
         return this.instanceCountToAttributeValues.get(instanceCount);
     }
 
-    public Map<Integer, List<CommonAttributeValue>> getMetadata() {
+ /**
+     * Get an unmodifiable collection of values, indexed by number of 
+     * grandchildren, which represents the common attributes found in the 
+     * search.
+     * @return map of sizes of children to list of matches
+     */    
+public Map<Integer, List<CommonAttributeValue>> getMetadata() {
         return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
     /**
-     * How many distinct file instances exist for this metadata?
-     * @return number of file instances
+     * How many distinct common files exist for this search results?
+     * @return number of common files
      */
     public int size() {
                 

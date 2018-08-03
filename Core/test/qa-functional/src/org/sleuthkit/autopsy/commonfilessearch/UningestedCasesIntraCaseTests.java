@@ -30,8 +30,8 @@ import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearche
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.SET1;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSourceIdByName;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.SET1;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.getDataSourceIdByName;
 
 /**
  * Test that cases which are created but have not run any ingest modules turn up
@@ -51,12 +51,12 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
         return conf.suite();
     }
 
-    private final IntraCaseUtils utils;
+    private final IntraCaseTestUtils utils;
     
     public UningestedCasesIntraCaseTests(String name) {
         super(name);
         
-        this.utils = new IntraCaseUtils(this, "UningestedCasesTests");
+        this.utils = new IntraCaseTestUtils(this, "UningestedCasesTests");
     }
     
     @Override

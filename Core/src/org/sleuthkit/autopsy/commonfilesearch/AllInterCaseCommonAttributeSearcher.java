@@ -33,8 +33,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
 
-    public AllInterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(filterByMediaMimeType, filterByDocMimeType);
+    /**
+     * 
+     * @param filterByMediaMimeType match only on files whose mime types can be
+     * broadly categorized as media types
+     * @param filterByDocMimeType match only on files whose mime types can be
+     * broadly categorized as document types
+     * @throws EamDbException 
+     */
+    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
     }
 
     @Override
