@@ -707,33 +707,13 @@ public interface EamDb {
     void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
     
     /**
-     * Process a single Artifact instance in the EamDb
-     *
-     * @param type EamArtifact.Type to search for
-     * @param id the id of the row to return
-     * @param instanceTableCallback callback to process the instance
-     * @throws EamDbException
-     */
-    void processInstanceTableRow(CorrelationAttribute.Type type, int id, InstanceTableCallback instanceTableCallback) throws EamDbException;
-    
-    /**
-     * Process the Artifact md5s in the EamDb for matches of case files which are not known
-     * @param type EamArtifact.Type to search for
-     * @param correlationCase  CorrelationCase to filter by
-     * @param instanceTableCallback callback to process the instance
-     * @throws EamDbException
-     */
-    void processCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, InstanceTableCallback instanceTableCallback) throws EamDbException;
-    
-    /**
      * Process the Artifact instance in the EamDb
      *
      * @param type EamArtifact.Type to search for
-     * @param correlationCase  CorrelationCase to filter by
-     * @param singleCase Single Case to filter by
      * @param instanceTableCallback callback to process the instance
+     * @param whereClause query string to execute
      * @throws EamDbException
      */
-    void processSingleCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, CorrelationCase singleCase,InstanceTableCallback instanceTableCallback) throws EamDbException;
-         
+    void processInstanceTableWhere(CorrelationAttribute.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException;
+
 }

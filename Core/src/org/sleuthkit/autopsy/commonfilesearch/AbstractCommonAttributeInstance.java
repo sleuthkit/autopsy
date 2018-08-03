@@ -78,7 +78,8 @@ public abstract class AbstractCommonAttributeInstance {
      * CaseDB.
      *
      * @return AbstractFile corresponding to this common attribute or null if it
-     * cannot be found (for example, in the event that this is a central repo file)
+     * cannot be found (for example, in the event that this is a central repo
+     * file)
      */
     abstract AbstractFile getAbstractFile();
 
