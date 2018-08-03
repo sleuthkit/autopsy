@@ -25,7 +25,6 @@ import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.HashUtility;
 
 /**
@@ -47,8 +46,8 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
      *
      * @throws EamDbException
      */
-    InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(filterByMediaMimeType, filterByDocMimeType);
+    InterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         dbManager = EamDb.getInstance();
     }
 
@@ -69,7 +68,6 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
             if (md5 == null || HashUtility.isNoDataMd5(md5)) {
                 continue;
             }
-            Map<Long, AbstractFile> fileCache = new HashMap<>();
             
             // we don't *have* all the information for the rows in the CR,
             //  so we need to consult the present case via the SleuthkitCase object
@@ -79,15 +77,15 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
                 //Add to intercase metaData
                 final CommonAttributeValue commonAttributeValue = interCaseCommonFiles.get(md5);
 
-                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, fileCache);
-                commonAttributeValue.addFileInstanceMetadata(searchResult);
+                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, this.getDataSourceIdToNameMap());
+                commonAttributeValue.addInstance(searchResult);
 
             } else {
                 CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
                 interCaseCommonFiles.put(md5, commonAttributeValue);
 
-                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, fileCache);
-                commonAttributeValue.addFileInstanceMetadata(searchResult);
+                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, this.getDataSourceIdToNameMap());
+                commonAttributeValue.addInstance(searchResult);
             }        
         }
 

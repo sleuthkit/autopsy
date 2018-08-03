@@ -31,8 +31,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Used by the Common Files search feature to encapsulate instances of a given 
@@ -46,23 +44,14 @@ public class CentralRepoCommonAttributeInstanceNode extends DisplayableItemNode 
 
     private final CorrelationAttributeInstance crFile;
     
-    //this may not be the same file, but at least it is identical, 
-    //  and we can use this to support certain actions in the tree table and crFile viewer
-    private final AbstractFile md5Reference;
-    
-    CentralRepoCommonAttributeInstanceNode(CorrelationAttributeInstance content, AbstractFile md5Reference) {
-        super(Children.LEAF, Lookups.fixed(content)); // Using md5Reference enables Other Occurances, but for the current file path
+    CentralRepoCommonAttributeInstanceNode(CorrelationAttributeInstance content) {
+        super(Children.LEAF, Lookups.fixed(content));
         this.crFile = content;
         this.setDisplayName(new File(this.crFile.getFilePath()).getName());
-        this.md5Reference = md5Reference;
     }
     
     public CorrelationAttributeInstance getCorrelationAttributeInstance(){
         return this.crFile;
-    }
-    
-    public Content getContent(){
-        return this.md5Reference;
     }
     
     @Override

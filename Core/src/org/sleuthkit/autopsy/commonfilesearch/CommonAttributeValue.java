@@ -74,10 +74,6 @@ final public class CommonAttributeValue {
         this.fileInstances.add(metadata);
     }
 
-    void addFileInstanceMetadata(AbstractCommonAttributeInstance metadata) {
-        this.fileInstances.add(metadata);
-    }
-
     public Collection<AbstractCommonAttributeInstance> getInstances() {
         return Collections.unmodifiableCollection(this.fileInstances);
     }

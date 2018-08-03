@@ -157,9 +157,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                 if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
 
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments);
+                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
                     } else {
-                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, filterByMedia, filterByDocuments);
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
                     }
                 } else {
                     if (dataSourceId == CommonAttributePanel.NO_DATA_SOURCE_SELECTED) {
