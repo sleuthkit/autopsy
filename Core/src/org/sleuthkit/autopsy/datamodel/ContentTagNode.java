@@ -59,8 +59,8 @@ class ContentTagNode extends DisplayableItemNode {
 
     @Messages({
         "ContentTagNode.createSheet.artifactMD5.displayName=MD5 Hash",
-        "ContentTagNode.createSheet.artifactMD5.name=MD5 Hash"
-    })
+        "ContentTagNode.createSheet.artifactMD5.name=MD5 Hash",
+        "ContentTagNode.createSheet.userName.text=User Name"})
     @Override
     protected Sheet createSheet() {
         Content content = tag.getContent();
@@ -115,6 +115,11 @@ class ContentTagNode extends DisplayableItemNode {
                 Bundle.ContentTagNode_createSheet_artifactMD5_displayName(),
                 "",
                 file != null ? StringUtils.defaultString(file.getMd5Hash()) : ""));
+        properties.put(new NodeProperty<>(
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.userName.text"),
+                NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.userName.text"),
+                "",
+                tag.getUserName()));
         return propertySheet;
     }
 
@@ -123,13 +128,14 @@ class ContentTagNode extends DisplayableItemNode {
         List<Action> actions = new ArrayList<>();
         actions.addAll(Arrays.asList(super.getActions(context)));
 
-        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        AbstractFile file = getLookup().lookup(AbstractFile.class
+        );
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
-        
+
         actions.addAll(DataModelActionsFactory.getActions(tag, false));
-        
+
         return actions.toArray(new Action[actions.size()]);
     }
 
