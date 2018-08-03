@@ -475,8 +475,6 @@ class SevenZipExtractor {
         List<AbstractFile> unpackedFiles = Collections.<AbstractFile>emptyList();
         ISevenZipInArchive inArchive = null;
 
-        Map<Integer, InArchiveItemDetails> archiveDetailsMap = new LinkedHashMap<>();
-
         SevenZipContentReadStream stream = null;
         final ProgressHandle progress = ProgressHandle.createHandle(Bundle.EmbeddedFileExtractorIngestModule_ArchiveExtractor_moduleName());
         //recursion depth check for zip bomb
@@ -562,6 +560,7 @@ class SevenZipExtractor {
                 freeDiskSpace = IngestMonitor.DISK_FREE_SPACE_UNKNOWN;
             }
 
+            Map<Integer, InArchiveItemDetails> archiveDetailsMap = new LinkedHashMap<>();
             for (int inArchiveItemIndex = 0; inArchiveItemIndex < numItems; inArchiveItemIndex++) {
                 String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
                 String archiveItemPath = (String) inArchive.getProperty(
@@ -662,7 +661,7 @@ class SevenZipExtractor {
             //inArchiveItemIndex.
             inArchive.extract(extractionIndices, false, archiveCallBack);
 
-            unpackSuccessful = unpackSuccessful & archiveCallBack.getSuccessFlag();
+            unpackSuccessful = unpackSuccessful & archiveCallBack.wasSuccessful();
 
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
@@ -917,9 +916,9 @@ class SevenZipExtractor {
      */
     private static class InArchiveItemDetails {
 
-        private SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode;
-        private String localAbsPath;
-        private String localRelPath;
+        private final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode;
+        private final String localAbsPath;
+        private final String localRelPath;
 
         public InArchiveItemDetails(
                 SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode,
@@ -949,21 +948,21 @@ class SevenZipExtractor {
     private static class StandardIArchiveExtractCallback
             implements IArchiveExtractCallback, ICryptoGetTextPassword {
 
-        private AbstractFile archiveFile;
-        private ISevenZipInArchive inArchive;
+        private final AbstractFile archiveFile;
+        private final ISevenZipInArchive inArchive;
         private SevenZipExtractor.UnpackStream unpackStream = null;
-        private Map<Integer, InArchiveItemDetails> archiveDetailsMap;
-        private ProgressHandle progressHandle;
+        private final Map<Integer, InArchiveItemDetails> archiveDetailsMap;
+        private final ProgressHandle progressHandle;
         
         private int inArchiveItemIndex;
-        private long freeDiskSpace;
+        private final long freeDiskSpace;
 
         private long createTimeInSeconds;
         private long modTimeInSeconds;
         private long accessTimeInSeconds;
 
         private boolean isFolder;
-        private String password;
+        private final String password;
 
         private boolean unpackSuccessful = true;
 
@@ -1070,11 +1069,11 @@ class SevenZipExtractor {
         }
 
         @Override
-        public void setTotal(long l) throws SevenZipException {
+        public void setTotal(long value) throws SevenZipException {
         }
 
         @Override
-        public void setCompleted(long l) throws SevenZipException {
+        public void setCompleted(long value) throws SevenZipException {
         }
 
         /**
@@ -1089,7 +1088,7 @@ class SevenZipExtractor {
             return password;
         }
 
-        public boolean getSuccessFlag() {
+        public boolean wasSuccessful() {
             return unpackSuccessful;
         }
     }
