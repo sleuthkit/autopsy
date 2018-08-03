@@ -752,6 +752,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return artifactInstances;
     }
+    
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
@@ -1894,22 +1895,27 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
     }
-    
-        /**
-     * Process the Artifact instance in the EamDb
+
+    /**
+     * Process the Artifact instance in the EamDb give a where clause
      *
      * @param type EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
+     * @param whereClause query string to execute
      * @throws EamDbException
      */
     @Override
-    public void processInstanceTableRow(CorrelationAttribute.Type type, int id, InstanceTableCallback instanceTableCallback) throws EamDbException {
+    public void processInstanceTableWhere(CorrelationAttribute.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException {
         if (type == null) {
             throw new EamDbException("Correlation type is null");
         }
 
         if (instanceTableCallback == null) {
             throw new EamDbException("Callback interface is null");
+        }
+        
+        if(whereClause == null) {
+            throw new EamDbException("Where clause is null");
         }
 
         Connection conn = connect();
@@ -1919,115 +1925,11 @@ abstract class AbstractSqlEamDb implements EamDb {
         StringBuilder sql = new StringBuilder(3);
         sql.append("select * from ");
         sql.append(tableName);
-        sql.append(" WHERE id = ?");
+        sql.append(" WHERE ");
+        sql.append(whereClause);
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setInt(1, id);
-            resultSet = preparedStatement.executeQuery();
-            instanceTableCallback.process(resultSet);
-        } catch (SQLException ex) {
-            throw new EamDbException("Error getting all artifact instances from instances table", ex);
-        } finally {
-            EamDbUtil.closeStatement(preparedStatement);
-            EamDbUtil.closeResultSet(resultSet);
-            EamDbUtil.closeConnection(conn);
-        }
-    }
-    
-    /**
-     * Process the Artifact instance in the EamDb
-     *
-     * @param type EamArtifact.Type to search for
-     * @param correlationCase  CorrelationCase to filter by
-     * @param instanceTableCallback callback to process the instance
-     * @throws EamDbException
-     */
-    @Override
-    public void processCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, InstanceTableCallback instanceTableCallback) throws EamDbException {
-        if (type == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-
-        if (instanceTableCallback == null) {
-            throw new EamDbException("Callback interface is null");
-        }
-        
-        if(correlationCase == null) {
-            throw new EamDbException("Correlation Case is null");
-        }
-
-        Connection conn = connect();
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
-        StringBuilder sql = new StringBuilder(7);
-        sql.append("SELECT id, value, case_id FROM ");
-        sql.append(tableName);
-        sql.append(" WHERE value IN (SELECT value FROM "); // TODO should this select * so any field is available?
-        sql.append(tableName);
-        sql.append(" WHERE value IN (SELECT value FROM ");
-        sql.append(tableName);
-        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
-
-        try {
-            preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setInt(1, correlationCase.getID());
-            preparedStatement.setByte(2, TskData.FileKnown.KNOWN.getFileKnownValue());
-            resultSet = preparedStatement.executeQuery();
-            instanceTableCallback.process(resultSet);
-        } catch (SQLException ex) {
-            throw new EamDbException("Error getting all artifact instances from instances table", ex);
-        } finally {
-            EamDbUtil.closeStatement(preparedStatement);
-            EamDbUtil.closeResultSet(resultSet);
-            EamDbUtil.closeConnection(conn);
-        }
-    }
-    
-    /**
-     * Process the Artifact instance in the EamDb
-     *
-     * @param type EamArtifact.Type to search for
-     * @param correlationCase  CorrelationCase to filter by
-     * @param singleCase Single Case to filter by
-     * @param instanceTableCallback callback to process the instance
-     * @throws EamDbException
-     */
-    @Override
-    public void processSingleCaseInstancesTable(CorrelationAttribute.Type type, CorrelationCase correlationCase, CorrelationCase singleCase,InstanceTableCallback instanceTableCallback) throws EamDbException {
-        if (type == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-
-        if (instanceTableCallback == null) {
-            throw new EamDbException("Callback interface is null");
-        }
-        
-        if(correlationCase == null) {
-            throw new EamDbException("Correlation Case is null");
-        }
-
-        Connection conn = connect();
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
-        StringBuilder sql = new StringBuilder(8);
-        sql.append("SELECT id, value, case_id FROM ");
-        sql.append(tableName);
-        sql.append(" WHERE value IN (SELECT value FROM "); // TODO should this select * so any field is available?
-        sql.append(tableName);
-        sql.append(" WHERE value IN (SELECT value FROM ");
-        sql.append(tableName);
-        sql.append(" WHERE case_id=? AND (known_status !=? OR known_status IS NULL) GROUP BY value)");
-        sql.append(" AND (case_id=? OR case_id=?) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
-
-        try {
-            preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setInt(1, correlationCase.getID());
-            preparedStatement.setByte(2, TskData.FileKnown.KNOWN.getFileKnownValue());
-            preparedStatement.setInt(3, correlationCase.getID());
-            preparedStatement.setInt(4, singleCase.getID());
             resultSet = preparedStatement.executeQuery();
             instanceTableCallback.process(resultSet);
         } catch (SQLException ex) {

@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Used to process and return CorrelationCase md5s from the EamDB for
@@ -46,6 +47,15 @@ final class InterCaseSearchResultsProcessor {
     private final Map<Integer, String> intercaseCommonValuesMap = new HashMap<>();
     // maps row ID to case ID
     private final Map<Integer, Integer> intercaseCommonCasesMap = new HashMap<>();
+    private final String interCaseWhereClause = "value IN (SELECT value FROM file_instances"
+                    + " WHERE value IN (SELECT value FROM  file_instances"
+                    + " WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)"
+                    + " GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value";
+    private final String singleInterCaseWhereClause = "value IN (SELECT value FROM file_instances "
+                + "WHERE value IN (SELECT value FROM  file_instances "
+                + "WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value) "
+                + "AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value";
+    
 
     /**
      * Finds a single CorrelationAttribute given an id.
@@ -58,7 +68,7 @@ final class InterCaseSearchResultsProcessor {
             InterCaseCommonAttributeRowCallback instancetableCallback = new InterCaseCommonAttributeRowCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            DbManager.processInstanceTableRow(fileType, attrbuteId, instancetableCallback);
+            DbManager.processInstanceTableWhere(fileType, String.format("id = %s", attrbuteId), instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
 
@@ -80,7 +90,11 @@ final class InterCaseSearchResultsProcessor {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            DbManager.processCaseInstancesTable(fileType, DbManager.getCase(currentCase), instancetableCallback);
+            int caseId = DbManager.getCase(currentCase).getID();
+
+            DbManager.processInstanceTableWhere(fileType, String.format(interCaseWhereClause, caseId,
+                    TskData.FileKnown.KNOWN.getFileKnownValue()),
+                    instancetableCallback);
 
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
@@ -101,7 +115,10 @@ final class InterCaseSearchResultsProcessor {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            DbManager.processSingleCaseInstancesTable(fileType, DbManager.getCase(currentCase), singleCase, instancetableCallback);
+            int caseId = DbManager.getCase(currentCase).getID();
+            int targetCaseId = singleCase.getID();
+            DbManager.processInstanceTableWhere(fileType,  String.format(singleInterCaseWhereClause, caseId,
+                    TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
