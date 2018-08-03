@@ -61,6 +61,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * Extracts all the unallocated space as a single file
  */
 final class ExtractUnallocAction extends AbstractAction {
+
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
 
     private final List<OutputFileData> filesToExtract = new ArrayList<>();
@@ -70,19 +71,32 @@ final class ExtractUnallocAction extends AbstractAction {
     private long currentImage = 0L;
     private final boolean isImage;
 
-    public ExtractUnallocAction(String title, Volume volume){
+    /**
+     * Create an instance of ExtractUnallocAction with a volume.
+     *
+     * @param title The title
+     * @param volume The volume set for extraction.
+     */
+    public ExtractUnallocAction(String title, Volume volume) {
         super(title);
         isImage = false;
         try {
             OutputFileData outputFileData = new OutputFileData(volume);
             filesToExtract.add(outputFileData);
-        } catch (NoCurrentCaseException ex) { 
+        } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             setEnabled(false);
         }
-        
+
     }
 
+    /**
+     * Create an instance of ExtractUnallocAction with an image.
+     * 
+     * @param title The title.
+     * @param image The image set for extraction.
+     * @throws NoCurrentCaseException If no case is open.
+     */
     public ExtractUnallocAction(String title, Image image) throws NoCurrentCaseException {
         super(title);
         isImage = true;
@@ -102,17 +116,17 @@ final class ExtractUnallocAction extends AbstractAction {
      * Writes the unallocated files to
      * $CaseDir/Export/ImgName-Unalloc-ImgObjectID-VolumeID.dat
      *
-     * @param e
+     * @param event
      */
     @NbBundle.Messages({"# {0} - fileName",
-            "ExtractUnallocAction.volumeInProgress=Already extracting unallocated space into {0} - will skip this volume",
-            "ExtractUnallocAction.volumeError=Error extracting unallocated space from volume",
-            "ExtractUnallocAction.noFiles=No unallocated files found on volume",
-            "ExtractUnallocAction.imageError=Error extracting unallocated space from image",
-            "ExtractUnallocAction.noOpenCase.errMsg=No open case available."})
+        "ExtractUnallocAction.volumeInProgress=Already extracting unallocated space into {0} - will skip this volume",
+        "ExtractUnallocAction.volumeError=Error extracting unallocated space from volume",
+        "ExtractUnallocAction.noFiles=No unallocated files found on volume",
+        "ExtractUnallocAction.imageError=Error extracting unallocated space from image",
+        "ExtractUnallocAction.noOpenCase.errMsg=No open case available."})
     @Override
-    public void actionPerformed(ActionEvent e) {
-        if (filesToExtract != null && filesToExtract.size() > 0) {
+    public void actionPerformed(ActionEvent event) {
+        if (filesToExtract != null && filesToExtract.isEmpty() == false) {
             // This check doesn't absolutely guarantee that the image won't be in progress when we make the worker, 
             // but in general it will suffice.
             if (isImage && isImageInProgress(currentImage)) {
@@ -151,7 +165,7 @@ final class ExtractUnallocAction extends AbstractAction {
                     NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.dlgTitle.selectDirToSaveTo.msg"));
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
-            int returnValue = fileChooser.showSaveDialog((Component) e.getSource());
+            int returnValue = fileChooser.showSaveDialog((Component) event.getSource());
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 String destination = fileChooser.getSelectedFile().getPath();
                 
@@ -159,10 +173,10 @@ final class ExtractUnallocAction extends AbstractAction {
                 
                 for (OutputFileData outputFileData : filesToExtract) {
                     outputFileData.setPath(destination);
-                    
-                    if (outputFileData.layoutFiles != null && outputFileData.layoutFiles.size() > 0 && (! isVolumeInProgress(outputFileData.getFileName()))) {
+
+                    if (outputFileData.layoutFiles != null && outputFileData.layoutFiles.size() > 0 && (!isVolumeInProgress(outputFileData.getFileName()))) {
                         //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat  
-                        
+
                         // Check if there is already a file with this name
                         if (outputFileData.fileInstance.exists()) {
                             int res = JOptionPane.showConfirmDialog(new Frame(), NbBundle.getMessage(this.getClass(),
@@ -176,22 +190,22 @@ final class ExtractUnallocAction extends AbstractAction {
                                 copyList.remove(outputFileData);
                             }
                         }
-                        
+
                         if (!isImage & !copyList.isEmpty()) {
-                            try{
+                            try {
                                 ExtractUnallocWorker worker = new ExtractUnallocWorker(outputFileData);
                                 worker.execute();
-                            } catch (Exception ex){
-                                logger.log(Level.WARNING, "Already extracting unallocated space into " + outputFileData.getFileName());
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.WARNING, "Already extracting unallocated space into {0}", outputFileData.getFileName());
                                 MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.volumeInProgress", outputFileData.getFileName()));
                             }
                         }
                     } else {
                         // The output file for this volume could not be created for one of the following reasons
-                        if (outputFileData.layoutFiles == null){
+                        if (outputFileData.layoutFiles == null) {
                             MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.volumeError"));
                             logger.log(Level.SEVERE, "Tried to get unallocated content but the list of unallocated files was null"); //NON-NLS
-                        } else if (outputFileData.layoutFiles.isEmpty()){
+                        } else if (outputFileData.layoutFiles.isEmpty()) {
                             MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.noFiles"));
                             logger.log(Level.WARNING, "No unallocated files found in volume"); //NON-NLS
                             copyList.remove(outputFileData);
@@ -202,16 +216,16 @@ final class ExtractUnallocAction extends AbstractAction {
                         }
                     }
                 }
-                
+
                 // This needs refactoring. The idea seems to be that we'll take advantage of the loop above to
                 // check whether each output file exists but wait until this point to make a worker
                 // to extract everything (the worker in the above loop doesn't get created because isImage is true)
                 // It's also unclear to me why we need the two separate worker types.
                 if (isImage && !copyList.isEmpty()) {
-                    try{
+                    try {
                         ExtractUnallocWorker worker = new ExtractUnallocWorker(copyList);
                         worker.execute();
-                    } catch (Exception ex){
+                    } catch (Exception ex) {
                         logger.log(Level.WARNING, "Error creating ExtractUnallocWorker", ex);
                         MessageNotifyUtil.Message.info(NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.imageError"));
                     }
@@ -262,16 +276,16 @@ final class ExtractUnallocAction extends AbstractAction {
     /**
      * Gets all the unallocated files in a given Content.
      *
-     * @param c Content to get Unallocated Files from
+     * @param content Content to get Unallocated Files from
      *
      * @return A list<LayoutFile> if it didn't crash List may be empty.
      */
-    private List<LayoutFile> getUnallocFiles(Content c) {
-        UnallocVisitor uv = new UnallocVisitor();
+    private List<LayoutFile> getUnallocFiles(Content content) {
+        UnallocVisitor unallocVisitor = new UnallocVisitor();
         try {
-            for (Content contentChild : c.getChildren()) {
+            for (Content contentChild : content.getChildren()) {
                 if (contentChild instanceof AbstractContent) {
-                    return contentChild.accept(uv);  //call on first non-artifact child added to database
+                    return contentChild.accept(unallocVisitor);  //call on first non-artifact child added to database
                 }
             }
         } catch (TskCoreException tce) {
@@ -279,38 +293,37 @@ final class ExtractUnallocAction extends AbstractAction {
         }
         return Collections.emptyList();
     }
-    
+
     synchronized static private void addVolumeInProgress(String volumeOutputFileName) throws TskCoreException {
-        if(volumesInProgress.contains(volumeOutputFileName)){
+        if (volumesInProgress.contains(volumeOutputFileName)) {
             throw new TskCoreException("Already writing unallocated space to " + volumeOutputFileName);
-        }     
+        }
         volumesInProgress.add(volumeOutputFileName);
     }
-    
-    synchronized static private void removeVolumeInProgress(String volumeOutputFileName){
+
+    synchronized static private void removeVolumeInProgress(String volumeOutputFileName) {
         volumesInProgress.remove(volumeOutputFileName);
     }
-    
-    synchronized static private boolean isVolumeInProgress(String volumeOutputFileName){
+
+    synchronized static private boolean isVolumeInProgress(String volumeOutputFileName) {
         return volumesInProgress.contains(volumeOutputFileName);
     }
-    
-    synchronized static private void addImageInProgress(Long id) throws TskCoreException {
-        if(imagesInProgress.contains(id)){
-            throw new TskCoreException("Image " + id + " is in use");
-        }     
-        imagesInProgress.add(id);
+
+    synchronized static private void addImageInProgress(Long objId) throws TskCoreException {
+        if (imagesInProgress.contains(objId)) {
+            throw new TskCoreException("Image " + objId + " is in use");
+        }
+        imagesInProgress.add(objId);
     }
-    
-    synchronized static private void removeImageInProgress(Long id){
-        imagesInProgress.remove(id);
-    }   
-    
-    synchronized static private boolean isImageInProgress(Long id){
-        return imagesInProgress.contains(id);
+
+    synchronized static private void removeImageInProgress(Long objId) {
+        imagesInProgress.remove(objId);
     }
-    
-    
+
+    synchronized static private boolean isImageInProgress(Long objId) {
+        return imagesInProgress.contains(objId);
+    }
+
     /**
      * Private class for dispatching the file IO in a background thread.
      */
@@ -318,9 +331,9 @@ final class ExtractUnallocAction extends AbstractAction {
 
         private ProgressHandle progress;
         private boolean canceled = false;
-        private List<OutputFileData> outputFileDataList = new ArrayList<>();
+        private final List<OutputFileData> outputFileDataList = new ArrayList<>();
         private File currentlyProcessing;
-        private int totalSizeinMegs;
+        private final int totalSizeinMegs;
         long totalBytes = 0;
 
         ExtractUnallocWorker(OutputFileData outputFileData) throws TskCoreException {
@@ -333,32 +346,32 @@ final class ExtractUnallocAction extends AbstractAction {
 
         ExtractUnallocWorker(List<OutputFileData> outputFileDataList) throws TskCoreException {
             addImageInProgress(currentImage);
-            
+
             //Getting the total megs this worker is going to be doing            
             for (OutputFileData outputFileData : outputFileDataList) {
-                try{
+                try {
                     // If a volume is locked, skip it but continue trying to process any other requested volumes
                     addVolumeInProgress(outputFileData.getFileName());
                     totalBytes += outputFileData.getSizeInBytes();
                     this.outputFileDataList.add(outputFileData);
-                } catch (TskCoreException ex){
-                    logger.log(Level.WARNING, "Already extracting data into " + outputFileData.getFileName());
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Already extracting data into {0}", outputFileData.getFileName());
                 }
             }
-            
+
             // If we don't have anything to output (because of locking), throw an exception
-            if(this.outputFileDataList.isEmpty()){
+            if (this.outputFileDataList.isEmpty()) {
                 throw new TskCoreException("No unallocated files can be extracted");
             }
-            
+
             totalSizeinMegs = toMb(totalBytes);
         }
 
         private int toMb(long bytes) {
             if (bytes > 1024 && (bytes / 1024.0) <= Double.MAX_VALUE) {
-                double Mb = ((bytes / 1024.0) / 1024.0);//Bytes -> Megabytes
-                if (Mb <= Integer.MAX_VALUE) {
-                    return (int) Math.ceil(Mb);
+                double megabytes = ((bytes / 1024.0) / 1024.0);//Bytes -> Megabytes
+                if (megabytes <= Integer.MAX_VALUE) {
+                    return (int) Math.ceil(megabytes);
                 }
             }
             return 0;
@@ -389,7 +402,7 @@ final class ExtractUnallocAction extends AbstractAction {
                 int mbs = 0; //Increments every 128th tick of  kbs
                 for (OutputFileData outputFileData : this.outputFileDataList) {
                     currentlyProcessing = outputFileData.getFile();
-                    logger.log(Level.INFO, "Writing Unalloc file to " + currentlyProcessing.getPath()); //NON-NLS
+                    logger.log(Level.INFO, "Writing Unalloc file to {0}", currentlyProcessing.getPath()); //NON-NLS
                     OutputStream outputStream = new FileOutputStream(currentlyProcessing);
                     long bytes = 0;
                     int i = 0;
@@ -416,9 +429,9 @@ final class ExtractUnallocAction extends AbstractAction {
 
                     if (canceled) {
                         outputFileData.getFile().delete();
-                        logger.log(Level.INFO, "Canceled extraction of " + outputFileData.getFileName() + " and deleted file"); //NON-NLS
+                        logger.log(Level.INFO, "Canceled extraction of {0} and deleted file", outputFileData.getFileName()); //NON-NLS
                     } else {
-                        logger.log(Level.INFO, "Finished writing unalloc file " + outputFileData.getFile().getPath()); //NON-NLS
+                        logger.log(Level.INFO, "Finished writing unalloc file {0}", outputFileData.getFile().getPath()); //NON-NLS
                     }
                 }
                 progress.finish();
@@ -631,7 +644,7 @@ final class ExtractUnallocAction extends AbstractAction {
      */
     private class OutputFileData {
 
-        private List<LayoutFile> layoutFiles;
+        private final List<LayoutFile> layoutFiles;
         private final long sizeInBytes;
         private long volumeId;
         private long imageId;
@@ -643,7 +656,7 @@ final class ExtractUnallocAction extends AbstractAction {
          * Contingency constructor in event no VolumeSystem exists on an Image.
          *
          * @param img Image file to be analyzed
-         * 
+         *
          * @throws NoCurrentCaseException if there is no open case.
          */
         OutputFileData(Image img) throws NoCurrentCaseException {
@@ -661,7 +674,7 @@ final class ExtractUnallocAction extends AbstractAction {
          * Default constructor for extracting info from Volumes.
          *
          * @param volume Volume file to be analyzed
-         * 
+         *
          * @throws NoCurrentCaseException if there is no open case.
          */
         OutputFileData(Volume volume) throws NoCurrentCaseException {
