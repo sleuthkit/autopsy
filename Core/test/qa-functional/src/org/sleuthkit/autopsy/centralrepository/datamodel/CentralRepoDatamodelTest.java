@@ -285,7 +285,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with two CorrelationAttributeInstance instances
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN));
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase2, "badPath",
@@ -310,7 +310,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null known status
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(case1, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN));
 
@@ -325,7 +325,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null case
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(null, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN));
 
@@ -340,7 +340,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null data source
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(fileType, "bad11111111111111111111111111111");
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, randomHash());
             attr.addInstance(new CorrelationAttributeInstance(case1, null, "badPath",
                     "", TskData.FileKnown.KNOWN));
 
@@ -782,7 +782,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Create an attribute to use in the next few tests
         CorrelationAttribute failAttr;
         try {
-            failAttr = new CorrelationAttribute(fileType, "bad11111111111111111111111111112");
+            failAttr = new CorrelationAttribute(fileType, randomHash());
         } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
@@ -853,7 +853,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test CorrelationAttribute failure cases
         // Test null type
         try {
-            CorrelationAttribute attr = new CorrelationAttribute(null, "bad11111111111111111111111111113");
+            CorrelationAttribute attr = new CorrelationAttribute(null, randomHash());
             EamDb.getInstance().addArtifact(attr);
             Assert.fail("addArtifact failed to throw exception for null type");
         } catch (EamDbException ex) {
