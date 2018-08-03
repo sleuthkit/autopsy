@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,12 +39,18 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractCommonAttributeSearcher {
     
+    private final Map<Long, String> dataSourceIdToNameMap;
     private boolean filterByMedia;
     private boolean filterByDoc;
     
-    AbstractCommonAttributeSearcher(boolean filterByMedia, boolean filterByDoc){
+    AbstractCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMedia, boolean filterByDoc){
         this.filterByDoc = filterByDoc;
         this.filterByMedia = filterByMedia;
+        this.dataSourceIdToNameMap = dataSourceIdMap;
+    }
+    
+    Map<Long, String> getDataSourceIdToNameMap(){
+        return Collections.unmodifiableMap(this.dataSourceIdToNameMap);
     }
     
     /**

@@ -74,11 +74,6 @@ final public class CommonAttributeValue {
         this.fileInstances.add(metadata);
     }
 
-    void addFileInstanceMetadata(AbstractCommonAttributeInstance metadata, String caseName) {
-        this.fileInstances.add(metadata);
-        // @@@ Why are we ignoring caseName?
-    }
-
     public Collection<AbstractCommonAttributeInstance> getInstances() {
         return Collections.unmodifiableCollection(this.fileInstances);
     }
