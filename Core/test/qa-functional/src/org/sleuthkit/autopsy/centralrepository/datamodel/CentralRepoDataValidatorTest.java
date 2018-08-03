@@ -42,10 +42,10 @@ public class CentralRepoDataValidatorTest extends NbTestCase {
 
     public void testValidateMd5() {
         final String aValidHash = "e34a8899ef6468b74f8a1048419ccc8b";           //should pass
-        final String anInValidHash = "e34asdfa8899ef6468b74f8a1048419ccc8b";    //should failo
-        final String aValidHashWithCaps = "E34A8899EF6468B74F8A1048419CCC8B";   //should pass
+        final String anInValidHash = "e34asdfa8899ef6468b74f8a1048419ccc8b";    //should fail
+        final String aValidHashWithCaps = "E34A8899EF6468B74F8A1048419CCC8B";   //should pass and be lowered
         final String emptyHash = "";                                            //should fail
-        final String nullHash = "";                                             //should fail
+        final String nullHash = null;                                             //should fail
 
         final int FILES_TYPE_ID = CorrelationAttribute.FILES_TYPE_ID;
 
@@ -82,17 +82,17 @@ public class CentralRepoDataValidatorTest extends NbTestCase {
     }
 
     public void testValidateDomain() {
-        final String goodDomainOne = "www.test.com";
-        final String badDomainTwo = "http://www.test.com";
-        final String goodDomainThree = "test.com";
-        final String badDomainFour = "http://1270.0.1";
-        final String badDomainFive = "?>\\/)(*&.com";
-        final String badDomainSix = null;
-        final String badDomainSeven = "";
-        final String badDomainEight = "HTTP://tests.com";
-        final String badDomainNine = "http://www.test.com/aPage?aQuestion=aParam&anotherQuestion=anotherParam";
-        final String goodDomainTen = "WWW.TEST.COM";
-        final String goodDomainEleven = "TEST.COM";
+        final String goodDomainOne = "www.test.com";            //should pass
+        final String badDomainTwo = "http://www.test.com";      //should fail (includes protocol)
+        final String goodDomainThree = "test.com";              //should pass
+        final String badDomainFour = "http://1270.0.1";         //should fail
+        final String badDomainFive = "?>\\/)(*&.com";           //should fail
+        final String badDomainSix = null;                       //should fail
+        final String badDomainSeven = "";                       //should fail
+        final String badDomainEight = "HTTP://tests.com";       //should fail    
+        final String badDomainNine = "http://www.test.com/aPage?aQuestion=aParam&anotherQuestion=anotherParam";     //should fail
+        final String goodDomainTen = "WWW.TEST.COM";            //should pass but be lowered
+        final String goodDomainEleven = "TEST.COM";             //should pass but be lowered
 
         final int DOMAIN_TYPE_ID = CorrelationAttribute.DOMAIN_TYPE_ID;
 
@@ -165,13 +165,13 @@ public class CentralRepoDataValidatorTest extends NbTestCase {
     }
 
     public void testValidateEmail() {
-        final String goodEmailOne = "bsweeney@cipehrtechsolutions.com";
-        final String goodEmailTwo = "BSWEENEY@ciphertechsolutions.com";
-        final String badEmailThree = "";
-        final String badEmailFour = null;
-        final String badEmailFive = "asdf";
+        final String goodEmailOne = "bsweeney@cipehrtechsolutions.com";     //should pass
+        final String goodEmailTwo = "BSWEENEY@ciphertechsolutions.com";     //should pass and be lowered
+        final String badEmailThree = "";                                    //should fail
+        final String badEmailFour = null;                                   //should fail
+        final String badEmailFive = "asdf";                                 //should fail
         final String badEmailSix = "asdf@asdf"; //TODO looks bad but the lib accepts it...
-        final String badEmailSeven = "asdf.asdf";
+        final String badEmailSeven = "asdf.asdf";                           //should
 
         final int EMAIL_TYPE_ID = CorrelationAttribute.EMAIL_TYPE_ID;
 
@@ -224,14 +224,14 @@ public class CentralRepoDataValidatorTest extends NbTestCase {
     }
 
     public void testValidateUsbId() {
-        final String goodIdOne = "0202:AAFF";
-        final String goodIdTwo = "0202:aaff";
-        final String badIdThree = "0202:axxf";
-        final String badIdFour = "";
-        final String badIdFive = null;
-        final String goodIdSix = "0202 AAFF";
-        final String goodIdSeven = "0202AAFF";
-        final String goodIdEight = "0202-AAFF";
+        final String goodIdOne = "0202:AAFF";       //should pass and be lowered
+        final String goodIdTwo = "0202:aaff";       //should pass
+        final String badIdThree = "0202:axxf";      //should fail
+        final String badIdFour = "";                //should fail
+        final String badIdFive = null;              //should fail
+        final String goodIdSix = "0202 AAFF";       //should pass
+        final String goodIdSeven = "0202AAFF";      //should pass
+        final String goodIdEight = "0202-AAFF";     //should pass
                 
         final int USBID_TYPE_ID = CorrelationAttribute.USBID_TYPE_ID;
         
