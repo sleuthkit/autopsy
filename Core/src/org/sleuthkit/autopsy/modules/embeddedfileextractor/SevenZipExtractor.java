@@ -562,17 +562,12 @@ class SevenZipExtractor {
 
             Map<Integer, InArchiveItemDetails> archiveDetailsMap = new LinkedHashMap<>();
             for (int inArchiveItemIndex = 0; inArchiveItemIndex < numItems; inArchiveItemIndex++) {
-                String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
-                String archiveItemPath = (String) inArchive.getProperty(
-                        inArchiveItemIndex, PropID.PATH);
-                Long archiveItemSize = (Long) inArchive.getProperty(
-                        inArchiveItemIndex, PropID.SIZE);
-
                 if (isZipBombArchiveItemCheck(archiveFile, inArchive, inArchiveItemIndex, depthMap, escapedArchiveFilePath)) {
                     unpackSuccessful = false;
                     return unpackSuccessful;
                 }
 
+                String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
                 SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
 
                 final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
@@ -586,11 +581,15 @@ class SevenZipExtractor {
                     fullEncryption = false;
                 }
 
-                // NOTE: item.getSize() may return null in case of certain
+                // NOTE: item size may return null in case of certain
                 // archiving formats. Eg: BZ2
                 //check if unpacking this file will result in out of disk space
                 //this is additional to zip bomb prevention mechanism
+                Long archiveItemSize = (Long) inArchive.getProperty(
+                        inArchiveItemIndex, PropID.SIZE);
                 if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && archiveItemSize != null && archiveItemSize > 0) { //if free space is known and file is not empty.
+                    String archiveItemPath = (String) inArchive.getProperty(
+                        inArchiveItemIndex, PropID.PATH);
                     long newDiskSpace = freeDiskSpace - archiveItemSize;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
@@ -1026,8 +1025,8 @@ class SevenZipExtractor {
 
         /**
          * Pull necessary details from map to appropriately update unpackedNode
-         * info and provide useful logging messages.
-         *
+         * info and provide useful logging messages. This function is called
+         * after the internal framework has processed the stream.
          *
          * @param EOR - ExtractOperationResult
          *
@@ -1035,17 +1034,14 @@ class SevenZipExtractor {
          */
         @Override
         public void setOperationResult(ExtractOperationResult result) throws SevenZipException {
-            final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode
-                    = archiveDetailsMap.get(inArchiveItemIndex).getUnpackedNode();
-            final String localRelPath = archiveDetailsMap.get(
-                    inArchiveItemIndex).getLocalRelPath();
-            final String localAbsPath = archiveDetailsMap.get(
-                    inArchiveItemIndex).getLocalAbsPath();
-
             progressHandle.progress(archiveFile.getName() + ": "
                     + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
                     inArchiveItemIndex);
 
+            final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode
+                    = archiveDetailsMap.get(inArchiveItemIndex).getUnpackedNode();
+            final String localRelPath = archiveDetailsMap.get(
+                    inArchiveItemIndex).getLocalRelPath();
             if (isFolder) {
                 unpackedNode.addDerivedInfo(0,
                         !(Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER),
@@ -1053,7 +1049,9 @@ class SevenZipExtractor {
                         localRelPath);
                 return;
             }
-
+            
+            final String localAbsPath = archiveDetailsMap.get(
+                    inArchiveItemIndex).getLocalAbsPath();
             if (result != ExtractOperationResult.OK) {
                 logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
                         new Object[]{localAbsPath, result});
@@ -1070,10 +1068,12 @@ class SevenZipExtractor {
 
         @Override
         public void setTotal(long value) throws SevenZipException {
+            //Not necessary for extract, left intenionally blank
         }
 
         @Override
         public void setCompleted(long value) throws SevenZipException {
+            //Not necessary for extract, left intenionally blank
         }
 
         /**
