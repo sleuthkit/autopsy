@@ -63,15 +63,18 @@ public final class PathValidator {
     
     /**
      * Checks whether Autopsy is running from the external disk
+     * 
      * @return true if Autopsy is running from external USB or CD
      */
     private static boolean checkForLiveAutopsy() {
-        return RuntimeProperties.runningLive();
+        return RuntimeProperties.runningInTarget();
     }
     
     /**
-     * Checks whether a file path contains "/mnt" or "/media"  
+     * Checks whether a file path contains "/mnt" or "/media"
+     * 
      * @param filePath Input file absolute path
+     * 
      * @return true if path matches the pattern, false otherwise 
      */
     private static boolean pathIsMedia(String filePath) {

@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.core;
 
@@ -18,7 +31,8 @@ import org.openide.util.lookup.ServiceProvider;
 
 /**
  * This class can be used to add command line options to Autopsy
- * 
+ * To add more options to autopsy, create a Option variable and add it to the set in getOptions method
+ * Do your logic for that option in the process method
  */
 @ServiceProvider(service=OptionProcessor.class)
 public class AutopsyOptionProcessor extends OptionProcessor {
@@ -38,7 +52,7 @@ public class AutopsyOptionProcessor extends OptionProcessor {
     protected void process(Env env, Map<Option, String[]> values) throws CommandException {
        if(values.containsKey(liveAutopsyOption)){
            try {
-               RuntimeProperties.setAutopsyLive(true);
+               RuntimeProperties.setRunningInTarget(true);
            } catch (RuntimeProperties.RuntimePropertiesException ex) {
                logger.log(Level.SEVERE, ex.getMessage(), ex);
            }
