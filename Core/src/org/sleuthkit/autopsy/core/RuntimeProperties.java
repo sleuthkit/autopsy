@@ -70,7 +70,7 @@ public class RuntimeProperties {
      * 
      * @return True or false.
      */
-    public synchronized static boolean runningInTarget() {
+    public synchronized static boolean isRunningInTarget() {
         return runningInTarget;
     }
 

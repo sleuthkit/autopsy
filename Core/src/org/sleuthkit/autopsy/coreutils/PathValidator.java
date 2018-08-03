@@ -52,10 +52,8 @@ public final class PathValidator {
                 if(pathOnCDrive(path)){
                     return false;
                 }
-            }else if(System.getProperty("os.name").toLowerCase().contains("nux")){
-                if(!pathIsMedia(path)){
-                    return false;
-                }
+            }else if(System.getProperty("os.name").toLowerCase().contains("nux") && !pathIsMedia(path)){
+                return false;
             }
         }
         return true;
@@ -67,7 +65,7 @@ public final class PathValidator {
      * @return true if Autopsy is running from external USB or CD
      */
     private static boolean checkForLiveAutopsy() {
-        return RuntimeProperties.runningInTarget();
+        return RuntimeProperties.isRunningInTarget();
     }
     
     /**
@@ -78,8 +76,8 @@ public final class PathValidator {
      * @return true if path matches the pattern, false otherwise 
      */
     private static boolean pathIsMedia(String filePath) {
-        Matcher m = unixMediaDrivePattern.matcher(filePath);
-        return m.find();
+        Matcher matcher = unixMediaDrivePattern.matcher(filePath);
+        return matcher.find();
     }
     
     /**
