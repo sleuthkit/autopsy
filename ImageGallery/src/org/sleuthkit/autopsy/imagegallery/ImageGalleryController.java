@@ -82,7 +82,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -219,11 +218,12 @@ public final class ImageGalleryController {
 
     private ImageGalleryController() {
 
-        listeningEnabled.addListener((observable, oldValue, newValue) -> {
+        // listener for the boolean property about when IG is listening / enabled
+        listeningEnabled.addListener((observable, wasPreviouslyEnabled, isEnabled) -> {
             try {
                 // if we just turned on listening and a single-user case is open and that case is not up to date, then rebuild it
                 // For multiuser cases, we defer DB rebuild till the user actually opens Image Gallery
-                if ( newValue && !oldValue && 
+                if ( isEnabled && !wasPreviouslyEnabled && 
                     ImageGalleryModule.isDrawableDBStale(Case.getCurrentCaseThrows()) && 
                     (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE) ) {
                     //populate the db
@@ -870,12 +870,13 @@ public final class ImageGalleryController {
 
         @Override
         protected void cleanup(boolean success) {
-            controller.updateDataSourcesTable();
+            // processFile will set success to fail if files are missing MIME types
             controller.setStale(!success);
         }
 
         @Override
         List<AbstractFile> getFiles() throws TskCoreException {
+            controller.updateDataSourcesTable(); 
             return tskCase.findAllFilesWhere(DRAWABLE_QUERY);
         }
 
@@ -895,6 +896,7 @@ public final class ImageGalleryController {
                     else { 
                         // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
                         if (null == f.getMIMEType()) {
+                            // set to false to force the DB to be marked as stale
                             this.setTaskCompletionStatus(false);
                         } else { 
                             //unsupported mimtype => analyzed but shouldn't include
@@ -950,6 +952,7 @@ public final class ImageGalleryController {
         @Override
         List<AbstractFile> getFiles() throws TskCoreException {
             long datasourceID = dataSource.getDataSource().getId();
+            taskDB.insertDataSource(datasourceID);
             return tskCase.findAllFilesWhere("data_source_obj_id = " + datasourceID + " AND " + DRAWABLE_QUERY);
         }
 
@@ -1060,7 +1063,11 @@ public final class ImageGalleryController {
                             setStale(true);
                         }
                     }
+                    else {
+                        setStale(true);
+                    }
                     break;
+                    
                 case CONTENT_TAG_ADDED:
                     final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
                     if (getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
@@ -1117,19 +1124,6 @@ public final class ImageGalleryController {
                             }
                         }
                     });
-                } else { 
-                    // received event from local node
-                    // add the datasource to drawable db
-                    long dsObjId = 0;
-                    DataSourceAnalysisCompletedEvent event = (DataSourceAnalysisCompletedEvent)evt;
-                    if(event.getDataSource() != null) {
-                        dsObjId = event.getDataSource().getId();
-                        db.insertDataSource(dsObjId);
-                        // All files for the data source have been analyzed.
-                        setStale(false);
-                    } else {
-                       LOGGER.log(Level.SEVERE, "DataSourceAnalysisCompletedEvent does not contain a dataSource object"); //NON-NLS
-                    }
                 }
             }
         }

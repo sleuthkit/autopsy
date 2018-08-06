@@ -88,7 +88,7 @@ public class ImageGalleryModule {
             String stale = new PerCaseProperties(c).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.STALE);
             
             return ( ImageGalleryController.getDefault().isDataSourcesTableStale() || 
-                     (StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : true) );
+                     (StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : false) );
         } else {
             return false;
         }
