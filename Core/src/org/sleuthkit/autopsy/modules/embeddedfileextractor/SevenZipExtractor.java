@@ -163,8 +163,12 @@ class SevenZipExtractor {
      *
      * @param archiveFile     the AbstractFile for the parent archive which
      *                        which we are checking
-     * @param archiveFileItem the current item being extracted from the parent
-     *                        archive
+     * @param inArchive       The SevenZip archive currently open for extraction
+     * 
+     * @param inArchiveItemIndex Index of item inside the SevenZip archive. Each 
+     *                           file inside an archive is assocaited with a unique 
+     *                           integer.
+     * 
      * @param depthMap        a concurrent hashmap which keeps track of the
      *                        depth of all nested archives, key of objectID
      * @param escapedFilePath the path to the archiveFileItem which has been
@@ -657,7 +661,7 @@ class SevenZipExtractor {
 
             //According to the documentation, indices in sorted order are optimal 
             //for efficiency. Hence, the LinkedHashMap and linear processing of 
-            //inArchiveItemIndex.
+            //inArchiveItemIndex. False indicates non-test mode
             inArchive.extract(extractionIndices, false, archiveCallBack);
 
             unpackSuccessful = unpackSuccessful & archiveCallBack.wasSuccessful();
@@ -978,6 +982,18 @@ class SevenZipExtractor {
             this.password = password;
         }
 
+        /**
+         * Get stream is called by the internal framework as it traverses 
+         * the archive structure. The ISequentialOutStream is where the 
+         * archive file contents will be expanded and written to the local disk.
+         * 
+         * Skips folders, as there is nothing to extract.
+         * 
+         * @param inArchiveItemIndex current location of the 
+         * @param mode Will always be EXTRACT
+         * @return
+         * @throws SevenZipException 
+         */
         @Override
         public ISequentialOutStream getStream(int inArchiveItemIndex, 
                 ExtractAskMode mode) throws SevenZipException {
@@ -1006,6 +1022,13 @@ class SevenZipExtractor {
             return unpackStream;
         }
 
+        /**
+         * Retrieves the archive metadata before extraction. Called by the 
+         * internal framework after getStream call for the current index. 
+         * 
+         * @param mode Will always be EXTRACT.
+         * @throws SevenZipException 
+         */
         @Override
         public void prepareOperation(ExtractAskMode mode) throws SevenZipException {
             final Date createTime = (Date) inArchive.getProperty(
@@ -1024,11 +1047,11 @@ class SevenZipExtractor {
         }
 
         /**
-         * Pull necessary details from map to appropriately update unpackedNode
-         * info and provide useful logging messages. This function is called
-         * after the internal framework has processed the stream.
+         * Updates the unpackedNode data in the tree, after the archive has been
+         * expanded to local disk. The map supplies reference to the correct file
+         * path location and corresponding unpackedNode. 
          *
-         * @param EOR - ExtractOperationResult
+         * @param EOR - ExtractOperationResult 
          *
          * @throws SevenZipException
          */
