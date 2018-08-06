@@ -53,6 +53,8 @@ public final class ExtractAction extends AbstractAction {
 
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
+    private String userDefinedExportPath;
+
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
     // node in the array returns a reference to the same action object from Node.getActions(boolean).    
@@ -110,10 +112,12 @@ public final class ExtractAction extends AbstractAction {
             return;
         }
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
+        fileChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
+            updateExportDirectory(fileChooser.getSelectedFile().getParent(), openCase);
+            
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
             runExtractionTasks(event, fileExtractionTasks);
@@ -137,7 +141,7 @@ public final class ExtractAction extends AbstractAction {
         }
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        folderChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
+        folderChooser.setCurrentDirectory(new File(getExportDirectory(openCase)));
         if (folderChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {
@@ -150,6 +154,7 @@ public final class ExtractAction extends AbstractAction {
                     return;
                 }
             }
+            updateExportDirectory(destinationFolder.getPath(), openCase);
 
             /*
              * get the unique set of files from the list. A user once reported
@@ -166,6 +171,45 @@ public final class ExtractAction extends AbstractAction {
                 fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + FileUtil.escapeFileName(source.getName()))));
             }
             runExtractionTasks(event, fileExtractionTasks);
+        }
+    }
+
+    /**
+     * Get the export directory path.
+     *
+     * @param openCase The current case.
+     *
+     * @return The export directory path.
+     */
+    private String getExportDirectory(Case openCase) {
+        String caseExportPath = openCase.getExportDirectory();
+
+        if (userDefinedExportPath == null) {
+            return caseExportPath;
+        }
+
+        File file = new File(userDefinedExportPath);
+        if (file.exists() == false || file.isDirectory() == false) {
+            return caseExportPath;
+        }
+
+        return userDefinedExportPath;
+    }
+
+    /**
+     * Update the default export directory. If the directory path matches the
+     * case export directory, then the directory used will always match the
+     * export directory of any given case. Otherwise, the path last used will be
+     * saved.
+     *
+     * @param exportPath The export path.
+     * @param openCase   The current case.
+     */
+    private void updateExportDirectory(String exportPath, Case openCase) {
+        if (exportPath.equalsIgnoreCase(openCase.getExportDirectory())) {
+            userDefinedExportPath = null;
+        } else {
+            userDefinedExportPath = exportPath;
         }
     }
 
