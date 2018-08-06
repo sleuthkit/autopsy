@@ -227,8 +227,7 @@ public class SQLiteReader implements AutoCloseable {
     }
     
     /**
-     * Converts a ResultSet (row results from a table read) and converts 
-     * them into a collection view. 
+     * Converts a ResultSet (row results from a table read) into a list. 
      * 
      * @param resultSet row results from a table read
      * @return List of rows, where each row is 
@@ -261,6 +260,11 @@ public class SQLiteReader implements AutoCloseable {
         return rowMap;
     }
 
+    /**
+     * Closes underlying JDBC connection.
+     * 
+     * @throws SQLException 
+     */
     @Override
     public void close() throws SQLException {
         connection.close();
