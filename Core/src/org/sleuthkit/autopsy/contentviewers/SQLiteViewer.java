@@ -22,8 +22,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -40,15 +42,11 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * A file content viewer for SQLite database files.
@@ -63,7 +61,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private final SQLiteTableView selectedTableView = new SQLiteTableView();
     private AbstractFile sqliteDbFile;
     private File tmpDbFile;
-    private Connection connection;
+    private SQLiteReader sqliteReader;
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
 
@@ -340,10 +338,10 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         numEntriesField.setText("");
 
         // close DB connection to file
-        if (null != connection) {
+        if (null != sqliteReader) {
             try {
-                connection.close();
-                connection = null;
+                sqliteReader.close();
+                sqliteReader = null;
             } catch (SQLException ex) {
                 logger.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
             }
@@ -365,14 +363,12 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         "# {0} - exception message", "SQLiteViewer.errorMessage.unexpectedError=An unexpected error occurred:\n{0).",})
     private void processSQLiteFile() {       
         tablesDropdownList.removeAllItems();
-
         try {
-            String tmpDBPathName = Case.getCurrentCaseThrows().getTempDirectory() + 
+            String localDiskPath = Case.getCurrentCaseThrows().getTempDirectory() + 
                     File.separator + sqliteDbFile.getName();
-            moveDbToTempFile(sqliteDbFile, tmpDBPathName);
+            sqliteReader = new SQLiteReader(sqliteDbFile, localDiskPath);
             
-            connection = SQLiteReader.getDatabaseConnection(tmpDBPathName);
-            Map<String, String> dbTablesMap = SQLiteReader.getTableNameAndSchemaPairs(connection);
+            Map<String, String> dbTablesMap = sqliteReader.getTableSchemas();
             
             if (dbTablesMap.isEmpty()) {
                 tablesDropdownList.addItem(Bundle.SQLiteViewer_comboBox_noTableEntry());
@@ -411,7 +407,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     })
     private void selectTable(String tableName) {
         try {
-            numRows = SQLiteReader.getTableRowCount(connection, tableName);
+            numRows = sqliteReader.getTableRowCount(tableName);
             numEntriesField.setText(numRows + " entries");
 
             currPage = 1;
@@ -444,8 +440,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private void readTable(String tableName, int startRow, int numRowsToRead) {
 
         try {
-            List<Map<String, Object>> rows = SQLiteReader.getRowsFromTable(
-                    connection, tableName, startRow, numRowsToRead);
+            List<Map<String, Object>> rows = sqliteReader.getRowsFromTable(
+                    tableName, startRow, numRowsToRead);
             if (Objects.nonNull(rows)) {
                 selectedTableView.setupTable(rows);
             } else {
@@ -460,22 +456,65 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         }
     }
     
-    @NbBundle.Messages({"SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.",
-                        "SQLiteViewer.exportTableToCsv.FileName=File name: ",
-                        "SQLiteViewer.exportTableToCsv.TableName=Table name: "
+    /**
+     * Converts a sqlite table into a CSV file.
+     * 
+     * @param file
+     * @param tableName
+     * @param rowMap -- A list of rows in the table, where each row is represented as a column-value
+     * map.
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    @NbBundle.Messages({
+        "SQLiteViewer.exportTableToCsv.FileName=File name: ",
+        "SQLiteViewer.exportTableToCsv.TableName=Table name: "
+    })
+    public void exportTableToCSV(File file, String tableName, 
+            List<Map<String, Object>> rowMap) throws FileNotFoundException, IOException{
+        
+        File csvFile;
+        String fileName = file.getName();
+        if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
+            csvFile = file;
+        } else {
+            csvFile = new File(file.toString() + ".csv");
+        }
+
+        try (FileOutputStream out = new FileOutputStream(csvFile, false)) {
+
+            out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
+            out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
+            
+            String header = createColumnHeader(rowMap.get(0)).concat("\n");
+            out.write(header.getBytes());
+
+            for (Map<String, Object> maps : rowMap) {
+                String row = maps.values()
+                        .stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(","))
+                        .concat("\n");
+                out.write(row.getBytes());
+            }
+        }
+    }
+    
+    @NbBundle.Messages({
+        "SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.",
     })
     private void exportTableToCsv(File file) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         try {
             List<Map<String, Object>> currentTableRows = 
-                    SQLiteReader.getRowsFromTable(connection, tableName);
+                    sqliteReader.getRowsFromTable(tableName);
 
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
                 logger.log(Level.INFO, String.format(
                         "The table %s is empty. (objId=%d)", tableName, //NON-NLS
                         sqliteDbFile.getId()));
             } else {
-                SQLiteReader.exportTableToCSV(file, tableName, currentTableRows);
+                exportTableToCSV(file, tableName, currentTableRows);
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, String.format(
@@ -491,45 +530,17 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         }
     }
     
-    private static void moveDbToTempFile(AbstractFile sqliteDbFile, String tempDbPath) 
-            throws IOException, NoCurrentCaseException, TskCoreException {
-        
-        File tmpDbFile = new File(tempDbPath);
-        if (!tmpDbFile.exists()) {
-            ContentUtils.writeToFile(sqliteDbFile, tmpDbFile);
-
-            // Look for any meta files associated with this DB - WAL, SHM, etc. 
-            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
-            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
-        }
-    }
-    
     /**
-     * Searches for a meta file associated with the give SQLite db If found,
-     * copies the file to the temp folder
-     *
-     * @param sqliteFile   - SQLIte db file being processed
-     * @param metaFileName name of meta file to look for
+     * Returns a comma seperated header string from the keys of the column
+     * row map.
+     * 
+     * @param row -- column header row map
+     * @return -- comma seperated header string
      */
-    private static void findAndCopySQLiteMetaFile(AbstractFile sqliteFile,
-            String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
-        
-        Case openCase = Case.getCurrentCaseThrows();
-        SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
-        Services services = new Services(sleuthkitCase);
-        FileManager fileManager = services.getFileManager();
-        
-        List<AbstractFile> metaFiles = fileManager.findFiles(
-                sqliteFile.getDataSource(), metaFileName, 
-                sqliteFile.getParent().getName());
-        
-        if (metaFiles != null) {
-            for (AbstractFile metaFile : metaFiles) {
-                String tmpMetafilePathName = openCase.getTempDirectory() + 
-                        File.separator + metaFile.getName();
-                File tmpMetafile = new File(tmpMetafilePathName);
-                ContentUtils.writeToFile(metaFile, tmpMetafile);
-            }
-        }
+    private String createColumnHeader(Map<String, Object> row) {
+        return row.entrySet()
+                .stream()
+                .map(Map.Entry::getKey)
+                .collect(Collectors.joining(","));
     }
 }
