@@ -28,14 +28,29 @@ import org.openide.nodes.Node;
  */
 final class TableFilterChildrenWithDescendants extends TableFilterChildren {
 
-    private int childLayerDepth;
+    private final int childLayerDepth;
     
+    /**
+     * Used to create children of the given node, with the specified number of 
+     * child generations. 
+     * 
+     * @param wrappedNode node with children
+     * @param childLayerDepth number of subsequent generations.
+     */
     private TableFilterChildrenWithDescendants(Node wrappedNode, int childLayerDepth) {
         super(wrappedNode);
         this.childLayerDepth = childLayerDepth;
     }
     
-    public static Children createInstance(Node wrappedNode, boolean createChildren, int childLayerDepth){
+    /**
+     * Factory method for getting an instance of the Children object based on the 
+     * node with children, and the number of subsequent generations.
+     * 
+     * @param wrappedNode node that has children
+     * @param childLayerDepth
+     * @return object capable of generating child node
+     */
+    public static Children createInstance(Node wrappedNode, int childLayerDepth){
         if(childLayerDepth == 0){
             return Children.LEAF;
         } else {
@@ -45,6 +60,6 @@ final class TableFilterChildrenWithDescendants extends TableFilterChildren {
     
     @Override
     protected Node copyNode(Node nodeToCopy){
-        return new MultiLayerTableFilterNode(nodeToCopy, this.childLayerDepth);
+        return new TableFilterNode(nodeToCopy, this.childLayerDepth);
     }
 }

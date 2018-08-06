@@ -19,28 +19,45 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.Installer;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
  */
 final public class CommonFilesSearchAction extends CallableSystemAction {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchAction.class.getName());
+    
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
-
+    
     CommonFilesSearchAction() {
         super();
         this.setEnabled(false);
     }
-    
+
     @Override
     public boolean isEnabled(){
-        return super.isEnabled() && Case.isCaseOpen() && Installer.isJavaFxInited();
+        boolean shouldBeEnabled = false;
+        try {
+            shouldBeEnabled = Case.isCaseOpen() 
+                    && Case.getCurrentCase().getDataSources().size() > 1
+                    || (EamDb.isEnabled() && EamDb.getInstance().getCases().size() > 1);
+                    
+        } catch(TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting CR cases for action enabled check", ex);
+        }
+        return super.isEnabled() && shouldBeEnabled;
     }
 
     public static synchronized CommonFilesSearchAction getDefault() {
@@ -52,12 +69,12 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        new CommonFilesDialog().setVisible(true);
+        new CommonAttributePanel().setVisible(true);
     }
 
     @Override
     public void performAction() {
-        new CommonFilesDialog().setVisible(true);
+        new CommonAttributePanel().setVisible(true);
     }
 
     @NbBundle.Messages({

@@ -25,7 +25,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -33,7 +35,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -44,8 +45,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extracts AbstractFiles to a location selected by the user.
@@ -66,6 +65,9 @@ public final class ExtractAction extends AbstractAction {
         return instance;
     }
 
+    /**
+     * Private constructor for the action.
+     */
     private ExtractAction() {
         super(NbBundle.getMessage(ExtractAction.class, "ExtractAction.title.extractFiles.text"));
     }
@@ -94,16 +96,16 @@ public final class ExtractAction extends AbstractAction {
     /**
      * Called when user has selected a single file to extract
      *
-     * @param e
+     * @param event
      * @param selectedFile Selected file
      */
-    @NbBundle.Messages ({"ExtractAction.noOpenCase.errMsg=No open case available."})
-    private void extractFile(ActionEvent e, AbstractFile selectedFile) {
+    @NbBundle.Messages({"ExtractAction.noOpenCase.errMsg=No open case available."})
+    private void extractFile(ActionEvent event, AbstractFile selectedFile) {
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            JOptionPane.showMessageDialog((Component) e.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
+            JOptionPane.showMessageDialog((Component) event.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
@@ -111,60 +113,70 @@ public final class ExtractAction extends AbstractAction {
         fileChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
-        if (fileChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
+        if (fileChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
-            runExtractionTasks(e, fileExtractionTasks);
+            runExtractionTasks(event, fileExtractionTasks);
         }
     }
 
     /**
      * Called when a user has selected multiple files to extract
      *
-     * @param e
+     * @param event
      * @param selectedFiles Selected files
      */
-    private void extractFiles(ActionEvent e, Collection<? extends AbstractFile> selectedFiles) {
+    private void extractFiles(ActionEvent event, Collection<? extends AbstractFile> selectedFiles) {
         Case openCase;
         try {
             openCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            JOptionPane.showMessageDialog((Component) e.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
+            JOptionPane.showMessageDialog((Component) event.getSource(), Bundle.ExtractAction_noOpenCase_errMsg());
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
         JFileChooser folderChooser = new JFileChooser();
         folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         folderChooser.setCurrentDirectory(new File(openCase.getExportDirectory()));
-        if (folderChooser.showSaveDialog((Component) e.getSource()) == JFileChooser.APPROVE_OPTION) {
+        if (folderChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
             File destinationFolder = folderChooser.getSelectedFile();
             if (!destinationFolder.exists()) {
                 try {
                     destinationFolder.mkdirs();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog((Component) e.getSource(), NbBundle.getMessage(this.getClass(),
+                    JOptionPane.showMessageDialog((Component) event.getSource(), NbBundle.getMessage(this.getClass(),
                             "ExtractAction.extractFiles.cantCreateFolderErr.msg"));
                     logger.log(Level.INFO, "Unable to create folder(s) for user " + destinationFolder.getAbsolutePath(), ex); //NON-NLS
                     return;
                 }
             }
 
-            /* get the unique set of files from the list. A user once reported extraction taking
-             * days because it was extracting the same PST file 20k times.  They selected 20k 
-             * email messages in the tree and chose to extract them. */
+            /*
+             * get the unique set of files from the list. A user once reported
+             * extraction taking days because it was extracting the same PST
+             * file 20k times. They selected 20k email messages in the tree and
+             * chose to extract them.
+             */
             Set<AbstractFile> uniqueFiles = new HashSet<>(selectedFiles);
-            
+
             // make a task for each file
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             for (AbstractFile source : uniqueFiles) {
                 // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
                 fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + FileUtil.escapeFileName(source.getName()))));
             }
-            runExtractionTasks(e, fileExtractionTasks);
+            runExtractionTasks(event, fileExtractionTasks);
         }
     }
 
-    private void runExtractionTasks(ActionEvent e, ArrayList<FileExtractionTask> fileExtractionTasks) {
+    /**
+     * Execute a series of file extraction tasks.
+     *
+     * @param event               ActionEvent whose source will be used for
+     *                            centering popup dialogs.
+     * @param fileExtractionTasks List of file extraction tasks.
+     */
+    private void runExtractionTasks(ActionEvent event, List<FileExtractionTask> fileExtractionTasks) {
 
         // verify all of the sources and destinations are OK
         for (Iterator<FileExtractionTask> it = fileExtractionTasks.iterator(); it.hasNext();) {
@@ -177,16 +189,16 @@ public final class ExtractAction extends AbstractAction {
             }
 
             /*
-             * This code assumes that each destination is unique.  We previously satisfied
-             * that by adding the unique ID.
+             * This code assumes that each destination is unique. We previously
+             * satisfied that by adding the unique ID.
              */
             if (task.destination.exists()) {
-                if (JOptionPane.showConfirmDialog((Component) e.getSource(),
+                if (JOptionPane.showConfirmDialog((Component) event.getSource(),
                         NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.msg", task.destination.getAbsolutePath()),
                         NbBundle.getMessage(this.getClass(), "ExtractAction.confDlg.destFileExist.title"),
                         JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     if (!FileUtil.deleteFileDir(task.destination)) {
-                        JOptionPane.showMessageDialog((Component) e.getSource(),
+                        JOptionPane.showMessageDialog((Component) event.getSource(),
                                 NbBundle.getMessage(this.getClass(), "ExtractAction.msgDlg.cantOverwriteFile.msg", task.destination.getAbsolutePath()));
                         it.remove();
                     }
@@ -210,11 +222,20 @@ public final class ExtractAction extends AbstractAction {
         }
     }
 
+    /**
+     * Stores source and destination for file extraction.
+     */
     private class FileExtractionTask {
 
         AbstractFile source;
         File destination;
 
+        /**
+         * Create an instance of the FileExtractionTask.
+         *
+         * @param source      The file to be extracted.
+         * @param destination The destination for the extraction.
+         */
         FileExtractionTask(AbstractFile source, File destination) {
             this.source = source;
             this.destination = destination;
@@ -226,11 +247,16 @@ public final class ExtractAction extends AbstractAction {
      */
     private class FileExtracter extends SwingWorker<Object, Void> {
 
-        private Logger logger = Logger.getLogger(FileExtracter.class.getName());
+        private final Logger logger = Logger.getLogger(FileExtracter.class.getName());
         private ProgressHandle progress;
-        private ArrayList<FileExtractionTask> extractionTasks;
+        private final List<FileExtractionTask> extractionTasks;
 
-        FileExtracter(ArrayList<FileExtractionTask> extractionTasks) {
+        /**
+         * Create an instance of the FileExtracter.
+         *
+         * @param extractionTasks List of file extraction tasks.
+         */
+        FileExtracter(List<FileExtractionTask> extractionTasks) {
             this.extractionTasks = extractionTasks;
         }
 
@@ -275,7 +301,7 @@ public final class ExtractAction extends AbstractAction {
             boolean msgDisplayed = false;
             try {
                 super.get();
-            } catch (Exception ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Fatal error during file extraction", ex); //NON-NLS
                 MessageNotifyUtil.Message.info(
                         NbBundle.getMessage(this.getClass(), "ExtractAction.done.notifyMsg.extractErr", ex.getMessage()));
@@ -289,22 +315,23 @@ public final class ExtractAction extends AbstractAction {
             }
         }
 
-        private int calculateProgressBarWorkUnits(AbstractFile file) {
-            int workUnits = 0;
-            if (file.isFile()) {
-                workUnits += file.getSize();
-            } else {
-                try {
-                    for (Content child : file.getChildren()) {
-                        if (child instanceof AbstractFile) {
-                            workUnits += calculateProgressBarWorkUnits((AbstractFile) child);
-                        }
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not get children of content", ex); //NON-NLS
-                }
-            }
-            return workUnits;
+        /**
+         * Calculate the number of work units for the progress bar.
+         *
+         * @param file File whose children will be reviewed to get the number of
+         *             work units.
+         *
+         * @return The number of work units.
+         */
+        /*
+         * private int calculateProgressBarWorkUnits(AbstractFile file) { int
+         * workUnits = 0; if (file.isFile()) { workUnits += file.getSize(); }
+         * else { try { for (Content child : file.getChildren()) { if (child
+         * instanceof AbstractFile) { workUnits +=
+         * calculateProgressBarWorkUnits((AbstractFile) child); } } } catch
+         * (TskCoreException ex) { logger.log(Level.SEVERE, "Could not get
+         * children of content", ex); //NON-NLS } } return workUnits;
         }
+         */
     }
 }

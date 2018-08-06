@@ -221,11 +221,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         actionsList.addAll(Arrays.asList(super.getActions(context)));
         AbstractFile file = getLookup().lookup(AbstractFile.class);
 
-        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
-        if (file != null && file.isFile() && EamDbUtil.useCentralRepo()) {
-            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-        }
-
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
             if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
@@ -317,7 +312,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
         "BlackboardArtifactNode.artifact.displayName=Artifact",
         "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
-        "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash"})
+        "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash",
+        "BlackboardArtifactNode.createSheet.fileSize.name=Size",
+        "BlackboardArtifactNode.createSheet.fileSize.displayName=Size",
+        "BlackboardArtifactNode.createSheet.path.displayName=Path",
+        "BlackboardArtifactNode.createSheet.path.name=Path"})
 
     @Override
     protected Sheet createSheet() {
@@ -456,6 +455,31 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         NO_DESCR,
                         dataSourceStr));
             }
+        }
+        
+        // If EXIF, add props for file size and path
+        if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+            
+            long size = 0;
+            String path = ""; //NON-NLS
+            if (associated instanceof AbstractFile) {
+                AbstractFile af = (AbstractFile) associated;
+                size = af.getSize();
+                try {
+                    path = af.getUniquePath();
+                } catch (TskCoreException ex) {
+                    path = af.getParentPath();
+                }
+            }
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.fileSize.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.fileSize.displayName"),
+                    NO_DESCR,
+                    size));
+            sheetSet.put(new NodeProperty<>(
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.path.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.path.displayName"),
+                    NO_DESCR,
+                    path));
         }
 
         addTagProperty(sheetSet);

@@ -37,12 +37,12 @@ import javax.swing.DefaultListModel;
  * class and extended classes model the user's intentions, not necessarily how
  * the search manager and 3rd party tools actually perform the search.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 abstract class AdHocSearchPanel extends javax.swing.JPanel {
 
     private final String keywordSearchErrorDialogHeader = org.openide.util.NbBundle.getMessage(this.getClass(), "AbstractKeywordSearchPerformer.search.dialogErrorHeader");
     protected int filesIndexed;
     private final Map<Long, String> dataSourceMap = new HashMap<>();
-    private final List<String> toolTipList = new ArrayList<>();
     private List<DataSource> dataSources = new ArrayList<>();
     private final DefaultListModel<String> dataSourceListModel = new DefaultListModel<>();
 
@@ -53,18 +53,18 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     private void initListeners() {
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                Object newValue = evt.getNewValue();
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        String changed = evt.getPropertyName();
+                        Object newValue = evt.getNewValue();
 
-                if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
-                    int newFilesIndexed = ((Integer) newValue).intValue();
-                    filesIndexed = newFilesIndexed;
-                    postFilesIndexedChange();
-                }
-            }
-        });
+                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                            int newFilesIndexed = ((Integer) newValue);
+                            filesIndexed = newFilesIndexed;
+                            postFilesIndexedChange();
+                        }
+                    }
+                });
     }
 
     /**
@@ -98,8 +98,10 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     /**
      * Performs the search using the selected keywords. Creates a
      * DataResultTopComponent with the results.
+     *
+     * @param saveResults Flag whether to save search results as KWS artifacts.
      */
-    public void search() {
+    public void search(boolean saveResults) {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
 
         if (filesIndexed == 0) {
@@ -128,8 +130,6 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
             }
         }
 
-        AdHocSearchDelegator man = null;
-
         final List<KeywordList> keywordLists = getKeywordLists();
         if (keywordLists.isEmpty()) {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
@@ -137,10 +137,10 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
-
+      
+        AdHocSearchDelegator man = new AdHocSearchDelegator(keywordLists, getDataSourcesSelected());
         if (man.validate()) {
-            man.execute();
+            man.execute(saveResults);
         } else {
             KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
                     "AbstractKeywordSearchPerformer.search.invalidSyntaxHeader"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
@@ -154,14 +154,12 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
      */
     synchronized List<String> getDataSourceArray() {
         List<String> dsList = new ArrayList<>();
-        toolTipList.clear();
         Collections.sort(this.dataSources, (DataSource ds1, DataSource ds2) -> ds1.getName().compareTo(ds2.getName()));
         for (DataSource ds : dataSources) {
             String dsName = ds.getName();
             File dataSourceFullName = new File(dsName);
             String displayName = dataSourceFullName.getName();
             dataSourceMap.put(ds.getId(), displayName);
-            toolTipList.add(dsName);
             dsList.add(displayName);
         }
         return dsList;
@@ -176,21 +174,12 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Get dataSourceMap with object id and data source display name. Add the
-     * data source full name to toolTipList
+     * Get dataSourceMap with object id and data source display name.
      *
      * @return The list of data source name
      */
     Map<Long, String> getDataSourceMap() {
         return dataSourceMap;
-    }
-
-    /**
-     * Get a list of tooltip text for data source
-     * @return A list of tool tips 
-     */
-    List<String> getDataSourceToolTipList() {
-        return toolTipList;
     }
     
     /**

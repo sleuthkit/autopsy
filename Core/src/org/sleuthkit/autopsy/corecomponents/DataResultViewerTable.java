@@ -79,7 +79,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
  */
 @ServiceProvider(service = DataResultViewer.class)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class DataResultViewerTable extends AbstractDataResultViewer {
+public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
@@ -156,10 +156,9 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * Configure the child OutlineView (explorer view) component.
          */
         outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
-        
+
         outline = outlineView.getOutline();
         outline.setRowSelectionAllowed(true);
-        outline.setColumnSelectionAllowed(true);
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);
         outline.setDragEnabled(false);
@@ -224,6 +223,11 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode) {
+        if (! SwingUtilities.isEventDispatchThread()) {
+            LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
+            return;
+        }
+        
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -297,7 +301,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
          * let the table resize itself.
          */
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
-
+       
         assignColumns(props); // assign columns to match the properties
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
@@ -381,7 +385,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
      * Sets the column widths for the child OutlineView of this tabular results
      * viewer.
      */
-    private void setColumnWidths() {
+    protected void setColumnWidths() {
         if (rootNode.getChildren().getNodesCount() != 0) {
             final Graphics graphics = outlineView.getGraphics();
             if (graphics != null) {
@@ -416,6 +420,10 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
             // if there's no content just auto resize all columns
             outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
+    }
+    
+    protected TableColumnModel getColumnModel(){
+        return outline.getColumnModel();
     }
 
     /*
@@ -547,7 +555,7 @@ public final class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof SingleLayerTableFilterNode) {
+        if (rootNode instanceof TableFilterNode) {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             final TableFilterNode tfn = ((TableFilterNode) rootNode);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();

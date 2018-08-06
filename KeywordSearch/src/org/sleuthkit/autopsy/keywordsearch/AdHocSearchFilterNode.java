@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -48,7 +47,6 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -126,50 +124,45 @@ class AdHocSearchFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(File f) {
-            return getFileActions(true);
+            return getFileActions();
         }
 
         @Override
         public List<Action> visit(DerivedFile f) {
-            return getFileActions(true);
+            return getFileActions();
         }
 
         @Override
         public List<Action> visit(Directory d) {
-            return getFileActions(false);
+            return getFileActions();
         }
 
         @Override
         public List<Action> visit(LayoutFile lf) {
-            //we want hashsearch enabled on carved files but not unallocated blocks
-            boolean enableHashSearch = (lf.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.CARVED);
-            return getFileActions(enableHashSearch);
+            return getFileActions();
         }
 
         @Override
         public List<Action> visit(LocalFile lf) {
-            return getFileActions(true);
+            return getFileActions();
         }
 
         @Override
         public List<Action> visit(SlackFile f) {
-            return getFileActions(false);
+            return getFileActions();
         }
 
         @Override
         public List<Action> visit(VirtualDirectory dir) {
-            return getFileActions(false);
+            return getFileActions();
         }
 
-        private List<Action> getFileActions(boolean enableHashSearch) {
+        private List<Action> getFileActions() {
             List<Action> actionsList = new ArrayList<>();
             actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), AdHocSearchFilterNode.this));
             actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
             actionsList.add(null);
             actionsList.add(ExtractAction.getInstance());
-            Action hashSearchAction = new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal());
-            hashSearchAction.setEnabled(enableHashSearch);
-            actionsList.add(hashSearchAction);
             actionsList.add(null); // creates a menu separator
             actionsList.add(AddContentTagAction.getInstance());
 
@@ -185,7 +178,7 @@ class AdHocSearchFilterNode extends FilterNode {
 
         @Override
         protected List<Action> defaultVisit(Content c) {
-            return getFileActions(false);
+            return getFileActions();
         }
     }
 }

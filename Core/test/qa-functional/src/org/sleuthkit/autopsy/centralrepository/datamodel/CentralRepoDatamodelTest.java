@@ -46,7 +46,7 @@ import static junit.framework.Assert.assertTrue;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
- *
+ * Functional tests for the Central Repository data model.
  */
 public class CentralRepoDatamodelTest extends TestCase {
 
@@ -115,7 +115,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDbUtil.setUseCentralRepo(true);
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-        } catch (Exception ex) {
+        } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -838,7 +838,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // This is the expected behavior
         }
 
-        // Test getting instances with expected resuls
+        // Test getting instances with expected results
         try {
             List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(fileType, inAllDataSourcesHash);
             assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 3", instances.size() == 3);
@@ -1119,6 +1119,34 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             //test null inputs
             EamDb.getInstance().processInstanceTable(null, null);
+            Assert.fail("processinstance method failed to throw exception for null type value");
+        } catch (EamDbException ex) {
+            // This is the expected 
+        }
+        
+         // Test running processinstance which queries all rows from instances table
+        try {
+            // Add two instances to the central repository and use the callback query to verify we can see them
+            CorrelationAttribute attr = new CorrelationAttribute(fileType, callbackTestFileHash);
+            CorrelationAttributeInstance inst1 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, callbackTestFilePath1);
+            CorrelationAttributeInstance inst2 = new CorrelationAttributeInstance(case1, dataSource1fromCase1, callbackTestFilePath2);
+            attr.addInstance(inst1);
+            attr.addInstance(inst2);
+            EamDb DbManager = EamDb.getInstance();
+            DbManager.addArtifact(attr);
+            AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
+            DbManager.processInstanceTableWhere(fileType, String.format("id = %s", attr.getID()), instancetableCallback);
+            int count1 = instancetableCallback.getCounter();
+            int count2 = instancetableCallback.getCounterNamingConvention();
+            assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
+            assertTrue("Process Instance count with filepath without naming convention: " + count1 + "-expected greater than 0", count1 > 0);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
+        try {
+            //test null inputs
+            EamDb.getInstance().processInstanceTableWhere(null, null, null);
             Assert.fail("processinstance method failed to throw exception for null type value");
         } catch (EamDbException ex) {
             // This is the expected 
@@ -2554,7 +2582,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 // This seems to help in allowing the Autopsy case to be deleted
                 try {
                     Thread.sleep(2000);
-                } catch (Exception ex) {
+                } catch (InterruptedException ex) {
 
                 }
             } catch (CaseActionException ex) {

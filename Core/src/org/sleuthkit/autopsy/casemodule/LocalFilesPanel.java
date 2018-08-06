@@ -279,7 +279,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
      *
      * @param paths Absolute paths to the selected data source
      */
-    @NbBundle.Messages("LocalFilesPanel.pathValidation.error=WARNING: Exception while gettting opon case.")
+    @NbBundle.Messages({
+        "LocalFilesPanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
+        "LocalFilesPanel.pathValidation.getOpenCase=WARNING: Exception while gettting open case."
+    })
     private void warnIfPathIsInvalid(final List<String> pathsList) {
         errorLabel.setVisible(false);
 
@@ -289,13 +292,13 @@ final class LocalFilesPanel extends javax.swing.JPanel {
             for (String currentPath : pathsList) {
                 if (!PathValidator.isValid(currentPath, currentCaseType)) {
                     errorLabel.setVisible(true);
-                    errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+                    errorLabel.setText(Bundle.LocalFilesPanel_pathValidation_dataSourceOnCDriveError());
                     return;
                 }
             }
         } catch (NoCurrentCaseException ex) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.LocalFilesPanel_pathValidation_error());
+            errorLabel.setText(Bundle.LocalFilesPanel_pathValidation_getOpenCase());
         }
     }
 

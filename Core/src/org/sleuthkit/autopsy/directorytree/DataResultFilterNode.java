@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.commonfilesearch.NoAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -52,20 +51,21 @@ import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.FileInstanceNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.InstanceCountNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
-import org.sleuthkit.autopsy.datamodel.Md5Node;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
-import static org.sleuthkit.autopsy.directorytree.Bundle.*;
+import static org.sleuthkit.autopsy.directorytree.Bundle.DataResultFilterNode_viewSourceArtifact_text;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -409,10 +409,8 @@ public class DataResultFilterNode extends FilterNode {
             }
             Content c = ban.getLookup().lookup(File.class);
             Node n = null;
-            boolean md5Action = false;
             if (c != null) {
                 n = new FileNode((AbstractFile) c);
-                md5Action = true;
             } else if ((c = ban.getLookup().lookup(Directory.class)) != null) {
                 n = new DirectoryNode((Directory) c);
             } else if ((c = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
@@ -446,10 +444,6 @@ public class DataResultFilterNode extends FilterNode {
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(ExtractAction.getInstance());
-                if (md5Action) {
-                    actionsList.add(new HashSearchAction(
-                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.searchFilesSameMd5.text"), n));
-                }
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
@@ -539,19 +533,24 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public AbstractAction visit(InstanceCountNode icn) {
-            return new NoAction();
+            return null;
         }
 
         @Override
-        public AbstractAction visit(Md5Node md5n) {
-            return new NoAction();
+        public AbstractAction visit(CommonAttributeValueNode md5n){
+            return null;
         }
 
         @Override
-        public AbstractAction visit(FileInstanceNode fin) {
-            return new NoAction();
+        public AbstractAction visit(CaseDBCommonAttributeInstanceNode fin){
+            return null;
         }
 
+        @Override
+        public AbstractAction visit(CentralRepoCommonAttributeInstanceNode iccan){
+            return null;
+        }
+        
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
             BlackboardArtifact artifact = ban.getArtifact();

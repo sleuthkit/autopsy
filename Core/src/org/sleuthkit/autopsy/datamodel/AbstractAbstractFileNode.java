@@ -251,26 +251,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(TYPE_META.toString(), content.getMetaType().toString());
         map.put(KNOWN.toString(), content.getKnown().getName());
-        map.put(HASHSETS.toString(), getHashSetHitsForFile(content));
+        map.put(HASHSETS.toString(), getHashSetHitsCsvList(content));
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
         map.put(ObjectID.toString(), content.getId());
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
-    }
-
-    @Override
-    public Action[] getActions(boolean context) {
-        List<Action> actionsList = new ArrayList<>();
-
-        actionsList.addAll(Arrays.asList(super.getActions(true)));
-        
-        // Create the "Add/Edit Central Repository Comment" menu item if the enabled.
-        AbstractFile file = content;
-        if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
-            actionsList.add(AddEditCentralRepoCommentAction.createAddEditCentralRepoCommentAction(file));
-        }
-        
-        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     /**
@@ -278,7 +263,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
-     *           Sheet.get(Sheet.PROPERTIES)
+     *                 Sheet.get(Sheet.PROPERTIES)
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     protected void addTagProperty(Sheet.Set sheetSet) {
@@ -316,7 +301,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    public static String getHashSetHitsForFile(AbstractFile file) {
+    /**
+     * Gets a comma-separated values list of the names of the hash sets
+     * currently identified as including a given file.
+     *
+     * @param file The file.
+     *
+     * @return The CSV list of hash set names.
+     */
+    protected static String getHashSetHitsCsvList(AbstractFile file) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {

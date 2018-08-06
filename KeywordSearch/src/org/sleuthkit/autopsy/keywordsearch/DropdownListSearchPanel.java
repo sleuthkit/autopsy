@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JCheckBox;
-import javax.swing.JList;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -72,22 +71,6 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
 
         dataSourceList.addListSelectionListener((ListSelectionEvent evt) -> {
             firePropertyChange(Bundle.DropdownSingleTermSearchPanel_selected(), null, null);
-        });
-        dataSourceList.addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent evt) {
-                //Unused by now
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent evt) {
-                JList<String> dsList = (JList<String>) evt.getSource();
-                int index = dsList.locationToIndex(evt.getPoint());
-                if (index > -1) {
-                    dsList.setToolTipText(getDataSourceToolTipList().get(index));
-                }
-            }
         });
     }
 
@@ -181,6 +164,8 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         }
         listsTableModel.resync();
         updateIngestIndexLabel();
+        
+        jSaveSearchResults.setSelected(true);
     }
 
     private void updateIngestIndexLabel() {
@@ -223,6 +208,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         dataSourceCheckBox = new javax.swing.JCheckBox();
         jScrollPane1 = new javax.swing.JScrollPane();
         dataSourceList = new javax.swing.JList<>();
+        jSaveSearchResults = new javax.swing.JCheckBox();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -282,23 +268,26 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         dataSourceList.setMinimumSize(new java.awt.Dimension(0, 200));
         jScrollPane1.setViewportView(dataSourceList);
 
+        jSaveSearchResults.setText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "DropdownListSearchPanel.jSaveSearchResults.text")); // NOI18N
+        jSaveSearchResults.setToolTipText(org.openide.util.NbBundle.getMessage(DropdownListSearchPanel.class, "DropdownListSearchPanel.jSaveSearchResults.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(4, 4, 4)
-                .addComponent(searchAddButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(manageListsButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(ingestIndexLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(dataSourceCheckBox)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addComponent(jScrollPane1)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(dataSourceCheckBox)
+                    .addComponent(jSaveSearchResults)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(searchAddButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(manageListsButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(ingestIndexLabel)))
+                .addGap(0, 120, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {manageListsButton, searchAddButton});
@@ -307,16 +296,18 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(dataSourceCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jSaveSearchResults)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(manageListsButton)
                     .addComponent(searchAddButton)
                     .addComponent(ingestIndexLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addGap(23, 23, 23))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -336,6 +327,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
     private javax.swing.JCheckBox dataSourceCheckBox;
     private javax.swing.JList<String> dataSourceList;
     private javax.swing.JLabel ingestIndexLabel;
+    private javax.swing.JCheckBox jSaveSearchResults;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTable keywordsTable;
@@ -350,7 +342,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            search();
+            search(jSaveSearchResults.isSelected());
         } finally {
             setCursor(null);
         }
@@ -683,11 +675,21 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
      * Set the dataSourceList enabled if the dataSourceCheckBox is selected
      */
     private void setComponentsEnabled() {
-        boolean enabled = this.dataSourceCheckBox.isSelected();
-        this.dataSourceList.setEnabled(enabled);
-        if (enabled) {
-            this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+        
+        if (getDataSourceListModel().size() > 1) {
+            this.dataSourceCheckBox.setEnabled(true);
+            
+            boolean enabled = this.dataSourceCheckBox.isSelected();
+            this.dataSourceList.setEnabled(enabled);
+            if (enabled) {
+                this.dataSourceList.setSelectionInterval(0, this.dataSourceList.getModel().getSize()-1);
+            } else {
+                this.dataSourceList.setSelectedIndices(new int[0]);
+            }
         } else {
+            this.dataSourceCheckBox.setEnabled(false);
+            this.dataSourceCheckBox.setSelected(false);
+            this.dataSourceList.setEnabled(false);
             this.dataSourceList.setSelectedIndices(new int[0]);
         }
     }

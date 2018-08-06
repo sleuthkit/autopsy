@@ -45,8 +45,8 @@ public final class DelayedLoadChildNodesOnTreeExpansion implements TreeExpansion
     @Override
     public synchronized void treeExpanded(final TreeExpansionEvent event) {
         Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
-        if (eventNode instanceof MultiLayerTableFilterNode) { //!inRecursion && 
-            final MultiLayerTableFilterNode node = (MultiLayerTableFilterNode) eventNode;
+        if (eventNode instanceof TableFilterNode) { //!inRecursion && 
+            final TableFilterNode node = (TableFilterNode) eventNode;
             node.refresh();
         }
 

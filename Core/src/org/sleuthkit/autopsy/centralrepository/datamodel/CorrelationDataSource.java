@@ -67,6 +67,7 @@ public class CorrelationDataSource implements Serializable {
 
     /**
      * Create a CorrelationDataSource object from a TSK Content object.
+     * This will add it to the central repository.
      *
      * @param correlationCase the current CorrelationCase used for ensuring
      *                        uniqueness of DataSource

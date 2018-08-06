@@ -44,6 +44,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -73,6 +74,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
+    private final long datasourceObjId;
 
     /**
      * String used in the instance MAP so that exact matches and substring can
@@ -81,6 +83,7 @@ public class KeywordHits implements AutopsyVisitableItem {
      */
     private static final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
 
+    
     /**
      * query attributes table for the ones that we need for the tree
      */
@@ -101,8 +104,25 @@ public class KeywordHits implements AutopsyVisitableItem {
         return (instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME));
     }
 
-    public KeywordHits(SleuthkitCase skCase) {
+    /**
+     * Constructor
+     * 
+     * @param skCase  Case DB
+     */ 
+    KeywordHits(SleuthkitCase skCase) {
+        this(skCase, 0);
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param skCase  Case DB
+     * @param objId  Object id of the data source 
+     * 
+     */ 
+    public KeywordHits(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
+        this.datasourceObjId = objId;
         keywordResults = new KeywordResults();
     }
 
@@ -300,7 +320,12 @@ public class KeywordHits implements AutopsyVisitableItem {
                 return;
             }
 
-            try (CaseDbQuery dbQuery = skCase.executeQuery(KEYWORD_HIT_ATTRIBUTES_QUERY)) {
+            String queryStr = KEYWORD_HIT_ATTRIBUTES_QUERY;
+            if (UserPreferences.groupItemsInTreeByDatasource()) {
+                queryStr +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            }
+            
+            try (CaseDbQuery dbQuery = skCase.executeQuery(queryStr)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
                     long artifactId = resultSet.getLong("artifact_id"); //NON-NLS

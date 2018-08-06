@@ -30,7 +30,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.corecomponents.SingleLayerTableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -74,8 +74,10 @@ class AdHocSearchDelegator {
     /**
      * Execute the keyword search based on keywords passed into constructor.
      * Post results into a new DataResultViewer.
+     *
+     * @param saveResults Flag whether to save search results as KWS artifacts.
      */
-    public void execute() {
+    public void execute(boolean saveResults) {
         Collection<AdHocQueryRequest> queryRequests = new ArrayList<>();
         int queryID = 0;
         StringBuilder queryConcat = new StringBuilder();    // concatenation of all query strings
@@ -95,7 +97,7 @@ class AdHocSearchDelegator {
         Node rootNode;
         if (queryRequests.size() > 0) {
             Children childNodes =
-                    Children.create(new AdHocSearchChildFactory(queryRequests), true);
+                    Children.create(new AdHocSearchChildFactory(queryRequests, saveResults), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {
@@ -104,7 +106,7 @@ class AdHocSearchDelegator {
 
         final String pathText = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.pathText.text");
 
-        DataResultTopComponent.initInstance(pathText, new SingleLayerTableFilterNode(rootNode, true, KeywordSearch.class.getName()),
+        DataResultTopComponent.initInstance(pathText, new TableFilterNode(rootNode, true, KeywordSearch.class.getName()),
                 queryRequests.size(), searchResultWin);
 
         searchResultWin.requestActive();

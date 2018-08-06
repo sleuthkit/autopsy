@@ -125,18 +125,6 @@ final class AinStatusPanel extends javax.swing.JPanel implements ExplorerManager
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Get the AutoIngestJob for the currently selected node of this panel.
-     *
-     * @return AutoIngestJob which is currently selected in this panel
-     */
-    AutoIngestJob getSelectedAutoIngestJob() {
-        Node[] selectedRows = explorerManager.getSelectedNodes();
-        if (selectedRows.length == 1) {
-            return ((JobNode) selectedRows[0]).getAutoIngestJob();
-        }
-        return null;
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 

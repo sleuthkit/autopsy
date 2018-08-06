@@ -1,12 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.windows.WindowManager;
@@ -16,6 +28,7 @@ import org.openide.windows.WindowManager;
  * the panel given to it. No additional buttons or features, except the default
  * close operation, which is set to dispose.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
 
     /**
@@ -27,6 +40,8 @@ public class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form AdvancedConfigurationDialog
+     * 
+     * @param resizable Is the dialog resizable?
      */
     public AdvancedConfigurationCleanDialog(boolean resizable) {
         super((JFrame) WindowManager.getDefault().getMainWindow(), true);

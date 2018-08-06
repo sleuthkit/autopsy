@@ -40,6 +40,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -86,10 +87,29 @@ public class EmailExtracted implements AutopsyVisitableItem {
     }
     private SleuthkitCase skCase;
     private final EmailResults emailResults;
+    private final long datasourceObjId;
 
 
+
+    /**
+     * Constructor
+     * 
+     * @param skCase Case DB
+     */
     public EmailExtracted(SleuthkitCase skCase) {
+        this(skCase, 0);
+    }
+    
+    /**
+     * Constructor
+     * 
+     * @param skCase  Case DB
+     * @param objId  Object id of the data source 
+     * 
+     */ 
+    public EmailExtracted(SleuthkitCase skCase, long objId) {
         this.skCase = skCase;
+        this.datasourceObjId = objId;
         emailResults = new EmailResults();
     }
 
@@ -141,6 +161,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
                     + "attribute_type_id=" + pathAttrId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
+            if (UserPreferences.groupItemsInTreeByDatasource()) {
+                query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
+            }
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();

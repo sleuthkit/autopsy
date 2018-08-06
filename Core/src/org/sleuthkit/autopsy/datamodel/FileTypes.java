@@ -72,11 +72,18 @@ public final class FileTypes implements AutopsyVisitableItem {
 
     private final SleuthkitCase skCase;
 
+    private final long datasourceObjId;
+    
     FileTypes(SleuthkitCase skCase) {
-        this.skCase = skCase;
-        updateShowCounts();
+        this(skCase, 0);
     }
 
+    FileTypes(SleuthkitCase skCase, long dsObjId) {
+        this.skCase = skCase;
+        this.datasourceObjId = dsObjId;
+        updateShowCounts();
+    }
+    
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -86,6 +93,9 @@ public final class FileTypes implements AutopsyVisitableItem {
         return skCase;
     }
 
+    long filteringDataSourceObjId() {
+        return this.datasourceObjId;
+    }
     /**
      * Check the db to determine if the nodes should show child counts.
      */
@@ -239,7 +249,7 @@ public final class FileTypes implements AutopsyVisitableItem {
             if (typesRoot.showCounts) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? Bundle.FileTypes_bgCounting_placeholder()
-                        : ("(" + childCount + ")"))); //NON-NLS
+                        : (" (" + childCount + ")"))); //NON-NLS
                 new SwingWorker<Long, Void>() {
                     @Override
                     protected Long doInBackground() throws Exception {

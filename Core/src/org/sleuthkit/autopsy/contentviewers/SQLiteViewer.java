@@ -56,7 +56,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
  * A file content viewer for SQLite database files.
@@ -289,28 +288,22 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(csvFilter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        String defaultFileName = (String) this.tablesDropdownList.getSelectedItem();
+        fileChooser.setSelectedFile(new File(defaultFileName));
         int choice = fileChooser.showSaveDialog((Component) evt.getSource()); //TODO
         if (JFileChooser.APPROVE_OPTION == choice) {
-            boolean overwrite = false;
             File file = fileChooser.getSelectedFile();
-            if (file == null) {
-                JOptionPane.showMessageDialog(this,
-                        Bundle.SQLiteViewer_csvExport_fileName_empty(),
-                        Bundle.SQLiteViewer_csvExport_title(), 
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            } else if (file.exists() && FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("csv")) {
+            if (file.exists() && FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("csv")) {
                 if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this,
                         Bundle.SQLiteViewer_csvExport_confirm_msg(), 
                         Bundle.SQLiteViewer_csvExport_title(), 
                         JOptionPane.YES_NO_OPTION)) {
-                    overwrite = true;
                 } else {
                     return;
                 }            
             }
          
-            exportTableToCsv(file, overwrite);
+            exportTableToCsv(file);
         }
     }//GEN-LAST:event_exportCsvButtonActionPerformed
 
@@ -567,9 +560,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                         "SQLiteViewer.exportTableToCsv.FileName=File name: ",
                         "SQLiteViewer.exportTableToCsv.TableName=Table name: "
     })
-    private void exportTableToCsv(File file, boolean overwrite) {
+    private void exportTableToCsv(File file) {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
-        String csvFileSuffix = "_" + tableName + "_" + TimeStampUtils.createTimeStamp() + ".csv";
         try (
                 Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery("SELECT * FROM " + tableName)) {
@@ -578,42 +570,42 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             if (Objects.isNull(currentTableRows) || currentTableRows.isEmpty()) {
                 logger.log(Level.INFO, String.format("The table %s is empty. (objId=%d)", tableName, sqliteDbFile.getId())); //NON-NLS
             } else {
-                String fileName = file.getName();
                 File csvFile;
-                if (overwrite) {
+                String fileName = file.getName();
+                if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
                     csvFile = file;
-                } else if (FilenameUtils.getExtension(fileName).equalsIgnoreCase("csv")) {
-                    csvFile = new File(file.getParentFile(), FilenameUtils.removeExtension(fileName) + csvFileSuffix);                    
                 } else {
-                    csvFile = new File(file.toString() + csvFileSuffix);
+                    csvFile = new File(file.toString() + ".csv");
                 }
-                FileOutputStream out = new FileOutputStream(csvFile, false);
 
-                out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
-                out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
-                // Set up the column names
-                Map<String, Object> row = currentTableRows.get(0);
-                StringBuffer header = new StringBuffer();
-                for (Map.Entry<String, Object> col : row.entrySet()) {
-                    String colName = col.getKey();
-                    if (header.length() > 0) {
-                        header.append(',').append(colName);
-                    } else {
-                        header.append(colName);
-                    }
-                }
-                out.write(header.append('\n').toString().getBytes());
+                try (FileOutputStream out = new FileOutputStream(csvFile, false)) {
 
-                for (Map<String, Object> maps : currentTableRows) {
-                    StringBuffer valueLine = new StringBuffer();
-                    maps.values().forEach((value) -> {
-                        if (valueLine.length() > 0) {
-                            valueLine.append(',').append(value.toString());
+                    out.write((Bundle.SQLiteViewer_exportTableToCsv_FileName() + csvFile.getName() + "\n").getBytes());
+                    out.write((Bundle.SQLiteViewer_exportTableToCsv_TableName() + tableName + "\n").getBytes());
+                    // Set up the column names
+                    Map<String, Object> row = currentTableRows.get(0);
+                    StringBuffer header = new StringBuffer();
+                    for (Map.Entry<String, Object> col : row.entrySet()) {
+                        String colName = col.getKey();
+                        if (header.length() > 0) {
+                            header.append(',').append(colName);
                         } else {
-                            valueLine.append(value.toString());
+                            header.append(colName);
                         }
-                    });
-                    out.write(valueLine.append('\n').toString().getBytes());
+                    }
+                    out.write(header.append('\n').toString().getBytes());
+
+                    for (Map<String, Object> maps : currentTableRows) {
+                        StringBuffer valueLine = new StringBuffer();
+                        maps.values().forEach((value) -> {
+                            if (valueLine.length() > 0) {
+                                valueLine.append(',').append(value.toString());
+                            } else {
+                                valueLine.append(value.toString());
+                            }
+                        });
+                        out.write(valueLine.append('\n').toString().getBytes());
+                    }
                 }
             }
         } catch (SQLException ex) {

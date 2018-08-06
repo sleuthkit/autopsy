@@ -56,7 +56,7 @@ public class MemoryDSProcessor implements DataSourceProcessor {
      *
      * @return A data source type display string for this data source processor.
      */
-    @Messages({"MemoryDSProcessor.dataSourceType=Memory Image File"})
+    @Messages({"MemoryDSProcessor.dataSourceType=Memory Image File (Volatility)"})
     public static String getType() {
         return Bundle.MemoryDSProcessor_dataSourceType();
     }

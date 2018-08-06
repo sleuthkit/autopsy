@@ -18,7 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -61,6 +65,8 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
+    T visit(DataSourceGroupingNode dataSourceGroupingNode);
+    
     T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
 
     T visit(DeletedContentNode dcn);
@@ -110,13 +116,13 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.SetNameNode ihsn);
 
-    T visit(Md5Node mn);
+    T visit(CommonAttributeValueNode mn);
 
-    T visit(CommonFilesNode cfn);
+    T visit(CommonAttributeSearchResultRootNode cfn);
 
-    T visit(FileInstanceNode fin);
-
-    T visit(CommonFileChildNodeLoading cfcnl);
+    T visit(CaseDBCommonAttributeInstanceNode fin);
+    
+    T visit(CentralRepoCommonAttributeInstanceNode crfin);
     
     T visit(InstanceCountNode icn);
 
@@ -189,17 +195,17 @@ public interface DisplayableItemNodeVisitor<T> {
         protected abstract T defaultVisit(DisplayableItemNode c);
 
         @Override
-        public T visit(FileInstanceNode fin) {
+        public T visit(CaseDBCommonAttributeInstanceNode fin) {
             return defaultVisit(fin);
         }
 
         @Override
-        public T visit(Md5Node mn) {
+        public T visit(CommonAttributeValueNode mn) {
             return defaultVisit(mn);
         }
 
         @Override
-        public T visit(CommonFilesNode cfn) {
+        public T visit(CommonAttributeSearchResultRootNode cfn) {
             return defaultVisit(cfn);
         }
         
@@ -207,10 +213,10 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(InstanceCountNode icn){
             return defaultVisit(icn);
         }
-
+        
         @Override
-        public T visit(CommonFileChildNodeLoading cfcnl) {
-            return defaultVisit(cfcnl);
+        public T visit(CentralRepoCommonAttributeInstanceNode crfin){
+            return defaultVisit(crfin);
         }
 
         @Override
@@ -343,6 +349,11 @@ public interface DisplayableItemNodeVisitor<T> {
             return defaultVisit(vn);
         }
 
+        @Override
+        public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
+            return defaultVisit(dataSourceGroupingNode);
+        }
+        
         @Override
         public T visit(ResultsNode rn) {
             return defaultVisit(rn);
