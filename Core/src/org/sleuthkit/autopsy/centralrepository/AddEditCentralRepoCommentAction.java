@@ -21,10 +21,13 @@ package org.sleuthkit.autopsy.centralrepository;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import org.apache.log4j.lf5.LogLevel;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoValidationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -63,7 +66,12 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
-        correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
+        try {
+            correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
+        } catch (EamDbException | CentralRepoValidationException ex) {
+            correlationAttribute = null;
+            logger.log(Level.SEVERE, "Possible problem creating CorrelationAttribute from content: " + file.getMd5Hash(), ex);
+        }
         if (correlationAttribute == null) {
             addToDatabase = true;
             correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);

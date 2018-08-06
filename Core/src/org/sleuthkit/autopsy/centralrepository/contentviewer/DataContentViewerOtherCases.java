@@ -51,6 +51,7 @@ import javax.swing.table.TableColumn;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -177,10 +178,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             try {
                 EamDb dbManager = EamDb.getInstance();
                 for (CorrelationAttribute eamArtifact : correlationAttributes) {
-                    percentage = dbManager.getFrequencyPercentage(eamArtifact);
-                    msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
+                    try {
+                        percentage = dbManager.getFrequencyPercentage(eamArtifact);
+                        msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
                             eamArtifact.getCorrelationType().getDisplayName(),
                             eamArtifact.getCorrelationValue()));
+                    } catch (CentralRepoValidationException ex) {
+                        String message = String.format("Unable to determine commonality for artifact %s", eamArtifact.toString());
+                        logger.log(Level.SEVERE, message, ex);
+                        Exceptions.printStackTrace(ex);
+                    }                    
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         msg.toString(),
@@ -555,7 +562,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
 
             return nodeDataMap;
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CentralRepoValidationException ex) {
             logger.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS

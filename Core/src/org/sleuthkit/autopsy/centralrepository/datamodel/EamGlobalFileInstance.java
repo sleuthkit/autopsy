@@ -46,9 +46,7 @@ public class EamGlobalFileInstance {
             String MD5Hash,
             TskData.FileKnown knownStatus,
             String comment) throws EamDbException, CentralRepoValidationException {
-        if(MD5Hash == null){
-            throw new EamDbException("null MD5 hash");	//NON-NLS
-        }
+
         if(knownStatus == null){
             throw new EamDbException("null known status");
         }
@@ -116,10 +114,7 @@ public class EamGlobalFileInstance {
     /**
      * @param MD5Hash the MD5Hash to set
      */
-    public void setMD5Hash(String MD5Hash) throws EamDbException, CentralRepoValidationException {
-        if(MD5Hash == null){
-            throw new EamDbException("null MD5 hash");	//NON-NLS
-        }
+    public void setMD5Hash(String MD5Hash) throws CentralRepoValidationException {
         this.MD5Hash = CentralRepoDataValidator.validate(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
     }
 

@@ -709,13 +709,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-        if(value == null){
-            value = "";
-        }
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+
+        value = CentralRepoDataValidator.validate(aType, value);
         
         Connection conn = connect();
 
@@ -741,7 +737,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
@@ -749,8 +745,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex){
-            //this is fine, we'll just return any empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -831,13 +825,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      *         ArtifactValue.
      */
     @Override
-    public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-        if (value == null) {
-            throw new EamDbException("Correlation value is null");
-        }
+    public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+        value = CentralRepoDataValidator.validate(aType, value);
 
         Connection conn = connect();
 
@@ -853,14 +842,12 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
         } catch (SQLException ex) {
             throw new EamDbException("Error getting count of artifact instances by artifactType and artifactValue.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex){
-            //this is ok, we'll just return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -871,7 +858,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     @Override
-    public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException {
+    public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException, CentralRepoValidationException {
         if (corAttr == null) {
             throw new EamDbException("CorrelationAttribute is null");
         }
@@ -892,10 +879,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return Number of unique tuples
      */
     @Override
-    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
+    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+        value = CentralRepoDataValidator.validate(aType, value);
 
         Connection conn = connect();
 
@@ -913,14 +898,12 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
         } catch (SQLException ex) {
             throw new EamDbException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex){
-            //this is ok - we'll return 0
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1297,19 +1280,15 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public CorrelationAttribute getCorrelationAttribute(CorrelationAttribute.Type type, CorrelationCase correlationCase,
-            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException {
-
-        if (type == null) {
-            throw new EamDbException("Correlation type is null");
-        }
+            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CentralRepoValidationException {
+        
+        value = CentralRepoDataValidator.validate(type, value);
+        
         if (correlationCase == null) {
             throw new EamDbException("Correlation case is null");
         }
         if (correlationDataSource == null) {
             throw new EamDbException("Correlation data source is null");
-        }
-        if (value == null) {
-            throw new EamDbException("Correlation value is null");
         }
         if (filePath == null) {
             throw new EamDbException("Correlation file path is null");
@@ -1334,7 +1313,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, correlationCase.getID());
             preparedStatement.setInt(2, correlationDataSource.getID());
-            preparedStatement.setString(3, CentralRepoDataValidator.validate(type, value));
+            preparedStatement.setString(3, value);
             preparedStatement.setString(4, filePath.toLowerCase());
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -1473,13 +1452,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return List with 0 or more matching eamArtifact instances.
      */
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-        if(value == null){
-            value = "";
-        }
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+        value = CentralRepoDataValidator.validate(aType, value);
 
         Connection conn = connect();
 
@@ -1505,7 +1479,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1514,8 +1488,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex){
-            //we'll just return an empty list
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1593,10 +1565,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return Number of matching eamArtifacts
      */
     @Override
-    public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
+    public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+        
+        value = CentralRepoDataValidator.validate(aType, value);
 
         Connection conn = connect();
 
@@ -1612,15 +1583,13 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
             throw new EamDbException("Error getting count of notable artifact instances.", ex); // NON-NLS
-        } catch (CentralRepoValidationException ex) {
-            //this is ok - we'll return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1643,10 +1612,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
+    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+        
+        value = CentralRepoDataValidator.validate(aType, value);
 
         Connection conn = connect();
 
@@ -1669,7 +1637,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1677,8 +1645,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex){
-            //this is ok - we'll return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1790,7 +1756,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException {
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException, CentralRepoValidationException {
         return isValueInReferenceSet(hash, referenceSetID, CorrelationAttribute.FILES_TYPE_ID);
     }
 
@@ -1804,8 +1770,10 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return true if the value is found in the reference set
      */
     @Override
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException {
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CentralRepoValidationException {
 
+        value = CentralRepoDataValidator.validate(this.getCorrelationTypeById(correlationTypeID), value);
+        
         Connection conn = connect();
 
         Long matchingInstances = 0L;
@@ -1817,15 +1785,13 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(this.getCorrelationTypeById(correlationTypeID), value));
+            preparedStatement.setString(1, value);
             preparedStatement.setInt(2, referenceSetID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             matchingInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
             throw new EamDbException("Error determining if value (" + value + ") is in reference set " + referenceSetID, ex); // NON-NLS
-        } catch (CentralRepoValidationException ex) {
-            //this is ok - we'll just return false
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1844,11 +1810,10 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+        
+        value = CentralRepoDataValidator.validate(aType, value);
+        
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttribute.FILES_TYPE_ID) {
             return false;
@@ -1863,15 +1828,13 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(aType)));
-            preparedStatement.setString(1, CentralRepoDataValidator.validate(aType, value));
+            preparedStatement.setString(1, value);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
             throw new EamDbException("Error determining if artifact is notable by reference.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex) { 
-            //this is ok  - we'll return false
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -2448,10 +2411,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException {
-        if (aType == null) {
-            throw new EamDbException("Correlation type is null");
-        }
+    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException, CentralRepoValidationException {
+        aValue = CentralRepoDataValidator.validate(aType, aValue);
 
         Connection conn = connect();
 
@@ -2462,7 +2423,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement1 = conn.prepareStatement(String.format(sql1, EamDbUtil.correlationTypeToReferenceTableName(aType)));
-            preparedStatement1.setString(1, CentralRepoDataValidator.validate(aType, aValue));
+            preparedStatement1.setString(1, aValue);
             resultSet = preparedStatement1.executeQuery();
             while (resultSet.next()) {
                 globalFileInstances.add(getEamGlobalFileInstanceFromResultSet(resultSet));
@@ -2470,8 +2431,6 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         } catch (SQLException ex) {
             throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
-        } catch(CentralRepoValidationException ex) {
-            //this is ok - we'll return an empty set
         } finally {
             EamDbUtil.closeStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
