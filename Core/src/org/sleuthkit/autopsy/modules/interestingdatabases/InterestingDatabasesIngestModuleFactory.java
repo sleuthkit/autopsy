@@ -38,11 +38,15 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactoryAdapter {
 
-    @Override
-    public String getModuleDisplayName() {
+    static String getModuleName() {
         return Bundle.InterestingDatabasesIngestModule_FlagDatabases_moduleName();
     }
 
+    @Override
+    public String getModuleDisplayName() {
+        return getModuleName();
+    }
+    
     @Override
     public String getModuleDescription() {
         return Bundle.InterestingDatabasesIngestModule_FlagDatabases_moduleDesc_text();
@@ -62,5 +66,4 @@ public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactory
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new InterestingDatabasesIngestModule();
     }
-    
 }
