@@ -19,13 +19,10 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.datamodel.HashUtility;
 
 /**
  * Provides logic for selecting common files from all data sources and all cases
@@ -49,49 +46,6 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
     InterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
         dbManager = EamDb.getInstance();
-    }
-
-    /**
-     * @param artifactInstances all 'common files' in central repo
-     * @param commonValues matches must ultimately have appeared in this
-     * collection
-     * @return collated map of instance counts to lists of matches
-     */
-    Map<Integer, List<CommonAttributeValue>> gatherIntercaseResults(Map<Integer, String> commonValues, Map<Integer, Integer> commonFileCases) {
-
-        // keyis string of value
-        Map<String, CommonAttributeValue> interCaseCommonFiles = new HashMap<>();
-
-        for (int commonAttrId : commonValues.keySet()) {
-
-            String md5 = commonValues.get(commonAttrId);
-            if (md5 == null || HashUtility.isNoDataMd5(md5)) {
-                continue;
-            }
-
-            // we don't *have* all the information for the rows in the CR,
-            //  so we need to consult the present case via the SleuthkitCase object
-            // Later, when the FileInstanceNodde is built. Therefore, build node generators for now.
-
-            if (interCaseCommonFiles.containsKey(md5)) {
-                //Add to intercase metaData
-                final CommonAttributeValue commonAttributeValue = interCaseCommonFiles.get(md5);
-
-                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, this.getDataSourceIdToNameMap());
-                commonAttributeValue.addInstance(searchResult);
-
-            } else {
-                CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
-                interCaseCommonFiles.put(md5, commonAttributeValue);
-
-                AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(commonAttrId, this.getDataSourceIdToNameMap());
-                commonAttributeValue.addInstance(searchResult);
-            }
-        }
-
-        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(interCaseCommonFiles);
-
-        return instanceCollatedCommonFiles;
     }
 
     protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException {

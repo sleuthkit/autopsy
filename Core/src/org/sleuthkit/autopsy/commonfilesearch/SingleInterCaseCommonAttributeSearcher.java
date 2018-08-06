@@ -70,11 +70,9 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         return this.findFiles(cCase);
     }
 
-    protected CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
-        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = gatherIntercaseResults(eamDbAttrInst.getIntercaseCommonValuesMap(), eamDbAttrInst.getIntercaseCommonCasesMap());
+    CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
 
         return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
