@@ -52,13 +52,13 @@ public class SQLiteReader implements AutoCloseable {
      * Writes data source file contents to local disk and opens a sqlite JDBC
      * connection. 
      * 
-     * @param sqliteDbFile -- Data source abstract file
-     * @param localDiskPath -- Location for database contents to be copied to
-     * @throws ClassNotFoundException -- missing SQLite JDBC class
-     * @throws SQLException -- Exception opening JDBC connection
-     * @throws IOException -- Exception writing file contents
-     * @throws NoCurrentCaseException -- Current case closed during file copying
-     * @throws TskCoreException -- Exception finding files from abstract file
+     * @param sqliteDbFile Data source abstract file
+     * @param localDiskPath Location for database contents to be copied to
+     * @throws ClassNotFoundException missing SQLite JDBC class
+     * @throws SQLException Exception opening JDBC connection
+     * @throws IOException Exception writing file contents
+     * @throws NoCurrentCaseException Current case closed during file copying
+     * @throws TskCoreException Exception finding files from abstract file
      */
     public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws ClassNotFoundException, 
             SQLException, IOException, NoCurrentCaseException, TskCoreException{
@@ -70,11 +70,11 @@ public class SQLiteReader implements AutoCloseable {
     /**
      * Copies the data source file contents to local drive for processing.
      * 
-     * @param file -- AbstractFile from the data source 
-     * @param localDiskPath -- Local drive path to copy AbstractFile contents
-     * @throws IOException -- Exception writing file contents
-     * @throws NoCurrentCaseException -- Current case closed during file copying
-     * @throws TskCoreException -- Exception finding files from abstract file
+     * @param file AbstractFile from the data source 
+     * @param localDiskPath Local drive path to copy AbstractFile contents
+     * @throws IOException Exception writing file contents
+     * @throws NoCurrentCaseException Current case closed during file copying
+     * @throws TskCoreException Exception finding files from abstract file
      */
     private void writeDataSourceToLocalDisk(AbstractFile file, String localDiskPath) 
         throws IOException, NoCurrentCaseException, TskCoreException {
@@ -93,11 +93,11 @@ public class SQLiteReader implements AutoCloseable {
      * Searches for a meta file associated with the give SQLite database. If found,
      * copies the file to the local disk folder
      * 
-     * @param sqliteFile -- SQLIte db file being processed
-     * @param metaFileName -- name of meta file to look for
-     * @throws NoCurrentCaseException -- Case has been closed.
-     * @throws TskCoreException -- fileManager cannot find AbstractFile files.
-     * @throws IOException -- Issue during writing to file.
+     * @param sqliteFile SQLIte db file being processed
+     * @param metaFileName name of meta file to look for
+     * @throws NoCurrentCaseException Case has been closed.
+     * @throws TskCoreException fileManager cannot find AbstractFile files.
+     * @throws IOException Issue during writing to file.
      */
     private void findAndCopySQLiteMetaFile(AbstractFile sqliteFile,
             String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
@@ -125,10 +125,10 @@ public class SQLiteReader implements AutoCloseable {
      * Opens a JDBC connection to the sqlite database specified by the path
      * parameter.
      * 
-     * @param databasePath -- Local path of sqlite database
-     * @return Connection -- JDBC connection, to be maintained and closed by the reader
-     * @throws ClassNotFoundException -- missing SQLite JDBC class
-     * @throws SQLException -- Exception during opening database connection
+     * @param databasePath Local path of sqlite database
+     * @return Connection JDBC connection, to be maintained and closed by the reader
+     * @throws ClassNotFoundException missing SQLite JDBC class
+     * @throws SQLException Exception during opening database connection
      */
     private Connection getDatabaseConnection(String databasePath) 
             throws ClassNotFoundException, SQLException {
@@ -139,13 +139,13 @@ public class SQLiteReader implements AutoCloseable {
                 "jdbc:sqlite:" + databasePath); //NON-NLS
     }
     
+    
     /**
      * Retrieves a map view of table names to table schemas (in the form of
      * CREATE TABLE statments).
      * 
-     * @return Map<String, String> -- A map of table names to table schemas
-     * @throws SQLException -- occurs if resultSet is closed while attempting to
-     * getString() or next().
+     * @return A map of table names to table schemas
+     * @throws SQLException
      */
     public Map<String, String> getTableSchemas()
             throws SQLException {
@@ -172,8 +172,8 @@ public class SQLiteReader implements AutoCloseable {
      * Retrieves the total number of rows from a table in the SQLite database.
      * 
      * @param tableName
-     * @return Integer -- row count from tableName
-     * @throws SQLException -- occurs if ResultSet is closed before calling getInt().
+     * @return Row count from tableName
+     * @throws SQLException
      */
     public Integer getTableRowCount(String tableName) throws SQLException {
         try (Statement statement = connection.createStatement();
@@ -188,10 +188,9 @@ public class SQLiteReader implements AutoCloseable {
      * subset of rows are desired, see the overloaded function below.
      * 
      * @param tableName
-     * @return List<Map<String, Object>> -- List of rows, where each row is 
+     * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException -- occurs if ResultSet is closed before being used in
-     * resultSetToList function.
+     * @throws SQLException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws SQLException {
         
@@ -209,12 +208,11 @@ public class SQLiteReader implements AutoCloseable {
      * Retrieves a subset of the rows from a given table in the SQLite database.
      * 
      * @param tableName
-     * @param startRow -- Desired start index (rows begin at 1)
-     * @param numRowsToRead -- Number of rows past the start index
-     * @return List<Map<String, Object>> -- List of rows, where each row is 
+     * @param startRow Desired start index (rows begin at 1)
+     * @param numRowsToRead Number of rows past the start index
+     * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException -- occurs if ResultSet is closed before being used in
-     * resultSetToList function.
+     * @throws SQLException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
             int startRow, int numRowsToRead) throws SQLException{
@@ -232,10 +230,10 @@ public class SQLiteReader implements AutoCloseable {
      * Converts a ResultSet (row results from a table read) and converts 
      * them into a collection view. 
      * 
-     * @param resultSet -- row results from a table read
-     * @return List<Map<String, Object>> -- List of rows, where each row is 
+     * @param resultSet row results from a table read
+     * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException -- occurs if ResultSet is closed while attempting to 
+     * @throws SQLException occurs if ResultSet is closed while attempting to 
      * access it's data.
      */
     @NbBundle.Messages("SQLiteReader.BlobNotShown.message=BLOB Data not shown")
