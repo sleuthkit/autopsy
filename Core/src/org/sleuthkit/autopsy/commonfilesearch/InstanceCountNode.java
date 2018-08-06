@@ -57,7 +57,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
         this.instanceCount = instanceCount;
         this.attributeValues = attributeValues;
         
-        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), attributeValues.getMetadataList().size()));
+        this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), attributeValues.getCommonAttributeListSize()));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 

@@ -52,6 +52,10 @@ final public class CommonAttributeValueList {
     public List<CommonAttributeValue> getMetadataList() {
         return Collections.unmodifiableList(this.metadataList);
     }
+    
+    public int getCommonAttributeListSize() {
+        return  this.delayedMetadataList.size();
+    }
 
     public void displayDelayedMetadata() {
         if (metadataList.isEmpty()) {
