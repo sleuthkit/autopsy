@@ -166,8 +166,8 @@ class SevenZipExtractor {
      * @param inArchive       The SevenZip archive currently open for extraction
      * 
      * @param inArchiveItemIndex Index of item inside the SevenZip archive. Each 
-     *                           file inside an archive is assocaited with a unique 
-     *                           integer.
+     *                           file inside an archive is associated with a unique 
+     *                           integer
      * 
      * @param depthMap        a concurrent hashmap which keeps track of the
      *                        depth of all nested archives, key of objectID
@@ -1023,8 +1023,8 @@ class SevenZipExtractor {
         }
 
         /**
-         * Retrieves the archive metadata before extraction. Called by the 
-         * internal framework after getStream call for the current index. 
+         * Retrieves the file metadata from the archive before extraction. 
+         * Called after getStream.
          * 
          * @param mode Will always be EXTRACT.
          * @throws SevenZipException 
@@ -1047,9 +1047,8 @@ class SevenZipExtractor {
         }
 
         /**
-         * Updates the unpackedNode data in the tree, after the archive has been
-         * expanded to local disk. The map supplies reference to the correct file
-         * path location and corresponding unpackedNode. 
+         * Updates the unpackedNode data in the tree after the archive has been
+         * expanded to local disk. 
          *
          * @param EOR - ExtractOperationResult 
          *
