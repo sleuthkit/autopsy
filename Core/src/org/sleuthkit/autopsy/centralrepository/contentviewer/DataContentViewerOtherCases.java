@@ -960,7 +960,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         /**
          * Get the type of this UniquePathKey.
-         * 
+         *
          * @return the type
          */
         String getType() {
@@ -969,7 +969,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         /**
          * Get the file path for the UniquePathKey.
-         * 
+         *
          * @return the filePath
          */
         String getFilePath() {
@@ -978,7 +978,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         /**
          * Get the data source id for the UniquePathKey.
-         * 
+         *
          * @return the dataSourceID
          */
         String getDataSourceID() {
