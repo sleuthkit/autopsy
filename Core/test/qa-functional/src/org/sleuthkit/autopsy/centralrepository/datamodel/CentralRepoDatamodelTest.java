@@ -899,14 +899,15 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         }
 
-        // Test getting instances expecting no results
+        // Test getting instances with mismatched data / data-type and expect an exception
         try {
-            List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(
-                    emailType, inAllDataSourcesHash);
-            assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
-        } catch (EamDbException | CentralRepoValidationException ex) {
+            EamDb.getInstance().getArtifactInstancesByTypeValue(emailType, inAllDataSourcesHash);
+            fail("we should get an exception");
+        } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
+        } catch (CentralRepoValidationException ex){
+            //this is expected
         }
 
         // Test getting instances with null type
@@ -1059,10 +1060,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().getFrequencyPercentage(null);
             fail("getFrequencyPercentage failed to throw exception for null attribute");
         } catch (EamDbException ex) {
+            // This is the expected behavior
+        } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CentralRepoValidationException ex) {
-            // This is the expected behavior
         }
         
         // Test updating a correlation attribute instance comment
@@ -1732,10 +1733,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             new EamGlobalFileInstance(notableSet1id, null, TskData.FileKnown.BAD, "comment");
             fail("EamGlobalFileInstance failed to throw exception for null hash");
         } catch (EamDbException ex) {
-            // This is the expected behavior
-        } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
+        } catch (CentralRepoValidationException ex) {
+            // This is the expected behavior
         }
 
         // Test adding file instance with null known status
@@ -1943,10 +1944,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().isValueInReferenceSet(knownHash1, knownSet1id, emailType.getId());
             fail("isValueInReferenceSet failed to throw exception for invalid type");
         } catch (EamDbException ex) {
-            // This is the expected behavior
-        } catch (CentralRepoValidationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
+        } catch (CentralRepoValidationException ex) {
+            // This is the expected behavior
         }
 
         // Test known bad with notable data
