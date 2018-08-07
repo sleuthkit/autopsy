@@ -28,6 +28,8 @@ import org.openide.util.NbBundle.Messages;
  */
 public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
+    private static final long serialVersionUID = 1L;
+
     @Messages({"DataContentViewerOtherCasesTableModel.case=Case",
         "DataContentViewerOtherCasesTableModel.device=Device",
         "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
@@ -66,7 +68,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    List<OtherOccurrenceNodeData> nodeDataList;
+    private final List<OtherOccurrenceNodeData> nodeDataList;
 
     DataContentViewerOtherCasesTableModel() {
         nodeDataList = new ArrayList<>();
@@ -118,7 +120,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     /**
      * Map a column ID to the value in that cell for node message data.
      *
-     * @param nodeData    The node message data.
+     * @param nodeData The node message data.
      * @param columnId The ID of the cell column.
      *
      * @return The value in the cell.
@@ -133,7 +135,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     /**
      * Map a column ID to the value in that cell for node instance data.
      *
-     * @param nodeData    The node instance data.
+     * @param nodeData The node instance data.
      * @param columnId The ID of the cell column.
      *
      * @return The value in the cell.

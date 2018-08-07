@@ -922,7 +922,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Used as a key to ensure we eliminate duplicates from the result set by
      * not overwriting CR correlation instances.
      */
-    static final class UniquePathKey {
+    private static final class UniquePathKey {
 
         private final String dataSourceID;
         private final String filePath;
@@ -943,9 +943,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         public boolean equals(Object other) {
             if (other instanceof UniquePathKey) {
                 UniquePathKey otherKey = (UniquePathKey) (other);
-                return (Objects.equals(otherKey.dataSourceID, this.dataSourceID)
-                        && Objects.equals(otherKey.filePath, this.filePath)
-                        && Objects.equals(otherKey.type, this.type));
+                return (Objects.equals(otherKey.getDataSourceID(), this.getDataSourceID())
+                        && Objects.equals(otherKey.getFilePath(), this.getFilePath())
+                        && Objects.equals(otherKey.getType(), this.getType()));
             }
             return false;
         }
@@ -955,7 +955,34 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             //int hash = 7;
             //hash = 67 * hash + this.dataSourceID.hashCode();
             //hash = 67 * hash + this.filePath.hashCode();
-            return Objects.hash(dataSourceID, filePath, type);
+            return Objects.hash(getDataSourceID(), getFilePath(), getType());
+        }
+
+        /**
+         * Get the type of this UniquePathKey.
+         * 
+         * @return the type
+         */
+        String getType() {
+            return type;
+        }
+
+        /**
+         * Get the file path for the UniquePathKey.
+         * 
+         * @return the filePath
+         */
+        String getFilePath() {
+            return filePath;
+        }
+
+        /**
+         * Get the data source id for the UniquePathKey.
+         * 
+         * @return the dataSourceID
+         */
+        String getDataSourceID() {
+            return dataSourceID;
         }
     }
 
