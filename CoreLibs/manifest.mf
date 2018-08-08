@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 OpenIDE-Module: org.sleuthkit.autopsy.corelibs/3
-OpenIDE-Module-Implementation-Version: 4
+OpenIDE-Module-Implementation-Version: 5
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/corelibs/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.1
+OpenIDE-Module-Specification-Version: 1.2
 AutoUpdate-Show-In-Client: true
 AutoUpdate-Essential-Module: true
 
