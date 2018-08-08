@@ -139,7 +139,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             selectedNode.updateComment(action.getComment());
                             otherCasesTable.repaint();
                         }
-                    } catch (CentralRepoValidationException ex) {
+                    } catch (EamDbException | CentralRepoValidationException ex) {
                         logger.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);	//NON-NLS
                     }
                 }
