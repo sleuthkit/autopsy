@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.interestingdatabases;
+package org.sleuthkit.autopsy.modules.databaseselector;
 
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.openide.util.NbBundle;
@@ -27,19 +27,18 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- *
- * @author dsmyda
+ * A factory that creates a DatabaseSelectorModule to parse database files and 
+ * mark them as having interesting records (emails, phone numbers, mac addresses, gps coordinates).
  */
-
 @NbBundle.Messages({
-    "InterestingDatabasesIngestModuleFactory.FlagDatabases.moduleName=Interesting Databases",
-    "InterestingDatabasesIngestModuleFactory.FlagDatabases.moduleDesc.text=Flags databases with interesting items (emails, phone numbers, gps coordinates, ip/mac addresses)"
+    "DatabaseSelectorIngestModuleFactory.FlagDatabases.moduleName=Database Selector",
+    "DatabaseSelectorIngestModuleFactory.FlagDatabases.moduleDesc.text=Flag databases with interesting items (emails, phone numbers, gps coordinates, ip/mac addresses)"
 })
 @ServiceProvider(service = IngestModuleFactory.class)
-public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactoryAdapter {
+public class DatabaseSelectorIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return Bundle.InterestingDatabasesIngestModuleFactory_FlagDatabases_moduleName();
+        return Bundle.DatabaseSelectorIngestModuleFactory_FlagDatabases_moduleName();
     }
 
     @Override
@@ -49,7 +48,7 @@ public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactory
     
     @Override
     public String getModuleDescription() {
-        return Bundle.InterestingDatabasesIngestModuleFactory_FlagDatabases_moduleDesc_text();
+        return Bundle.DatabaseSelectorIngestModuleFactory_FlagDatabases_moduleDesc_text();
     }
 
     @Override
@@ -64,6 +63,6 @@ public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactory
     
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new InterestingDatabasesIngestModule();
+        return new DatabaseSelectorIngestModule();
     }
 }

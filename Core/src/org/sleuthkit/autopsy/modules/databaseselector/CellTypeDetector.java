@@ -16,18 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.interestingdatabases;
+package org.sleuthkit.autopsy.modules.databaseselector;
+
+import org.apache.commons.validator.routines.EmailValidator;
 
 /**
- * 
- * @author dsmyda
+ * Determines the type of a database cell (EMAIL, PHONE, GPS COORD, MAC ADDRESS)
  */
 public class CellTypeDetector {
+    
+    private final EmailValidator emailValidator;
 
-    public CellTypeDetector() {     
+    public CellTypeDetector() {
+        emailValidator = EmailValidator.getInstance();
     }
     
     public CellType getType(String cell) {
-        return CellType.EMAIL;
+        if(emailValidator.isValid(cell)) {
+            return CellType.EMAIL;
+        } else {
+            return CellType.NOT_INTERESTING;
+        }
     } 
 }
