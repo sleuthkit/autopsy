@@ -32,14 +32,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 
 @NbBundle.Messages({
-    "InterestingDatabasesIngestModule.FlagDatabases.moduleName=Interesting Databases",
-    "InterestingDatabasesIngestModule.FlagDatabases.moduleDesc.text=Flags databases with interesting items (emails, phone numbers, gps coordinates, ip/mac addresses)"
+    "InterestingDatabasesIngestModuleFactory.FlagDatabases.moduleName=Interesting Databases",
+    "InterestingDatabasesIngestModuleFactory.FlagDatabases.moduleDesc.text=Flags databases with interesting items (emails, phone numbers, gps coordinates, ip/mac addresses)"
 })
 @ServiceProvider(service = IngestModuleFactory.class)
 public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return Bundle.InterestingDatabasesIngestModule_FlagDatabases_moduleName();
+        return Bundle.InterestingDatabasesIngestModuleFactory_FlagDatabases_moduleName();
     }
 
     @Override
@@ -49,7 +49,7 @@ public class InterestingDatabasesIngestModuleFactory extends IngestModuleFactory
     
     @Override
     public String getModuleDescription() {
-        return Bundle.InterestingDatabasesIngestModule_FlagDatabases_moduleDesc_text();
+        return Bundle.InterestingDatabasesIngestModuleFactory_FlagDatabases_moduleDesc_text();
     }
 
     @Override

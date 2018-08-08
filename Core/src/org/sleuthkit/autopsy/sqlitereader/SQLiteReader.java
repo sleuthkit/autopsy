@@ -31,12 +31,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -44,9 +47,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Reads rows from SQLite tables and returns results in a list collection.
  */
+@NbBundle.Messages({
+    "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
+})
 public class SQLiteReader implements AutoCloseable {
     
     private final Connection connection;
+    private final IngestServices services = IngestServices.getInstance();
+    private final Logger logger = services.getLogger(Bundle.SQLiteReader_ReadSQLiteFiles_moduleName());
     
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC
@@ -260,13 +268,18 @@ public class SQLiteReader implements AutoCloseable {
         return rowMap;
     }
 
+    
     /**
      * Closes underlying JDBC connection.
      * 
      * @throws SQLException 
      */
     @Override
-    public void close() throws SQLException {
-        connection.close();
+    public void close() {
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "Could not close JDBC connection", ex);
+        }
     }
 }

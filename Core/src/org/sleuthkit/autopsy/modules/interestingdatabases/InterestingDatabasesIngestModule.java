@@ -21,16 +21,28 @@ package org.sleuthkit.autopsy.modules.interestingdatabases;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -40,14 +52,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class InterestingDatabasesIngestModule extends FileIngestModuleAdapter {
 
     private static final String SUPPORTED_MIME_TYPE = "application/x-sqlite3";
+    private static final String MODULE_NAME = InterestingDatabasesIngestModuleFactory.getModuleName();
     
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(
             InterestingDatabasesIngestModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
+    private CellTypeDetector cellTypeDetector;
     
-    private String localDiskPath;
-    private SQLiteReader sqliteReader;
+    private Blackboard blackboard;
     
     /**
      * 
@@ -61,6 +74,7 @@ public class InterestingDatabasesIngestModule extends FileIngestModuleAdapter {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
             fileTypeDetector = new FileTypeDetector();
+            cellTypeDetector = new CellTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
@@ -72,54 +86,150 @@ public class InterestingDatabasesIngestModule extends FileIngestModuleAdapter {
      * @return 
      */
     @Override
+    @NbBundle.Messages({
+        "InterestingDatabasesIngestModule.indexError.message=Failed to index interesting artifact hit for keyword search."
+    })
     public ProcessResult process(AbstractFile file) {
+        try {
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();        
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            return ProcessResult.ERROR;
+        }
+        
         String dataSourceMimeType = fileTypeDetector.getMIMEType(file);
         if(SUPPORTED_MIME_TYPE.equals(dataSourceMimeType)) {
             
-            if(successfulDependencyInitialization(file)) {
-                
-            } else {
+            String localDiskPath;
+            try {
+                localDiskPath = Case.getCurrentCaseThrows()
+                        .getTempDirectory() + File.separator + file.getName();
+            } catch (NoCurrentCaseException ex) {
+                // TODO -- personal note log about current case being closed or
+                 //current case not existing.
+                Exceptions.printStackTrace(ex);
                 return ProcessResult.ERROR;
+            }
+            
+            
+            try (SQLiteReader sqliteReader = 
+                    new SQLiteReader(file, localDiskPath)){
+                
+                Set<CellType> aggregatedCellTypes = cellTypesInDatabase(sqliteReader);
+                String cellTypesMessage = aggregatedCellTypes.toString()
+                        .replace("]", "")
+                        .replace("[", "");
+                
+                try {
+                    BlackboardArtifact artifact = createArtifactGivenCellTypes(
+                        file, cellTypesMessage);   
+                    
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(artifact);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, 
+                                "Unable to index blackboard artifact " + //NON-NLS 
+                                        artifact.getArtifactID(), ex);
+                        MessageNotifyUtil.Notify.error(
+                                Bundle.InterestingDatabasesIngestModule_indexError_message(), 
+                                artifact.getDisplayName());
+                    }
+                    
+                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, 
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, 
+                        Collections.singletonList(artifact)));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N NON-NLS
+                }
+                
+            } catch (SQLException ex) {
+                //Could be thrown in init or close.. need to fix.
+                Exceptions.printStackTrace(ex);
+            } catch (ClassNotFoundException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (NoCurrentCaseException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
             }
         }
         
         return ProcessResult.OK;
     }
     
-    private boolean successfulDependencyInitialization(AbstractFile file) {
-        return createLocalDiskPath(file) == ProcessResult.OK && 
-                initalizeSQLiteReader(file) == ProcessResult.OK;
-    }
-    
-    private ProcessResult createLocalDiskPath(AbstractFile file) {
-        try {
-            localDiskPath = Case.getCurrentCaseThrows()
-                    .getTempDirectory() + File.separator + file.getName();
-        } catch (NoCurrentCaseException ex) {
-            // TODO -- personal note log about current case being closed or
-             //current case not existing.
-             return ProcessResult.ERROR;
+    /**
+     * 
+     * @param sqliteReader
+     * @return
+     * @throws SQLException 
+     */
+    private Set<CellType> cellTypesInDatabase(SQLiteReader sqliteReader) throws SQLException {
+        Map<String, String> tables = sqliteReader.getTableSchemas();    
+        Set<CellType> aggregateCellTypes = new TreeSet<>();
+
+        //Aggregate all cell types from each table
+        for(String tableName : tables.keySet()) {
+            addCellTypesInTable(sqliteReader, tableName, aggregateCellTypes);
         }
         
-        return ProcessResult.OK;
+        return aggregateCellTypes;
     }
     
-    private ProcessResult initalizeSQLiteReader(AbstractFile file) {
-        try {
-            sqliteReader = new SQLiteReader(file, localDiskPath);
-            return ProcessResult.OK;
-        } catch (ClassNotFoundException ex) {
-            //TODO add logging messages for this.
-        } catch (SQLException ex) {
-            //TODO add logging messages for this.
-        } catch (IOException ex) {
-            //TODO add logging messages for this.
-        } catch (NoCurrentCaseException ex) {
-            //TODO add logging messages for this.
-        } catch (TskCoreException ex) {
-            //TODO add logging messages for this.
-        }
-        return ProcessResult.ERROR;
+    /**
+     * 
+     * @param sqliteReader
+     * @param table
+     * @return 
+     */
+    private void addCellTypesInTable(SQLiteReader sqliteReader, String tableName, 
+            Set<CellType> aggregateCellTypes) throws SQLException {
+
+        List<Map<String, Object>> tableValues = sqliteReader.getRowsFromTable(tableName);
+        tableValues.forEach((row) -> {
+            addCellTypeInRow(row, aggregateCellTypes);
+        });
+    }
+    
+    /**
+     * 
+     * @param row
+     * @return 
+     */
+    private void addCellTypeInRow(Map<String, Object> row, 
+            Set<CellType> aggregateCellTypes) {
+        row.values().forEach((Object cell) -> {
+            if(cell instanceof String) {
+                aggregateCellTypes.add(cellTypeDetector.getType( (String) cell));
+            }
+        });
+    }
+    
+    /**
+     * 
+     * @param type 
+     */
+    @NbBundle.Messages({
+        "InterestingDatabasesIngestModule.FlagDatabases.setName=Selectors identified"
+    })
+    private BlackboardArtifact createArtifactGivenCellTypes(AbstractFile file, 
+            String cellTypesMessage) throws TskCoreException {
+        BlackboardArtifact artifact = file.newArtifact(
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+        
+        BlackboardAttribute setNameAttribute = new BlackboardAttribute(
+                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, 
+                Bundle.InterestingDatabasesIngestModule_FlagDatabases_setName());
+        artifact.addAttribute(setNameAttribute);
+
+        BlackboardAttribute commentAttribute = new BlackboardAttribute(
+                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, 
+                cellTypesMessage);
+        artifact.addAttribute(commentAttribute);
+        
+        return artifact;
     }
     
     /**
@@ -127,10 +237,6 @@ public class InterestingDatabasesIngestModule extends FileIngestModuleAdapter {
      */
     @Override
     public void shutDown() {
-        
-    }
-
-    private void createArtifact() {
         
     }
 }
