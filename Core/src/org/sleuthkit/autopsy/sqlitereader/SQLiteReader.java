@@ -270,15 +270,14 @@ public class SQLiteReader implements AutoCloseable {
 
     
     /**
-     * Closes underlying JDBC connection.
-     * 
-     * @throws SQLException 
+     * Closes underlying JDBC connection. 
      */
     @Override
     public void close() {
         try {
             connection.close();
         } catch (SQLException ex) {
+            //Non-essential exception, 
             logger.log(Level.WARNING, "Could not close JDBC connection", ex);
         }
     }

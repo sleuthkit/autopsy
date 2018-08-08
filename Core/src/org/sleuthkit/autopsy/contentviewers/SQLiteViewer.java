@@ -339,12 +339,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         // close DB connection to file
         if (null != sqliteReader) {
-            try {
-                sqliteReader.close();
-                sqliteReader = null;
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
-            }
+            sqliteReader.close();
+            sqliteReader = null;
         }
         
         sqliteDbFile = null;
