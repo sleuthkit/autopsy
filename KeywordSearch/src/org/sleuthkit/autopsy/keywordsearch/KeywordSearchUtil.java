@@ -136,9 +136,9 @@ class KeywordSearchUtil {
                 query.escape();
             } // literal, substring match
             else {
-                query = new TermsComponentQuery(keywordList, keyword);
-                query.escape();
-                query.setSubstringQuery();
+                query = new RegexQuery(keywordList, keyword);
+                //DLG: query.escape();
+                ((RegexQuery)query).setSubstringQuery();
             }
         } // regexp
         else {

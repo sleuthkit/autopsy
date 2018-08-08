@@ -391,8 +391,12 @@ final class RegexQuery implements KeywordSearchQuery {
         this.field = field;
     }
 
-    @Override
+    /**
+     * Adds wild cards to the search term for the query, which makes the query a
+     * substring search.
+     */
     public void setSubstringQuery() {
+        escapedQuery = ".*" + escapedQuery + ".*";
     }
 
     @Override

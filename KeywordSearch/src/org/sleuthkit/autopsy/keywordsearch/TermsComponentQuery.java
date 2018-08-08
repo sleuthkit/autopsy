@@ -185,15 +185,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     }
 
     /**
-     * Adds wild cards to the search term for the query, which makes the query a
-     * substring search, if it is a literal search term.
-     */
-    @Override
-    public void setSubstringQuery() {
-        searchTerm = ".*" + searchTerm + ".*";
-    }
-
-    /**
      * Escapes the search term for the query.
      */
     @Override
