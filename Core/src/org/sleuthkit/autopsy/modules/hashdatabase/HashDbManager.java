@@ -39,6 +39,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -1238,8 +1239,8 @@ public class HashDbManager implements PropertyChangeListener {
                         EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
                             type, comment);
                         EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
-                    } catch (EamDbException ex){
-                        throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
+                    } catch (EamDbException | CorrelationAttributeNormalizationException ex){
+                        throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);	//NON-NLS
                     }
                 }
             }
@@ -1264,7 +1265,7 @@ public class HashDbManager implements PropertyChangeListener {
                 }       
                 try {
                     globalFileInstances.add(new EamGlobalFileInstance(referenceSetID, hashEntry.getMd5Hash(), type, hashEntry.getComment()));
-                } catch (EamDbException ex){
+                } catch (EamDbException | CorrelationAttributeNormalizationException ex){
                     throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
                 }
             }
@@ -1295,7 +1296,7 @@ public class HashDbManager implements PropertyChangeListener {
                 if (null != file.getMd5Hash()) {
                     try{
                         return EamDb.getInstance().isFileHashInReferenceSet(file.getMd5Hash(), this.referenceSetID);
-                    } catch (EamDbException ex){
+                    } catch (EamDbException | CorrelationAttributeNormalizationException ex){
                         Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup for hash "
                                 + file.getMd5Hash() + " in reference set " + referenceSetID, ex); //NON-NLS
                         throw new TskCoreException("Error performing central reposiotry hash lookup", ex);
@@ -1327,7 +1328,7 @@ public class HashDbManager implements PropertyChangeListener {
                             // Make a bare-bones HashHitInfo for now
                             result = new HashHitInfo(file.getMd5Hash(), "", "");
                         }
-                    } catch (EamDbException ex){
+                    } catch (EamDbException | CorrelationAttributeNormalizationException ex){
                         Logger.getLogger(SleuthkitHashSet.class.getName()).log(Level.SEVERE, "Error performing central reposiotry hash lookup for hash "
                                 + file.getMd5Hash() + " in reference set " + referenceSetID, ex); //NON-NLS
                         throw new TskCoreException("Error performing central reposiotry hash lookup", ex);

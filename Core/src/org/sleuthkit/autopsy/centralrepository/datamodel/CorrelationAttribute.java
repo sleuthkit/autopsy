@@ -66,14 +66,10 @@ public class CorrelationAttribute implements Serializable {
         return DEFAULT_CORRELATION_TYPES;
     }
 
-    public CorrelationAttribute(Type correlationType, String correlationValue) throws EamDbException {
-        if(correlationValue == null) { 
-            throw new EamDbException ("Correlation value is null");
-        }
+    public CorrelationAttribute(Type correlationType, String correlationValue) throws CorrelationAttributeNormalizationException {
         this.ID = "";
         this.correlationType = correlationType;
-        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
-        this.correlationValue = correlationValue.toLowerCase();
+        this.correlationValue = CorrelationAttributeNormalizer.normalize(correlationType, correlationValue);
         this.artifactInstances = new ArrayList<>();
     }
 
@@ -117,11 +113,16 @@ public class CorrelationAttribute implements Serializable {
     }
 
     /**
+     * Set the correlation value.  Requires that the correlation type has already
+     * been set (for data normalization purposes).
+     * 
      * @param correlationValue the correlationValue to set
      */
-    public void setCorrelationValue(String correlationValue) {
-        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
-        this.correlationValue = correlationValue.toLowerCase();
+    public void setCorrelationValue(String correlationValue) throws CorrelationAttributeNormalizationException {
+        if(this.getCorrelationType() == null){
+            throw new IllegalStateException("Correlation Type must be set before calling setCorrelationValue");
+        }
+        this.correlationValue = CorrelationAttributeNormalizer.normalize(this.getCorrelationType(), correlationValue);
     }
 
     /**

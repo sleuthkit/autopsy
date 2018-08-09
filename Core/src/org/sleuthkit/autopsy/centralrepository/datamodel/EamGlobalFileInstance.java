@@ -36,7 +36,7 @@ public class EamGlobalFileInstance {
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) throws EamDbException {
+            String comment) throws EamDbException, CorrelationAttributeNormalizationException {
         this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
 
@@ -45,17 +45,14 @@ public class EamGlobalFileInstance {
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) throws EamDbException {
-        if(MD5Hash == null){
-            throw new EamDbException("null MD5 hash");
-        }
+            String comment) throws EamDbException, CorrelationAttributeNormalizationException {
+
         if(knownStatus == null){
             throw new EamDbException("null known status");
         }
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
-        // Normalize hashes by lower casing
-        this.MD5Hash = MD5Hash.toLowerCase();
+        this.MD5Hash = CorrelationAttributeNormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
         this.knownStatus = knownStatus;
         this.comment = comment;
     }
@@ -117,12 +114,8 @@ public class EamGlobalFileInstance {
     /**
      * @param MD5Hash the MD5Hash to set
      */
-    public void setMD5Hash(String MD5Hash) throws EamDbException {
-        if(MD5Hash == null){
-            throw new EamDbException("null MD5 hash");
-        }
-        // Normalize hashes by lower casing
-        this.MD5Hash = MD5Hash.toLowerCase();
+    public void setMD5Hash(String MD5Hash) throws CorrelationAttributeNormalizationException {
+        this.MD5Hash = CorrelationAttributeNormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
     }
 
     /**

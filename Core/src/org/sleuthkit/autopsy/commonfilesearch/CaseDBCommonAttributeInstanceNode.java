@@ -20,18 +20,18 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Used by the Common Files search feature to encapsulate instances of a given 
- MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
+ * Node that wraps CaseDBCommonAttributeInstance to represent a file instance stored
+ * in the CaseDB. 
  */
-public class FileInstanceNode extends FileNode {
+public class CaseDBCommonAttributeInstanceNode extends FileNode {
     
+    private final String caseName;
     private final String dataSource;
 
     /**
@@ -41,11 +41,10 @@ public class FileInstanceNode extends FileNode {
      * @param fsContent
      * @param dataSource 
      */
-    public FileInstanceNode(AbstractFile fsContent, String dataSource) {
+    public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
         super(fsContent);
+        this.caseName = caseName;
         this.dataSource = dataSource;
-        
-        this.setDisplayName(fsContent.getName());
     }
 
     @Override
@@ -59,11 +58,14 @@ public class FileInstanceNode extends FileNode {
         return visitor.visit(this);
     }
 
-    String getDataSource() {
+    public String getCase(){
+        return this.caseName;
+    }
+    
+    public String getDataSource() {
         return this.dataSource;
     }
 
-    @NbBundle.Messages({"FileInstanceNode.createSheet.noDescription= "})
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -73,7 +75,7 @@ public class FileInstanceNode extends FileNode {
             sheet.put(sheetSet);
         }
 
-        final String NO_DESCR = Bundle.FileInstanceNode_createSheet_noDescription();
+        final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
