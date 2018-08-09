@@ -24,7 +24,7 @@ errorLog () {
   exit 1
 }
 
-Verify we can find the script
+#Verify we can find the script
 if [[ -x "$AUTOPSY_BIN" ]]; then
  infoLog "Autopsy found"
 else
@@ -66,7 +66,11 @@ showAndReadOptions () {
     echo [$x] "${word}"
     x=$((x + 1))
   done
-  read option
+  read -n 1 option
+  if [[ $option = "" ]] || ! [[ "$option" =~ ^[0-9]+$ ]]; then
+	echo "Please choose a valid option"
+	showAndReadOptions
+  fi
 }
 
 
