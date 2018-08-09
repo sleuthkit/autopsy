@@ -87,12 +87,14 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
     private static boolean isEamDbAvailable() {
         try {
-            return (EamDb.isEnabled() && 
-                    EamDb.getInstance() != null && 
+            final boolean conditions = EamDb.isEnabled() && 
+                    EamDb.getInstance() != null &&
                     EamDb.getInstance().getCases().size() > 1 && 
                     Case.isCaseOpen() &&
-                    Case.getCurrentCase() != null && 
-                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null);
+                    Case.getCurrentCase() != null &&
+                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
+            
+            return conditions;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
