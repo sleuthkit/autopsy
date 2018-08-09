@@ -184,6 +184,7 @@ public class SQLiteReader implements AutoCloseable {
      * @throws SQLException
      */
     public Integer getTableRowCount(String tableName) throws SQLException {
+        tableName = wrapTableNameStringWithQuotes(tableName);
         try (Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT count (*) as count FROM " + tableName)){ //NON-NLS
@@ -201,10 +202,10 @@ public class SQLiteReader implements AutoCloseable {
      * @throws SQLException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws SQLException {
-        
         //This method does not directly call its overloaded counterpart 
         //since the second parameter would need to be retreived from a call to
         //getTableRowCount().
+        tableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT * FROM " + tableName)) { //NON-NLS
@@ -224,7 +225,7 @@ public class SQLiteReader implements AutoCloseable {
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
             int startRow, int numRowsToRead) throws SQLException{
-        
+        tableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT * FROM " + tableName    //NON-NLS
@@ -232,6 +233,18 @@ public class SQLiteReader implements AutoCloseable {
                         + " OFFSET " + Integer.toString(startRow - 1))) { //NON-NLS
             return resultSetToList(resultSet);
         }
+    }
+    
+    /**
+     * Wraps table name with quotation marks in case table name contains spaces. 
+     * sqliteJDBC cannot read table names with spaces in them unless surrounded 
+     * by quotation marks.
+     * 
+     * @param tableName
+     * @return Input name: Result Table -> "Result Table"
+     */
+    private String wrapTableNameStringWithQuotes(String tableName) {
+        return "\"" + tableName +"\"";
     }
     
     /**
@@ -277,7 +290,8 @@ public class SQLiteReader implements AutoCloseable {
         try {
             connection.close();
         } catch (SQLException ex) {
-            //Non-essential exception, 
+            //Non-essential exception, user has no need for the connection 
+            //object at this stage so closing details are not important
             logger.log(Level.WARNING, "Could not close JDBC connection", ex);
         }
     }

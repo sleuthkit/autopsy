@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -62,59 +61,57 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
     private CellTypeDetector cellTypeDetector;
     
     private Blackboard blackboard;
-    private String localDiskPath;
     
     
     @NbBundle.Messages({
-        "DatabaseSelectorIngestModule.CannotRunFileTypeDetection=Unable to initialize file type detection.",
+        "DatabaseSelectorIngestModule.CannotRunFileTypeDetection="
+                + "Unable to initialize file type detection.",
+        "DatabaseSelectorIngestModule.CannotGetBlackboard="
+                + "Exception while attempting to get Blackboard from current case."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
             fileTypeDetector = new FileTypeDetector();
-            cellTypeDetector = new CellTypeDetector();
         } catch (FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.DatabaseSelectorIngestModule_CannotRunFileTypeDetection(), ex);
         }
+        
+        cellTypeDetector = new CellTypeDetector();
+        
+        try {
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.DatabaseSelectorIngestModule_CannotGetBlackboard(), ex);
+        }          
     }
     
     @Override
     public ProcessResult process(AbstractFile file) {
-        if(getBlackboardInstanceFromServices().equals(ProcessResult.ERROR)) {
-            return ProcessResult.ERROR;
-        }
-        
-        //Qualify the MIMEType
+        //Qualify the MIMEType, only process sqlite files.
         String dataSourceMimeType = fileTypeDetector.getMIMEType(file);
-        if(SUPPORTED_MIME_TYPE.equals(dataSourceMimeType)) {
-            if(createLocalDiskPathFromCurrentCase(file).equals(ProcessResult.ERROR)) {
-                return ProcessResult.ERROR;
-            }
-            
-            try (SQLiteReader sqliteReader = new SQLiteReader(file, localDiskPath)){
+        if(!dataSourceMimeType.equals(SUPPORTED_MIME_TYPE)) {
+            return ProcessResult.OK;
+        }
+
+        try (SQLiteReader sqliteReader = new SQLiteReader(file, createLocalDiskPath(file))){
+            Set<CellType> databaseCellTypes = getCellTypesInDatabase(file, sqliteReader);
+            //No interesting hits, don't flag this database, skip artifact creation.
+            if(!databaseCellTypes.isEmpty()) {
+                String cellTypesComment = createCellTypeCommentString(databaseCellTypes);
                 try {
-                    Set<CellType> databaseCellTypes = getCellTypesInDatabase(sqliteReader);
-                    //No interesting hits, don't flag this database, skip artifact creation.
-                    if(!databaseCellTypes.isEmpty()) {
-                        String cellTypesComment = createCellTypeCommentString(databaseCellTypes);
-                        try {
-                            BlackboardArtifact artifact = createArtifactGivenCellTypes(
-                                file, cellTypesComment);   
-                            indexArtifactAndFireModuleDataEvent(artifact);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
-                        } 
-                    }
-                } catch(SQLException ex) {
-                    logger.log(Level.WARNING, "Error attempting to read sqlite "
-                            + "file in DatabaseSelectorIngestModule", ex);
-                }    
-            } catch (ClassNotFoundException | SQLException | IOException | 
-                    NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Cannot initialize sqliteReader class "
-                        + "in DatabaseSelectorIngestModule", ex);
-                return ProcessResult.ERROR;
-            }
+                    BlackboardArtifact artifact = createArtifactGivenCellTypes(
+                        file, cellTypesComment);   
+                    indexArtifactAndFireModuleDataEvent(artifact);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
+                } 
+            } 
+        } catch (ClassNotFoundException | SQLException | IOException | 
+                NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Cannot initialize sqliteReader class " //NON-NLS
+                    + "in DatabaseSelectorIngestModule for file [%s]", file.getName()), ex); //NON-NLS
+            return ProcessResult.ERROR;
         }
         
         //Whether we successfully read the sqlite database or determined the mime
@@ -123,57 +120,48 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
     }
     
     /**
-     * Get a pointer to the current case blackboard for indexing of artifacts
-     * 
-     * @return ProcessResult indicating a success or failure in getting current case
-     */
-    private ProcessResult getBlackboardInstanceFromServices() {
-        try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            return ProcessResult.ERROR;
-        }
-        
-        return ProcessResult.OK;      
-    }
-    
-    /**
      * Generates a local disk path for abstract file contents to be copied.
      * All database sources must be copied to local disk to be opened by 
      * SQLiteReader
      * 
      * @param file The database abstract file
-     * @return ProcessResult indicating a success or failure in creating a disk path
+     * @return Valid local path for copying
+     * @throws NoCurrentCaseException if the current case has been closed.
      */
-    private ProcessResult createLocalDiskPathFromCurrentCase(AbstractFile file) {
-        try {
-            localDiskPath = Case.getCurrentCaseThrows()
-                    .getTempDirectory() + File.separator + file.getName();
-        } catch (NoCurrentCaseException ex) {
-            // TODO -- personal note log about current case being closed or
-             //current case not existing.
-            Exceptions.printStackTrace(ex);
-            return ProcessResult.ERROR;
-        }
-        
-        return ProcessResult.OK;
+    private String createLocalDiskPath(AbstractFile file) throws NoCurrentCaseException {
+        return Case.getCurrentCaseThrows().getTempDirectory() + 
+                File.separator + file.getName();
     }
     
     /**
      * Creates and populates a set of all CellTypes in the sqlite database
      * 
-     * @param sqliteReader Reader currently connected to database file
+     * @param sqliteReader Reader instance currently connected to database file
      * @return A Set of distinct CellTypes
-     * @throws SQLException Caught during attempting to read sqlite database
      */
-    private Set<CellType> getCellTypesInDatabase(SQLiteReader sqliteReader) throws SQLException {
-        Map<String, String> tables = sqliteReader.getTableSchemas();    
+    private Set<CellType> getCellTypesInDatabase(AbstractFile file, SQLiteReader sqliteReader) {  
         Set<CellType> aggregateCellTypes = new TreeSet<>();
-
+        
+        Map<String, String> tables;
+        try {
+            tables = sqliteReader.getTableSchemas();    
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, String.format("Error attempting to get tables from sqlite" //NON-NLS
+                                + "file [%s] in DatabaseSelectorIngestModule", //NON-NLS
+                                file.getName()), ex);
+            //Unable to get any cellTypes, return empty set to be ignored.
+            return aggregateCellTypes;
+        }
         //Aggregate cell types from all tables
         for(String tableName : tables.keySet()) {
-            aggregateCellTypes.addAll(getCellTypesInTable(sqliteReader, tableName));
+            try {
+                aggregateCellTypes.addAll(getCellTypesInTable(sqliteReader, tableName));
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, 
+                        String.format("Error attempting to read sqlite table [%s]" //NON-NLS
+                                + " for file [%s] in DatabaseSelectorIngestModule", //NON-NLS
+                                tableName, file.getName()), ex);
+            }
         }
         
         return aggregateCellTypes;
@@ -211,11 +199,9 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
         
         //Aggregate cell types from a row
         row.values().forEach((Object cell) -> {
-            if(cell instanceof String) {
-                CellType type = cellTypeDetector.getType((String) cell);
-                if(!type.equals(CellType.NOT_INTERESTING)) {
-                    rowCellTypes.add(type);
-                }
+            CellType type = cellTypeDetector.getType(cell);
+            if(!type.equals(CellType.NOT_INTERESTING)) {
+                rowCellTypes.add(type);
             }
         });
         return rowCellTypes;
@@ -229,7 +215,7 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
      * @return 
      */
     private String createCellTypeCommentString(Set<CellType> databaseCellTypes) {
-        return databaseCellTypes.toString().replace("]", "").replace("[", "");
+        return databaseCellTypes.toString().replace("]", "").replace("[", ""); //NON-NLS
     }
     
     /**

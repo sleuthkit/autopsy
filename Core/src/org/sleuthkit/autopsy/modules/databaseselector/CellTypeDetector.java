@@ -31,11 +31,17 @@ public class CellTypeDetector {
         emailValidator = EmailValidator.getInstance();
     }
     
+    public CellType getType(Object cell) {
+        if (cell instanceof String) {
+            return getType((String) cell);
+        }
+        return CellType.NOT_INTERESTING;
+    }
+    
     public CellType getType(String cell) {
         if(emailValidator.isValid(cell)) {
             return CellType.EMAIL;
-        } else {
-            return CellType.NOT_INTERESTING;
         }
+        return CellType.NOT_INTERESTING;
     } 
 }
