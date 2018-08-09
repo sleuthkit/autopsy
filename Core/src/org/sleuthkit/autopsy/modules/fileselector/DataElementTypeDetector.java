@@ -16,32 +16,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.databaseselector;
+package org.sleuthkit.autopsy.modules.fileselector;
 
 import org.apache.commons.validator.routines.EmailValidator;
 
 /**
  * Determines the type of a database cell (EMAIL, PHONE, GPS COORD, MAC ADDRESS)
  */
-public class CellTypeDetector {
+final class DataElementTypeDetector {
     
-    private final EmailValidator emailValidator;
-
-    public CellTypeDetector() {
-        emailValidator = EmailValidator.getInstance();
+    private static final EmailValidator EMAIL_VALIDATOR;
+    
+    static {
+        EMAIL_VALIDATOR = EmailValidator.getInstance();
     }
     
-    public CellType getType(Object cell) {
+    public static DataElementType getType(Object cell) {
         if (cell instanceof String) {
             return getType((String) cell);
         }
-        return CellType.NOT_INTERESTING;
+        return DataElementType.NOT_INTERESTING;
     }
     
-    public CellType getType(String cell) {
-        if(emailValidator.isValid(cell)) {
-            return CellType.EMAIL;
+    public static DataElementType getType(String cell) {
+        if(EMAIL_VALIDATOR.isValid(cell)) {
+            return DataElementType.EMAIL;
         }
-        return CellType.NOT_INTERESTING;
+        return DataElementType.NOT_INTERESTING;
     } 
+    
+    /*
+     * Cell data that qualify as an "interesting" selector
+     */
+    public enum DataElementType {
+        EMAIL,
+        NOT_INTERESTING
+    }
 }

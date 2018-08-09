@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.databaseselector;
+package org.sleuthkit.autopsy.modules.fileselector;
 
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.openide.util.NbBundle;
@@ -31,14 +31,15 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * mark them as having interesting records (emails, phone numbers, mac addresses, gps coordinates).
  */
 @NbBundle.Messages({
-    "DatabaseSelectorIngestModuleFactory.FlagDatabases.moduleName=Database Selector",
-    "DatabaseSelectorIngestModuleFactory.FlagDatabases.moduleDesc.text=Flag databases with interesting items (emails, phone numbers, gps coordinates, ip/mac addresses)"
+    "FileSelectorIngestModuleFactory.FlagFilesWithInterestingContents.moduleName=File Selector",
+    "FileSelectorIngestModuleFactory.FlagFilesWithInterestingContents.moduleDesc.text="
+            + "Flag file with interesting contents (emails, phone numbers, gps coordinates, ip/mac addresses)"
 })
 @ServiceProvider(service = IngestModuleFactory.class)
-public class DatabaseSelectorIngestModuleFactory extends IngestModuleFactoryAdapter {
+public class FileSelectorIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     static String getModuleName() {
-        return Bundle.DatabaseSelectorIngestModuleFactory_FlagDatabases_moduleName();
+        return Bundle.FileSelectorIngestModuleFactory_FlagFilesWithInterestingContents_moduleName();
     }
 
     @Override
@@ -48,7 +49,7 @@ public class DatabaseSelectorIngestModuleFactory extends IngestModuleFactoryAdap
     
     @Override
     public String getModuleDescription() {
-        return Bundle.DatabaseSelectorIngestModuleFactory_FlagDatabases_moduleDesc_text();
+        return Bundle.FileSelectorIngestModuleFactory_FlagFilesWithInterestingContents_moduleDesc_text();
     }
 
     @Override
@@ -63,6 +64,6 @@ public class DatabaseSelectorIngestModuleFactory extends IngestModuleFactoryAdap
     
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new DatabaseSelectorIngestModule();
+        return new FileSelectorIngestModule();
     }
 }

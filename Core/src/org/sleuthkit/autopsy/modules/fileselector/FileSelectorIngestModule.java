@@ -16,15 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.databaseselector;
+package org.sleuthkit.autopsy.modules.fileselector;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.modules.fileselector.DataElementTypeDetector.DataElementType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
@@ -49,24 +50,23 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Parses database files and marks them as having interesting records (emails,
  * phone numbers, mac addresses, gps coordinates).
  */
-public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
+public class FileSelectorIngestModule extends FileIngestModuleAdapter {
 
     private static final String SUPPORTED_MIME_TYPE = "application/x-sqlite3";
-    private static final String MODULE_NAME = DatabaseSelectorIngestModuleFactory.getModuleName();
+    private static final String MODULE_NAME = FileSelectorIngestModuleFactory.getModuleName();
     
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(
-            DatabaseSelectorIngestModuleFactory.getModuleName());
+            FileSelectorIngestModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
-    private CellTypeDetector cellTypeDetector;
     
     private Blackboard blackboard;
     
     
     @NbBundle.Messages({
-        "DatabaseSelectorIngestModule.CannotRunFileTypeDetection="
+        "FileSelectorIngestModule.CannotRunFileTypeDetection="
                 + "Unable to initialize file type detection.",
-        "DatabaseSelectorIngestModule.CannotGetBlackboard="
+        "FileSelectorIngestModule.CannotGetBlackboard="
                 + "Exception while attempting to get Blackboard from current case."
     })
     @Override
@@ -74,37 +74,37 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetectorInitException ex) {
-            throw new IngestModuleException(Bundle.DatabaseSelectorIngestModule_CannotRunFileTypeDetection(), ex);
+            throw new IngestModuleException(Bundle.FileSelectorIngestModule_CannotRunFileTypeDetection(), ex);
         }
-        
-        cellTypeDetector = new CellTypeDetector();
         
         try {
             blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.DatabaseSelectorIngestModule_CannotGetBlackboard(), ex);
+            throw new IngestModuleException(Bundle.FileSelectorIngestModule_CannotGetBlackboard(), ex);
         }          
     }
     
     @Override
     public ProcessResult process(AbstractFile file) {
         //Qualify the MIMEType, only process sqlite files.
-        String dataSourceMimeType = fileTypeDetector.getMIMEType(file);
-        if(!dataSourceMimeType.equals(SUPPORTED_MIME_TYPE)) {
+        String fileMimeType = fileTypeDetector.getMIMEType(file);
+        if(!fileMimeType.equals(SUPPORTED_MIME_TYPE)) {
             return ProcessResult.OK;
         }
 
         try (SQLiteReader sqliteReader = new SQLiteReader(file, createLocalDiskPath(file))){
-            Set<CellType> databaseCellTypes = getCellTypesInDatabase(file, sqliteReader);
             
-            //If empty, then no interesting hits, don't flag this database, skip artifact creation.
-            if(!databaseCellTypes.isEmpty()) {
-                try {
-                    BlackboardArtifact artifact = createArtifact(file, databaseCellTypes);   
-                    indexArtifactAndFireModuleDataEvent(artifact);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
-                } 
+            Collection<DataElementType> dataElementTypesInFile = readFileAndFindTypes(file, sqliteReader);
+            //No interesting types found, no artifact to create
+            if(dataElementTypesInFile.isEmpty()) {
+                return ProcessResult.OK;
+            }
+            
+            try {
+                BlackboardArtifact artifact = createArtifact(file, dataElementTypesInFile);   
+                indexArtifactAndFireModuleDataEvent(artifact);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
             } 
         } catch (ClassNotFoundException | SQLException | IOException | 
                 NoCurrentCaseException | TskCoreException ex) {
@@ -131,13 +131,13 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
     }
     
     /**
-     * Creates and populates a set of all CellTypes in the sqlite database
+     * Creates and populates a collection of all data element types in the file
      * 
-     * @param sqliteReader Reader instance currently connected to database file
-     * @return A Set of distinct CellTypes
+     * @param sqliteReader Reader instance currently connected to local file contents
+     * @return A collection of data element types
      */
-    private Set<CellType> getCellTypesInDatabase(AbstractFile file, SQLiteReader sqliteReader) {  
-        Set<CellType> aggregateCellTypes = new TreeSet<>();
+    private Collection<DataElementType> readFileAndFindTypes(AbstractFile file, SQLiteReader sqliteReader) {  
+        Collection<DataElementType> currentTypesFound = new TreeSet<>();
         
         Map<String, String> tables;
         try {
@@ -146,14 +146,15 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
             logger.log(Level.WARNING, String.format("Error attempting to get tables from sqlite" //NON-NLS
                                 + "file [%s].", //NON-NLS
                                 file.getName()), ex);
-            //Unable to get any cellTypes, return empty set to be ignored.
-            return aggregateCellTypes;
+            //Unable to read anything, return empty collection.
+            return currentTypesFound;
         }
         
         //Aggregate cell types from all tables
         for(String tableName : tables.keySet()) {
             try {
-                aggregateCellTypes.addAll(getCellTypesInTable(sqliteReader, tableName));
+                Collection<DataElementType> typesFoundInTable = readTableAndFindTypes(sqliteReader, tableName);
+                currentTypesFound.addAll(typesFoundInTable);
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, 
                         String.format("Error attempting to read sqlite table [%s]" //NON-NLS
@@ -162,47 +163,60 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
             }
         }
         
-        return aggregateCellTypes;
+        return currentTypesFound;
     }
     
     /**
-     * Creates and populates a set of all CellTypes in a sqlite table
+     * Creates and populates a collection of all data element types in a sqlite
+     * database table
      * 
-     * @param sqliteReader Reader currently connected to database file
+     * @param sqliteReader Reader currently connected to local file contents
      * @param tableName database table to be opened and read
-     * @return Set of all unique cell types in table
+     * @return collection of all types in table
      * @throws SQLException Caught during attempting to read sqlite database
      */
-    private Set<CellType> getCellTypesInTable(SQLiteReader sqliteReader, 
+    private Collection<DataElementType> readTableAndFindTypes(SQLiteReader sqliteReader, 
             String tableName) throws SQLException {
         
-        Set<CellType> tableCellTypes = new TreeSet<>();
+        Collection<DataElementType> typesFoundReadingTable = new TreeSet<>();
         List<Map<String, Object>> tableValues = sqliteReader.getRowsFromTable(tableName);
         
-        //Aggregate cell types from all table rows
+        //Aggregate cell types from all rows
         tableValues.forEach((row) -> {
-            tableCellTypes.addAll(getCellTypesInRow(row));
+            Collection<DataElementType> typesFoundInRow = readRowAndFindTypes(row);
+            typesFoundReadingTable.addAll(typesFoundInRow);
         });
-        return tableCellTypes;
+        return typesFoundReadingTable;
     }
     
     /**
-     * Creates and populates a set of all CellTypes in a table row
+     * Creates and populates a collection of all data element types in a table row
      * 
      * @param row Table row is represented as a column-value map
      * @return 
      */
-    private Set<CellType> getCellTypesInRow(Map<String, Object> row) {
-        Set<CellType> rowCellTypes = new TreeSet<>();
+    private Collection<DataElementType> readRowAndFindTypes(Map<String, Object> row) {
+        Collection<DataElementType> typesFoundReadingRow = new TreeSet<>();
         
         //Aggregate cell types from a row
-        row.values().forEach((Object cell) -> {
-            CellType type = cellTypeDetector.getType(cell);
-            if(!type.equals(CellType.NOT_INTERESTING)) {
-                rowCellTypes.add(type);
+        row.values().forEach((Object dataElement) -> {
+            DataElementType type = DataElementTypeDetector.getType(dataElement);
+            if(isAnInterestingDataType(type)) {
+                typesFoundReadingRow.add(type);
             }
         });
-        return rowCellTypes;
+        return typesFoundReadingRow;
+    }
+    
+    /**
+     * Boolean function purely for readability. Statement below is read as:
+     * if type is not not interesting -> isAnInterestingDataType.
+     * 
+     * @param type
+     * @return 
+     */
+    private boolean isAnInterestingDataType(DataElementType type) {
+        return !type.equals(DataElementType.NOT_INTERESTING);
     }
     
     /**
@@ -210,29 +224,29 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
      * comment attributes
      * 
      * @param file The database abstract file
-     * @param cellTypesComment String of all the cell types found in a database
+     * @param dataElementTypesInFile Collection of data types found during reading
      * file
      * @return Interesting file hit artifact
      * @throws TskCoreException Thrown if the abstract file cannot create a blackboard
      * artifact
      */
     @NbBundle.Messages({
-        "DatabaseSelectorIngestModule.FlagDatabases.setName=Selectors identified"
+        "FileSelectorIngestModule.setName=Selectors identified"
     })
     private BlackboardArtifact createArtifact(AbstractFile file, 
-            Set<CellType> databaseCellTypes) throws TskCoreException {
+            Collection<DataElementType> dataElementTypesInFile) throws TskCoreException {
         BlackboardArtifact artifact = file.newArtifact(
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         
         BlackboardAttribute setNameAttribute = new BlackboardAttribute(
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, 
-                Bundle.DatabaseSelectorIngestModule_FlagDatabases_setName());
+                Bundle.FileSelectorIngestModule_setName());
         artifact.addAttribute(setNameAttribute);
 
-        String cellTypesComment = createCellTypeCommentString(databaseCellTypes);
+        String dateTypesComment = dataElementTypesToString(dataElementTypesInFile);
         BlackboardAttribute commentAttribute = new BlackboardAttribute(
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, 
-                cellTypesComment);
+                dateTypesComment);
         artifact.addAttribute(commentAttribute);
         
         return artifact;
@@ -243,11 +257,11 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
      * file. Used as the comment string for the blackboard artifact. TreeSet is 
      * used to ensure that CellTypes appear in the same order as the enum.
      * 
-     * @param databaseCellTypes The set of all database cell types detected
+     * @param dataElementTypesInFile Collection of data types found during reading
      * @return 
      */
-    private String createCellTypeCommentString(Set<CellType> databaseCellTypes) {
-        return databaseCellTypes.toString().replace("]", "").replace("[", ""); //NON-NLS
+    private String dataElementTypesToString(Collection<DataElementType> dataElementTypesInFile) {
+        return dataElementTypesInFile.toString().replace("]", "").replace("[", ""); //NON-NLS
     }
     
     /**
@@ -257,7 +271,7 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
      * @param artifact Blackboard artifact created for the interesting file hit
      */
     @NbBundle.Messages({
-        "DatabaseSelectorIngestModule.indexError.message="
+        "FileSelectorIngestModule.indexError.message="
                 + "Failed to index interesting file hit artifact for keyword search."
     })
     private void indexArtifactAndFireModuleDataEvent(BlackboardArtifact artifact) {
@@ -269,7 +283,7 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
                     "Unable to index blackboard artifact " + //NON-NLS 
                             artifact.getArtifactID(), ex);
             MessageNotifyUtil.Notify.error(
-                    Bundle.DatabaseSelectorIngestModule_indexError_message(), 
+                    Bundle.FileSelectorIngestModule_indexError_message(), 
                     artifact.getDisplayName());
         }
 
