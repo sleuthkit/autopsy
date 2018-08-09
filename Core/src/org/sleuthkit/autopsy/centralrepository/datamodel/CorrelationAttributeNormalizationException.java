@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 /**
  * Thrown when a given value is not in the expected format.
  */
-public class CentralRepoValidationException extends Exception {
+public class CorrelationAttributeNormalizationException extends Exception {
     
     private static final long serialVersionUID = 1L;
     
@@ -30,7 +30,7 @@ public class CentralRepoValidationException extends Exception {
      * Construct an exception with the given message.
      * @param message error message
      */
-    public CentralRepoValidationException(String message){
+    public CorrelationAttributeNormalizationException(String message){
         super(message);
     }
     
@@ -39,7 +39,7 @@ public class CentralRepoValidationException extends Exception {
      * @param message error message
      * @param cause inner exception
      */
-    public CentralRepoValidationException(String message, Throwable cause){
+    public CorrelationAttributeNormalizationException(String message, Throwable cause){
         super(message, cause);
     }
     
@@ -47,7 +47,7 @@ public class CentralRepoValidationException extends Exception {
      * Construct an exception with the given inner exception.
      * @param cause inner exception
      */
-    public CentralRepoValidationException(Throwable cause){
+    public CorrelationAttributeNormalizationException(Throwable cause){
         super(cause);
     }    
 }

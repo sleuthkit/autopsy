@@ -66,10 +66,10 @@ public class CorrelationAttribute implements Serializable {
         return DEFAULT_CORRELATION_TYPES;
     }
 
-    public CorrelationAttribute(Type correlationType, String correlationValue) throws CentralRepoValidationException {
+    public CorrelationAttribute(Type correlationType, String correlationValue) throws CorrelationAttributeNormalizationException {
         this.ID = "";
         this.correlationType = correlationType;
-        this.correlationValue = CentralRepoDataValidator.validate(correlationType, correlationValue);
+        this.correlationValue = CorrelationAttributeNormalizer.normalize(correlationType, correlationValue);
         this.artifactInstances = new ArrayList<>();
     }
 
@@ -118,11 +118,11 @@ public class CorrelationAttribute implements Serializable {
      * 
      * @param correlationValue the correlationValue to set
      */
-    public void setCorrelationValue(String correlationValue) throws CentralRepoValidationException {
+    public void setCorrelationValue(String correlationValue) throws CorrelationAttributeNormalizationException {
         if(this.getCorrelationType() == null){
             throw new IllegalStateException("Correlation Type must be set before calling setCorrelationValue");
         }
-        this.correlationValue = CentralRepoDataValidator.validate(this.getCorrelationType(), correlationValue);
+        this.correlationValue = CorrelationAttributeNormalizer.normalize(this.getCorrelationType(), correlationValue);
     }
 
     /**

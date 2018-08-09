@@ -21,13 +21,10 @@ package org.sleuthkit.autopsy.centralrepository;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
-import org.apache.log4j.lf5.LogLevel;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoValidationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -42,7 +39,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
-    private static final Logger logger = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private boolean addToDatabase;
     private CorrelationAttribute correlationAttribute;
@@ -68,9 +66,9 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
         try {
             correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
-        } catch (EamDbException | CentralRepoValidationException ex) {
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             correlationAttribute = null;
-            logger.log(Level.SEVERE, "Possible problem creating CorrelationAttribute from content: " + file.getMd5Hash(), ex);
+            LOGGER.log(Level.SEVERE, "Possible problem creating CorrelationAttribute from content: " + file.getMd5Hash(), ex);
         }
         if (correlationAttribute == null) {
             addToDatabase = true;
@@ -110,7 +108,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
                 comment = centralRepoCommentDialog.getComment();
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error adding comment", ex);
+                LOGGER.log(Level.SEVERE, "Error adding comment", ex);
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
                         "An error occurred while trying to save the comment to the central repository.",
                         NotifyDescriptor.ERROR_MESSAGE);

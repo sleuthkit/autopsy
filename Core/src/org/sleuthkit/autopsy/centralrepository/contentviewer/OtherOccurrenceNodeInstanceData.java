@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoValidationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -134,7 +134,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * Should only be called if isCentralRepoNode() is true.
      * @return the newly created CorrelationAttribute
      */
-    CorrelationAttribute createCorrelationAttribute() throws EamDbException, CentralRepoValidationException {
+    CorrelationAttribute createCorrelationAttribute() throws EamDbException, CorrelationAttributeNormalizationException {
         if (! isCentralRepoNode() ) { 
             throw new EamDbException("Can not create CorrelationAttribute for non central repo node");
         }

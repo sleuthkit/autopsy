@@ -709,9 +709,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
 
-        value = CentralRepoDataValidator.validate(aType, value);
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
         
         Connection conn = connect();
 
@@ -825,8 +825,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      *         ArtifactValue.
      */
     @Override
-    public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
-        value = CentralRepoDataValidator.validate(aType, value);
+    public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -858,7 +858,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     @Override
-    public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException, CentralRepoValidationException {
+    public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException, CorrelationAttributeNormalizationException {
         if (corAttr == null) {
             throw new EamDbException("CorrelationAttribute is null");
         }
@@ -879,8 +879,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return Number of unique tuples
      */
     @Override
-    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
-        value = CentralRepoDataValidator.validate(aType, value);
+    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -1280,9 +1280,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public CorrelationAttribute getCorrelationAttribute(CorrelationAttribute.Type type, CorrelationCase correlationCase,
-            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CentralRepoValidationException {
+            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        value = CentralRepoDataValidator.validate(type, value);
+        value = CorrelationAttributeNormalizer.normalize(type, value);
         
         if (correlationCase == null) {
             throw new EamDbException("Correlation case is null");
@@ -1326,7 +1326,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
                 correlationAttribute.addInstance(artifactInstance);
             }
-        } catch (CentralRepoValidationException | SQLException ex) {
+        } catch (CorrelationAttributeNormalizationException | SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
@@ -1452,8 +1452,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return List with 0 or more matching eamArtifact instances.
      */
     @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
-        value = CentralRepoDataValidator.validate(aType, value);
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -1565,9 +1565,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return Number of matching eamArtifacts
      */
     @Override
-    public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+    public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        value = CentralRepoDataValidator.validate(aType, value);
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -1612,9 +1612,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        value = CentralRepoDataValidator.validate(aType, value);
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -1756,7 +1756,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException, CentralRepoValidationException {
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException, CorrelationAttributeNormalizationException {
         return isValueInReferenceSet(hash, referenceSetID, CorrelationAttribute.FILES_TYPE_ID);
     }
 
@@ -1770,9 +1770,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return true if the value is found in the reference set
      */
     @Override
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CentralRepoValidationException {
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CorrelationAttributeNormalizationException {
 
-        value = CentralRepoDataValidator.validate(this.getCorrelationTypeById(correlationTypeID), value);
+        value = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value);
         
         Connection conn = connect();
 
@@ -1810,9 +1810,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException {
+    public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        value = CentralRepoDataValidator.validate(aType, value);
+        value = CorrelationAttributeNormalizer.normalize(aType, value);
         
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttribute.FILES_TYPE_ID) {
@@ -2411,8 +2411,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException, CentralRepoValidationException {
-        aValue = CentralRepoDataValidator.validate(aType, aValue);
+    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException, CorrelationAttributeNormalizationException {
+        aValue = CorrelationAttributeNormalizer.normalize(aType, aValue);
 
         Connection conn = connect();
 
@@ -2801,7 +2801,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         );
     }
 
-    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException, CentralRepoValidationException {
+    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException, CorrelationAttributeNormalizationException {
         if (null == resultSet) {
             return null;
         }

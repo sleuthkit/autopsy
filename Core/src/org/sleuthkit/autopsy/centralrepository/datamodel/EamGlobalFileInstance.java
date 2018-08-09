@@ -36,7 +36,7 @@ public class EamGlobalFileInstance {
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) throws EamDbException, CentralRepoValidationException {
+            String comment) throws EamDbException, CorrelationAttributeNormalizationException {
         this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
 
@@ -45,14 +45,14 @@ public class EamGlobalFileInstance {
             int globalSetID,
             String MD5Hash,
             TskData.FileKnown knownStatus,
-            String comment) throws EamDbException, CentralRepoValidationException {
+            String comment) throws EamDbException, CorrelationAttributeNormalizationException {
 
         if(knownStatus == null){
             throw new EamDbException("null known status");
         }
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
-        this.MD5Hash = CentralRepoDataValidator.validate(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
+        this.MD5Hash = CorrelationAttributeNormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
         this.knownStatus = knownStatus;
         this.comment = comment;
     }
@@ -114,8 +114,8 @@ public class EamGlobalFileInstance {
     /**
      * @param MD5Hash the MD5Hash to set
      */
-    public void setMD5Hash(String MD5Hash) throws CentralRepoValidationException {
-        this.MD5Hash = CentralRepoDataValidator.validate(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
+    public void setMD5Hash(String MD5Hash) throws CorrelationAttributeNormalizationException {
+        this.MD5Hash = CorrelationAttributeNormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, MD5Hash);
     }
 
     /**

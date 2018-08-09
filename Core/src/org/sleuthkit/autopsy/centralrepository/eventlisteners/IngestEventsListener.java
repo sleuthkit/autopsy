@@ -35,7 +35,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoValidationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -271,7 +271,7 @@ public class IngestEventsListener {
                                         postCorrelatedBadArtifactToBlackboard(bbArtifact,
                                                 caseDisplayNames);
                                     }
-                                } catch (CentralRepoValidationException ex) {
+                                } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.SEVERE, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }

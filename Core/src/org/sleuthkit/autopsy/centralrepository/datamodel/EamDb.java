@@ -244,7 +244,7 @@ public interface EamDb {
      *
      * @return List of artifact instances for a given type/value
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
     
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -269,7 +269,7 @@ public interface EamDb {
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
      */
-    Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Calculate the percentage of data sources that have this attribute value.
@@ -278,7 +278,7 @@ public interface EamDb {
      *
      * @return Int between 0 and 100
      */
-    int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException, CentralRepoValidationException;
+    int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves number of unique caseDisplayName / dataSource tuples in the
@@ -290,7 +290,7 @@ public interface EamDb {
      *
      * @return Number of unique tuples
      */
-    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves number of data sources in the database.
@@ -358,7 +358,7 @@ public interface EamDb {
      * @throws EamDbException
      */
     CorrelationAttribute getCorrelationAttribute(CorrelationAttribute.Type type, CorrelationCase correlationCase,
-            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CentralRepoValidationException;
+            CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact
@@ -378,7 +378,7 @@ public interface EamDb {
      *
      * @return List with 0 or more matching eamArtifact instances.
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
@@ -397,7 +397,7 @@ public interface EamDb {
      *
      * @return Number of matching eamArtifacts
      */
-    Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Gets list of distinct case display names, where each case has 1+ Artifact
@@ -411,7 +411,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Remove a reference set and all values contained in it.
@@ -462,7 +462,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException, CentralRepoValidationException;
+    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Check if the given value is in a specific reference set
@@ -473,7 +473,7 @@ public interface EamDb {
      *
      * @return true if the hash is found in the reference set
      */
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CentralRepoValidationException;
+    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -483,7 +483,7 @@ public interface EamDb {
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException, CentralRepoValidationException;
+    boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Add a new organization
@@ -611,7 +611,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException, CentralRepoValidationException;
+    List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Add a new EamArtifact.Type to the db.

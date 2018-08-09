@@ -82,7 +82,7 @@ public class EamArtifactUtil {
                     }
                 }
             }
-        } catch (EamDbException | CentralRepoValidationException ex) {
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
             return eamArtifacts;
         }
@@ -137,7 +137,7 @@ public class EamArtifactUtil {
      *         bbArtifact did not contain the needed data
      */
     private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType,
-            BlackboardArtifact bbArtifact) throws EamDbException, CentralRepoValidationException {
+            BlackboardArtifact bbArtifact) throws EamDbException, CorrelationAttributeNormalizationException {
         
         String value = null;
         
@@ -207,7 +207,7 @@ public class EamArtifactUtil {
      *
      * @return The new CorrelationAttribute, or null if retrieval failed.
      */
-    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content) throws EamDbException, CentralRepoValidationException {
+    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content) throws EamDbException, CorrelationAttributeNormalizationException {
 
         if (!(content instanceof AbstractFile)) {
             throw new EamDbException("Content is not an AbstractFile.");
@@ -298,7 +298,7 @@ public class EamArtifactUtil {
                     af.getParentPath() + af.getName());
             eamArtifact.addInstance(cei);
             return eamArtifact;
-        } catch (TskCoreException | EamDbException | NoCurrentCaseException | CentralRepoValidationException ex) {
+        } catch (TskCoreException | EamDbException | NoCurrentCaseException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);	//NON-NLS
             return null;
         }
