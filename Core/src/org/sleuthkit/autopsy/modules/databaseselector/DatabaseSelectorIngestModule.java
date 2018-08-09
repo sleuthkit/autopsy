@@ -96,12 +96,11 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
 
         try (SQLiteReader sqliteReader = new SQLiteReader(file, createLocalDiskPath(file))){
             Set<CellType> databaseCellTypes = getCellTypesInDatabase(file, sqliteReader);
+            
             //No interesting hits, don't flag this database, skip artifact creation.
             if(!databaseCellTypes.isEmpty()) {
-                String cellTypesComment = createCellTypeCommentString(databaseCellTypes);
                 try {
-                    BlackboardArtifact artifact = createArtifactGivenCellTypes(
-                        file, cellTypesComment);   
+                    BlackboardArtifact artifact = createArtifact(file, databaseCellTypes);   
                     indexArtifactAndFireModuleDataEvent(artifact);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
@@ -110,12 +109,10 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
         } catch (ClassNotFoundException | SQLException | IOException | 
                 NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Cannot initialize sqliteReader class " //NON-NLS
-                    + "in DatabaseSelectorIngestModule for file [%s]", file.getName()), ex); //NON-NLS
+                    + "for file [%s].", file.getName()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
         
-        //Whether we successfully read the sqlite database or determined the mime
-        //type is not supported, the process is OK.
         return ProcessResult.OK;
     }
     
@@ -147,11 +144,12 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
             tables = sqliteReader.getTableSchemas();    
         } catch (SQLException ex) {
             logger.log(Level.WARNING, String.format("Error attempting to get tables from sqlite" //NON-NLS
-                                + "file [%s] in DatabaseSelectorIngestModule", //NON-NLS
+                                + "file [%s].", //NON-NLS
                                 file.getName()), ex);
             //Unable to get any cellTypes, return empty set to be ignored.
             return aggregateCellTypes;
         }
+        
         //Aggregate cell types from all tables
         for(String tableName : tables.keySet()) {
             try {
@@ -159,7 +157,7 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, 
                         String.format("Error attempting to read sqlite table [%s]" //NON-NLS
-                                + " for file [%s] in DatabaseSelectorIngestModule", //NON-NLS
+                                + " for file [%s].", //NON-NLS
                                 tableName, file.getName()), ex);
             }
         }
@@ -208,17 +206,6 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
     }
     
     /**
-     * Creates a comma seperated string of all the cell types found in a database
-     * file. Used as the comment string for the blackboard artifact.
-     * 
-     * @param databaseCellTypes The set of all database cell types detected
-     * @return 
-     */
-    private String createCellTypeCommentString(Set<CellType> databaseCellTypes) {
-        return databaseCellTypes.toString().replace("]", "").replace("[", ""); //NON-NLS
-    }
-    
-    /**
      * Initializes a new interesting file hit artifact and provides name and 
      * comment attributes
      * 
@@ -232,8 +219,8 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
     @NbBundle.Messages({
         "DatabaseSelectorIngestModule.FlagDatabases.setName=Selectors identified"
     })
-    private BlackboardArtifact createArtifactGivenCellTypes(AbstractFile file, 
-            String cellTypesComment) throws TskCoreException {
+    private BlackboardArtifact createArtifact(AbstractFile file, 
+            Set<CellType> databaseCellTypes) throws TskCoreException {
         BlackboardArtifact artifact = file.newArtifact(
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         
@@ -242,12 +229,24 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
                 Bundle.DatabaseSelectorIngestModule_FlagDatabases_setName());
         artifact.addAttribute(setNameAttribute);
 
+        String cellTypesComment = createCellTypeCommentString(databaseCellTypes);
         BlackboardAttribute commentAttribute = new BlackboardAttribute(
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, 
                 cellTypesComment);
         artifact.addAttribute(commentAttribute);
         
         return artifact;
+    }
+    
+    /**
+     * Creates a comma seperated string of all the cell types found in a database
+     * file. Used as the comment string for the blackboard artifact.
+     * 
+     * @param databaseCellTypes The set of all database cell types detected
+     * @return 
+     */
+    private String createCellTypeCommentString(Set<CellType> databaseCellTypes) {
+        return databaseCellTypes.toString().replace("]", "").replace("[", ""); //NON-NLS
     }
     
     /**
