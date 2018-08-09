@@ -56,8 +56,7 @@ final public class CommonAttributeValue {
      * @return 
      */
     public String getCases() {
-        final String cases = this.fileInstances.stream().map(AbstractCommonAttributeInstance::getCaseName).collect(Collectors.joining(", "));
-        return cases;
+        return this.fileInstances.stream().map(AbstractCommonAttributeInstance::getCaseName).collect(Collectors.joining(", "));
     }
 
     public String getDataSources() {
@@ -66,8 +65,7 @@ final public class CommonAttributeValue {
             sources.add(data.getDataSource());
         }
         
-        final String dataSources = String.join(", ", sources);
-        return dataSources;
+        return String.join(", ", sources);
     }
 
     void addInstance(AbstractCommonAttributeInstance metadata) {

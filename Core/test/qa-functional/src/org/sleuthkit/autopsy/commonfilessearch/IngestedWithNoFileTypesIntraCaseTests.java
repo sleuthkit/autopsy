@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
      * find nothing and no errors should arise.
      */
     public void testOne() {
+        
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
@@ -108,7 +110,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 
             assertTrue(files.isEmpty());
 
-        } catch (Exception ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }

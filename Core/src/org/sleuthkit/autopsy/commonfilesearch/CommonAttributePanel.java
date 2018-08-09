@@ -87,14 +87,12 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
     private static boolean isEamDbAvailable() {
         try {
-            final boolean conditions = EamDb.isEnabled() && 
+            return EamDb.isEnabled() && 
                     EamDb.getInstance() != null &&
                     EamDb.getInstance().getCases().size() > 1 && 
                     Case.isCaseOpen() &&
                     Case.getCurrentCase() != null &&
                     EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
-            
-            return conditions;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
@@ -138,7 +136,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+            protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
                 progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -350,7 +348,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             }
 
             @Override
-            protected Map<Integer, String> doInBackground() throws Exception {
+            protected Map<Integer, String> doInBackground() throws EamDbException {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
                 Map<Integer, String> caseMap = mapDataSources(dataSources);

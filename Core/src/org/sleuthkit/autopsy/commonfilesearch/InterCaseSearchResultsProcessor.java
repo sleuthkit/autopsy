@@ -57,10 +57,17 @@ final class InterCaseSearchResultsProcessor {
                 + "WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value) "
                 + "AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value";
     
+    /**
+     * Used in the InterCaseCommonAttributeSearchers to find common attribute instances and generate nodes at the UI level.
+     * @param dataSources 
+     */
     InterCaseSearchResultsProcessor(Map<Long, String> dataSources){
         this.dataSources = dataSources;
     }
     
+    /**
+     * Used in the CentralRepoCommonAttributeInstance to find common attribute instances and generate nodes at the UI level.
+     */
     InterCaseSearchResultsProcessor(){}
     
     /**

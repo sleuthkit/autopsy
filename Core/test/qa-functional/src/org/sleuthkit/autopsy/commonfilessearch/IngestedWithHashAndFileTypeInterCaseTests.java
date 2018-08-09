@@ -25,11 +25,13 @@ import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.SingleInterCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.*;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Tests with case 3 as the current case.
@@ -62,7 +64,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
         try {
             this.utils.enableCentralRepo();
             this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
-        } catch (Exception ex) {
+        } catch (TskCoreException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }

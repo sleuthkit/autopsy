@@ -116,7 +116,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.SetNameNode ihsn);
 
-    T visit(CommonAttributeValueNode mn);
+    T visit(CommonAttributeValueNode cavn);
 
     T visit(CommonAttributeSearchResultRootNode cfn);
 
@@ -200,8 +200,8 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(CommonAttributeValueNode mn) {
-            return defaultVisit(mn);
+        public T visit(CommonAttributeValueNode cavn) {
+            return defaultVisit(cavn);
         }
 
         @Override
