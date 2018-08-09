@@ -92,6 +92,9 @@ final public class CorrelationAttributeNormalizer {
         }
     }
 
+    /**
+     * Verify MD5 is the correct length and values. Make lower case.
+     */
     private static String normalizeMd5(String data) throws CorrelationAttributeNormalizationException {
         final String errorMessage = "Data purporting to be an MD5 was found not to comform to expected format: %s";
         if(data == null){
@@ -106,6 +109,9 @@ final public class CorrelationAttributeNormalizer {
         }
     }
 
+    /**
+     * Verify there are no slashes or invalid domain name characters (such as '?' or \: ). Normalize to lower case.
+     */
     private static String normalizeDomain(String data) throws CorrelationAttributeNormalizationException {
         DomainValidator validator = DomainValidator.getInstance(true);
         if(validator.isValid(data)){
@@ -115,6 +121,9 @@ final public class CorrelationAttributeNormalizer {
         }
     }
 
+    /**
+     *  Verify that there is an '@' and no invalid characters. Should normalize to lower case.
+     */
     private static String normalizeEmail(String data) throws CorrelationAttributeNormalizationException {
         EmailValidator validator = EmailValidator.getInstance(true, true);
         if(validator.isValid(data)){
@@ -124,6 +133,9 @@ final public class CorrelationAttributeNormalizer {
         }
     }
 
+    /**
+     * Verify it is only numbers and '+'. Strip spaces, dashes, and parentheses.
+     */
     private static String normalizePhone(String data) throws CorrelationAttributeNormalizationException {
         String phoneNumber = data.replaceAll("[^0-9\\+]", "");
         if(phoneNumber.matches("\\+?[0-9]+")){
@@ -133,12 +145,15 @@ final public class CorrelationAttributeNormalizer {
         }
     }
 
+    /**
+     * USB ID is of the form: hhhh:hhhh where h is a hex digit.  Convert to lower case.
+     */
     private static String normalizeUsbId(String data) throws CorrelationAttributeNormalizationException {
         final String errorMessage = "Data was expected to be a valid USB device ID: %s";
         if(data == null){
             throw new CorrelationAttributeNormalizationException(String.format(errorMessage, data));
         }
-        //usbId is of the form: hhhh:hhhh where h is a hex digit
+        
         String validUsbIdRegex = "^(0[Xx])?[A-Fa-f0-9]{4}[:\\\\\\ \\-.]?(0[Xx])?[A-Fa-f0-9]{4}$";
         if(data.matches(validUsbIdRegex)){
             return data.toLowerCase();
