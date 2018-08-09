@@ -48,9 +48,17 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
     public boolean isEnabled(){
         boolean shouldBeEnabled = false;
         try {
-            shouldBeEnabled = Case.isCaseOpen() 
-                    && Case.getCurrentCase().getDataSources().size() > 1
-                    || (EamDb.isEnabled() && EamDb.getInstance().getCases().size() > 1);
+            //dont refactor any of this to pull out common expressions - order of evaluation of each expression is significant
+            shouldBeEnabled = 
+                    (Case.isCaseOpen() && 
+                    Case.getCurrentCase().getDataSources().size() > 1) 
+                    || 
+                    (EamDb.isEnabled() && 
+                    EamDb.getInstance() != null && 
+                    EamDb.getInstance().getCases().size() > 1 && 
+                    Case.isCaseOpen() &&
+                    Case.getCurrentCase() != null && 
+                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null);
                     
         } catch(TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);

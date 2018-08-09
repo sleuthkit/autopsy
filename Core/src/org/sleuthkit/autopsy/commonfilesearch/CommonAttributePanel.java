@@ -87,8 +87,12 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
     private static boolean isEamDbAvailable() {
         try {
-            EamDb DbManager = EamDb.getInstance();
-            return DbManager != null;
+            return (EamDb.isEnabled() && 
+                    EamDb.getInstance() != null && 
+                    EamDb.getInstance().getCases().size() > 1 && 
+                    Case.isCaseOpen() &&
+                    Case.getCurrentCase() != null && 
+                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
@@ -331,7 +335,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                 }
             }
 
-            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws Exception {
+            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws EamDbException {
                 Map<Integer, String> casemap = new HashMap<>();
                 CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
