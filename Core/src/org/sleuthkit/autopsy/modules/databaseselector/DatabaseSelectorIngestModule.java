@@ -97,7 +97,7 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
         try (SQLiteReader sqliteReader = new SQLiteReader(file, createLocalDiskPath(file))){
             Set<CellType> databaseCellTypes = getCellTypesInDatabase(file, sqliteReader);
             
-            //No interesting hits, don't flag this database, skip artifact creation.
+            //If empty, then no interesting hits, don't flag this database, skip artifact creation.
             if(!databaseCellTypes.isEmpty()) {
                 try {
                     BlackboardArtifact artifact = createArtifact(file, databaseCellTypes);   
@@ -240,7 +240,8 @@ public class DatabaseSelectorIngestModule extends FileIngestModuleAdapter {
     
     /**
      * Creates a comma seperated string of all the cell types found in a database
-     * file. Used as the comment string for the blackboard artifact.
+     * file. Used as the comment string for the blackboard artifact. TreeSet is 
+     * used to ensure that CellTypes appear in the same order as the enum.
      * 
      * @param databaseCellTypes The set of all database cell types detected
      * @return 
