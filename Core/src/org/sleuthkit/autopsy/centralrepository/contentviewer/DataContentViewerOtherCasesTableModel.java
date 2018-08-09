@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,20 +22,20 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
  * Model for cells in data content viewer table
  */
 public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
+    private static final long serialVersionUID = 1L;
+
     @Messages({"DataContentViewerOtherCasesTableModel.case=Case",
         "DataContentViewerOtherCasesTableModel.device=Device",
         "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
         "DataContentViewerOtherCasesTableModel.path=Path",
-        "DataContentViewerOtherCasesTableModel.type=Correlation Type",
-        "DataContentViewerOtherCasesTableModel.value=Correlation Value",
+        "DataContentViewerOtherCasesTableModel.attribute=Matched Attribute",
+        "DataContentViewerOtherCasesTableModel.value=Attribute Value",
         "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
@@ -44,7 +44,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
         DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
-        TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 100),
+        ATTRIBUTE(Bundle.DataContentViewerOtherCasesTableModel_attribute(), 125),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
         KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
         FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
@@ -68,7 +68,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    List<OtherOccurrenceNodeData> nodeDataList;
+    private final List<OtherOccurrenceNodeData> nodeDataList;
 
     DataContentViewerOtherCasesTableModel() {
         nodeDataList = new ArrayList<>();
@@ -109,26 +109,41 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             return Bundle.DataContentViewerOtherCasesTableModel_noData();
         }
 
-        return mapValueById(rowIdx, TableColumns.values()[colIdx]);
-    }
-
-    Object getRow(int rowIdx) {
-        return nodeDataList.get(rowIdx);
+        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
+        TableColumns columnId = TableColumns.values()[colIdx];
+        if (nodeData instanceof OtherOccurrenceNodeMessageData) {
+            return mapNodeMessageData((OtherOccurrenceNodeMessageData) nodeData, columnId);
+        }
+        return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
     }
 
     /**
-     * Map a rowIdx and colId to the value in that cell.
+     * Map a column ID to the value in that cell for node message data.
      *
-     * @param rowIdx Index of row to search
-     * @param colId  ID of column to search
+     * @param nodeData The node message data.
+     * @param columnId The ID of the cell column.
      *
-     * @return value in the cell
+     * @return The value in the cell.
      */
-    private Object mapValueById(int rowIdx, TableColumns colId) {
-        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
+    private Object mapNodeMessageData(OtherOccurrenceNodeMessageData nodeData, TableColumns columnId) {
+        if (columnId == TableColumns.CASE_NAME) {
+            return nodeData.getDisplayMessage();
+        }
+        return "";
+    }
+
+    /**
+     * Map a column ID to the value in that cell for node instance data.
+     *
+     * @param nodeData The node instance data.
+     * @param columnId The ID of the cell column.
+     *
+     * @return The value in the cell.
+     */
+    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
-        switch (colId) {
+        switch (columnId) {
             case CASE_NAME:
                 if (null != nodeData.getCaseName()) {
                     value = nodeData.getCaseName();
@@ -147,7 +162,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             case FILE_PATH:
                 value = nodeData.getFilePath();
                 break;
-            case TYPE:
+            case ATTRIBUTE:
                 value = nodeData.getType();
                 break;
             case VALUE:
@@ -159,8 +174,14 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             case COMMENT:
                 value = nodeData.getComment();
                 break;
+            default: // This shouldn't occur! Use default "No data" value.
+                break;
         }
         return value;
+    }
+
+    Object getRow(int rowIdx) {
+        return nodeDataList.get(rowIdx);
     }
 
     @Override
@@ -178,6 +199,9 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    /**
+     * Clear the node data table.
+     */
     void clearTable() {
         nodeDataList.clear();
         fireTableDataChanged();

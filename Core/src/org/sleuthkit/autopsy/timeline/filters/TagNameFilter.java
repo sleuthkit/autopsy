@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.filters;
 import java.util.Objects;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
 
 /**
  * Filter for an individual TagName

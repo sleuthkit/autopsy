@@ -568,8 +568,11 @@ class ListTimeline extends BorderPane {
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setText(null);
+                setTooltip(null);
             } else {
-                setText(textSupplier.apply(getEvent()));
+                String text = textSupplier.apply(getEvent());
+                setText(text);
+                setTooltip(new Tooltip(text));
             }
         }
     }

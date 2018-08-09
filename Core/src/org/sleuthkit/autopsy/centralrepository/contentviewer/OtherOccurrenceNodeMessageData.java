@@ -19,8 +19,16 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 /**
- * Marker interface for Other Occurrences nodes.
+ * Class for populating the Other Occurrences tab with a single message.
  */
-interface OtherOccurrenceNodeData {
+final class OtherOccurrenceNodeMessageData implements OtherOccurrenceNodeData {
+    private final String displayMessage;
     
+    OtherOccurrenceNodeMessageData(String displayMessage) {
+        this.displayMessage = displayMessage;
+    }
+    
+    String getDisplayMessage() {
+        return displayMessage;
+    }
 }

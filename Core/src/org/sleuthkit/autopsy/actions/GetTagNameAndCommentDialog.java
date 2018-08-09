@@ -24,10 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.logging.Level;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -57,7 +55,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     private final List<TagName> tagNamesList = new ArrayList<>();
     private final List<TagName> standardTagNamesList = new ArrayList<>();
     private TagNameAndComment tagNameAndComment = null;
-    
+
     public static class TagNameAndComment {
 
         private final TagName tagName;
@@ -105,7 +103,16 @@ public class GetTagNameAndCommentDialog extends JDialog {
     public static TagNameAndComment doDialog(Window owner) {
         GetTagNameAndCommentDialog dialog = new GetTagNameAndCommentDialog(owner);
         dialog.display();
-        return dialog.tagNameAndComment;
+        return dialog.getTagNameAndComment();
+    }
+
+    /**
+     * Get the TagNameAndComment.
+     *
+     * @return the tagNameAndComment
+     */
+    private TagNameAndComment getTagNameAndComment() {
+        return tagNameAndComment;
     }
 
     private GetTagNameAndCommentDialog(Window owner) {
@@ -114,14 +121,14 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 ModalityType.APPLICATION_MODAL);
     }
 
-    
     private void display() {
         initComponents();
         tagCombo.setRenderer(new DefaultListCellRenderer() {
             private static final long serialVersionUID = 1L;
+
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String status = ((TagName) value).getKnownStatus() == TskData.FileKnown.BAD ?TagsManager.getNotableTagLabel() : "";
+                String status = ((TagName) value).getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
                 String newValue = ((TagName) value).getDisplayName() + status;
                 return super.getListCellRendererComponent(list, newValue, index, isSelected, cellHasFocus);
             }
@@ -151,7 +158,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
             TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             List<String> standardTagNames = TagsManager.getStandardTagNames();
             Map<String, TagName> tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
-            
+
             tagNamesMap.entrySet().stream().map((entry) -> entry.getValue()).forEachOrdered((tagName) -> {
                 if (standardTagNames.contains(tagName.getDisplayName())) {
                     standardTagNamesList.add(tagName);
@@ -159,7 +166,6 @@ public class GetTagNameAndCommentDialog extends JDialog {
                     tagNamesList.add(tagName);
                 }
             });
-            
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class
@@ -320,4 +326,5 @@ public class GetTagNameAndCommentDialog extends JDialog {
     private javax.swing.JComboBox<TagName> tagCombo;
     private javax.swing.JLabel tagLabel;
     // End of variables declaration//GEN-END:variables
+
 }

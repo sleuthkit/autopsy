@@ -80,7 +80,8 @@ import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
-import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildrenFactory;
+import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
@@ -108,7 +109,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private AutopsyTreeChildrenFactory autopsyTreeChildrenFactory;
+    private AutopsyTreeChildFactory autopsyTreeChildFactory;
     private Children autopsyTreeChildren;
     private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
@@ -137,6 +138,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         forwardButton.setEnabled(false);
 
         groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
+        showOnlyCurrentUserTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
     }
 
     /**
@@ -151,6 +153,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.GROUP_ITEMS_IN_TREE_BY_DATASOURCE:
                         refreshContentTreeSafe();
+                        break;
+                    case UserPreferences.SHOW_ONLY_CURRENT_USER_TAGS:
+                        refreshTagsTree();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:
@@ -191,6 +196,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         forwardButton = new javax.swing.JButton();
         showRejectedCheckBox = new javax.swing.JCheckBox();
         groupByDatasourceCheckBox = new javax.swing.JCheckBox();
+        showOnlyCurrentUserTagsCheckbox = new javax.swing.JCheckBox();
 
         treeView.setBorder(null);
 
@@ -235,6 +241,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(showOnlyCurrentUserTagsCheckbox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showOnlyCurrentUserTagsCheckbox.text")); // NOI18N
+        showOnlyCurrentUserTagsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showOnlyCurrentUserTagsCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -244,7 +257,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 51, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(showOnlyCurrentUserTagsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(showRejectedCheckBox)
                     .addComponent(groupByDatasourceCheckBox))
@@ -256,7 +271,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(5, 5, 5)
-                        .addComponent(showRejectedCheckBox)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(showRejectedCheckBox)
+                            .addComponent(showOnlyCurrentUserTagsCheckbox))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(groupByDatasourceCheckBox))
                     .addGroup(layout.createSequentialGroup()
@@ -323,10 +340,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         UserPreferences.setGroupItemsInTreeByDatasource(this.groupByDatasourceCheckBox.isSelected());
     }//GEN-LAST:event_groupByDatasourceCheckBoxActionPerformed
 
+    private void showOnlyCurrentUserTagsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showOnlyCurrentUserTagsCheckboxActionPerformed
+        UserPreferences.setShowOnlyCurrentUserTags(this.showOnlyCurrentUserTagsCheckbox.isSelected());
+    }//GEN-LAST:event_showOnlyCurrentUserTagsCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
     private javax.swing.JCheckBox groupByDatasourceCheckBox;
+    private javax.swing.JCheckBox showOnlyCurrentUserTagsCheckbox;
     private javax.swing.JCheckBox showRejectedCheckBox;
     private javax.swing.JScrollPane treeView;
     // End of variables declaration//GEN-END:variables
@@ -476,8 +498,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
 
             // if there's at least one image, load the image and open the top componen
-            autopsyTreeChildrenFactory = new AutopsyTreeChildrenFactory();
-            autopsyTreeChildren = Children.create(autopsyTreeChildrenFactory, true);
+            autopsyTreeChildFactory = new AutopsyTreeChildFactory();
+            autopsyTreeChildren = Children.create(autopsyTreeChildFactory, true);
             Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
@@ -735,9 +757,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                      * responsible for opening core windows. Consider moving
                      * this elsewhere.
                      */
-                    if (!this.isOpened()) {
-                        SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
-                    }
+                    SwingUtilities.invokeLater(() -> {
+                        if (! DirectoryTreeTopComponent.this.isOpened()) {
+                            CoreComponentControl.openCoreWindows();
+                        }
+                    });
                 } catch (NoCurrentCaseException notUsed) {
                     /**
                      * Case is closed, do nothing.
@@ -889,6 +913,29 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
+     * Refresh only the tags subtree(s) of the tree view.
+     */
+    private void refreshTagsTree() {
+        SwingUtilities.invokeLater(() -> {
+            // if no open case or has no data then there is no tree to rebuild
+            if (UserPreferences.groupItemsInTreeByDatasource()) {
+                for (Node dataSource : autopsyTreeChildren.getNodes()) {
+                    Node tagsNode = dataSource.getChildren().findChild(Tags.getTagsDisplayName());
+                    if (tagsNode != null) {
+                        //Reports is at the same level as the data sources so we want to ignore it
+                        ((Tags.RootNode)tagsNode).refresh();
+                    }
+                }
+            } else {
+                 Node tagsNode = autopsyTreeChildren.findChild(Tags.getTagsDisplayName());
+                    if (tagsNode != null) {
+                        ((Tags.RootNode)tagsNode).refresh();
+                    }
+            }
+        });
+    }
+
+    /**
      * Rebuilds the autopsy tree.
      *
      * Does nothing if there is no open case.
@@ -907,7 +954,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         // refresh all children of the root.
-        autopsyTreeChildrenFactory.refreshChildren();
+        autopsyTreeChildFactory.refreshChildren();
 
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.
