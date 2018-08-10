@@ -59,7 +59,7 @@ public class ZoomToEvents extends Action {
             private final FilteredEventsModel eventsModel = controller.getEventsModel();
 
             {
-                bind(eventsModel.zoomParametersProperty());
+                bind(eventsModel.zoomStateProperty());
             }
 
             @Override

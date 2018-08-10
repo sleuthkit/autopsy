@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -26,6 +27,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  * Dialog to allow Central Repository file instance comments to be added and
  * modified.
  */
+@Messages({"CentralRepoCommentDialog.title.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
@@ -37,10 +39,9 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
      * Create an instance.
      *
      * @param correlationAttribute The correlation attribute to be modified.
-     * @param title                The title to assign the dialog.
      */
-    CentralRepoCommentDialog(CorrelationAttribute correlationAttribute, String title) {
-        super(WindowManager.getDefault().getMainWindow(), title);
+    CentralRepoCommentDialog(CorrelationAttribute correlationAttribute) {
+        super(WindowManager.getDefault().getMainWindow(), Bundle.CentralRepoCommentDialog_title_addEditCentralRepoComment());
         
         initComponents();
 
@@ -51,7 +52,6 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
             currentComment = instance.getComment();
         }
 
-        pathLabel.setText(instance.getFilePath());
         commentTextArea.setText(instance.getComment());
 
         this.correlationAttribute = correlationAttribute;
@@ -82,6 +82,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
      * Get the current comment.
      * If the user hit OK, this will be the new comment.
      * If the user canceled, this will be the original comment.
+     * 
      * @return the comment
      */
     String getComment() {
@@ -101,8 +102,6 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         commentTextArea = new javax.swing.JTextArea();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        fileLabel = new javax.swing.JLabel();
-        pathLabel = new javax.swing.JLabel();
         commentLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -129,10 +128,6 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileLabel, org.openide.util.NbBundle.getMessage(CentralRepoCommentDialog.class, "CentralRepoCommentDialog.fileLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(CentralRepoCommentDialog.class, "CentralRepoCommentDialog.pathLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(CentralRepoCommentDialog.class, "CentralRepoCommentDialog.commentLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -144,12 +139,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(fileLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(pathLabel))
-                            .addComponent(commentLabel))
+                        .addComponent(commentLabel)
                         .addGap(0, 451, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -162,17 +152,13 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fileLabel)
-                    .addComponent(pathLabel))
-                .addGap(19, 19, 19)
                 .addComponent(commentLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(okButton)
-                    .addComponent(cancelButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelButton)
+                    .addComponent(okButton))
                 .addContainerGap())
         );
 
@@ -195,9 +181,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
     private javax.swing.JTextArea commentTextArea;
-    private javax.swing.JLabel fileLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okButton;
-    private javax.swing.JLabel pathLabel;
     // End of variables declaration//GEN-END:variables
 }

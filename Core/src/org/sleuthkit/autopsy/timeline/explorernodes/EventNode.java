@@ -49,10 +49,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
- * * Explorer Node for a SingleEvent.
+ * * Explorer Node for a TimelineEvent.
  */
 public class EventNode extends DisplayableItemNode {
 
@@ -60,15 +60,15 @@ public class EventNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
 
-    private final SingleEvent event;
+    private final TimelineEvent event;
 
-    EventNode(SingleEvent event, AbstractFile file, BlackboardArtifact artifact) {
+    EventNode(TimelineEvent event, AbstractFile file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
         this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
     }
 
-    EventNode(SingleEvent event, AbstractFile file) {
+    EventNode(TimelineEvent event, AbstractFile file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
         this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
@@ -225,7 +225,7 @@ public class EventNode extends DisplayableItemNode {
              * Look up the event by id and creata an EventNode with the
              * appropriate data in the lookup.
              */
-            final SingleEvent eventById = eventsModel.getEventById(eventID);
+        final TimelineEvent eventById = eventsModel.getEventById(eventID);
 
             AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
 

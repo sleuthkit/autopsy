@@ -22,8 +22,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
+import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 
 /**
  * An Action that un-hides, in the given chart, events with the given

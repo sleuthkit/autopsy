@@ -24,13 +24,13 @@ import javafx.scene.chart.Axis;
 import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 
 /**
  *
  */
-public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent> {
+public final class PinnedEventsChartLane extends DetailsChartLane<DetailViewEvent> {
 
     private static final Logger logger = Logger.getLogger(PinnedEventsChartLane.class.getName());
 
@@ -42,16 +42,16 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
      * @param selectedNodes1 the value of selectedNodes1
      */
     @NbBundle.Messages({"PinnedChartLane.pinnedEventsListener.errorMessage=Error adding pinned event to lane."})
-    PinnedEventsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<TimeLineEvent> verticalAxis) {
+    PinnedEventsChartLane(DetailsChart parentChart, DateAxis dateAxis, final Axis<DetailViewEvent> verticalAxis) {
         super(parentChart, dateAxis, verticalAxis, false);
 
-        getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends TimeLineEvent> change) -> {
+        getController().getPinnedEvents().addListener((SetChangeListener.Change<? extends DetailViewEvent> change) -> {
             if (change.wasAdded()) {
                 try {
                     addEvent(change.getElementAdded());
                 } catch (TskCoreException ex) {
                     Notifications.create().owner(getScene().getWindow())
-                        .text( Bundle.PinnedChartLane_pinnedEventsListener_errorMessage()).showError();
+                            .text(Bundle.PinnedChartLane_pinnedEventsListener_errorMessage()).showError();
                     logger.log(Level.SEVERE, "Error adding pinned event to lane.", ex);
                 }
             }
@@ -61,7 +61,7 @@ public final class PinnedEventsChartLane extends DetailsChartLane<TimeLineEvent>
             requestChartLayout();
         });
 
-        for (TimeLineEvent event : getController().getPinnedEvents()) {
+        for (DetailViewEvent event : getController().getPinnedEvents()) {
             try {
                 addEvent(event);
             } catch (TskCoreException ex) {

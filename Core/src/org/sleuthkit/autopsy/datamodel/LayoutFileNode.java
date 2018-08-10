@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2017 Basis Technology Corp.
+ *
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -46,11 +47,11 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     public static enum LayoutContentPropertyType {
 
         PARTS {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "LayoutFileNode.propertyType.parts");
-                    }
-                }
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "LayoutFileNode.propertyType.parts");
+            }
+        }
     }
 
     public static String nameForLayoutFile(LayoutFile lf) {
@@ -115,9 +116,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actionsList.add(a);
-        }
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new ExternalViewerAction(
@@ -126,19 +125,18 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        
+
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
-    
-      void fillPropertyMap(Map<String, Object> map) {
+    void fillPropertyMap(Map<String, Object> map) {
         AbstractAbstractFileNode.fillPropertyMap(map, getContent());
         map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
     }

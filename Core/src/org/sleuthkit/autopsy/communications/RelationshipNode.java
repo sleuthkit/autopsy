@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-18 Basis Technology Corp.
+ * Copyright 2017-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class RelationshipNode extends BlackboardArtifactNode {
 
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
-    
+
     RelationshipNode(BlackboardArtifact artifact) {
         super(artifact);
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s");
@@ -115,7 +115,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
         }
 
         addTagProperty(sheetSet);
-        
+
         return sheet;
     }
 

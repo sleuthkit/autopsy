@@ -39,7 +39,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportBranding;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 
 /**
  * Generate and write the Timeline snapshot report to disk.
@@ -56,7 +56,7 @@ public class SnapShotReportWriter {
     private final String reportName;
     private final ReportBranding reportBranding;
 
-    private final ZoomParams zoomParams;
+    private final ZoomState zoomState;
     private final Date generationDate;
     private final BufferedImage image;
 
@@ -67,17 +67,16 @@ public class SnapShotReportWriter {
      * @param reportFolderPath The Path to the folder that will contain the
      *                         report.
      * @param reportName       The name of the report.
-     * @param zoomParams       The ZoomParams in effect when the snapshot was
+     * @param zoomState        The ZoomState in effect when the snapshot was
      *                         taken.
      * @param generationDate   The generation Date of the report.
-     * @param snapshot         A snapshot of the view to include in the
-     *                         report.
+     * @param snapshot         A snapshot of the view to include in the report.
      */
-    public SnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, ZoomParams zoomParams, Date generationDate, BufferedImage snapshot) {
+    public SnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, ZoomState zoomState, Date generationDate, BufferedImage snapshot) {
         this.currentCase = currentCase;
         this.reportFolderPath = reportFolderPath;
         this.reportName = reportName;
-        this.zoomParams = zoomParams;
+        this.zoomState = zoomState;
         this.generationDate = generationDate;
         this.image = snapshot;
 
@@ -108,8 +107,7 @@ public class SnapShotReportWriter {
     }
 
     /**
-     * Generate and write the html page that shows the snapshot and the state of
-     * the ZoomParams
+     * Generate and write the html page that shows the snapshot and the ZoomState
      *
      * @throws IOException If there is a problem writing the html file to disk.
      */
@@ -117,9 +115,9 @@ public class SnapShotReportWriter {
         //make a map of context objects to resolve template paramaters against
         HashMap<String, Object> snapShotContext = new HashMap<>();
         snapShotContext.put("reportTitle", reportName); //NON-NLS
-        snapShotContext.put("startTime", zoomParams.getTimeRange().getStart().toString(DateTimeFormat.fullDateTime())); //NON-NLS
-        snapShotContext.put("endTime", zoomParams.getTimeRange().getEnd().toString(DateTimeFormat.fullDateTime())); //NON-NLS
-        snapShotContext.put("zoomParams", zoomParams); //NON-NLS
+        snapShotContext.put("startTime", zoomState.getTimeRange().getStart().toString(DateTimeFormat.fullDateTime())); //NON-NLS
+        snapShotContext.put("endTime", zoomState.getTimeRange().getEnd().toString(DateTimeFormat.fullDateTime())); //NON-NLS
+        snapShotContext.put("zoomState", zoomState); //NON-NLS
 
         fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/snapshot_template.html", "Snapshot", snapShotContext, reportFolderPath.resolve("snapshot.html")); //NON-NLS
     }
@@ -157,7 +155,7 @@ public class SnapShotReportWriter {
         summaryContext.put("ingestRunning", IngestManager.getInstance().isIngestRunning()); //NON-NLS
         summaryContext.put("currentCase", currentCase); //NON-NLS
         String agencyLogo = "agency_logo.png"; //default name for agency logo.
-        if (StringUtils.isNotBlank(reportBranding.getAgencyLogoPath())){
+        if (StringUtils.isNotBlank(reportBranding.getAgencyLogoPath())) {
             agencyLogo = Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString();
         }
         summaryContext.put("agencyLogoFileName", agencyLogo);

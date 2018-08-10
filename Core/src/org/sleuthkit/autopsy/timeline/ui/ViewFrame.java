@@ -95,8 +95,8 @@ import org.sleuthkit.autopsy.timeline.ui.countsview.CountsViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
 
 /**
  * A container for an AbstractTimelineView. Has a Toolbar on top to hold
@@ -108,7 +108,7 @@ import org.sleuthkit.datamodel.timeline.RangeDivisionInfo;
  */
 final public class ViewFrame extends BorderPane {
 
-    private static final Logger LOGGER = Logger.getLogger(ViewFrame.class.getName());
+    private static final Logger logger = Logger.getLogger(ViewFrame.class.getName());
 
     private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
@@ -258,7 +258,7 @@ final public class ViewFrame extends BorderPane {
             if (rangeSlider.isHighValueChanging() == false
                 && rangeSlider.isLowValueChanging() == false) {
                 try {
-                    Long minTime = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
+                    Long minTime = RangeDivision.getRangeDivision(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone()).getLowerBound();
                     if (false == controller.pushTimeRange(new Interval(
                             (long) (rangeSlider.getLowValue() + minTime),
                             (long) (rangeSlider.getHighValue() + minTime + 1000)))) {
@@ -268,7 +268,7 @@ final public class ViewFrame extends BorderPane {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.ViewFrame_rangeSliderListener_errorMessage())
                             .showError();
-                    LOGGER.log(Level.SEVERE, "Error responding to range slider.", ex);
+                    logger.log(Level.SEVERE, "Error responding to range slider.", ex);
                 }
             }
         }
@@ -437,7 +437,7 @@ final public class ViewFrame extends BorderPane {
                             Notifications.create().owner(getScene().getWindow())
                                     .text(Bundle.ViewFrame_zoomMenuButton_errorMessage())
                                     .showError();
-                            LOGGER.log(Level.SEVERE, "Error pushing a time range.", ex);
+                            logger.log(Level.SEVERE, "Error pushing a time range.", ex);
                         }
                     })
             ));
@@ -452,7 +452,7 @@ final public class ViewFrame extends BorderPane {
         //listen for changes in the time range / zoom params
         TimeLineController.getTimeZone().addListener(timeZoneProp -> refreshTimeUI());
         filteredEvents.timeRangeProperty().addListener(timeRangeProp -> refreshTimeUI());
-        filteredEvents.zoomParametersProperty().addListener(zoomListener);
+        filteredEvents.zoomStateProperty().addListener(zoomListener);
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
@@ -566,7 +566,7 @@ final public class ViewFrame extends BorderPane {
                 updateMessage(Bundle.ViewFrame_histogramTask_preparing());
 
                 long max = 0;
-                final RangeDivisionInfo rangeInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+                final RangeDivision rangeInfo = RangeDivision.getRangeDivision(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
                 final long lowerBound = rangeInfo.getLowerBound();
                 final long upperBound = rangeInfo.getUpperBound();
                 Interval timeRange = new Interval(new DateTime(lowerBound, TimeLineController.getJodaTimeZone()), new DateTime(upperBound, TimeLineController.getJodaTimeZone()));
@@ -587,7 +587,7 @@ final public class ViewFrame extends BorderPane {
                     if (isCancelled()) {
                         return null;
                     }
-                    DateTime end = start.plus(rangeInfo.getPeriodSize().getPeriod());
+                    DateTime end = start.plus(rangeInfo.getPeriodSize().toUnitPeriod());
                     final Interval interval = new Interval(start, end);
                     //increment for next iteration
 
@@ -642,7 +642,7 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.refreshTimeUI.errorMessage=Error gettig the spanning interval."})
     private void refreshTimeUI() {
         try {
-            RangeDivisionInfo rangeDivisionInfo = RangeDivisionInfo.getRangeDivisionInfo(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
+            RangeDivision rangeDivisionInfo = RangeDivision.getRangeDivision(filteredEvents.getSpanningInterval(), TimeLineController.getJodaTimeZone());
             final long minTime = rangeDivisionInfo.getLowerBound();
             final long maxTime = rangeDivisionInfo.getUpperBound();
 
@@ -673,7 +673,7 @@ final public class ViewFrame extends BorderPane {
             Notifications.create().owner(getScene().getWindow())
                     .text(Bundle.ViewFrame_refreshTimeUI_errorMessage())
                     .showError();
-            LOGGER.log(Level.SEVERE, "Error gettig the spanning interval.", ex);
+            logger.log(Level.SEVERE, "Error gettig the spanning interval.", ex);
         }
     }
 
@@ -831,7 +831,7 @@ final public class ViewFrame extends BorderPane {
                     Notifications.create().owner(getScene().getWindow())
                             .text(Bundle.ViewFrame_pickerListener_errorMessage())
                             .showError();
-                    LOGGER.log(Level.SEVERE, "Error responding to date/time picker change.", ex);
+                    logger.log(Level.SEVERE, "Error responding to date/time picker change.", ex);
                 }
                 Platform.runLater(ViewFrame.this::refreshTimeUI);
             }
@@ -873,7 +873,7 @@ final public class ViewFrame extends BorderPane {
                 Notifications.create().owner(getScene().getWindow())
                         .text(Bundle.ViewFrame_localDateDisabler_errorMessage())
                         .showError();
-                LOGGER.log(Level.SEVERE, "Error getting spanning interval.", ex);
+                logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
             }
             return null;
         }
@@ -914,7 +914,7 @@ final public class ViewFrame extends BorderPane {
                 Notifications.create().owner(getScene().getWindow())
                         .text(Bundle.ViewFrame_dateTimeValidator_errorMessage())
                         .showError();
-                LOGGER.log(Level.SEVERE, "Error getting spanning interval.", ex);
+                logger.log(Level.SEVERE, "Error getting spanning interval.", ex);
                 return false;
             }
         }

@@ -53,13 +53,13 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventCluster;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
-import org.sleuthkit.datamodel.timeline.filters.AbstractFilter;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout
@@ -70,7 +70,7 @@ import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
  * addDataItem(javafx.scene.chart.XYChart.Data) and
  * removeDataItem(javafx.scene.chart.XYChart.Data) to add and remove data.
  */
-abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider {
+abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider {
 
     private static final String STYLE_SHEET = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
 
@@ -112,11 +112,11 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         return parentChart.getContextMenu(clickEvent);
     }
 
-    private EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) throws TskCoreException {
+    EventNodeBase<?> createNode(DetailsChartLane<?> chart, DetailViewEvent event) throws TskCoreException {
         if (event.getEventIDs().size() == 1) {
-            return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
-        } else if (event instanceof SingleEvent) {
-            return new SingleEventNode(chart, (SingleEvent) event, null);
+            return new SingleEventNode(this, new SingleDetailsViewEvent(controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs()))), null);
+        } else if (event instanceof SingleDetailsViewEvent) {
+            return new SingleEventNode(chart, (SingleDetailsViewEvent) event, null);
         } else if (event instanceof EventCluster) {
             return new EventClusterNode(chart, (EventCluster) event, null);
         } else {
@@ -130,7 +130,8 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
         if (useQuickHideFilters) {
             //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
             activeQuickHidefilters = getController().getQuickHideFilters().stream()
-                    .filter(AbstractFilter::isActive)
+                    .filter(FilterState::isActive)
+                    .map(FilterState<DescriptionFilter>::getFilter)
                     .map(DescriptionFilter::getDescription)
                     .collect(Collectors.toSet());
         }

@@ -31,9 +31,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventCluster;
-import org.sleuthkit.datamodel.timeline.EventStripe;
 
 /**
  * Custom implementation of XYChart to graph events on a horizontal timeline.

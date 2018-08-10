@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import java.util.Deque;
-import java.util.Objects;
-import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -32,12 +29,11 @@ import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * A basic history implementation. Keeps a history (and forward) stack of state
- * objects of type T. exposes current state and availability of
- * advance/retreat operations via methods and JFX Property objects. Null is not
- * a valid state, and will only be the current state before the first call to
- * advance.
+ * objects of type T. exposes current state and availability of advance/retreat
+ * operations via methods and JFX Property objects. Null is not a valid state,
+ * and will only be the current state before the first call to advance.
  *
- * @param T the type of objects used to represent the
+ * @param <T> the type of objects used to represent the
  *            current/historical/future states
  */
 @ThreadSafe
@@ -116,20 +112,21 @@ public class History<T> {
     }
 
     /**
-     * retreat through the history states by one, and add the current state to
+     * Retreat through the history states by one, and add the current state to
      * the forward states. Is a no-op if there are no history states.
      *
      * @return the state retreated to, or null if there were no history states.
      */
     synchronized public T retreat() {
         final T pop = historyStack.pop();
-
-        if (pop != null && pop.equals(currentState.get()) == false) {
-            forwardStack.push(currentState.get());
-            currentState.set(pop);
-            return pop;
-        } else if (pop != null && pop.equals(currentState.get())) {
-            return retreat();
+        if (pop != null) {
+            if (pop.equals(currentState.get())) {
+                return retreat();
+            } else {
+                forwardStack.push(currentState.get());
+                currentState.set(pop);
+                return pop;
+            }
         }
         return pop;
     }
@@ -144,7 +141,7 @@ public class History<T> {
      * @throws IllegalArgumentException if newState == null
      */
     synchronized public void advance(T newState) throws IllegalArgumentException {
-        if (newState != null && Objects.equals(currentState.get(), newState) == false) {
+        if (newState != null && newState.equals(currentState.get()) == false) {
             if (currentState.get() != null) {
                 historyStack.push(currentState.get());
             }

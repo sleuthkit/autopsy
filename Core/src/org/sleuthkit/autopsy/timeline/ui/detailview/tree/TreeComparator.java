@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 import java.util.Comparator;
 import javafx.scene.control.TreeItem;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 
 /**
  * Comparators of TreeItems: these are the ways the EventsTree can be sorted.
@@ -29,23 +29,23 @@ import org.sleuthkit.datamodel.timeline.TimeLineEvent;
 @NbBundle.Messages({"TreeComparator.Description.displayName=Description",
     "TreeComparator.Count.displayName=Count",
     "TreeComparator.Type.displayName=Type"})
-enum TreeComparator implements Comparator<TreeItem<TimeLineEvent>> {
+enum TreeComparator implements Comparator<TreeItem<DetailViewEvent>> {
 
     Description(Bundle.TreeComparator_Description_displayName()) {
         @Override
-        public int compare(TreeItem<TimeLineEvent> item1, TreeItem<TimeLineEvent> item2) {
+        public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
             return item1.getValue().getDescription().compareTo(item2.getValue().getDescription());
         }
     },
     Count(Bundle.TreeComparator_Count_displayName()) {
         @Override
-        public int compare(TreeItem<TimeLineEvent> item1, TreeItem<TimeLineEvent> item2) {
+        public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
             return Long.compare(item2.getValue().getSize(), item1.getValue().getSize());
         }
     },
     Type(Bundle.TreeComparator_Type_displayName()) {
         @Override
-        public int compare(TreeItem<TimeLineEvent> item1, TreeItem<TimeLineEvent> item2) {
+        public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
             return item1.getValue().getEventType().compareTo(item2.getValue().getEventType());
         }
     };

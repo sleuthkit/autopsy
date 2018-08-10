@@ -30,10 +30,11 @@ import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventCluster;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * Node used in DetailsChart to represent an EventStripe.
@@ -118,8 +119,9 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TskCoreException {
         ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
-            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(cluster);
-            return new SingleEventNode(getChartLane(), singleEvent, this);
+            TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
+            SingleDetailsViewEvent singleDetailEvent = new SingleDetailsViewEvent(singleEvent).withParent(cluster);
+            return new SingleEventNode(getChartLane(), singleDetailEvent, this);
         } else {
             return new EventClusterNode(getChartLane(), cluster, this);
         }

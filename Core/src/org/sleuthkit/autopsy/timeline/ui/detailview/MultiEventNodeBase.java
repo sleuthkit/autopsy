@@ -35,9 +35,9 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.MultiEvent;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.MultiEvent;
 
 /**
  * Base class for nodes that represent multiple events in the Details View.
@@ -95,7 +95,6 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
         descLOD.set(descriptionLoD);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;

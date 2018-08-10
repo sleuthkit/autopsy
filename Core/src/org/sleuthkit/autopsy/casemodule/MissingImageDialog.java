@@ -28,6 +28,7 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
@@ -44,17 +45,8 @@ class MissingImageDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(MissingImageDialog.class.getName());
     long obj_id;
     SleuthkitCase db;
-    static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
-    static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
-    static final List<String> allExt = new ArrayList<String>();
 
-    static {
-        allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
-        allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
-    }
-    static final String allDesc = NbBundle.getMessage(MissingImageDialog.class, "MissingImageDialog.allDesc.text");
-    static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
-    private final JFileChooser fc = new JFileChooser();
+    private final JFileChooser fileChooser = new JFileChooser();
 
     /**
      * Instantiate a MissingImageDialog.
@@ -68,13 +60,15 @@ class MissingImageDialog extends javax.swing.JDialog {
         this.db = db;
         initComponents();
 
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(false);
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
 
-        fc.addChoosableFileFilter(rawFilter);
-        fc.addChoosableFileFilter(encaseFilter);
-        fc.setFileFilter(allFilter);
+        List<FileFilter> fileFiltersList = ImageDSProcessor.getFileFiltersList();
+        for (FileFilter fileFilter : fileFiltersList) {
+            fileChooser.addChoosableFileFilter(fileFilter);
+        }
+        fileChooser.setFileFilter(fileFiltersList.get(0));
 
         selectButton.setEnabled(false);
     }
@@ -286,12 +280,12 @@ class MissingImageDialog extends javax.swing.JDialog {
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentDir = new File(oldText);
         if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
+            fileChooser.setCurrentDirectory(currentDir);
         }
 
-        int retval = fc.showOpenDialog(this);
+        int retval = fileChooser.showOpenDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
+            String path = fileChooser.getSelectedFile().getPath();
             pathNameTextField.setText(path);
         }
         //pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);

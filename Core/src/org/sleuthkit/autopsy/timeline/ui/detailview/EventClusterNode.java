@@ -50,18 +50,19 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.datamodel.timeline.filters.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventCluster;
-import org.sleuthkit.datamodel.timeline.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
 /**
  * A Node to represent an EventCluster in a DetailsChart
@@ -163,11 +164,11 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
      */
     @NbBundle.Messages(value = "EventClusterNode.loggedTask.name=Load sub events")
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private synchronized void loadSubStripes(DescriptionLoD.RelativeDetail relativeDetail) {
+    private synchronized void loadSubStripes(RelativeDetail relativeDetail) {
         getChartLane().setCursor(Cursor.WAIT);
 
         /*
-         * make new ZoomParams to query with
+         * make new ZoomState to query with
          *
          * We need to extend end time for the query by one second, because it is
          * treated as an open interval but we want to include events at exactly
@@ -175,13 +176,13 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        final RootFilter subClusterFilter = eventsModel.filterProperty().get().copyOf();
-        subClusterFilter.getSubFilters().addAll(
+        final RootFilterState subClusterFilter = eventsModel.getFilterState().copyOf();
+        subClusterFilter.getFilter().getSubFilters().addAll(
                 new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new TypeFilter(getEventType()));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
-        final ZoomParams zoomParams = new ZoomParams(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
+        final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
         /*
          * task to load sub-stripes in a background thread
@@ -189,7 +190,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         Task<List<EventStripe>> loggedTask;
         loggedTask = new LoggedTask<List<EventStripe>>(Bundle.EventClusterNode_loggedTask_name(), false) {
 
-            private volatile DescriptionLoD loadedDescriptionLoD = getDescriptionLoD().withRelativeDetail(relativeDetail);
+            private volatile DescriptionLoD loadedDescriptionLoD = withRelativeDetail(getDescriptionLoD(), relativeDetail);
 
             @Override
             protected List<EventStripe> call() throws Exception {
@@ -206,9 +207,9 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = eventsModel.getEventStripes(zoomParams.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(zoom.withDescrLOD(loadedDescriptionLoD));
                     //setup next for subsequent go through the "do" loop
-                    next = loadedDescriptionLoD.withRelativeDetail(relativeDetail);
+                    next = withRelativeDetail(loadedDescriptionLoD, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.
 
                 // return list of EventStripes with parents set to this cluster
@@ -219,7 +220,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
 
             @Override
             protected void succeeded() {
-                ObservableList<TimeLineEvent> chartNestedEvents = getChartLane().getParentChart().getAllNestedEvents();
+                ObservableList<DetailViewEvent> chartNestedEvents = getChartLane().getParentChart().getAllNestedEvents();
 
                 //clear the existing subnodes/events
                 chartNestedEvents.removeAll(StripeFlattener.flatten(subNodes));
@@ -260,8 +261,9 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         ImmutableSet<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.
-            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(stripe);
-            return new SingleEventNode(getChartLane(), singleEvent, this);
+            TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
+            SingleDetailsViewEvent singleDetailsEvent = new SingleDetailsViewEvent(singleEvent).withParent(stripe);
+            return new SingleEventNode(getChartLane(), singleDetailsEvent, this);
         } else {
             return new EventStripeNode(getChartLane(), stripe, this);
         }
@@ -303,7 +305,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
 
             setEventHandler(actionEvent -> {
                 if (node.getDescriptionLoD().moreDetailed() != null) {
-                    node.loadSubStripes(DescriptionLoD.RelativeDetail.MORE);
+                    node.loadSubStripes(RelativeDetail.MORE);
                 }
             });
 
@@ -327,7 +329,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
 
             setEventHandler(actionEvent -> {
                 if (node.getDescriptionLoD().lessDetailed() != null) {
-                    node.loadSubStripes(DescriptionLoD.RelativeDetail.LESS);
+                    node.loadSubStripes(RelativeDetail.LESS);
                 }
             });
 
@@ -335,4 +337,25 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
             disabledProperty().bind(node.descriptionLoDProperty().isEqualTo(node.getEvent().getDescriptionLoD()));
         }
     }
+
+    private enum RelativeDetail {
+
+        EQUAL,
+        MORE,
+        LESS;
+    }
+
+    private static DescriptionLoD withRelativeDetail(DescriptionLoD LoD, RelativeDetail relativeDetail) {
+        switch (relativeDetail) {
+            case EQUAL:
+                return LoD;
+            case MORE:
+                return LoD.moreDetailed();
+            case LESS:
+                return LoD.lessDetailed();
+            default:
+                throw new IllegalArgumentException("Unknown RelativeDetail value " + relativeDetail);
+        }
+    }
+
 }

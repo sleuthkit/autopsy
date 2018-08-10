@@ -43,12 +43,13 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
-import org.sleuthkit.datamodel.timeline.EventStripe;
-import org.sleuthkit.datamodel.timeline.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
+import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 
 /**
  * A TimeLineChart that implements the visual aspects of the DetailView
@@ -88,13 +89,18 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      * of events whose roots are in the eventStripes lists
      *
      */
-    private final ObservableList<TimeLineEvent> nestedEvents = FXCollections.observableArrayList();
+    private final ObservableList<DetailViewEvent> nestedEvents = FXCollections.observableArrayList();
 
     /**
      * Aggregates all the settings related to the layout of this chart as one
      * object.
      */
     private final DetailsChartLayoutSettings layoutSettings;
+    private final DetailsViewModel detailsViewModel;
+
+    DetailsViewModel getDetailsViewModel() {
+        return detailsViewModel;
+    }
 
     /**
      * The main controller object for this instance of the Timeline UI.
@@ -110,6 +116,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Constructor
      *
+     * @param detailsViewModel     The DetailsViewModel to use for this chart.
      * @param controller           The TimeLineController for this chart.
      * @param detailsChartDateAxis The DateAxis to use in this chart.
      * @param pinnedDateAxis       The DateAxis to use for the pinned lane. It
@@ -121,7 +128,8 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
      *                             will be used to keep track of the nodes
      *                             selected in this chart.
      */
-    DetailsChart(TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+    DetailsChart(DetailsViewModel detailsViewModel, TimeLineController controller, DateAxis detailsChartDateAxis, DateAxis pinnedDateAxis, Axis<EventStripe> verticalAxis, ObservableList<EventNodeBase<?>> selectedNodes) {
+        this.detailsViewModel = detailsViewModel;
         this.controller = controller;
         this.layoutSettings = new DetailsChartLayoutSettings(controller);
         this.detailsChartDateAxis = detailsChartDateAxis;
@@ -138,7 +146,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
         eventsModel.timeRangeProperty().addListener(observable -> clearTimeBasedUIElements());
 
         //if the view paramaters change, clear the selection
-        eventsModel.zoomParametersProperty().addListener(observable -> getSelectedNodes().clear());
+        eventsModel.zoomStateProperty().addListener(observable -> getSelectedNodes().clear());
     }
 
     /**
@@ -212,7 +220,7 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
     /**
      * Get the tree of event stripes flattened into a list
      */
-    public ObservableList<TimeLineEvent> getAllNestedEvents() {
+    public ObservableList<DetailViewEvent> getAllNestedEvents() {
         return nestedEvents;
     }
 

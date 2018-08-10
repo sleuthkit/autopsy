@@ -19,10 +19,10 @@
 package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -58,34 +58,37 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.timeline.events.RefreshRequestedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
+import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
+import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.CombinedEvent;
-import org.sleuthkit.datamodel.timeline.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.EventStripe;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.SingleEvent;
-import org.sleuthkit.datamodel.timeline.ZoomParams;
-import org.sleuthkit.datamodel.timeline.filters.DataSourceFilter;
-import org.sleuthkit.datamodel.timeline.filters.DataSourcesFilter;
-import org.sleuthkit.datamodel.timeline.filters.Filter;
-import org.sleuthkit.datamodel.timeline.filters.HashHitsFilter;
-import org.sleuthkit.datamodel.timeline.filters.HashSetFilter;
-import org.sleuthkit.datamodel.timeline.filters.HideKnownFilter;
-import org.sleuthkit.datamodel.timeline.filters.RootFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagNameFilter;
-import org.sleuthkit.datamodel.timeline.filters.TagsFilter;
-import org.sleuthkit.datamodel.timeline.filters.TextFilter;
-import org.sleuthkit.datamodel.timeline.filters.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
+
 
 /**
  * This class acts as the model for a TimelineView
@@ -109,27 +112,27 @@ public final class FilteredEventsModel {
     private static final Logger logger = Logger.getLogger(FilteredEventsModel.class.getName());
 
     private final TimelineManager eventManager;
+
     private final Case autoCase;
     private final EventBus eventbus = new EventBus("FilteredEventsModel_EventBus"); //NON-NLS
 
     //Filter and zoome state
-    private final ReadOnlyObjectWrapper<RootFilter> requestedFilter = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<RootFilterState> requestedFilter = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper<Interval> requestedTimeRange = new ReadOnlyObjectWrapper<>();
-    private final ReadOnlyObjectWrapper<ZoomParams> requestedZoomParamters = new ReadOnlyObjectWrapper<>();
+    private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
     private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
 
     //caches
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
-    private final LoadingCache<Long, SingleEvent> idToEventCache;
-    private final LoadingCache<ZoomParams, Map<EventType, Long>> eventCountsCache;
-    private final LoadingCache<ZoomParams, List<EventStripe>> eventStripeCache;
+    private final LoadingCache<Long, TimelineEvent> idToEventCache;
+    private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
 
-    public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomParams> currentStateProperty) throws TskCoreException {
+    public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
         this.eventManager = autoCase.getSleuthkitCase().getTimelineManager();
         populateFilterData();
@@ -142,11 +145,7 @@ public final class FilteredEventsModel {
         eventCountsCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoaderImpl<>(eventManager::countEventsByType));
-        eventStripeCache = CacheBuilder.newBuilder()
-                .maximumSize(1000L)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoaderImpl<>(params -> eventManager.getEventStripes(params, TimeLineController.getJodaTimeZone())));
+                .build(new CacheLoaderImpl<>(this::countEventsByType));
 
         maxCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMaxTime()));
@@ -155,39 +154,66 @@ public final class FilteredEventsModel {
 
         getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
-            RootFilter rootFilter = filterProperty().get();
-            rootFilter.getDataSourcesFilter().addSubFilter(dataSourceFilter);
+            RootFilterState rootFilter = filterProperty().get();
+            rootFilter.getDataSourcesFilterState().getFilter().getSubFilters().add(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
-            RootFilter rootFilter = filterProperty().get();
-            rootFilter.getHashHitsFilter().addSubFilter(hashSetFilter);
+            RootFilterState rootFilter = filterProperty().get();
+            rootFilter.getHashHitsFilterState().getFilter().getSubFilters().add(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
-            RootFilter rootFilter = filterProperty().get();
-            TagsFilter tagsFilter = rootFilter.getTagsFilter();
-            syncTagsFilter(tagsFilter);
+            RootFilterState rootFilter = filterProperty().get();
+            syncTagsFilter(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
         requestedFilter.set(getDefaultFilter());
 
-        //TODO: use bindings to keep these in sync? -jm
-        requestedZoomParamters.addListener((Observable observable) -> {
-            final ZoomParams zoomParams = requestedZoomParamters.get();
+        requestedZoomState.addListener((Observable observable) -> {
+            final ZoomState zoomState = requestedZoomState.get();
 
-            if (zoomParams != null) {
+            if (zoomState != null) {
                 synchronized (FilteredEventsModel.this) {
-                    requestedTypeZoom.set(zoomParams.getTypeZoomLevel());
-                    requestedFilter.set(zoomParams.getFilter());
-                    requestedTimeRange.set(zoomParams.getTimeRange());
-                    requestedLOD.set(zoomParams.getDescriptionLOD());
+                    requestedTypeZoom.set(zoomState.getTypeZoomLevel());
+                    requestedFilter.set(zoomState.getFilterState());
+                    requestedTimeRange.set(zoomState.getTimeRange());
+                    requestedLOD.set(zoomState.getDescriptionLOD());
                 }
             }
         });
 
-        requestedZoomParamters.bind(currentStateProperty);
+        requestedZoomState.bind(currentStateProperty);
+    }
+
+    /**
+     * get the count of all events that fit the given zoom params organized by
+     * the EvenType of the level specified in the zoomState
+     *
+     * @param zoomState The params that control what events to count and how to
+     *               organize the returned map
+     *
+     * @return a map from event type( of the requested level) to event counts
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    private Map<EventType, Long> countEventsByType(ZoomState zoomState) throws TskCoreException {
+        if (zoomState.getTimeRange() == null) {
+            return Collections.emptyMap();
+        } else {
+            return eventManager.countEventsByType(zoomState.getTimeRange().getStartMillis() / 1000,
+                    zoomState.getTimeRange().getEndMillis() / 1000,
+                    zoomState.getFilterState().getActiveFilter(), zoomState.getTypeZoomLevel());
+        }
+    }
+
+    public TimelineManager getEventManager() {
+        return eventManager;
+    }
+
+    public SleuthkitCase getSleuthkitCase() {
+        return autoCase.getSleuthkitCase();
     }
 
     public ObservableList<TagName> getTagNames() {
@@ -207,21 +233,21 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * Readonly observable property for the current ZoomParams
+     * Readonly observable property for the current ZoomState
      *
-     * @return A readonly observable property for the current ZoomParams.
+     * @return A readonly observable property for the current ZoomState.
      */
-    synchronized public ReadOnlyObjectProperty<ZoomParams> zoomParametersProperty() {
-        return requestedZoomParamters.getReadOnlyProperty();
+    synchronized public ReadOnlyObjectProperty<ZoomState> zoomStateProperty() {
+        return requestedZoomState.getReadOnlyProperty();
     }
 
     /**
-     * Get the current ZoomParams
+     * Get the current ZoomState
      *
-     * @return The current ZoomParams
+     * @return The current ZoomState
      */
-    synchronized public ZoomParams getZoomParamaters() {
-        return requestedZoomParamters.get();
+    synchronized public ZoomState getZoomState() {
+        return requestedZoomState.get();
     }
 
     /**
@@ -248,21 +274,18 @@ public final class FilteredEventsModel {
      * for tags that are not in use in the case, and add new filters for tags
      * that don't have them. New filters are selected by default.
      *
-     * @param tagsFilter the tags filter to modify so it is consistent with the
+     * @param rootFilter the filter state to modify so it is consistent with the
      *                   tags in use in the case
      */
-    public void syncTagsFilter(TagsFilter tagsFilter) {
+    public void syncTagsFilter(RootFilterState rootFilter) {
         for (TagName tagName : tagNames) {
-            tagsFilter.addSubFilter(new TagNameFilter(tagName));
+            rootFilter.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
         }
-        for (TagNameFilter filter : tagsFilter.getSubFilters()) {
-            filter.setDisabled(tagNames.contains(filter.getTagName()) == false);
+        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
+            filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
     }
-
-    public boolean areFiltersEquivalent(RootFilter filter1, RootFilter filter2) {
-        return eventManager.getSQLWhere(filter1).equals(eventManager.getSQLWhere(filter2));
-    }
+  
 
     /**
      * Get a read only view of the time range currently in view.
@@ -289,7 +312,7 @@ public final class FilteredEventsModel {
         return requestedLOD.getReadOnlyProperty();
     }
 
-    synchronized public ReadOnlyObjectProperty<RootFilter> filterProperty() {
+    synchronized public ReadOnlyObjectProperty<RootFilterState> filterProperty() {
         return requestedFilter.getReadOnlyProperty();
     }
 
@@ -303,54 +326,57 @@ public final class FilteredEventsModel {
      * @return The time range currently in view.
      */
     synchronized public Interval getTimeRange() {
-        return timeRangeProperty().get();
+        return getZoomState().getTimeRange();
     }
 
     synchronized public DescriptionLoD getDescriptionLOD() {
-        return requestedLOD.get();
+        return getZoomState().getDescriptionLOD();
     }
 
-    synchronized public RootFilter getFilter() {
-        return requestedFilter.get();
+    synchronized public RootFilterState getFilterState() {
+        return getZoomState().getFilterState();
     }
 
     synchronized public EventTypeZoomLevel getEventTypeZoom() {
-        return requestedTypeZoom.get();
+        return getZoomState().getTypeZoomLevel();
     }
 
     /**
      * @return the default filter used at startup
      */
-    public RootFilter getDefaultFilter() {
+    public RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
 
         getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> entry) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(entry.getValue(), entry.getKey());
-            dataSourceFilter.setSelected(true);
             dataSourcesFilter.addSubFilter(dataSourceFilter);
         });
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
         getHashSets().forEach(hashSetName -> {
             HashSetFilter hashSetFilter = new HashSetFilter(hashSetName);
-            hashSetFilter.setSelected(true);
             hashHitsFilter.addSubFilter(hashSetFilter);
         });
 
         TagsFilter tagsFilter = new TagsFilter();
         getTagNames().stream().forEach(tagName -> {
             TagNameFilter tagNameFilter = new TagNameFilter(tagName);
-            tagNameFilter.setSelected(true);
             tagsFilter.addSubFilter(tagNameFilter);
         });
-        return new RootFilter(new HideKnownFilter(), tagsFilter, hashHitsFilter, new TextFilter(), new TypeFilter(EventType.ROOT_EVEN_TYPE), dataSourcesFilter, Collections.emptySet());
+        return new RootFilterState(new RootFilter(new HideKnownFilter(),
+                tagsFilter,
+                hashHitsFilter,
+                new TextFilter(),
+                new TypeFilter(EventType.ROOT_EVEN_TYPE),
+                dataSourcesFilter,
+                Collections.emptySet()));
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone timeZone) throws TskCoreException {
-        return eventManager.getSpanningInterval(zoomParametersProperty().get().getTimeRange(), zoomParametersProperty().get().getFilter(), timeZone);
+        return eventManager.getSpanningInterval(zoomStateProperty().get().getTimeRange(), getFilterState().getActiveFilter(), timeZone);
     }
 
-    public SingleEvent getEventById(Long eventID) throws TskCoreException {
+    public TimelineEvent getEventById(Long eventID) throws TskCoreException {
         try {
             return idToEventCache.get(eventID);
         } catch (ExecutionException ex) {
@@ -358,8 +384,8 @@ public final class FilteredEventsModel {
         }
     }
 
-    public Set<SingleEvent> getEventsById(Collection<Long> eventIDs) throws TskCoreException {
-        Set<SingleEvent> events = new HashSet<>();
+    public Set<TimelineEvent> getEventsById(Collection<Long> eventIDs) throws TskCoreException {
+        Set<TimelineEvent> events = new HashSet<>();
         for (Long id : eventIDs) {
             events.add(getEventById(id));
         }
@@ -378,28 +404,16 @@ public final class FilteredEventsModel {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public List<Long> getEventIDs(Interval timeRange, Filter filter) throws TskCoreException {
+    public List<Long> getEventIDs(Interval timeRange, TimelineFilter filter) throws TskCoreException {
 
         final Interval overlap;
-        final RootFilter intersect;
+        final RootFilterState intersect;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersect = requestedFilter.get().copyOf();
+            intersect = getFilterState().copyOf();
         }
-        intersect.getSubFilters().add(filter);
-        return eventManager.getEventIDs(overlap, intersect);
-    }
-
-    /**
-     * Get a representation of all the events, within the given time range, that
-     * pass the given filter, grouped by time and description such that file
-     * system events for the same file, with the same timestamp, are combined
-     * together.
-     *
-     * @return A List of combined events, sorted by timestamp.
-     */
-    public List<CombinedEvent> getCombinedEvents() throws TskCoreException {
-        return eventManager.getCombinedEvents(requestedTimeRange.get(), requestedFilter.get());
+        intersect.getFilter().getSubFilters().add(filter);
+        return eventManager.getEventIDs(overlap, intersect.getActiveFilter());
     }
 
     /**
@@ -411,17 +425,19 @@ public final class FilteredEventsModel {
      * @param timeRange
      *
      * @return
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Map<EventType, Long> getEventCounts(Interval timeRange) throws TskCoreException {
 
-        final RootFilter filter;
+        final RootFilterState filter;
         final EventTypeZoomLevel typeZoom;
         synchronized (this) {
-            filter = requestedFilter.get();
-            typeZoom = requestedTypeZoom.get();
+            filter = getFilterState();
+            typeZoom = getEventTypeZoom();
         }
         try {
-            return eventCountsCache.get(new ZoomParams(timeRange, typeZoom, filter, null));
+            return eventCountsCache.get(new ZoomState(timeRange, typeZoom, filter, null));
         } catch (ExecutionException executionException) {
             throw new TskCoreException("Error getting cached event counts.`1", executionException);
         }
@@ -465,41 +481,6 @@ public final class FilteredEventsModel {
             return maxCache.get("max"); // NON-NLS
         } catch (ExecutionException ex) {
             throw new TskCoreException("Error getting cached max time.", ex);
-        }
-    }
-
-    /**
-     *
-     * @return a list of event clusters at the requested zoom levels that are
-     *         within the requested time range and pass the requested filter
-     */
-    public List<EventStripe> getEventStripes() throws TskCoreException {
-        final Interval range;
-        final RootFilter filter;
-        final EventTypeZoomLevel zoom;
-        final DescriptionLoD lod;
-        synchronized (this) {
-            range = requestedTimeRange.get();
-            filter = requestedFilter.get();
-            zoom = requestedTypeZoom.get();
-            lod = requestedLOD.get();
-        }
-        return getEventStripes(new ZoomParams(range, zoom, filter, lod));
-    }
-
-    /**
-     * @param params
-     *
-     * @return a list of aggregated events that are within the requested time
-     *         range and pass the requested filter, using the given aggregation
-     *         to control the grouping of events
-     */
-    public List<EventStripe> getEventStripes(ZoomParams params) throws TskCoreException {
-        try {
-            return eventStripeCache.get(params);
-        } catch (ExecutionException ex) {
-            logger.log(Level.SEVERE, "Failed to load Event Stripes from cache for " + params.toString(), ex); //NON-NLS
-            return Collections.emptyList();
         }
     }
 
@@ -681,48 +662,12 @@ public final class FilteredEventsModel {
     synchronized private void invalidateCaches(Collection<Long> updatedEventIDs) {
         idToEventCache.invalidateAll(updatedEventIDs);
         eventCountsCache.invalidateAll();
-        eventStripeCache.invalidateAll();
         try {
             populateFilterData();
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed topopulate filter data.", ex); //NON-NLS
         }
         eventbus.post(new CacheInvalidatedEvent());
-    }
-
-    /**
-     * Extension of CacheLoader that delegates the load method to the Function
-     * passed to the constructor.
-     *
-     * @param <K> Key type.
-     * @param <V> Value type.
-     */
-    private static class CacheLoaderImpl<K, V> extends CacheLoader<K, V> {
-
-        /**
-         * Functinal interface for a function from I to O that throws an
-         * Exception.
-         *
-         * @param <I> Input type.
-         * @param <O> Output type.
-         */
-        @FunctionalInterface
-        interface CheckedFunction<I, O> {
-
-            O apply(I input) throws Exception;
-        }
-
-        private final CheckedFunction<K, V> func;
-
-        CacheLoaderImpl(CheckedFunction<K, V> func) {
-            this.func = func;
-        }
-
-        @Override
-        public V load(K key) throws Exception {
-            return func.apply(key);
-        }
-
     }
 
     /**
@@ -736,4 +681,30 @@ public final class FilteredEventsModel {
         }
     }
 
+    /**
+     * take the result of a group_concat SQLite operation and split it into a
+     * set of X using the mapper to to convert from string to X If groupConcat
+     * is empty, null, or all whitespace, returns an empty list.
+     *
+     * @param <X>         the type of elements to return
+     * @param groupConcat a string containing the group_concat result ( a comma
+     *                    separated list)
+     * @param mapper      a function from String to X
+     *
+     * @return a Set of X, each element mapped from one element of the original
+     *         comma delimited string
+     */
+    public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
+
+        if (org.apache.commons.lang3.StringUtils.isBlank(groupConcat)) {
+            return Collections.emptyList();
+        }
+
+        List<X> result = new ArrayList<>();
+        String[] split = groupConcat.split(",");
+        for (String s : split) {
+            result.add(mapper.apply(s));
+        }
+        return result;
+    }
 }
