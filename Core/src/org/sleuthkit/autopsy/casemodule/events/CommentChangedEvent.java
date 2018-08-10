@@ -12,8 +12,8 @@ public class CommentChangedEvent extends AutopsyEvent implements Serializable {
     
     private final long contentID;
     
-    public CommentChangedEvent(long id) {
-        super(Case.Events.CR_COMMENT_CHANGED.toString(), true, false);
+    public CommentChangedEvent(long id, String newComment) {
+        super(Case.Events.CR_COMMENT_CHANGED.toString(), null, newComment);
         contentID = id;
     }
     

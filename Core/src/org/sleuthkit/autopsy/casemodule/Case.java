@@ -375,6 +375,10 @@ public class Case {
          */
         TAG_DEFINITION_CHANGED,
         
+        /**
+         * An item in the central repository has had its comment modified. The
+         * old value is null, the new value is string for current comment.
+         */
         CR_COMMENT_CHANGED;
 
     };
@@ -1103,7 +1107,7 @@ public class Case {
                 /*
                  * Open the top components (windows within the main application
                  * window).
-                 * 
+                 *
                  * Note: If the core windows are not opened here, they will be
                  * opened via the DirectoryTreeTopComponent 'propertyChange()'
                  * method on a DATA_SOURCE_ADDED event.
@@ -1536,10 +1540,10 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
     }
 
-    public void notifyCentralRepoCommentChanged(long id){
+    public void notifyCentralRepoCommentChanged(long id) {
         eventPublisher.publish(new CommentChangedEvent(id));
     }
-    
+
     /**
      * Notifies case event subscribers that an artifact tag has been added.
      *

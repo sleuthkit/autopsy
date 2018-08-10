@@ -23,8 +23,6 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.Exceptions;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -43,6 +41,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private boolean addToDatabase;
     private CorrelationAttribute correlationAttribute;
@@ -110,9 +109,9 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 comment = centralRepoCommentDialog.getComment();
                 if (fileId != null) {
                     try {
-                        Case.getCurrentCaseThrows().notifyCentralRepoCommentChanged(fileId);
-                    } catch (NoCurrentCaseException ignored) {
-                        //WJS should this be ignored or is it an issue in multi-user instances
+                        Case.getCurrentCaseThrows().notifyCentralRepoCommentChanged(fileId, comment);
+                    } catch (NoCurrentCaseException ex) {
+                        logger.log(Level.WARNING, "Case not open after changing central repository comment", ex);
                     }
                 }
             } catch (EamDbException ex) {
