@@ -28,7 +28,7 @@ import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -85,7 +85,7 @@ public class EmbeddedFileTest extends NbTestCase {
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -137,7 +137,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertEquals("Unexpected number of artifacts reflecting zip bombs found", 2, zipBombs);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -164,7 +164,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertEquals(numOfFilesToTest, numOfFilesTested);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -187,7 +187,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertTrue(fileReached.get(0).endsWith(dirReached.toString() + "file.txt"));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -213,7 +213,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertTrue(checkFileInEmbeddedFolder(results.get(0)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -239,7 +239,7 @@ public class EmbeddedFileTest extends NbTestCase {
             
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -253,7 +253,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertEquals("file.txt wasn't extracted from the file: zipFileWithTxtExtension.txt", "file.txt", results.get(0).getName());
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -272,7 +272,7 @@ public class EmbeddedFileTest extends NbTestCase {
                 }
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         } else if (file.isFile() && !file.getName().endsWith("slack")) {
             assertEquals(errMsg, "file.txt", file.getName());
@@ -291,7 +291,7 @@ public class EmbeddedFileTest extends NbTestCase {
                 }
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         } else {
             assertTrue(file.getNameExtension().equalsIgnoreCase("txt"));
