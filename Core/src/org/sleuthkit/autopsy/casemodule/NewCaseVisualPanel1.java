@@ -152,7 +152,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
          */
         caseParentDirWarningLabel.setVisible(false);
         String parentDir = getCaseParentDir();
-        if (!PathValidator.isValid(parentDir, getCaseType())) {
+        if (!PathValidator.isValidForMultiUserCase(parentDir, getCaseType())) {
             caseParentDirWarningLabel.setVisible(true);
             caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
         }
@@ -161,7 +161,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
          * Check the base case directory if it can persist data and show a 
          * warning if it is a wrong choice
          */
-        if(!PathValidator.isCasedataPersistable(parentDir)){
+        if(!PathValidator.isValidForRunningOnTarget(parentDir)){
             caseParentDirWarningLabel.setVisible(true);
             if(PlatformUtil.isWindowsOS()){
                 caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text" ));

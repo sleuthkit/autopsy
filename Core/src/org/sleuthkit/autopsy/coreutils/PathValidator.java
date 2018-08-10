@@ -32,7 +32,7 @@ public final class PathValidator {
     private static final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
     private static final Pattern unixMediaDrivePattern = Pattern.compile("^\\/(media|mnt)\\/.*$");
 
-    public static boolean isValid(String path, Case.CaseType caseType) {
+    public static boolean isValidForMultiUserCase(String path, Case.CaseType caseType) {
 
         if (caseType == Case.CaseType.MULTI_USER_CASE) {
             // check that path is not on "C:" drive
@@ -46,7 +46,7 @@ public final class PathValidator {
         return true;
     }
     
-    public static boolean isCasedataPersistable(String path) {
+    public static boolean isValidForRunningOnTarget(String path) {
         if(checkForLiveAutopsy()) {
             if(PlatformUtil.isWindowsOS()) {
                 if(pathOnCDrive(path)){
