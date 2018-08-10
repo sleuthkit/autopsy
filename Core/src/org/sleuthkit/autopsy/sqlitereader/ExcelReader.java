@@ -34,6 +34,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -42,11 +43,14 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  * @author dsmyda
  */
+@NbBundle.Messages({
+    "ExcelReader.ReadExcelFiles.moduleName=ExcelReader"
+})
 public class ExcelReader extends AbstractReader {
     
     private Workbook xlsWorkbook;
     private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(Bundle.SQLiteReader_ReadSQLiteFiles_moduleName());
+    private final Logger logger = services.getLogger(Bundle.ExcelReader_ReadExcelFiles_moduleName());
     
     public ExcelReader(AbstractFile file, String localDiskPath) 
             throws FileReaderInitException {
