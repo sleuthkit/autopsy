@@ -826,7 +826,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    private class HasCommentCellRenderer extends ColorTagCustomRenderer {
+    private final class HasCommentCellRenderer extends ColorTagCustomRenderer {
 
         private static final long serialVersionUID = 1L;
 

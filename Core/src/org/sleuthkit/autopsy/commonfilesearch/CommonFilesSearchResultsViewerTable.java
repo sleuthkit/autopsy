@@ -49,7 +49,6 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     static {
         Map<String, Integer> map = new HashMap<>();
         map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
-        //WJS-TODO does this need to have it as well
         map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);

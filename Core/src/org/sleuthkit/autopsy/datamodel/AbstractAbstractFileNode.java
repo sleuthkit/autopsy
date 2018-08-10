@@ -159,7 +159,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
            CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
-               System.out.println("EVENT HEARD");
                 updateSheet();
             }
         }
@@ -204,7 +203,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     public enum AbstractFilePropertyType {
 
         NAME(AbstractAbstractFileNode_nameColLbl()),
-        //WJS-TODO DO I NEED TO MODIFY THIS ENUM
         LOCATION(AbstractAbstractFileNode_locationColLbl()),
         MOD_TIME(AbstractAbstractFileNode_modifiedTimeColLbl()),
         CHANGED_TIME(AbstractAbstractFileNode_changeTimeColLbl()),

@@ -1207,23 +1207,18 @@ abstract class AbstractSqlEamDb implements EamDb {
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException {
 
         if (type == null) {
-            System.out.println("TYPE NULL");
             throw new EamDbException("Correlation type is null");
         }
         if (correlationCase == null) {
-            System.out.println("CASE NULL");
             throw new EamDbException("Correlation case is null");
         }
         if (correlationDataSource == null) {
-            System.out.println("DS NULL");
             throw new EamDbException("Correlation data source is null");
         }
         if (value == null) {
-            System.out.println("VALUE NULL");
             throw new EamDbException("Correlation value is null");
         }
         if (filePath == null) {
-            System.out.println("PATH NULL");
             throw new EamDbException("Correlation file path is null");
         }
 
