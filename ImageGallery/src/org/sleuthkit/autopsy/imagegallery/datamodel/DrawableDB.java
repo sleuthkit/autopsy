@@ -102,7 +102,7 @@ public final class DrawableDB {
 
     private final PreparedStatement insertHashHitStmt;
 
-    private final PreparedStatement insertDataSourceStmt;
+    private final PreparedStatement updateDataSourceStmt;
      
     private final PreparedStatement updateFileStmt;
     private final PreparedStatement insertFileStmt;
@@ -149,6 +149,15 @@ public final class DrawableDB {
     private final SleuthkitCase tskCase;
     private final ImageGalleryController controller;
 
+    /**
+     * Enum to track Image gallery db rebuild status for a data source
+     */
+   public enum DrawableDbBuildStatusEnum {
+        UNKNOWN,        /// no known status
+        IN_PROGRESS,    /// drawable db rebuild has been started for the data source
+        COMPLETE;       /// drawable db rebuild is complete for the data source
+   }
+        
     //////////////general database logic , mostly borrowed from sleuthkitcase
     /**
      * Lock to protect against concurrent write accesses to case database and to
@@ -210,9 +219,9 @@ public final class DrawableDB {
                     "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
                     + "VALUES (?,?,?,?,?,?,?,?)"); //NON-NLS
 
-            insertDataSourceStmt = prepareStatement(
-                    "INSERT OR IGNORE INTO datasources (ds_obj_id) " //NON-NLS
-                    + "VALUES (?)"); //NON-NLS
+            updateDataSourceStmt = prepareStatement(
+                    "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
+                    + " VALUES (?,?)"); //NON-NLS
              
             removeFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
 
@@ -374,7 +383,8 @@ public final class DrawableDB {
          try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE if not exists datasources " //NON-NLS
                     + "( id INTEGER PRIMARY KEY, " //NON-NLS
-                    + " ds_obj_id integer UNIQUE NOT NULL)"; //NON-NLS
+                    + " ds_obj_id integer UNIQUE NOT NULL, "
+                    + " drawable_db_build_status VARCHAR(128) )"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "problem creating datasources table", ex); //NON-NLS
@@ -763,20 +773,20 @@ public final class DrawableDB {
 
 
    /**
-     * Gets all data source object ids from datasources table
+     * Gets all data source object ids from datasources table, and their DrawableDbBuildStatusEnum
      *
-     * @return list of known data source object ids
+     * @return map of known data source object ids, and their db status
      */
-    public Set<Long> getDataSourceIds() throws TskCoreException {
+    public Map<Long, DrawableDbBuildStatusEnum> getDataSourceDbBuildStatus() throws TskCoreException {
         Statement statement = null;
         ResultSet rs = null;
-        Set<Long> ret = new HashSet<>();
+        Map<Long, DrawableDbBuildStatusEnum> map = new HashMap<>();
         dbReadLock();
         try {
             statement = con.createStatement();
-            rs = statement.executeQuery("SELECT ds_obj_id FROM datasources "); //NON-NLS
+            rs = statement.executeQuery("SELECT ds_obj_id, drawable_db_build_status FROM datasources "); //NON-NLS
             while (rs.next()) {
-                ret.add(rs.getLong(1));
+                map.put(rs.getLong(1), DrawableDbBuildStatusEnum.valueOf(rs.getString(2)));
             }
         } catch (SQLException e) {
             throw new TskCoreException("SQLException while getting data source object ids", e);
@@ -797,24 +807,25 @@ public final class DrawableDB {
             }
             dbReadUnlock();
         }
-        return ret;
+        return map;
     }
     
     
     /**
-     * Insert given data source object id into datasources table
+     * Insert/update given data source object id and it's DB rebuild status in the datasources table.
      * 
-     * If the object id exists in the table already, it does nothing.
+     * If the object id exists in the table already, it updates the status
      * 
      * @param dsObjectId data source object id to insert
      */
-    public void  insertDataSource(long dsObjectId) {
+    public void  insertOrUpdateDataSource(long dsObjectId, DrawableDbBuildStatusEnum status ) {
         dbWriteLock();
         try {
-            // "INSERT OR IGNORE/ INTO datasources (ds_obj_id)"
-            insertDataSourceStmt.setLong(1,dsObjectId);
+            // "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
+            updateDataSourceStmt.setLong(1,dsObjectId);
+            updateDataSourceStmt.setString(2, status.name());
           
-            insertDataSourceStmt.executeUpdate();
+            updateDataSourceStmt.executeUpdate();
         } catch (SQLException | NullPointerException ex) {
             LOGGER.log(Level.SEVERE, "failed to insert/update datasources table", ex); //NON-NLS
         } finally {

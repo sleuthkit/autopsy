@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -85,10 +84,7 @@ public class ImageGalleryModule {
      */
     public static boolean isDrawableDBStale(Case c) {
         if (c != null) {
-            String stale = new PerCaseProperties(c).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.STALE);
-            
-            return ( ImageGalleryController.getDefault().isDataSourcesTableStale() || 
-                     (StringUtils.isNotBlank(stale) ? Boolean.valueOf(stale) : false) );
+            return ImageGalleryController.getDefault().isDataSourcesTableStale();
         } else {
             return false;
         }

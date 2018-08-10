@@ -25,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -74,6 +75,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB.DrawableDbBuildStatusEnum;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
@@ -200,11 +202,6 @@ public final class ImageGalleryController {
         Platform.runLater(() -> {
             stale.set(b);
         });
-        try {
-            new PerCaseProperties(Case.getCurrentCaseThrows()).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.STALE, b.toString());
-        } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ImageGalleryController.class.getName()).log(Level.WARNING, "Exception while getting open case."); //NON-NLS
-        }
     }
 
     public ReadOnlyBooleanProperty stale() {
@@ -403,7 +400,15 @@ public final class ImageGalleryController {
      * 
      */
     public void rebuildDB() {
-          queueDBTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
+         
+        // queue a rebuild task for each stale data source
+        Set<Long> staleDataSources = getStaleDataSourceIds();
+        if (!staleDataSources.isEmpty()) {
+            staleDataSources.forEach((id) -> {
+                queueDBTask(new CopyAnalyzedFiles(id, instance, db, sleuthKitCase));
+            });
+            
+        }          
     }
     
     /**
@@ -437,48 +442,57 @@ public final class ImageGalleryController {
      * @return true if datasources table is stale
      */
     boolean isDataSourcesTableStale() {
+        return (getStaleDataSourceIds().isEmpty() == false);
+    }
+    
+    /**
+     * Returns a set of data source object ids that are stale.
+     * 
+     * This includes any data sources already in the table, that are not in COMPLETE status, 
+     * or any data sources that might have been added to the case, but are not in the datasources table.
+     * 
+     * @return list of data source object ids that are stale.
+     */
+    Set<Long> getStaleDataSourceIds() {
+        
+        Set<Long> staleDataSourceIds = new HashSet<>();
         
         // no current case open to check
         if ((null == getDatabase()) || (null == getSleuthKitCase())) {
-            return false;
+            return staleDataSourceIds;
         }
         
         try {
-            Set<Long> knownDataSourceIds= getDatabase().getDataSourceIds();
+            Map<Long, DrawableDbBuildStatusEnum> knownDataSourceIds= getDatabase().getDataSourceDbBuildStatus();
+            
             List<DataSource> dataSources = getSleuthKitCase().getDataSources();
             Set<Long> caseDataSourceIds = new HashSet<>();
             dataSources.forEach((dataSource) -> {
                 caseDataSourceIds.add(dataSource.getId());
             });
             
-            return !(knownDataSourceIds.containsAll(caseDataSourceIds) && caseDataSourceIds.containsAll(knownDataSourceIds));
+            // collect all data sources already in the table, that are not yet COMPLETE
+           knownDataSourceIds.entrySet().stream().forEach((Map.Entry<Long, DrawableDbBuildStatusEnum> t) -> {
+               DrawableDbBuildStatusEnum status = t.getValue();
+               if (DrawableDbBuildStatusEnum.COMPLETE != status) {
+                   staleDataSourceIds.add(t.getKey());
+               }
+            });
+           
+           // collect any new data sources in the case.
+           caseDataSourceIds.forEach((Long id) -> { 
+                if (!knownDataSourceIds.containsKey(id)) {
+                staleDataSourceIds.add(id);
+                }
+               });
+            
+            return staleDataSourceIds;
         }
         catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Image Gallery failed to check if datasources table is stale.", ex);
-            return false;
-        }
- 
-    }
-    
-    /**
-     * Update the datasources table in drawable DB.
-     * 
-     */
-    private void updateDataSourcesTable() {
-        // no current case open to update
-        if ((null == getDatabase()) || (null == getSleuthKitCase())) {
-            return;
+            return staleDataSourceIds;
         }
         
-        try {
-            List<DataSource> dataSources = getSleuthKitCase().getDataSources();
-            dataSources.forEach((dataSource) -> {
-                getDatabase().insertDataSource(dataSource.getId());
-            });
-        }
-        catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Image Gallery failed to update data_sources table.", ex);
-        }
     }
     
     synchronized private void shutDownDBExecutor() {
@@ -727,7 +741,10 @@ public final class ImageGalleryController {
     @NbBundle.Messages({"BulkTask.committingDb.status=committing image/video database",
         "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
-    /* Base abstract class for various methods of copying data into the Image gallery DB */
+    /** 
+     * Base abstract class for various methods of copying image files data, 
+     * for a given data source, into the Image gallery DB.
+     */
     abstract static private class BulkTransferTask extends BackgroundTask {
      
         static private final String FILE_EXTENSION_CLAUSE =
@@ -739,27 +756,35 @@ public final class ImageGalleryController {
                 "(mime_type LIKE '" //NON-NLS
                 + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
                 + "') ";
-
-        static final String DRAWABLE_QUERY =
-                //grab files with supported extension
-                "(" + FILE_EXTENSION_CLAUSE
-                //grab files with supported mime-types
-                + " OR " + MIMETYPE_CLAUSE //NON-NLS
-                //grab files with image or video mime-types even if we don't officially support them
-                + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
-
+   
+        final String DRAWABLE_QUERY;
+        final String DATASOURCE_CLAUSE;
+        
         final ImageGalleryController controller;
         final DrawableDB taskDB;
         final SleuthkitCase tskCase;
+        final long dataSourceObjId;
 
         ProgressHandle progressHandle;
-        
         private boolean taskCompletionStatus;
 
-        BulkTransferTask(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+        BulkTransferTask(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
             this.controller = controller;
             this.taskDB = taskDB;
             this.tskCase = tskCase;
+            this.dataSourceObjId = dataSourceObjId;
+            
+            DATASOURCE_CLAUSE = " (data_source_obj_id = " + dataSourceObjId + ") ";
+            
+            DRAWABLE_QUERY =
+                DATASOURCE_CLAUSE + 
+                " AND ( " +
+                    //grab files with supported extension
+                    FILE_EXTENSION_CLAUSE
+                    //grab files with supported mime-types
+                    + " OR " + MIMETYPE_CLAUSE //NON-NLS
+                    //grab files with image or video mime-types even if we don't officially support them
+                    + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
         }
 
         /**
@@ -768,8 +793,16 @@ public final class ImageGalleryController {
          */
         abstract void cleanup(boolean success);
 
-        abstract List<AbstractFile> getFiles() throws TskCoreException;
-
+        /**
+         * Gets a list of files to process.
+         * 
+         * @return list of files to process
+         * @throws TskCoreException 
+         */
+        List<AbstractFile> getFiles() throws TskCoreException {
+            return tskCase.findAllFilesWhere(DRAWABLE_QUERY);
+        }
+ 
         abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
 
         @Override
@@ -786,8 +819,9 @@ public final class ImageGalleryController {
                 final List<AbstractFile> files = getFiles();
                 progressHandle.switchToDeterminate(files.size());
 
-                updateProgress(0.0);
+                taskDB.insertOrUpdateDataSource(dataSourceObjId, DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);
                 
+                updateProgress(0.0);
                 taskCompletionStatus = true;
                 int workDone = 0;
                 
@@ -839,6 +873,9 @@ public final class ImageGalleryController {
                 return;
             } finally {
                 progressHandle.finish();
+                if (taskCompletionStatus) {
+                     taskDB.insertOrUpdateDataSource(dataSourceObjId, DrawableDB.DrawableDbBuildStatusEnum.COMPLETE);
+                }
                 updateMessage("");
                 updateProgress(-1.0);
             }
@@ -862,23 +899,20 @@ public final class ImageGalleryController {
     @NbBundle.Messages({"CopyAnalyzedFiles.committingDb.status=committing image/video database",
         "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
         "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
-    static private class CopyAnalyzedFiles extends BulkTransferTask {
+    private class CopyAnalyzedFiles extends BulkTransferTask {
 
-        CopyAnalyzedFiles(ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
-            super(controller, taskDB, tskCase);
+        CopyAnalyzedFiles(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+            super(dataSourceObjId, controller, taskDB, tskCase);
         }
 
         @Override
         protected void cleanup(boolean success) {
-            // processFile will set success to fail if files are missing MIME types
-            controller.setStale(!success);
+            // at the end of the task, set the stale status based on the 
+            // cumulative status of all data sources
+            controller.setStale(isDataSourcesTableStale());
         }
 
-        @Override
-        List<AbstractFile> getFiles() throws TskCoreException {
-            controller.updateDataSourcesTable(); 
-            return tskCase.findAllFilesWhere(DRAWABLE_QUERY);
-        }
+
 
         @Override
         void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException {
@@ -928,16 +962,13 @@ public final class ImageGalleryController {
     static private class PrePopulateDataSourceFiles extends BulkTransferTask {
 
         private static final Logger LOGGER = Logger.getLogger(PrePopulateDataSourceFiles.class.getName());
-
-        private final Content dataSource;
-
+        
         /**
          *
          * @param dataSourceId Data source object ID
          */
-        PrePopulateDataSourceFiles(Content dataSource, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
-            super(controller, taskDB, tskCase);
-            this.dataSource = dataSource;
+        PrePopulateDataSourceFiles(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+            super(dataSourceObjId, controller, taskDB, tskCase);
         }
 
         @Override
@@ -947,13 +978,6 @@ public final class ImageGalleryController {
         @Override
         void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
             taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
-        }
-
-        @Override
-        List<AbstractFile> getFiles() throws TskCoreException {
-            long datasourceID = dataSource.getDataSource().getId();
-            taskDB.insertDataSource(datasourceID);
-            return tskCase.findAllFilesWhere("data_source_obj_id = " + datasourceID + " AND " + DRAWABLE_QUERY);
         }
 
         @Override
@@ -1020,9 +1044,7 @@ public final class ImageGalleryController {
                                             "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
                                 }
                             }
-                        } else {
-                            setStale(true);
-                        }
+                        } 
                     }
                     break;
             }
@@ -1058,13 +1080,8 @@ public final class ImageGalleryController {
                     if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                         Content newDataSource = (Content) evt.getNewValue();
                         if (isListeningEnabled()) {
-                            queueDBTask(new PrePopulateDataSourceFiles(newDataSource, ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
-                        } else {
-                            setStale(true);
-                        }
-                    }
-                    else {
-                        setStale(true);
+                            queueDBTask(new PrePopulateDataSourceFiles(newDataSource.getId(), ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
+                        } 
                     }
                     break;
                     
