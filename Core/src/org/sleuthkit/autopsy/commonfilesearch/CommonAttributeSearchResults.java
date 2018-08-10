@@ -22,23 +22,27 @@ package org.sleuthkit.autopsy.commonfilesearch;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
  * Stores the results from the various types of common attribute searching
  * Stores results based on how they are currently displayed in the UI
  */
 final public class CommonAttributeSearchResults {
-    
+
     // maps instance count to list of attribute values. 
     private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
-    
+
     /**
      * Create a values object which can be handed off to the node factories.
-     * 
-     * @param values list of CommonAttributeValue indexed by size of 
+     *
+     * @param values list of CommonAttributeValue indexed by size of
      * CommonAttributeValue
      */
-    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
+    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata) {
         this.instanceCountToAttributeValues = metadata;
     }
 
@@ -55,25 +59,64 @@ final public class CommonAttributeSearchResults {
         return this.instanceCountToAttributeValues.get(instanceCount);
     }
 
- /**
-     * Get an unmodifiable collection of values, indexed by number of 
-     * grandchildren, which represents the common attributes found in the 
+    /**
+     * Get an unmodifiable collection of values, indexed by number of
+     * grandchildren, which represents the common attributes found in the
      * search.
+     *
      * @return map of sizes of children to list of matches
-     */    
-public Map<Integer, List<CommonAttributeValue>> getMetadata() {
+     */
+    public Map<Integer, List<CommonAttributeValue>> getMetadata() {
+        return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+    }
+    
+    /**
+     * Get an unmodifiable collection of values, indexed by number of
+     * grandchildren, which represents the common attributes found in the
+     * search.
+     * 
+     * Remove results which are not found in the portion of available data 
+     * sources described by minimumPercentageThreshold.
+     * 
+     * @return 
+     */
+    public Map<Integer, List<CommonAttributeValue>> getMetadata(int minimumPercentageThreshold) throws EamDbException {
+        
+        CorrelationAttribute.Type fileAttributeType = CorrelationAttribute
+                .getDefaultCorrelationTypes()
+                .stream()
+                .filter(t -> t.getId() == CorrelationAttribute.FILES_TYPE_ID)
+                .findFirst().get();
+        
+        EamDb eamDb = EamDb.getInstance();
+        
+        for(Entry<Integer, List<CommonAttributeValue>> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
+            
+            Integer key = listOfValues.getKey();
+            
+            for(CommonAttributeValue value : listOfValues.getValue()){
+                
+                int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttribute(fileAttributeType, value.getValue()));
+                
+                if(frequencyPercentage < minimumPercentageThreshold){
+                    this.instanceCountToAttributeValues.get(key).remove(value);
+                }
+            }
+        }
+        
         return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
     /**
      * How many distinct common files exist for this search results?
+     *
      * @return number of common files
      */
     public int size() {
-                
+
         int count = 0;
         for (List<CommonAttributeValue> data : this.instanceCountToAttributeValues.values()) {
-            for(CommonAttributeValue md5 : data){
+            for (CommonAttributeValue md5 : data) {
                 count += md5.getInstanceCount();
             }
         }
