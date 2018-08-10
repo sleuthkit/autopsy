@@ -68,7 +68,9 @@ final class InterCaseSearchResultsProcessor {
     /**
      * Used in the CentralRepoCommonAttributeInstance to find common attribute instances and generate nodes at the UI level.
      */
-    InterCaseSearchResultsProcessor(){}
+    InterCaseSearchResultsProcessor(){
+        //intentionally emtpy - we need a constructor which does not set the data sources field
+    }
     
     /**
      * Finds a single CorrelationAttribute given an id.

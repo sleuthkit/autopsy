@@ -19,12 +19,14 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.sql.SQLException;
 import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
@@ -122,7 +124,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
             
-        } catch (Exception ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
             Assert.fail(ex);
         }
@@ -175,7 +177,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
             
-        } catch (Exception ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
             Assert.fail(ex);
         }
