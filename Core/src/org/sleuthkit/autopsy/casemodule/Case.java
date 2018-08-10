@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -34,7 +35,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,6 +61,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -101,6 +105,8 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
@@ -108,6 +114,9 @@ import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.Type;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
@@ -388,8 +397,26 @@ public class Case {
     private final class TSKCaseRepublisher {
 
         @Subscribe
-        public void handleTimelineEventCreated(TimelineManager.EventAddedEvent event) {
+        public void rebroadcastTimelineEventCreated(TimelineManager.EventAddedEvent event) {
             eventPublisher.publish(new EventAddedEvent(event));
+        }
+
+        @Subscribe
+        public void rebroadcastArtifactPosted(Blackboard.ArtifactPostedEvent event) {
+            try {
+                /*
+                 * fireModuleDataEvent is deprecated so module writers don't use
+                 * it (they should use Blackboard.postArtifact instead), but we
+                 * still need a way to rebroadcast the ArtifactPostedEvent as a
+                 * ModuleDataEvent.
+                 */
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                        event.getModuleName(),
+                        caseDb.getArtifactType(event.getArtifact().getArtifactTypeName()),
+                        Collections.singleton(event.getArtifact())));
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
     }
 
@@ -1117,7 +1144,7 @@ public class Case {
                 /*
                  * Open the top components (windows within the main application
                  * window).
-                 * 
+                 *
                  * Note: If the core windows are not opened here, they will be
                  * opened via the DirectoryTreeTopComponent 'propertyChange()'
                  * method on a DATA_SOURCE_ADDED event.
