@@ -50,12 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
 })
-public class SQLiteReader extends TabularFileReader {
-    
-    static {
-        final String SUPPORTED_MIME_TYPE = "application/x-sqlite3";
-        FileReaderFactory.registerReaderType(SUPPORTED_MIME_TYPE, SQLiteReader.class);
-    }
+public class SQLiteReader extends AbstractReader {
     
     private final Connection connection;
     private final IngestServices services = IngestServices.getInstance();
@@ -73,15 +68,18 @@ public class SQLiteReader extends TabularFileReader {
      * @throws NoCurrentCaseException Current case closed during file copying
      * @throws TskCoreException Exception finding files from abstract file
      */
-    public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws ClassNotFoundException, 
-            SQLException, IOException, NoCurrentCaseException, TskCoreException{
-        
+    public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws FileReaderInitException {
         super(sqliteDbFile, localDiskPath);
-        // Look for any meta files associated with this DB - WAL, SHM, etc. 
-        findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
-        findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
-        
-        connection = getDatabaseConnection(localDiskPath);
+        try {
+            // Look for any meta files associated with this DB - WAL, SHM, etc. 
+            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
+            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
+
+            connection = getDatabaseConnection(localDiskPath);
+        } catch (ClassNotFoundException | SQLException |IOException | 
+                NoCurrentCaseException | TskCoreException ex) {
+            throw new FileReaderInitException(ex);
+        }
     }
     
     /**
@@ -143,7 +141,7 @@ public class SQLiteReader extends TabularFileReader {
      * @throws SQLException
      */
     @Override
-    public Map<String, String> getTableSchemas() {
+    public Map<String, String> getTableSchemas() throws FileReaderException {
         
         Map<String, String> dbTablesMap = new TreeMap<>();
         
@@ -160,7 +158,7 @@ public class SQLiteReader extends TabularFileReader {
                 }
                 
         } catch (SQLException ex) {
-            throw new RuntimeException(ex);
+            throw new FileReaderException(ex);
         }
         
         return dbTablesMap;
@@ -174,12 +172,15 @@ public class SQLiteReader extends TabularFileReader {
      * @throws SQLException
      */
     @Override
-    public Integer getRowCountFromTable(String tableName) throws SQLException {
+    public Integer getRowCountFromTable(String tableName) 
+            throws FileReaderException {
         tableName = wrapTableNameStringWithQuotes(tableName);
         try (Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT count (*) as count FROM " + tableName)){ //NON-NLS
             return resultSet.getInt("count"); //NON-NLS
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
     }
     
@@ -193,7 +194,8 @@ public class SQLiteReader extends TabularFileReader {
      * @throws SQLException
      */
     @Override
-    public List<Map<String, Object>> getRowsFromTable(String tableName) throws SQLException {
+    public List<Map<String, Object>> getRowsFromTable(String tableName) 
+            throws FileReaderException {
         //This method does not directly call its overloaded counterpart 
         //since the second parameter would need to be retreived from a call to
         //getTableRowCount().
@@ -202,6 +204,8 @@ public class SQLiteReader extends TabularFileReader {
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT * FROM " + tableName)) { //NON-NLS
             return resultSetToList(resultSet);
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
     }
     
@@ -216,7 +220,7 @@ public class SQLiteReader extends TabularFileReader {
      * @throws SQLException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
-            int startRow, int numRowsToRead) throws SQLException{
+            int startRow, int numRowsToRead) throws FileReaderException{
         tableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
@@ -224,6 +228,8 @@ public class SQLiteReader extends TabularFileReader {
                         + " LIMIT " + Integer.toString(numRowsToRead) //NON-NLS
                         + " OFFSET " + Integer.toString(startRow - 1))) { //NON-NLS
             return resultSetToList(resultSet);
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
     }
     

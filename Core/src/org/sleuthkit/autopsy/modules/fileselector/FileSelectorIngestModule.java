@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -43,8 +44,9 @@ import org.sleuthkit.autopsy.modules.fileselector.DataElementTypeDetector.DataEl
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.autopsy.sqlitereader.FileReaderFactory;
-import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
-import org.sleuthkit.autopsy.sqlitereader.TabularFileReader;
+import org.sleuthkit.autopsy.sqlitereader.AbstractReader;
+import org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException;
+import org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -56,7 +58,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class FileSelectorIngestModule extends FileIngestModuleAdapter {
 
-    private static final String SUPPORTED_MIME_TYPE = "application/x-sqlite3";
+    private static final List<String> SUPPORTED_MIMETYPES = Arrays.asList(new String[]{"application/x-sqlite3", "application/vnd.ms-excel"});
     private static final String MODULE_NAME = FileSelectorIngestModuleFactory.getModuleName();
     
     private final IngestServices services = IngestServices.getInstance();
@@ -66,37 +68,35 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
     
     private Blackboard blackboard;
     
-    
     @NbBundle.Messages({
         "FileSelectorIngestModule.CannotRunFileTypeDetection="
                 + "Unable to initialize file type detection.",
         "FileSelectorIngestModule.CannotGetBlackboard="
-                + "Exception while attempting to get Blackboard from current case."
+                + "Exception while attempting to get Blackboard from current case.",
+        "FileSelectorIngestModule.CannotLoadReaderClasses=" 
+            + "Cannot load reader class dependencies."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
             fileTypeDetector = new FileTypeDetector();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.FileSelectorIngestModule_CannotRunFileTypeDetection(), ex);
-        }
-        
-        try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.FileSelectorIngestModule_CannotGetBlackboard(), ex);
-        }          
+        }           
     }
     
     @Override
     public ProcessResult process(AbstractFile file) {
         //Qualify the MIMEType, only process sqlite files.
         String fileMimeType = fileTypeDetector.getMIMEType(file);
-        if(!fileMimeType.equals(SUPPORTED_MIME_TYPE)) {
+        if(!SUPPORTED_MIMETYPES.contains(fileMimeType)) {
             return ProcessResult.OK;
         }
 
-        try (TabularFileReader fileReader = FileReaderFactory.createReader(fileMimeType, file, createLocalDiskPath(file))){
+        try (AbstractReader fileReader = FileReaderFactory.createReader(fileMimeType, file, createLocalDiskPath(file))){
             
             Collection<DataElementType> dataElementTypesInFile = readFileAndFindTypes(file, fileReader);
             //No interesting types found, no artifact to create
@@ -110,9 +110,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
             } 
-        } catch (InstantiationException | IllegalAccessException | 
-                IllegalArgumentException | InvocationTargetException |
-                NoSuchMethodException | NoCurrentCaseException ex) {
+        } catch (FileReaderInitException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, String.format("Cannot initialize fileReader class " //NON-NLS
                     + "for file [%s].", file.getName()), ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -141,16 +139,18 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
      * @param sqliteReader Reader instance currently connected to local file contents
      * @return A collection of data element types
      */
-    private Collection<DataElementType> readFileAndFindTypes(AbstractFile file, TabularFileReader sqliteReader) {  
+    private Collection<DataElementType> readFileAndFindTypes(AbstractFile file, AbstractReader sqliteReader) {  
         Collection<DataElementType> currentTypesFound = new TreeSet<>();
         
         Map<String, String> tables;
         try {
-            tables = sqliteReader.getTableSchemas();    
-        } catch (SQLException ex) {
+            tables = sqliteReader.getTableSchemas(); //NON-NLS
+            //NON-NLS
+            //Unable to read anything, return empty collection.
+        } catch (FileReaderException ex) {
             logger.log(Level.WARNING, String.format("Error attempting to get tables from sqlite" //NON-NLS
-                                + "file [%s].", //NON-NLS
-                                file.getName()), ex);
+                    + "file [%s].", //NON-NLS
+                    file.getName()), ex);
             //Unable to read anything, return empty collection.
             return currentTypesFound;
         }
@@ -160,7 +160,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
             try {
                 Collection<DataElementType> typesFoundInTable = readTableAndFindTypes(sqliteReader, tableName);
                 currentTypesFound.addAll(typesFoundInTable);
-            } catch (SQLException ex) {
+            } catch (FileReaderException ex) {
                 logger.log(Level.WARNING, 
                         String.format("Error attempting to read sqlite table [%s]" //NON-NLS
                                 + " for file [%s].", //NON-NLS
@@ -180,8 +180,8 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
      * @return collection of all types in table
      * @throws SQLException Caught during attempting to read sqlite database
      */
-    private Collection<DataElementType> readTableAndFindTypes(TabularFileReader sqliteReader, 
-            String tableName) throws SQLException {
+    private Collection<DataElementType> readTableAndFindTypes(AbstractReader sqliteReader, 
+            String tableName) throws FileReaderException {
         
         Collection<DataElementType> typesFoundReadingTable = new TreeSet<>();
         List<Map<String, Object>> tableValues = sqliteReader.getRowsFromTable(tableName);
@@ -204,7 +204,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
         Collection<DataElementType> typesFoundReadingRow = new TreeSet<>();
         
         //Aggregate cell types from a row
-        row.values().forEach((Object dataElement) -> {
+        row.values().forEach((dataElement) -> {
             DataElementType type = DataElementTypeDetector.getType(dataElement);
             if(isAnInterestingDataType(type)) {
                 typesFoundReadingRow.add(type);

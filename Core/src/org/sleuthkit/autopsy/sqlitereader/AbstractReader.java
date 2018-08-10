@@ -30,10 +30,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author dsmyda
  */
-public abstract class TabularFileReader implements AutoCloseable {
+public abstract class AbstractReader implements AutoCloseable {
     
-    public TabularFileReader(AbstractFile file, String localDiskPath) 
-            throws IOException, TskCoreException {
+    public AbstractReader(AbstractFile file, String localDiskPath) 
+            throws FileReaderInitException {
+        
         writeDataSourceToLocalDisk(file, localDiskPath);
     }
     
@@ -47,20 +48,52 @@ public abstract class TabularFileReader implements AutoCloseable {
      * @throws TskCoreException Exception finding files from abstract file
      */
     private void writeDataSourceToLocalDisk(AbstractFile file, String localDiskPath) 
-        throws IOException, TskCoreException {
+        throws FileReaderInitException {
         
-        File localDatabaseFile = new File(localDiskPath);
-        if (!localDatabaseFile.exists()) {
-            ContentUtils.writeToFile(file, localDatabaseFile);
+        try {
+            File localDatabaseFile = new File(localDiskPath);
+            if (!localDatabaseFile.exists()) {
+                ContentUtils.writeToFile(file, localDatabaseFile);
+            }
+        } catch (IOException ex) {
+            throw new FileReaderInitException(ex);
         }
     }
     
-    public abstract Map<String, String> getTableSchemas();
+    public abstract Map<String, String> getTableSchemas() throws FileReaderException;
     
-    public abstract Integer getRowCountFromTable(String tableName);
+    public abstract Integer getRowCountFromTable(String tableName) throws FileReaderException;
     
-    public abstract List<Map<String, Object>> getRowsFromTable(String tableName);
+    public abstract List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException;
 
     @Override
-    public abstract void close();   
+    public abstract void close(); 
+    
+    public static class FileReaderInitException extends Exception {
+        public FileReaderInitException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        
+        public FileReaderInitException(Throwable cause) {
+            super(cause);
+        }
+        
+        public FileReaderInitException(String message) {
+            super(message);
+        }
+    }
+
+    public class FileReaderException extends Exception {
+        public FileReaderException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        
+        public FileReaderException(Throwable cause) {
+            super(cause);
+        }
+        
+        public FileReaderException(String message) {
+            super(message);
+        }
+    }
 }

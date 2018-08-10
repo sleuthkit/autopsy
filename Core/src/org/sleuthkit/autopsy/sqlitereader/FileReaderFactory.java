@@ -5,10 +5,7 @@
  */
 package org.sleuthkit.autopsy.sqlitereader;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
+import org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -17,22 +14,16 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public final class FileReaderFactory {
     
-    private final static Map<String, Class> REGISTERED_READER_TYPES;
-            
-    static {
-        REGISTERED_READER_TYPES = new HashMap();
-    }
-    
-    public static void registerReaderType(String mimeType, Class reader) {
-        REGISTERED_READER_TYPES.put(mimeType, reader);
-    }
-    
-    public static TabularFileReader createReader(String mimeType, AbstractFile file, String localDiskPath) 
-            throws InstantiationException, IllegalAccessException, 
-            IllegalArgumentException, InvocationTargetException, NoSuchMethodException {
-        
-        Class readerClass = (Class) REGISTERED_READER_TYPES.get(mimeType);
-        Constructor readerConstructor = Class.class.getDeclaredConstructor(new Class[] {String.class, String.class});
-        return (TabularFileReader) readerConstructor.newInstance(new Object[] {file, localDiskPath});
+    public static AbstractReader createReader(String mimeType, AbstractFile file, 
+            String localDiskPath) throws FileReaderInitException {
+        switch(mimeType) {
+            case "application/x-sqlite3":
+                return new SQLiteReader(file, localDiskPath);
+            case "application/vnd.ms-excel":
+                return new ExcelReader(file, localDiskPath);
+            default:
+                throw new FileReaderInitException(String.format("Reader for mime "
+                        + "type [%s] is not supported", mimeType));
+        }
     }
 }
