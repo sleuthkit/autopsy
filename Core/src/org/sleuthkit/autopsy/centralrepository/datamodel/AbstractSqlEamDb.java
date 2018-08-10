@@ -1207,18 +1207,23 @@ abstract class AbstractSqlEamDb implements EamDb {
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException {
 
         if (type == null) {
+            System.out.println("TYPE NULL");
             throw new EamDbException("Correlation type is null");
         }
         if (correlationCase == null) {
+            System.out.println("CASE NULL");
             throw new EamDbException("Correlation case is null");
         }
         if (correlationDataSource == null) {
+            System.out.println("DS NULL");
             throw new EamDbException("Correlation data source is null");
         }
         if (value == null) {
+            System.out.println("VALUE NULL");
             throw new EamDbException("Correlation value is null");
         }
         if (filePath == null) {
+            System.out.println("PATH NULL");
             throw new EamDbException("Correlation file path is null");
         }
 
@@ -1248,13 +1253,14 @@ abstract class AbstractSqlEamDb implements EamDb {
                 int instanceId = resultSet.getInt(1);
                 int knownStatus = resultSet.getInt(2);
                 String comment = resultSet.getString(3);
-
+                System.out.println("COMMENT: " + comment);
                 correlationAttribute = new CorrelationAttribute(type, value);
                 CorrelationAttributeInstance artifactInstance = new CorrelationAttributeInstance(
                         instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
                 correlationAttribute.addInstance(artifactInstance);
             }
         } catch (SQLException ex) {
+            
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);

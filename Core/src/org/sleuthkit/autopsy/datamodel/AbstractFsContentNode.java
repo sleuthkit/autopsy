@@ -19,11 +19,14 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -70,10 +73,14 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
+        List<ContentTag> tags = getContentTagsFromDatabase();
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
-
+        sheetSet.put(new NodeProperty<>("Name",
+                "Name",
+                "Name",
+                getName()));
+        addHasCommentProperty(sheetSet, tags);
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
@@ -84,7 +91,11 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         }
 
         // add tags property to the sheet
-        addTagProperty(sheetSet);
+        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
+        sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
+                tags.stream().map(t -> t.getName().getDisplayName())
+                        .distinct()
+                        .collect(Collectors.joining(", "))));
 
         return sheet;
     }

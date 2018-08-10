@@ -29,6 +29,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +38,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
+import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import static javax.swing.SwingConstants.CENTER;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -58,13 +61,16 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -82,6 +88,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
+    private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/notepad16.png", false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
@@ -179,14 +186,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets the title of this tabular result viewer.
-     * @return  title of tab.
+     *
+     * @return title of tab.
      */
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
     public String getTitle() {
         return title;
     }
-    
+
     /**
      * Indicates whether a given node is supported as a root node for this
      * tabular viewer.
@@ -208,11 +216,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode) {
-        if (! SwingUtilities.isEventDispatchThread()) {
+        if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
             return;
         }
-        
+
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -252,9 +260,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Sets up the Outline view of this tabular result viewer by creating
-     * column headers based on the children of the current root node. The
-     * persisted column order, sorting and visibility is used.
+     * Sets up the Outline view of this tabular result viewer by creating column
+     * headers based on the children of the current root node. The persisted
+     * column order, sorting and visibility is used.
      */
     private void setupTable() {
         /*
@@ -286,7 +294,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * let the table resize itself.
          */
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
-       
+
         assignColumns(props); // assign columns to match the properties
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
@@ -348,9 +356,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /*
-     * Populates the column map for the child OutlineView of this tabular
-     * result viewer with references to the column objects for use when
-     * loading/storing the visibility info.
+     * Populates the column map for the child OutlineView of this tabular result
+     * viewer with references to the column objects for use when loading/storing
+     * the visibility info.
      */
     private void populateColumnMap() {
         columnMap.clear();
@@ -361,7 +369,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             final String propName = entry.getValue().getName();
             if (entry.getKey() < columnCount) {
                 final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
+                if (propName.equals("Has Comment")) {
+                    column.setCellRenderer(new HasCommentCellRenderer());
+                }
                 columnMap.put(propName, column);
+
             }
         }
     }
@@ -406,8 +418,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
     }
-    
-    protected TableColumnModel getColumnModel(){
+
+    protected TableColumnModel getColumnModel() {
         return outline.getColumnModel();
     }
 
@@ -812,6 +824,68 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
             return component;
         }
+    }
+
+    private class HasCommentCellRenderer extends GrayableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setHorizontalAlignment(CENTER);
+            Object switchValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    switchValue = ((Node.Property) value).getValue();
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+            } else {
+                //JTables contain the value we want directly in the cell
+                switchValue = value;
+            }
+            setText("");
+            if ((switchValue instanceof HasCommentStatus)) {
+
+                switch ((HasCommentStatus) switchValue) {
+                    case CR_COMMENT:
+                        setIcon(COMMENT_ICON);
+                        setToolTipText("Comment exists in Central Repository");
+                        break;
+                    case TAG_COMMENT:
+                        setIcon(COMMENT_ICON);
+                        setToolTipText("Comment exists on associated tag(s)");
+                        setBackground(TAGGED_ROW_COLOR);
+                        break;
+                    case CR_AND_TAG_COMMENTS: 
+                        setIcon(COMMENT_ICON);
+                        setToolTipText("Comments exist both in Central Repository and on associated tag(s)");
+                        setBackground(TAGGED_ROW_COLOR);
+                        break;
+                    case TAG_NO_COMMENT:
+                        setBackground(TAGGED_ROW_COLOR);
+                    case NO_COMMENT:
+                    default:
+                        setIcon(null);
+                        setToolTipText("No comments found");
+                }
+            } else {
+                setIcon(null);
+            }
+            grayCellIfTableNotEnabled(table, isSelected);
+
+            return this;
+        }
+
+    }
+
+    public enum HasCommentStatus {
+        NO_COMMENT,
+        TAG_NO_COMMENT,
+        CR_COMMENT,
+        TAG_COMMENT,
+        CR_AND_TAG_COMMENTS
     }
 
     /**

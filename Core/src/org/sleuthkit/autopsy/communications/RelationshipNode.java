@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -37,6 +39,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -57,14 +60,15 @@ final class RelationshipNode extends BlackboardArtifactNode {
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
+        List<Tag> tags = getAllTagsFromDatabase();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
+        
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
-
+        addHasCommentProperty(sheetSet, tags);
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
         if (null != fromID) {
@@ -113,8 +117,9 @@ final class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
-
-        addTagProperty(sheetSet);
+        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
+        sheetSet.put(new NodeProperty<>("Tags", "",
+                "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
 
         return sheet;
     }

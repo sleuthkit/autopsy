@@ -65,6 +65,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -723,13 +724,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 sheetSet = Sheet.createPropertiesSet();
                 sheet.put(sheetSet);
             }
+            List<ContentTag> tags = getContentTagsFromDatabase();
+            
             AbstractFile file = getContent();
             sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
+            addHasCommentProperty(sheetSet, tags);
             sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
             sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
 
-            addTagProperty(sheetSet);
+            //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
+            sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
+                    tags.stream().map(t -> t.getName().getDisplayName())
+                            .distinct()
+                            .collect(Collectors.joining(", "))));
             return sheet;
         }
     }

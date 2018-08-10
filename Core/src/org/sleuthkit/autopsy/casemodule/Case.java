@@ -71,6 +71,7 @@ import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
@@ -372,7 +373,9 @@ public class Case {
          * old value of the PropertyChangeEvent is the display name of the tag
          * definition that has changed.
          */
-        TAG_DEFINITION_CHANGED;
+        TAG_DEFINITION_CHANGED,
+        
+        CR_COMMENT_CHANGED;
 
     };
 
@@ -1533,6 +1536,10 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
     }
 
+    public void notifyCentralRepoCommentChanged(long id){
+        eventPublisher.publish(new CommentChangedEvent(id));
+    }
+    
     /**
      * Notifies case event subscribers that an artifact tag has been added.
      *

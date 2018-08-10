@@ -30,15 +30,26 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -58,7 +69,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
-            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED);
+            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
 
     /**
      * @param abstractFile file to wrap
@@ -145,6 +156,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (event.getDeletedTagInfo().getContentID() == content.getId()) {
                 updateSheet();
             }
+        } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
+           CommentChangedEvent event = (CommentChangedEvent) evt;
+            if (event.getContentID() == content.getId()) {
+               System.out.println("EVENT HEARD");
+                updateSheet();
+            }
         }
     };
 
@@ -187,6 +204,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     public enum AbstractFilePropertyType {
 
         NAME(AbstractAbstractFileNode_nameColLbl()),
+        //WJS-TODO DO I NEED TO MODIFY THIS ENUM
         LOCATION(AbstractAbstractFileNode_locationColLbl()),
         MOD_TIME(AbstractAbstractFileNode_modifiedTimeColLbl()),
         CHANGED_TIME(AbstractAbstractFileNode_changeTimeColLbl()),
@@ -253,6 +271,46 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(EXTENSION.toString(), content.getNameExtension());
     }
 
+    protected List<ContentTag> getContentTagsFromDatabase() {
+        List<ContentTag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+        }
+        return tags;
+    }
+
+    protected void addHasCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+
+        HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
+
+        for (ContentTag tag : tags) {
+            if (tag.getComment() != null && !tag.getComment().trim().isEmpty()) {
+                //if the tag is null or empty or contains just white space it will indicate there is not a comment
+                status = HasCommentStatus.TAG_COMMENT;
+                break;
+            }
+        }
+        if (EamDbUtil.useCentralRepo()) {
+               CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(getContent());
+                if (attribute != null) {
+                    for (CorrelationAttributeInstance instance : attribute.getInstances()) {
+                        if (instance != null && instance.getComment() != null && !instance.getComment().trim().isEmpty()) {
+                            if (status == HasCommentStatus.TAG_COMMENT) {
+                                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+                            } else {
+                                status = HasCommentStatus.CR_COMMENT;
+                            }
+                            break;
+                        }
+                    }
+                }
+        }
+        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
+                status));
+    }
+
     /**
      * Used by subclasses of AbstractAbstractFileNode to add the tags property
      * to their sheets.
@@ -261,6 +319,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *                 Sheet.get(Sheet.PROPERTIES)
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
+    @Deprecated
     protected void addTagProperty(Sheet.Set sheetSet) {
         List<ContentTag> tags = new ArrayList<>();
         try {

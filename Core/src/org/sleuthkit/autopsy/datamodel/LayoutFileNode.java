@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -36,6 +37,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -79,6 +81,8 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             sheet.put(sheetSet);
         }
 
+        List<ContentTag> tags = getContentTagsFromDatabase();
+
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map);
 
@@ -86,14 +90,18 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));
-
+        addHasCommentProperty(sheetSet, tags);
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
 
         // add tags property to the sheet
-        addTagProperty(sheetSet);
+        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
+        sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
+                tags.stream().map(t -> t.getName().getDisplayName())
+                        .distinct()
+                        .collect(Collectors.joining(", "))));
 
         return sheet;
     }

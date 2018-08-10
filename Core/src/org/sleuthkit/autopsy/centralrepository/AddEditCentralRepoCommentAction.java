@@ -23,8 +23,11 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -44,6 +47,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private boolean addToDatabase;
     private CorrelationAttribute correlationAttribute;
     private String comment;
+    private final Long fileId;
 
     /**
      * Constructor to create an instance given a CorrelationAttribute.
@@ -53,6 +57,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     public AddEditCentralRepoCommentAction(CorrelationAttribute correlationAttribute) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
         this.correlationAttribute = correlationAttribute;
+        fileId = null;
     }
 
     /**
@@ -64,10 +69,12 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
         correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
+        fileId = file.getId();
         if (correlationAttribute == null) {
             addToDatabase = true;
             correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
         }
+
     }
 
     /**
@@ -101,6 +108,13 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 }
 
                 comment = centralRepoCommentDialog.getComment();
+                if (fileId != null) {
+                    try {
+                        Case.getCurrentCaseThrows().notifyCentralRepoCommentChanged(fileId);
+                    } catch (NoCurrentCaseException ignored) {
+                        //WJS should this be ignored or is it an issue in multi-user instances
+                    }
+                }
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error adding comment", ex);
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
@@ -121,10 +135,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     public String getComment() {
         return comment;
     }
-    
+
     /**
      * Retrieve the associated correlation attribute.
-     * 
+     *
      * @return The correlation attribute.
      */
     public CorrelationAttribute getCorrelationAttribute() {
