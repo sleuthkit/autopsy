@@ -128,12 +128,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
              * verify the file hasn't been deleted.
              */
             if (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
-                    && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
-                    && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
-                    && !file.getKnown().equals(TskData.FileKnown.KNOWN)
-                    && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                && !file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR)
+                && (!file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) || slackFilesAllowed)
+                && !file.getKnown().equals(TskData.FileKnown.KNOWN)
+                && !file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
                 /*
                  * Is the file in FILE_IGNORE_LIST?
                  */
@@ -199,17 +199,13 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
 
             try {
                 /*
-                 * Index the artifact for keyword search.
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
                  */
-                blackboard.postArtifact(artifact);
+                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
-
-            /*
-             * Send an event to update the view with the new result.
-             */
-            services.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), artifactType, Collections.singletonList(artifact)));
 
             /*
              * Make an ingest inbox message.

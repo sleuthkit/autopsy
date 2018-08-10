@@ -116,9 +116,9 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     /**
      * Create a blackboard artifact.
      *
-     * @param volume The volume to be processed.
+     * @param volume       The volume to be processed.
      * @param artifactType The type of artifact to create.
-     * @param comment A comment to be attached to the artifact.
+     * @param comment      A comment to be attached to the artifact.
      *
      * @return 'OK' if the volume was processed successfully, or 'ERROR' if
      *         there was a problem.
@@ -130,17 +130,13 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
 
             try {
                 /*
-                 * Index the artifact for keyword search.
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
                  */
-                blackboard.postArtifact(artifact);
+                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }
-
-            /*
-             * Send an event to update the view with the new result.
-             */
-            services.fireModuleDataEvent(new ModuleDataEvent(EncryptionDetectionModuleFactory.getModuleName(), artifactType, Collections.singletonList(artifact)));
 
             /*
              * Make an ingest inbox message.

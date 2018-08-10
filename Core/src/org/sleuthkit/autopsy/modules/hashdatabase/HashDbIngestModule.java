@@ -102,7 +102,7 @@ public class HashDbIngestModule implements FileIngestModule {
      * object is used to configure the module.
      *
      * @param settings The module settings.
-     * 
+     *
      * @throws NoCurrentCaseException If there is no open case.
      */
     HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
@@ -178,7 +178,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
         // Skip unallocated space files.
         if ((file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
+             || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
             return ProcessResult.OK;
         }
 
@@ -354,8 +354,11 @@ public class HashDbIngestModule implements FileIngestModule {
             badFile.addAttributes(attributes);
 
             try {
-                // index the artifact for keyword search
-                blackboard.postArtifact(badFile);
+                /*
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
+                 */
+                blackboard.postArtifact(badFile, moduleName);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
@@ -398,7 +401,6 @@ public class HashDbIngestModule implements FileIngestModule {
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
-            services.fireModuleDataEvent(new ModuleDataEvent(moduleName, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex); //NON-NLS
         }

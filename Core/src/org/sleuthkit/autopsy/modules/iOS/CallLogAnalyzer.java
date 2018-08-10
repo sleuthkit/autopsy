@@ -58,7 +58,7 @@ final class CallLogAnalyzer {
 
     /**
      * Find call logs given an ingest job context and index the results.
-     * 
+     *
      * @param context The ingest job context.
      */
     public void findCallLogs(IngestJobContext context) {
@@ -98,7 +98,7 @@ final class CallLogAnalyzer {
 
     /**
      * Index results for call logs found in the database.
-     * 
+     *
      * @param DatabasePath The path to the database.
      * @param fileId       The ID of the file associated with artifacts.
      */
@@ -162,8 +162,12 @@ final class CallLogAnalyzer {
 
                     bba.addAttributes(attributes);
                     try {
-                        // index the artifact for keyword search
-                        blackboard.postArtifact(bba);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */
+                        blackboard.postArtifact(bba, moduleName);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
@@ -184,7 +188,5 @@ final class CallLogAnalyzer {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing Call logs to the Blackboard", e); //NON-NLS
         }
-
     }
-
 }

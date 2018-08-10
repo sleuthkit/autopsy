@@ -162,15 +162,16 @@ public class IngestEventsListener {
 
             tifArtifact.addAttributes(attributes);
             try {
-                // index the artifact for keyword search
+                /*
+                 * post the artifact, which will index the artifact for keyword
+                 * search and fire an event to notify UI of this new artifact
+                 */
                 Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-                blackboard.postArtifact(tifArtifact);
+                blackboard.postArtifact(tifArtifact, MODULE_NAME);
             } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
             }
 
-            // fire event to notify UI of this new artifact
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {

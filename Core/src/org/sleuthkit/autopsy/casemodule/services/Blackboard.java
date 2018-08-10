@@ -59,7 +59,7 @@ public final class Blackboard implements Closeable {
         }
 
         try {
-            delegate.postArtifact(artifact);
+            delegate.postArtifact(artifact, "");
         } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException("Error indexing artifact", ex);
         }

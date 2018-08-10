@@ -100,18 +100,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-
-        try {
-            BlackboardArtifact artifact = file.newArtifact(TSK_TL_EVENT);
-            artifact.addAttribute(new BlackboardAttribute(TSK_DATETIME, "test", System.currentTimeMillis() / 1000));
-            artifact.addAttribute(new BlackboardAttribute(TSK_TL_EVENT_TYPE, "test", EventType.OTHER.getTypeID()));
-            artifact.addAttribute(new BlackboardAttribute(TSK_DESCRIPTION, "test", "Test Description"));
-
-            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact);
-        } catch (TskCoreException | Blackboard.BlackboardException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-
         /**
          * Attempt to detect the file type. Do it within an exception firewall,
          * so that any issues with reading file content or complaints from tika
@@ -175,7 +163,11 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             attributes.add(ruleNameAttribute);
             artifact.addAttributes(attributes);
             try {
-                Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifact(artifact);
+                /*
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
+                 */
+                Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifact(artifact, FileTypeIdModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
             } catch (NoCurrentCaseException ex) {

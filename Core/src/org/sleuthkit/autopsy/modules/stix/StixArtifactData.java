@@ -38,6 +38,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class StixArtifactData {
 
+    private static final String MODULE_NAME = "Stix";
+
     private AbstractFile file;
     private final String observableId;
     private final String objType;
@@ -82,14 +84,17 @@ class StixArtifactData {
 
         BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, "Stix", setName)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, "Stix", observableId)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, "Stix", objType)); //NON-NLS
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, setName)); //NON-NLS
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, MODULE_NAME, observableId)); //NON-NLS
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, objType)); //NON-NLS
 
         bba.addAttributes(attributes);
         try {
-            // index the artifact for keyword search
-            blackboard.postArtifact(bba);
+            /*
+             * post the artifact which will index the artifact for keyword
+             * search, and fire an event to notify UI of this new artifact
+             */
+            blackboard.postArtifact(bba, MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
