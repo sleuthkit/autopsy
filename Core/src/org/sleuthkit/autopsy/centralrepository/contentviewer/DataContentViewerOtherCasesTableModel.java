@@ -22,13 +22,13 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
  * Model for cells in data content viewer table
  */
 public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
+
+    private static final long serialVersionUID = 1L;
 
     @Messages({"DataContentViewerOtherCasesTableModel.case=Case",
         "DataContentViewerOtherCasesTableModel.device=Device",

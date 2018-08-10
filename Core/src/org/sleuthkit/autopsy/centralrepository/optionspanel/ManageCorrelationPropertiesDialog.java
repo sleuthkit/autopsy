@@ -30,7 +30,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
@@ -43,7 +43,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
 
     private static final Logger LOGGER = Logger.getLogger(ManageCorrelationPropertiesDialog.class.getName());
 
-    private final List<CorrelationAttribute.Type> correlationTypes;
+    private final List<CorrelationAttributeInstance.Type> correlationTypes;
 
     /**
      * Displays a dialog that allows a user to select which Type(s) should be

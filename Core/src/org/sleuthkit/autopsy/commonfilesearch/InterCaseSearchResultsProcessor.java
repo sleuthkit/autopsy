@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -69,11 +69,11 @@ final class InterCaseSearchResultsProcessor {
      * @param attrbuteId Row of CorrelationAttribute to retrieve from the EamDb
      * @return CorrelationAttribute object representation of retrieved match
      */
-    CorrelationAttribute findSingleCorrelationAttribute(int attrbuteId) {
+    CorrelationAttributeInstance findSingleCorrelationAttribute(int attrbuteId) {
         try {
             InterCaseCommonAttributeRowCallback instancetableCallback = new InterCaseCommonAttributeRowCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            CorrelationAttributeInstance.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
             DbManager.processInstanceTableWhere(fileType, String.format("id = %s", attrbuteId), instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
@@ -95,7 +95,7 @@ final class InterCaseSearchResultsProcessor {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            CorrelationAttributeInstance.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
             int caseId = DbManager.getCase(currentCase).getID();
             
             DbManager.processInstanceTableWhere(fileType, String.format(interCaseWhereClause, caseId,
@@ -122,7 +122,7 @@ final class InterCaseSearchResultsProcessor {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            CorrelationAttributeInstance.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
             int caseId = DbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
             DbManager.processInstanceTableWhere(fileType,  String.format(singleInterCaseWhereClause, caseId,
@@ -202,22 +202,22 @@ final class InterCaseSearchResultsProcessor {
      */
     private class InterCaseCommonAttributeRowCallback implements InstanceTableCallback {
 
-        CorrelationAttribute correlationAttribute = null;
+        CorrelationAttributeInstance correlationAttributeInstance = null;
 
         @Override
         public void process(ResultSet resultSet) {
             try {
                 EamDb DbManager = EamDb.getInstance();
-                CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+                CorrelationAttributeInstance.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
 
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    correlationAttribute = DbManager.getCorrelationAttribute(fileType,
+                    correlationAttributeInstance = DbManager.makeInstancesFromBlackboardArtifact(fileType,
                             correlationCase,
                             dataSource,
                             InstanceTableCallback.getValue(resultSet),
-                            InstanceTableCallback.getFilePath(resultSet));
+                            InstanceTableCallback.getFilePath(resultSet)).get(0); // TODO how many will this return?
 
                 }
             } catch (SQLException | EamDbException ex) {
@@ -225,8 +225,8 @@ final class InterCaseSearchResultsProcessor {
             }
         }
 
-        CorrelationAttribute getCorrelationAttribute() {
-            return correlationAttribute;
+        CorrelationAttributeInstance getCorrelationAttribute() {
+            return correlationAttributeInstance;
         }
     }
 }
