@@ -43,9 +43,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import static org.sleuthkit.autopsy.keywordsearch.KeywordSearchSettings.MODULE_NAME;
-import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.CREDIT_CARD_NUM_PATTERN;
-import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.CREDIT_CARD_TRACK2_PATTERN;
-import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.KEYWORD_SEARCH_DOCUMENT_ID;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
@@ -104,6 +101,61 @@ final class RegexQuery implements KeywordSearchQuery {
     private boolean escaped;
     private String escapedQuery;
     private String field = Server.Schema.CONTENT_STR.toString();
+
+    /*
+     * The following fields are part of the initial implementation of credit
+     * card account search and should be factored into another class when time
+     * permits.
+     */
+    /**
+     * 12-19 digits, with possible single spaces or dashes in between. First
+     * digit is 2 through 6
+     *
+     */
+    static final Pattern CREDIT_CARD_NUM_PATTERN
+            = Pattern.compile("(?<ccn>[2-6]([ -]?[0-9]){11,18})");
+    static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
+            /*
+             * Track 1 is alphanumeric.
+             *
+             * This regex matches 12-19 digit ccns embeded in a track 1 formated
+             * string. This regex matches (and extracts groups) even if the
+             * entire track is not present as long as the part that is conforms
+             * to the track format.
+             */
+            "(?:" //begin nested optinal group //NON-NLS
+            + "%?" //optional start sentinal: % //NON-NLS
+            + "B)?" //format code  //NON-NLS
+            + "(?<accountNumber>[2-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 2,3,4,5, or 6 //NON-NLS
+            + "\\^" //separator //NON-NLS
+            + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
+            + "(?:\\^" //separator //NON-NLS
+            + "(?:(?:\\^|(?<expiration>\\d{4}))" //separator or 4 digit expiration YYMM //NON-NLS
+            + "(?:(?:\\^|(?<serviceCode>\\d{3}))"//separator or 3 digit service code //NON-NLS
+            + "(?:(?<discretionary>[^?]*)" // discretionary data not containing separator //NON-NLS
+            + "(?:\\?" // end sentinal: ? //NON-NLS
+            + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
+            + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
+    static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
+            /*
+             * Track 2 is numeric plus six punctuation symbolls :;<=>?
+             *
+             * This regex matches 12-19 digit ccns embeded in a track 2 formated
+             * string. This regex matches (and extracts groups) even if the
+             * entire track is not present as long as the part that is conforms
+             * to the track format.
+             *
+             */
+            "[:;<=>?]?" //(optional)start sentinel //NON-NLS
+            + "(?<accountNumber>[2-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 2,3,4,5, or 6 //NON-NLS
+            + "(?:[:;<=>?]" //separator //NON-NLS
+            + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
+            + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
+            + "(?:(?<discretionary>[^:;<=>?]*)" //discretionary data, not containing punctuation marks //NON-NLS
+            + "(?:[:;<=>?]" //end sentinel //NON-NLS
+            + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
+            + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
+    static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
     /**
      * Constructor with query to process.
@@ -172,11 +224,12 @@ final class RegexQuery implements KeywordSearchQuery {
         // We construct the query by surrounding it with slashes (to indicate it is
         // a regular expression search) and .* as anchors (if the query doesn't
         // already have them). We do not add .* if there is a boundary character.
+        String queryString = (originalKeyword.searchTermIsLiteral() ? getEscapedQueryString() : getQueryString());
         boolean skipWildcardPrefix = queryStringContainsWildcardPrefix || getQueryString().startsWith("^");
         boolean skipWildcardSuffix = queryStringContainsWildcardSuffix || 
                 (getQueryString().endsWith("$") && ( ! getQueryString().endsWith("\\$")));
         solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/"
-                + (skipWildcardPrefix ? "" : ".*") + getQueryString()
+                + (skipWildcardPrefix ? "" : ".*") + queryString
                 + (skipWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
@@ -391,14 +444,6 @@ final class RegexQuery implements KeywordSearchQuery {
         this.field = field;
     }
 
-    /**
-     * Adds wild cards to the search term for the query, which makes the query a
-     * substring search.
-     */
-    public void setSubstringQuery() {
-        escapedQuery = ".*" + escapedQuery + ".*";
-    }
-
     @Override
     synchronized public void escape() {
         if (isEscaped() == false) {
@@ -529,7 +574,7 @@ final class RegexQuery implements KeywordSearchQuery {
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         
         Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
-        Matcher matcher = TermsComponentQuery.CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
+        Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
         if (matcher.find()) {
             parseTrack1Data(parsedTrackAttributeMap, matcher);
         }
