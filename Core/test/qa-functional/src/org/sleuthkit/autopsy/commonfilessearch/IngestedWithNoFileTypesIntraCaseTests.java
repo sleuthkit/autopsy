@@ -31,10 +31,10 @@ import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
-import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
+import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
@@ -51,21 +51,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not run mime type
  * module.
  */
-public class IngestedWithNoFileTypes extends NbTestCase {
+public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypes.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(IngestedWithNoFileTypesIntraCaseTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    private final IntraCaseUtils utils;
+    private final IntraCaseTestUtils utils;
     
-    public IngestedWithNoFileTypes(String name) {
+    public IngestedWithNoFileTypesIntraCaseTests(String name) {
         super(name);
         
-        this.utils = new IntraCaseUtils(this, "IngestedWithNoFileTypes");
+        this.utils = new IntraCaseTestUtils(this, "IngestedWithNoFileTypes");
     }
 
     @Override
@@ -77,7 +77,7 @@ public class IngestedWithNoFileTypes extends NbTestCase {
         ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
         templates.add(hashLookupTemplate);
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileType.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithNoFileTypesIntraCaseTests.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
 
         try {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
@@ -97,20 +97,22 @@ public class IngestedWithNoFileTypes extends NbTestCase {
      * find nothing and no errors should arise.
      */
     public void testOne() {
+        
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, true, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(files.isEmpty());
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
             Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
         }
     }
 
@@ -121,18 +123,18 @@ public class IngestedWithNoFileTypes extends NbTestCase {
     public void testTwo() {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
-            Long third = IntraCaseUtils.getDataSourceIdByName(IntraCaseUtils.SET3, dataSources);
+            Long third = IntraCaseTestUtils.getDataSourceIdByName(IntraCaseTestUtils.SET3, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(third, dataSources, true, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, true, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
-            Map<Long, String> objectIdToDataSource = IntraCaseUtils.mapFileInstancesToDataSources(metadata);
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
-            List<AbstractFile> files = IntraCaseUtils.getFiles(objectIdToDataSource.keySet());
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
 
             assertTrue(files.isEmpty());
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }

@@ -28,12 +28,13 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadataBuilder;
-import org.sleuthkit.autopsy.commonfilesearch.SingleDataSource;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.SET1;
-import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseUtils.getDataSourceIdByName;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.SET1;
+import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.getDataSourceIdByName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -45,21 +46,21 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Add images set 1, set 2, set 3, and set 4 to case. Do not ingest.
  *
  */
-public class UningestedCases extends NbTestCase {
+public class UningestedCasesIntraCaseTests extends NbTestCase {
 
     public static Test suite() {
-        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(UningestedCases.class).
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(UningestedCasesIntraCaseTests.class).
                 clusters(".*").
                 enableModules(".*");
         return conf.suite();
     }
 
-    private final IntraCaseUtils utils;
+    private final IntraCaseTestUtils utils;
     
-    public UningestedCases(String name) {
+    public UningestedCasesIntraCaseTests(String name) {
         super(name);
         
-        this.utils = new IntraCaseUtils(this, "UningestedCasesTests");
+        this.utils = new IntraCaseTestUtils(this, "UningestedCasesTests");
     }
     
     @Override
@@ -80,13 +81,13 @@ public class UningestedCases extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            CommonFilesMetadataBuilder allSourcesBuilder = new AllDataSourcesCommonFilesAlgorithm(dataSources, false, false);
-            CommonFilesMetadata metadata = allSourcesBuilder.findCommonFiles();
+            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
@@ -100,13 +101,13 @@ public class UningestedCases extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            CommonFilesMetadataBuilder singleSourceBuilder = new SingleDataSource(first, dataSources, false, false);
-            CommonFilesMetadata metadata = singleSourceBuilder.findCommonFiles();
+            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
 
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex);
         }
