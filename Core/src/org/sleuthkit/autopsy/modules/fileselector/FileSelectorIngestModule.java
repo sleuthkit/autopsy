@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.fileselector;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -40,7 +42,9 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.fileselector.DataElementTypeDetector.DataElementType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
+import org.sleuthkit.autopsy.sqlitereader.FileReaderFactory;
 import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
+import org.sleuthkit.autopsy.sqlitereader.TabularFileReader;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -92,9 +96,9 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
             return ProcessResult.OK;
         }
 
-        try (SQLiteReader sqliteReader = new SQLiteReader(file, createLocalDiskPath(file))){
+        try (TabularFileReader fileReader = FileReaderFactory.createReader(fileMimeType, file, createLocalDiskPath(file))){
             
-            Collection<DataElementType> dataElementTypesInFile = readFileAndFindTypes(file, sqliteReader);
+            Collection<DataElementType> dataElementTypesInFile = readFileAndFindTypes(file, fileReader);
             //No interesting types found, no artifact to create
             if(dataElementTypesInFile.isEmpty()) {
                 return ProcessResult.OK;
@@ -106,9 +110,10 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
             } 
-        } catch (ClassNotFoundException | SQLException | IOException | 
-                NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Cannot initialize sqliteReader class " //NON-NLS
+        } catch (InstantiationException | IllegalAccessException | 
+                IllegalArgumentException | InvocationTargetException |
+                NoSuchMethodException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, String.format("Cannot initialize fileReader class " //NON-NLS
                     + "for file [%s].", file.getName()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
@@ -136,7 +141,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
      * @param sqliteReader Reader instance currently connected to local file contents
      * @return A collection of data element types
      */
-    private Collection<DataElementType> readFileAndFindTypes(AbstractFile file, SQLiteReader sqliteReader) {  
+    private Collection<DataElementType> readFileAndFindTypes(AbstractFile file, TabularFileReader sqliteReader) {  
         Collection<DataElementType> currentTypesFound = new TreeSet<>();
         
         Map<String, String> tables;
@@ -150,7 +155,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
             return currentTypesFound;
         }
         
-        //Aggregate cell types from all tables
+        //Aggregate data element types from all tables
         for(String tableName : tables.keySet()) {
             try {
                 Collection<DataElementType> typesFoundInTable = readTableAndFindTypes(sqliteReader, tableName);
@@ -175,7 +180,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
      * @return collection of all types in table
      * @throws SQLException Caught during attempting to read sqlite database
      */
-    private Collection<DataElementType> readTableAndFindTypes(SQLiteReader sqliteReader, 
+    private Collection<DataElementType> readTableAndFindTypes(TabularFileReader sqliteReader, 
             String tableName) throws SQLException {
         
         Collection<DataElementType> typesFoundReadingTable = new TreeSet<>();

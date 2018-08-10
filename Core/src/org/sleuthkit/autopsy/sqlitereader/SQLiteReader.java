@@ -50,7 +50,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
 })
-public class SQLiteReader implements AutoCloseable {
+public class SQLiteReader extends TabularFileReader {
+    
+    static {
+        final String SUPPORTED_MIME_TYPE = "application/x-sqlite3";
+        FileReaderFactory.registerReaderType(SUPPORTED_MIME_TYPE, SQLiteReader.class);
+    }
     
     private final Connection connection;
     private final IngestServices services = IngestServices.getInstance();
@@ -71,37 +76,19 @@ public class SQLiteReader implements AutoCloseable {
     public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws ClassNotFoundException, 
             SQLException, IOException, NoCurrentCaseException, TskCoreException{
         
-        writeDataSourceToLocalDisk(sqliteDbFile, localDiskPath);
-        connection = getDatabaseConnection(localDiskPath);
-    }
-    
-    /**
-     * Copies the data source file contents to local drive for processing.
-     * 
-     * @param file AbstractFile from the data source 
-     * @param localDiskPath Local drive path to copy AbstractFile contents
-     * @throws IOException Exception writing file contents
-     * @throws NoCurrentCaseException Current case closed during file copying
-     * @throws TskCoreException Exception finding files from abstract file
-     */
-    private void writeDataSourceToLocalDisk(AbstractFile file, String localDiskPath) 
-        throws IOException, NoCurrentCaseException, TskCoreException {
+        super(sqliteDbFile, localDiskPath);
+        // Look for any meta files associated with this DB - WAL, SHM, etc. 
+        findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
+        findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
         
-        File localDatabaseFile = new File(localDiskPath);
-        if (!localDatabaseFile.exists()) {
-            ContentUtils.writeToFile(file, localDatabaseFile);
-
-            // Look for any meta files associated with this DB - WAL, SHM, etc. 
-            findAndCopySQLiteMetaFile(file, file.getName() + "-wal");
-            findAndCopySQLiteMetaFile(file, file.getName() + "-shm");
-        }
+        connection = getDatabaseConnection(localDiskPath);
     }
     
     /**
      * Searches for a meta file associated with the give SQLite database. If found,
      * copies the file to the local disk folder
      * 
-     * @param sqliteFile SQLIte db file being processed
+     * @param file file being processed
      * @param metaFileName name of meta file to look for
      * @throws NoCurrentCaseException Case has been closed.
      * @throws TskCoreException fileManager cannot find AbstractFile files.
@@ -128,7 +115,7 @@ public class SQLiteReader implements AutoCloseable {
             }
         }
     }
-
+    
     /**
      * Opens a JDBC connection to the sqlite database specified by the path
      * parameter.
@@ -155,8 +142,8 @@ public class SQLiteReader implements AutoCloseable {
      * @return A map of table names to table schemas
      * @throws SQLException
      */
-    public Map<String, String> getTableSchemas()
-            throws SQLException {
+    @Override
+    public Map<String, String> getTableSchemas() {
         
         Map<String, String> dbTablesMap = new TreeMap<>();
         
@@ -166,11 +153,14 @@ public class SQLiteReader implements AutoCloseable {
                     + " WHERE type= 'table' " //NON-NLS
                     + " ORDER BY name;")){ //NON-NLS
             
-            while (resultSet.next()) {
-                String tableName = resultSet.getString("name"); //NON-NLS
-                String tableSQL = resultSet.getString("sql"); //NON-NLS
-                dbTablesMap.put(tableName, tableSQL);
-            }
+                while (resultSet.next()) {
+                    String tableName = resultSet.getString("name"); //NON-NLS
+                    String tableSQL = resultSet.getString("sql"); //NON-NLS
+                    dbTablesMap.put(tableName, tableSQL);
+                }
+                
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
         }
         
         return dbTablesMap;
@@ -183,7 +173,8 @@ public class SQLiteReader implements AutoCloseable {
      * @return Row count from tableName
      * @throws SQLException
      */
-    public Integer getTableRowCount(String tableName) throws SQLException {
+    @Override
+    public Integer getRowCountFromTable(String tableName) throws SQLException {
         tableName = wrapTableNameStringWithQuotes(tableName);
         try (Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
@@ -201,6 +192,7 @@ public class SQLiteReader implements AutoCloseable {
      * represented as a column-value map.
      * @throws SQLException
      */
+    @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws SQLException {
         //This method does not directly call its overloaded counterpart 
         //since the second parameter would need to be retreived from a call to
