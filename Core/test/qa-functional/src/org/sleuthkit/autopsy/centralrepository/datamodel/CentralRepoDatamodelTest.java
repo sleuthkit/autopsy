@@ -35,7 +35,7 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbModuleSuite;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
@@ -85,7 +85,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             try {
                 FileUtils.deleteDirectory(testDirectory.toFile());
             } catch (IOException ex) {
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         }
         assertFalse("Unable to delete existing test directory", testDirectory.toFile().exists());
@@ -117,7 +117,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDbPlatformEnum.saveSelectedPlatform();
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         Path crDbFilePath = Paths.get(testDirectory.toString(), CR_DB_NAME);
@@ -162,7 +162,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
     }
@@ -179,7 +179,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             FileUtils.deleteDirectory(testDirectory.toFile());
         } catch (EamDbException | IOException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         assertFalse("Error deleting test directory " + testDirectory.toString(), testDirectory.toFile().exists());
     }
@@ -234,7 +234,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             }
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Add two instances with one notable, one known
@@ -259,7 +259,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             }
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Add an artifact and then update its status
@@ -276,7 +276,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("Artifact status did not change to BAD", attrs.get(0).getKnownStatus().equals(TskData.FileKnown.BAD));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Try to update artifact with two CorrelationAttributeInstance instances
@@ -343,7 +343,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected 2", attrs.size() == 2);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting notable instances where one instance is notable and the other is known
@@ -352,7 +352,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected 1", attrs.size() == 1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting notable instances with null type
@@ -369,7 +369,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesKnownBad returned " + attrs.size() + " values - expected ", attrs.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting count of two notable instances
@@ -378,7 +378,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesKnownBad returned " + count + " values - expected 2", count == 2);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting notable instance count where one instance is notable and the other is known
@@ -387,7 +387,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesKnownBad returned " + count + " values - expected 1", count == 1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting notable instance count with null type
@@ -404,7 +404,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesKnownBad returned " + count + " values - expected ", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting cases with notable instances (all instances are notable)
@@ -413,7 +413,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getListCasesHavingArtifactInstancesKnownBad returned " + cases.size() + " values - expected 2", cases.size() == 2);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting cases with notable instances (only one instance is notable)
@@ -423,7 +423,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getListCasesHavingArtifactInstancesKnownBad returned unexpected case " + cases.get(0), case1.getDisplayName().equals(cases.get(0)));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting cases with null type
@@ -440,7 +440,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getListCasesHavingArtifactInstancesKnownBad returned " + cases.size() + " values - expected ", cases.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -520,7 +520,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test preparing artifact with null type
@@ -656,7 +656,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             emailType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.EMAIL_TYPE_ID);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -668,7 +668,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding attribute with an instance in each data source
@@ -683,7 +683,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding attribute with two instances in one data source
@@ -696,7 +696,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding the other types
@@ -708,7 +708,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding a phone artifact
@@ -720,7 +720,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding a domain artifact
@@ -732,7 +732,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding a device ID artifact
@@ -744,7 +744,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifact(attr);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test CorrelationAttributeInstance failure cases
@@ -754,7 +754,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             failAttr = new CorrelationAttribute(fileType, "badInstances");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -850,7 +850,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             }
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instances expecting no results
@@ -860,7 +860,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 0", instances.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instances with null type
@@ -878,7 +878,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesByTypeValue returned non-empty list for null value", instances.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instances with path that should produce results
@@ -887,7 +887,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesByPath returned " + instances.size() + " objects - expected 3", instances.size() == 3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instances with path that should not produce results
@@ -896,7 +896,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getArtifactInstancesByPath returned " + instances.size() + " objects - expected 0", instances.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instances with null type
@@ -921,7 +921,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesByTypeValue returned " + count + " - expected 3", count == 3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instance count with path that should not produce results
@@ -930,7 +930,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesByTypeValue returned " + count + " - expected 0", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting instance count with null type
@@ -956,7 +956,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 100", freq == 100);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting frequency of value that appears twice in a single data source
@@ -966,7 +966,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting frequency of non-file type
@@ -976,7 +976,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting frequency of non-existent value
@@ -986,7 +986,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getFrequencyPercentage returned " + freq + " - expected 0", freq == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting frequency with null type
@@ -1022,7 +1022,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     "new comment", correlationAttribute.getInstances().get(0).getComment());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting count for dataSource1fromCase1 (includes all types)
@@ -1031,7 +1031,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 7", count == 7);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting count with null case UUID
@@ -1040,7 +1040,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 0", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting count with null device ID
@@ -1049,7 +1049,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 0", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting data source count for entry that is in all three
@@ -1058,7 +1058,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 3", count == 3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting data source count for entry that is in one data source twice
@@ -1067,7 +1067,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 1", count == 1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting data source count for entry that is not in any data sources
@@ -1076,7 +1076,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 0", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting data source count for null type
@@ -1093,7 +1093,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 0", count == 0);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         // Test running processinstance which queries all rows from instances table
@@ -1160,7 +1160,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             customType.setId(EamDb.getInstance().newCorrelationType(customType));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1207,7 +1207,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 6", types.size() == 6);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting enabled correlation types
@@ -1218,7 +1218,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 5", types.size() == 5);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting supported correlation types
@@ -1229,7 +1229,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 5", types.size() == 5);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting the type with a valid ID
@@ -1239,7 +1239,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCorrelationTypeById returned type with unexpected db table name " + temp.getDbTableName(), customTypeDb.equals(temp.getDbTableName()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting the type with a invalid ID
@@ -1270,7 +1270,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("updateCorrelationType failed to update supported status", temp.isSupported());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test updating a type with an invalid ID
@@ -1281,7 +1281,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().updateCorrelationType(temp);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test updating a type to a null name
@@ -1344,7 +1344,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("Organization ID is still -1 after adding to db", orgA.getOrgID() != -1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1355,7 +1355,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("Organization ID is still -1 after adding to db", orgB.getOrgID() != -1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1393,7 +1393,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getOrganizations returned " + orgs.size() + " orgs - expected 5", orgs.size() == 5);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting org with valid ID
@@ -1406,7 +1406,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getOrganizationByID returned unexpected poc phone for organization", orgBpocPhone.equals(temp.getPocPhone()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting org with invalid ID
@@ -1439,7 +1439,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("updateOrganization failed to update poc phone", newPocPhone.equals(copyOfA.getPocPhone()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test updating invalid org
@@ -1480,7 +1480,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getOrganizations returned unexpected count after deletion", orgCount - 1 == EamDb.getInstance().getOrganizations().size());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test deleting existing org that is in use
@@ -1582,7 +1582,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getCorrelationTypeById(EMAIL_TYPE_ID) returned null", emailType != null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1596,7 +1596,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             knownSet1id = EamDb.getInstance().newReferenceSet(knownSet1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1618,7 +1618,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addReferenceInstance(temp, fileType);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test adding file instance with invalid reference set ID
@@ -1679,7 +1679,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             }
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test bulk add file instance with null list
@@ -1714,7 +1714,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getReferenceInstancesByTypeValue returned " + temp.size() + " instances - expected 3", temp.size() == 3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting reference instances with non-existent data
@@ -1723,7 +1723,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getReferenceInstancesByTypeValue returned " + temp.size() + " instances for non-existent value - expected 0", temp.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting reference instances an invalid type (the email table is not yet implemented)
@@ -1748,7 +1748,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getReferenceInstancesByTypeValue returned non-empty list given null value", temp.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking existing hash/ID
@@ -1756,7 +1756,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("isFileHashInReferenceSet returned false for valid data", EamDb.getInstance().isFileHashInReferenceSet(knownHash1, knownSet1id));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking non-existent (but valid) hash/ID
@@ -1764,7 +1764,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("isFileHashInReferenceSet returned true for non-existent data", EamDb.getInstance().isFileHashInReferenceSet(knownHash1, notableSet1id));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking invalid reference set ID
@@ -1772,7 +1772,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("isFileHashInReferenceSet returned true for invalid data", EamDb.getInstance().isFileHashInReferenceSet(knownHash1, 5678));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking null hash
@@ -1780,7 +1780,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("isFileHashInReferenceSet returned true for null hash", EamDb.getInstance().isFileHashInReferenceSet(null, knownSet1id));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking existing hash/ID
@@ -1789,7 +1789,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isValueInReferenceSet(knownHash1, knownSet1id, fileType.getId()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking non-existent (but valid) hash/ID
@@ -1798,7 +1798,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isValueInReferenceSet(knownHash1, notableSet1id, fileType.getId()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking invalid reference set ID
@@ -1807,7 +1807,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isValueInReferenceSet(knownHash1, 5678, fileType.getId()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking null hash
@@ -1816,7 +1816,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isValueInReferenceSet(null, knownSet1id, fileType.getId()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test checking invalid type
@@ -1833,7 +1833,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isArtifactKnownBadByReference(fileType, notableHash1));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test known bad with known data
@@ -1842,7 +1842,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isArtifactKnownBadByReference(fileType, knownHash1));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test known bad with non-existent data
@@ -1851,7 +1851,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isArtifactKnownBadByReference(fileType, "abcdef"));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test known bad with null hash
@@ -1860,7 +1860,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().isArtifactKnownBadByReference(fileType, null));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test known bad with null type
@@ -1876,7 +1876,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("isArtifactKnownBadByReference returned true for invalid type", EamDb.getInstance().isArtifactKnownBadByReference(emailType, null));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -1932,7 +1932,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             set1id = EamDb.getInstance().newReferenceSet(set1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1942,7 +1942,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().newReferenceSet(set2);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -1961,7 +1961,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().newReferenceSet(set3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -2015,7 +2015,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("referenceSetIsValid returned false for valid reference set", EamDb.getInstance().referenceSetIsValid(set1id, set1name, set1version));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test validation with an invalid reference set
@@ -2023,7 +2023,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("referenceSetIsValid returned true for invalid reference set", EamDb.getInstance().referenceSetIsValid(5000, set1name, set1version));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test validation with a null name
@@ -2031,7 +2031,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("referenceSetIsValid returned true with null name", EamDb.getInstance().referenceSetIsValid(set1id, null, set1version));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test validation with a null version
@@ -2039,7 +2039,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("referenceSetIsValid returned true with null version", EamDb.getInstance().referenceSetIsValid(set1id, set1name, null));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test existence with a valid reference set
@@ -2047,7 +2047,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("referenceSetExists returned false for valid reference set", EamDb.getInstance().referenceSetExists(set1name, set1version));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test existence with an invalid reference set
@@ -2055,7 +2055,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("referenceSetExists returned true for invalid reference set", EamDb.getInstance().referenceSetExists(set1name, "5.5"));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test existence with null name
@@ -2063,7 +2063,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("referenceSetExists returned true for null name", EamDb.getInstance().referenceSetExists(null, "1.0"));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test existence with null version
@@ -2071,7 +2071,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertFalse("referenceSetExists returned true for null version", EamDb.getInstance().referenceSetExists(set1name, null));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting global set with valid ID
@@ -2082,7 +2082,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     set1name.equals(temp.getSetName()) && set1version.equals(temp.getVersion()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting global set with invalid ID
@@ -2091,7 +2091,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getReferenceSetByID returned non-null result for invalid ID", temp == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting all file reference sets
@@ -2100,7 +2100,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getAllReferenceSets(FILES) returned unexpected number", referenceSets.size() == 3);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting all email reference sets
@@ -2109,7 +2109,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getAllReferenceSets(EMAIL) returned unexpected number", referenceSets.isEmpty());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test null argument to getAllReferenceSets
@@ -2135,7 +2135,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test deleting a non-existent reference set
@@ -2146,7 +2146,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("Number of reference sets changed after deleting non-existent set", currentCount == EamDb.getInstance().getAllReferenceSets(fileType).size());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting reference set organization for valid ID with org set
@@ -2156,7 +2156,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getReferenceSetOrganization returned the incorrect organization", org.getOrgID() == org1.getOrgID());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting reference set organization for non-existent reference set
@@ -2199,7 +2199,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().newDataSource(dataSourceA);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -2218,7 +2218,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().newDataSource(dataSourceB);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return;
         }
 
@@ -2256,7 +2256,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("Failed to get data source", temp != null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting a data source with non-existent ID
@@ -2265,7 +2265,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getDataSource returned non-null value for non-existent data source", temp == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting a data source with a null case
@@ -2282,7 +2282,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("getDataSource returned non-null value for null data source", temp == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test getting the list of data sources
@@ -2299,7 +2299,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     && devIdList.contains(dataSource1fromCase2.getDeviceID()));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test the data source count
@@ -2308,7 +2308,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().getCountUniqueDataSources() == 5);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -2349,7 +2349,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, testDirectory.toString(), new CaseDetails("CentralRepoDatamodelTestCase"));
             } catch (CaseActionException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
             assertTrue("Failed to create test case", testDirectory.toFile().exists());
 
@@ -2360,7 +2360,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("Failed to create case", caseA != null);
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
                 return;
             }
 
@@ -2393,7 +2393,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("newCase created a new case for an already existing UUID", nCases == EamDb.getInstance().getCases().size());
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test creating a case from an Autopsy case
@@ -2403,7 +2403,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("Failed to create correlation case from Autopsy case", caseB != null);
             } catch (EamDbException | NoCurrentCaseException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
                 return;
             }
 
@@ -2455,7 +2455,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("updateCase failed to update org (org ID is wrong)", org1.getOrgID() == updatedCase.getOrg().getOrgID());
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test update case with null case
@@ -2472,7 +2472,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("getCase returned null for current Autopsy case", tempCase != null);
             } catch (EamDbException | NoCurrentCaseException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test getting a case by UUID
@@ -2481,7 +2481,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("Failed to get case by UUID", tempCase != null);
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test getting a case with a non-existent UUID
@@ -2490,7 +2490,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("getCaseByUUID returned non-null case for non-existent UUID", tempCase == null);
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test getting a case with null UUID
@@ -2499,7 +2499,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("getCaseByUUID returned non-null case for null UUID", tempCase == null);
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test getting the list of cases
@@ -2513,7 +2513,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                         && uuidList.contains(caseB.getCaseUUID()));
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test bulk case insert
@@ -2538,7 +2538,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 assertTrue("bulkInsertCases did not insert the expected number of cases", nCases + cases.size() == EamDb.getInstance().getCases().size());
             } catch (EamDbException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
 
             // Test bulk case insert with null list
@@ -2559,7 +2559,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 }
             } catch (CaseActionException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         }
     }
@@ -2592,7 +2592,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().newDbInfo(name1, value1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Test null name
@@ -2617,7 +2617,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("dbInfo value for name1 does not match", value1.equals(tempVal));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Try getting the dbInfo entry that should not exist
@@ -2626,7 +2626,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("dbInfo value is unexpectedly non-null given non-existent name", tempVal == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Try getting dbInfo for a null value
@@ -2635,7 +2635,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("dbInfo value is unexpectedly non-null given null name", tempVal == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Try updating an existing value to a valid new value
@@ -2644,7 +2644,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue("dbInfo value failed to update to expected value", value2.equals(EamDb.getInstance().getDbInfo(name1)));
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Try updating an existing value to null
@@ -2661,7 +2661,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().updateDbInfo(null, value1);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         // Try updating the value for a non-existant name

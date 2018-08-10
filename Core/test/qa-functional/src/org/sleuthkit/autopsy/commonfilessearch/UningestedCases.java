@@ -26,7 +26,7 @@ import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AllDataSourcesCommonFilesAlgorithm;
 import org.sleuthkit.autopsy.commonfilesearch.CommonFilesMetadata;
@@ -88,7 +88,7 @@ public class UningestedCases extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -108,7 +108,7 @@ public class UningestedCases extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 }

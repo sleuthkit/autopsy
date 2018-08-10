@@ -25,5 +25,5 @@ script:
  - echo -en 'travis_fold:end:script.build\\r'
  - echo "testing autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
  - cd Core/
- - xvfb-run ant -q test
+ - xvfb-run ant -q -Dcontinue.after.failing.tests=true test-unit
  - echo -en 'travis_fold:end:script.tests\\r'
