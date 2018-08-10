@@ -826,13 +826,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    private class HasCommentCellRenderer extends GrayableCellRenderer {
+    private class HasCommentCellRenderer extends ColorTagCustomRenderer {
 
         private static final long serialVersionUID = 1L;
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setHorizontalAlignment(CENTER);
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(CENTER);    
             Object switchValue = null;
             if ((value instanceof NodeProperty)) {
                 //The Outline view has properties in the cell, the value contained in the property is what we want
@@ -856,15 +858,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     case TAG_COMMENT:
                         setIcon(COMMENT_ICON);
                         setToolTipText("Comment exists on associated tag(s)");
-                        setBackground(TAGGED_ROW_COLOR);
                         break;
                     case CR_AND_TAG_COMMENTS: 
                         setIcon(COMMENT_ICON);
                         setToolTipText("Comments exist both in Central Repository and on associated tag(s)");
-                        setBackground(TAGGED_ROW_COLOR);
                         break;
                     case TAG_NO_COMMENT:
-                        setBackground(TAGGED_ROW_COLOR);
                     case NO_COMMENT:
                     default:
                         setIcon(null);
@@ -873,7 +872,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             } else {
                 setIcon(null);
             }
-            grayCellIfTableNotEnabled(table, isSelected);
 
             return this;
         }
