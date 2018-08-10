@@ -570,7 +570,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
             }
 
-            if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt"))) {
+            if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt") && !(aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)))) {
+                //Carved Files should be the only type of unallocated files capable of a txt extension and 
+                //should be ignored by the TextFileExtractor because they may contain more than one text encoding
                 try {
                     if (Ingester.getDefault().indexText(txtFileExtractor, aFile, context)) {
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
