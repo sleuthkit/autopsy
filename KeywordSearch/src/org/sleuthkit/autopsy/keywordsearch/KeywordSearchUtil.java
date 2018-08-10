@@ -128,20 +128,15 @@ class KeywordSearchUtil {
     }
     
     static KeywordSearchQuery getQueryForKeyword(Keyword keyword, KeywordList keywordList) {
-        KeywordSearchQuery query = null;
-        if (keyword.searchTermIsLiteral()) {
-            if (keyword.searchTermIsWholeWord()) {
-                // literal, exact match
-                query = new LuceneQuery(keywordList, keyword);
-                query.escape();
-            } else {
-                // literal, substring match
-                query = new RegexQuery(keywordList, keyword, true);
-            }
+        KeywordSearchQuery query;
+        if (keyword.searchTermIsLiteral() && keyword.searchTermIsWholeWord()) {
+            // literal exact match
+            query = new LuceneQuery(keywordList, keyword);
+            query.escape();
         }
         else {
-            // regex
-            query = new RegexQuery(keywordList, keyword, false);
+            // regex and literal substring match
+            query = new RegexQuery(keywordList, keyword);
         }
         return query;
     }
