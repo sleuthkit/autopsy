@@ -25,22 +25,27 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import net.sf.sevenzipjbinding.ArchiveFormat;
 import static net.sf.sevenzipjbinding.ArchiveFormat.RAR;
+import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
 import net.sf.sevenzipjbinding.ISevenZipInArchive;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
-import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
-import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
+import net.sf.sevenzipjbinding.IArchiveExtractCallback;
+import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
+import net.sf.sevenzipjbinding.PropID;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -158,8 +163,12 @@ class SevenZipExtractor {
      *
      * @param archiveFile     the AbstractFile for the parent archive which
      *                        which we are checking
-     * @param archiveFileItem the current item being extracted from the parent
-     *                        archive
+     * @param inArchive       The SevenZip archive currently open for extraction
+     * 
+     * @param inArchiveItemIndex Index of item inside the SevenZip archive. Each 
+     *                           file inside an archive is associated with a unique 
+     *                           integer
+     * 
      * @param depthMap        a concurrent hashmap which keeps track of the
      *                        depth of all nested archives, key of objectID
      * @param escapedFilePath the path to the archiveFileItem which has been
@@ -167,19 +176,22 @@ class SevenZipExtractor {
      *
      * @return true if potential zip bomb, false otherwise
      */
-    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISimpleInArchiveItem archiveFileItem, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
+    private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISevenZipInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
         try {
-            final Long archiveItemSize = archiveFileItem.getSize();
+            final Long archiveItemSize = (Long) inArchive.getProperty(
+                    inArchiveItemIndex, PropID.SIZE);
 
             //skip the check for small files
             if (archiveItemSize == null || archiveItemSize < MIN_COMPRESSION_RATIO_SIZE) {
                 return false;
             }
 
-            final Long archiveItemPackedSize = archiveFileItem.getPackedSize();
+            final Long archiveItemPackedSize = (Long) inArchive.getProperty(
+                    inArchiveItemIndex, PropID.PACKED_SIZE);
 
             if (archiveItemPackedSize == null || archiveItemPackedSize <= 0) {
-                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", new Object[]{archiveFile.getName(), archiveFileItem.getPath()}); //NON-NLS
+                logger.log(Level.WARNING, "Cannot getting compression ratio, cannot detect if zipbomb: {0}, item: {1}", //NON-NLS
+                        new Object[]{archiveFile.getName(), (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH)}); //NON-NLS
                 return false;
             }
 
@@ -366,8 +378,9 @@ class SevenZipExtractor {
      *
      * @throws SevenZipException
      */
-    private String getPathInArchive(ISimpleInArchiveItem item, int itemNumber, AbstractFile archiveFile) throws SevenZipException {
-        String pathInArchive = item.getPath();
+    private String getPathInArchive(ISevenZipInArchive archive, int inArchiveItemIndex, AbstractFile archiveFile) throws SevenZipException {
+        String pathInArchive = (String) archive.getProperty(
+                inArchiveItemIndex, PropID.PATH);
 
         if (pathInArchive == null || pathInArchive.isEmpty()) {
             //some formats (.tar.gz) may not be handled correctly -- file in archive has no name/path
@@ -400,7 +413,7 @@ class SevenZipExtractor {
                 }
             }
             if (useName == null) {
-                pathInArchive = "/" + archName + "/" + Integer.toString(itemNumber);
+                pathInArchive = "/" + archName + "/" + Integer.toString(inArchiveItemIndex);
             } else {
                 pathInArchive = "/" + useName;
             }
@@ -426,69 +439,6 @@ class SevenZipExtractor {
      */
     private String getKeyFromUnpackedNode(UnpackedTree.UnpackedNode node, String archiveFilePath) {
         return node == null ? null : archiveFilePath + "/" + node.getFileName();
-    }
-
-    /**
-     * Unpack an archive item to the disk using a password if specified.
-     *
-     * @param item                - the archive item to unpack
-     * @param unpackedNode        - the unpackedNode to add derivedInfo to
-     * @param password            - the password for the archive, null if not
-     *                            used
-     * @param freeDiskSpace       - the amount of free disk space
-     * @param uniqueExtractedName - the name of the file to extract the item to
-     *
-     * @return unpackedNode - the updated unpackedNode
-     *
-     * @throws SevenZipException
-     */
-    private SevenZipExtractor.UnpackedTree.UnpackedNode unpackNode(ISimpleInArchiveItem item, SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode, String password, long freeDiskSpace, String uniqueExtractedName) throws SevenZipException {
-        //unpack locally if a file
-        final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
-        final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
-        final Date createTime = item.getCreationTime();
-        final Date accessTime = item.getLastAccessTime();
-        final Date writeTime = item.getLastWriteTime();
-        final long createtime = createTime == null ? 0L : createTime.getTime() / 1000;
-        final long modtime = writeTime == null ? 0L : writeTime.getTime() / 1000;
-        final long accesstime = accessTime == null ? 0L : accessTime.getTime() / 1000;
-        SevenZipExtractor.UnpackStream unpackStream = null;
-        boolean isDir = item.isFolder();
-        if (!isDir) {
-            try {
-                // NOTE: item.getSize() may return null in case of certain
-                // archiving formats. Eg: BZ2
-                if (item.getSize() != null) {
-                    unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(localAbsPath, item.getSize());
-                } else {
-                    unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(localAbsPath, freeDiskSpace);
-                }
-                ExtractOperationResult result;
-                if (password == null) {
-                    result = item.extractSlow(unpackStream);
-                } else {
-                    result = item.extractSlow(unpackStream, password);
-                }
-                if (result != ExtractOperationResult.OK) {
-                    logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", new Object[]{localAbsPath, result}); //NON-NLS
-                    return null;
-                }
-
-            } catch (SevenZipException e) {
-                //could be something unexpected with this file, move on
-                logger.log(Level.WARNING, "Could not extract file from archive: " + localAbsPath, e); //NON-NLS
-            } finally {
-                if (unpackStream != null) {
-                    //record derived data in unode, to be traversed later after unpacking the archive
-                    unpackedNode.addDerivedInfo(unpackStream.getSize(), !isDir,
-                            0L, createtime, accesstime, modtime, localRelPath);
-                    unpackStream.close();
-                }
-            }
-        } else { // this is a directory, size is always 0
-            unpackedNode.addDerivedInfo(0, !isDir, 0L, createtime, accesstime, modtime, localRelPath);
-        }
-        return unpackedNode;
     }
 
     /**
@@ -523,7 +473,6 @@ class SevenZipExtractor {
         boolean hasEncrypted = false;
         boolean fullEncryption = true;
         boolean progressStarted = false;
-        int processedItems = 0;
         final String archiveFilePath = getArchiveFilePath(archiveFile);
         final String escapedArchiveFilePath = FileUtil.escapeFileName(archiveFilePath);
         HashMap<String, ZipFileStatusWrapper> statusMap = new HashMap<>();
@@ -590,7 +539,7 @@ class SevenZipExtractor {
             logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{escapedArchiveFilePath, numItems}); //NON-NLS
             progress.start(numItems);
             progressStarted = true;
-            final ISimpleInArchive simpleInArchive = inArchive.getSimpleInterface();
+            progress.progress(archiveFile.getName() + ": Analyzing archive metadata and creating local files");
 
             //setup the archive local root folder
             final String uniqueArchiveFileName = FileUtil.escapeFileName(EmbeddedFileExtractorIngestModule.getUniqueName(archiveFile));
@@ -614,25 +563,18 @@ class SevenZipExtractor {
                 //currently getFreeDiskSpace always returns DISK_FREE_SPACE_UNKNOWN
                 freeDiskSpace = IngestMonitor.DISK_FREE_SPACE_UNKNOWN;
             }
-            //unpack and process every item in archive
-            int itemNumber = 0;
 
-            for (ISimpleInArchiveItem item : simpleInArchive.getArchiveItems()) {
-                String pathInArchive = getPathInArchive(item, itemNumber, archiveFile);
-
-                //query for path in db
-                ++itemNumber;
-
-                //check if possible zip bomb
-                if (isZipBombArchiveItemCheck(archiveFile, item, depthMap, escapedArchiveFilePath)) {
+            Map<Integer, InArchiveItemDetails> archiveDetailsMap = new LinkedHashMap<>();
+            for (int inArchiveItemIndex = 0; inArchiveItemIndex < numItems; inArchiveItemIndex++) {
+                if (isZipBombArchiveItemCheck(archiveFile, inArchive, inArchiveItemIndex, depthMap, escapedArchiveFilePath)) {
                     unpackSuccessful = false;
                     return unpackSuccessful;
                 }
-                SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
-                //update progress bar
-                progress.progress(archiveFile.getName() + ": " + item.getPath(), processedItems);
 
-                final boolean isEncrypted = item.isEncrypted();
+                String pathInArchive = getPathInArchive(inArchive, inArchiveItemIndex, archiveFile);
+                SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode = unpackedTree.addNode(pathInArchive);
+
+                final boolean isEncrypted = (Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.ENCRYPTED);
 
                 if (isEncrypted && password == null) {
                     logger.log(Level.WARNING, "Skipping encrypted file in archive: {0}", pathInArchive); //NON-NLS
@@ -642,20 +584,25 @@ class SevenZipExtractor {
                 } else {
                     fullEncryption = false;
                 }
-                // NOTE: item.getSize() may return null in case of certain
+
+                // NOTE: item size may return null in case of certain
                 // archiving formats. Eg: BZ2
                 //check if unpacking this file will result in out of disk space
                 //this is additional to zip bomb prevention mechanism
-                if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && item.getSize() != null && item.getSize() > 0) { //if free space is known and file is not empty.
-                    long newDiskSpace = freeDiskSpace - item.getSize();
+                Long archiveItemSize = (Long) inArchive.getProperty(
+                        inArchiveItemIndex, PropID.SIZE);
+                if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && archiveItemSize != null && archiveItemSize > 0) { //if free space is known and file is not empty.
+                    String archiveItemPath = (String) inArchive.getProperty(
+                        inArchiveItemIndex, PropID.PATH);
+                    long newDiskSpace = freeDiskSpace - archiveItemSize;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.msg",
-                                escapedArchiveFilePath, item.getPath());
+                                escapedArchiveFilePath, archiveItemPath);
                         String details = NbBundle.getMessage(SevenZipExtractor.class,
                                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.unpack.notEnoughDiskSpace.details");
                         services.postMessage(IngestMessage.createErrorMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
-                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new String[]{escapedArchiveFilePath, item.getPath()}); //NON-NLS
+                        logger.log(Level.INFO, "Skipping archive item due to insufficient disk space: {0}, {1}", new String[]{escapedArchiveFilePath, archiveItemPath}); //NON-NLS
                         logger.log(Level.INFO, "Available disk space: {0}", new Object[]{freeDiskSpace}); //NON-NLS
                         unpackSuccessful = false;
                         continue; //skip this file
@@ -664,42 +611,61 @@ class SevenZipExtractor {
                         freeDiskSpace = newDiskSpace;
                     }
                 }
-                final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (item.getItemIndex() / 1000) + File.separator + item.getItemIndex() + "_" + new File(pathInArchive).getName());
+                final String uniqueExtractedName = FileUtil.escapeFileName(uniqueArchiveFileName + File.separator + (inArchiveItemIndex / 1000) + File.separator + inArchiveItemIndex + "_" + new File(pathInArchive).getName());
+                final String localAbsPath = moduleDirAbsolute + File.separator + uniqueExtractedName;
+                final String localRelPath = moduleDirRelative + File.separator + uniqueExtractedName;
 
                 //create local dirs and empty files before extracted
-                File localFile = new java.io.File(moduleDirAbsolute + File.separator + uniqueExtractedName);
+                File localFile = new java.io.File(localAbsPath);
                 //cannot rely on files in top-bottom order
                 if (!localFile.exists()) {
                     try {
-                        if (item.isFolder()) {
+                        if ((Boolean) inArchive.getProperty(
+                                inArchiveItemIndex, PropID.IS_FOLDER)) {
                             localFile.mkdirs();
                         } else {
                             localFile.getParentFile().mkdirs();
                             try {
                                 localFile.createNewFile();
                             } catch (IOException e) {
-                                logger.log(Level.SEVERE, "Error creating extracted file: " + localFile.getAbsolutePath(), e); //NON-NLS
+                                logger.log(Level.SEVERE, "Error creating extracted file: "//NON-NLS
+                                        + localFile.getAbsolutePath(), e);
                             }
                         }
                     } catch (SecurityException e) {
-                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", pathInArchive); //NON-NLS
+                        logger.log(Level.SEVERE, "Error setting up output path for unpacked file: {0}", //NON-NLS
+                                pathInArchive); //NON-NLS
                         //TODO consider bail out / msg to the user
                     }
                 }
                 // skip the rest of this loop if we couldn't create the file
+                //continue will skip details from being added to the map
                 if (localFile.exists() == false) {
                     continue;
                 }
-                //find this node in the hierarchy, create if neede;
-                unpackedNode = unpackNode(item, unpackedNode, password,
-                        freeDiskSpace, uniqueExtractedName);
-                if (unpackedNode == null) {
-                    unpackSuccessful = false;
-                }
 
-                //update units for progress bar
-                ++processedItems;
+                //Store archiveItemIndex with local paths and unpackedNode reference.
+                //Necessary for the extract call back to write the current archive
+                //file to the correct disk location and to correctly update it's 
+                //corresponding unpackedNode
+                archiveDetailsMap.put(inArchiveItemIndex, new InArchiveItemDetails(
+                        unpackedNode, localAbsPath, localRelPath));
             }
+
+            int[] extractionIndices = getExtractableFilesFromDetailsMap(archiveDetailsMap);
+
+            StandardIArchiveExtractCallback archiveCallBack
+                    = new StandardIArchiveExtractCallback(
+                            inArchive, archiveFile, progress,
+                            archiveDetailsMap, password, freeDiskSpace);
+
+            //According to the documentation, indices in sorted order are optimal 
+            //for efficiency. Hence, the LinkedHashMap and linear processing of 
+            //inArchiveItemIndex. False indicates non-test mode
+            inArchive.extract(extractionIndices, false, archiveCallBack);
+
+            unpackSuccessful = unpackSuccessful & archiveCallBack.wasSuccessful();
+
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
             try {
@@ -797,6 +763,21 @@ class SevenZipExtractor {
             }
         }
         return unpackSuccessful;
+    }
+
+    /**
+     * Produce a list of archive indices needed for the call to extract, which
+     * will open the archive and begin unpacking the files.
+     */
+    private int[] getExtractableFilesFromDetailsMap(
+            Map<Integer, InArchiveItemDetails> archiveDetailsMap) {
+
+        Integer[] wrappedExtractionIndices = archiveDetailsMap.keySet()
+                .toArray(new Integer[archiveDetailsMap.size()]);
+
+        return Arrays.stream(wrappedExtractionIndices)
+                .mapToInt(Integer::intValue)
+                .toArray();
     }
 
     /**
@@ -930,6 +911,207 @@ class SevenZipExtractor {
                                 getLocalAbsPath()), ex);
             }
             return bytes.length;
+        }
+    }
+
+    /**
+     * Wrapper for necessary details used in StandardIArchiveExtractCallback
+     */
+    private static class InArchiveItemDetails {
+
+        private final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode;
+        private final String localAbsPath;
+        private final String localRelPath;
+
+        public InArchiveItemDetails(
+                SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode,
+                String localAbsPath, String localRelPath) {
+            this.unpackedNode = unpackedNode;
+            this.localAbsPath = localAbsPath;
+            this.localRelPath = localRelPath;
+        }
+
+        public SevenZipExtractor.UnpackedTree.UnpackedNode getUnpackedNode() {
+            return unpackedNode;
+        }
+
+        public String getLocalAbsPath() {
+            return localAbsPath;
+        }
+
+        public String getLocalRelPath() {
+            return localRelPath;
+        }
+    }
+
+    /**
+     * Call back class used by extract to expand archive files. This is the most
+     * efficient way to process according to the sevenzip binding documentation.
+     */
+    private static class StandardIArchiveExtractCallback
+            implements IArchiveExtractCallback, ICryptoGetTextPassword {
+
+        private final AbstractFile archiveFile;
+        private final ISevenZipInArchive inArchive;
+        private SevenZipExtractor.UnpackStream unpackStream = null;
+        private final Map<Integer, InArchiveItemDetails> archiveDetailsMap;
+        private final ProgressHandle progressHandle;
+        
+        private int inArchiveItemIndex;
+        private final long freeDiskSpace;
+
+        private long createTimeInSeconds;
+        private long modTimeInSeconds;
+        private long accessTimeInSeconds;
+
+        private boolean isFolder;
+        private final String password;
+
+        private boolean unpackSuccessful = true;
+
+        public StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
+                AbstractFile archiveFile, ProgressHandle progressHandle,
+                Map<Integer, InArchiveItemDetails> archiveDetailsMap,
+                String password, long freeDiskSpace) {
+
+            this.inArchive = inArchive;
+            this.freeDiskSpace = freeDiskSpace;
+            this.progressHandle = progressHandle;
+            this.archiveFile = archiveFile;
+            this.archiveDetailsMap = archiveDetailsMap;
+            this.password = password;
+        }
+
+        /**
+         * Get stream is called by the internal framework as it traverses 
+         * the archive structure. The ISequentialOutStream is where the 
+         * archive file contents will be expanded and written to the local disk.
+         * 
+         * Skips folders, as there is nothing to extract.
+         * 
+         * @param inArchiveItemIndex current location of the 
+         * @param mode Will always be EXTRACT
+         * @return
+         * @throws SevenZipException 
+         */
+        @Override
+        public ISequentialOutStream getStream(int inArchiveItemIndex, 
+                ExtractAskMode mode) throws SevenZipException {
+
+            this.inArchiveItemIndex = inArchiveItemIndex;
+
+            isFolder = (Boolean) inArchive
+                    .getProperty(inArchiveItemIndex, PropID.IS_FOLDER);
+            if (isFolder || mode != ExtractAskMode.EXTRACT) {
+                return null;
+            }
+
+            final Long archiveItemSize = (Long) inArchive.getProperty(
+                    inArchiveItemIndex, PropID.SIZE);
+            final String localAbsPath = archiveDetailsMap.get(
+                    inArchiveItemIndex).getLocalAbsPath();
+
+            if (archiveItemSize != null) {
+                unpackStream = new SevenZipExtractor.KnownSizeUnpackStream(
+                        localAbsPath, archiveItemSize);
+            } else {
+                unpackStream = new SevenZipExtractor.UnknownSizeUnpackStream(
+                        localAbsPath, freeDiskSpace);
+            }
+
+            return unpackStream;
+        }
+
+        /**
+         * Retrieves the file metadata from the archive before extraction. 
+         * Called after getStream.
+         * 
+         * @param mode Will always be EXTRACT.
+         * @throws SevenZipException 
+         */
+        @Override
+        public void prepareOperation(ExtractAskMode mode) throws SevenZipException {
+            final Date createTime = (Date) inArchive.getProperty(
+                    inArchiveItemIndex, PropID.CREATION_TIME);
+            final Date accessTime = (Date) inArchive.getProperty(
+                    inArchiveItemIndex, PropID.LAST_ACCESS_TIME);
+            final Date writeTime = (Date) inArchive.getProperty(
+                    inArchiveItemIndex, PropID.LAST_WRITE_TIME);
+
+            createTimeInSeconds = createTime == null ? 0L
+                    : createTime.getTime() / 1000;
+            modTimeInSeconds = writeTime == null ? 0L
+                    : writeTime.getTime() / 1000;
+            accessTimeInSeconds = accessTime == null ? 0L
+                    : accessTime.getTime() / 1000;
+        }
+
+        /**
+         * Updates the unpackedNode data in the tree after the archive has been
+         * expanded to local disk. 
+         *
+         * @param EOR - ExtractOperationResult 
+         *
+         * @throws SevenZipException
+         */
+        @Override
+        public void setOperationResult(ExtractOperationResult result) throws SevenZipException {
+            progressHandle.progress(archiveFile.getName() + ": "
+                    + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
+                    inArchiveItemIndex);
+
+            final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode
+                    = archiveDetailsMap.get(inArchiveItemIndex).getUnpackedNode();
+            final String localRelPath = archiveDetailsMap.get(
+                    inArchiveItemIndex).getLocalRelPath();
+            if (isFolder) {
+                unpackedNode.addDerivedInfo(0,
+                        !(Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER),
+                        0L, createTimeInSeconds, accessTimeInSeconds, modTimeInSeconds,
+                        localRelPath);
+                return;
+            }
+            
+            final String localAbsPath = archiveDetailsMap.get(
+                    inArchiveItemIndex).getLocalAbsPath();
+            if (result != ExtractOperationResult.OK) {
+                logger.log(Level.WARNING, "Extraction of : {0} encountered error {1}", //NON-NLS
+                        new Object[]{localAbsPath, result});
+                unpackSuccessful = false;
+            }
+
+            //record derived data in unode, to be traversed later after unpacking the archive
+            unpackedNode.addDerivedInfo(unpackStream.getSize(),
+                    !(Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER),
+                    0L, createTimeInSeconds, accessTimeInSeconds, modTimeInSeconds, localRelPath);
+
+            unpackStream.close();
+        }
+
+        @Override
+        public void setTotal(long value) throws SevenZipException {
+            //Not necessary for extract, left intenionally blank
+        }
+
+        @Override
+        public void setCompleted(long value) throws SevenZipException {
+            //Not necessary for extract, left intenionally blank
+        }
+
+        /**
+         * Called when opening encrypted archive files.
+         *
+         * @return - Password supplied by user
+         *
+         * @throws SevenZipException
+         */
+        @Override
+        public String cryptoGetTextPassword() throws SevenZipException {
+            return password;
+        }
+
+        public boolean wasSuccessful() {
+            return unpackSuccessful;
         }
     }
 
@@ -1290,7 +1472,8 @@ class SevenZipExtractor {
         }
 
         /**
-         * Set the flag which identifies whether this file has been determined to be a zip bomb to true.
+         * Set the flag which identifies whether this file has been determined
+         * to be a zip bomb to true.
          */
         synchronized void flagAsZipBomb() {
             flaggedAsZipBomb = true;
