@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -38,9 +36,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -251,7 +246,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(TYPE_META.toString(), content.getMetaType().toString());
         map.put(KNOWN.toString(), content.getKnown().getName());
-        map.put(HASHSETS.toString(), getHashSetHitsForFile(content));
+        map.put(HASHSETS.toString(), getHashSetHitsCsvList(content));
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
         map.put(ObjectID.toString(), content.getId());
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
@@ -263,7 +258,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
-     *           Sheet.get(Sheet.PROPERTIES)
+     *                 Sheet.get(Sheet.PROPERTIES)
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     protected void addTagProperty(Sheet.Set sheetSet) {
@@ -301,7 +296,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    public static String getHashSetHitsForFile(AbstractFile file) {
+    /**
+     * Gets a comma-separated values list of the names of the hash sets
+     * currently identified as including a given file.
+     *
+     * @param file The file.
+     *
+     * @return The CSV list of hash set names.
+     */
+    protected static String getHashSetHitsCsvList(AbstractFile file) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {

@@ -80,7 +80,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="otherCasesPanel" pref="483" max="32767" attributes="0"/>
+          <Component id="otherCasesPanel" pref="59" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -106,7 +106,7 @@
               <EmptySpace min="0" pref="483" max="32767" attributes="0"/>
               <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="tableContainerPanel" pref="483" max="32767" attributes="0"/>
+                      <Component id="tableContainerPanel" pref="59" max="32767" attributes="0"/>
                       <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -133,23 +133,18 @@
                       <Component id="earliestCaseLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="earliestCaseDate" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="tableStatusPanelLabel" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
-                      <Component id="tableScrollPane" pref="176" max="32767" attributes="0"/>
-                      <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="earliestCaseLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="earliestCaseDate" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="tableStatusPanelLabel" min="-2" pref="16" max="-2" attributes="0"/>
+                      <Component id="tableScrollPane" pref="27" max="32767" attributes="0"/>
+                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="earliestCaseLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="earliestCaseDate" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                       <Component id="tableStatusPanel" min="-2" max="-2" attributes="0"/>
@@ -230,13 +225,6 @@
                 </DimensionLayout>
               </Layout>
             </Container>
-            <Component class="javax.swing.JLabel" name="tableStatusPanelLabel">
-              <Properties>
-                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="33" green="0" red="ff" type="rgb"/>
-                </Property>
-              </Properties>
-            </Component>
           </SubComponents>
         </Container>
       </SubComponents>

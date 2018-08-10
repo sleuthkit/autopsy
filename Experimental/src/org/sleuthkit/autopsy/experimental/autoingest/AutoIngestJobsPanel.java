@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent;
+import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
  * A panel which displays an outline view with all jobs for a specified status.
@@ -84,6 +85,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_priority_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
+                    outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new PrioritizedIconCellRenderer());
                 }
                 break;
             case RUNNING_JOB:
@@ -108,6 +110,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_status_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_STATUS_WIDTH);
+                    outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new StatusIconCellRenderer());
                 }
                 break;
             default:
