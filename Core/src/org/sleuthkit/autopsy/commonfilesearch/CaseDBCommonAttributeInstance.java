@@ -63,9 +63,7 @@ final public class CaseDBCommonAttributeInstance extends AbstractCommonAttribute
 
             SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
-            AbstractFile abstractFile = tskDb.findAllFilesWhere(String.format("obj_id in (%s)", this.getAbstractFileObjectId())).get(0);
-
-            return abstractFile;
+            return tskDb.findAllFilesWhere(String.format("obj_id in (%s)", this.getAbstractFileObjectId())).get(0);
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{this.getAbstractFileObjectId()}), ex);

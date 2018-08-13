@@ -117,8 +117,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         drp.open();
         drpExplorerManager = drp.getExplorerManager();
-        drpExplorerManager.addPropertyChangeListener(evt ->
-                viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
+        drpExplorerManager.addPropertyChangeListener(evt
+                -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
     }
 
     /**
