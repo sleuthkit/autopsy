@@ -24,6 +24,7 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -32,6 +33,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -39,23 +41,21 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import java.nio.file.Path;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
-import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
     "RegRipperNotFound=Autopsy RegRipper executable not found.",
     "RegRipperFullNotFound=Full version RegRipper executable not found."
 })
-class ExtractRegistry extends Extract {
+class RegistryExtractor extends Extractor {
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -80,18 +80,16 @@ class ExtractRegistry extends Extract {
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
     private final List<String> rrCmd = new ArrayList<>();
-    private final List<String> rrFullCmd= new ArrayList<>();
-    
+    private final List<String> rrFullCmd = new ArrayList<>();
 
-    ExtractRegistry() throws IngestModuleException {
-        moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
-        
-        final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
+    RegistryExtractor() throws IngestModuleException {
+
+        final File rrRoot = InstalledFileLocator.getDefault().locate("rr", RegistryExtractor.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
 
-        final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
+        final File rrFullRoot = InstalledFileLocator.getDefault().locate("rr-full", RegistryExtractor.class.getPackage().getName(), false); //NON-NLS
         if (rrFullRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
@@ -104,25 +102,25 @@ class ExtractRegistry extends Extract {
         RR_PATH = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
         RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
-        
+
         if (!(new File(RR_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
         if (!(new File(RR_FULL_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
-        if(PlatformUtil.isWindowsOS()){
+        if (PlatformUtil.isWindowsOS()) {
             rrCmd.add(RR_PATH);
             rrFullCmd.add(RR_FULL_PATH);
-        }else{
+        } else {
             String perl;
             File usrBin = new File("/usr/bin/perl");
             File usrLocalBin = new File("/usr/local/bin/perl");
-            if(usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()){
+            if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
                 perl = "/usr/bin/perl";
-            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
+            } else if (usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()) {
                 perl = "/usr/local/bin/perl";
-            }else{
+            } else {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
@@ -131,6 +129,12 @@ class ExtractRegistry extends Extract {
             rrFullCmd.add(RR_FULL_PATH);
         }
     }
+
+    @Override
+    protected String getModuleName() {
+        return NbBundle.getMessage(IEExtractor.class, "ExtractRegistry.moduleName.text");
+    }
+
     /**
      * Search for the registry hives on the system.
      */
@@ -154,7 +158,7 @@ class ExtractRegistry extends Extract {
                 String msg = NbBundle.getMessage(this.getClass(),
                         "ExtractRegistry.findRegFiles.errMsg.errReadingFile", regFileName);
                 logger.log(Level.WARNING, msg);
-                this.addErrorMessage(this.getName() + ": " + msg);
+                this.addErrorMessage(this.getModuleName() + ": " + msg);
             }
         }
         return allRegistryFiles;
@@ -188,14 +192,14 @@ class ExtractRegistry extends Extract {
                         regFile.getName(), regFileId), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                this.getName(), regFileName));
+                                this.getModuleName(), regFileName));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp registry file '%s' for registry file '%s' (id=%d).",
                         regFileNameLocal, regFile.getName(), regFileId), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.errMsg.errWritingTemp",
-                                this.getName(), regFileName));
+                                this.getModuleName(), regFileName));
                 continue;
             }
 
@@ -211,7 +215,7 @@ class ExtractRegistry extends Extract {
                 logger.log(Level.SEVERE, null, ex);
             }
 
-            logger.log(Level.INFO, "{0}- Now getting registry information from {1}", new Object[]{moduleName, regFileNameLocal}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting registry information from {1}", new Object[]{getModuleName(), regFileNameLocal}); //NON-NLS
             RegOutputFiles regOutputFiles = ripRegistryFile(regFileNameLocal, outputPathBase);
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -222,7 +226,7 @@ class ExtractRegistry extends Extract {
                 if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
-                                    this.getName(), regFileName));
+                                    this.getModuleName(), regFileName));
                 }
             }
 
@@ -318,7 +322,7 @@ class ExtractRegistry extends Extract {
     private void executeRegRipper(List<String> regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             List<String> commandLine = new ArrayList<>();
-            for(String cmd: regRipperPath){
+            for (String cmd : regRipperPath) {
                 commandLine.add(cmd);
             }
             commandLine.add("-r"); //NON-NLS
@@ -333,7 +337,7 @@ class ExtractRegistry extends Extract {
             ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to run RegRipper", ex); //NON-NLS
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractRegistry.execRegRip.errMsg.failedAnalyzeRegFile", this.getModuleName()));
         }
     }
 
@@ -741,7 +745,7 @@ class ExtractRegistry extends Extract {
                 }
             } // for
             if (!usbBBartifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
             }
             return true;
         } catch (FileNotFoundException ex) {

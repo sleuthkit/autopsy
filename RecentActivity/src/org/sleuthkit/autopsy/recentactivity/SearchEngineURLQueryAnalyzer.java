@@ -64,7 +64,7 @@ import org.xml.sax.SAXException;
     "cannotParseXml=Unable to parse XML file: ",
     "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
 })
-class SearchEngineURLQueryAnalyzer extends Extract {
+class SearchEngineURLQueryAnalyzer extends Extractor {
 
     private static final Logger logger = Logger.getLogger(SearchEngineURLQueryAnalyzer.class.getName());
     private static final String XMLFILE = "SEUQAMappings.xml"; //NON-NLS
@@ -74,8 +74,9 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     private Content dataSource;
     private IngestJobContext context;
 
-    SearchEngineURLQueryAnalyzer() {
-        moduleName = NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
+    @Override
+    protected String getModuleName() {
+        return NbBundle.getMessage(IEExtractor.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
     }
 
     /**
@@ -239,17 +240,17 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             return decoded;
         } catch (UnsupportedEncodingException exception) { //if it fails, return the encoded string
             logger.log(Level.FINE, "Error during URL decoding, returning undecoded value:"
-                    + "\n\tURL: " + url
-                    + "\n\tUndecoded value: " + x
-                    + "\n\tEngine name: " + eng.getEngineName()
-                    + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
+                                   + "\n\tURL: " + url
+                                   + "\n\tUndecoded value: " + x
+                                   + "\n\tEngine name: " + eng.getEngineName()
+                                   + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
             return x;
         } catch (IllegalArgumentException exception) { //if it fails, return the encoded string
             logger.log(Level.SEVERE, "Illegal argument passed to URL decoding, returning undecoded value:"
-                    + "\n\tURL: " + url
-                    + "\n\tUndecoded value: " + x
-                    + "\n\tEngine name: " + eng.getEngineName()
-                    + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS)
+                                     + "\n\tURL: " + url
+                                     + "\n\tUndecoded value: " + x
+                                     + "\n\tEngine name: " + eng.getEngineName()
+                                     + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS)
             return x;
         }
     }
@@ -295,7 +296,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         try {
             //from blackboard_artifacts
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (blackboard_artifacts.artifact_type_id = '" + ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() //NON-NLS
-                    + "' OR blackboard_artifacts.artifact_type_id = '" + ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() + "') ");  //List of every 'web_history' and 'bookmark' artifact NON-NLS
+                                                                                                               + "' OR blackboard_artifacts.artifact_type_id = '" + ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() + "') ");  //List of every 'web_history' and 'bookmark' artifact NON-NLS
             logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
             for (BlackboardArtifact artifact : listArtifacts) {

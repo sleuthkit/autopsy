@@ -62,9 +62,9 @@ import org.sleuthkit.datamodel.*;
  * Extracts activity from Internet Explorer browser, as well as recent documents
  * in windows.
  */
-class ExtractIE extends Extract {
+class IEExtractor extends Extractor {
 
-    private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
+    private static final Logger logger = Logger.getLogger(IEExtractor.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
@@ -73,10 +73,14 @@ class ExtractIE extends Extract {
     private Content dataSource;
     private IngestJobContext context;
 
-    ExtractIE() throws NoCurrentCaseException {
-        moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
+    IEExtractor() throws NoCurrentCaseException {
         moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
         JAVA_PATH = PlatformUtil.getJavaPath();
+    }
+
+    @Override
+    protected String getModuleName() {
+        return NbBundle.getMessage(IEExtractor.class, "ExtractIE.moduleName.text");
     }
 
     @Override
@@ -101,7 +105,7 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
-                            this.getName()));
+                            this.getModuleName()));
             return;
         }
 
@@ -174,12 +178,12 @@ class ExtractIE extends Extract {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getModuleName(),
                             fav.getName()));
         } catch (IndexOutOfBoundsException ex) {
             logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex); //NON-NLS
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getModuleName(),
                             fav.getName()));
         } finally {
             try {
@@ -203,7 +207,7 @@ class ExtractIE extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting cookie files for IE"); //NON-NLS
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getName()));
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getModuleName()));
             return;
         }
 
@@ -229,7 +233,7 @@ class ExtractIE extends Extract {
                 logger.log(Level.WARNING, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
-                                this.getName(), cookiesFile.getName()));
+                                this.getModuleName(), cookiesFile.getName()));
                 continue;
             }
             String cookieString = new String(t);
@@ -279,10 +283,10 @@ class ExtractIE extends Extract {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
         boolean foundHistory = false;
 
-        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
+        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", IEExtractor.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getModuleName()));
             logger.log(Level.SEVERE, "Error finding pasco program "); //NON-NLS
             return;
         }
@@ -291,7 +295,7 @@ class ExtractIE extends Extract {
         logger.log(Level.INFO, "Pasco2 home: {0}", pascoHome); //NON-NLS
 
         PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator //NON-NLS
-                + pascoHome + File.separator + "*";
+                         + pascoHome + File.separator + "*";
 
         File resultsDir = new File(moduleTempResultsDir);
         resultsDir.mkdirs();
@@ -303,7 +307,7 @@ class ExtractIE extends Extract {
             indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
         } catch (TskCoreException ex) {
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errGettingHistFiles",
-                    this.getName()));
+                    this.getModuleName()));
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
             return;
         }
@@ -336,7 +340,7 @@ class ExtractIE extends Extract {
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getModuleName(),
                                 datFile.getAbsolutePath()));
                 continue;
             }
@@ -359,9 +363,9 @@ class ExtractIE extends Extract {
                 //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
             } else {
-                logger.log(Level.WARNING, "pasco execution failed on: {0}", this.getName()); //NON-NLS
+                logger.log(Level.WARNING, "pasco execution failed on: {0}", this.getModuleName()); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getModuleName()));
             }
         }
 
@@ -432,7 +436,7 @@ class ExtractIE extends Extract {
         File file = new File(fnAbs);
         if (file.exists() == false) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getModuleName(),
                             file.getName()));
             logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
             return bbartifacts;
@@ -449,7 +453,7 @@ class ExtractIE extends Extract {
             fileScanner = new Scanner(new FileInputStream(file.toString()));
         } catch (FileNotFoundException ex) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getModuleName(),
                             file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
@@ -507,7 +511,7 @@ class ExtractIE extends Extract {
                 } catch (ParseException e) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
-                                    this.getName()));
+                                    this.getModuleName()));
                     logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
                 }
             }

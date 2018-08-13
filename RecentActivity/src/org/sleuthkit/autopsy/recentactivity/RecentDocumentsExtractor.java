@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2014 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,12 +47,17 @@ import org.sleuthkit.datamodel.*;
  * Recent documents class that will extract recent documents in the form of .lnk
  * files
  */
-class RecentDocumentsByLnk extends Extract {
+class RecentDocumentsExtractor extends Extractor {
 
-    private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private static final Logger logger = Logger.getLogger(RecentDocumentsExtractor.class.getName());
+    private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
+
+    @Override
+    protected String getModuleName() {
+        return "";
+    }
 
     /**
      * Find the documents that Windows stores about recent documents and make
@@ -71,7 +76,7 @@ class RecentDocumentsByLnk extends Extract {
             logger.log(Level.WARNING, "Error searching for .lnk files."); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errGetLnkFiles",
-                            this.getName()));
+                            this.getModuleName()));
             return;
         }
 
@@ -96,7 +101,7 @@ class RecentDocumentsByLnk extends Extract {
             } catch (JLnkParserException e) {
                 //TODO should throw a specific checked exception
                 boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)
-                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+                                  || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
                     logger.log(Level.WARNING, "Error lnk parsing the file to get recent files {0}", recentFile); //NON-NLS
                 }

@@ -38,17 +38,21 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
 
-abstract class Extract {
+abstract class Extractor {
+
+    private static final Logger logger = Logger.getLogger(Extractor.class.getName());
 
     protected Case currentCase;
     protected SleuthkitCase tskCase;
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final ArrayList<String> errorMessages = new ArrayList<>();
-    String moduleName = "";
     boolean dataFound = false;
 
-    Extract() {
-    }
+    /**
+     * Returns the name of the inheriting class
+     *
+     * @return Gets the moduleName
+     */
+    abstract protected String getModuleName();
 
     final void init() throws IngestModuleException {
         try {
@@ -102,20 +106,17 @@ abstract class Extract {
      * @param bbattributes is the collection of blackboard attributes that need
      *                     to be added to the artifact after the artifact has
      *                     been created
+     * @return The newly-created artifact
      *
-     * @return The newly-created artifact, or null on error
+     * @throws org.sleuthkit.datamodel.TskCoreException If there was a problem
+     *                                                  creating the artifact.
      */
-    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
-        try {
-            BlackboardArtifact bbart = content.newArtifact(type);
-            bbart.addAttributes(bbattributes);
-            // index the artifact for keyword search
-            this.indexArtifact(bbart);
-            return bbart;
-        } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
-        }
-        return null;
+    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) throws TskCoreException {
+        BlackboardArtifact bbart = content.newArtifact(type);
+        bbart.addAttributes(bbattributes);
+        // index the artifact for keyword search
+        this.indexArtifact(bbart);
+        return bbart;
     }
 
     /**
@@ -129,7 +130,7 @@ abstract class Extract {
         try {
             Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             // index the artifact for keyword search
-            blackboard.postArtifact(bbart, NbBundle.getMessage(Extract.class, "Chrome.parentModuleName"));
+            blackboard.postArtifact(bbart, getModuleName());
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
@@ -151,20 +152,16 @@ abstract class Extract {
      *         it that the query obtained
      */
     protected List<HashMap<String, Object>> dbConnect(String path, String query) {
-        ResultSet temprs;
-        List<HashMap<String, Object>> list;
+
         String connectionString = "jdbc:sqlite:" + path; //NON-NLS
-        try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
-            temprs = tempdbconnect.executeQry(query);
-            list = this.resultSetToArrayList(temprs);
-            tempdbconnect.closeConnection();
+        try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
+                ResultSet temprs = tempdbconnect.executeQry(query);) {
+            return this.resultSetToArrayList(temprs);
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
-            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
+            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getModuleName()));
             return Collections.<HashMap<String, Object>>emptyList();
         }
-        return list;
     }
 
     /**
@@ -191,15 +188,6 @@ abstract class Extract {
         }
 
         return list;
-    }
-
-    /**
-     * Returns the name of the inheriting class
-     *
-     * @return Gets the moduleName set in the moduleName data member
-     */
-    protected String getName() {
-        return moduleName;
     }
 
     public boolean foundData() {
