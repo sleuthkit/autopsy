@@ -31,6 +31,9 @@ final class CellTypeDetector {
         EMAIL_VALIDATOR = EmailValidator.getInstance();
     }
     
+    private CellTypeDetector(){
+    }
+    
     public static CellType getType(Object cell) {
         if (cell instanceof String) {
             return getType((String) cell);
@@ -45,7 +48,7 @@ final class CellTypeDetector {
         return CellType.NOT_INTERESTING;
     } 
     
-    /*
+    /**
      * Cell data that qualify as an "interesting" selector
      */
     public enum CellType {

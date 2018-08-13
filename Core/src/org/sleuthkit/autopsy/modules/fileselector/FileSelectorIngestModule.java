@@ -56,8 +56,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
     private static final String MODULE_NAME = FileSelectorIngestModuleFactory.getModuleName();
     
     private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(
-            FileSelectorIngestModuleFactory.getModuleName());
+    private final Logger logger = services.getLogger(FileSelectorIngestModule.class.getName());
     private FileTypeDetector fileTypeDetector;
     
     private Blackboard blackboard;

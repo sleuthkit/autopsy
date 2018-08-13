@@ -47,14 +47,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Reads rows from SQLite tables and returns results in a list collection.
  */
-@NbBundle.Messages({
-    "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
-})
 public class SQLiteReader implements AutoCloseable {
     
     private final Connection connection;
     private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(Bundle.SQLiteReader_ReadSQLiteFiles_moduleName());
+    private final Logger logger = services.getLogger(SQLiteReader.class.getName());
     
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC
