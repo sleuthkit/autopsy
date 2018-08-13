@@ -31,12 +31,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -47,6 +50,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class SQLiteReader implements AutoCloseable {
     
     private final Connection connection;
+    private final IngestServices services = IngestServices.getInstance();
+    private final Logger logger = services.getLogger(SQLiteReader.class.getName());
     
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC
@@ -176,6 +181,7 @@ public class SQLiteReader implements AutoCloseable {
      * @throws SQLException
      */
     public Integer getTableRowCount(String tableName) throws SQLException {
+        tableName = wrapTableNameStringWithQuotes(tableName);
         try (Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT count (*) as count FROM " + tableName)){ //NON-NLS
@@ -193,10 +199,10 @@ public class SQLiteReader implements AutoCloseable {
      * @throws SQLException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws SQLException {
-        
         //This method does not directly call its overloaded counterpart 
         //since the second parameter would need to be retreived from a call to
         //getTableRowCount().
+        tableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT * FROM " + tableName)) { //NON-NLS
@@ -216,7 +222,7 @@ public class SQLiteReader implements AutoCloseable {
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
             int startRow, int numRowsToRead) throws SQLException{
-        
+        tableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT * FROM " + tableName    //NON-NLS
@@ -224,6 +230,18 @@ public class SQLiteReader implements AutoCloseable {
                         + " OFFSET " + Integer.toString(startRow - 1))) { //NON-NLS
             return resultSetToList(resultSet);
         }
+    }
+    
+    /**
+     * Wraps table name with quotation marks in case table name contains spaces. 
+     * sqliteJDBC cannot read table names with spaces in them unless surrounded 
+     * by quotation marks.
+     * 
+     * @param tableName
+     * @return Input name: Result Table -> "Result Table"
+     */
+    private String wrapTableNameStringWithQuotes(String tableName) {
+        return "\"" + tableName +"\"";
     }
     
     /**
@@ -260,13 +278,18 @@ public class SQLiteReader implements AutoCloseable {
         return rowMap;
     }
 
+    
     /**
-     * Closes underlying JDBC connection.
-     * 
-     * @throws SQLException 
+     * Closes underlying JDBC connection. 
      */
     @Override
-    public void close() throws SQLException {
-        connection.close();
+    public void close() {
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            //Non-essential exception, user has no need for the connection 
+            //object at this stage so closing details are not important
+            logger.log(Level.WARNING, "Could not close JDBC connection", ex);
+        }
     }
 }
