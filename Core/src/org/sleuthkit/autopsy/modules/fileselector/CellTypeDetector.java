@@ -23,7 +23,7 @@ import org.apache.commons.validator.routines.EmailValidator;
 /**
  * Determines the type of a database cell (EMAIL, PHONE, GPS COORD, MAC ADDRESS)
  */
-final class DataElementTypeDetector {
+final class CellTypeDetector {
     
     private static final EmailValidator EMAIL_VALIDATOR;
     
@@ -31,24 +31,24 @@ final class DataElementTypeDetector {
         EMAIL_VALIDATOR = EmailValidator.getInstance();
     }
     
-    public static DataElementType getType(Object cell) {
+    public static CellType getType(Object cell) {
         if (cell instanceof String) {
             return getType((String) cell);
         }
-        return DataElementType.NOT_INTERESTING;
+        return CellType.NOT_INTERESTING;
     }
     
-    public static DataElementType getType(String cell) {
+    public static CellType getType(String cell) {
         if(EMAIL_VALIDATOR.isValid(cell)) {
-            return DataElementType.EMAIL;
+            return CellType.EMAIL;
         }
-        return DataElementType.NOT_INTERESTING;
+        return CellType.NOT_INTERESTING;
     } 
     
     /*
      * Cell data that qualify as an "interesting" selector
      */
-    public enum DataElementType {
+    public enum CellType {
         EMAIL,
         NOT_INTERESTING
     }

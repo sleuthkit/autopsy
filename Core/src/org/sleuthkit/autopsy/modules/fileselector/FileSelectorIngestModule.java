@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.modules.fileselector.DataElementTypeDetector.DataElementType;
+import org.sleuthkit.autopsy.modules.fileselector.CellTypeDetector.CellType;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class FileSelectorIngestModule extends FileIngestModuleAdapter {
 
-    private static final String SUPPORTED_MIME_TYPE = "application/x-sqlite3";
+    private static final String SUPPORTED_MIME_TYPE = "application/x-sqlite3"; //NON-NLS
     private static final String MODULE_NAME = FileSelectorIngestModuleFactory.getModuleName();
     
     private final IngestServices services = IngestServices.getInstance();
@@ -93,15 +93,14 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
         }
 
         try (SQLiteReader sqliteReader = new SQLiteReader(file, createLocalDiskPath(file))){
-            
-            Collection<DataElementType> dataElementTypesInFile = readFileAndFindTypes(file, sqliteReader);
+            Collection<CellType> notableCellTypes = selectInterestingCellTypesFromFile(file, sqliteReader);
             //No interesting types found, no artifact to create
-            if(dataElementTypesInFile.isEmpty()) {
+            if(notableCellTypes.isEmpty()) {
                 return ProcessResult.OK;
             }
             
             try {
-                BlackboardArtifact artifact = createArtifact(file, dataElementTypesInFile);   
+                BlackboardArtifact artifact = createArtifact(file, notableCellTypes);   
                 indexArtifactAndFireModuleDataEvent(artifact);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact", ex); //NON-NLS
@@ -131,30 +130,31 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
     }
     
     /**
-     * Creates and populates a collection of all data element types in the file
+     * Creates and populates a collection of all the interesting cell types found in 
+     * the database.
      * 
      * @param sqliteReader Reader instance currently connected to local file contents
-     * @return A collection of data element types
+     * @return A collection of interesting cell types 
      */
-    private Collection<DataElementType> readFileAndFindTypes(AbstractFile file, SQLiteReader sqliteReader) {  
-        Collection<DataElementType> currentTypesFound = new TreeSet<>();
+    private Collection<CellType> selectInterestingCellTypesFromFile(AbstractFile file, SQLiteReader sqliteReader) {  
+        Collection<CellType> interestingCellTypes = new TreeSet<>();
         
         Map<String, String> tables;
         try {
+            //Table name to table schema mapping
             tables = sqliteReader.getTableSchemas();    
         } catch (SQLException ex) {
             logger.log(Level.WARNING, String.format("Error attempting to get tables from sqlite" //NON-NLS
                                 + "file [%s].", //NON-NLS
                                 file.getName()), ex);
             //Unable to read anything, return empty collection.
-            return currentTypesFound;
+            return interestingCellTypes;
         }
         
-        //Aggregate cell types from all tables
+        //Parse every table and collect all interesting cell types
         for(String tableName : tables.keySet()) {
             try {
-                Collection<DataElementType> typesFoundInTable = readTableAndFindTypes(sqliteReader, tableName);
-                currentTypesFound.addAll(typesFoundInTable);
+                getNotableCellTypesFromTable(sqliteReader, tableName, interestingCellTypes);
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, 
                         String.format("Error attempting to read sqlite table [%s]" //NON-NLS
@@ -163,60 +163,42 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
             }
         }
         
-        return currentTypesFound;
+        return interestingCellTypes;
     }
     
     /**
-     * Creates and populates a collection of all data element types in a sqlite
-     * database table
+     * Reads every cell in the table and adds any interesting hits to the collection
+     * of cell types.
      * 
-     * @param sqliteReader Reader currently connected to local file contents
-     * @param tableName database table to be opened and read
-     * @return collection of all types in table
-     * @throws SQLException Caught during attempting to read sqlite database
+     * @param sqliteReader Reader instance currently connected to local file contents
+     * @param tableName Table name to be read from
+     * @param interestingCellTypes Collection that this function will add interesting hits to
+     * @throws SQLException An error attempting to get rows from table
      */
-    private Collection<DataElementType> readTableAndFindTypes(SQLiteReader sqliteReader, 
-            String tableName) throws SQLException {
-        
-        Collection<DataElementType> typesFoundReadingTable = new TreeSet<>();
-        List<Map<String, Object>> tableValues = sqliteReader.getRowsFromTable(tableName);
-        
-        //Aggregate cell types from all rows
-        tableValues.forEach((row) -> {
-            Collection<DataElementType> typesFoundInRow = readRowAndFindTypes(row);
-            typesFoundReadingTable.addAll(typesFoundInRow);
-        });
-        return typesFoundReadingTable;
-    }
-    
-    /**
-     * Creates and populates a collection of all data element types in a table row
-     * 
-     * @param row Table row is represented as a column-value map
-     * @return 
-     */
-    private Collection<DataElementType> readRowAndFindTypes(Map<String, Object> row) {
-        Collection<DataElementType> typesFoundReadingRow = new TreeSet<>();
-        
-        //Aggregate cell types from a row
-        row.values().forEach((Object dataElement) -> {
-            DataElementType type = DataElementTypeDetector.getType(dataElement);
-            if(isAnInterestingDataType(type)) {
-                typesFoundReadingRow.add(type);
-            }
-        });
-        return typesFoundReadingRow;
+    private void getNotableCellTypesFromTable(SQLiteReader sqliteReader, 
+            String tableName, Collection<CellType> interestingCellTypes) throws SQLException {
+        //row is represented as a column name to value mapping
+        List<Map<String, Object>> rowsInTable = sqliteReader.getRowsFromTable(tableName);
+        for(Map<String, Object> row : rowsInTable) {
+            //Only interested in row values, not the column name
+            row.values().forEach(cell -> {
+                CellType type = CellTypeDetector.getType(cell);
+                if(isAnInterestingCellType(type)) {
+                    interestingCellTypes.add(type);
+                }
+            });
+        }
     }
     
     /**
      * Boolean function purely for readability. Statement below is read as:
-     * if type is not not interesting -> isAnInterestingDataType.
+     * if type is not not interesting -> isAnInterestingCellType.
      * 
      * @param type
      * @return 
      */
-    private boolean isAnInterestingDataType(DataElementType type) {
-        return !type.equals(DataElementType.NOT_INTERESTING);
+    private boolean isAnInterestingCellType(CellType type) {
+        return !type.equals(CellType.NOT_INTERESTING);
     }
     
     /**
@@ -224,7 +206,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
      * comment attributes
      * 
      * @param file The database abstract file
-     * @param dataElementTypesInFile Collection of data types found during reading
+     * @param cellTypesInFile Collection of notable cell types found during reading
      * file
      * @return Interesting file hit artifact
      * @throws TskCoreException Thrown if the abstract file cannot create a blackboard
@@ -234,7 +216,7 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
         "FileSelectorIngestModule.setName=Selectors identified"
     })
     private BlackboardArtifact createArtifact(AbstractFile file, 
-            Collection<DataElementType> dataElementTypesInFile) throws TskCoreException {
+            Collection<CellType> cellTypesInFile) throws TskCoreException {
         BlackboardArtifact artifact = file.newArtifact(
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         
@@ -243,10 +225,10 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
                 Bundle.FileSelectorIngestModule_setName());
         artifact.addAttribute(setNameAttribute);
 
-        String dateTypesComment = dataElementTypesToString(dataElementTypesInFile);
+        String cellTypesComment = cellTypesToString(cellTypesInFile);
         BlackboardAttribute commentAttribute = new BlackboardAttribute(
                 BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, 
-                dateTypesComment);
+                cellTypesComment);
         artifact.addAttribute(commentAttribute);
         
         return artifact;
@@ -257,11 +239,11 @@ public class FileSelectorIngestModule extends FileIngestModuleAdapter {
      * file. Used as the comment string for the blackboard artifact. TreeSet is 
      * used to ensure that CellTypes appear in the same order as the enum.
      * 
-     * @param dataElementTypesInFile Collection of data types found during reading
+     * @param cellTypesInFile Collection of interesting cell types found during reading
      * @return 
      */
-    private String dataElementTypesToString(Collection<DataElementType> dataElementTypesInFile) {
-        return dataElementTypesInFile.toString().replace("]", "").replace("[", ""); //NON-NLS
+    private String cellTypesToString(Collection<CellType> cellTypesInFile) {
+        return cellTypesInFile.toString().replace("]", "").replace("[", ""); //NON-NLS
     }
     
     /**
