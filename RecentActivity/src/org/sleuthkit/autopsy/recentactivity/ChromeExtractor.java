@@ -79,6 +79,8 @@ class ChromeExtractor extends Extractor {
     private static final String DOWNLOAD_QUERY_V30 = "SELECT current_path AS full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
     private static final String LOGIN_QUERY = "SELECT origin_url, username_value, signon_realm from logins"; //NON-NLS
 
+    private static final long SECONDS_SINCE_JAN_1_1601 = 11_644_473_600L;
+
     private Content dataSource;
     private IngestJobContext context;
 
@@ -163,13 +165,12 @@ class ChromeExtractor extends Extractor {
             tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0}- Now getting history from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                        new BlackboardAttribute(
-                                TSK_URL, PARENT_MODULE_NAME,
-                                Objects.toString(result.get("url"), "")), //NON-NLS
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
+                        TSK_URL, PARENT_MODULE_NAME,
+                        Objects.toString(result.get("url"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - 11_644_473_600L), //TODO: what is this magic number?
+                                (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601),
                         new BlackboardAttribute(
                                 TSK_REFERRER, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("from_visit"), "")), //NON-NLS
@@ -303,16 +304,15 @@ class ChromeExtractor extends Extractor {
                 String domain = Util.extractDomain(url);
                 try {
 
-                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                            new BlackboardAttribute(
-                                    TSK_URL, PARENT_MODULE_NAME,
-                                    url),
+                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
+                            TSK_URL, PARENT_MODULE_NAME,
+                            url),
                             new BlackboardAttribute(
                                     TSK_TITLE, PARENT_MODULE_NAME,
                                     name),
                             new BlackboardAttribute(
                                     TSK_DATETIME_CREATED, PARENT_MODULE_NAME,
-                                    (date / 1_000_000) - 11_644_473_600L), //TODO: What is this magic number?
+                                    (date / 1_000_000) - SECONDS_SINCE_JAN_1_1601),
                             new BlackboardAttribute(
                                     TSK_PROG_NAME, PARENT_MODULE_NAME,
                                     getModuleName()),
@@ -392,16 +392,15 @@ class ChromeExtractor extends Extractor {
             for (HashMap<String, Object> result : tempList) {
                 String domain = result.get("host_key").toString(); //NON-NLS
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                        new BlackboardAttribute(
-                                TSK_DOMAIN, PARENT_MODULE_NAME,
-                                domain),
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
+                        TSK_DOMAIN, PARENT_MODULE_NAME,
+                        domain),
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("host_key"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DATETIME, PARENT_MODULE_NAME,
-                                (Long.valueOf(result.get("last_access_utc").toString()) / 1000000) - 11_644_473_600L), //NON-NLS
+                                (Long.valueOf(result.get("last_access_utc").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_NAME, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("name"), "")), //NON-NLS
@@ -478,16 +477,15 @@ class ChromeExtractor extends Extractor {
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
-                Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
-                        new BlackboardAttribute(
-                                TSK_PATH, PARENT_MODULE_NAME,
-                                Objects.toString(result.get("full_path"), "")), //NON-NLS
+                Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(new BlackboardAttribute(
+                        TSK_PATH, PARENT_MODULE_NAME,
+                        Objects.toString(result.get("full_path"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("url"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                (Long.valueOf(result.get("start_time").toString()) / 1000000) - 11_644_473_600L), //NON-NLS
+                                (Long.valueOf(result.get("start_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
                                 Util.extractDomain(Objects.toString(result.get("url"), ""))), //NON-NLS
@@ -566,13 +564,12 @@ class ChromeExtractor extends Extractor {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                        new BlackboardAttribute(
-                                TSK_URL, PARENT_MODULE_NAME,
-                                Objects.toString(result.get("origin_url"), "")), //NON-NLS
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
+                        TSK_URL, PARENT_MODULE_NAME,
+                        Objects.toString(result.get("origin_url"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - 11_644_473_600L), //NON-NLS
+                                (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_REFERRER, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("from_visit"), "")), //NON-NLS
