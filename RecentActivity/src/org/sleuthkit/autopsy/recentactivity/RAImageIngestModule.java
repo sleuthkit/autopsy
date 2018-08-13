@@ -62,7 +62,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         }
 
         Extractor registry = new RegistryExtractor();
-        Extractor recentDocuments = new RecentDocumentsExtractor();
+        Extractor recentDocuments = new RecentDocumentsLnkExtractor();
         Extractor chrome = new ChromeExtractor();
         Extractor firefox = new FirefoxExtractor();
         Extractor SEUQA = new SearchEngineURLQueryAnalyzer();

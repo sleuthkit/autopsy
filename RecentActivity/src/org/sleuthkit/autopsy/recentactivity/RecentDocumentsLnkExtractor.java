@@ -47,9 +47,9 @@ import org.sleuthkit.datamodel.*;
  * Recent documents class that will extract recent documents in the form of .lnk
  * files
  */
-class RecentDocumentsExtractor extends Extractor {
+class RecentDocumentsLnkExtractor extends Extractor {
 
-    private static final Logger logger = Logger.getLogger(RecentDocumentsExtractor.class.getName());
+    private static final Logger logger = Logger.getLogger(RecentDocumentsLnkExtractor.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
