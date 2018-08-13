@@ -400,15 +400,11 @@ public final class ImageGalleryController {
      * 
      */
     public void rebuildDB() {
-         
         // queue a rebuild task for each stale data source
         Set<Long> staleDataSources = getStaleDataSourceIds();
-        if (!staleDataSources.isEmpty()) {
-            staleDataSources.forEach((id) -> {
-                queueDBTask(new CopyAnalyzedFiles(id, instance, db, sleuthKitCase));
-            });
-            
-        }          
+        staleDataSources.forEach((id) -> {
+            queueDBTask(new CopyAnalyzedFiles(id, instance, db, sleuthKitCase));
+        });          
     }
     
     /**
