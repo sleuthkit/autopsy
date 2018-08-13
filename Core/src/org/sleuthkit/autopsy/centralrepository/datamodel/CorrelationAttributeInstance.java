@@ -114,6 +114,10 @@ public class CorrelationAttributeInstance implements Serializable {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public CorrelationAttributeInstance(Type filesType, String md5, CorrelationCase eamCase, CorrelationDataSource eamDataSource, String string, Object object, TskData.FileKnown fileKnown) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
         return ((this.getID() == otherInstance.getID())
                 && (this.getCorrelationCase().equals(otherInstance.getCorrelationCase()))
