@@ -216,7 +216,6 @@ class ChromeExtractor extends Extractor {
         dataFound = true;
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
-
         while (j < bookmarkFiles.size()) {
             AbstractFile bookmarkFile = bookmarkFiles.get(j++);
             if (bookmarkFile.getSize() == 0) {
@@ -610,12 +609,7 @@ class ChromeExtractor extends Extractor {
     private boolean isChromePreVersion30(String temps) {
         String query = "PRAGMA table_info(downloads)"; //NON-NLS
         List<HashMap<String, Object>> columns = this.dbConnect(temps, query);
-        for (HashMap<String, Object> col : columns) {
-            if (col.get("name").equals("url")) { //NON-NLS
-                return true;
-            }
-        }
-
-        return false;
+        return columns.stream()
+                .anyMatch(col -> "url".equals(col.get("name")));
     }
 }
