@@ -466,6 +466,9 @@ final class RegexQuery implements KeywordSearchQuery {
         if (StringUtils.isNotBlank(listName)) {
             attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
+        hit.getArtifactID().ifPresent(artifactID
+                -> attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
 
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -495,10 +498,6 @@ final class RegexQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-
-        hit.getArtifactID().ifPresent(artifactID
-                -> attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
-        );
 
         try {
             newArtifact.addAttributes(attributesList);
