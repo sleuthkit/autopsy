@@ -28,6 +28,8 @@ import org.netbeans.spi.sendopts.Env;
 import org.netbeans.spi.sendopts.Option;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * This class can be used to add command line options to Autopsy
@@ -39,6 +41,7 @@ public class AutopsyOptionProcessor extends OptionProcessor {
     
     private static final Logger logger = Logger.getLogger(AutopsyOptionProcessor.class.getName());
     private final Option liveAutopsyOption = Option.withoutArgument('l', "liveAutopsy");
+    private final static String PROP_BASECASE = "LBL_BaseCase_PATH";
 
 
     @Override
@@ -53,6 +56,7 @@ public class AutopsyOptionProcessor extends OptionProcessor {
        if(values.containsKey(liveAutopsyOption)){
            try {
                RuntimeProperties.setRunningInTarget(true);
+               ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE , PlatformUtil.getUserDirectory().toString());
            } catch (RuntimeProperties.RuntimePropertiesException ex) {
                logger.log(Level.SEVERE, ex.getMessage(), ex);
            }
