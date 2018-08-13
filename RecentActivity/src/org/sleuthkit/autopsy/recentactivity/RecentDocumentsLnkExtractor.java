@@ -122,7 +122,8 @@ class RecentDocumentsLnkExtractor extends Extractor {
                     NbBundle.getMessage(this.getClass(),
                             "RecentDocumentsByLnk.parentModuleName.noSpace"),
                     recentFile.getCrtime()));
-            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+            BlackboardArtifact bbart = recentFile.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+            bbart.addAttributes(bbattributes);
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.parentModuleName"),

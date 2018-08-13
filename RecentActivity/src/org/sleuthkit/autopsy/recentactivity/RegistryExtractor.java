@@ -531,7 +531,8 @@ class RegistryExtractor extends Extractor {
                     new BlackboardAttribute(TSK_REMOTE_PATH, PARENT_MODULE_NAME,
                             remoteName));
 
-            addArtifact(TSK_REMOTE_DRIVE, regAbstractFile, bbattributes);
+            BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_REMOTE_DRIVE);
+            bbart.addAttributes(bbattributes);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding network drive artifact to blackboard."); //NON-NLS
         }
@@ -550,7 +551,8 @@ class RegistryExtractor extends Extractor {
                             TSK_PATH, PARENT_MODULE_NAME,
                             homeDir));
 
-            addArtifact(TSK_OS_ACCOUNT, regAbstractFile, bbattributes);
+            BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_OS_ACCOUNT);
+            bbart.addAttributes(bbattributes);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding account artifact to blackboard."); //NON-NLS
         }
@@ -570,7 +572,8 @@ class RegistryExtractor extends Extractor {
             if (mtime != null) {
                 bbattributes.add(new BlackboardAttribute(TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME, mtime));
             }
-            addArtifact(TSK_RECENT_OBJECT, regAbstractFile, bbattributes);
+            BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_RECENT_OBJECT);
+            bbart.addAttributes(bbattributes);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard."); //NON-NLS
         }
@@ -593,7 +596,8 @@ class RegistryExtractor extends Extractor {
                     new BlackboardAttribute(
                             TSK_DATETIME, PARENT_MODULE_NAME,
                             itemMtime));
-            addArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG, regAbstractFile, bbattributes);
+            BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+            bbart.addAttributes(bbattributes);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard."); //NON-NLS
         }
@@ -626,7 +630,9 @@ class RegistryExtractor extends Extractor {
                     new BlackboardAttribute(
                             TSK_DEVICE_ID, PARENT_MODULE_NAME,
                             deviceID));
-            usbBBartifacts.add(addArtifact(TSK_DEVICE_ATTACHED, regAbstractFile, bbattributes));
+            BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_DEVICE_ATTACHED);
+            bbart.addAttributes(bbattributes);
+            usbBBartifacts.add(bbart);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard."); //NON-NLS
         }
@@ -659,7 +665,8 @@ class RegistryExtractor extends Extractor {
             // Check if there is already an OS_INFO artifact for this file and add to that if possible
             ArrayList<BlackboardArtifact> results = caseDB.getBlackboardArtifacts(TSK_OS_INFO, regAbstractFile.getId());
             if (results.isEmpty()) {
-                addArtifact(TSK_OS_INFO, regAbstractFile, bbattributes);
+                BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_OS_INFO);
+                bbart.addAttributes(bbattributes);
             } else {
                 results.get(0).addAttributes(bbattributes);
                 //TODO: does it need to get re-indexed?
@@ -700,7 +707,8 @@ class RegistryExtractor extends Extractor {
             // Check if there is already an OS_INFO artifact for this file and add to that if possible
             ArrayList<BlackboardArtifact> results = caseDB.getBlackboardArtifacts(TSK_OS_INFO, regAbstractFile.getId());
             if (results.isEmpty()) {
-                addArtifact(TSK_OS_INFO, regAbstractFile, bbattributes);
+                BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_OS_INFO);
+                bbart.addAttributes(bbattributes);
             } else {
                 results.get(0).addAttributes(bbattributes);
             }
@@ -786,7 +794,8 @@ class RegistryExtractor extends Extractor {
             // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
             ArrayList<BlackboardArtifact> results = caseDB.getBlackboardArtifacts(TSK_OS_INFO, regAbstractFile.getId());
             if (results.isEmpty()) {
-                addArtifact(TSK_OS_INFO, regAbstractFile, bbattributes);
+                BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_OS_INFO);
+                bbart.addAttributes(bbattributes);
             } else {
                 results.get(0).addAttributes(bbattributes);
             }

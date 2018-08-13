@@ -29,7 +29,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -59,7 +58,6 @@ import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
@@ -153,8 +151,10 @@ class IEExtractor extends Extractor {
                             NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")),
                     new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME_NO_SPACE, Util.extractDomain(getURLFromIEBookmarkFile(fav))));
+            BlackboardArtifact bbart = fav.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+            bbart.addAttributes(bbattributes);
 
-            bbartifacts.add(this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes));
+            bbartifacts.add(bbart);
 
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
@@ -249,8 +249,10 @@ class IEExtractor extends Extractor {
                     new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME_NO_SPACE,
                             Util.extractDomain(URL)));
+            BlackboardArtifact bbart = cookiesFile.newArtifact(TSK_WEB_COOKIE);
+            bbart.addAttributes(bbattributes);
 
-            bbartifacts.add(this.addArtifact(TSK_WEB_COOKIE, cookiesFile, bbattributes));
+            bbartifacts.add(bbart);
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"), TSK_WEB_COOKIE, bbartifacts));

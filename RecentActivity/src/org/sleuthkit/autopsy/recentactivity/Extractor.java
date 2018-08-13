@@ -31,8 +31,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -44,6 +44,9 @@ abstract class Extractor {
 
     protected Case currentCase;
     protected SleuthkitCase tskCase;
+    protected Blackboard blackboard;
+    protected FileManager fileManager;
+
     private final ArrayList<String> errorMessages = new ArrayList<>();
     boolean dataFound = false;
 
@@ -54,11 +57,16 @@ abstract class Extractor {
      */
     abstract protected String getModuleName();
 
+    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
+        "Extract.noOpenCase.errMsg=No open case available."})
     final void init() throws IngestModuleException {
         try {
             currentCase = Case.getCurrentCaseThrows();
             tskCase = currentCase.getSleuthkitCase();
+            blackboard = tskCase.getBlackboard();
+            fileManager = currentCase.getServices().getFileManager();
         } catch (NoCurrentCaseException ex) {
+            //TODO: fix this error message
             throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
         }
         configExtractor();
@@ -95,51 +103,25 @@ abstract class Extractor {
         errorMessages.add(message);
     }
 
-    /**
-     * Generic method for adding a blackboard artifact to the blackboard and
-     * indexing it
-     *
-     * @param type         is a blackboard.artifact_type enum to determine which
-     *                     type the artifact should be
-     * @param content      is the AbstractFile object that needs to have the
-     *                     artifact added for it
-     * @param bbattributes is the collection of blackboard attributes that need
-     *                     to be added to the artifact after the artifact has
-     *                     been created
-     * @return The newly-created artifact
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException If there was a problem
-     *                                                  creating the artifact.
-     */
-    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) throws TskCoreException {
-        BlackboardArtifact bbart = content.newArtifact(type);
-        bbart.addAttributes(bbattributes);
-        // index the artifact for keyword search
-        this.indexArtifact(bbart);
-        return bbart;
-    }
-
-    /**
-     * Method to index a blackboard artifact for keyword search
-     *
-     * @param bbart Blackboard artifact to be indexed
-     */
-    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
-        "Extract.noOpenCase.errMsg=No open case available."})
-    void indexArtifact(BlackboardArtifact bbart) {
-        try {
-            Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-            // index the artifact for keyword search
-            blackboard.postArtifact(bbart, getModuleName());
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.Extract_noOpenCase_errMsg(), bbart.getDisplayName());
-        }
-    }
-
+//
+//    /**
+//     * Method to index a blackboard artifact for keyword search
+//     *
+//     * @param bbart Blackboard artifact to be indexed
+//     */
+//  
+//    void postArtifacts(Collections<BlackboardArtifact> bbarts) throws Blackboard.BlackboardException {
+//
+//        // index the artifact for keyword search
+//        blackboard.postArtifact(bbarts, getModuleName());
+////        } catch (Blackboard.BlackboardException ex) {
+////            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
+////            MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
+////        } catch (NoCurrentCaseException ex) {
+////            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+////            MessageNotifyUtil.Notify.error(Bundle.Extract_noOpenCase_errMsg(), bbart.getDisplayName());
+////        }
+//    }
     /**
      * Returns a List from a result set based on sql query. This is used to
      * query sqlite databases storing user recent activity data, such as in
