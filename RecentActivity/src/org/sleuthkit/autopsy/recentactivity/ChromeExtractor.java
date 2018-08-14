@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -83,7 +82,6 @@ final class ChromeExtractor extends Extractor {
 
     private Content dataSource;
     private IngestJobContext context;
-    private FileManager fileManager;
 
     @Override
     protected String getModuleName() {

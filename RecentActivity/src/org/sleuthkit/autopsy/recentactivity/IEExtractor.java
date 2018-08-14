@@ -77,7 +77,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VAL
 class IEExtractor extends Extractor {
 
     private static final Logger logger = Logger.getLogger(IEExtractor.class.getName());
-    private static final String PARENT_MODULE_NAME_NO_SPACE
+    private static final String PARENT_MODULE_NAME
             = NbBundle.getMessage(IEExtractor.class, "ExtractIE.parentModuleName.noSpace");
     private static final String PASCO_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
@@ -141,16 +141,16 @@ class IEExtractor extends Extractor {
 
             Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                     new BlackboardAttribute(
-                            TSK_URL, PARENT_MODULE_NAME_NO_SPACE, getURLFromIEBookmarkFile(fav)),
+                            TSK_URL, PARENT_MODULE_NAME, getURLFromIEBookmarkFile(fav)),
                     new BlackboardAttribute(
-                            TSK_TITLE, PARENT_MODULE_NAME_NO_SPACE, fav.getName()),
+                            TSK_TITLE, PARENT_MODULE_NAME, fav.getName()),
                     new BlackboardAttribute(
-                            TSK_DATETIME_CREATED, PARENT_MODULE_NAME_NO_SPACE, fav.getCrtime()),
+                            TSK_DATETIME_CREATED, PARENT_MODULE_NAME, fav.getCrtime()),
                     new BlackboardAttribute(
-                            TSK_PROG_NAME, PARENT_MODULE_NAME_NO_SPACE,
+                            TSK_PROG_NAME, PARENT_MODULE_NAME,
                             NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")),
                     new BlackboardAttribute(
-                            TSK_DOMAIN, PARENT_MODULE_NAME_NO_SPACE, Util.extractDomain(getURLFromIEBookmarkFile(fav))));
+                            TSK_DOMAIN, PARENT_MODULE_NAME, Util.extractDomain(getURLFromIEBookmarkFile(fav))));
             BlackboardArtifact bbart = fav.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
             bbart.addAttributes(bbattributes);
 
@@ -232,22 +232,22 @@ class IEExtractor extends Extractor {
             String URL = values.length > 2 ? values[2] : "";
 
             Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
-                    TSK_DATETIME, PARENT_MODULE_NAME_NO_SPACE,
+                    TSK_DATETIME, PARENT_MODULE_NAME,
                     cookiesFile.getCrtime()),
                     new BlackboardAttribute(
-                            TSK_NAME, PARENT_MODULE_NAME_NO_SPACE,
+                            TSK_NAME, PARENT_MODULE_NAME,
                             values.length > 0 ? values[0] : ""),
                     new BlackboardAttribute(
-                            TSK_VALUE, PARENT_MODULE_NAME_NO_SPACE,
+                            TSK_VALUE, PARENT_MODULE_NAME,
                             values.length > 1 ? values[1] : ""),
                     new BlackboardAttribute(
-                            TSK_URL, PARENT_MODULE_NAME_NO_SPACE,
+                            TSK_URL, PARENT_MODULE_NAME,
                             URL),
                     new BlackboardAttribute(
-                            TSK_PROG_NAME, PARENT_MODULE_NAME_NO_SPACE,
+                            TSK_PROG_NAME, PARENT_MODULE_NAME,
                             getModuleName()),
                     new BlackboardAttribute(
-                            TSK_DOMAIN, PARENT_MODULE_NAME_NO_SPACE,
+                            TSK_DOMAIN, PARENT_MODULE_NAME,
                             Util.extractDomain(URL)));
             BlackboardArtifact bbart = cookiesFile.newArtifact(TSK_WEB_COOKIE);
             bbart.addAttributes(bbattributes);
@@ -494,24 +494,24 @@ class IEExtractor extends Extractor {
                     BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                     Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                             new BlackboardAttribute(
-                                    TSK_URL, PARENT_MODULE_NAME_NO_SPACE,
+                                    TSK_URL, PARENT_MODULE_NAME,
                                     realurl),
                             new BlackboardAttribute(
-                                    TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME_NO_SPACE,
+                                    TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
                                     ftime),
                             //TODO: why are we adding an attribute that is always blank?
                             new BlackboardAttribute(
-                                    TSK_REFERRER, PARENT_MODULE_NAME_NO_SPACE,
+                                    TSK_REFERRER, PARENT_MODULE_NAME,
                                     ""),
                             // @@@ NOte that other browser modules are adding TITLE in here for the title
                             new BlackboardAttribute(
-                                    TSK_PROG_NAME, PARENT_MODULE_NAME_NO_SPACE,
+                                    TSK_PROG_NAME, PARENT_MODULE_NAME,
                                     getModuleName()),
                             new BlackboardAttribute(
-                                    TSK_DOMAIN, PARENT_MODULE_NAME_NO_SPACE,
+                                    TSK_DOMAIN, PARENT_MODULE_NAME,
                                     domain),
                             new BlackboardAttribute(
-                                    TSK_USER_NAME, PARENT_MODULE_NAME_NO_SPACE,
+                                    TSK_USER_NAME, PARENT_MODULE_NAME,
                                     user));
                     bbart.addAttributes(bbattributes);
 
@@ -521,7 +521,7 @@ class IEExtractor extends Extractor {
 
                     if (reportedUserAccounts.contains(user) == false) {
                         BlackboardArtifact osAttr = origFile.newArtifact(TSK_OS_ACCOUNT);
-                        osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME_NO_SPACE, user));
+                        osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME, user));
 
                         // index the artifact for keyword search
                         this.indexArtifact(osAttr);

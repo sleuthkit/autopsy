@@ -180,7 +180,6 @@ final class FirefoxExtractor extends Extractor {
                             NbBundle.getMessage(ChromeExtractor.class, "Firefox.getHistory.errMsg.errAnalyzeFile=", //NON-NLS
                                     this.getModuleName(), historyFile.getName()));
                 }
-
             }
             index++;
             dbFile.delete();
