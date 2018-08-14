@@ -82,7 +82,7 @@ public class EamArtifactUtil {
                     }
                 }
             }
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
             return eamArtifacts;
         }
@@ -133,15 +133,19 @@ public class EamArtifactUtil {
      * @param correlationType The Central Repository artifact type to create
      * @param bbArtifact      The blackboard artifact to pull data from
      *
-     * @return the new EamArtifact, or null if one was not created because
+     * @return the new EamArtifact. Throws an exception if one was not created because
      *         bbArtifact did not contain the needed data
      */
     private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType,
-            BlackboardArtifact bbArtifact) throws EamDbException {
+            BlackboardArtifact bbArtifact) throws EamDbException, CorrelationAttributeNormalizationException {
+        
         String value = null;
+        
         int artifactTypeID = bbArtifact.getArtifactTypeID();
 
         try {
+            final int correlationTypeId = correlationType.getId();
+            
             if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeID) {
                 // Get the associated artifact
                 BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -150,7 +154,7 @@ public class EamArtifactUtil {
                     return EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(correlationType, associatedArtifact);
                 }
 
-            } else if (correlationType.getId() == CorrelationAttribute.EMAIL_TYPE_ID
+            } else if (correlationTypeId == CorrelationAttribute.EMAIL_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
                 BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
@@ -158,15 +162,15 @@ public class EamArtifactUtil {
                         && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD)).getValueString();
                 }
-            } else if (correlationType.getId() == CorrelationAttribute.DOMAIN_TYPE_ID
+            } else if (correlationTypeId == CorrelationAttribute.DOMAIN_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == artifactTypeID)) {
 
-                // Lower-case this to normalize domains
+                // Lower-case this to validate domains
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
-            } else if (correlationType.getId() == CorrelationAttribute.PHONE_TYPE_ID
+            } else if (correlationTypeId == CorrelationAttribute.PHONE_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifactTypeID)) {
@@ -179,23 +183,7 @@ public class EamArtifactUtil {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                 }
 
-                // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
-                if (value != null) {
-                    String newValue = value.replaceAll("\\D", "");
-                    if (value.startsWith("+")) {
-                        newValue = "+" + newValue;
-                    }
-
-                    value = newValue;
-
-                    // If the resulting phone number is too small to be of use, return null
-                    // (these 3-5 digit numbers can be valid, but are not useful for correlation)
-                    if (value.length() <= 5) {
-                        return null;
-                    }
-                }
-
-            } else if (correlationType.getId() == CorrelationAttribute.USBID_TYPE_ID
+            } else if (correlationTypeId == CorrelationAttribute.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();
@@ -209,11 +197,7 @@ public class EamArtifactUtil {
             return null;
         }
 
-        if (null != value) {
-            return new CorrelationAttribute(correlationType, value);
-        } else {
-            return null;
-        }
+        return new CorrelationAttribute(correlationType, value);
     }
 
     /**
@@ -223,16 +207,16 @@ public class EamArtifactUtil {
      *
      * @return The new CorrelationAttribute, or null if retrieval failed.
      */
-    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content) {
+    public static CorrelationAttribute getCorrelationAttributeFromContent(Content content) throws EamDbException, CorrelationAttributeNormalizationException {
 
         if (!(content instanceof AbstractFile)) {
-            return null;
+            throw new EamDbException("Content is not an AbstractFile.");
         }
 
         final AbstractFile file = (AbstractFile) content;
 
         if (!isSupportedAbstractFileType(file)) {
-            return null;
+            throw new EamDbException("File type is not supported.");
         }
 
         CorrelationAttribute correlationAttribute;
@@ -251,12 +235,10 @@ public class EamArtifactUtil {
             correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
             value = file.getMd5Hash();
             filePath = (file.getParentPath() + file.getName()).toLowerCase();
-        } catch (TskCoreException | EamDbException ex) {
-            logger.log(Level.SEVERE, "Error retrieving correlation attribute.", ex);
-            return null;
+        } catch (TskCoreException ex) {
+            throw new EamDbException("Error retrieving correlation attribute.", ex);
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Case is closed.", ex);
-            return null;
+            throw new EamDbException("Case is closed.", ex);
         }
         
         try {
@@ -265,7 +247,7 @@ public class EamArtifactUtil {
             logger.log(Level.WARNING, String.format(
                     "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
                     content.getName(), content.getId(), ex.getMessage()));
-            return null;
+            throw ex;
         }
 
         return correlationAttribute;
@@ -316,11 +298,8 @@ public class EamArtifactUtil {
                     af.getParentPath() + af.getName());
             eamArtifact.addInstance(cei);
             return eamArtifact;
-        } catch (TskCoreException | EamDbException ex) {
-            logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
-            return null;
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Case is closed.", ex);
+        } catch (TskCoreException | EamDbException | NoCurrentCaseException | CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.SEVERE, "Error making correlation attribute.", ex);	//NON-NLS
             return null;
         }
     }

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
@@ -229,7 +230,7 @@ final class InterCaseSearchResultsProcessor {
                             InstanceTableCallback.getFilePath(resultSet));
 
                 }
-            } catch (SQLException | EamDbException ex) {
+            } catch (SQLException | EamDbException | CorrelationAttributeNormalizationException ex) {
                 LOGGER.log(Level.WARNING, "Error getting single correlation artifact instance from database.", ex); // NON-NLS
             }
         }

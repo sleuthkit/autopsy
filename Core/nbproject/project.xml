@@ -356,6 +356,10 @@
                 <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/curator-framework-2.8.0.jar</binary-origin>
             </class-path-extension>
@@ -488,6 +492,10 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/pdfbox-2.0.8.jar</binary-origin>
             </class-path-extension>
@@ -498,10 +506,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/xmpcore-5.1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmpcore-5.1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
