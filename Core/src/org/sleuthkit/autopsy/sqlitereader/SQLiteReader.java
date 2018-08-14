@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Reads rows from SQLite tables and returns results in a list collection.
+ * Reads sqlite databases and returns results in a list collection.
  */
 @NbBundle.Messages({
     "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
@@ -62,11 +62,7 @@ public class SQLiteReader extends AbstractReader {
      * 
      * @param sqliteDbFile Data source abstract file
      * @param localDiskPath Location for database contents to be copied to
-     * @throws ClassNotFoundException missing SQLite JDBC class
-     * @throws SQLException Exception opening JDBC connection
-     * @throws IOException Exception writing file contents
-     * @throws NoCurrentCaseException Current case closed during file copying
-     * @throws TskCoreException Exception finding files from abstract file
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException
      */
     public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws FileReaderInitException {
         super(sqliteDbFile, localDiskPath);
@@ -138,7 +134,7 @@ public class SQLiteReader extends AbstractReader {
      * CREATE TABLE statments).
      * 
      * @return A map of table names to table schemas
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
      */
     @Override
     public Map<String, String> getTableSchemas() throws FileReaderException {
@@ -169,7 +165,7 @@ public class SQLiteReader extends AbstractReader {
      * 
      * @param tableName
      * @return Row count from tableName
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
      */
     @Override
     public Integer getRowCountFromTable(String tableName) 
@@ -191,7 +187,7 @@ public class SQLiteReader extends AbstractReader {
      * @param tableName
      * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
      */
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) 
@@ -217,7 +213,7 @@ public class SQLiteReader extends AbstractReader {
      * @param numRowsToRead Number of rows past the start index
      * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
             int startRow, int numRowsToRead) throws FileReaderException{

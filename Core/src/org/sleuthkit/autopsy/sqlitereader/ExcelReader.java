@@ -40,8 +40,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author dsmyda
+ * Reads Excel files and returns results in a list collection.
  */
 @NbBundle.Messages({
     "ExcelReader.ReadExcelFiles.moduleName=ExcelReader"
@@ -50,8 +49,14 @@ public class ExcelReader extends AbstractReader {
     
     private Workbook xlsWorkbook;
     private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(Bundle.ExcelReader_ReadExcelFiles_moduleName());
+    private final Logger logger = services.getLogger(ExcelReader.class.getName());
     
+    /**
+     * 
+     * @param file
+     * @param localDiskPath
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException 
+     */
     public ExcelReader(AbstractFile file, String localDiskPath) 
             throws FileReaderInitException {
         super(file, localDiskPath);
@@ -63,23 +68,46 @@ public class ExcelReader extends AbstractReader {
         }
     }
     
+    /**
+     * Opens an apache poi workbook instance on the file contents copied from the 
+     * abstract file.
+     * 
+     * @param localDiskPath Location of the file contents on local disk
+     * @throws IOException Error opening file at local disk path
+     */
     private void getWorkbookFromLocalDisk(String localDiskPath) throws IOException{
         xlsWorkbook = new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
     }
 
+    /**
+     * Returns the number of rows in a given excel table (aka sheet). 
+     * 
+     * @param tableName Name of table to count total rows from
+     * @return row count for requested table name
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException 
+     */
     @Override
     public Integer getRowCountFromTable(String tableName) throws FileReaderException {
         return xlsWorkbook.getSheet(tableName).getLastRowNum();
     }
 
+    /**
+     * Returns a collection of all the rows from a given table in an excel document.
+     * 
+     * @param tableName
+     * @return
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException 
+     */
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException {
         List<Map<String, Object>> rowContents = new ArrayList<>();
         Iterator<Row> iterator = xlsWorkbook.getSheet(tableName).rowIterator();
         //Consume header
         if(iterator.hasNext()) {
+            //Consume header
             iterator.next();
         }
+        
         while(iterator.hasNext()) {
             Map<String, Object> contents = new HashMap<>();
             Row r = iterator.next();
@@ -91,44 +119,63 @@ public class ExcelReader extends AbstractReader {
         return rowContents;
     }
     
+    /**
+     * 
+     * @param cell
+     * @param contents 
+     */
     private void addCellValueToMap(Cell cell, Map<String, Object> contents){
+        String columnName = getCellValuesColumnName(cell);
         switch (cell.getCellTypeEnum()) {
             case BOOLEAN:
-                contents.put(getCellValuesColumnName(cell), cell.getBooleanCellValue());
+                contents.put(columnName, cell.getBooleanCellValue());
                 break;
             case STRING:
-                contents.put(getCellValuesColumnName(cell), cell.getRichStringCellValue().getString());
+                contents.put(columnName, cell.getRichStringCellValue().getString());
                 break;
             case NUMERIC:
                 if (DateUtil.isCellDateFormatted(cell)) {
-                    contents.put(getCellValuesColumnName(cell), cell.getDateCellValue());
+                    contents.put(columnName, cell.getDateCellValue());
                 } else {
-                    contents.put(getCellValuesColumnName(cell), cell.getNumericCellValue());
+                    contents.put(columnName, cell.getNumericCellValue());
                 }
                 break;
             case FORMULA:
-                contents.put(getCellValuesColumnName(cell), cell.getCellFormula());
+                contents.put(columnName, cell.getCellFormula());
                 break;
             default:
-                contents.put(getCellValuesColumnName(cell),"");
+                contents.put(columnName,"");
         }
     }
     
+    /**
+     * 
+     * @param cell
+     * @return 
+     */
     private String getCellValuesColumnName(Cell cell) {
         Row header = cell.getSheet().getRow(0);
-       // if(header != null) {
-        //    header.getCell(cell.getRowIndex()).getRichStringCellValue().toString();
-        //}
+        if(header != null) {
+            Cell columnCell = header.getCell(cell.getRowIndex());
+            
+        }
         return "";
     }
 
+    /**
+     * 
+     * 
+     * @return
+     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException 
+     */
     @Override
     public Map<String, String> getTableSchemas() throws FileReaderException {     
         Map<String, String> tableSchemas = new HashMap<>();
         for(Sheet sheet : xlsWorkbook) {
             Row header = sheet.getRow(0);
             if(header != null) {
-                tableSchemas.put(sheet.getSheetName(), poiRowToString(sheet.getRow(0)));
+                String headerStringFormat = StringUtils.join(header.cellIterator(), ", ");
+                tableSchemas.put(sheet.getSheetName(), headerStringFormat);
             } else {
                 tableSchemas.put(sheet.getSheetName(), "");
             }
@@ -136,11 +183,10 @@ public class ExcelReader extends AbstractReader {
         return tableSchemas;
     }
     
-    private String poiRowToString(Row row) {
-        return StringUtils.join(row.cellIterator(), ", ");
-    }
-    
-        @Override
+    /**
+     * 
+     */
+    @Override
     public void close() {
         try {
             xlsWorkbook.close();
