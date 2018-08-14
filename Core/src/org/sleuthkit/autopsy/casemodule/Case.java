@@ -402,20 +402,18 @@ public class Case {
         }
 
         @Subscribe
-        public void rebroadcastArtifactPosted(Blackboard.ArtifactPostedEvent event) {
-            try {
+        public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
+            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
                 /*
                  * fireModuleDataEvent is deprecated so module writers don't use
-                 * it (they should use Blackboard.postArtifact instead), but we
-                 * still need a way to rebroadcast the ArtifactPostedEvent as a
-                 * ModuleDataEvent.
+                 * it (they should use Blackboard.postArtifact(s) instead), but
+                 * we still need a way to rebroadcast the ArtifactsPostedEvent
+                 * as a ModuleDataEvent.
                  */
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
                         event.getModuleName(),
-                        caseDb.getArtifactType(event.getArtifact().getArtifactTypeName()),
-                        Collections.singleton(event.getArtifact())));
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                        artifactType,
+                        event.getArtifacts(artifactType)));
             }
         }
     }

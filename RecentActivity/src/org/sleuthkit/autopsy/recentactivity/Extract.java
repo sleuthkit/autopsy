@@ -1,19 +1,19 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2018 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ abstract class Extract {
     String moduleName = "";
     boolean dataFound = false;
 
-    Extract() {        
+    Extract() {
     }
 
     final void init() throws IngestModuleException {
@@ -59,13 +59,13 @@ abstract class Extract {
         }
         configExtractor();
     }
-    
+
     /**
      * Override to add any module-specific configuration
-     * 
-     * @throws IngestModuleException 
+     *
+     * @throws IngestModuleException
      */
-    void configExtractor() throws IngestModuleException  {        
+    void configExtractor() throws IngestModuleException {
     }
 
     abstract void process(Content dataSource, IngestJobContext context);
@@ -92,7 +92,8 @@ abstract class Extract {
     }
 
     /**
-     * Generic method for adding a blackboard artifact to the blackboard and indexing it
+     * Generic method for adding a blackboard artifact to the blackboard and
+     * indexing it
      *
      * @param type         is a blackboard.artifact_type enum to determine which
      *                     type the artifact should be
@@ -101,6 +102,7 @@ abstract class Extract {
      * @param bbattributes is the collection of blackboard attributes that need
      *                     to be added to the artifact after the artifact has
      *                     been created
+     *
      * @return The newly-created artifact, or null on error
      */
     protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
@@ -115,19 +117,19 @@ abstract class Extract {
         }
         return null;
     }
-    
+
     /**
      * Method to index a blackboard artifact for keyword search
      *
      * @param bbart Blackboard artifact to be indexed
      */
     @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
-               "Extract.noOpenCase.errMsg=No open case available."})
+        "Extract.noOpenCase.errMsg=No open case available."})
     void indexArtifact(BlackboardArtifact bbart) {
         try {
             Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
             // index the artifact for keyword search
-            blackboard.postArtifact(bbart);
+            blackboard.postArtifact(bbart, NbBundle.getMessage(Extract.class, "Chrome.parentModuleName"));
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
