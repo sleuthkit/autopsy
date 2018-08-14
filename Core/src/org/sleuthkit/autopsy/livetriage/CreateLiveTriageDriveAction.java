@@ -254,7 +254,7 @@ public final class CreateLiveTriageDriveAction extends CallableSystemAction impl
                 + "                echo %appName%\\bin\\%appName%64.exe does not exist\n"
                 + "                goto end\n"
                 + "        )\n"
-                + "        %appName%\\bin\\%appName%64.exe --userdir ..\\configData\\userdir --cachedir ..\\configData\\cachedir -J-Djava.io.tmpdir=..\\configData\\temp\n"
+                + "        %appName%\\bin\\%appName%64.exe --userdir ..\\configData\\userdir --cachedir ..\\configData\\cachedir -J-Djava.io.tmpdir=..\\configData\\temp --liveAutopsy\n"
                 + ") else (\n"
                 + "        echo Could not find %appName% directory\n"
                 + "        goto end\n"

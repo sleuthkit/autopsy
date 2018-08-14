@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
  * Validates absolute path (e.g. to a data source or case output folder)
@@ -29,8 +30,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public final class PathValidator {
 
     private static final Pattern driveLetterPattern = Pattern.compile("^[Cc]:.*$");
+    private static final Pattern unixMediaDrivePattern = Pattern.compile("^\\/(media|mnt)\\/.*$");
 
-    public static boolean isValid(String path, Case.CaseType caseType) {
+    public static boolean isValidForMultiUserCase(String path, Case.CaseType caseType) {
 
         if (caseType == Case.CaseType.MULTI_USER_CASE) {
             // check that path is not on "C:" drive
@@ -39,11 +41,45 @@ public final class PathValidator {
             }
         } else {
             // single user case - no validation needed
-        }
+            }
 
         return true;
     }
-
+    
+    public static boolean isValidForRunningOnTarget(String path) {
+        if(checkForLiveAutopsy()) {
+            if(PlatformUtil.isWindowsOS()) {
+                if(pathOnCDrive(path)){
+                    return false;
+                }
+            }else if(System.getProperty("os.name").toLowerCase().contains("nux") && !pathIsMedia(path)){
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Checks whether Autopsy is running from the external disk
+     * 
+     * @return true if Autopsy is running from external USB or CD
+     */
+    private static boolean checkForLiveAutopsy() {
+        return RuntimeProperties.isRunningInTarget();
+    }
+    
+    /**
+     * Checks whether a file path contains "/mnt" or "/media"
+     * 
+     * @param filePath Input file absolute path
+     * 
+     * @return true if path matches the pattern, false otherwise 
+     */
+    private static boolean pathIsMedia(String filePath) {
+        Matcher matcher = unixMediaDrivePattern.matcher(filePath);
+        return matcher.find();
+    }
+    
     /**
      * Checks whether a file path contains drive letter defined by pattern.
      *
