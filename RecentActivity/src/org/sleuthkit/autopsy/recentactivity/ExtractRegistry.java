@@ -107,10 +107,10 @@ import org.xml.sax.SAXException;
     "RegRipperNotFound=Autopsy RegRipper executable not found.",
     "RegRipperFullNotFound=Full version RegRipper executable not found."
 })
-class RegistryExtractor extends Extractor {
+class ExtractRegistry extends Extract {
 
-    private static final Logger logger = Logger.getLogger(RegistryExtractor.class.getName());
-    private final static String PARENT_MODULE_NAME = NbBundle.getMessage(RegistryExtractor.class, "ExtractRegistry.parentModuleName.noSpace");
+    private static final Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
+    private final static String PARENT_MODULE_NAME = NbBundle.getMessage(ExtractRegistry.class, "ExtractRegistry.parentModuleName.noSpace");
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
@@ -123,13 +123,13 @@ class RegistryExtractor extends Extractor {
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
 
-    RegistryExtractor() throws IngestModuleException {
+    ExtractRegistry() throws IngestModuleException {
         InstalledFileLocator installedFileLocator = InstalledFileLocator.getDefault();
-        final File rrRoot = installedFileLocator.locate("rr", RegistryExtractor.class.getPackage().getName(), false); //NON-NLS
+        final File rrRoot = installedFileLocator.locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
-        final File rrFullRoot = installedFileLocator.locate("rr-full", RegistryExtractor.class.getPackage().getName(), false); //NON-NLS
+        final File rrFullRoot = installedFileLocator.locate("rr-full", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrFullRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
@@ -170,7 +170,7 @@ class RegistryExtractor extends Extractor {
 
     @Override
     protected String getModuleName() {
-        return NbBundle.getMessage(RegistryExtractor.class, "ExtractRegistry.moduleName.text");
+        return NbBundle.getMessage(ExtractRegistry.class, "ExtractRegistry.moduleName.text");
     }
 
     /**
@@ -192,7 +192,7 @@ class RegistryExtractor extends Extractor {
             try {
                 allRegistryFiles.addAll(fileManager.findFiles(dataSource, regFileName, "/system32/config")); //NON-NLS
             } catch (TskCoreException ex) {
-                String msg = NbBundle.getMessage(RegistryExtractor.class,
+                String msg = NbBundle.getMessage(ExtractRegistry.class,
                         "ExtractRegistry.findRegFiles.errMsg.errReadingFile", regFileName);
                 logger.log(Level.WARNING, msg, ex);
                 this.addErrorMessage(this.getModuleName() + ": " + msg);

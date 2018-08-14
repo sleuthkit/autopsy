@@ -38,9 +38,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
 
-abstract class Extractor {
+abstract class Extract {
 
-    private static final Logger logger = Logger.getLogger(Extractor.class.getName());
+    private static final Logger logger = Logger.getLogger(Extract.class.getName());
 
     protected Case currentCase;
     protected SleuthkitCase tskCase;

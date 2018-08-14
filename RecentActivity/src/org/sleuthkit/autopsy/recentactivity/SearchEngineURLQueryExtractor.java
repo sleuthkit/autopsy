@@ -70,7 +70,7 @@ import org.xml.sax.SAXException;
     "cannotParseXml=Unable to parse XML file: ",
     "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
 })
-final class SearchEngineURLQueryExtractor extends Extractor {
+final class SearchEngineURLQueryExtractor extends Extract {
 
     private static final Logger logger = Logger.getLogger(SearchEngineURLQueryExtractor.class.getName());
     private static final String PARENT_MODULE_NAME = NbBundle.getMessage(SearchEngineURLQueryExtractor.class,
@@ -85,7 +85,7 @@ final class SearchEngineURLQueryExtractor extends Extractor {
 
     @Override
     protected String getModuleName() {
-        return NbBundle.getMessage(IEExtractor.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
+        return NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
     }
 
     /**

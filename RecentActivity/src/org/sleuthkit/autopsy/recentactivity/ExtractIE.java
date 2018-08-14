@@ -78,11 +78,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts activity from Internet Explorer browser, as well as recent documents
  * in windows.
  */
-class IEExtractor extends Extractor {
+class ExtractIE extends Extract {
 
-    private static final Logger logger = Logger.getLogger(IEExtractor.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
     private static final String PARENT_MODULE_NAME
-            = NbBundle.getMessage(IEExtractor.class, "ExtractIE.parentModuleName.noSpace");
+            = NbBundle.getMessage(ExtractIE.class, "ExtractIE.parentModuleName.noSpace");
     private static final String PASCO_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     private final String moduleTempResultsDir;
@@ -91,13 +91,13 @@ class IEExtractor extends Extractor {
     private Content dataSource;
     private IngestJobContext context;
 
-    IEExtractor() throws NoCurrentCaseException {
+    ExtractIE() throws NoCurrentCaseException {
         moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
     }
 
     @Override
     protected String getModuleName() {
-        return NbBundle.getMessage(IEExtractor.class, "ExtractIE.moduleName.text");
+        return NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
     }
 
     @Override
@@ -160,7 +160,7 @@ class IEExtractor extends Extractor {
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  bookmark artifact.", ex); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(ChromeExtractor.class, "ExtractIE.getBookmark.errMsg.errGettingBookmarks", //NON-NLS
+                        NbBundle.getMessage(Chrome.class, "ExtractIE.getBookmark.errMsg.errGettingBookmarks", //NON-NLS
                                 this.getModuleName(), fav.getName()));
             }
         }
@@ -265,7 +265,7 @@ class IEExtractor extends Extractor {
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
                 this.addErrorMessage(
-                        NbBundle.getMessage(ChromeExtractor.class, "ExtractIE.getCookie.errMsg.errReadingIECookie", //NON-NLS
+                        NbBundle.getMessage(Chrome.class, "ExtractIE.getCookie.errMsg.errReadingIECookie", //NON-NLS
                                 this.getModuleName(), cookiesFile.getName()));
 
             }
@@ -285,7 +285,7 @@ class IEExtractor extends Extractor {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
 
         //TODO: Why are we getting the pasco library path for datasource we process?
-        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", IEExtractor.class.getPackage().getName(), false); //NON-NLS
+        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getModuleName()));
@@ -548,7 +548,7 @@ class IEExtractor extends Extractor {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Internet Explorer history artifact.", ex); //NON-NLS
                     this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
+                            NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
                                     origFile.getName()));
                 }
 
@@ -561,7 +561,7 @@ class IEExtractor extends Extractor {
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  os account artifact.", ex); //NON-NLS
                         this.addErrorMessage(
-                                NbBundle.getMessage(ChromeExtractor.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
+                                NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
                                         origFile.getName()));
                     }
                 }

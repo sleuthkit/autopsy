@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskData;
  * Recent documents class that will extract recent documents in the form of .lnk
  * files
  */
-class RecentDocumentsLnkExtractor extends Extractor {
+class RecentDocumentsLnkExtractor extends Extract {
 
     private static final Logger logger = Logger.getLogger(RecentDocumentsLnkExtractor.class.getName());
 

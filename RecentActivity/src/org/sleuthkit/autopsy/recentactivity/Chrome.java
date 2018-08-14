@@ -67,10 +67,10 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Chrome recent activity extraction
  */
-final class ChromeExtractor extends Extractor {
+final class Chrome extends Extract {
 
-    private static final Logger logger = Logger.getLogger(ChromeExtractor.class.getName());
-    private static final String PARENT_MODULE_NAME = NbBundle.getMessage(ChromeExtractor.class, "Chrome.parentModuleName");
+    private static final Logger logger = Logger.getLogger(Chrome.class.getName());
+    private static final String PARENT_MODULE_NAME = NbBundle.getMessage(Chrome.class, "Chrome.parentModuleName");
     private static final String HISTORY_QUERY = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, " //NON-NLS
                                                 + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) AS from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name, value, host_key, expires_utc,last_access_utc, creation_utc FROM cookies"; //NON-NLS
@@ -85,7 +85,7 @@ final class ChromeExtractor extends Extractor {
 
     @Override
     protected String getModuleName() {
-        return NbBundle.getMessage(ChromeExtractor.class, "Chrome.moduleName");
+        return NbBundle.getMessage(Chrome.class, "Chrome.moduleName");
     }
 
     @Override
@@ -111,7 +111,7 @@ final class ChromeExtractor extends Extractor {
         try {
             historyFiles = fileManager.findFiles(dataSource, "History", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
-            String msg = NbBundle.getMessage(ChromeExtractor.class, "Chrome.getHistory.errMsg.errGettingFiles");
+            String msg = NbBundle.getMessage(Chrome.class, "Chrome.getHistory.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getModuleName() + ": " + msg);
             return;
@@ -127,7 +127,7 @@ final class ChromeExtractor extends Extractor {
 
         // log a message if we don't have any allocated history files
         if (allocatedHistoryFiles.isEmpty()) {
-            String msg = NbBundle.getMessage(ChromeExtractor.class, "Chrome.getHistory.errMsg.couldntFindAnyFiles");
+            String msg = NbBundle.getMessage(Chrome.class, "Chrome.getHistory.errMsg.couldntFindAnyFiles");
             logger.log(Level.INFO, msg);
             return;
         }
@@ -147,13 +147,13 @@ final class ChromeExtractor extends Extractor {
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Chrome web history artifacts file '%s' (id=%d).",
                         historyFile.getName(), historyFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
                         this.getModuleName(), historyFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome web history artifacts file '%s' (id=%d).",
                         temps, historyFile.getName(), historyFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
                         this.getModuleName(), historyFile.getName()));
                 continue;
             }
@@ -190,8 +190,7 @@ final class ChromeExtractor extends Extractor {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Chrome history artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
+                    this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
                                     this.getModuleName(), historyFile.getName()));
                 }
             }
@@ -213,7 +212,7 @@ final class ChromeExtractor extends Extractor {
         try {
             bookmarkFiles = fileManager.findFiles(dataSource, "Bookmarks", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
-            String msg = NbBundle.getMessage(ChromeExtractor.class, "Chrome.getBookmark.errMsg.errGettingFiles");
+            String msg = NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getModuleName() + ": " + msg);
             return;
@@ -238,13 +237,13 @@ final class ChromeExtractor extends Extractor {
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Chrome bookmark artifacts file '%s' (id=%d).",
                         bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getBookmark.errMsg.errAnalyzingFile",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzingFile",
                         this.getModuleName(), bookmarkFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome bookmark artifacts file '%s' (id=%d).",
                         temps, bookmarkFile.getName(), bookmarkFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getBookmark.errMsg.errAnalyzingFile",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzingFile",
                         this.getModuleName(), bookmarkFile.getName()));
                 continue;
             }
@@ -261,8 +260,7 @@ final class ChromeExtractor extends Extractor {
                 tempReader = new FileReader(temps);
             } catch (FileNotFoundException ex) {
                 logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(ChromeExtractor.class, "Chrome.getBookmark.errMsg.errAnalyzeFile", this.getModuleName(),
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzeFile", this.getModuleName(),
                                 bookmarkFile.getName()));
                 continue;
             }
@@ -280,7 +278,7 @@ final class ChromeExtractor extends Extractor {
                 jBookmarkArray = jBookmark.getAsJsonArray("children"); //NON-NLS
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
                 logger.log(Level.WARNING, "Error parsing Json from Chrome Bookmark.", ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getBookmark.errMsg.errAnalyzingFile3",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzingFile3",
                         this.getModuleName(), bookmarkFile.getName()));
                 continue;
             }
@@ -334,8 +332,7 @@ final class ChromeExtractor extends Extractor {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Chrome.getBookmark.errMsg.errAnalyzingFile4",
+                    this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzingFile4",
                                     this.getModuleName(), bookmarkFile.getName()));
                 }
             }
@@ -357,7 +354,7 @@ final class ChromeExtractor extends Extractor {
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "Cookies", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
-            String msg = NbBundle.getMessage(ChromeExtractor.class, "Chrome.getCookie.errMsg.errGettingFiles");
+            String msg = NbBundle.getMessage(Chrome.class, "Chrome.getCookie.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getModuleName() + ": " + msg);
             return;
@@ -382,13 +379,13 @@ final class ChromeExtractor extends Extractor {
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Chrome cookie artifacts file '%s' (id=%d).",
                         cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getCookie.errMsg.errAnalyzeFile",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getCookie.errMsg.errAnalyzeFile",
                         this.getModuleName(), cookiesFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome cookie artifacts file '%s' (id=%d).",
                         temps, cookiesFile.getName(), cookiesFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getCookie.errMsg.errAnalyzeFile",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getCookie.errMsg.errAnalyzeFile",
                         this.getModuleName(), cookiesFile.getName()));
                 continue;
             }
@@ -427,8 +424,7 @@ final class ChromeExtractor extends Extractor {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome cookie artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Chrome.getCookie.errMsg.errAnalyzingFile",
+                    this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getCookie.errMsg.errAnalyzingFile",
                                     this.getModuleName(), cookiesFile.getName()));
                 }
             }
@@ -451,7 +447,7 @@ final class ChromeExtractor extends Extractor {
         try {
             downloadFiles = fileManager.findFiles(dataSource, "History", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
-            String msg = NbBundle.getMessage(ChromeExtractor.class, "Chrome.getDownload.errMsg.errGettingFiles");
+            String msg = NbBundle.getMessage(Chrome.class, "Chrome.getDownload.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getModuleName() + ": " + msg);
             return;
@@ -476,13 +472,13 @@ final class ChromeExtractor extends Extractor {
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Chrome download artifacts file '%s' (id=%d).",
                         downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
                         this.getModuleName(), downloadFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome download artifacts file '%s' (id=%d).",
                         temps, downloadFile.getName(), downloadFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
                         this.getModuleName(), downloadFile.getName()));
                 continue;
             }
@@ -525,8 +521,7 @@ final class ChromeExtractor extends Extractor {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome download artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
+                    this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
                                     this.getModuleName(), downloadFile.getName()));
                 }
             }
@@ -549,7 +544,7 @@ final class ChromeExtractor extends Extractor {
         try {
             signonFiles = fileManager.findFiles(dataSource, "signons.sqlite", "Chrome"); //NON-NLS
         } catch (TskCoreException ex) {
-            String msg = NbBundle.getMessage(ChromeExtractor.class, "Chrome.getLogin.errMsg.errGettingFiles");
+            String msg = NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errGettingFiles");
             logger.log(Level.SEVERE, msg, ex);
             this.addErrorMessage(this.getModuleName() + ": " + msg);
             return;
@@ -574,13 +569,13 @@ final class ChromeExtractor extends Extractor {
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Chrome login artifacts file '%s' (id=%d).",
                         signonFile.getName(), signonFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
                         this.getModuleName(), signonFile.getName()));
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome login artifacts file '%s' (id=%d).",
                         temps, signonFile.getName(), signonFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(ChromeExtractor.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
                         this.getModuleName(), signonFile.getName()));
                 continue;
             }
@@ -623,8 +618,7 @@ final class ChromeExtractor extends Extractor {
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome login artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                    this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
                                     this.getModuleName(), signonFile.getName()));
                 }
 
@@ -640,8 +634,7 @@ final class ChromeExtractor extends Extractor {
 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome os account artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                    this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
                                     this.getModuleName(), signonFile.getName()));
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Error while trying to post Chrome os account artifact.", ex); //NON-NLS

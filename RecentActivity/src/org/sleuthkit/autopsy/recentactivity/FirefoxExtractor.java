@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Firefox recent activity extraction
  */
-final class FirefoxExtractor extends Extractor {
+final class FirefoxExtractor extends Extract {
 
     private static final Logger logger = Logger.getLogger(FirefoxExtractor.class.getName());
     private static final String PARENT_MODULE_NAME = NbBundle.getMessage(FirefoxExtractor.class,
@@ -177,7 +177,7 @@ final class FirefoxExtractor extends Extractor {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Firefox history artifact.", ex); //NON-NLS
                     this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Firefox.getHistory.errMsg.errAnalyzeFile=", //NON-NLS
+                            NbBundle.getMessage(Chrome.class, "Firefox.getHistory.errMsg.errAnalyzeFile=", //NON-NLS
                                     this.getModuleName(), historyFile.getName()));
                 }
             }
@@ -271,7 +271,7 @@ final class FirefoxExtractor extends Extractor {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Firefox bookmark artifact.", ex); //NON-NLS
                     this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Firefox.getBookmark.errMsg.errAnalyzeFile=", //NON-NLS
+                            NbBundle.getMessage(Chrome.class, "Firefox.getBookmark.errMsg.errAnalyzeFile=", //NON-NLS
                                     this.getModuleName(), bookmarkFile.getName()));
                 }
             }
@@ -374,7 +374,7 @@ final class FirefoxExtractor extends Extractor {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Firefox cookie artifact.", ex); //NON-NLS
                     this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Firefox.getCookie.errMsg.errAnalyzeFile=", //NON-NLS
+                            NbBundle.getMessage(Chrome.class, "Firefox.getCookie.errMsg.errAnalyzeFile=", //NON-NLS
                                     this.getModuleName(), cookiesFile.getName()));
                 }
             }
@@ -483,7 +483,7 @@ final class FirefoxExtractor extends Extractor {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Firefox download artifact.", ex); //NON-NLS
                     this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Firefox.getDlPre24.errMsg.errAnalyzeFiles", //NON-NLS
+                            NbBundle.getMessage(Chrome.class, "Firefox.getDlPre24.errMsg.errAnalyzeFiles", //NON-NLS
                                     this.getModuleName(), downloadsFile.getName()));
                 }
             }
@@ -602,7 +602,7 @@ final class FirefoxExtractor extends Extractor {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Firefox download artifact.", ex); //NON-NLS
                     this.addErrorMessage(
-                            NbBundle.getMessage(ChromeExtractor.class, "Firefox.getDlV24.errMsg.errAnalyzeFile", //NON-NLS
+                            NbBundle.getMessage(Chrome.class, "Firefox.getDlV24.errMsg.errAnalyzeFile", //NON-NLS
                                     this.getModuleName(), downloadsFile.getName()));
                 }
             }
