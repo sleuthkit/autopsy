@@ -80,8 +80,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     @NbBundle.Messages({
         "PlasoIngestModule_error_running=Error running Plaso, see log file.",
         "PlasoIngestModule_log2timeline_executable_not_found=Log2timeline Executable Not Found",
-        "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found",})
-
+        "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found"
+    })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -111,8 +111,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_running_log2timeline=Running Log2timeline",
         "PlasoIngestModule_running_psort=Running Psort",
         "PlasoIngestModule_completed=Plaso Processing Completed",
-        "PlasoIngestModule_has_run=Plaso Plugin has been run.",})
-
+        "PlasoIngestModule_has_run=Plaso Plugin has been run."
+    })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         statusHelper.switchToIndeterminate();
