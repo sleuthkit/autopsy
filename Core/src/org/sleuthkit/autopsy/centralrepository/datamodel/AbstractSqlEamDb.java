@@ -738,7 +738,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, value);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -798,7 +798,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, filePath.toLowerCase());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -1282,7 +1282,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
+    public CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException {
 
         if (type == null) {
@@ -1305,7 +1305,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        List<CorrelationAttributeInstance> correlationAttributeInstances = new ArrayList<>();
+        CorrelationAttributeInstance correlationAttributeInstance = null;
 
         try {
             String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
@@ -1328,9 +1328,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 int knownStatus = resultSet.getInt(2);
                 String comment = resultSet.getString(3);
 
-                CorrelationAttributeInstance artifactInstance = new CorrelationAttributeInstance(type, value,
+                correlationAttributeInstance = new CorrelationAttributeInstance(type, value,
                         instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
-                correlationAttributeInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
@@ -1340,7 +1339,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
 
-        return correlationAttributeInstances;
+        return correlationAttributeInstance;
     }
 
     /**
@@ -1485,7 +1484,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -1544,7 +1543,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setByte(1, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -2759,12 +2758,14 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws SQLException when an expected column name is not in the resultSet
      */
-    private CorrelationAttributeInstance getEamArtifactInstanceFromResultSet(ResultSet resultSet) throws SQLException, EamDbException {
+    private CorrelationAttributeInstance getEamArtifactInstanceFromResultSet(ResultSet resultSet, CorrelationAttributeInstance.Type aType) throws SQLException, EamDbException {
         if (null == resultSet) {
             return null;
         }
         // @@@ We should have data source ID in the previous query instead of passing -1 into the below constructor
         return new CorrelationAttributeInstance(
+                aType,
+                resultSet.getString("value"),
                 resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name")),

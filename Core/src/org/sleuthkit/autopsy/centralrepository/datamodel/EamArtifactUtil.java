@@ -38,7 +38,6 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class EamArtifactUtil {
 
-    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(EamArtifactUtil.class.getName());
 
     public EamArtifactUtil() {
@@ -55,17 +54,17 @@ public class EamArtifactUtil {
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact         BlackboardArtifact to examine
+     * @param bbArtifact BlackboardArtifact to examine
      * @param addInstanceDetails If true, add instance details from bbArtifact
-     *                           into the returned structure
-     * @param checkEnabled       If true, only create a CorrelationAttribute if
-     *                           it is enabled
+     * into the returned structure
+     * @param checkEnabled If true, only create a CorrelationAttribute if it is
+     * enabled
      *
      * @return List of EamArtifacts
      */
     //TODO, needs overhaul to comdine 72-85 with the second step
     public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact bbArtifact,
-            boolean addInstanceDetails, boolean checkEnabled) {
+            boolean checkEnabled) {
 
         List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
@@ -77,7 +76,8 @@ public class EamArtifactUtil {
             // have switch based on artifact type
             for (CorrelationAttributeInstance.Type aType : EamDb.getInstance().getDefinedCorrelationTypes()) {
                 if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                    CorrelationAttributeInstance correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
+                    // Now always adds the instance details associated with this occurance.
+                    CorrelationAttributeInstance correlationAttribute = EamArtifactUtil.makeInstanceFromBlackboardArtifact(aType, bbArtifact);
                     if (correlationAttribute != null) {
                         eamArtifacts.add(correlationAttribute);
                     }
@@ -88,39 +88,6 @@ public class EamArtifactUtil {
             return eamArtifacts;
         }
 
-        // if they asked for it, add the instance details associated with this occurance.
-        if (!eamArtifacts.isEmpty() && addInstanceDetails) {
-            try {
-                Case currentCase = Case.getCurrentCaseThrows();
-                AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
-                if (null == bbSourceFile) {
-                    //@@@ Log this
-                    return eamArtifacts;
-                }
-
-                // make an instance for the BB source file 
-                CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-                if (null == correlationCase) {
-                    correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
-                }
-                CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
-                        correlationCase,
-                        CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
-                        bbSourceFile.getParentPath() + bbSourceFile.getName(),
-                        "",
-                        TskData.FileKnown.UNKNOWN
-                );
-                eamArtifacts.add(eamInstance);
-
-            } catch (TskCoreException | EamDbException ex) {
-                logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
-                return eamArtifacts;
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Case is closed.", ex); // NON-NLS
-                return eamArtifacts;
-            }
-        }
-
         return eamArtifacts;
     }
 
@@ -129,12 +96,12 @@ public class EamArtifactUtil {
      * based on the data in the blackboard artifact.
      *
      * @param correlationType The Central Repository artifact type to create
-     * @param bbArtifact      The blackboard artifact to pull data from
+     * @param bbArtifact The blackboard artifact to pull data from
      *
      * @return the new EamArtifact, or null if one was not created because
-     *         bbArtifact did not contain the needed data
+     * bbArtifact did not contain the needed data
      */
-    private static CorrelationAttributeInstance getCorrelationAttributeFromBlackboardArtifact(CorrelationAttributeInstance.Type correlationType,
+    private static CorrelationAttributeInstance makeInstanceFromBlackboardArtifact(CorrelationAttributeInstance.Type correlationType,
             BlackboardArtifact bbArtifact) throws EamDbException {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
@@ -145,7 +112,7 @@ public class EamArtifactUtil {
                 BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
                     BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
-                    return EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(correlationType, associatedArtifact);
+                    return EamArtifactUtil.makeInstanceFromBlackboardArtifact(correlationType, associatedArtifact);
                 }
 
             } else if (correlationType.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID
@@ -208,8 +175,49 @@ public class EamArtifactUtil {
         }
 
         if (null != value) {
-            return new CorrelationAttributeInstance(correlationType, value); // TODO?
+            return makeCorrelationAttributeInstanceUsingTypeValue(bbArtifact, correlationType, value);
         } else {
+            return null;
+        }
+    }
+
+    /**
+     * Uses the determined type and vallue, then looks up instance details to create proper CorrelationAttributeInstance.
+     * @param bbArtifact the blackboard artifatc
+     * @param correlationType the given type
+     * @param value the artifact md5
+     * @return CorrelationAttributeInstance from details
+     */
+    private static CorrelationAttributeInstance makeCorrelationAttributeInstanceUsingTypeValue(BlackboardArtifact bbArtifact, CorrelationAttributeInstance.Type correlationType, String value) {
+        try {
+            Case currentCase = Case.getCurrentCaseThrows();
+            AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
+            if (null == bbSourceFile) {
+                logger.log(Level.SEVERE, "Error creating artifact instance. Abstract File was null."); // NON-NLS
+                return null;
+            }
+
+            // make an instance for the BB source file
+            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+            if (null == correlationCase) {
+                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
+            }
+            CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
+                    value,
+                    correlationType,
+                    correlationCase,
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
+                    bbSourceFile.getParentPath() + bbSourceFile.getName(),
+                    "",
+                    TskData.FileKnown.UNKNOWN
+            );
+            return eamInstance;
+            
+        } catch (TskCoreException | EamDbException ex) {
+            logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
+            return null;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Case is closed.", ex); // NON-NLS
             return null;
         }
     }
@@ -221,7 +229,7 @@ public class EamArtifactUtil {
      *
      * @return The new CorrelationAttribute, or null if retrieval failed.
      */
-    public static List<CorrelationAttributeInstance> makeInstancesFromContent(Content content) {
+    public static CorrelationAttributeInstance getInstanceFromContent(Content content) {
 
         if (!(content instanceof AbstractFile)) {
             return null;
@@ -233,13 +241,13 @@ public class EamArtifactUtil {
             return null;
         }
 
-        List<CorrelationAttributeInstance> correlationAttributeInstances;
+        CorrelationAttributeInstance correlationAttributeInstance;
         CorrelationAttributeInstance.Type type;
         CorrelationCase correlationCase;
         CorrelationDataSource correlationDataSource;
         String value;
         String filePath;
-        
+
         try {
             type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
             correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
@@ -256,9 +264,9 @@ public class EamArtifactUtil {
             logger.log(Level.SEVERE, "Case is closed.", ex);
             return null;
         }
-        
+
         try {
-            correlationAttributeInstances = EamDb.getInstance().makeInstancesFromBlackboardArtifact(type, correlationCase, correlationDataSource, value, filePath);
+            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, String.format(
                     "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
@@ -266,7 +274,7 @@ public class EamArtifactUtil {
             return null;
         }
 
-        return correlationAttributeInstances;
+        return correlationAttributeInstance;
     }
 
     /**
@@ -331,7 +339,7 @@ public class EamArtifactUtil {
      * @param file The file to test
      *
      * @return true if the file should be added to the central repo, false
-     *         otherwise
+     * otherwise
      */
     public static boolean isSupportedAbstractFileType(AbstractFile file) {
         if (file == null) {

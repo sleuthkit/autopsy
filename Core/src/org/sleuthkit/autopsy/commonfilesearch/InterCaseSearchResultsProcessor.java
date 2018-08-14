@@ -213,11 +213,11 @@ final class InterCaseSearchResultsProcessor {
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    correlationAttributeInstance = DbManager.makeInstancesFromBlackboardArtifact(fileType,
+                    correlationAttributeInstance = DbManager.getCorrelationAttributeInstance(fileType,
                             correlationCase,
                             dataSource,
                             InstanceTableCallback.getValue(resultSet),
-                            InstanceTableCallback.getFilePath(resultSet)).get(0); // TODO how many will this return?
+                            InstanceTableCallback.getFilePath(resultSet));
 
                 }
             } catch (SQLException | EamDbException ex) {

@@ -51,6 +51,7 @@ import javax.swing.table.TableColumn;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -60,6 +61,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -421,11 +423,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && EamDb.isEnabled()) {
-            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false, false));
+            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false));
         }
-
+        
         // we can correlate based on the MD5 if it is enabled      
-        if (this.file != null && EamDb.isEnabled()) {
+        if (this.file != null && EamDb.isEnabled()) {           
             try {
 
                 List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
@@ -433,14 +435,22 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
                     for (CorrelationAttributeInstance.Type aType : artifactTypes) {
                         if (aType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                            ret.add(new CorrelationAttributeInstance(aType, md5));
+                            CorrelationCase corCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                            ret.add(new CorrelationAttributeInstance(
+                                    md5,
+                                    aType,
+                                    corCase,
+                                    CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
+                                    file.getParentPath() + file.getName(),
+                                    "",
+                                    file.getKnown()));
                             break;
                         }
                     }
                 }
-            } catch (EamDbException ex) {
+            } catch (EamDbException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-            }
+            } 
 
         } else {
             try {

@@ -57,32 +57,43 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath
     ) throws EamDbException {
-        this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
-        this.correlationType = correlationType;
-        this.correlationValue = correlationValue;
-    }
-        
-    public CorrelationAttributeInstance(
-            CorrelationCase eamCase,
-            CorrelationDataSource eamDataSource,
-            String filePath
-    ) throws EamDbException {
-        this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
+        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
     }
 
-
     public CorrelationAttributeInstance(
+            String correlationValue,
+            CorrelationAttributeInstance.Type correlationType,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
             TskData.FileKnown knownStatus
     ) throws EamDbException {
-        this(-1, eamCase, eamDataSource, filePath, comment, knownStatus);
+        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus);
+    }
+    
+    public CorrelationAttributeInstance(
+            Type filesType, 
+            String md5Hash, 
+            CorrelationCase correlationCase, 
+            CorrelationDataSource fromTSKDataSource, 
+            String string) throws EamDbException {
+        this(filesType, md5Hash, -1, correlationCase, fromTSKDataSource, string, "", TskData.FileKnown.UNKNOWN);
+    }
+
+    /**
+     * NOTE: Only used for when EamDB is NOT enabled.
+     * @param aType CorrelationType
+     * @param value md5 value 
+     */
+    public CorrelationAttributeInstance(Type aType, String value) throws  EamDbException  {
+        this(aType, value, -1, null, null, "", "", TskData.FileKnown.UNKNOWN);
     }
 
     CorrelationAttributeInstance(
-            int ID,
+           Type type, 
+            String value, 
+            int instanceId,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
@@ -93,7 +104,9 @@ public class CorrelationAttributeInstance implements Serializable {
             throw new EamDbException("file path is null");
         }
 
-        this.ID = ID;
+        this.correlationType = type;
+        this.correlationValue = value;
+        this.ID = instanceId;
         this.correlationCase = eamCase;
         this.correlationDataSource = eamDataSource;
         // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
@@ -102,22 +115,8 @@ public class CorrelationAttributeInstance implements Serializable {
         this.knownStatus = knownStatus;
     }
 
-    CorrelationAttributeInstance(Type type, String value, int instanceId, CorrelationCase correlationCase, CorrelationDataSource correlationDataSource, String filePath, String comment, TskData.FileKnown valueOf) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 
-    CorrelationAttributeInstance(Type filesType, String md5Hash, CorrelationCase correlationCase, CorrelationDataSource fromTSKDataSource, String string) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    CorrelationAttributeInstance(Type correlationType, String value) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public CorrelationAttributeInstance(Type filesType, String md5, CorrelationCase eamCase, CorrelationDataSource eamDataSource, String string, Object object, TskData.FileKnown fileKnown) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
         return ((this.getID() == otherInstance.getID())
                 && (this.getCorrelationCase().equals(otherInstance.getCorrelationCase()))

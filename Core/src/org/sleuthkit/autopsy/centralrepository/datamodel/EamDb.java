@@ -357,7 +357,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
+    CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException;
 
     /**
