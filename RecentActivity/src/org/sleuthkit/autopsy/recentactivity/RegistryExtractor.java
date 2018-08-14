@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED;
@@ -458,7 +459,12 @@ class RegistryExtractor extends Extractor {
 
             //TODO: why do we only send module data events for USB artifacts
             if (!usbBBartifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(getModuleName(), TSK_DEVICE_ATTACHED, usbBBartifacts));
+                try {
+                    blackboard.postArtifacts(usbBBartifacts, PARENT_MODULE_NAME);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Error while trying to post usb device artifact.", ex); //NON-NLS
+                    this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
+                }
             }
             return true;
         } catch (FileNotFoundException ex) {
