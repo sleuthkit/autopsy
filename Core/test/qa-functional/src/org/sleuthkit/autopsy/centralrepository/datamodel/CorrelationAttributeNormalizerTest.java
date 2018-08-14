@@ -63,23 +63,25 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         }
         try {
             CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, anInValidHash);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, emptyHash);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, nullHash);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
     }
+    private static final String WE_EXPECT_AN_EXCEPTION_HERE = "We expect an exception here.";
+    private static final String THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION = "This should have thrown an exception.";
 
     public void testValidateDomain() {
         final String goodDomainOne = "www.test.com";            //should pass
@@ -97,72 +99,73 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final int DOMAIN_TYPE_ID = CorrelationAttribute.DOMAIN_TYPE_ID;
 
         try {
-            assertTrue("This domain should pass.", CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainOne).equals(goodDomainOne));
+            assertTrue(THIS_DOMAIN_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainOne).equals(goodDomainOne));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainTwo);
-            fail("This should have thrown an exception");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("we expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
-            assertTrue("This domain should pass.", CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainThree).equals(goodDomainThree));
+            assertTrue(THIS_DOMAIN_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainThree).equals(goodDomainThree));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This domain should pass.", CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainFour).equals(badDomainFour));
-            fail("This should have thrown an exception.");
+            assertTrue(THIS_DOMAIN_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainFour).equals(badDomainFour));
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainFive);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainSix);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainSeven);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainEight);
             fail("This should have thrown an exception");
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, badDomainNine);
             fail("This should have thrown an exception");
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
-            assertTrue("This domain should pass.", CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainTen).equals(goodDomainTen.toLowerCase()));
+            assertTrue(THIS_DOMAIN_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainTen).equals(goodDomainTen.toLowerCase()));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This domain should pass.", CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainEleven).equals(goodDomainEleven.toLowerCase()));
+            assertTrue(THIS_DOMAIN_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainEleven).equals(goodDomainEleven.toLowerCase()));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
     }
+    private static final String THIS_DOMAIN_SHOULD_PASS = "This domain should pass.";
 
     public void testValidateEmail() {
         final String goodEmailOne = "bsweeney@cipehrtechsolutions.com";     //should pass
@@ -189,21 +192,21 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailThree);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailFour);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailFive);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
 //        try { //TODO consider a better library?
 //            CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailSix);
@@ -213,9 +216,9 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
 //        }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailSeven);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
     }
 
@@ -233,25 +236,25 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final int PHONE_TYPE_ID = CorrelationAttribute.PHONE_TYPE_ID;
 
         try {
-            assertTrue("This phone number should pass.", CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnOne).equals(goodPnOne));
+            assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnOne).equals(goodPnOne));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This phone number should pass.", CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnTwo).equals(goodPnOne));
+            assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnTwo).equals(goodPnOne));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This phone number should pass.", CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnThree).equals(goodPnThree));
+            assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnThree).equals(goodPnThree));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This phone number should pass.", CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnFour).equals(goodPnOne));
+            assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnFour).equals(goodPnOne));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -260,16 +263,16 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnFive);
             //fail("This should have thrown an exception.");    //this will eventually pass when we do a better job at this
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);    
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);    
         }
         try {
-            assertTrue("This phone number should pass.", CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnSix).equals(goodPnThree));
+            assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnSix).equals(goodPnThree));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This phone number should pass.", CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnSeven).equals(goodPnThree));
+            assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnSeven).equals(goodPnThree));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -278,15 +281,16 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnEight);
             //fail("This should have thrown an exception.");    //this will eventually pass when we do a better job at this
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);    
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);    
         }
         try {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnNine);
             //fail("This should have thrown an exception.");    //this will eventually pass when we do a better job at this
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true); 
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true); 
         }
     }
+    private static final String THIS_PHONE_NUMBER_SHOULD_PASS = "This phone number should pass.";
 
     public void testValidateUsbId() {
         final String goodIdOne = "0202:AAFF";       //should pass and be lowered
@@ -301,58 +305,59 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final int USBID_TYPE_ID = CorrelationAttribute.USBID_TYPE_ID;
         
         try {
-            assertTrue("This USB ID should pass.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne.toLowerCase()));
+            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne.toLowerCase()));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdTwo).equals(goodIdTwo));
+            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdTwo).equals(goodIdTwo));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue("This USB ID should fail.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdThree).equals(badIdThree));
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);            
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);            
         }
         try {
             CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdFour);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdFive);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdFive);
-            fail("This should have thrown an exception.");
+            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
         } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue("We expect an exception here.", true);
+            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
-            assertTrue("This USB ID should pass.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdSix).equals(goodIdSix.toLowerCase()));
+            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdSix).equals(goodIdSix.toLowerCase()));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdSeven).equals(goodIdSeven.toLowerCase()));
+            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdSeven).equals(goodIdSeven.toLowerCase()));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This USB ID should pass.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdEight).equals(goodIdEight.toLowerCase()));
+            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdEight).equals(goodIdEight.toLowerCase()));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }        
     }
+    private static final String THIS_USB_ID_SHOULD_PASS = "This USB ID should pass.";
 }

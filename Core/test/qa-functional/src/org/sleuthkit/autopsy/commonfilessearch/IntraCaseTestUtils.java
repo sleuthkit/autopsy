@@ -172,7 +172,7 @@ class IntraCaseTestUtils {
 
             String dataSourceName = objectIdToDataSourceMap.get(objectId);
 
-            if (name.toLowerCase().equals(fileName.toLowerCase()) && dataSourceName.toLowerCase().equals(dataSource.toLowerCase())) {
+            if (name.equalsIgnoreCase(fileName) && dataSourceName.equalsIgnoreCase(dataSource)) {
                 tally++;
             }
         }
