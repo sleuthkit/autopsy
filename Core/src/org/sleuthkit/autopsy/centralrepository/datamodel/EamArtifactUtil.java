@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -76,9 +77,9 @@ public class EamArtifactUtil {
             // have switch based on artifact type
             for (CorrelationAttribute.Type aType : EamDb.getInstance().getDefinedCorrelationTypes()) {
                 if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                    CorrelationAttribute correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
-                    if (correlationAttribute != null) {
-                        eamArtifacts.add(correlationAttribute);
+                    Optional<CorrelationAttribute> correlationAttributeOptional = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
+                    if (correlationAttributeOptional.isPresent()) {
+                        eamArtifacts.add(correlationAttributeOptional.get());
                     }
                 }
             }
@@ -136,7 +137,7 @@ public class EamArtifactUtil {
      * @return the new EamArtifact. Throws an exception if one was not created because
      *         bbArtifact did not contain the needed data
      */
-    private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType,
+    private static Optional<CorrelationAttribute> getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType,
             BlackboardArtifact bbArtifact) throws EamDbException, CorrelationAttributeNormalizationException {
         
         String value = null;
@@ -191,16 +192,17 @@ public class EamArtifactUtil {
 
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
-            return null;
+            return Optional.empty();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-            return null;
+            return Optional.empty();
         }
 
         if(null != value){
-            return new CorrelationAttribute(correlationType, value);
+            CorrelationAttribute correlationAttribute = new CorrelationAttribute(correlationType, value);
+            return Optional.of(correlationAttribute);
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
