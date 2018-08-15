@@ -284,7 +284,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Try to update artifact with two CorrelationAttributeInstance instances
-        // TODO, this seems like it is no longer a valid test.
+        // TODO, this seems like it is no longer a valid test, already moved fail to the catch since it no longe fails.
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance("badHash", fileType, case1, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN);
@@ -293,9 +293,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr1, TskData.FileKnown.BAD);
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr2, TskData.FileKnown.BAD);
-            Assert.fail("setArtifactInstanceKnownStatus failed to throw exception for multiple Correlation Attribute Instances");
         } catch (EamDbException ex) {
-            // This is the expected behavior
+             Assert.fail("setArtifactInstanceKnownStatus threw an exception for sequential Correlation Attribute Instances updates");
         }
 
         // Try to update null artifact
@@ -998,7 +997,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance correlationAttribute = EamDb.getInstance().getCorrelationAttributeInstance(
                     usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
-            assertNotNull("getCorrelationAttribute returned null", correlationAttribute);
+            assertNotNull("getCorrelationAttributeInstance returned null", correlationAttribute);
             
             correlationAttribute.setComment("new comment");
             EamDb.getInstance().updateAttributeInstanceComment(correlationAttribute);

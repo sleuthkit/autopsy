@@ -723,7 +723,10 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "SELECT "
                 + tableName
-                + ".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
+                + ".id,"
+                + tableName
+                + ".value,"
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -783,7 +786,10 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "SELECT "
                 + tableName
-                + ".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
+                + ".id, " 
+                + tableName
+                + ".value," 
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1468,7 +1474,10 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "SELECT "
                 + tableName
-                + ".id, cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
+                + ".id, "
+                + tableName
+                + ".value, "
+                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1525,7 +1534,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
