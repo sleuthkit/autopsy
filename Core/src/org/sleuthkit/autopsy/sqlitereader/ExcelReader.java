@@ -34,6 +34,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -67,7 +68,7 @@ public class ExcelReader extends AbstractReader {
         if(mimeType.equals(XLSMimeType)) {
             return new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
         } else if(mimeType.equals(XLSXMimeType)) {
-            return new XSSFWorkbook(new FileInputStream(new File(localDiskPath)));
+            return new SXSSFWorkbook(new XSSFWorkbook(new FileInputStream(new File(localDiskPath))));
         } else {
             throw new FileReaderInitException(String.format("Excel reader for mime "
                         + "type [%s] is not supported", mimeType));
@@ -97,11 +98,6 @@ public class ExcelReader extends AbstractReader {
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException {
         List<Map<String, Object>> rowContents = new ArrayList<>();
         Iterator<Row> iterator = workbook.getSheet(tableName).rowIterator();
-        //Consume header
-        if(iterator.hasNext()) {
-            //Consume header
-            iterator.next();
-        }
         
         while(iterator.hasNext()) {
             Map<String, Object> contents = new HashMap<>();
