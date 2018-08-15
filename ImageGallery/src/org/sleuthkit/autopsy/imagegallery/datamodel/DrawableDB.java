@@ -786,7 +786,7 @@ public final class DrawableDB {
             statement = con.createStatement();
             rs = statement.executeQuery("SELECT ds_obj_id, drawable_db_build_status FROM datasources "); //NON-NLS
             while (rs.next()) {
-                map.put(rs.getLong(1), DrawableDbBuildStatusEnum.valueOf(rs.getString(2)));
+                map.put(rs.getLong("ds_obj_id"), DrawableDbBuildStatusEnum.valueOf(rs.getString("drawable_db_build_status")));
             }
         } catch (SQLException e) {
             throw new TskCoreException("SQLException while getting data source object ids", e);
