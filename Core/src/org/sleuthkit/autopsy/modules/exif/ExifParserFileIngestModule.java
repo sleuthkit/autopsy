@@ -144,8 +144,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private ProcessResult processFile(AbstractFile f) {
 
-        try (InputStream in = new ReadContentInputStream(f);
-                BufferedInputStream bin = new BufferedInputStream(in);) {
+        try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(f));) {
 
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             Metadata metadata = ImageMetadataReader.readMetadata(bin);
@@ -263,8 +262,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     MessageNotifyUtil.Notify.error(Bundle.ExifParserFileIngestModule_indexError_message(), "");
                 }
                 artifactsToPost.clear();
-            } else {
-
             }
         }
     }
