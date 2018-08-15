@@ -120,7 +120,7 @@ public class CorrelationAttribute implements Serializable {
      */
     public void setCorrelationValue(String correlationValue) throws CorrelationAttributeNormalizationException {
         if(this.getCorrelationType() == null){
-            throw new IllegalStateException("Correlation Type must be set before calling setCorrelationValue");
+            throw new CorrelationAttributeNormalizationException("Correlation Type must be set before calling setCorrelationValue");
         }
         this.correlationValue = CorrelationAttributeNormalizer.normalize(this.getCorrelationType(), correlationValue);
     }

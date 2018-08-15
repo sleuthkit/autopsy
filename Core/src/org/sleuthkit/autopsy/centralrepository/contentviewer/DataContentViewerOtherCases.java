@@ -189,7 +189,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     } catch (CorrelationAttributeNormalizationException ex) {
                         String message = String.format("Unable to determine commonality for artifact %s", eamArtifact.toString());
                         LOGGER.log(Level.SEVERE, message, ex);
-                        Exceptions.printStackTrace(ex);
                     }                    
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,

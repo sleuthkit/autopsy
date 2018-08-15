@@ -1613,7 +1613,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        String normalizeValue = CorrelationAttributeNormalizer.normalize(aType, value);
+        String normalizeValuedd = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -1636,7 +1636,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, normalizeValue);
+            preparedStatement.setString(1, normalizeValuedd);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1771,7 +1771,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CorrelationAttributeNormalizationException {
 
-        String normalizeValue = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value);
+        String normalizeValued = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value);
         
         Connection conn = connect();
 
@@ -1784,13 +1784,13 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, fileTableName));
-            preparedStatement.setString(1, normalizeValue);
+            preparedStatement.setString(1, normalizeValued);
             preparedStatement.setInt(2, referenceSetID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             matchingInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
-            throw new EamDbException("Error determining if value (" + normalizeValue + ") is in reference set " + referenceSetID, ex); // NON-NLS
+            throw new EamDbException("Error determining if value (" + normalizeValued + ") is in reference set " + referenceSetID, ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1811,7 +1811,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public boolean isArtifactKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        String normalizeValue = CorrelationAttributeNormalizer.normalize(aType, value);
+        String normalizeValued = CorrelationAttributeNormalizer.normalize(aType, value);
         
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttribute.FILES_TYPE_ID) {
@@ -1827,7 +1827,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(aType)));
-            preparedStatement.setString(1, normalizeValue);
+            preparedStatement.setString(1, normalizeValued);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -2411,7 +2411,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException, CorrelationAttributeNormalizationException {
-        String normalizeValue = CorrelationAttributeNormalizer.normalize(aType, aValue);
+        String normalizeValued = CorrelationAttributeNormalizer.normalize(aType, aValue);
 
         Connection conn = connect();
 
@@ -2422,7 +2422,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement1 = conn.prepareStatement(String.format(sql1, EamDbUtil.correlationTypeToReferenceTableName(aType)));
-            preparedStatement1.setString(1, normalizeValue);
+            preparedStatement1.setString(1, normalizeValued);
             resultSet = preparedStatement1.executeQuery();
             while (resultSet.next()) {
                 globalFileInstances.add(getEamGlobalFileInstanceFromResultSet(resultSet));

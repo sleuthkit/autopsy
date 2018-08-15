@@ -197,7 +197,11 @@ public class EamArtifactUtil {
             return null;
         }
 
-        return new CorrelationAttribute(correlationType, value);
+        if(null != value){
+            return new CorrelationAttribute(correlationType, value);
+        } else {
+            return null;
+        }
     }
 
     /**

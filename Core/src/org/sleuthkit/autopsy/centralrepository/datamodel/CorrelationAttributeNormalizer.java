@@ -100,7 +100,7 @@ final public class CorrelationAttributeNormalizer {
         if(data == null){
             throw new CorrelationAttributeNormalizationException(String.format(errorMessage, data));
         }
-        final String validMd5Regex = "^[a-fA-F0-9]{32}$";
+        final String validMd5Regex = "^[a-f0-9]{32}$";
         final String dataLowered = data.toLowerCase();
         if(dataLowered.matches(validMd5Regex)){
             return dataLowered;
