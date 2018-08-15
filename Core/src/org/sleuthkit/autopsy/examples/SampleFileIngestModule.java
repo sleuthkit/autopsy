@@ -31,7 +31,6 @@ package org.sleuthkit.autopsy.examples;
 
 import java.util.HashMap;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -39,11 +38,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -56,7 +53,7 @@ import org.sleuthkit.datamodel.TskData;
 class SampleFileIngestModule implements FileIngestModule {
 
     private static final HashMap<Long, Long> artifactCountsForIngestJobs = new HashMap<>();
-    private static BlackboardAttribute.ATTRIBUTE_TYPE attrType = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT;
+    private static final BlackboardAttribute.ATTRIBUTE_TYPE ATTR_TYPE = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT;
     private final boolean skipKnownFiles;
     private IngestJobContext context = null;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -101,7 +98,7 @@ class SampleFileIngestModule implements FileIngestModule {
 
             // Make an attribute using the ID for the attribute attrType that 
             // was previously created.
-            BlackboardAttribute attr = new BlackboardAttribute(attrType, SampleIngestModuleFactory.getModuleName(), count);
+            BlackboardAttribute attr = new BlackboardAttribute(ATTR_TYPE, SampleIngestModuleFactory.getModuleName(), count);
 
             // Add the to the general info artifact for the file. In a
             // real module, you would likely have more complex data types 

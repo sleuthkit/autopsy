@@ -60,7 +60,6 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
@@ -445,13 +444,11 @@ class SevenZipExtractor {
     }
 
     /**
-     * Unpack the file to local folder and return a list of derived files
+     * Unpack the file to local folder.
      *
      * @param archiveFile file to unpack
      * @param depthMap    - a concurrent hashmap which keeps track of the depth
      *                    of all nested archives, key of objectID
-     *
-     * @return true if unpacking is complete
      */
     void unpack(AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> depthMap) {
         unpack(archiveFile, depthMap, null);
@@ -667,7 +664,7 @@ class SevenZipExtractor {
             //inArchiveItemIndex. False indicates non-test mode
             inArchive.extract(extractionIndices, false, archiveCallBack);
 
-            unpackSuccessful = unpackSuccessful & archiveCallBack.wasSuccessful();
+            unpackSuccessful &= archiveCallBack.wasSuccessful();
 
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
@@ -929,7 +926,7 @@ class SevenZipExtractor {
         private final String localAbsPath;
         private final String localRelPath;
 
-        public InArchiveItemDetails(
+         InArchiveItemDetails(
                 SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode,
                 String localAbsPath, String localRelPath) {
             this.unpackedNode = unpackedNode;
@@ -975,7 +972,7 @@ class SevenZipExtractor {
 
         private boolean unpackSuccessful = true;
 
-        public StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
+         StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
                                                AbstractFile archiveFile, ProgressHandle progressHandle,
                                                Map<Integer, InArchiveItemDetails> archiveDetailsMap,
                                                String password, long freeDiskSpace) {
@@ -1066,7 +1063,7 @@ class SevenZipExtractor {
         @Override
         public void setOperationResult(ExtractOperationResult result) throws SevenZipException {
             progressHandle.progress(archiveFile.getName() + ": "
-                                    + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
+                                    + inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
                     inArchiveItemIndex);
 
             final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode

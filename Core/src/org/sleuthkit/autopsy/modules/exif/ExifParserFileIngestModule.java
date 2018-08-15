@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -51,8 +52,14 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -66,9 +73,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * files. Ingests an image file and, if available, adds it's date, latitude,
  * longitude, altitude, device model, and device make to a blackboard artifact.
  */
-@NbBundle.Messages({
-    "CannotRunFileTypeDetection=Cannot run file type detection."
-})
+@NbBundle.Messages({"CannotRunFileTypeDetection=Cannot run file type detection."})
 public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
@@ -137,7 +142,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return processFile(content);
     }
 
-    ProcessResult processFile(AbstractFile f) {
+    private ProcessResult processFile(AbstractFile f) {
 
         try (InputStream in = new ReadContentInputStream(f);
                 BufferedInputStream bin = new BufferedInputStream(in);) {
@@ -163,7 +168,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 }
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL, timeZone);
                 if (date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, MODULE_NAME, date.getTime() / 1000));
+                    attributes.add(new BlackboardAttribute(TSK_DATETIME_CREATED, MODULE_NAME, date.getTime() / 1000));
                 }
             }
 
@@ -172,13 +177,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (gpsDir != null) {
                 GeoLocation loc = gpsDir.getGeoLocation();
                 if (loc != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE, MODULE_NAME, loc.getLatitude()));
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE, MODULE_NAME, loc.getLongitude()));
+                    attributes.add(new BlackboardAttribute(TSK_GEO_LATITUDE, MODULE_NAME, loc.getLatitude()));
+                    attributes.add(new BlackboardAttribute(TSK_GEO_LONGITUDE, MODULE_NAME, loc.getLongitude()));
                 }
 
                 Rational altitude = gpsDir.getRational(GpsDirectory.TAG_ALTITUDE);
                 if (altitude != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE, MODULE_NAME, altitude.doubleValue()));
+                    attributes.add(new BlackboardAttribute(TSK_GEO_ALTITUDE, MODULE_NAME, altitude.doubleValue()));
                 }
             }
 
@@ -187,18 +192,18 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (StringUtils.isNotBlank(model)) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, MODULE_NAME, model));
+                    attributes.add(new BlackboardAttribute(TSK_DEVICE_MODEL, MODULE_NAME, model));
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (StringUtils.isNotBlank(make)) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, MODULE_NAME, make));
+                    attributes.add(new BlackboardAttribute(TSK_DEVICE_MAKE, MODULE_NAME, make));
                 }
             }
 
             // Add the attributes, if there are any, to a new artifact
             if (!attributes.isEmpty()) {
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
+                BlackboardArtifact bba = f.newArtifact(TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
                 synchronized (artifactsToPost) {
                     artifactsToPost.add(bba);
@@ -245,7 +250,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private void postArtifacts() {
         synchronized (artifactsToPost) {
-            if (artifactsToPost.isEmpty() == false) {
+            if (CollectionUtils.isNotEmpty(artifactsToPost)) {
                 try {
                     /*
                      * Post the artifact which will index the artifact for
@@ -258,6 +263,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                     MessageNotifyUtil.Notify.error(Bundle.ExifParserFileIngestModule_indexError_message(), "");
                 }
                 artifactsToPost.clear();
+            } else {
+
             }
         }
     }

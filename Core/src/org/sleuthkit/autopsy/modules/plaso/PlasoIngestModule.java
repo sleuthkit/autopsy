@@ -59,6 +59,8 @@ import org.sleuthkit.datamodel.timeline.EventType;
 public class PlasoIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(PlasoIngestModule.class.getName());
+    private static final String MODULE_NAME = PlasoModuleFactory.getModuleName();
+
     private static final String PLASO = "plaso";
     private static final String PLASO64 = "plaso//plaso-20180127-amd64";
     private static final String PLASO32 = "plaso//plaso-20180127-win32";
@@ -326,11 +328,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_database_error(), ex); //NON-NLS
         }
     }
-    private static final String MODULE_NAME = PlasoModuleFactory.getModuleName();
 
-    @NbBundle.Messages({
-        "PlasoIngestModule_exception_find_file=Exception finding file."
-    })
+    @NbBundle.Messages({"PlasoIngestModule_exception_find_file=Exception finding file."})
     private AbstractFile getAbstractFile(String file) {
 
         List<AbstractFile> abstractFiles;
@@ -341,11 +340,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         filePath = filePath.toLowerCase() + "/";
 
         // check the cached file
-        if (previousFile != null) {
-            if (previousFile.getName().toLowerCase().equals(fileName)
-                && previousFile.getParentPath().toLowerCase().equals(filePath)) {
-                return previousFile;
-            }
+        if (previousFile != null
+            && previousFile.getName().equalsIgnoreCase(fileName)
+            && previousFile.getParentPath().equalsIgnoreCase(filePath)) {
+            return previousFile;
+
         }
         try {
             abstractFiles = fileManager.findFiles(fileName, filePath);
