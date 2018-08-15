@@ -34,51 +34,46 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.openide.util.NbBundle;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 
+
 /**
- * Reads Excel files and returns results in a list collection.
+ *
+ * @author dsmyda
  */
-@NbBundle.Messages({
-    "ExcelReader.ReadExcelFiles.moduleName=ExcelReader"
-})
-public class ExcelReader extends AbstractReader {
+public class ExcelReader extends AbstractReader {  
     
-    private Workbook xlsWorkbook;
+    private Workbook workbook;
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(ExcelReader.class.getName());
-    
-    /**
-     * 
-     * @param file
-     * @param localDiskPath
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException 
-     */
-    public ExcelReader(AbstractFile file, String localDiskPath) 
+    private String XLSXMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    private String XLSMimeType = "application/vnd.ms-excel";
+
+    public ExcelReader(AbstractFile file, String localDiskPath, String mimeType) 
             throws FileReaderInitException {
         super(file, localDiskPath);
-        
         try {
-            getWorkbookFromLocalDisk(localDiskPath);
+            this.workbook = createWorkbook(localDiskPath, mimeType);
         } catch (IOException ex) {
             throw new FileReaderInitException(ex);
         }
     }
     
-    /**
-     * Opens an apache poi workbook instance on the file contents copied from the 
-     * abstract file.
-     * 
-     * @param localDiskPath Location of the file contents on local disk
-     * @throws IOException Error opening file at local disk path
-     */
-    private void getWorkbookFromLocalDisk(String localDiskPath) throws IOException{
-        xlsWorkbook = new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
+    private Workbook createWorkbook(String localDiskPath, String mimeType) throws 
+            IOException, FileReaderInitException {
+        if(mimeType.equals(XLSMimeType)) {
+            return new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
+        } else if(mimeType.equals(XLSXMimeType)) {
+            return new XSSFWorkbook(new FileInputStream(new File(localDiskPath)));
+        } else {
+            throw new FileReaderInitException(String.format("Excel reader for mime "
+                        + "type [%s] is not supported", mimeType));
+        }
     }
-
+    
     /**
      * Returns the number of rows in a given excel table (aka sheet). 
      * 
@@ -88,7 +83,7 @@ public class ExcelReader extends AbstractReader {
      */
     @Override
     public Integer getRowCountFromTable(String tableName) throws FileReaderException {
-        return xlsWorkbook.getSheet(tableName).getLastRowNum();
+        return workbook.getSheet(tableName).getLastRowNum();
     }
 
     /**
@@ -101,7 +96,7 @@ public class ExcelReader extends AbstractReader {
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException {
         List<Map<String, Object>> rowContents = new ArrayList<>();
-        Iterator<Row> iterator = xlsWorkbook.getSheet(tableName).rowIterator();
+        Iterator<Row> iterator = workbook.getSheet(tableName).rowIterator();
         //Consume header
         if(iterator.hasNext()) {
             //Consume header
@@ -171,7 +166,7 @@ public class ExcelReader extends AbstractReader {
     @Override
     public Map<String, String> getTableSchemas() throws FileReaderException {     
         Map<String, String> tableSchemas = new HashMap<>();
-        for(Sheet sheet : xlsWorkbook) {
+        for(Sheet sheet : workbook) {
             Row header = sheet.getRow(0);
             if(header != null) {
                 String headerStringFormat = StringUtils.join(header.cellIterator(), ", ");
@@ -183,13 +178,10 @@ public class ExcelReader extends AbstractReader {
         return tableSchemas;
     }
     
-    /**
-     * 
-     */
     @Override
     public void close() {
         try {
-            xlsWorkbook.close();
+            workbook.close();
         } catch (IOException ex) {
             //Non-essential exception, user has no need for the connection 
             //object at this stage so closing details are not important

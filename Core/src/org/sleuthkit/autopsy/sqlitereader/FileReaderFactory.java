@@ -36,11 +36,12 @@ public final class FileReaderFactory {
      */
     public static AbstractReader createReader(String mimeType, AbstractFile file, 
             String localDiskPath) throws FileReaderInitException {
-        switch(mimeType) {
+        switch (mimeType) {
             case "application/x-sqlite3":
                 return new SQLiteReader(file, localDiskPath);
             case "application/vnd.ms-excel":
-                return new ExcelReader(file, localDiskPath);
+            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                return new ExcelReader(file, localDiskPath, mimeType);
             default:
                 throw new FileReaderInitException(String.format("Reader for mime "
                         + "type [%s] is not supported", mimeType));
