@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LocalDirectory;
 
@@ -63,7 +64,9 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
                 Bundle.LocalDirectoryNode_createSheet_name_displayName(),
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
-        addHasCommentProperty(sheetSet, tags);
+        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
+        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
+                hasCommentStatus));
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
         // file set is a VirtualDirectory
         Map<String, Object> map = new LinkedHashMap<>();

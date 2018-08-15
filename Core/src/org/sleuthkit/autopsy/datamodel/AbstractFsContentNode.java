@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
@@ -80,7 +81,9 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 "Name",
                 "Name",
                 getName()));
-        addHasCommentProperty(sheetSet, tags);
+        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
+        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
+                hasCommentStatus));
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();

@@ -374,7 +374,6 @@ public class Case {
          * definition that has changed.
          */
         TAG_DEFINITION_CHANGED,
-        
         /**
          * An item in the central repository has had its comment modified. The
          * old value is null, the new value is string for current comment.
@@ -1540,8 +1539,8 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
     }
 
-    public void notifyCentralRepoCommentChanged(long id) {
-        eventPublisher.publish(new CommentChangedEvent(id));
+    public void notifyCentralRepoCommentChanged(long id, String newComment) {
+        eventPublisher.publish(new CommentChangedEvent(id, newComment));
     }
 
     /**

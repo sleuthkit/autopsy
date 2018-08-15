@@ -130,7 +130,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 } else if (jmi.equals(addCommentMenuItem)) {
                     try {
                         OtherOccurrenceNodeInstanceData selectedNode = (OtherOccurrenceNodeInstanceData) tableModel.getRow(otherCasesTable.getSelectedRow());
-                        AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.createCorrelationAttribute());
+                        AbstractFile file = selectedNode.getAbstractFile();
+                        if (file == null) {
+                            System.out.println("FILE IS NULL");
+                        }
+                        AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.createCorrelationAttribute(), null);
+
                         action.actionPerformed(null);
                         String currentComment = action.getComment();
                         if (currentComment != null) {

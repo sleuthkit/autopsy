@@ -38,6 +38,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -725,10 +726,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 sheet.put(sheetSet);
             }
             List<ContentTag> tags = getContentTagsFromDatabase();
-            
+
             AbstractFile file = getContent();
             sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
-            addHasCommentProperty(sheetSet, tags);
+            DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
+            sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
+                    hasCommentStatus));
             sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
             sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));

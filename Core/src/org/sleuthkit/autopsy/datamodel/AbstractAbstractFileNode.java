@@ -157,7 +157,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 updateSheet();
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
-           CommentChangedEvent event = (CommentChangedEvent) evt;
+            CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
                 updateSheet();
             }
@@ -279,7 +279,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return tags;
     }
 
-    protected void addHasCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+    protected HasCommentStatus getHasCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
 
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
 
@@ -291,22 +291,21 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         }
         if (EamDbUtil.useCentralRepo()) {
-               CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(getContent());
-                if (attribute != null) {
-                    for (CorrelationAttributeInstance instance : attribute.getInstances()) {
-                        if (instance != null && instance.getComment() != null && !instance.getComment().trim().isEmpty()) {
-                            if (status == HasCommentStatus.TAG_COMMENT) {
-                                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-                            } else {
-                                status = HasCommentStatus.CR_COMMENT;
-                            }
-                            break;
+            CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(getContent());
+            if (attribute != null) {
+                for (CorrelationAttributeInstance instance : attribute.getInstances()) {
+                    if (instance != null && instance.getComment() != null && !instance.getComment().trim().isEmpty()) {
+                        if (status == HasCommentStatus.TAG_COMMENT) {
+                            status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+                        } else {
+                            status = HasCommentStatus.CR_COMMENT;
                         }
+                        break;
                     }
                 }
+            }
         }
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                status));
+        return status;
     }
 
     /**

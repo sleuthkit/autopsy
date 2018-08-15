@@ -29,6 +29,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -89,7 +90,9 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
-        addHasCommentProperty(sheetSet, tags);
+        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
+        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
+                hasCommentStatus));
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, getContent());
