@@ -91,7 +91,7 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     CorrelationAttributeInstance(
-           Type type, 
+            Type type, 
             String value, 
             int instanceId,
             CorrelationCase eamCase,
@@ -102,6 +102,10 @@ public class CorrelationAttributeInstance implements Serializable {
     ) throws EamDbException {
         if (filePath == null) {
             throw new EamDbException("file path is null");
+        }
+        
+        if (value == null) {
+            throw new EamDbException("md5 value is null");
         }
 
         this.correlationType = type;
