@@ -36,6 +36,8 @@ final public class CommonAttributeSearchResults {
     // maps instance count to list of attribute values. 
     private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
 
+    private final int percentageThreshold;
+    
     /**
      * Create a values object which can be handed off to the node factories.
      *
@@ -44,6 +46,18 @@ final public class CommonAttributeSearchResults {
      */
     CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata) {
         this.instanceCountToAttributeValues = metadata;
+        this.percentageThreshold = 0;
+    }
+    
+    /**
+     * Create a values object which can be handed off to the node factories.
+     *
+     * @param values list of CommonAttributeValue indexed by size of
+     * CommonAttributeValue
+     */
+    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata, int percentageThreshold) {
+        this.instanceCountToAttributeValues = metadata;
+        this.percentageThreshold = percentageThreshold;
     }
 
     /**
@@ -52,7 +66,7 @@ final public class CommonAttributeSearchResults {
      * This is a convenience method - you can also iterate over
      * <code>getValues()</code>.
      *
-     * @param isntanceCound key
+     * @param instanceCount key
      * @return list of values which represent matches
      */
     List<CommonAttributeValue> getAttributeValuesForInstanceCount(Integer instanceCount) {
@@ -66,8 +80,12 @@ final public class CommonAttributeSearchResults {
      *
      * @return map of sizes of children to list of matches
      */
-    public Map<Integer, List<CommonAttributeValue>> getMetadata() {
-        return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+    public Map<Integer, List<CommonAttributeValue>> getMetadata() throws EamDbException {
+        if(this.percentageThreshold == 0){
+            return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+        } else {
+            return this.getMetadata(this.percentageThreshold);
+        }
     }
     
     /**
@@ -80,7 +98,7 @@ final public class CommonAttributeSearchResults {
      * 
      * @return 
      */
-    public Map<Integer, List<CommonAttributeValue>> getMetadata(int minimumPercentageThreshold) throws EamDbException {
+    private Map<Integer, List<CommonAttributeValue>> getMetadata(int minimumPercentageThreshold) throws EamDbException {
         
         CorrelationAttribute.Type fileAttributeType = CorrelationAttribute
                 .getDefaultCorrelationTypes()

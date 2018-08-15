@@ -41,8 +41,8 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
      * broadly categorized as document types
      * @throws EamDbException 
      */
-    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
     }
 
     @Override

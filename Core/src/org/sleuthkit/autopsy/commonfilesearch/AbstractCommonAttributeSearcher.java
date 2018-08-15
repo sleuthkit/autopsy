@@ -43,7 +43,7 @@ public abstract class AbstractCommonAttributeSearcher {
     private boolean filterByMedia;
     private boolean filterByDoc;
     
-    AbstractCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMedia, boolean filterByDoc){
+    AbstractCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMedia, boolean filterByDoc, int percentageThreshold){
         this.filterByDoc = filterByDoc;
         this.filterByMedia = filterByMedia;
         this.dataSourceIdToNameMap = dataSourceIdMap;

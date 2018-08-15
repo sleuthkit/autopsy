@@ -37,8 +37,8 @@ final public class AllIntraCaseCommonAttributeSearcher extends IntraCaseCommonAt
      * @param filterByMediaMimeType match only on files whose mime types can be broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be broadly categorized as document types
      */
-    public AllIntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    public AllIntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
 
     }
 
