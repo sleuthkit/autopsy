@@ -29,7 +29,6 @@
 
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
         <dependency conf="core->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
-        <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency org="com.monitorjbl" name="xlsx-streamer" rev="1.2.1"/>
 
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
