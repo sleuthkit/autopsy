@@ -1,10 +1,10 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.Futures;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.logging.Level;
-import javafx.application.Platform;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.BorderStrokeStyle;
@@ -23,14 +23,13 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 
 /**
  * Interface for classes that are views of a single DrawableFile. Implementation
- * of DrawableView must be registered with {@link CategoryManager#registerListener(java.lang.Object)
- * } to have there {@link DrawableView#handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryChangeEvent)
- * } method invoked
+ * of DrawableView must be registered with CategoryManager.registerListener() to
+ * have their handleCategoryChanged() method invoked
  */
 public interface DrawableView {
 
     //TODO: do this all in css? -jm
-    static final int CAT_BORDER_WIDTH = 10;
+    int CAT_BORDER_WIDTH = 10;
 
     static final BorderWidths CAT_BORDER_WIDTHS = new BorderWidths(CAT_BORDER_WIDTH);
 
@@ -52,7 +51,7 @@ public interface DrawableView {
 
     Region getCategoryBorderRegion();
 
-    Optional<DrawableFile> getFile();
+    DrawableUIBase.FileFuture getFile();
 
     void setFile(final Long fileID);
 
@@ -83,9 +82,9 @@ public interface DrawableView {
 
     ImageGalleryController getController();
 
-    default boolean hasHashHit() {
+    default Boolean hasHashHit() {
         try {
-            return getFile().map(DrawableFile::getHashSetNamesUnchecked)
+            return Futures.getUnchecked(getFile()).map(DrawableFile::getHashSetNamesUnchecked)
                     .map((Collection<String> t) -> t.isEmpty() == false)
                     .orElse(false);
 
@@ -121,14 +120,14 @@ public interface DrawableView {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    default DhsImageCategory updateCategory() {
-        if (getFile().isPresent()) {
-            final DhsImageCategory category = getFile().map(DrawableFile::getCategory).orElse(DhsImageCategory.ZERO);
-            final Border border = hasHashHit() && (category == DhsImageCategory.ZERO) ? HASH_BORDER : getCategoryBorder(category);
-            Platform.runLater(() -> getCategoryBorderRegion().setBorder(border));
-            return category;
-        } else {
-            return DhsImageCategory.ZERO;
-        }
+    default void updateCategory() {
+        getFile().addFXListener(fileOpt -> {
+            //on FX thread
+            if (fileOpt.isPresent()) {
+                final DhsImageCategory category = fileOpt.map(DrawableFile::getCategory).orElse(DhsImageCategory.ZERO);
+                final Border border = hasHashHit() && (category == DhsImageCategory.ZERO) ? HASH_BORDER : getCategoryBorder(category);
+                getCategoryBorderRegion().setBorder(border);
+            }
+        });
     }
 }

@@ -695,8 +695,8 @@ public final class DrawableDB {
         }
 
         dbWriteLock();
-        try {
-            // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
+        try {        
+            // "INSERT OR REPLACE INTO drawable_files (obj_id, path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
             stmt.setString(2, f.getDrawablePath());
             stmt.setString(3, f.getName());

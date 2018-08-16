@@ -18,10 +18,12 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import com.google.common.util.concurrent.Futures;
 import java.io.IOException;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -99,12 +101,15 @@ public class SlideShowView extends DrawableTileBase {
 
         innerPane.addEventHandler(MouseEvent.MOUSE_CLICKED, clickEvent -> {
             if (clickEvent.getButton() == MouseButton.PRIMARY) {
-                getFile().ifPresent(file -> {
-                    final long fileID = file.getId();
-                    getGroupPane().makeSelection(false, fileID);
-                    if (clickEvent.getClickCount() > 1) {
-                        getGroupPane().activateTileViewer();
-                    }
+                getFile().addFXListener(fileOpt -> {
+                    //on FX thread
+                    fileOpt.ifPresent(file -> {
+                        final long fileID = file.getId();
+                        getGroupPane().makeSelection(false, fileID);
+                        if (clickEvent.getClickCount() > 1) {
+                            getGroupPane().activateTileViewer();
+                        }
+                    });
                 });
                 clickEvent.consume();
             }
@@ -131,8 +136,8 @@ public class SlideShowView extends DrawableTileBase {
         getGroupPane().grouping().addListener(observable -> {
             syncButtonVisibility();
             if (getGroupPane().getGroup() != null) {
-                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1) ->
-                        syncButtonVisibility());
+                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1)
+                        -> syncButtonVisibility());
             }
         });
     }
@@ -167,7 +172,7 @@ public class SlideShowView extends DrawableTileBase {
     synchronized public void setFile(final Long fileID) {
         super.setFile(fileID);
         getFileID().ifPresent(id -> getGroupPane().makeSelection(false, id));
-        getFile().ifPresent(getGroupPane()::syncCatToggle);
+        getFile().addFXListener(fileOpt -> fileOpt.ifPresent(getGroupPane()::syncCatToggle));
     }
 
     @Override
@@ -184,14 +189,16 @@ public class SlideShowView extends DrawableTileBase {
     @Override
     synchronized protected void updateContent() {
         disposeContent();
-        if (getFile().isPresent()) {
-            DrawableFile file = getFile().get();
-            if (file.isVideo()) {
-                doMediaLoadTask((VideoFile) file);
-            } else {
-                doReadImageTask(file);
-            }
-        }
+        getFile().addFXListener(fileOpt -> {
+            //on FX thread
+            fileOpt.ifPresent(file -> {
+                if (file.isVideo()) {
+                    doMediaLoadTask((VideoFile) file);
+                } else {
+                    doReadImageTask(file);
+                }
+            });
+        });
     }
 
     synchronized private Node doMediaLoadTask(VideoFile file) {
@@ -259,12 +266,10 @@ public class SlideShowView extends DrawableTileBase {
         return maskerPane;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     protected String getTextForLabel() {
-        return getFile().map(DrawableFile::getName).orElse("") + " " + getSupplementalText();
+        //TODO: is it safe to call getUnchecked?
+        return Futures.getUnchecked(getFile()).map(DrawableFile::getName).orElse("") + " " + getSupplementalText();
     }
 
     /**
@@ -292,8 +297,8 @@ public class SlideShowView extends DrawableTileBase {
      *         of y"
      */
     @NbBundle.Messages({"# {0} - file id number",
-            "# {1} - number of file ids",
-            "SlideShowView.supplementalText={0} of {1} in group"})
+        "# {1} - number of file ids",
+        "SlideShowView.supplementalText={0} of {1} in group"})
     private String getSupplementalText() {
         final ObservableList<Long> fileIds = getGroupPane().getGroup().getFileIDs();
         return getFileID().map(fileID -> " ( " + Bundle.SlideShowView_supplementalText(fileIds.indexOf(fileID) + 1, fileIds.size()) + " )")
@@ -301,20 +306,14 @@ public class SlideShowView extends DrawableTileBase {
 
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     @ThreadConfined(type = ThreadType.ANY)
-    public DhsImageCategory updateCategory() {
-        Optional<DrawableFile> file = getFile();
-        if (file.isPresent()) {
-            DhsImageCategory updateCategory = super.updateCategory();
-            Platform.runLater(() -> getGroupPane().syncCatToggle(file.get()));
-            return updateCategory;
-        } else {
-            return DhsImageCategory.ZERO;
-        }
+    public void updateCategory() {
+        super.updateCategory();
+        getFile().addFXListener(fileOpt -> {
+            //on FX thread
+            fileOpt.ifPresent(getGroupPane()::syncCatToggle);
+        });
     }
 
     @Override

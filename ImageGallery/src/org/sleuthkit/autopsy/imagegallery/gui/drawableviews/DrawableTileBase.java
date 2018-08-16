@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,6 +38,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
@@ -157,16 +160,16 @@ public abstract class DrawableTileBase extends DrawableUIBase {
         addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 
             @Override
-            public void handle(MouseEvent t) {
-                getFile().ifPresent(file -> {
-                    final long fileID = file.getId();
-                    switch (t.getButton()) {
+            public void handle(MouseEvent mouseEvent) {
+                getFile().addFXListener((fileOpt) -> {
+                    //on FX thread
+                    fileOpt.ifPresent(file -> {
+                        final long fileID = file.getId();
+                        if (mouseEvent.getButton() == MouseButton.SECONDARY) {
+                            if (mouseEvent.getClickCount() == 1
+                                && selectionModel.isNotSelected(fileID)) {
+                                groupPane.makeSelection(false, fileID);
 
-                        case SECONDARY:
-                            if (t.getClickCount() == 1) {
-                                if (selectionModel.isSelected(fileID) == false) {
-                                    groupPane.makeSelection(false, fileID);
-                                }
                             }
                             if (contextMenu != null) {
                                 contextMenu.hide();
@@ -176,11 +179,11 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                                 groupContextMenu.hide();
                             }
                             contextMenu = buildContextMenu(file);
-                            contextMenu.show(DrawableTileBase.this, t.getScreenX(), t.getScreenY());
-                            break;
-                    }
+                            contextMenu.show(DrawableTileBase.this, mouseEvent.getScreenX(), mouseEvent.getScreenY());
+                        }
+                    });
+                    mouseEvent.consume();
                 });
-                t.consume();
             }
 
             private ContextMenu buildContextMenu(DrawableFile file) {
@@ -188,9 +191,9 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
                 menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
                 menuItems.add(AddTagAction.getTagMenu(getController()));
-                
+
                 final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                if(selectedFilesList.size() == 1) {
+                if (selectedFilesList.size() == 1) {
                     menuItems.add(DeleteTagAction.getTagMenu(getController()));
                 }
 
@@ -244,40 +247,27 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
     protected void initialize() {
         followUpToggle.setOnAction(actionEvent -> {
-            getFile().ifPresent(file -> {
-                if (followUpToggle.isSelected() == true) {
-                    try {
-                        selectionModel.clearAndSelect(file.getId());
-                        new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
+            getFile().addFXListener(fileOpt -> {
+                fileOpt.ifPresent(file -> {
+                    if (followUpToggle.isSelected() == true) {
+                        try {
+                            selectionModel.clearAndSelect(file.getId());
+                            new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
+                        } catch (TskCoreException ex) {
+                            LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
+                        }
+                    } else {
+                        new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
                     }
-                } else {
-                    new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
-                }
+                });
             });
         });
-    }
-
-    protected boolean hasFollowUp() {
-        if (getFileID().isPresent()) {
-            try {
-                TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
-                return DrawableAttribute.TAGS.getValue(getFile().get()).stream()
-                        .anyMatch(followUpTagName::equals);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "failed to get follow up tag name ", ex); //NON-NLS
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
 
     @Override
     synchronized protected void setFileHelper(final Long newFileID) {
         setFileIDOpt(Optional.ofNullable(newFileID));
-        setFileOpt(Optional.empty());
+        setFileFuture(new FileFuture(null));
 
         disposeContent();
 
@@ -303,13 +293,14 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     }
 
     private void updateMetaData() {
-        getFile().ifPresent(file -> {
-            final boolean isVideo = file.isVideo();
-            final boolean hasHashSetHits = hasHashHit();
+        getFile().addFXListener(fileOpt -> {
+            //on FX thread
+            fileOpt.ifPresent(file -> {
+                final boolean isVideo = file.isVideo();
+                final boolean hasHashSetHits = hasHashHit();
 
-            final String text = getTextForLabel();
+                final String text = getTextForLabel();
 
-            Platform.runLater(() -> {
                 fileTypeImageView.setManaged(isVideo);
                 fileTypeImageView.setVisible(isVideo);
                 hashHitImageView.setManaged(hasHashSetHits);
@@ -319,7 +310,6 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 nameLabel.setTooltip(new Tooltip(text));
             });
         });
-
     }
 
     /**
@@ -346,7 +336,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
                 final ContentTag addedTag = evt.getAddedTag();
                 if (fileID == addedTag.getContent().getId()
-                        && addedTag.getName().equals(followUpTagName)) {
+                    && addedTag.getName().equals(followUpTagName)) {
                     Platform.runLater(() -> {
                         followUpImageView.setImage(followUpIcon);
                         followUpToggle.setSelected(true);
@@ -366,7 +356,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
                 final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
                 if (fileID == deletedTagInfo.getContentID()
-                        && deletedTagInfo.getName().equals(followUpTagName)) {
+                    && deletedTagInfo.getName().equals(followUpTagName)) {
                     updateFollowUpIcon();
                 }
             } catch (TskCoreException ex) {
@@ -376,10 +366,21 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     }
 
     private void updateFollowUpIcon() {
-        boolean hasFollowUp = hasFollowUp();
-        Platform.runLater(() -> {
-            followUpImageView.setImage(hasFollowUp ? followUpIcon : followUpGray);
-            followUpToggle.setSelected(hasFollowUp);
-        });
+        FileFuture fileFuture = getFile();
+        fileFuture.addListener(() -> {
+            ListenableFuture<Boolean> hasFollowUpFuture = exec.submit(() -> {
+                // on BG thread
+                TagName followUpTagName = getController().getTagsManager().getFollowUpTagName(); //this does a DB query
+                return Futures.getUnchecked(fileFuture).map(file -> DrawableAttribute.TAGS.getValue(file).stream().anyMatch(followUpTagName::equals)).orElse(false);
+            });
+            hasFollowUpFuture.addListener(() -> {
+                //on FX thread
+                //TODO: is it safe to use getUnchecked?
+                boolean hasFollowUp = Futures.getUnchecked(hasFollowUpFuture);
+
+                followUpImageView.setImage(hasFollowUp ? followUpIcon : followUpGray);
+                followUpToggle.setSelected(hasFollowUp);
+            }, new FXExecutor());
+        }, exec);
     }
 }

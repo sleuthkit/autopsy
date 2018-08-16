@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import com.google.common.util.concurrent.Futures;
 import java.util.Objects;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -71,18 +72,22 @@ public class DrawableTile extends DrawableTileBase {
         //set up mouse listener
         addEventHandler(MouseEvent.MOUSE_CLICKED, clickEvent -> {
             if (clickEvent.getButton() == MouseButton.PRIMARY) {
-                getFile().ifPresent(file -> {
-                    final long fileID = file.getId();
-                    if (clickEvent.isControlDown()) {
-                        selectionModel.toggleSelection(fileID);
-                    } else {
-                        getGroupPane().makeSelection(clickEvent.isShiftDown(), fileID);
-                    }
-                    if (clickEvent.getClickCount() > 1) {
-                        getGroupPane().activateSlideShowViewer(fileID);
-                    }
-                });
-                clickEvent.consume();
+                getFile().addListener(() -> {
+                    //on FX thread
+                    //TODO: is it safe to use getUnchecked?
+                    Futures.getUnchecked(getFile()).ifPresent(file -> {
+                        final long fileID = file.getId();
+                        if (clickEvent.isControlDown()) {
+                            selectionModel.toggleSelection(fileID);
+                        } else {
+                            getGroupPane().makeSelection(clickEvent.isShiftDown(), fileID);
+                        }
+                        if (clickEvent.getClickCount() > 1) {
+                            getGroupPane().activateSlideShowViewer(fileID);
+                        }
+                    });
+                    clickEvent.consume();
+                }, new FXExecutor());
             }
         });
     }
@@ -111,6 +116,7 @@ public class DrawableTile extends DrawableTileBase {
 
     @Override
     protected String getTextForLabel() {
-        return getFile().map(DrawableFile::getName).orElse("");
+        //TODO: is it safe to use getUnchecked?
+        return Futures.getUnchecked(getFile()).map(DrawableFile::getName).orElse("");
     }
 }

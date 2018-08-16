@@ -18,14 +18,17 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.Objects;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
+import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -40,13 +43,13 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.ActionUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Abstract base class for views of a single drawable file.
@@ -55,9 +58,9 @@ import org.sleuthkit.datamodel.TskCoreException;
     "DrawableUIBase.errorLabel.OOMText=Insufficent memory"})
 abstract public class DrawableUIBase extends AnchorPane implements DrawableView {
 
-    static final Executor exec = Executors.newSingleThreadExecutor();
-
     private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
+
+    static final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 
     @FXML
     BorderPane imageBorder;
@@ -66,7 +69,38 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     private final ImageGalleryController controller;
 
-    private Optional<DrawableFile> fileOpt = Optional.empty();
+    private FileFuture fileFuture = new FileFuture(null);
+
+    public final class FileFuture extends AbstractFuture<Optional<DrawableFile>> {
+
+        private final Long fileID;
+
+        public Long getFileID() {
+            return fileID;
+        }
+
+        FileFuture(Long fileID) {
+            this.fileID = fileID;
+            if (fileID != null) {
+                setFuture(exec.submit(() -> Optional.ofNullable(getController().getFileFromId(fileIDOpt.get()))));
+            } else {
+                setFuture(Futures.immediateFuture(Optional.empty()));
+            }
+        }
+
+        public void addFXListener(Consumer<Optional<DrawableFile>> listener) {
+            super.addListener(() -> {
+                try {
+                    listener.accept(get());
+                } catch (InterruptedException ex) {
+                    Exceptions.printStackTrace(ex);
+                } catch (ExecutionException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }, new FXExecutor()); //To change body of generated methods, choose Tools | Templates.
+        }
+
+    }
 
     private Optional<Long> fileIDOpt = Optional.empty();
     private volatile Task<Image> imageTask;
@@ -89,26 +123,21 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         this.fileIDOpt = fileIDOpt;
     }
 
-    synchronized void setFileOpt(Optional<DrawableFile> fileOpt) {
-        this.fileOpt = fileOpt;
+    synchronized void setFileFuture(FileFuture fileOpt) {
+        this.fileFuture = fileOpt;
     }
 
     @Override
-    synchronized public Optional<DrawableFile> getFile() {
+    synchronized public FileFuture getFile() {
         if (fileIDOpt.isPresent()) {
-            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
-                return fileOpt;
+            if (Objects.equals(fileFuture.getFileID(), fileIDOpt.get())) {
+                return fileFuture;
             } else {
-                try {
-                    fileOpt = Optional.ofNullable(getController().getFileFromId(fileIDOpt.get()));
-                } catch (TskCoreException ex) {
-                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex); //NON-NLS
-                    fileOpt = Optional.empty();
-                }
-                return fileOpt;
+                fileFuture = new FileFuture(fileIDOpt.get());
+                return fileFuture;
             }
         } else {
-            return Optional.empty();
+            return new FileFuture(null);
         }
     }
 
@@ -126,9 +155,19 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     synchronized protected void updateContent() {
-        if (getFile().isPresent()) {
-            doReadImageTask(getFile().get());
-        }
+
+        getFile().addListener(() -> {
+            try {
+                if (getFile().get().isPresent()) {
+                    doReadImageTask(getFile().get().get());
+                }
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            } catch (ExecutionException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }, exec);
+
     }
 
     synchronized Node doReadImageTask(DrawableFile file) {
@@ -147,7 +186,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         myTask.setOnFailed(failed -> {
             Throwable exception = myTask.getException();
             if (exception instanceof OutOfMemoryError
-                    && exception.getMessage().contains("Java heap space")) { //NON-NLS
+                && exception.getMessage().contains("Java heap space")) { //NON-NLS
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_OOMText(), file);
             } else {
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);
