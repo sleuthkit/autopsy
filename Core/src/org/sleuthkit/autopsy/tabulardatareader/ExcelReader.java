@@ -100,8 +100,8 @@ public class ExcelReader extends AbstractReader {
                 //and this can use the same functions below.
                 return StreamingReader.builder().rowCacheSize(500).open(new File(localDiskPath));
             default:
-                throw new FileReaderInitException(String.format("Excel reader for mime "
-                        + "type [%s] is not supported", mimeType));
+                throw new FileReaderInitException(String.format("Excel reader for mime " + 
+                        "type [%s] is not supported", mimeType));
         }
     }
     
@@ -268,7 +268,7 @@ public class ExcelReader extends AbstractReader {
         
         return tableSchemas;
     }
-     
+    
     @Override
     public void close() {
         try {

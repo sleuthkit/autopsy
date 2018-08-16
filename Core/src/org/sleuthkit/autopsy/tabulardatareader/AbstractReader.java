@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An abstract reader interface for retrieving contents from files via a common
- * API.
+ * API. 
  */
 public abstract class AbstractReader implements AutoCloseable {
     
