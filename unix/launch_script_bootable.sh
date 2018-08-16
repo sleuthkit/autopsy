@@ -25,24 +25,22 @@ errorLog () {
 }
 
 #Verify we can find the script
-if [[ -x "$AUTOPSY_BIN" ]]; then
- infoLog "Autopsy found"
-else
- errorLog "Autopsy binaries not found at $AUTOPSY_BIN. Exiting....."
+if [[ ! -x "$AUTOPSY_BIN" ]]; then
+  errorLog "Autopsy binaries not found at $AUTOPSY_BIN. Exiting....."
 fi
 
 
 # Create folders on external drive
 createConfigDirectories () {
+  if [ ! -d "$1" ]; then
+    mkdir $1
     if [ ! -d "$1" ]; then
-      mkdir $1
-      if [ ! -d "$1" ]; then
-	      errorLog "error while creating $1"
-      else
-        infoLog "$1 successfully created"
-      fi
+      errorLog "error while creating $1"
+    else
+      infoLog "$1 successfully created"
     fi
-    return 0
+  fi
+  return 0
 }
 
 
@@ -53,23 +51,27 @@ showAndReadOptions () {
   echo "Select a mounted disk to create config directory"
   # Maintainers: Adjust these grep statements based on where your
   # platform mounts media.
-  mnt=( $(mount | grep "media" | grep "rw" | awk '{print $3}') )
+  mnt=( $(findmnt -lo source,target,fstype,label,options,size | grep "media" | grep "rw" | awk '{print $1, $2, $4, $6}') )
 
-  # Add option to user to not use mounted media
   length=${#mnt[@]}
   mnt[length]="Do not store on mounted disk"
-  options_length=$(( length + 1 ))
+  options_length=$(( length / 4 + 1 ))
+  printf "%10s\t%10s\t%10s\t%10s\t%10s\n" "OPTION" "SOURCE" "TARGET" "LABEL" "SIZE"
 
-  x=1
-  for word in "${mnt[@]}"
+  for ((i=0;i< $options_length;i++));
   do
-    echo [$x] "${word}"
-    x=$((x + 1))
+    printf "%10s\t" "[$(( i+1 ))]"
+    for((j=0;j<4;j++));
+    do
+      printf "%10s\t" "${mnt[j + i * 4]}"
+
+    done
+    echo
   done
   read -n 1 option
   if [[ $option = "" ]] || ! [[ "$option" =~ ^[0-9]+$ ]]; then
-	echo "Please choose a valid option"
-	showAndReadOptions
+    echo "Please choose a valid option"
+    showAndReadOptions
   fi
 }
 
@@ -85,7 +87,7 @@ do
 done
 
 if [ "$option" != "$options_length" ]; then
-  index=$(( option - 1 ))
+  index=$(( (option - 1) * 4 + 1 ))
   echo "Autopsy configurations will be stored in" "${mnt[$index]}"". Are you sure? (y/n)"
   read affirmation
   if [ "$affirmation" == "y" ] || [ "$affirmation" == "Y" ]; then
@@ -106,9 +108,10 @@ if [ "$option" != "$options_length" ]; then
     createConfigDirectories $autopsyConfigDir && createConfigDirectories $userDirectory
 
     if [ $? -eq 0 ]; then
-        sh $AUTOPSY_BIN --userdir $userDirectory
+      sh $AUTOPSY_BIN --userdir $userDirectory
     fi
   fi
 else
-    sh $AUTOPSY_BIN
+  sh $AUTOPSY_BIN
 fi
+
