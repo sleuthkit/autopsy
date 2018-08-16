@@ -126,12 +126,35 @@ public class ExcelReader extends AbstractReader {
      */
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException {
+        return getRowsFromTable(tableName, 0, getRowCountFromTable(tableName));
+    }
+    
+    /**
+     * Returns a window of rows starting at the offset and ending when the number of rows read 
+     * equals the 'numRowsToRead' parameter or the iterator has nothing left to read.
+     * 
+     * For instance: offset 1, numRowsToRead 5 would return 5 results (1-5).
+     *               offset 0, numRowsToRead 5 would return 5 results (0-4).
+     * 
+     * @param tableName Current name of sheet to be read
+     * @param offset start index to begin reading (documents are 0 indexed)
+     * @param numRowsToRead number of rows to read
+     * @return
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
+    @Override
+    public List<Map<String, Object>> getRowsFromTable(String tableName, 
+            int offset, int numRowsToRead) throws FileReaderException {
+        Iterator<Row> sheetIter = workbook.getSheet(tableName).rowIterator();
         List<Map<String, Object>> rowList = new ArrayList<>();
-        Iterator<Row> iterator = workbook.getSheet(tableName).rowIterator();
         
-        while(iterator.hasNext()) {
+        int currRowCount = 0;
+        while(sheetIter.hasNext() && currRowCount < (offset + numRowsToRead)) {
+            Row currRow = sheetIter.next();
+            if(currRowCount++ < offset) {
+                continue;
+            }
             Map<String, Object> row = new HashMap<>();
-            Row currRow = iterator.next();
             for(Cell cell : currRow) {
                 String columnName = getColumnName(cell, tableName);
                 Object value = getCellValue(cell);
@@ -218,7 +241,7 @@ public class ExcelReader extends AbstractReader {
         
         return tableSchemas;
     }
-    
+     
     @Override
     public void close() {
         try {

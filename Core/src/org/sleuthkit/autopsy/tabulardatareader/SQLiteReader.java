@@ -209,20 +209,21 @@ public class SQLiteReader extends AbstractReader {
      * Retrieves a subset of the rows from a given table in the SQLite database.
      * 
      * @param tableName
-     * @param startRow Desired start index (rows begin at 1)
+     * @param offset Desired start index (rows begin at 1)
      * @param numRowsToRead Number of rows past the start index
      * @return List of rows, where each row is 
      * represented as a column-value map.
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
+    @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
-            int startRow, int numRowsToRead) throws FileReaderException{
+            int offset, int numRowsToRead) throws FileReaderException{
         tableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
                         "SELECT * FROM " + tableName    //NON-NLS
                         + " LIMIT " + Integer.toString(numRowsToRead) //NON-NLS
-                        + " OFFSET " + Integer.toString(startRow - 1))) { //NON-NLS
+                        + " OFFSET " + Integer.toString(offset - 1))) { //NON-NLS
             return resultSetToList(resultSet);
         } catch (SQLException ex) {
             throw new FileReaderException(ex);
