@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.sqlitereader;
+package org.sleuthkit.autopsy.tabulardatareader;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,8 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
- * @author dsmyda
+ * An abstract reader interface to 
  */
 public abstract class AbstractReader implements AutoCloseable {
     

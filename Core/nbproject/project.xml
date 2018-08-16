@@ -337,6 +337,7 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
+                <package>org.sleuthkit.autopsy.tabulardatareader</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
@@ -445,7 +446,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.8.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.8.11.jar</binary-origin>
+                <binary-origin>release\modules\ext\sqlite-jdbc-3.8.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
@@ -494,6 +495,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xlsx-streamer-1.2.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\xlsx-streamer-1.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>

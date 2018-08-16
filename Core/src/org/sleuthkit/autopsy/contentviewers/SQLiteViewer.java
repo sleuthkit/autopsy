@@ -47,10 +47,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException;
-import org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException;
-import org.sleuthkit.autopsy.sqlitereader.FileReaderFactory;
-import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
+import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
+import org.sleuthkit.autopsy.tabulardatareader.SQLiteReader;
 
 /**
  * A file content viewer for SQLite database files.

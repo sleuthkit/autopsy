@@ -16,9 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.sqlitereader;
+package org.sleuthkit.autopsy.tabulardatareader;
 
-import org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -27,9 +27,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 public final class FileReaderFactory {
     
     /**
+     * Instantiates the appropriate reader given the mimeType argument. Currently
+     * supports SQLite files and Excel files (.xls and .xlsx). BIFF5 format of .xls
+     * is not supported.
      * 
-     * @param mimeType
-     * @param file
+     * @param mimeType mimeType passed in from the ingest module
+     * @param file 
      * @param localDiskPath
      * @return
      * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException 
