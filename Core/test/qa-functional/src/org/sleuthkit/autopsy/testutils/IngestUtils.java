@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 import static junit.framework.Assert.assertEquals;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -69,7 +69,7 @@ public final class IngestUtils {
             }
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -91,7 +91,7 @@ public final class IngestUtils {
             assertEquals(joinedErrors.toString(), 0, errs.size());
         } catch (InterruptedException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
