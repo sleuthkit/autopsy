@@ -290,6 +290,14 @@ public class PlatformUtil {
     public static boolean isWindowsOS() {
         return PlatformUtil.getOSName().toLowerCase().contains("windows"); //NON-NLS
     }
+    /**
+     * Check if running on Linux OS
+     *
+     * @return true if running on Linux OS
+     */
+    public static boolean isLinuxOS() {
+        return PlatformUtil.getOSName().toLowerCase().contains("nux");
+    }
 
     /**
      * Convert file path (quote) for OS specific

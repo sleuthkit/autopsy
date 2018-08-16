@@ -18,6 +18,13 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import org.openide.util.Exceptions;
+
 /**
  * Representation of a PhysicalDisk or partition.
  */
@@ -26,11 +33,15 @@ public class LocalDisk {
     private String name;
     private String path;
     private long size;
+    private String mountPoint = null;
 
     public LocalDisk(String name, String path, long size) {
         this.name = name;
         this.path = path;
         this.size = size;
+        if (PlatformUtil.isLinuxOS()) {
+            findMointPoint(this.path);
+        }
     }
 
     public String getName() {
@@ -43,6 +54,10 @@ public class LocalDisk {
 
     public long getSize() {
         return size;
+    }
+
+    public String getMountPoint() {
+        return mountPoint;
     }
 
     public String getReadableSize() {
@@ -58,6 +73,30 @@ public class LocalDisk {
     @Override
     public String toString() {
         return name + ": " + getReadableSize();
+    }
+
+    private void findMointPoint(String path) {
+        try {
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add("/bin/bash");
+            commandLine.add("-c");
+            commandLine.add("df -h | grep " + path + " | awk '{print $6}'");
+
+            ProcessBuilder pb = new ProcessBuilder(commandLine);
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+            this.mountPoint = builder.toString();
+            process.destroy();
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
 }

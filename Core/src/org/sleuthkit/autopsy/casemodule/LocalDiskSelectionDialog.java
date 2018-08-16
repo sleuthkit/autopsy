@@ -295,13 +295,17 @@ final class LocalDiskSelectionDialog extends JDialog {
 
         @Override
         public int getColumnCount() {
-            return 2;
-
+            if (PlatformUtil.isLinuxOS()) {
+                return 3;
+            } else {
+                return 2;
+            }
         }
 
         @NbBundle.Messages({
             "LocalDiskSelectionDialog.columnName.diskName=Disk Name",
-            "LocalDiskSelectionDialog.columnName.diskSize=Disk Size"
+            "LocalDiskSelectionDialog.columnName.diskSize=Disk Size",
+            "LocalDiskSelectionDialog.columnName.mountPoint=Mount Point"
         })
 
         @Override
@@ -311,6 +315,8 @@ final class LocalDiskSelectionDialog extends JDialog {
                     return Bundle.LocalDiskSelectionDialog_columnName_diskName();
                 case 1:
                     return Bundle.LocalDiskSelectionDialog_columnName_diskSize();
+                case 2:
+                    return Bundle.LocalDiskSelectionDialog_columnName_mountPoint();
                 default:
                     return "Unnamed"; //NON-NLS
             }
@@ -337,6 +343,8 @@ final class LocalDiskSelectionDialog extends JDialog {
                         return disks.get(rowIndex).getName();
                     case 1:
                         return disks.get(rowIndex).getReadableSize();
+                    case 2:
+                        return disks.get(rowIndex).getMountPoint();
                     default:
                         return disks.get(rowIndex).getPath();
                 }
