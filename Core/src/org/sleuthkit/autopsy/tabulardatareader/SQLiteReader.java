@@ -62,7 +62,7 @@ public class SQLiteReader extends AbstractReader {
      * 
      * @param sqliteDbFile Data source abstract file
      * @param localDiskPath Location for database contents to be copied to
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
     public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws FileReaderInitException {
         super(sqliteDbFile, localDiskPath);
@@ -134,7 +134,7 @@ public class SQLiteReader extends AbstractReader {
      * CREATE TABLE statments).
      * 
      * @return A map of table names to table schemas
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
     @Override
     public Map<String, String> getTableSchemas() throws FileReaderException {
@@ -165,7 +165,7 @@ public class SQLiteReader extends AbstractReader {
      * 
      * @param tableName
      * @return Row count from tableName
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
     @Override
     public Integer getRowCountFromTable(String tableName) 
@@ -187,7 +187,7 @@ public class SQLiteReader extends AbstractReader {
      * @param tableName
      * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) 
@@ -213,7 +213,7 @@ public class SQLiteReader extends AbstractReader {
      * @param numRowsToRead Number of rows past the start index
      * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
             int startRow, int numRowsToRead) throws FileReaderException{

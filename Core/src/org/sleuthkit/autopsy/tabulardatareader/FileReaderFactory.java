@@ -32,10 +32,10 @@ public final class FileReaderFactory {
      * is not supported.
      * 
      * @param mimeType mimeType passed in from the ingest module
-     * @param file 
-     * @param localDiskPath
-     * @return
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderInitException 
+     * @param file current file under inspection
+     * @param localDiskPath path for abstract file contents to be written
+     * @return The correct reader class needed to read the file contents
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException 
      */
     public static AbstractReader createReader(String mimeType, AbstractFile file, 
             String localDiskPath) throws FileReaderInitException {

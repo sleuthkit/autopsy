@@ -43,7 +43,8 @@ import org.apache.poi.hssf.OldExcelFormatException;
 
 
 /**
- * 
+ * Reads excel files and implements the abstract reader api for interfacing with the 
+ * content. Supports .xls and .xlsx files.
  */
 public class ExcelReader extends AbstractReader {  
     /* Boilerplate code */
@@ -81,24 +82,25 @@ public class ExcelReader extends AbstractReader {
      */
     private Workbook createWorkbook(String localDiskPath, String mimeType) throws 
             IOException, FileReaderInitException {
-        if(mimeType.equals(XLSMimeType)) {
-            try {
-                //Apache POI only supports BIFF8 format, anything below is considered
-                //old excel format and is not a concern for us.
-                return new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
-            } catch (OldExcelFormatException e) {
-                throw new FileReaderInitException(e);
-            }
-        } else if(mimeType.equals(XLSXMimeType)) {
-            InputStream is = new FileInputStream(new File(localDiskPath));
-            //StreamingReader is part of the xlsx streamer dependency that creates 
-            //a streaming version of XSSFWorkbook for reading (SXSSFWorkbook is only for writing 
-            //large workbooks, not reading). This libary provides a workbook interface
-            //that is mostly identical to the poi workbook api, hence both the HSSFWorkbook
-            //and this can use the same functions below.
-           return StreamingReader.builder().rowCacheSize(500).bufferSize(4096).open(is);
-        } else {
-            throw new FileReaderInitException(String.format("Excel reader for mime "
+        switch (mimeType) {
+            case XLSMimeType:
+                try {
+                    //Apache POI only supports BIFF8 format, anything below is considered
+                    //old excel format and is not a concern for us.
+                    return new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
+                } catch (OldExcelFormatException e) {
+                    throw new FileReaderInitException(e);
+                }
+            case XLSXMimeType:
+                InputStream is = new FileInputStream(new File(localDiskPath));
+                //StreamingReader is part of the xlsx streamer dependency that creates
+                //a streaming version of XSSFWorkbook for reading (SXSSFWorkbook is only for writing
+                //large workbooks, not reading). This libary provides a workbook interface
+                //that is mostly identical to the poi workbook api, hence both the HSSFWorkbook
+                //and this can use the same functions below.
+                return StreamingReader.builder().rowCacheSize(500).bufferSize(4096).open(is);
+            default:
+                throw new FileReaderInitException(String.format("Excel reader for mime "
                         + "type [%s] is not supported", mimeType));
         }
     }
@@ -107,8 +109,8 @@ public class ExcelReader extends AbstractReader {
      * Returns the number of rows in a given excel table (aka sheet). 
      * 
      * @param tableName Name of table to count total rows from
-     * @return row count for requested table name
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException 
+     * @return row count for requested table name 
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     @Override
     public Integer getRowCountFromTable(String tableName) throws FileReaderException {
@@ -119,8 +121,8 @@ public class ExcelReader extends AbstractReader {
      * Returns a collection of all the rows from a given table in an excel document.
      * 
      * @param tableName Current sheet name being read
-     * @return A collection of row maps
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException 
+     * @return A collection of row maps 
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException {
@@ -198,8 +200,8 @@ public class ExcelReader extends AbstractReader {
     /**
      * Returns a map of sheet names to headers (header is in a comma-seperated string).
      * 
-     * @return A map of sheet names to header strings.
-     * @throws org.sleuthkit.autopsy.sqlitereader.AbstractReader.FileReaderException 
+     * @return A map of sheet names to header strings. 
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     @Override
     public Map<String, String> getTableSchemas() throws FileReaderException {     

@@ -27,7 +27,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * An abstract reader interface to 
+ * An abstract reader interface for retrieving contents from files via a common
+ * API.
  */
 public abstract class AbstractReader implements AutoCloseable {
     
@@ -39,6 +40,7 @@ public abstract class AbstractReader implements AutoCloseable {
     
     /**
      * Copies the data source file contents to local drive for processing.
+     * This function is common to all readers.
      * 
      * @param file AbstractFile from the data source 
      * @param localDiskPath Local drive path to copy AbstractFile contents
@@ -59,15 +61,41 @@ public abstract class AbstractReader implements AutoCloseable {
         }
     }
     
+    /**
+     * Return the a mapping of table names to table schemas (may be in the form of 
+     * headers or create table statements for databases).
+     * 
+     * @return
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
     public abstract Map<String, String> getTableSchemas() throws FileReaderException;
     
+    /**
+     * Returns the row count fo the given table name.
+     * 
+     * @param tableName
+     * @return
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
     public abstract Integer getRowCountFromTable(String tableName) throws FileReaderException;
     
+    /**
+     * Returns a collection view of the rows in a table.
+     * 
+     * @param tableName
+     * @return
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
     public abstract List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException;
 
     @Override
     public abstract void close(); 
     
+    /**
+     * Checked exceptions are specific to a given implementation, so this custom
+     * exception allows for a common interface to accommodate all of them. Init
+     * exception allows for more flexibility in logging.
+     */
     public static class FileReaderInitException extends Exception {
         public FileReaderInitException(String message, Throwable cause) {
             super(message, cause);
@@ -82,6 +110,10 @@ public abstract class AbstractReader implements AutoCloseable {
         }
     }
 
+    /**
+     * Checked exceptions are specific to a given implementation, so this custom
+     * exception allows for a common interface to accommodate all of them.
+     */
     public class FileReaderException extends Exception {
         public FileReaderException(String message, Throwable cause) {
             super(message, cause);
