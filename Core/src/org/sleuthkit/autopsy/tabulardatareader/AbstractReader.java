@@ -65,7 +65,7 @@ public abstract class AbstractReader implements AutoCloseable {
      * Return the a mapping of table names to table schemas (may be in the form of 
      * headers or create table statements for databases).
      * 
-     * @return
+     * @return Mapping of table names to schemas
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     public abstract Map<String, String> getTableSchemas() throws FileReaderException;
@@ -74,7 +74,7 @@ public abstract class AbstractReader implements AutoCloseable {
      * Returns the row count fo the given table name.
      * 
      * @param tableName
-     * @return
+     * @return number of rows in the current table
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     public abstract Integer getRowCountFromTable(String tableName) throws FileReaderException;
@@ -83,17 +83,19 @@ public abstract class AbstractReader implements AutoCloseable {
      * Returns a collection view of the rows in a table.
      * 
      * @param tableName
-     * @return
+     * @return List view of the rows in the table
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     public abstract List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException;
 
     /**
+     * Returns a window of rows starting at the offset and ending when the number of rows read 
+     * equals the 'numRowsToRead' parameter or there is nothing left to read.
      * 
-     * @param tableName
-     * @param offset
-     * @param numRowsToRead
-     * @return
+     * @param tableName table name to be read from
+     * @param offset start index to begin reading
+     * @param numRowsToRead number of rows to read past offset
+     * @return List view of the rows in the table
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     public abstract List<Map<String, Object>> getRowsFromTable(String tableName, 
