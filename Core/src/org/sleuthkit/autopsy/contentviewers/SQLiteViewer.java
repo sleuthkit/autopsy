@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,19 +37,17 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
 import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
-import org.sleuthkit.autopsy.tabulardatareader.SQLiteReader;
 
 /**
  * A file content viewer for SQLite database files.
@@ -65,7 +62,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private final SQLiteTableView selectedTableView = new SQLiteTableView();
     private AbstractFile sqliteDbFile;
     private File tmpDbFile;
-    private SQLiteReader sqliteReader;
+    private AbstractReader sqliteReader;
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
 
@@ -367,7 +364,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             String localDiskPath = Case.getCurrentCaseThrows().getTempDirectory() + 
                     File.separator + sqliteDbFile.getName();
             
-            sqliteReader = (SQLiteReader) FileReaderFactory.createReader(SUPPORTED_MIMETYPES[0], sqliteDbFile, localDiskPath);
+            sqliteReader = FileReaderFactory.createReader(SUPPORTED_MIMETYPES[0], sqliteDbFile, localDiskPath);
             
             Map<String, String> dbTablesMap = sqliteReader.getTableSchemas();
             
