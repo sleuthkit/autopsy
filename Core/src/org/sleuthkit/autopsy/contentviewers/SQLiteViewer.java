@@ -454,7 +454,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * 
      * @param file
      * @param tableName
-     * @param rowMap -- A list of rows in the table, where each row is represented as a column-value
+     * @param rowMap A list of rows in the table, where each row is represented as a column-value
      * map.
      * @throws FileNotFoundException
      * @throws IOException 
@@ -527,8 +527,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * Returns a comma seperated header string from the keys of the column
      * row map.
      * 
-     * @param row -- column header row map
-     * @return -- comma seperated header string
+     * @param row column header row map
+     * @return comma seperated header string
      */
     private String createColumnHeader(Map<String, Object> row) {
         return row.entrySet()
