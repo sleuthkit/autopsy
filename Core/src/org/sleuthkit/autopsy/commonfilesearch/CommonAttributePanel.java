@@ -54,13 +54,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class CommonAttributePanel extends javax.swing.JDialog  {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     private static final long serialVersionUID = 1L;
-
+    
     private static final Long NO_DATA_SOURCE_SELECTED = -1L;
 
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     private boolean pictureViewCheckboxState;
+    
     private boolean documentsCheckboxState;
+    
+    private int percentageThresholdValue = 20;
 
     /**
      * Creates new form CommonFilesPanel
@@ -521,6 +524,11 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         });
 
         percentageThreshold.setText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThreshold.text")); // NOI18N
+        percentageThreshold.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                percentageThresholdActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.jLabel1.text_1")); // NOI18N
 
@@ -653,11 +661,26 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
     private void percentageThresholdCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdCheckActionPerformed
         if(this.percentageThresholdCheck.isSelected()){
+            this.percentageThreshold.setEnabled(true);
             
         } else {
-            
+            this.percentageThreshold.setEnabled(false);
         }
     }//GEN-LAST:event_percentageThresholdCheckActionPerformed
+
+    private void percentageThresholdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdActionPerformed
+        String percentageString = this.percentageThreshold.getText();
+        
+        Integer percentage;
+        
+        try{
+            percentage = Integer.parseInt(percentageString);
+            this.percentageThresholdValue = percentage;
+        } catch(Exception e){
+            this.percentageThresholdValue = -1;
+        }
+        
+    }//GEN-LAST:event_percentageThresholdActionPerformed
 
     public void handleInterCaseSearchCriteriaChanged() {
         if (this.areInterCaseSearchCriteriaMet()) {
@@ -755,11 +778,12 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
     private void enablePercentageOptions() {
         this.percentageThreshold.setEnabled(true);
         this.percentageThresholdCheck.setEnabled(true);
-        this.percentageThresholdCheck.setEnabled(true);
+        this.percentageThresholdCheck.setSelected(true);
     }
 
     private void disablePercentageOptions() {
         this.percentageThreshold.setEnabled(false);
         this.percentageThresholdCheck.setEnabled(false);
+        this.percentageThresholdCheck.setSelected(false);
     }
 }
