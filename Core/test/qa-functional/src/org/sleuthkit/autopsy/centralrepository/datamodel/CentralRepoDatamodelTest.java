@@ -995,6 +995,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         
         // Test updating a correlation attribute instance comment
         try {
+            // TODO
             CorrelationAttributeInstance correlationAttribute = EamDb.getInstance().getCorrelationAttributeInstance(
                     usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
             assertNotNull("getCorrelationAttributeInstance returned null", correlationAttribute);
@@ -1118,7 +1119,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             DbManager.addArtifactInstance(attr1);
             DbManager.addArtifactInstance(attr2);
             AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
-            DbManager.processInstanceTableWhere(fileType, String.format("id = %s", attr1.getID()), instancetableCallback);
+            DbManager.processInstanceTableWhere(fileType, String.format("value = %s", callbackTestFileHash), instancetableCallback);
             int count1 = instancetableCallback.getCounter();
             int count2 = instancetableCallback.getCounterNamingConvention();
             assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
@@ -2693,7 +2694,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         public void process(ResultSet resultSet) {
             try {
                 while(resultSet.next()){
-                    if(InstanceTableCallback.getFilePath(resultSet).contains("processinstancecallback")){
+                    if(InstanceTableCallback.getFilePath(resultSet).toLowerCase().contains("processinstancecallback")){
                         counterNamingConvention++;
                     }else{
                         counter++;

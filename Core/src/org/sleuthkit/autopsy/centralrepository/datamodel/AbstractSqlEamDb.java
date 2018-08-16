@@ -675,8 +675,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setString(1, eamArtifact.getCorrelationCase().getCaseUUID());
                 preparedStatement.setString(2, eamArtifact.getCorrelationDataSource().getDeviceID());
                 preparedStatement.setInt(3, eamArtifact.getCorrelationDataSource().getCaseID());
-                preparedStatement.setString(4, eamArtifact.getCorrelationValue());
-                preparedStatement.setString(5, eamArtifact.getFilePath());
+                preparedStatement.setString(4, eamArtifact.getCorrelationValue().toLowerCase());
+                preparedStatement.setString(5, eamArtifact.getFilePath().toLowerCase());
                 preparedStatement.setByte(6, eamArtifact.getKnownStatus().getFileKnownValue());
                 if ("".equals(eamArtifact.getComment())) {
                     preparedStatement.setNull(7, Types.INTEGER);
@@ -1230,9 +1230,6 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateAttributeInstanceComment(CorrelationAttributeInstance eamArtifact) throws EamDbException {
-        if (eamArtifact == null) {
-            throw new EamDbException("CorrelationAttribute is null");
-        }
 
         if (eamArtifact == null) {
             throw new EamDbException("CorrelationAttributeInstance is null");
@@ -1262,8 +1259,8 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedQuery.setString(1, eamArtifact.getComment());
             preparedQuery.setString(2, eamArtifact.getCorrelationCase().getCaseUUID());
             preparedQuery.setString(3, eamArtifact.getCorrelationDataSource().getDeviceID());
-            preparedQuery.setString(4, eamArtifact.getCorrelationValue());
-            preparedQuery.setString(5, eamArtifact.getFilePath());
+            preparedQuery.setString(4, eamArtifact.getCorrelationValue().toLowerCase());
+            preparedQuery.setString(5, eamArtifact.getFilePath().toLowerCase());
             preparedQuery.executeUpdate();
         } catch (SQLException ex) {
             throw new EamDbException("Error getting/setting artifact instance comment=" + eamArtifact.getComment(), ex); // NON-NLS

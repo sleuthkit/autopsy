@@ -183,7 +183,7 @@ public class CorrelationAttributeInstance implements Serializable {
     /**
      * @return the database ID
      */
-    int getID() {
+    public int getID() {
         return ID;
     }
 
