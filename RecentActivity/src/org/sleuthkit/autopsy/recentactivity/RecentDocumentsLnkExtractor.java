@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2014 Basis Technology Corp.
- * 
+ *
+ * Copyright 2012-2018 Basis Technology Corp.
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,36 +23,54 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.Collection;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.coreutils.JLnkParserException;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Recent documents class that will extract recent documents in the form of .lnk
  * files
  */
-class RecentDocumentsByLnk extends Extract {
+class RecentDocumentsLnkExtractor extends Extract {
 
-    private static final Logger logger = Logger.getLogger(RecentDocumentsByLnk.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private static final Logger logger = Logger.getLogger(RecentDocumentsLnkExtractor.class.getName());
+
+    private static final String PARENT_MODULE_NAME = NbBundle.getMessage(RecentDocumentsLnkExtractor.class,
+            "RecentDocumentsByLnk.parentModuleName.noSpace");
     private Content dataSource;
     private IngestJobContext context;
+
+    @Override
+    protected String getModuleName() {
+        return "lnk files";
+    }
+
+    @Override
+    public void process(Content dataSource, IngestJobContext context) {
+        this.dataSource = dataSource;
+        this.context = context;
+        dataFound = false;
+        this.getRecentDocuments();
+    }
 
     /**
      * Find the documents that Windows stores about recent documents and make
@@ -62,8 +80,6 @@ class RecentDocumentsByLnk extends Extract {
      * @param controller
      */
     private void getRecentDocuments() {
-
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> recentFiles;
         try {
             recentFiles = fileManager.findFiles(dataSource, "%.lnk", "Recent"); //NON-NLS
@@ -71,7 +87,7 @@ class RecentDocumentsByLnk extends Extract {
             logger.log(Level.WARNING, "Error searching for .lnk files."); //NON-NLS
             this.addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errGetLnkFiles",
-                            this.getName()));
+                            this.getModuleName()));
             return;
         }
 
@@ -81,6 +97,8 @@ class RecentDocumentsByLnk extends Extract {
         }
 
         dataFound = true;
+
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (AbstractFile recentFile : recentFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -96,39 +114,42 @@ class RecentDocumentsByLnk extends Extract {
             } catch (JLnkParserException e) {
                 //TODO should throw a specific checked exception
                 boolean unalloc = recentFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)
-                        || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+                                  || recentFile.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
                 if (unalloc == false) {
                     logger.log(Level.WARNING, "Error lnk parsing the file to get recent files {0}", recentFile); //NON-NLS
                 }
                 continue;
             }
-
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             String path = lnk.getBestPath();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                    NbBundle.getMessage(this.getClass(),
-                            "RecentDocumentsByLnk.parentModuleName.noSpace"),
-                    path));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
-                    NbBundle.getMessage(this.getClass(),
-                            "RecentDocumentsByLnk.parentModuleName.noSpace"),
-                    Util.findID(dataSource, path)));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
-                    NbBundle.getMessage(this.getClass(),
-                            "RecentDocumentsByLnk.parentModuleName.noSpace"),
-                    recentFile.getCrtime()));
-            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
+            Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                    new BlackboardAttribute(
+                            TSK_PATH, PARENT_MODULE_NAME,
+                            path),
+                    new BlackboardAttribute(
+                            TSK_PATH_ID, PARENT_MODULE_NAME,
+                            Util.findID(dataSource, path)),
+                    new BlackboardAttribute(
+                            TSK_DATETIME, PARENT_MODULE_NAME,
+                            recentFile.getCrtime()));
+            try {
+                BlackboardArtifact bbart = recentFile.newArtifact(TSK_RECENT_OBJECT);
+                bbart.addAttributes(bbattributes);
+                bbartifacts.add(bbart);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error creating recent document artifact.", ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.getRecDoc.errMsg.errCreatingArtifact",
+                                this.getModuleName()));
+            }
         }
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "RecentDocumentsByLnk.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+
+        //TODO: why weren't these getting indexed before?
+        try {
+            blackboard.postArtifacts(bbartifacts, PARENT_MODULE_NAME);
+        } catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, "Error while trying to post recent document artifact.", ex); //NON-NLS
+            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
+        }
     }
 
-    @Override
-    public void process(Content dataSource, IngestJobContext context) {
-        this.dataSource = dataSource;
-        this.context = context;
-        dataFound = false;
-        this.getRecentDocuments();
-    }
 }

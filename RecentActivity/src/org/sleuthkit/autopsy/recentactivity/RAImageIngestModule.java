@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2018 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -33,12 +32,12 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
-import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Recent activity image ingest module
@@ -48,12 +47,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extracters = new ArrayList<>();
     private final List<Extract> browserExtracters = new ArrayList<>();
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
-    private StringBuilder subCompleted = new StringBuilder();
-
-    RAImageIngestModule() {
-    }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -67,10 +62,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         }
 
         Extract registry = new ExtractRegistry();
-        Extract recentDocuments = new RecentDocumentsByLnk();
+        Extract recentDocuments = new RecentDocumentsLnkExtractor();
         Extract chrome = new Chrome();
-        Extract firefox = new Firefox();
-        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+        Extract firefox = new FirefoxExtractor();
+        Extract SEUQA = new SearchEngineURLQueryExtractor();
 
         extracters.add(chrome);
         extracters.add(firefox);
@@ -102,18 +97,16 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         for (int i = 0; i < extracters.size(); i++) {
             Extract extracter = extracters.get(i);
             if (context.dataSourceIngestIsCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getModuleName()); //NON-NLS
                 break;
             }
 
-            progressBar.progress(extracter.getName(), i);
+            progressBar.progress(extracter.getModuleName(), i);
 
             try {
                 extracter.process(dataSource, context);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
-                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
-                        extracter.getName()));
+                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getModuleName(), ex); //NON-NLS
                 errors.add(
                         NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
             }
@@ -155,7 +148,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
         for (Extract module : browserExtracters) {
-            historyMsg.append("<li>").append(module.getName()); //NON-NLS
+            historyMsg.append("<li>").append(module.getModuleName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.notFnd"));
@@ -171,17 +164,6 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         if (context.dataSourceIngestIsCancelled()) {
             return ProcessResult.OK;
-        }
-
-        for (int i = 0; i < extracters.size(); i++) {
-            Extract extracter = extracters.get(i);
-            try {
-                extracter.complete();
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex); //NON-NLS
-                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
-                        extracter.getName()));
-            }
         }
 
         return ProcessResult.OK;
