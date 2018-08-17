@@ -82,7 +82,7 @@ public class SQLiteReader extends AbstractReader {
      * Searches for a meta file associated with the give SQLite database. If found,
      * copies the file to the local disk folder
      * 
-     * @param file file being processed
+     * @param sqliteFile file being processed
      * @param metaFileName name of meta file to look for
      * @throws NoCurrentCaseException Case has been closed.
      * @throws TskCoreException fileManager cannot find AbstractFile files.
