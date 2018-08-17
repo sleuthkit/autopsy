@@ -216,6 +216,8 @@ class LuceneQuery implements KeywordSearchQuery {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         List<BlackboardAttribute> attributesList = new ArrayList<>();
+        List<BlackboardAttribute> unexpectedAttributesList = new ArrayList<>();
+        
         attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         if (originalKeyword != null) {
             BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKeyword.getArtifactAttributeType();
@@ -228,18 +230,27 @@ class LuceneQuery implements KeywordSearchQuery {
             } else {
                 attributesList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
             }
+        } else {
+            unexpectedAttributesList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, ""));
         }
+        
+        BlackboardAttribute setNameAttribute = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName);
         if (StringUtils.isNotBlank(listName)) {
-            attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+            attributesList.add(setNameAttribute);
+        } else {
+            unexpectedAttributesList.add(setNameAttribute);
         }
-        hit.getArtifactID().ifPresent(artifactID
-                -> attributesList.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
-        );
+        
+        if (hit.getArtifactID().isPresent()) {
+            attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifactID().get()));
+        } else {
+            unexpectedAttributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, -1L));
+        }
 
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             Blackboard blackboard = tskCase.getBlackboard();
-            if (blackboard.artifactExists(content, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, attributesList)) {
+            if (blackboard.artifactExists(content, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, attributesList, unexpectedAttributesList)) {
                 return null;
             }
         } catch (NoCurrentCaseException | TskCoreException ex) {
