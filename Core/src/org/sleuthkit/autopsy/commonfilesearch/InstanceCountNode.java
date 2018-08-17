@@ -19,34 +19,40 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Node used to indicate the number of matches found with the MD5 children 
- * of this Node.
+ * Node used to indicate the number of matches found with the MD5 children of
+ * this Node.
  */
 final public class InstanceCountNode extends DisplayableItemNode {
+
+    private static final Logger logger = Logger.getLogger(InstanceCountNode.class.getName());
 
     final private int instanceCount;
     final private CommonAttributeValueList attributeValues;
 
     /**
-     * Create a node with the given number of instances, and the given
-     * selection of metadata.
+     * Create a node with the given number of instances, and the given selection
+     * of metadata.
+     *
      * @param instanceCount
-     * @param attributeValues 
+     * @param attributeValues
      */
     @NbBundle.Messages({
         "InstanceCountNode.displayName=Files with %s instances (%s)"
@@ -56,26 +62,45 @@ final public class InstanceCountNode extends DisplayableItemNode {
 
         this.instanceCount = instanceCount;
         this.attributeValues = attributeValues;
-        
+
         this.setDisplayName(String.format(Bundle.InstanceCountNode_displayName(), Integer.toString(instanceCount), attributeValues.getCommonAttributeListSize()));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
     /**
      * Number of matches found for each of the MD5 children.
+     *
      * @return int match count
      */
     int getInstanceCount() {
         return this.instanceCount;
     }
-    
+
     public void refresh() {
-        attributeValues.displayDelayedMetadata();
-        setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                attributeValues.displayDelayedMetadata();
+                setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Unexpected exception while loading common search result instances", ex); //NON-NLS
+                }
+            }
+        }.execute();
     }
 
     /**
      * Get a list of metadata for the MD5s which are children of this object.
+     *
      * @return List<Md5Metadata>
      */
     CommonAttributeValueList getAttributeValues() {
@@ -106,13 +131,19 @@ final public class InstanceCountNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        
+
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getInstanceCount()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, ""));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), NO_DESCR, ""));
+
         return sheet;
     }
-
 
     /**
      * ChildFactory which builds CommonFileParentNodes from the
@@ -143,7 +174,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
             list.addAll(this.metadata.keySet());
             return true;
         }
-        
+
         @Override
         protected Node createNodeForKey(String attributeValue) {
             CommonAttributeValue md5Metadata = this.metadata.get(attributeValue);
