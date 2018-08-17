@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Component;
+import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
@@ -86,7 +87,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     private static final long serialVersionUID = -1L;
 
-    private final static Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
+    private static final Logger logger = Logger.getLogger(DataContentViewerOtherCases.class.getName());
+
+    private static final int DEFAULT_MIN_CELL_WIDTH = 15;
+    private static final int CELL_TEXT_WIDTH_PADDING = 5;
 
     private final DataContentViewerOtherCasesTableModel tableModel;
     private final Collection<CorrelationAttributeInstance> correlationAttributes;
@@ -126,7 +130,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     showCommonalityDetails();
                 } else if (jmi.equals(addCommentMenuItem)) {
                     try {
-                        OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(otherCasesTable.getSelectedRow());
+                        OtherOccurrenceNodeInstanceData selectedNode = (OtherOccurrenceNodeInstanceData) tableModel.getRow(otherCasesTable.getSelectedRow());
                         AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.createCorrelationAttribute());
                         action.actionPerformed(null);
                         String currentComment = action.getComment();
@@ -150,7 +154,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
         otherCasesTable.setDefaultRenderer(Object.class, renderer);
-        tableStatusPanelLabel.setVisible(false);
 
     }
 
@@ -208,7 +211,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
-                OtherOccurrenceNodeData nodeData = (OtherOccurrenceNodeData) tableModel.getRow(selectedRowModelIdx);
+                OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) tableModel.getRow(selectedRowModelIdx);
                 CorrelationCase eamCasePartial = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
                 if (eamCasePartial == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
@@ -471,12 +474,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     @Messages({"DataContentViewerOtherCases.earliestCaseNotAvailable= Not Enabled."})
     /**
-     * Gets the list of Eam Cases and determines the earliest case creation date.
-     * Sets the label to display the earliest date string to the user.
+     * Gets the list of Eam Cases and determines the earliest case creation
+     * date. Sets the label to display the earliest date string to the user.
      */
-    private void setEarliestCaseDate() {       
-       String dateStringDisplay = Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable();
-       
+    private void setEarliestCaseDate() {
+        String dateStringDisplay = Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable();
+
         if (EamDb.isEnabled()) {
             LocalDateTime earliestDate = LocalDateTime.now(DateTimeZone.UTC);
             DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US);
@@ -484,15 +487,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 EamDb dbManager = EamDb.getInstance();
                 List<CorrelationCase> cases = dbManager.getCases();
                 for (CorrelationCase aCase : cases) {
-                   LocalDateTime caseDate = LocalDateTime.fromDateFields(datetimeFormat.parse(aCase.getCreationDate()));
-                  
-                   if (caseDate.isBefore(earliestDate)) {
+                    LocalDateTime caseDate = LocalDateTime.fromDateFields(datetimeFormat.parse(aCase.getCreationDate()));
+
+                    if (caseDate.isBefore(earliestDate)) {
                         earliestDate = caseDate;
                         dateStringDisplay = aCase.getCreationDate();
-                   }
+                    }
 
                 }
-                
+
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
             } catch (ParseException ex) {
@@ -504,10 +507,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     /**
-     * Query the central repo database (if enabled) and the case database to find all
-     * artifact instances correlated to the given central repository artifact. If the 
-     * central repo is not enabled, this will only return files from the current case
-     * with matching MD5 hashes.
+     * Query the central repo database (if enabled) and the case database to
+     * find all artifact instances correlated to the given central repository
+     * artifact. If the central repo is not enabled, this will only return files
+     * from the current case with matching MD5 hashes.
      *
      * @param corAttr        CorrelationAttribute to query for
      * @param dataSourceName Data source to filter results
@@ -515,19 +518,19 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @return A collection of correlated artifact instances
      */
-    private Map<UniquePathKey,OtherOccurrenceNodeData> getCorrelatedInstances(CorrelationAttributeInstance corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey, OtherOccurrenceNodeInstanceData> getCorrelatedInstances(CorrelationAttributeInstance corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
             String caseUUID = openCase.getName();
 
-            HashMap<UniquePathKey,OtherOccurrenceNodeData> nodeDataMap = new HashMap<>();
+            HashMap<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap = new HashMap<>();
 
             if (EamDb.isEnabled()) {
                 List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue());
 
-                for (CorrelationAttributeInstance artifactInstance:instances) {
-                    
+                for (CorrelationAttributeInstance artifactInstance : instances) {
+
                     // Only add the attribute if it isn't the object the user selected.
                     // We consider it to be a different object if at least one of the following is true:
                     // - the case UUID is different
@@ -539,14 +542,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId)
                             || !artifactInstance.getFilePath().equalsIgnoreCase(file.getParentPath() + file.getName())) {
 
-                        OtherOccurrenceNodeData newNode = new OtherOccurrenceNodeData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
+                        OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(artifactInstance, corAttr.getCorrelationType(), corAttr.getCorrelationValue());
                         UniquePathKey uniquePathKey = new UniquePathKey(newNode);
                         nodeDataMap.put(uniquePathKey, newNode);
                     }
                 }
             }
 
-            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) { 
+            if (corAttr.getCorrelationType().getDisplayName().equals("Files")) {
                 List<AbstractFile> caseDbFiles = getCaseDbMatches(corAttr, openCase);
 
                 for (AbstractFile caseDbFile : caseDbFiles) {
@@ -569,13 +572,17 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     /**
-     * Get all other abstract files in the current case with the same MD5 as the selected node.
+     * Get all other abstract files in the current case with the same MD5 as the
+     * selected node.
+     *
      * @param corAttr  The CorrelationAttribute containing the MD5 to search for
      * @param openCase The current case
+     *
      * @return List of matching AbstractFile objects
+     *
      * @throws NoCurrentCaseException
      * @throws TskCoreException
-     * @throws EamDbException 
+     * @throws EamDbException
      */
     private List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
         String md5 = corAttr.getCorrelationValue();
@@ -595,18 +602,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     /**
      * Adds the file to the nodeDataMap map if it does not already exist
-     * 
-     * @param autopsyCase 
+     *
+     * @param autopsyCase
      * @param nodeDataMap
      * @param newFile
      *
      * @throws TskCoreException
      * @throws EamDbException
      */
-    private void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey,OtherOccurrenceNodeData> nodeDataMap, AbstractFile newFile) throws TskCoreException, EamDbException {
-        
-        OtherOccurrenceNodeData newNode = new OtherOccurrenceNodeData(newFile, autopsyCase);
-        
+    private void addOrUpdateNodeData(final Case autopsyCase, Map<UniquePathKey, OtherOccurrenceNodeInstanceData> nodeDataMap, AbstractFile newFile) throws TskCoreException, EamDbException {
+
+        OtherOccurrenceNodeInstanceData newNode = new OtherOccurrenceNodeInstanceData(newFile, autopsyCase);
+
         // If the caseDB object has a notable tag associated with it, update
         // the known status to BAD
         if (newNode.getKnown() != TskData.FileKnown.BAD) {
@@ -622,13 +629,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         // Make a key to see if the file is already in the map
         UniquePathKey uniquePathKey = new UniquePathKey(newNode);
-        
+
         // If this node is already in the list, the only thing we need to do is
         // update the known status to BAD if the caseDB version had known status BAD.
         // Otherwise this is a new node so add the new node to the map.
         if (nodeDataMap.containsKey(uniquePathKey)) {
             if (newNode.getKnown() == TskData.FileKnown.BAD) {
-                OtherOccurrenceNodeData prevInstance = nodeDataMap.get(uniquePathKey);
+                OtherOccurrenceNodeInstanceData prevInstance = nodeDataMap.get(uniquePathKey);
                 prevInstance.updateKnown(newNode.getKnown());
             }
         } else {
@@ -651,7 +658,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         } else {
             return this.file != null
                     && this.file.getSize() > 0
-                    && ((this.file.getMd5Hash() != null) && ( ! this.file.getMd5Hash().isEmpty()));
+                    && ((this.file.getMd5Hash() != null) && (!this.file.getMd5Hash().isEmpty()));
         }
     }
 
@@ -674,8 +681,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @param node The node being viewed.
      */
-    @Messages({"DataContentViewerOtherCases.table.isempty=There are no associated artifacts or files from other occurrences to display.",
-        "DataContentViewerOtherCases.table.noArtifacts=Correlation cannot be performed on the selected file."})
+    @Messages({
+        "DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.",
+        "DataContentViewerOtherCases.table.noResultsFound=No results found."
+    })
     private void populateTable(Node node) {
         String dataSourceName = "";
         String deviceId = "";
@@ -693,7 +702,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
-            Map<UniquePathKey,OtherOccurrenceNodeData> correlatedNodeDataMap = new HashMap<>(0);
+            Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
             // get correlation and reference set instances from DB
             correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
@@ -705,34 +714,43 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
 
         if (correlationAttributes.isEmpty()) {
-            // @@@ BC: We should have a more descriptive message than this.  Mention that the file didn't have a MD5, etc.
-            displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
+            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noArtifacts()));
+            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
-            displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_isempty());
+            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
+            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noResultsFound());
         } else {
-            clearMessageOnTableStatusPanel();
             setColumnWidths();
         }
         setEarliestCaseDate();
     }
 
+    /**
+     * Adjust a given column for the text provided.
+     *
+     * @param columnIndex The index of the column to adjust.
+     * @param text        The text whose length will be used to adjust the
+     *                    column width.
+     */
+    private void setColumnWidthToText(int columnIndex, String text) {
+        TableColumn column = otherCasesTable.getColumnModel().getColumn(columnIndex);
+        FontMetrics fontMetrics = otherCasesTable.getFontMetrics(otherCasesTable.getFont());
+        int stringWidth = fontMetrics.stringWidth(text);
+        column.setMinWidth(stringWidth + CELL_TEXT_WIDTH_PADDING);
+    }
+
+    /**
+     * Adjust column widths to their preferred values.
+     */
     private void setColumnWidths() {
         for (int idx = 0; idx < tableModel.getColumnCount(); idx++) {
             TableColumn column = otherCasesTable.getColumnModel().getColumn(idx);
-            int colWidth = tableModel.getColumnPreferredWidth(idx);
-            if (0 < colWidth) {
-                column.setPreferredWidth(colWidth);
+            column.setMinWidth(DEFAULT_MIN_CELL_WIDTH);
+            int columnWidth = tableModel.getColumnPreferredWidth(idx);
+            if (columnWidth > 0) {
+                column.setPreferredWidth(columnWidth);
             }
         }
-    }
-
-    private void displayMessageOnTableStatusPanel(String message) {
-        tableStatusPanelLabel.setText(message);
-        tableStatusPanelLabel.setVisible(true);
-    }
-
-    private void clearMessageOnTableStatusPanel() {
-        tableStatusPanelLabel.setVisible(false);
     }
 
     /**
@@ -758,7 +776,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         earliestCaseLabel = new javax.swing.JLabel();
         earliestCaseDate = new javax.swing.JLabel();
         tableStatusPanel = new javax.swing.JPanel();
-        tableStatusPanelLabel = new javax.swing.JLabel();
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
@@ -820,8 +837,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 16, Short.MAX_VALUE)
         );
 
-        tableStatusPanelLabel.setForeground(new java.awt.Color(255, 0, 51));
-
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
         tableContainerPanel.setLayout(tableContainerPanelLayout);
         tableContainerPanelLayout.setHorizontalGroup(
@@ -834,20 +849,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 .addComponent(earliestCaseLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(earliestCaseDate)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         tableContainerPanelLayout.setVerticalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
-                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(earliestCaseLabel)
-                        .addComponent(earliestCaseDate))
-                    .addComponent(tableStatusPanelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+                .addGap(2, 2, 2)
+                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(earliestCaseLabel)
+                    .addComponent(earliestCaseDate))
                 .addGap(0, 0, 0)
                 .addComponent(tableStatusPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
@@ -866,7 +877,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 483, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 483, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -878,7 +889,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 483, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -888,8 +899,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
             int rowIndex = otherCasesTable.getSelectedRow();
             OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(rowIndex);
-            if (selectedNode.isCentralRepoNode()) {
-                enableCentralRepoActions = true;
+            if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
+                OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
+                enableCentralRepoActions = instanceData.isCentralRepoNode();
             }
         }
 
@@ -913,20 +925,19 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JPanel tableContainerPanel;
     private javax.swing.JScrollPane tableScrollPane;
     private javax.swing.JPanel tableStatusPanel;
-    private javax.swing.JLabel tableStatusPanelLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
      * Used as a key to ensure we eliminate duplicates from the result set by
      * not overwriting CR correlation instances.
      */
-    static final class UniquePathKey {
+    private static final class UniquePathKey {
 
         private final String dataSourceID;
         private final String filePath;
         private final String type;
 
-        UniquePathKey(OtherOccurrenceNodeData nodeData) {
+        UniquePathKey(OtherOccurrenceNodeInstanceData nodeData) {
             super();
             dataSourceID = nodeData.getDeviceID();
             if (nodeData.getFilePath() != null) {
@@ -940,10 +951,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         @Override
         public boolean equals(Object other) {
             if (other instanceof UniquePathKey) {
-                UniquePathKey otherKey = (UniquePathKey)(other);
-                return ( Objects.equals(otherKey.dataSourceID, this.dataSourceID) 
-                        && Objects.equals(otherKey.filePath, this.filePath) 
-                        && Objects.equals(otherKey.type, this.type));
+                UniquePathKey otherKey = (UniquePathKey) (other);
+                return (Objects.equals(otherKey.getDataSourceID(), this.getDataSourceID())
+                        && Objects.equals(otherKey.getFilePath(), this.getFilePath())
+                        && Objects.equals(otherKey.getType(), this.getType()));
             }
             return false;
         }
@@ -953,7 +964,34 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             //int hash = 7;
             //hash = 67 * hash + this.dataSourceID.hashCode();
             //hash = 67 * hash + this.filePath.hashCode();
-            return Objects.hash(dataSourceID, filePath, type);
+            return Objects.hash(getDataSourceID(), getFilePath(), getType());
+        }
+
+        /**
+         * Get the type of this UniquePathKey.
+         *
+         * @return the type
+         */
+        String getType() {
+            return type;
+        }
+
+        /**
+         * Get the file path for the UniquePathKey.
+         *
+         * @return the filePath
+         */
+        String getFilePath() {
+            return filePath;
+        }
+
+        /**
+         * Get the data source id for the UniquePathKey.
+         *
+         * @return the dataSourceID
+         */
+        String getDataSourceID() {
+            return dataSourceID;
         }
     }
 

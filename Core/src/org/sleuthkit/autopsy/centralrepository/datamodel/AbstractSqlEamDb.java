@@ -1917,11 +1917,11 @@ abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
-        StringBuilder sql = new StringBuilder(3);
-        sql.append("select * from ");
-        sql.append(tableName);
-        sql.append(" WHERE ");
-        sql.append(whereClause);
+        StringBuilder sql = new StringBuilder(300);
+        sql.append("select * from ")
+                .append(tableName)
+                .append(" WHERE ")
+                .append(whereClause);
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());

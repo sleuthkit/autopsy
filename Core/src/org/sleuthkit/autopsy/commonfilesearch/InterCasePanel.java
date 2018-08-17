@@ -42,6 +42,10 @@ public class InterCasePanel extends javax.swing.JPanel {
     
     private String errorMessage;
     
+    //True if we are looking in any or all cases,
+    //  false if we must find matches in a given case plus the current case
+    private boolean anyCase;
+    
     /**
      * Creates new form InterCasePanel
      */
@@ -49,6 +53,7 @@ public class InterCasePanel extends javax.swing.JPanel {
         initComponents();
         this.errorMessage = "";
         this.caseMap = new HashMap<>();
+        this.anyCase = true;
     }
 
     private void specificCaseSelected(boolean selected) {
@@ -127,10 +132,12 @@ public class InterCasePanel extends javax.swing.JPanel {
         if(this.caseComboBox.isEnabled() && this.caseComboBox.getSelectedItem() == null){
             this.caseComboBox.setSelectedIndex(0);
         }
+        this.anyCase = false;
     }//GEN-LAST:event_specificCentralRepoCaseRadioActionPerformed
 
     private void anyCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_anyCentralRepoCaseRadioActionPerformed
         this.caseComboBox.setEnabled(false);
+        this.anyCase = true;
     }//GEN-LAST:event_anyCentralRepoCaseRadioActionPerformed
 
 
@@ -170,6 +177,10 @@ public class InterCasePanel extends javax.swing.JPanel {
     }
     
     Integer getSelectedCaseId(){
+        if(this.anyCase){
+            return InterCasePanel.NO_CASE_SELECTED;
+        }
+        
         for(Entry<Integer, String> entry : this.caseMap.entrySet()){
             if(entry.getValue().equals(this.caseComboBox.getSelectedItem())){
                 return entry.getKey();

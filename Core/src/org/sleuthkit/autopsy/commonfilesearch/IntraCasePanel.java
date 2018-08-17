@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * UI controls for Common Files Search scenario where the user intends to find
@@ -38,10 +37,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     static final long NO_DATA_SOURCE_SELECTED = -1;
         
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
-        
     private boolean singleDataSource;
-    private String selectedDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private final Map<Long, String> dataSourceMap;
     
@@ -54,18 +50,7 @@ public class IntraCasePanel extends javax.swing.JPanel {
         initComponents();
         this.errorMessage = "";
         this.dataSourceMap = new HashMap<>();
-    }
-    
-    public boolean isSingleDataSource(){
-        return this.singleDataSource;
-    }
-    
-    public String getSelectedDataSource(){
-        if(this.singleDataSource && this.selectedDataSource != null){
-            return selectedDataSource;            
-        } else {
-            return "";
-        }
+        this.singleDataSource = true;
     }
     
     public Map<Long, String> getDataSourceMap(){
@@ -73,6 +58,10 @@ public class IntraCasePanel extends javax.swing.JPanel {
     }
     
     Long getSelectedDataSourceId(){
+        if(!this.singleDataSource){
+            return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
+        }
+        
         for(Entry<Long, String> entry : this.dataSourceMap.entrySet()){
             if(entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())){
                 return entry.getKey();
@@ -115,12 +104,8 @@ public class IntraCasePanel extends javax.swing.JPanel {
         });
 
         selectDataSourceComboBox.setModel(dataSourcesList);
+        selectDataSourceComboBox.setActionCommand(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectDataSourceComboBox.actionCommand")); // NOI18N
         selectDataSourceComboBox.setEnabled(false);
-        selectDataSourceComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                selectDataSourceComboBoxActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -157,15 +142,6 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private void withinDataSourceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withinDataSourceRadioButtonActionPerformed
         withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
     }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
-
-    private void selectDataSourceComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectDataSourceComboBoxActionPerformed
-        final Object selectedItem = selectDataSourceComboBox.getSelectedItem();
-        if (selectedItem != null) {
-            selectedDataSource = selectedItem.toString();
-        } else {
-            selectedDataSource = "";
-        }
-    }//GEN-LAST:event_selectDataSourceComboBoxActionPerformed
 
     private void withinDataSourceSelected(boolean selected) {
         selectDataSourceComboBox.setEnabled(selected);

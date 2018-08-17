@@ -25,7 +25,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -35,8 +34,6 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
  * Children are instances of that value. 
  */
 public class CommonAttributeValueNode extends DisplayableItemNode {
-
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributeValueNode.class.getName());
 
     private final String value;
     private final int commonFileCount;
