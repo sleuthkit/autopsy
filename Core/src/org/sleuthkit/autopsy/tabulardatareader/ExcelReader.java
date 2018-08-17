@@ -131,7 +131,7 @@ public class ExcelReader extends AbstractReader {
         //2. This also implies there is no way to determine if a workbook is empty,
         //since a last row num of 0 doesnt differentiate between a record in 0 or 
         //nothing in the workbook. Such a HSSF.
-        return getRowsFromTable(tableName, 0, getRowCountFromTable(tableName) + 1);
+        return getRowsFromTable(tableName, 0, getRowCountFromTable(tableName));
     }
     
     /**
@@ -158,21 +158,28 @@ public class ExcelReader extends AbstractReader {
         Iterator<Row> sheetIter = workbook.getSheet(tableName).rowIterator();
         List<Map<String, Object>> rowList = new ArrayList<>();
         
-        int currRowCount = 0;
-        
         //Read the header value as the header may be a row of data in the
         //excel sheet
         if(headerCache.containsKey(tableName)) {
             Row header = headerCache.get(tableName);
-            if(currRowCount++ >= offset) {
+            if(header.getRowNum() >= offset 
+                    && header.getRowNum() < (offset + numRowsToRead)) {
                 rowList.add(getRowMap(tableName, header));
             }
         }
         
-        while(sheetIter.hasNext() && currRowCount < (offset + numRowsToRead)) {
+        while(sheetIter.hasNext()) {
             Row currRow = sheetIter.next();
-            if(currRowCount++ >= offset) {
+            //If the current row number is within the window of our row capture
+            if(currRow.getRowNum() >= offset 
+                    && currRow.getRowNum() < (offset + numRowsToRead)) {
                 rowList.add(getRowMap(tableName, currRow));
+            }
+            
+            //if current row number is equal to our upper bound
+            //of rows requested to be read.
+            if(currRow.getRowNum() >= (offset + numRowsToRead)) {
+                break;
             }
         }
         
