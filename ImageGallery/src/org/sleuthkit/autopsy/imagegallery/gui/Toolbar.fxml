@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuItem?>
@@ -12,29 +13,41 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 
-<fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
     <items> 
         <HBox alignment="CENTER" spacing="5.0">
             <children>
-                <Label fx:id="groupByLabel" text="Group By:">
-                    <labelFor>
-                        <ComboBox fx:id="groupByBox" editable="false" />
-                    </labelFor>
-                </Label>
-                <fx:reference source="groupByBox" />
-      
+                <CheckBox fx:id="filterDataSourcesCheckBox" mnemonicParsing="false" text="Filter DataSources:">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/datasource.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </CheckBox>
+                <ComboBox fx:id="dataSourceComboBox" editable="false" />
+    
             </children>
         </HBox>
-      <ImageView fx:id="sortHelpImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-         <image>
-            <Image url="@../images/question-frame.png" />
-         </image>
-      </ImageView>
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label fx:id="groupByLabel" text="Group By:">
+                  
+                </Label>
+                <ComboBox fx:id="groupByBox" prefWidth="100.0" />
+            </children>
+        </HBox>
+        <ImageView fx:id="sortHelpImageView" fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@../images/question-frame.png" />
+            </image>
+        </ImageView>
           
   
    
    
-        <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="10.0" />
+        <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
         <HBox alignment="CENTER" spacing="5.0">
             <children>
                 <Label fx:id="tagImageViewLabel" text="Tag Group's Files:">
@@ -76,7 +89,7 @@
                 <Insets left="5.0" />
             </padding>
         </HBox>
-        <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="10.0" />
+        <Separator orientation="VERTICAL" prefHeight="-1.0" prefWidth="20.0" />
         <HBox alignment="CENTER" spacing="5.0">
             <children>
                 <Label fx:id="thumbnailSizeLabel" text="Thumbnail Size (px):">
