@@ -202,7 +202,7 @@ public class EamArtifactUtil {
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
-            CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
+            return new CorrelationAttributeInstance(
                     value,
                     correlationType,
                     correlationCase,
@@ -211,7 +211,6 @@ public class EamArtifactUtil {
                     "",
                     TskData.FileKnown.UNKNOWN
             );
-            return eamInstance;
             
         } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
@@ -315,14 +314,13 @@ public class EamArtifactUtil {
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
-            CorrelationAttributeInstance eamArtifact = new CorrelationAttributeInstance(
+            return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName());
 
-            return eamArtifact;
         } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
             return null;

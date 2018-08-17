@@ -622,7 +622,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public int newCorrelationType(CorrelationAttributeInstance.Type newType) throws EamDbException;
+    int newCorrelationType(CorrelationAttributeInstance.Type newType) throws EamDbException;
 
     /**
      * Get the list of EamArtifact.Type's that are defined in the DB and can be
@@ -633,7 +633,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws EamDbException;
+    List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws EamDbException;
 
     /**
      * Get the list of enabled EamArtifact.Type's that will be used to correlate
@@ -644,7 +644,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws EamDbException;
+    List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws EamDbException;
 
     /**
      * Get the list of supported EamArtifact.Type's that can be used to
@@ -655,7 +655,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws EamDbException;
+    List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws EamDbException;
 
     /**
      * Update a EamArtifact.Type.
@@ -664,7 +664,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws EamDbException;
+    void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws EamDbException;
 
     /**
      * Get the EamArtifact.Type that has the given Type.Id.
@@ -675,7 +675,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException;
+    CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException;
 
     /**
      * Upgrade the schema of the database (if needed)

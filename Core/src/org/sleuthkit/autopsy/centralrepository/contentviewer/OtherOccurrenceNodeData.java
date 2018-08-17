@@ -17,15 +17,6 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
-
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 /**
  * Marker interface for Other Occurrences nodes.
  */

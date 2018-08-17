@@ -276,7 +276,7 @@ public class CorrelationAttributeInstance implements Serializable {
         private String dbTableName;
         private Boolean supported;
         private Boolean enabled;
-        private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*";
+        private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*";
     
             /**
          * 
@@ -361,7 +361,7 @@ public class CorrelationAttributeInstance implements Serializable {
 
         @Override
         public String toString() {
-            StringBuilder str = new StringBuilder();
+            StringBuilder str = new StringBuilder(55);
             str.append("(id=").append(getId());
             str.append(", displayName=").append(getDisplayName());
             str.append(", dbTableName=").append(getDbTableName());
