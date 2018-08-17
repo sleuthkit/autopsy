@@ -29,6 +29,7 @@ import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * The JPanel for the first page of the new case wizard.
@@ -151,9 +152,22 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener {
          */
         caseParentDirWarningLabel.setVisible(false);
         String parentDir = getCaseParentDir();
-        if (!PathValidator.isValid(parentDir, getCaseType())) {
+        if (!PathValidator.isValidForMultiUserCase(parentDir, getCaseType())) {
             caseParentDirWarningLabel.setVisible(true);
             caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnCDriveError.text"));
+        }
+        
+        /**
+         * Check the base case directory if it can persist data and show a 
+         * warning if it is a wrong choice
+         */
+        if(!PathValidator.isValidForRunningOnTarget(parentDir)){
+            caseParentDirWarningLabel.setVisible(true);
+            if(PlatformUtil.isWindowsOS()){
+                caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text" ));
+            } else if(System.getProperty("os.name").toLowerCase().contains("nux")) {
+                caseParentDirWarningLabel.setText(NbBundle.getMessage(this.getClass(), "NewCaseVisualPanel1.CaseFolderOnInternalDriveLinuxError.text"));
+            }
         }
 
         /**

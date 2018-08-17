@@ -1,29 +1,25 @@
 ---------------- VERSION 4.8.0  --------------
 New Features:
-- The case tree view can now be grouped by data source.
-- Added a common files search tool that finds all instances of a file in a case.
-- Text extraction optionally includes optical character recognition (OCR).
-- Data source(s) filter added to ad hoc keyword search and file search by 
-attributes.
-- SQLite tables can be now be exported to CSV files.
-- User defined tags now appear first in tagging menus.
-- Eliminated one tagging sub menu layer for faster tagging.
-- Added Replace Tag item to tagging menus (shortcut for delete tag, add tag).
-- The Other Occurrences content viewer now shows matches in the current case.
-- A listing of cases in the central repository is displayed by the 
-central repository options panel.
-- An interesting file artifact is now created when a "zip bomb" is detected.
-- Text and queries sent to Solr are now normalized to handle diacritics, 
-ligatures, narrow and wide width Japanese characters, etc.
-- An object detection ingest module that uses OpenCV and user-supplied
-classifiers has been added to the "experimental" Net Beans Module (NBM).
-- A data source processor that runs Volatility on a memory image has been
-added to the "experimental" NBM.
-- Comments can be added to all files (file correlation properties) recorded 
-in the central repository using a results view context menu item.
-- Comments can be added to all correlation properties recorded 
-in the central repository using an Other Occurrences results content viewer 
-context menu item.
+- Data Source Grouping:
+-- The case tree view can now be grouped by data source.
+-- Keyword and file search can now be restricted to a data source.
+- Central Repository / Corrrelation:
+-- New common files search feature that finds files that exist in multiple devices in the same case. 
+-- The Other Occurrences content viewer now shows matches in the current case (in addition to central repository).
+-- Central repository options panel now shows cases that are in repo.
+- A comment about a file can be created and saved in the central repository so that future cases and see it. 
+- Keyword Search:
+-- Can enable OCR text extraction of PDF and JPG files using Tesseract. 
+-- Keyword search module normalizes Unicode text. 
+-- Keyword search module uses ICU to convert text files that do not have a BOM.
+- Tagging: 
+-- Tagging menu changed to have user defined tags at top and "quick tag" removed one level of menus.
+-- New "Replace Tag" feature to change the tag on an item.
+- Other:
+-- SQLite tables can be now be exported to CSV files.
+-- An interesting file artifact is now created when a "zip bomb" is detected.
+-- An object detection ingest module was added to the Experimental module. It requires an OpenCV trained model. 
+
 
 Bug Fixes:
 - Expanding the case tree is more efficient.

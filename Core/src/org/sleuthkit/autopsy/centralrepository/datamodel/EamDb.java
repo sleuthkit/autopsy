@@ -176,12 +176,20 @@ public interface EamDb {
     CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException;
 
     /**
+     * Retrieves Case details based on Case ID
+     *
+     * @param caseID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    CorrelationCase getCaseById(int caseId) throws EamDbException;
+    /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases
      */
     List<CorrelationCase> getCases() throws EamDbException;
-
+    
     /**
      * Creates new Data Source in the database
      *
@@ -200,6 +208,18 @@ public interface EamDb {
      */
     CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
 
+    
+    /**
+     * Retrieves Data Source details based on data source ID
+     *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
+     * @param dataSourceId the data source ID number
+     *
+     * @return The data source
+     */
+    CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException;
+    
     /**
      * Retrieves data sources that are in DB
      *
@@ -225,7 +245,7 @@ public interface EamDb {
      * @return List of artifact instances for a given type/value
      */
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException;
-
+    
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
@@ -685,4 +705,15 @@ public interface EamDb {
      * @throws EamDbException
      */
     void processInstanceTable(CorrelationAttribute.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
+    
+    /**
+     * Process the Artifact instance in the EamDb
+     *
+     * @param type EamArtifact.Type to search for
+     * @param instanceTableCallback callback to process the instance
+     * @param whereClause query string to execute
+     * @throws EamDbException
+     */
+    void processInstanceTableWhere(CorrelationAttribute.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException;
+
 }

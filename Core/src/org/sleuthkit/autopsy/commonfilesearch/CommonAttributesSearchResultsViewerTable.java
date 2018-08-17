@@ -31,18 +31,18 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 
 /**
- * <code>DataResultViewerTable</code> which overrides the default column header
- * width calculations. The <code>CommonFilesSearchResultsViewerTable</code>
- * presents multiple tiers of data which are not always present and it may not
- * make sense to try to calculate the column widths for such tables by sampling
- * rows and looking for wide cells. Rather, we just pick some reasonable values.
+ * <code>DataResultViewerTable</code> which overrides the default column
+ * header width calculations.  The <code>CommonAttributesSearchResultsViewerTable</code>
+ * presents multiple tiers of data which are not always present and it may not 
+ * make sense to try to calculate the column widths for such tables by sampling 
+ * rows and looking for wide cells.  Rather, we just pick some reasonable values.
  */
-public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
+public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTable {
 
     private static final Map<String, Integer> COLUMN_WIDTHS;
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchResultsViewerTable.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributesSearchResultsViewerTable.class.getName());
     
     private static final int DEFAULT_WIDTH = 100;
 
@@ -51,6 +51,7 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
         map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
@@ -60,11 +61,13 @@ public class CommonFilesSearchResultsViewerTable extends DataResultViewerTable {
     }
 
     @NbBundle.Messages({
+        "CommonFilesSearchResultsViewerTable.noDescText= ",
         "CommonFilesSearchResultsViewerTable.filesColLbl=Files",
         "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.hashsetHitsColLbl=Hash Set Hits",
-        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source(s)",
+        "CommonFilesSearchResultsViewerTable.caseColLbl1=Case",
+        "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
         "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
         "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
     })

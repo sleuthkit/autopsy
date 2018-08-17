@@ -86,7 +86,7 @@
 
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
-	<get src="https://drive.google.com/uc?id=1dLYGctuvRQMmnzfXPppTM_9gB49eLc_g" dest="${test-input}/EmbeddedIM_img1_v1.vhd" skipexisting="true"/>
+	<get src="https://drive.google.com/uc?id=1FkinvA7EFqP4nOSOyTAOli5KefM67ufA" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1JACMDyH4y54ypGzFWl82ZzMQf3qbrioP" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=17sGybvmBGsWWJYo1IWKmO04oG9hKpPi3" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>	    
@@ -97,6 +97,12 @@
         <get src="https://drive.google.com/uc?id=1-vmbmAAb2HBLbf58GpAA97ozGUFiYHbN" dest="${test-input}/CommonFiles_img2_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1ghDjm0NhI3ShMQ38E-4o7XrGeexpjdJb" dest="${test-input}/CommonFiles_img3_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1SJYJFjiumKEtQmeMPsQ6G3xmABarbKm_" dest="${test-input}/CommonFiles_img4_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1HwpDlMa1J7h9AmEd1JhLYGnzihslZJUj" dest="${test-input}/c1ds1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1Z7mWChlLIpIlScD-DVNGFik5A_rnwS_9" dest="${test-input}/c1ds2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=14ZxYGyng_eKPe2yaiKDkJLoNcKHIHhW5" dest="${test-input}/c2ds1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1xv3Lz9m2QLq35ofDfHQNe9aHVtVzHUsj" dest="${test-input}/c2ds2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1sg-znklB9yJAWq8i1cF2W-QLOM4FjZyv" dest="${test-input}/c3ds1_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1qXyaSlm3hMhv0jl6JkZEficknKjYNOlt" dest="${test-input}/c3ds2_v1.vhd" skipexisting="true"/>
     </target>
 
     <target name="get-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist,getTestDataFiles">

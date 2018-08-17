@@ -42,13 +42,18 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
         return getModuleName();
     }
 
+    /**
+     * Get the name of the module.
+     *
+     * @return The module name.
+     */
     static String getModuleName() {
-        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashDbIngestModule.moduleName");
+        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashLookupModuleFactory.moduleName.text");
     }
 
     @Override
     public String getModuleDescription() {
-        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashDbIngestModule.moduleDescription");
+        return NbBundle.getMessage(HashLookupModuleFactory.class, "HashLookupModuleFactory.moduleDescription.text");
     }
 
     @Override
@@ -101,8 +106,8 @@ public class HashLookupModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         if (!(settings instanceof HashLookupModuleSettings)) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "HashLookupModuleFactory.createFileIngestModule.exception.msg"));
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                    "HashLookupModuleFactory.createFileIngestModule.exception.msg"));
         }
         try {
             return new HashDbIngestModule((HashLookupModuleSettings) settings);

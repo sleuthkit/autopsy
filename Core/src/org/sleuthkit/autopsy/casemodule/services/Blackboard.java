@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 import java.io.Closeable;
 import java.io.IOException;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -38,7 +37,7 @@ import org.sleuthkit.datamodel.TskDataException;
 public final class Blackboard implements Closeable {
 
     private SleuthkitCase caseDb;
-    
+
     /**
      * Constructs a representation of the blackboard, a place where artifacts
      * and their attributes are posted.
@@ -80,8 +79,8 @@ public final class Blackboard implements Closeable {
      *
      * @return A type object representing the artifact type.
      *
-     * @throws BlackboardBlackboardException If there is a problem getting or
-     *                                       adding the artifact type.
+     * @throws BlackboardException If there is a problem getting or adding the
+     *                             artifact type.
      */
     public synchronized BlackboardArtifact.Type getOrAddArtifactType(String typeName, String displayName) throws BlackboardException {
         if (null == caseDb) {
@@ -110,8 +109,8 @@ public final class Blackboard implements Closeable {
      *
      * @return A type object representing the attribute type.
      *
-     * @throws BlackboardBlackboardException If there is a problem getting or
-     *                                       adding the attribute type.
+     * @throws BlackboardException If there is a problem getting or adding the
+     *                             attribute type.
      */
     public synchronized BlackboardAttribute.Type getOrAddAttributeType(String typeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE valueType, String displayName) throws BlackboardException {
         if (null == caseDb) {
@@ -139,7 +138,6 @@ public final class Blackboard implements Closeable {
     public synchronized void close() throws IOException {
         caseDb = null;
     }
-
 
     /**
      * A blackboard exception.
