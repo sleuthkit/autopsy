@@ -39,6 +39,8 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.commons.lang.StringUtils;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -50,8 +52,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -260,7 +260,7 @@ class ExtractRegistry extends Extract {
             }
 
             // parse the autopsy-specific output
-            if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
+            if (isNotEmpty(regOutputFiles.autopsyPlugins)) {
                 if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
@@ -269,7 +269,7 @@ class ExtractRegistry extends Extract {
             }
 
             // create a report for the full output
-            if (regOutputFiles.fullPlugins.isEmpty() == false) {
+            if (isNotEmpty(regOutputFiles.fullPlugins)) {
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"),

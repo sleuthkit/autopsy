@@ -75,7 +75,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private FileManager fileManager;
     private IngestJobContext context;
     private Blackboard blackboard;
-    private SleuthkitCase sleuthkitCase;
     private CommunicationsManager communicationsManager;
 
     ThunderbirdMboxFileIngestModule() {
@@ -87,10 +86,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         try {
-            Case currentCaseThrows = Case.getCurrentCaseThrows();
-            fileManager = currentCaseThrows.getServices().getFileManager();
-            sleuthkitCase = currentCaseThrows.getSleuthkitCase();
-            blackboard = sleuthkitCase.getBlackboard();
+            Case currentCase = Case.getCurrentCaseThrows();
+            fileManager = currentCase.getServices().getFileManager();
+            blackboard = currentCase.getSleuthkitCase().getBlackboard();
             communicationsManager = sleuthkitCase.getCommunicationsManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
