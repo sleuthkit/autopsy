@@ -83,8 +83,12 @@ public class EamArtifactUtil {
                     }
                 }
             }
-        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+        } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
+            return eamArtifacts;
+        } catch (CorrelationAttributeNormalizationException ex){
+            final String errorMessage = String.format("Error getting defined correlation types due to normalization exception: %s", ex.getMessage());   // NON-NLS
+            logger.log(Level.INFO, errorMessage);
             return eamArtifacts;
         }
 
