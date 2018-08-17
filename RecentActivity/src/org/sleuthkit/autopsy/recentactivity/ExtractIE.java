@@ -36,8 +36,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
@@ -467,112 +469,141 @@ class ExtractIE extends Extract {
             // Initialize it with the empty string to represent an unknown user.
             Set<String> reportedUserAccounts = Sets.newHashSet("");
             while (fileScanner.hasNext()) {
-                String line = fileScanner.nextLine();
-                if (!line.startsWith("URL")) {   //NON-NLS
-                    continue;
-                }
 
-                String[] lineBuff = line.split("\\t"); //NON-NLS
-
-                if (lineBuff.length < 4) {
-                    logger.log(Level.INFO, "Found unrecognized IE history format."); //NON-NLS
-                    continue;
-                }
-
-                String actime = lineBuff[3];
-                Long ftime = (long) 0;
-                String user;
-                String realurl;
-                String domain;
-
-                /*
-                 * We've seen two types of lines: URL http://XYZ.com .... URL
-                 * Visited: Joe@http://XYZ.com ....
-                 */
-                if (lineBuff[1].contains("@")) {
-                    String url[] = lineBuff[1].split("@", 2);
-                    user = url[0];
-                    user = user.replace("Visited:", ""); //NON-NLS
-                    user = user.replace(":Host:", ""); //NON-NLS
-                    user = user.replaceAll(":(.*?):", "");
-                    user = user.trim();
-                    realurl = url[1];
-                    realurl = realurl.replace("Visited:", ""); //NON-NLS
-                    realurl = realurl.replaceAll(":(.*?):", "");
-                    realurl = realurl.replace(":Host:", ""); //NON-NLS
-                    realurl = realurl.trim();
-                } else {
-                    user = "";
-                    realurl = lineBuff[1].trim();
-                }
-
-                domain = Util.extractDomain(realurl);
-
-                if (!actime.isEmpty()) {
+                parseLine(origFile, fileScanner.nextLine()).ifPresent(urlVisit -> {
+                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                            new BlackboardAttribute(
+                                    TSK_URL, PARENT_MODULE_NAME,
+                                    urlVisit.getURL()),
+                            new BlackboardAttribute(
+                                    TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
+                                    urlVisit.getTime()),
+                            //TODO: why are we adding an attribute that is always blank?
+                            new BlackboardAttribute(
+                                    TSK_REFERRER, PARENT_MODULE_NAME,
+                                    ""),
+                            // @@@ NOte that other browser modules are adding TITLE in here for the title
+                            new BlackboardAttribute(
+                                    TSK_PROG_NAME, PARENT_MODULE_NAME,
+                                    getModuleName()),
+                            new BlackboardAttribute(
+                                    TSK_DOMAIN, PARENT_MODULE_NAME,
+                                    urlVisit.getDomain()),
+                            new BlackboardAttribute(
+                                    TSK_USER_NAME, PARENT_MODULE_NAME,
+                                    urlVisit.getUser()));
                     try {
-                        Long epochtime = new SimpleDateFormat(PASCO_DATE_FORMAT).parse(actime).getTime();
-                        ftime = epochtime / 1000;
-                    } catch (ParseException e) {
-                        this.addErrorMessage(
-                                NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
-                                        this.getModuleName()));
-                        logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
-                    }
-                }
-
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                        new BlackboardAttribute(
-                                TSK_URL, PARENT_MODULE_NAME,
-                                realurl),
-                        new BlackboardAttribute(
-                                TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                ftime),
-                        //TODO: why are we adding an attribute that is always blank?
-                        new BlackboardAttribute(
-                                TSK_REFERRER, PARENT_MODULE_NAME,
-                                ""),
-                        // @@@ NOte that other browser modules are adding TITLE in here for the title
-                        new BlackboardAttribute(
-                                TSK_PROG_NAME, PARENT_MODULE_NAME,
-                                getModuleName()),
-                        new BlackboardAttribute(
-                                TSK_DOMAIN, PARENT_MODULE_NAME,
-                                domain),
-                        new BlackboardAttribute(
-                                TSK_USER_NAME, PARENT_MODULE_NAME,
-                                user));
-                try {
-                    BlackboardArtifact bbart = origFile.newArtifact(TSK_WEB_HISTORY);
-                    bbart.addAttributes(bbattributes);
-                    bbartifacts.put(TSK_WEB_HISTORY, bbart);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error while trying to create Internet Explorer history artifact.", ex); //NON-NLS
-                    this.addErrorMessage(
-                            NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
-                                    origFile.getName()));
-                }
-
-                if (reportedUserAccounts.contains(user) == false) {
-                    try {
-                        BlackboardArtifact osAttr = origFile.newArtifact(TSK_OS_ACCOUNT);
-                        osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME, user));
-                        bbartifacts.put(TSK_OS_ACCOUNT, osAttr);
-                        reportedUserAccounts.add(user);
+                        BlackboardArtifact bbart = origFile.newArtifact(TSK_WEB_HISTORY);
+                        bbart.addAttributes(bbattributes);
+                        bbartifacts.put(TSK_WEB_HISTORY, bbart);
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  os account artifact.", ex); //NON-NLS
-                        this.addErrorMessage(
+                        logger.log(Level.SEVERE, "Error while trying to create Internet Explorer history artifact.", ex); //NON-NLS
+                        addErrorMessage(
                                 NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
                                         origFile.getName()));
                     }
-                }
+                    if (reportedUserAccounts.contains(urlVisit.getUser()) == false) {
+                        try {
+                            BlackboardArtifact osAttr = origFile.newArtifact(TSK_OS_ACCOUNT);
+                            osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME, urlVisit.getUser()));
+                            bbartifacts.put(TSK_OS_ACCOUNT, osAttr);
+                            reportedUserAccounts.add(urlVisit.getUser());
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  os account artifact.", ex); //NON-NLS
+                            addErrorMessage(
+                                    NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
+                                            origFile.getName()));
+                        }
+                    }
+                });
+
             }
             return bbartifacts;
         } catch (FileNotFoundException ex) {
-            this.addErrorMessage(
+            addErrorMessage(
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getModuleName(),
                             file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
+        }
+    }
+
+    private Optional<URLVisit> parseLine(AbstractFile origFile, String line) {
+
+        if (!line.startsWith("URL")) {   //NON-NLS
+            return Optional.empty();
+        }
+
+        String[] lineBuff = line.split("\\t"); //NON-NLS
+
+        if (lineBuff.length < 4) {
+            logger.log(Level.INFO, "Found unrecognized IE history format."); //NON-NLS
+            return Optional.empty();
+        }
+
+        String user;
+        String realurl;
+
+        /*
+         * We've seen two types of lines: URL http://XYZ.com .... URL Visited:
+         * Joe@http://XYZ.com ....
+         */
+        if (lineBuff[1].contains("@")) {
+            String splitLine[] = lineBuff[1].split("@", 2);
+            //TODO: does the order matter?  is this the same processing to both?
+            user = splitLine[0].replace("Visited:", "").replace(":Host:", "").replaceAll(":(.*?):", "").trim(); // NON-NLS
+            realurl = splitLine[1].replace("Visited:", "").replaceAll(":(.*?):", "").replace(":Host:", "").trim(); //NON-NLS
+        } else {
+            user = "";
+            realurl = lineBuff[1].trim();
+        }
+
+        String domain = Util.extractDomain(realurl);
+        String actime = lineBuff[3];
+        Long ftime = (long) 0;
+        if (!actime.isEmpty()) {
+            try {
+                Long epochtime = new SimpleDateFormat(PASCO_DATE_FORMAT).parse(actime).getTime();
+                ftime = epochtime / 1000;
+            } catch (ParseException e) {
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
+                                this.getModuleName()));
+                logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
+            }
+        }
+
+        return Optional.of(new URLVisit(user, realurl, domain, ftime));
+    }
+
+    private static class URLVisit {
+
+        String user;
+        String realurl;
+        String domain;
+        Long ftime;
+
+        URLVisit(String user, String realurl, String domain, Long ftime) {
+            this.user = user;
+            this.realurl = realurl;
+            this.domain = domain;
+            this.ftime = ftime;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public String getURL() {
+            return realurl;
+        }
+
+        public String getDomain() {
+            return domain;
+        }
+
+        public Long getTime() {
+            return ftime;
         }
     }
 }
