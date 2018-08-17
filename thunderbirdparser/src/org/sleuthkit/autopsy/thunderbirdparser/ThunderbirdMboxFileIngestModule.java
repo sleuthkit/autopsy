@@ -57,7 +57,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Relationship;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;

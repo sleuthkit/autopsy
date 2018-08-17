@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.logging.Level;
+import javax.annotation.concurrent.Immutable;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
@@ -474,10 +474,10 @@ class ExtractIE extends Extract {
                     Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                             new BlackboardAttribute(
                                     TSK_URL, PARENT_MODULE_NAME,
-                                    urlVisit.getURL()),
+                                    urlVisit.url),
                             new BlackboardAttribute(
                                     TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                    urlVisit.getTime()),
+                                    urlVisit.time),
                             //TODO: why are we adding an attribute that is always blank?
                             new BlackboardAttribute(
                                     TSK_REFERRER, PARENT_MODULE_NAME,
@@ -488,10 +488,10 @@ class ExtractIE extends Extract {
                                     getModuleName()),
                             new BlackboardAttribute(
                                     TSK_DOMAIN, PARENT_MODULE_NAME,
-                                    urlVisit.getDomain()),
+                                    urlVisit.domain),
                             new BlackboardAttribute(
                                     TSK_USER_NAME, PARENT_MODULE_NAME,
-                                    urlVisit.getUser()));
+                                    urlVisit.user));
                     try {
                         BlackboardArtifact bbart = origFile.newArtifact(TSK_WEB_HISTORY);
                         bbart.addAttributes(bbattributes);
@@ -502,12 +502,12 @@ class ExtractIE extends Extract {
                                 NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
                                         origFile.getName()));
                     }
-                    if (reportedUserAccounts.contains(urlVisit.getUser()) == false) {
+                    if (reportedUserAccounts.contains(urlVisit.user) == false) {
                         try {
                             BlackboardArtifact osAttr = origFile.newArtifact(TSK_OS_ACCOUNT);
-                            osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME, urlVisit.getUser()));
+                            osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME, urlVisit.user));
                             bbartifacts.put(TSK_OS_ACCOUNT, osAttr);
-                            reportedUserAccounts.add(urlVisit.getUser());
+                            reportedUserAccounts.add(urlVisit.user);
                         } catch (TskCoreException ex) {
                             logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  os account artifact.", ex); //NON-NLS
                             addErrorMessage(
@@ -576,34 +576,19 @@ class ExtractIE extends Extract {
         return Optional.of(new URLVisit(user, realurl, domain, ftime));
     }
 
+    @Immutable
     private static class URLVisit {
 
-        String user;
-        String realurl;
-        String domain;
-        Long ftime;
+        private final String user;
+        private final String url;
+        private final String domain;
+        private final Long time;
 
-        URLVisit(String user, String realurl, String domain, Long ftime) {
+        URLVisit(String user, String url, String domain, Long ftime) {
             this.user = user;
-            this.realurl = realurl;
+            this.url = url;
             this.domain = domain;
-            this.ftime = ftime;
-        }
-
-        public String getUser() {
-            return user;
-        }
-
-        public String getURL() {
-            return realurl;
-        }
-
-        public String getDomain() {
-            return domain;
-        }
-
-        public Long getTime() {
-            return ftime;
+            this.time = ftime;
         }
     }
 }

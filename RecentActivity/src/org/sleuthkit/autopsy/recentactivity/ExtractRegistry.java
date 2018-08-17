@@ -39,7 +39,6 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.commons.lang.StringUtils;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Lookup;

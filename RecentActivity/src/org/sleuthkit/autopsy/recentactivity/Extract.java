@@ -103,25 +103,7 @@ abstract class Extract {
         errorMessages.add(message);
     }
 
-//
-//    /**
-//     * Method to index a blackboard artifact for keyword search
-//     *
-//     * @param bbart Blackboard artifact to be indexed
-//     */
-//  
-//    void postArtifacts(Collections<BlackboardArtifact> bbarts) throws Blackboard.BlackboardException {
-//
-//        // index the artifact for keyword search
-//        blackboard.postArtifact(bbarts, getModuleName());
-////        } catch (Blackboard.BlackboardException ex) {
-////            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
-////            MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
-////        } catch (NoCurrentCaseException ex) {
-////            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-////            MessageNotifyUtil.Notify.error(Bundle.Extract_noOpenCase_errMsg(), bbart.getDisplayName());
-////        }
-//    }
+
     /**
      * Returns a List from a result set based on sql query. This is used to
      * query sqlite databases storing user recent activity data, such as in
