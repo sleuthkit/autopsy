@@ -271,7 +271,7 @@ public class IngestEventsListener {
                                                 caseDisplayNames);
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
-                                    LOGGER.log(Level.SEVERE, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
+                                    LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }
                             eamArtifacts.add(eamArtifact);

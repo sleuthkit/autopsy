@@ -52,7 +52,6 @@ import javax.swing.table.TableColumn;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -139,8 +138,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             selectedNode.updateComment(action.getComment());
                             otherCasesTable.repaint();
                         }
-                    } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+                    } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);	//NON-NLS
+                    } catch(CorrelationAttributeNormalizationException ex){
+                        LOGGER.log(Level.INFO, "Error performing Add/Edit Comment action", ex);	//NON-NLS
                     }
                 }
             }
@@ -188,7 +189,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             eamArtifact.getCorrelationValue()));
                     } catch (CorrelationAttributeNormalizationException ex) {
                         String message = String.format("Unable to determine commonality for artifact %s", eamArtifact.toString());
-                        LOGGER.log(Level.SEVERE, message, ex);
+                        LOGGER.log(Level.INFO, message, ex);
                     }                    
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
@@ -447,7 +448,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             try {
                                 ret.add(new CorrelationAttribute(aType, md5));
                             } catch (CorrelationAttributeNormalizationException ex) {
-                                LOGGER.log(Level.WARNING, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
+                                LOGGER.log(Level.INFO, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
                             }
                             break;
                         }
@@ -466,7 +467,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         try {
                             ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), md5));
                         } catch (CorrelationAttributeNormalizationException ex) {
-                            LOGGER.log(Level.WARNING, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
+                            LOGGER.log(Level.INFO, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
                         }
                     }
                 }
@@ -564,8 +565,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
 
             return nodeDataMap;
-        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+        } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
+        } catch(CorrelationAttributeNormalizationException ex) {
+            LOGGER.log(Level.INFO, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         } catch (TskCoreException ex) {
@@ -715,7 +718,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
             correlatedNodeDataMap.values().forEach((nodeData) -> {
                 tableModel.addNodeData(nodeData);
-
             });
         }
 

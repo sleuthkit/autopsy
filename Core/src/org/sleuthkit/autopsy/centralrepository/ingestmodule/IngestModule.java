@@ -142,8 +142,11 @@ final class IngestModule implements FileIngestModule {
                 if (!caseDisplayNamesList.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList);
                 }
-            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+                return ProcessResult.ERROR;
+            } catch (CorrelationAttributeNormalizationException ex){
+                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
@@ -160,8 +163,11 @@ final class IngestModule implements FileIngestModule {
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);
-        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+        } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+            return ProcessResult.ERROR;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
             return ProcessResult.ERROR;
         }
 

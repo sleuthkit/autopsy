@@ -223,14 +223,17 @@ final class InterCaseSearchResultsProcessor {
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    correlationAttribute = DbManager.getCorrelationAttribute(fileType,
-                            correlationCase,
-                            dataSource,
-                            InstanceTableCallback.getValue(resultSet),
-                            InstanceTableCallback.getFilePath(resultSet));
-
+                    try {
+                        correlationAttribute = DbManager.getCorrelationAttribute(fileType,
+                                correlationCase,
+                                dataSource,
+                                InstanceTableCallback.getValue(resultSet),
+                                InstanceTableCallback.getFilePath(resultSet));
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        LOGGER.log(Level.INFO, "Error getting single correlation artifact instance from database.", ex); // NON-NLS
+                    }
                 }
-            } catch (SQLException | EamDbException | CorrelationAttributeNormalizationException ex) {
+            } catch (SQLException | EamDbException ex) {
                 LOGGER.log(Level.WARNING, "Error getting single correlation artifact instance from database.", ex); // NON-NLS
             }
         }
