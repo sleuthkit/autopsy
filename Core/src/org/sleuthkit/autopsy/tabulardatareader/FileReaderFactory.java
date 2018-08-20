@@ -32,7 +32,7 @@ public final class FileReaderFactory {
      * is not supported.
      * 
      * @param mimeType mimeType passed in from the ingest module
-     * @param file current file under inspection
+g     * @param file current file under inspection
      * @param localDiskPath path for abstract file contents to be written
      * @return The correct reader class needed to read the file contents
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException 
@@ -47,7 +47,7 @@ public final class FileReaderFactory {
                 try {
                     return new ExcelReader(file, localDiskPath, mimeType);
                     //Catches runtime exceptions being emitted from Apache
-                    //POI (such as EncryptedDocumentException) as wraps them
+                    //POI (such as EncryptedDocumentException) and wraps them
                     //into FileReaderInitException to be caught and logged
                     //in the ingest module.
                 } catch(Exception poiInitException) {
