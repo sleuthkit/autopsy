@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
 })
-public class SQLiteReader extends AbstractReader {
+public final class SQLiteReader extends AbstractReader {
     
     private final Connection connection;
     private final IngestServices services = IngestServices.getInstance();

@@ -45,7 +45,7 @@ import org.apache.poi.hssf.OldExcelFormatException;
  * Reads excel files and implements the abstract reader api for interfacing with the 
  * content. Supports .xls and .xlsx files.
  */
-public class ExcelReader extends AbstractReader {  
+public final class ExcelReader extends AbstractReader {  
     /* Boilerplate code */
     private final IngestServices services = IngestServices.getInstance();
     private final Logger logger = services.getLogger(ExcelReader.class.getName());
