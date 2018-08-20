@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 
 /**
@@ -97,6 +98,10 @@ public class LocalDisk {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
+    }
+    
+    public boolean isConfigDrive() {
+        return Places.getUserDirectory().toString() == this.mountPoint;
     }
 
 }

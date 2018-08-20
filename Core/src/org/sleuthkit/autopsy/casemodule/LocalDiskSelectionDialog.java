@@ -305,7 +305,7 @@ final class LocalDiskSelectionDialog extends JDialog {
         @NbBundle.Messages({
             "LocalDiskSelectionDialog.columnName.diskName=Disk Name",
             "LocalDiskSelectionDialog.columnName.diskSize=Disk Size",
-            "LocalDiskSelectionDialog.columnName.mountPoint=Mount Point"
+            "LocalDiskSelectionDialog.columnName.Details=Details"
         })
 
         @Override
@@ -316,7 +316,7 @@ final class LocalDiskSelectionDialog extends JDialog {
                 case 1:
                     return Bundle.LocalDiskSelectionDialog_columnName_diskSize();
                 case 2:
-                    return Bundle.LocalDiskSelectionDialog_columnName_mountPoint();
+                    return Bundle.LocalDiskSelectionDialog_columnName_Details();
                 default:
                     return "Unnamed"; //NON-NLS
             }
