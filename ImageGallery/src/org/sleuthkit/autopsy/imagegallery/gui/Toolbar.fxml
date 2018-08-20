@@ -17,7 +17,7 @@
     <items> 
         <HBox alignment="CENTER" spacing="5.0">
             <children>
-                <CheckBox fx:id="filterDataSourcesCheckBox" mnemonicParsing="false" text="Filter DataSources:">
+                <Label  mnemonicParsing="false" text=" Data Source: ">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                             <image>
@@ -25,7 +25,7 @@
                             </image>
                         </ImageView>
                     </graphic>
-                </CheckBox>
+                </Label>
                 <ComboBox fx:id="dataSourceComboBox" editable="false" />
     
             </children>

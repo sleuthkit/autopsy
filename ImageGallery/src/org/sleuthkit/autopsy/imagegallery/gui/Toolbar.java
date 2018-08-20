@@ -21,18 +21,18 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -71,55 +71,42 @@ public class Toolbar extends ToolBar {
     private static final int SIZE_SLIDER_DEFAULT = 100;
 
     @FXML
-    private CheckBox filterDataSourcesCheckBox;
-
-    @FXML
-    private ComboBox<DataSource> dataSourceComboBox;
-
+    private ComboBox<Optional<DataSource>> dataSourceComboBox;
     @FXML
     private ImageView sortHelpImageView;
-
     @FXML
     private ComboBox<DrawableAttribute<?>> groupByBox;
-
     @FXML
     private Slider sizeSlider;
-
     @FXML
     private SplitMenuButton catGroupMenuButton;
-
     @FXML
     private SplitMenuButton tagGroupMenuButton;
-
     @FXML
     private Label groupByLabel;
-
     @FXML
     private Label tagImageViewLabel;
-
     @FXML
     private Label categoryImageViewLabel;
-
     @FXML
     private Label thumbnailSizeLabel;
 
-    private final ImageGalleryController controller;
     private SortChooser<DrawableGroup, GroupSortBy> sortChooser;
+
+    private final ImageGalleryController controller;
+    private final ObservableList<Optional<DataSource>> dataSources = FXCollections.observableArrayList();
 
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
             controller.getGroupManager().regroup(
+                    //dataSourceComboBox.getSelectionModel().getSelectedItem(), TODO-1010/7: incorporate the selected datasource into this call.
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
                     false);
         }
     };
-
-    public DoubleProperty thumbnailSizeProperty() {
-        return sizeSlider.valueProperty();
-    }
 
     @FXML
     @NbBundle.Messages({"Toolbar.groupByLabel=Group By:",
@@ -133,7 +120,6 @@ public class Toolbar extends ToolBar {
         "Toolbar.sortHelpTitle=Group Sorting",})
     void initialize() {
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
-        assert filterDataSourcesCheckBox != null : "fx:id=\"filterDataSourcesCheckBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert dataSourceComboBox != null : "fx:id=\"dataSourceComboBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sortHelpImageView != null : "fx:id=\"sortHelpImageView\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert tagImageViewLabel != null : "fx:id=\"tagImageViewLabel\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -147,23 +133,21 @@ public class Toolbar extends ToolBar {
             Platform.runLater(() -> syncGroupControlsEnabledState(newViewState));
         });
         syncGroupControlsEnabledState(controller.viewState().get());
-        dataSourceComboBox.disableProperty().bind(filterDataSourcesCheckBox.selectedProperty().not());
+
         dataSourceComboBox.setCellFactory(param -> new DataSourceCell());
         dataSourceComboBox.setButtonCell(new DataSourceCell());
+        dataSourceComboBox.setItems(dataSources);
 
-        dataSourceComboBox.getSelectionModel().selectedItemProperty()
-                .addListener((ObservableValue<? extends DataSource> observable, DataSource oldValue, DataSource newValue) -> {
-                    /* TODO-1010/7: record newly selected datasource(id)
-                     * somewhere? controller? probably setting that property
-                     * will trigger a refresh...
-                     */
-                });
         try {
             /*
-             * TODO-1005: Getting the datasources and tShe tagnames are Db
+             * TODO-1005: Getting the datasources and the tagnames are Db
              * querries. We should probably push them off to a BG thread.
              */
-            dataSourceComboBox.setItems(FXCollections.observableArrayList(controller.getSleuthKitCase().getDataSources()));
+            dataSources.add(Optional.empty());
+            controller.getSleuthKitCase().getDataSources()
+                    .forEach(dataSource -> dataSources.add(Optional.of(dataSource)));
+            /* TODO: 1010/7 push data source selected in dialog into UI */
+            dataSourceComboBox.getSelectionModel().selectFirst();
 
             TagGroupAction followUpGroupAction = new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller);
             tagGroupMenuButton.setOnAction(followUpGroupAction);
@@ -213,7 +197,7 @@ public class Toolbar extends ToolBar {
 
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-        groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
+
         groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
         groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
@@ -228,7 +212,6 @@ public class Toolbar extends ToolBar {
             queryInvalidationListener.invalidated(observable);
         });
 
-        sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
         sortChooser.setComparator(controller.getGroupManager().getSortBy());
         getItems().add(2, sortChooser);
         sortHelpImageView.setCursor(Cursor.HAND);
@@ -240,6 +223,15 @@ public class Toolbar extends ToolBar {
                     Bundle.Toolbar_sortHelpTitle(),
                     sortHelpImageView.getImage(), text);
         });
+        
+        
+        dataSourceComboBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
+        groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
+        sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
+    }
+
+    public DoubleProperty thumbnailSizeProperty() {
+        return sizeSlider.valueProperty();
     }
 
     /**
@@ -291,15 +283,15 @@ public class Toolbar extends ToolBar {
     /**
      * Cell used to represent a DataSource in the dataSourceComboBoc
      */
-    static private class DataSourceCell extends ListCell<DataSource> {
+    static private class DataSourceCell extends ListCell<Optional<DataSource>> {
 
         @Override
-        protected void updateItem(DataSource item, boolean empty) {
+        protected void updateItem(Optional<DataSource> item, boolean empty) {
             super.updateItem(item, empty);
             if (empty || item == null) {
-                setText("All Data Sources");
+                setText("");
             } else {
-                setText(item.getName());
+                setText(item.map(DataSource::getName).orElse("All"));
             }
         }
     }
