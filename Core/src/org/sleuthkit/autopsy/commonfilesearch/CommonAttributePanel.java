@@ -420,7 +420,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         percentageThreshold = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(412, 350));
+        setMinimumSize(new java.awt.Dimension(412, 375));
+        setPreferredSize(new java.awt.Dimension(412, 375));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -428,7 +429,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             }
         });
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(412, 350));
+        jPanel1.setMaximumSize(new java.awt.Dimension(412, 375));
+        jPanel1.setMinimumSize(new java.awt.Dimension(412, 375));
+        jPanel1.setPreferredSize(new java.awt.Dimension(412, 375));
 
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel2.text")); // NOI18N
         commonFilesSearchLabel2.setFocusable(false);
