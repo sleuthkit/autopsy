@@ -44,7 +44,15 @@ public final class FileReaderFactory {
                 return new SQLiteReader(file, localDiskPath);
             case "application/vnd.ms-excel":
             case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-                return new ExcelReader(file, localDiskPath, mimeType);
+                try {
+                    return new ExcelReader(file, localDiskPath, mimeType);
+                    //Catches runtime exceptions being emitted from Apache
+                    //POI (such as EncryptedDocumentException) as wraps them
+                    //into FileReaderInitException to be caught and logged
+                    //in the ingest module.
+                } catch(Exception poiInitException) {
+                    throw new FileReaderInitException(poiInitException);
+                }
             default:
                 throw new FileReaderInitException(String.format("Reader for mime "
                         + "type [%s] is not supported", mimeType));
