@@ -223,8 +223,7 @@ public class Toolbar extends ToolBar {
                     Bundle.Toolbar_sortHelpTitle(),
                     sortHelpImageView.getImage(), text);
         });
-        
-        
+
         dataSourceComboBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
         groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
@@ -261,8 +260,16 @@ public class Toolbar extends ToolBar {
         popOver.show(owner);
     }
 
+    /**
+     * Disable the tag and catagory controls if and only if there is no group
+     * selected.
+     *
+     * @param newViewState The GroupViewState to use as a source of the
+     *                     selection.
+     */
     private void syncGroupControlsEnabledState(GroupViewState newViewState) {
-        boolean noGroupSelected = newViewState == null || newViewState.getGroup() == null;
+        boolean noGroupSelected = (null == newViewState)
+                                  || (null == newViewState.getGroup());
 
         tagGroupMenuButton.setDisable(noGroupSelected);
         catGroupMenuButton.setDisable(noGroupSelected);
