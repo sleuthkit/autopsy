@@ -29,6 +29,8 @@ import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
@@ -79,6 +81,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         super(new JFrame(Bundle.CommonFilesPanel_frame_title()),
                 Bundle.CommonFilesPanel_frame_msg(), true);
         initComponents();
+        
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         this.errorText.setVisible(false);
         this.setupDataSources();
@@ -92,6 +95,23 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         }
 
         this.errorManager = new UserInputErrorManager();
+        
+        this.percentageThreshold.getDocument().addDocumentListener(new DocumentListener(){
+            @Override
+            public void insertUpdate(DocumentEvent e) { 
+                CommonAttributePanel.this.percentageThresholdChanged();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                CommonAttributePanel.this.percentageThresholdChanged();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                CommonAttributePanel.this.percentageThresholdChanged();
+            }
+        });
     }
 
     private static boolean isEamDbAvailable() {
@@ -424,7 +444,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(412, 375));
-        setPreferredSize(new java.awt.Dimension(412, 375));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -530,11 +549,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         percentageThreshold.setText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThreshold.text")); // NOI18N
-        percentageThreshold.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                percentageThresholdActionPerformed(evt);
-            }
-        });
+        percentageThreshold.setMaximumSize(new java.awt.Dimension(28, 24));
+        percentageThreshold.setMinimumSize(new java.awt.Dimension(28, 24));
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.jLabel1.text_1")); // NOI18N
 
@@ -661,23 +677,19 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         this.handleFrequencyPercentageState();
     }//GEN-LAST:event_percentageThresholdCheckActionPerformed
 
-    private void percentageThresholdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdActionPerformed
+    private void percentageThresholdChanged(){
         String percentageString = this.percentageThreshold.getText();
 
-        Integer percentage = null;
-
         try {
-            percentage = Integer.parseInt(percentageString);
-            this.percentageThresholdValue = percentage;
+            this.percentageThresholdValue = Integer.parseInt(percentageString);
+            
         } catch (Exception e) {
             this.percentageThresholdValue = -1;
         }
 
-        this.percentageThresholdValue = percentage.intValue();
-
-        this.handleFrequencyPercentageState();
-    }//GEN-LAST:event_percentageThresholdActionPerformed
-
+        this.handleFrequencyPercentageState();        
+    }
+    
     private void updateErrorTextAndSearchBox() {
 
         if (this.errorManager.anyErrors()) {
