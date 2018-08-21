@@ -52,19 +52,19 @@ import org.sleuthkit.datamodel.TskCoreException;
  * logic. Nested within CommonFilesDialog.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class CommonAttributePanel extends javax.swing.JDialog  {
+public final class CommonAttributePanel extends javax.swing.JDialog {
 
     private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     private static final long serialVersionUID = 1L;
-    
+
     private static final Long NO_DATA_SOURCE_SELECTED = -1L;
-    
+
     private final UserInputErrorManager errorManager;
 
     private boolean pictureViewCheckboxState;
-    
+
     private boolean documentsCheckboxState;
-    
+
     private int percentageThresholdValue = 20;
 
     /**
@@ -90,18 +90,18 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             this.disableIntercaseSearch();
             this.disablePercentageOptions();
         }
-        
+
         this.errorManager = new UserInputErrorManager();
     }
 
     private static boolean isEamDbAvailable() {
         try {
-            return EamDb.isEnabled() && 
-                    EamDb.getInstance() != null &&
-                    EamDb.getInstance().getCases().size() > 1 && 
-                    Case.isCaseOpen() &&
-                    Case.getCurrentCase() != null &&
-                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
+            return EamDb.isEnabled()
+                    && EamDb.getInstance() != null
+                    && EamDb.getInstance().getCases().size() > 1
+                    && Case.isCaseOpen()
+                    && Case.getCurrentCase() != null
+                    && EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
@@ -166,9 +166,10 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                         filterByDocuments = true;
                     }
                 }
+
+                int percentageThreshold = CommonAttributePanel.this.percentageThresholdValue;
                 
-                int percentageThreshold = 0;
-                if(CommonAttributePanel.this.percentageThresholdCheck.isSelected()){
+                if (CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
                     String percentageThresholdAsString = CommonAttributePanel.this.percentageThreshold.getText();
                     percentageThreshold = Integer.parseInt(percentageThresholdAsString);
                 }
@@ -245,7 +246,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         }.execute();
     }
 
-
     /**
      * Sets up the data sources dropdown and returns the data sources map for
      * future usage.
@@ -278,8 +278,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                     boolean multipleDataSources = this.caseHasMultipleSources();
                     CommonAttributePanel.this.intraCasePanel.rigForMultipleDataSources(multipleDataSources);
 
-                    //TODO this should be attached to the intra/inter radio buttons
-                    CommonAttributePanel.this.setSearchButtonEnabled(true);
+                    CommonAttributePanel.this.updateErrorTextAndSearchBox();
                 }
             }
 
@@ -625,41 +624,27 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
-        this.manageFileTypeCheckBoxState();
-        this.updateErrorTextAndSearchBox();
+        this.handleFileTypeCheckBoxState();
     }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
 
     private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
-        this.manageFileTypeCheckBoxState();
+        this.handleFileTypeCheckBoxState();
     }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
 
     private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
-        this.updateErrorTextAndSearchBox();
+        this.handleFileTypeCheckBoxState();
     }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
 
     private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
-        this.updateErrorTextAndSearchBox();
+        this.handleFileTypeCheckBoxState();
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
-        handleIntraCaseSearchCriteriaChanged();
     }//GEN-LAST:event_intraCaseRadioActionPerformed
-
-    public void handleIntraCaseSearchCriteriaChanged() {
-        if (this.areIntraCaseSearchCriteriaMet()) {
-            this.searchButton.setEnabled(true);
-            this.hideErrorMessages();
-        } else {
-            this.searchButton.setEnabled(false);
-            this.hideErrorMessages();
-            this.showIntraCaseErrorMessage();
-        }
-    }
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
-        handleInterCaseSearchCriteriaChanged();
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
@@ -667,47 +652,35 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
     }//GEN-LAST:event_formWindowClosed
 
     private void percentageThresholdCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdCheckActionPerformed
-        if(this.percentageThresholdCheck.isSelected()){
+        if (this.percentageThresholdCheck.isSelected()) {
             this.percentageThreshold.setEnabled(true);
-            
         } else {
             this.percentageThreshold.setEnabled(false);
         }
-        
-        this.handleFrequencyPercentageCriteriaMet();
+
+        this.handleFrequencyPercentageState();
     }//GEN-LAST:event_percentageThresholdCheckActionPerformed
 
     private void percentageThresholdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdActionPerformed
         String percentageString = this.percentageThreshold.getText();
-        
+
         Integer percentage = null;
-        
-        try{
+
+        try {
             percentage = Integer.parseInt(percentageString);
             this.percentageThresholdValue = percentage;
-        } catch(Exception e){
+        } catch (Exception e) {
             this.percentageThresholdValue = -1;
         }
-        
+
         this.percentageThresholdValue = percentage.intValue();
-        
-        this.handleFrequencyPercentageCriteriaMet();
+
+        this.handleFrequencyPercentageState();
     }//GEN-LAST:event_percentageThresholdActionPerformed
 
-    public void handleInterCaseSearchCriteriaChanged() {
-        if (this.areInterCaseSearchCriteriaMet()) {
-            this.searchButton.setEnabled(true);
-            this.hideErrorMessages();
-        } else {
-            this.searchButton.setEnabled(false);
-            this.hideErrorMessages();
-            this.showInterCaseErrorMessage();
-        }
-    }
-
     private void updateErrorTextAndSearchBox() {
-        
-        if(this.errorManager.anyErrors()){
+
+        if (this.errorManager.anyErrors()) {
             this.searchButton.setEnabled(false);
             //grab the first error error and show it
             this.errorText.setText(this.errorManager.getErrors().get(0));
@@ -716,17 +689,21 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             this.searchButton.setEnabled(true);
             this.errorText.setVisible(false);
         }
-        
-        if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected() && !this.allFileCategoriesRadioButton.isSelected()) {
-            this.searchButton.setEnabled(false);
-            this.errorText.setVisible(true);
-        } else {
-            this.searchButton.setEnabled(true);
-            this.errorText.setVisible(false);
-        }
     }
 
-    private void manageFileTypeCheckBoxState() {
+    private void enablePercentageOptions() {
+        this.percentageThreshold.setEnabled(true);
+        this.percentageThresholdCheck.setEnabled(true);
+        this.percentageThresholdCheck.setSelected(true);
+    }
+
+    private void disablePercentageOptions() {
+        this.percentageThreshold.setEnabled(false);
+        this.percentageThresholdCheck.setEnabled(false);
+        this.percentageThresholdCheck.setSelected(false);
+    }
+
+    private void handleFileTypeCheckBoxState() {
 
         this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
         this.documentsCheckboxState = this.documentsCheckbox.isSelected();
@@ -734,6 +711,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         if (this.allFileCategoriesRadioButton.isSelected()) {
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
+            
+            this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
         }
 
         if (this.selectedFileCategoriesButton.isSelected()) {
@@ -744,8 +723,24 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             this.pictureVideoCheckbox.setEnabled(true);
             this.documentsCheckbox.setEnabled(true);
 
-            this.updateErrorTextAndSearchBox();
+            if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected() && !this.allFileCategoriesRadioButton.isSelected()) {
+                this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, true);
+            } else {
+                this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
+            }
         }
+        
+        this.updateErrorTextAndSearchBox();
+    }
+
+    private void handleFrequencyPercentageState() {
+        if (this.percentageThresholdValue > 0 && this.percentageThresholdValue <= 100) {
+            this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, false);
+        } else {
+            this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, true);
+        }
+
+        this.updateErrorTextAndSearchBox();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -771,50 +766,4 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
     private javax.swing.JButton searchButton;
     private javax.swing.JRadioButton selectedFileCategoriesButton;
     // End of variables declaration//GEN-END:variables
-
-    void setSearchButtonEnabled(boolean enabled) {
-        this.searchButton.setEnabled(enabled);
-    }
-
-    private boolean areIntraCaseSearchCriteriaMet() {
-        return this.intraCasePanel.areSearchCriteriaMet();
-    }
-
-    private boolean areInterCaseSearchCriteriaMet() {
-        return this.interCasePanel.areSearchCriteriaMet();
-    }
-
-    private void hideErrorMessages() {
-        this.errorText.setVisible(false);
-    }
-
-    private void showIntraCaseErrorMessage() {
-        this.errorText.setText(this.intraCasePanel.getErrorMessage());
-        this.errorText.setVisible(true);
-    }
-
-    private void showInterCaseErrorMessage() {
-        this.errorText.setText(this.interCasePanel.getErrorMessage());
-        this.errorText.setVisible(true);
-    }
-
-    private void enablePercentageOptions() {
-        this.percentageThreshold.setEnabled(true);
-        this.percentageThresholdCheck.setEnabled(true);
-        this.percentageThresholdCheck.setSelected(true);
-    }
-
-    private void disablePercentageOptions() {
-        this.percentageThreshold.setEnabled(false);
-        this.percentageThresholdCheck.setEnabled(false);
-        this.percentageThresholdCheck.setSelected(false);
-    }
-
-    private void handleFrequencyPercentageCriteriaMet() {
-        if(this.percentageThresholdValue > 0 && this.percentageThresholdValue<= 100){
-            this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, false);
-        } else {
-            this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, true);
-        }
-    }
 }

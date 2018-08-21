@@ -29,13 +29,24 @@ import java.util.stream.Collectors;
  */
 class UserInputErrorManager {
     
-    static final int FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY = 1;    
+    static final int FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY = 1; 
+    static final int NO_FILE_CATEGORIES_SELECTED_KEY = 2;
     
     private final Map<Integer, ErrorMessage> currentErrors;
     
+    /**
+     * Construct a new ErrorManager which can be used to track the status
+     * of all known error states, retrieve error messages, and determine if 
+     * anything is in an error state.
+     */
     UserInputErrorManager (){
+        
+        //when new errors are needed for the dialog, define a key and a value
+        //  and add them to the map.
+        
         this.currentErrors = new HashMap<>();
         this.currentErrors.put(FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, new ErrorMessage("Frequency percentage must be greater than zero and less than or equal to 100."));
+        this.currentErrors.put(NO_FILE_CATEGORIES_SELECTED_KEY, new ErrorMessage("No file categories are included in the search."));
     }
     
     /**
