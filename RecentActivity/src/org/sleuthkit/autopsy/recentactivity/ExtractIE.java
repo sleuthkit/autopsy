@@ -368,7 +368,7 @@ class ExtractIE extends Extract {
                 //Delete index<n>.dat file since it was succcessfully parsed by Pasco
                 datFile.delete();
             } else {
-                logger.log(Level.WARNING, "pasco execution failed on: {0}", this.getModuleName()); //NON-NLS
+                logger.log(Level.WARNING, "pasco execution failed on: {0}", filename); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getModuleName()));
             }
@@ -396,7 +396,7 @@ class ExtractIE extends Extract {
      * @param indexFilePath  Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
      *
-     * @return the boolean
+     * @return Success. False if there is an error executing pasco.
      */
     private boolean executePasco(String pascoLibraryPath, String indexFilePath, String outputFileName) {
         boolean success = true;

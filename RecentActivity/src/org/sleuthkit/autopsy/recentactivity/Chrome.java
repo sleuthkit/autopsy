@@ -166,9 +166,10 @@ final class Chrome extends Extract {
             tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0}- Now getting history from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
-                        TSK_URL, PARENT_MODULE_NAME,
-                        Objects.toString(result.get("url"), "")), //NON-NLS
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                        new BlackboardAttribute(
+                                TSK_URL, PARENT_MODULE_NAME,
+                                Objects.toString(result.get("url"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
                                 (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601),
@@ -191,7 +192,7 @@ final class Chrome extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Chrome history artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getHistory.errMsg.errAnalyzingFile",
-                                    this.getModuleName(), historyFile.getName()));
+                            this.getModuleName(), historyFile.getName()));
                 }
             }
             dbFile.delete();
@@ -261,7 +262,7 @@ final class Chrome extends Extract {
             } catch (FileNotFoundException ex) {
                 logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome.", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzeFile", this.getModuleName(),
-                                bookmarkFile.getName()));
+                        bookmarkFile.getName()));
                 continue;
             }
 
@@ -333,7 +334,7 @@ final class Chrome extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getBookmark.errMsg.errAnalyzingFile4",
-                                    this.getModuleName(), bookmarkFile.getName()));
+                            this.getModuleName(), bookmarkFile.getName()));
                 }
             }
             dbFile.delete();
@@ -400,9 +401,10 @@ final class Chrome extends Extract {
             for (HashMap<String, Object> result : tempList) {
                 String domain = result.get("host_key").toString(); //NON-NLS
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
-                        TSK_DOMAIN, PARENT_MODULE_NAME,
-                        domain),
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                        new BlackboardAttribute(
+                                TSK_DOMAIN, PARENT_MODULE_NAME,
+                                domain),
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("host_key"), "")), //NON-NLS
@@ -425,7 +427,7 @@ final class Chrome extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome cookie artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getCookie.errMsg.errAnalyzingFile",
-                                    this.getModuleName(), cookiesFile.getName()));
+                            this.getModuleName(), cookiesFile.getName()));
                 }
             }
 
@@ -494,9 +496,10 @@ final class Chrome extends Extract {
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
 
-                Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(new BlackboardAttribute(
-                        TSK_PATH, PARENT_MODULE_NAME,
-                        Objects.toString(result.get("full_path"), "")), //NON-NLS
+                Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
+                        new BlackboardAttribute(
+                                TSK_PATH, PARENT_MODULE_NAME,
+                                Objects.toString(result.get("full_path"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("url"), "")), //NON-NLS
@@ -522,7 +525,7 @@ final class Chrome extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome download artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getDownload.errMsg.errAnalyzeFiles1",
-                                    this.getModuleName(), downloadFile.getName()));
+                            this.getModuleName(), downloadFile.getName()));
                 }
             }
 
@@ -619,7 +622,7 @@ final class Chrome extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome login artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                                    this.getModuleName(), signonFile.getName()));
+                            this.getModuleName(), signonFile.getName()));
                 }
 
                 // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
@@ -635,7 +638,7 @@ final class Chrome extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome os account artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                                    this.getModuleName(), signonFile.getName()));
+                            this.getModuleName(), signonFile.getName()));
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Error while trying to post Chrome os account artifact.", ex); //NON-NLS
                     this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
