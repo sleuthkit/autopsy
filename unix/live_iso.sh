@@ -67,7 +67,7 @@ mv ./autopsy.png /usr/share/icons
 #setup iso wallpaper
 [ ! -f "./autopsy_wallpaper1.png" ] && wget https://github.com/sleuthkit/autopsy/raw/develop/unix/autopsy_wallpaper1.png
 mv ./autopsy_wallpaper1.png /usr/share/lubuntu/wallpapers/autopsy_wallpaper.png
-unlink lubuntu-default-wallpaper.png
-unlink lubuntu-default-wallpaper.jpg
-ln -s autopsy_wallpaper.png lubuntu-default-wallpaper.png
-ln -s autopsy-wallpaper.png lubuntu-default-wallpaper.jpg
+unlink /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.png
+unlink /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
+ln -s /usr/share/lubuntu/wallpapers/autopsy_wallpaper.png /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.png
+ln -s /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.png /usr/share/lubuntu/wallpapers/lubuntu-default-wallpaper.jpg
