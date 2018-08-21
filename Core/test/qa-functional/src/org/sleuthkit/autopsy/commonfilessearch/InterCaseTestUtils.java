@@ -307,67 +307,73 @@ class InterCaseTestUtils {
     //TODO refactor
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
-        int tally = 0;
-        
-        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getMetadata().entrySet()){
+        try {
+            int tally = 0;
             
-            for(CommonAttributeValue value : entry.getValue()){
+            for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getMetadata().entrySet()){
                 
-                for(AbstractCommonAttributeInstance commonAttribute : value.getInstances()){
+                for(CommonAttributeValue value : entry.getValue()){
                     
-                    if(commonAttribute instanceof CentralRepoCommonAttributeInstance){
-                        CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
-                        for (DisplayableItemNode din : results.generateNodes()){
-                            
-                            if(din instanceof CentralRepoCommonAttributeInstanceNode){
+                    for(AbstractCommonAttributeInstance commonAttribute : value.getInstances()){
+                        
+                        if(commonAttribute instanceof CentralRepoCommonAttributeInstance){
+                            CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
+                            for (DisplayableItemNode din : results.generateNodes()){
                                 
-                                CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
-                                CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
+                                if(din instanceof CentralRepoCommonAttributeInstanceNode){
+                                    
+                                    CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
+                                    CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
+                                    
+                                    final String fullPath = instance.getFilePath();
+                                    final File testFile = new File(fullPath);
+                                    
+                                    final String testCaseName = instance.getCorrelationCase().getDisplayName();
+                                    
+                                    final String testFileName = testFile.getName();
+                                    
+                                    final String testDataSource = instance.getCorrelationDataSource().getName();
+                                    
+                                    boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                    boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+                                    boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
+                                    
+                                    if( sameFileName && sameDataSource && sameCrCase){
+                                        tally++;
+                                    }
+                                }
                                 
-                                final String fullPath = instance.getFilePath();
-                                final File testFile = new File(fullPath);
-
-                                final String testCaseName = instance.getCorrelationCase().getDisplayName();
-
-                                final String testFileName = testFile.getName();
-
-                                final String testDataSource = instance.getCorrelationDataSource().getName();
-
-                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
-
-                                if( sameFileName && sameDataSource && sameCrCase){
-                                    tally++;
-                                } 
-                            }
-                            
-                            if(din instanceof CaseDBCommonAttributeInstanceNode){
-                                
-                                CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
-                                AbstractFile file = node.getContent();
-                                
-                                final String testFileName = file.getName();
-                                final String testCaseName = node.getCase();
-                                final String testDataSource = node.getDataSource();
-                                
-                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
-                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                
-                                if(sameFileName && sameDataSource && sameCaseName){
-                                    tally++;
+                                if(din instanceof CaseDBCommonAttributeInstanceNode){
+                                    
+                                    CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
+                                    AbstractFile file = node.getContent();
+                                    
+                                    final String testFileName = file.getName();
+                                    final String testCaseName = node.getCase();
+                                    final String testDataSource = node.getDataSource();
+                                    
+                                    boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                    boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
+                                    boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+                                    
+                                    if(sameFileName && sameDataSource && sameCaseName){
+                                        tally++;
+                                    }
                                 }
                             }
+                        } else {
+                            Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
                         }
-                    } else {
-                        Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
                     }
                 }                
             }
+            
+            return tally == instanceCount;
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return false;
         }
-        
-        return tally == instanceCount;
     }
 
     /**

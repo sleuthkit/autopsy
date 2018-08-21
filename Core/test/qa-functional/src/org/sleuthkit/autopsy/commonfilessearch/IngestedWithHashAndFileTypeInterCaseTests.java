@@ -86,7 +86,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             //note that the params false and false are presently meaningless because that feature is not supported yet
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, 0);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
@@ -139,7 +139,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
                         
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false, 0);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             

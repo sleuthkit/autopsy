@@ -33,6 +33,7 @@ import org.python.icu.impl.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
@@ -204,16 +205,22 @@ class IntraCaseTestUtils {
      */
     static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
-
-        for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
-            for (CommonAttributeValue md : entry.getValue()) {
-                for (AbstractCommonAttributeInstance fim : md.getInstances()) {
-                    instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
+            
+        try {
+            for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
+                for (CommonAttributeValue md : entry.getValue()) {
+                    for (AbstractCommonAttributeInstance fim : md.getInstances()) {
+                        instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
+                    }
                 }
             }
+            
+            return instanceIdToDataSource;
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex);
+            return instanceIdToDataSource;
         }
-
-        return instanceIdToDataSource;
     }
 
     
