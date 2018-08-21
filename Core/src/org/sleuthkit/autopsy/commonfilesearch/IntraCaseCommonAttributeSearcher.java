@@ -130,7 +130,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         
         Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
         
-        return new CommonAttributeSearchResults(instanceCollatedCommonFiles);
+        return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }
 
     /**

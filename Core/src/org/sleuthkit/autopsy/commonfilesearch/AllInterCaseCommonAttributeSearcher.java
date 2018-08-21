@@ -49,7 +49,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
-        return new CommonAttributeSearchResults(interCaseCommonFiles);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
     }
 
     @Override

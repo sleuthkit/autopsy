@@ -200,9 +200,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
                 int percentageThreshold = CommonAttributePanel.this.percentageThresholdValue;
                 
-                if (CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
-                    String percentageThresholdAsString = CommonAttributePanel.this.percentageThreshold.getText();
-                    percentageThreshold = Integer.parseInt(percentageThresholdAsString);
+                if (!CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
+                    //0 has the effect of disabling the feature
+                    percentageThreshold = 0;
                 }
 
                 if (CommonAttributePanel.this.interCaseRadio.isSelected()) {

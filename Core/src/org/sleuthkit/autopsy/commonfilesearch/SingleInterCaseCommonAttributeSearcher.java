@@ -74,7 +74,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
 
-        return new CommonAttributeSearchResults(interCaseCommonFiles);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
     }
     
     @Override
