@@ -65,7 +65,7 @@ cp /usr/share/applications/lxterminal.desktop /etc/skel/Desktop/
 mv ./autopsy.png /usr/share/icons
 
 #setup iso wallpaper
-[ ! -f "./autopsy_wallpaper1.png" ]wget https://github.com/sleuthkit/autopsy/raw/develop/unix/autopsy_wallpaper1.png
+[ ! -f "./autopsy_wallpaper1.png" ] && wget https://github.com/sleuthkit/autopsy/raw/develop/unix/autopsy_wallpaper1.png
 mv ./autopsy_wallpaper1.png /usr/share/lubuntu/wallpapers/autopsy_wallpaper.png
 unlink lubuntu-default-wallpaper.png
 unlink lubuntu-default-wallpaper.jpg
