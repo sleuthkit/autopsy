@@ -97,8 +97,7 @@ public final class JythonModuleLoader {
             if (file.isDirectory()) {
                 File[] pythonScripts = file.listFiles(new PythonScriptFileFilter());
                 for (File script : pythonScripts) {
-                    try {
-                        Scanner fileScanner = new Scanner(script);
+                        try (Scanner fileScanner = new Scanner(script)) {
                         while (fileScanner.hasNextLine()) {
                             String line = fileScanner.nextLine();
                             if (line.startsWith("class ") && filter.accept(line)) { //NON-NLS
