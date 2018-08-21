@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.awt.Dimension;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,18 +98,28 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         this.errorManager = new UserInputErrorManager();
         
         this.percentageThreshold.getDocument().addDocumentListener(new DocumentListener(){
+            
+            private Dimension preferredSize = CommonAttributePanel.this.percentageThreshold.getPreferredSize();
+            
+            private void maintainSize(){
+                CommonAttributePanel.this.percentageThreshold.setSize(preferredSize);
+            }
+            
             @Override
-            public void insertUpdate(DocumentEvent e) { 
+            public void insertUpdate(DocumentEvent e) {
+                this.maintainSize();
                 CommonAttributePanel.this.percentageThresholdChanged();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                this.maintainSize();
                 CommonAttributePanel.this.percentageThresholdChanged();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                this.maintainSize();
                 CommonAttributePanel.this.percentageThresholdChanged();
             }
         });
@@ -549,8 +560,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         percentageThreshold.setText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThreshold.text")); // NOI18N
-        percentageThreshold.setMaximumSize(new java.awt.Dimension(28, 24));
-        percentageThreshold.setMinimumSize(new java.awt.Dimension(28, 24));
+        percentageThreshold.setMaximumSize(new java.awt.Dimension(40, 24));
+        percentageThreshold.setMinimumSize(new java.awt.Dimension(40, 24));
+        percentageThreshold.setPreferredSize(new java.awt.Dimension(40, 24));
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.jLabel1.text_1")); // NOI18N
 
@@ -580,7 +592,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(percentageThresholdCheck)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(percentageThreshold, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(percentageThreshold, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel1))
                     .addGroup(jPanel1Layout.createSequentialGroup()
