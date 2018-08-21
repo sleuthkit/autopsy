@@ -66,7 +66,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
-import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
@@ -101,6 +100,8 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
@@ -108,6 +109,8 @@ import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
@@ -388,8 +391,24 @@ public class Case {
     private final class TSKCaseRepublisher {
 
         @Subscribe
-        public void handleTimelineEventCreated(TimelineManager.EventAddedEvent event) {
+        public void rebroadcastTimelineEventCreated(TimelineManager.EventAddedEvent event) {
             eventPublisher.publish(new EventAddedEvent(event));
+        }
+
+        @Subscribe
+        public void rebroadcastArtifactsPosted(Blackboard.ArtifactsPostedEvent event) {
+            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
+                /*
+                 * fireModuleDataEvent is deprecated so module writers don't use
+                 * it (they should use Blackboard.postArtifact(s) instead), but
+                 * we still need a way to rebroadcast the ArtifactsPostedEvent
+                 * as a ModuleDataEvent.
+                 */
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                        event.getModuleName(),
+                        artifactType,
+                        event.getArtifacts(artifactType)));
+            }
         }
     }
 
@@ -1117,7 +1136,7 @@ public class Case {
                 /*
                  * Open the top components (windows within the main application
                  * window).
-                 * 
+                 *
                  * Note: If the core windows are not opened here, they will be
                  * opened via the DirectoryTreeTopComponent 'propertyChange()'
                  * method on a DATA_SOURCE_ADDED event.
@@ -1988,10 +2007,10 @@ public class Case {
                 try {
                     caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
                 } catch (UserPreferencesException ex) {
-                    throw new CaseActionException(Case_databaseConnectionInfo_error_msg(), ex);
+                    throw new CaseActionException(Bundle.Case_databaseConnectionInfo_error_msg(), ex);
                 }
             } else {
-                throw new CaseActionException(Case_open_exception_multiUserCaseNotEnabled());
+                throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_unsupportedSchemaVersionMessage(), ex);

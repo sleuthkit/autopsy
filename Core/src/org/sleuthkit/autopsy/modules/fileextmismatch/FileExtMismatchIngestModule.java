@@ -145,14 +145,17 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                 BlackboardArtifact bart = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED);
 
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(bart);
+                    /*
+                     * post the artifact which will index the artifact for
+                     * keyword search, and fire an event to notify UI of this
+                     * new artifact
+                     */
+                    blackboard.postArtifact(bart, FileExtMismatchDetectorModuleFactory.getModuleName());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bart.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(FileExtMismatchDetectorModuleFactory.getModuleName(), Bundle.FileExtMismatchIngestModule_indexError_message());
                 }
 
-                services.fireModuleDataEvent(new ModuleDataEvent(FileExtMismatchDetectorModuleFactory.getModuleName(), ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED, Collections.singletonList(bart)));
             }
             return ProcessResult.OK;
         } catch (TskException ex) {

@@ -53,7 +53,7 @@ public class ModuleDataEvent extends ChangeEvent {
     private Collection<BlackboardArtifact> artifacts;
 
     /**
-     * @param moduleName Module name
+     * @param moduleName   Module name
      * @param artifactType Type of artifact that was posted to blackboard
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
@@ -63,9 +63,9 @@ public class ModuleDataEvent extends ChangeEvent {
     }
 
     /**
-     * @param moduleName Module Name
+     * @param moduleName             Module Name
      * @param blackboardArtifactType Type of the blackboard artifact posted to
-     * the blackboard
+     *                               the blackboard
      */
     public ModuleDataEvent(String moduleName, BlackboardArtifact.Type blackboardArtifactType) {
         super(blackboardArtifactType);
@@ -74,10 +74,10 @@ public class ModuleDataEvent extends ChangeEvent {
     }
 
     /**
-     * @param moduleName Module name
+     * @param moduleName             Module name
      * @param blackboardArtifactType Type of artifact posted to the blackboard
-     * @param artifacts List of specific artifact ID values that were added to
-     * blackboard
+     * @param artifacts              List of specific artifact ID values that
+     *                               were added to blackboard
      */
     public ModuleDataEvent(String moduleName, BlackboardArtifact.Type blackboardArtifactType, Collection<BlackboardArtifact> artifacts) {
         this(moduleName, blackboardArtifactType);
@@ -85,10 +85,10 @@ public class ModuleDataEvent extends ChangeEvent {
     }
 
     /**
-     * @param moduleName Module name
+     * @param moduleName   Module name
      * @param artifactType Type of artifact that was posted to blackboard
-     * @param artifacts List of specific artifact values that were added to
-     * blackboard
+     * @param artifacts    List of specific artifact values that were added to
+     *                     blackboard
      */
     public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifacts) {
         this(moduleName, artifactType);

@@ -112,7 +112,7 @@ final class ContactAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
-        
+
         Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -120,7 +120,7 @@ final class ContactAnalyzer {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
-        
+
         Statement statement = null;
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
@@ -174,8 +174,12 @@ final class ContactAnalyzer {
 
                     bba.addAttributes(attributes);
                     try {
-                        // index the artifact for keyword search
-                        blackboard.postArtifact(bba);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */
+                        blackboard.postArtifact(bba, moduleName);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(

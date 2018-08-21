@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.objectdetection;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -33,7 +32,6 @@ import org.opencv.objdetect.CascadeClassifier;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,8 +42,8 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -87,7 +85,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                     Bundle.ObjectDetectionFileIngestModule_noClassifiersFound_message(PlatformUtil.getObjectDetectionClassifierPath())));
         }
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModule.IngestModuleException("Exception while getting open case.", ex);
         }
@@ -102,7 +100,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
             if (file.getSize() > MAX_FILE_SIZE) {
                 //prevent it from allocating gigabytes of memory for extremely large files
                 logger.log(Level.INFO, "Encountered file " + file.getParentPath() + file.getName() + " with object id of "
-                        + file.getId() + " which exceeds max file size of " + MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
+                                       + file.getId() + " which exceeds max file size of " + MAX_FILE_SIZE + " bytes, with a size of " + file.getSize());
                 return IngestModule.ProcessResult.OK;
             }
 
@@ -154,18 +152,14 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
 
                         try {
                             /*
-                             * Index the artifact for keyword search.
+                             * Post the artifact which will index the artifact
+                             * for keyword search, and fire ModuleDataEvent to
+                             * notify the UI of this new artifact.
                              */
-                            blackboard.indexArtifact(artifact);
+                            blackboard.postArtifact(artifact, ObjectDetectionModuleFactory.getModuleName());
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         }
-
-                        /*
-                         * Send an event to update the view with the new result.
-                         */
-                        services.fireModuleDataEvent(new ModuleDataEvent(ObjectDetectionModuleFactory.getModuleName(), TSK_OBJECT_DETECTED, Collections.singletonList(artifact)));
-
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, String.format("Failed to create blackboard artifact for '%s'.", file.getParentPath() + file.getName()), ex); //NON-NLS
                         detectionRectangles.release();

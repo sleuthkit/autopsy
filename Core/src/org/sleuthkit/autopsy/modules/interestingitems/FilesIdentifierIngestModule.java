@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +35,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -48,9 +46,7 @@ import org.sleuthkit.datamodel.TskData;
  * A file ingest module that generates interesting files set hit artifacts for
  * files that match interesting files set definitions.
  */
-@NbBundle.Messages({
-    "FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."
-})
+@NbBundle.Messages({"FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."})
 final class FilesIdentifierIngestModule implements FileIngestModule {
 
     private static final Object sharedResourcesLock = new Object();
@@ -72,9 +68,6 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
         this.settings = settings;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -100,14 +93,11 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     @Messages({"FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public ProcessResult process(AbstractFile file) {
         try {
-            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();        
+            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -144,19 +134,21 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
 
                     artifact.addAttributes(attributes);
                     try {
-                        // index the artifact for keyword search
-                        blackboard.postArtifact(artifact);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */
+                        blackboard.postArtifact(artifact, moduleName);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
                     }
 
-                    services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
-
                     // make an ingest inbox message
                     StringBuilder detailsSb = new StringBuilder();
-                    detailsSb.append("File: " + file.getParentPath() + file.getName() + "<br/>\n");
-                    detailsSb.append("Rule Set: " + filesSet.getName());
+                    detailsSb.append("File: ").append(file.getParentPath()).append(file.getName()).append("<br/>\n");
+                    detailsSb.append("Rule Set: ").append(filesSet.getName());
 
                     services.postMessage(IngestMessage.createDataMessage(InterestingItemsIngestModuleFactory.getModuleName(),
                             "Interesting File Match: " + filesSet.getName() + "(" + file.getName() + ")",
@@ -172,9 +164,6 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
         return ProcessResult.OK;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void shutDown() {
         if (context != null) {

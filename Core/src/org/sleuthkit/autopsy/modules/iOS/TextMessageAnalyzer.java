@@ -168,8 +168,11 @@ class TextMessageAnalyzer {
 
                     bba.addAttributes(attributes);
                     try {
-                        // index the artifact for keyword search
-                        blackboard.postArtifact(bba);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */ blackboard.postArtifact(bba, moduleName);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(
@@ -191,7 +194,5 @@ class TextMessageAnalyzer {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         }
-
     }
-
 }

@@ -104,9 +104,13 @@ public final class IngestServices {
      *
      * @param moduleDataEvent A module data event, i.e., an event that
      *                        encapsulates artifact data.
+     *
+     * @deprecated use org.sleuthkit.datamodel.Blackboard.postArtifact instead.
      */
+    @Deprecated
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         IngestManager.getInstance().fireIngestModuleDataEvent(moduleDataEvent);
+
     }
 
     /**
@@ -169,10 +173,7 @@ public final class IngestServices {
      * Sets all of the global configuration settings for an ingest module.
      *
      * @param moduleName A unique identifier for the module.
-     *
-     * @param moduleName moduleName identifier unique to that module
      * @param settings   A mapping of setting names to setting values.
-     *
      */
     public void setConfigSettings(String moduleName, Map<String, String> settings) {
         ModuleSettings.setConfigSettings(moduleName, settings);

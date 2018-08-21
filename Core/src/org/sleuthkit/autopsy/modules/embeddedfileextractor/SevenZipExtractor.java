@@ -60,7 +60,6 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
@@ -161,18 +160,19 @@ class SevenZipExtractor {
      *
      * More heuristics to be added here
      *
-     * @param archiveFile     the AbstractFile for the parent archive which
-     *                        which we are checking
-     * @param inArchive       The SevenZip archive currently open for extraction
-     * 
-     * @param inArchiveItemIndex Index of item inside the SevenZip archive. Each 
-     *                           file inside an archive is associated with a unique 
-     *                           integer
-     * 
-     * @param depthMap        a concurrent hashmap which keeps track of the
-     *                        depth of all nested archives, key of objectID
-     * @param escapedFilePath the path to the archiveFileItem which has been
-     *                        escaped
+     * @param archiveFile        the AbstractFile for the parent archive which
+     *                           which we are checking
+     * @param inArchive          The SevenZip archive currently open for
+     *                           extraction
+     *
+     * @param inArchiveItemIndex Index of item inside the SevenZip archive. Each
+     *                           file inside an archive is associated with a
+     *                           unique integer
+     *
+     * @param depthMap           a concurrent hashmap which keeps track of the
+     *                           depth of all nested archives, key of objectID
+     * @param escapedFilePath    the path to the archiveFileItem which has been
+     *                           escaped
      *
      * @return true if potential zip bomb, false otherwise
      */
@@ -242,14 +242,16 @@ class SevenZipExtractor {
                     EmbeddedFileExtractorModuleFactory.getModuleName(),
                     details));
             try {
-                // index the artifact for keyword search
-                blackboard.postArtifact(artifact);
+                /*
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
+                 */
+                blackboard.postArtifact(artifact, EmbeddedFileExtractorModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
                         Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
             }
-            services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating blackboard artifact for Zip Bomb Detection for file: " + escapedFilePath, ex); //NON-NLS
         }
@@ -442,13 +444,11 @@ class SevenZipExtractor {
     }
 
     /**
-     * Unpack the file to local folder and return a list of derived files
+     * Unpack the file to local folder.
      *
      * @param archiveFile file to unpack
      * @param depthMap    - a concurrent hashmap which keeps track of the depth
      *                    of all nested archives, key of objectID
-     *
-     * @return true if unpacking is complete
      */
     void unpack(AbstractFile archiveFile, ConcurrentHashMap<Long, Archive> depthMap) {
         unpack(archiveFile, depthMap, null);
@@ -593,7 +593,7 @@ class SevenZipExtractor {
                         inArchiveItemIndex, PropID.SIZE);
                 if (freeDiskSpace != IngestMonitor.DISK_FREE_SPACE_UNKNOWN && archiveItemSize != null && archiveItemSize > 0) { //if free space is known and file is not empty.
                     String archiveItemPath = (String) inArchive.getProperty(
-                        inArchiveItemIndex, PropID.PATH);
+                            inArchiveItemIndex, PropID.PATH);
                     long newDiskSpace = freeDiskSpace - archiveItemSize;
                     if (newDiskSpace < MIN_FREE_DISK_SPACE) {
                         String msg = NbBundle.getMessage(SevenZipExtractor.class,
@@ -629,7 +629,7 @@ class SevenZipExtractor {
                                 localFile.createNewFile();
                             } catch (IOException e) {
                                 logger.log(Level.SEVERE, "Error creating extracted file: "//NON-NLS
-                                        + localFile.getAbsolutePath(), e);
+                                                         + localFile.getAbsolutePath(), e);
                             }
                         }
                     } catch (SecurityException e) {
@@ -664,7 +664,7 @@ class SevenZipExtractor {
             //inArchiveItemIndex. False indicates non-test mode
             inArchive.extract(extractionIndices, false, archiveCallBack);
 
-            unpackSuccessful = unpackSuccessful & archiveCallBack.wasSuccessful();
+            unpackSuccessful &= archiveCallBack.wasSuccessful();
 
             // add them to the DB. We wait until the end so that we have the metadata on all of the
             // intermediate nodes since the order is not guaranteed
@@ -733,15 +733,18 @@ class SevenZipExtractor {
                 artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, EmbeddedFileExtractorModuleFactory.getModuleName(), encryptionType));
 
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(artifact);
+                    /*
+                     * post the artifact which will index the artifact for
+                     * keyword search, and fire an event to notify UI of this
+                     * new artifact
+                     */
+                    blackboard.postArtifact(artifact, EmbeddedFileExtractorModuleFactory.getModuleName());
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
                             Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
                 }
 
-                services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error creating blackboard artifact for encryption detected for file: " + escapedArchiveFilePath, ex); //NON-NLS
             }
@@ -923,7 +926,7 @@ class SevenZipExtractor {
         private final String localAbsPath;
         private final String localRelPath;
 
-        public InArchiveItemDetails(
+         InArchiveItemDetails(
                 SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode,
                 String localAbsPath, String localRelPath) {
             this.unpackedNode = unpackedNode;
@@ -956,7 +959,7 @@ class SevenZipExtractor {
         private SevenZipExtractor.UnpackStream unpackStream = null;
         private final Map<Integer, InArchiveItemDetails> archiveDetailsMap;
         private final ProgressHandle progressHandle;
-        
+
         private int inArchiveItemIndex;
         private final long freeDiskSpace;
 
@@ -969,10 +972,10 @@ class SevenZipExtractor {
 
         private boolean unpackSuccessful = true;
 
-        public StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
-                AbstractFile archiveFile, ProgressHandle progressHandle,
-                Map<Integer, InArchiveItemDetails> archiveDetailsMap,
-                String password, long freeDiskSpace) {
+         StandardIArchiveExtractCallback(ISevenZipInArchive inArchive,
+                                               AbstractFile archiveFile, ProgressHandle progressHandle,
+                                               Map<Integer, InArchiveItemDetails> archiveDetailsMap,
+                                               String password, long freeDiskSpace) {
 
             this.inArchive = inArchive;
             this.freeDiskSpace = freeDiskSpace;
@@ -983,20 +986,22 @@ class SevenZipExtractor {
         }
 
         /**
-         * Get stream is called by the internal framework as it traverses 
-         * the archive structure. The ISequentialOutStream is where the 
-         * archive file contents will be expanded and written to the local disk.
-         * 
+         * Get stream is called by the internal framework as it traverses the
+         * archive structure. The ISequentialOutStream is where the archive file
+         * contents will be expanded and written to the local disk.
+         *
          * Skips folders, as there is nothing to extract.
-         * 
-         * @param inArchiveItemIndex current location of the 
-         * @param mode Will always be EXTRACT
+         *
+         * @param inArchiveItemIndex current location of the
+         * @param mode               Will always be EXTRACT
+         *
          * @return
-         * @throws SevenZipException 
+         *
+         * @throws SevenZipException
          */
         @Override
-        public ISequentialOutStream getStream(int inArchiveItemIndex, 
-                ExtractAskMode mode) throws SevenZipException {
+        public ISequentialOutStream getStream(int inArchiveItemIndex,
+                                              ExtractAskMode mode) throws SevenZipException {
 
             this.inArchiveItemIndex = inArchiveItemIndex;
 
@@ -1023,11 +1028,12 @@ class SevenZipExtractor {
         }
 
         /**
-         * Retrieves the file metadata from the archive before extraction. 
+         * Retrieves the file metadata from the archive before extraction.
          * Called after getStream.
-         * 
+         *
          * @param mode Will always be EXTRACT.
-         * @throws SevenZipException 
+         *
+         * @throws SevenZipException
          */
         @Override
         public void prepareOperation(ExtractAskMode mode) throws SevenZipException {
@@ -1048,16 +1054,16 @@ class SevenZipExtractor {
 
         /**
          * Updates the unpackedNode data in the tree after the archive has been
-         * expanded to local disk. 
+         * expanded to local disk.
          *
-         * @param EOR - ExtractOperationResult 
+         * @param EOR - ExtractOperationResult
          *
          * @throws SevenZipException
          */
         @Override
         public void setOperationResult(ExtractOperationResult result) throws SevenZipException {
             progressHandle.progress(archiveFile.getName() + ": "
-                    + (String) inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
+                                    + inArchive.getProperty(inArchiveItemIndex, PropID.PATH),
                     inArchiveItemIndex);
 
             final SevenZipExtractor.UnpackedTree.UnpackedNode unpackedNode
@@ -1071,7 +1077,7 @@ class SevenZipExtractor {
                         localRelPath);
                 return;
             }
-            
+
             final String localAbsPath = archiveDetailsMap.get(
                     inArchiveItemIndex).getLocalAbsPath();
             if (result != ExtractOperationResult.OK) {
