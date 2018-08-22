@@ -173,7 +173,7 @@ class IntraCaseTestUtils {
 
             String dataSourceName = objectIdToDataSourceMap.get(objectId);
 
-            if (name.equals(name) && dataSourceName.equals(dataSource)) {
+            if (name.equals(fileName) && dataSourceName.equals(dataSource)) {
                 tally++;
             }
         }
