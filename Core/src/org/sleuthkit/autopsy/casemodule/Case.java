@@ -1539,6 +1539,14 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
     }
 
+    /**
+     * Notifies case event subscribers that a central repository comment has been changed.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
+     * 
+     * @param id the objectId for the Content which has had its central repo comment changed
+     * @param newComment the new value of the comment
+     */
     public void notifyCentralRepoCommentChanged(long id, String newComment) {
         eventPublisher.publish(new CommentChangedEvent(id, newComment));
     }

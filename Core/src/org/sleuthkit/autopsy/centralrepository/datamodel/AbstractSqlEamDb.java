@@ -1330,14 +1330,12 @@ abstract class AbstractSqlEamDb implements EamDb {
                 int instanceId = resultSet.getInt(1);
                 int knownStatus = resultSet.getInt(2);
                 String comment = resultSet.getString(3);
-                System.out.println("COMMENT: " + comment);
                 correlationAttribute = new CorrelationAttribute(type, value);
                 CorrelationAttributeInstance artifactInstance = new CorrelationAttributeInstance(
                         instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
                 correlationAttribute.addInstance(artifactInstance);
             }
-        } catch (SQLException ex) {
-            
+        } catch (SQLException ex) {           
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
