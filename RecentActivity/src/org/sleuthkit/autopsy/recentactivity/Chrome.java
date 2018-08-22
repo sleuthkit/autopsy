@@ -132,7 +132,6 @@ final class Chrome extends Extract {
             return;
         }
 
-        //TODO  why are we using historyFiles instead of allocatedHistoryfiles here?
         dataFound = true;
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
