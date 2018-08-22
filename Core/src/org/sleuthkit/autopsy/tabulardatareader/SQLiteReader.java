@@ -47,14 +47,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Reads sqlite databases and returns results in a list collection.
  */
-@NbBundle.Messages({
-    "SQLiteReader.ReadSQLiteFiles.moduleName=SQLiteReader"
-})
 public final class SQLiteReader extends AbstractReader {
     
     private final Connection connection;
-    private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(Bundle.SQLiteReader_ReadSQLiteFiles_moduleName());
+    private final static IngestServices services = IngestServices.getInstance();
+    private final static Logger logger = services.getLogger(SQLiteReader.class.getName());
     
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC

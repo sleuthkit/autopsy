@@ -47,8 +47,8 @@ import org.apache.poi.hssf.OldExcelFormatException;
  */
 public final class ExcelReader extends AbstractReader {  
     /* Boilerplate code */
-    private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(ExcelReader.class.getName());
+    private final static IngestServices services = IngestServices.getInstance();
+    private final static Logger logger = services.getLogger(ExcelReader.class.getName());
     
     private Workbook workbook;
     private final static String XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
