@@ -29,7 +29,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +69,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
-import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
 
 /**
  * A tabular result viewer that displays the children of the given root node
@@ -97,6 +95,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final Map<Integer, Property<?>> propertiesMap;
     private final Outline outline;
     private final TableListener outlineViewListener;
+    private final IconRendererTableListener iconRendererListener;
     private Node rootNode;
 
     /**
@@ -162,6 +161,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         outlineViewListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(outlineViewListener);
+
+        iconRendererListener = new IconRendererTableListener();
+        outline.getColumnModel().addColumnModelListener(iconRendererListener);
 
         /*
          * Add a mouse listener to the child OutlineView (explorer view) to make
@@ -353,6 +355,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * treated as un-hide/hide.
          */
         outlineViewListener.listenToVisibilityChanges(true);
+
     }
 
     /*
@@ -369,9 +372,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             final String propName = entry.getValue().getName();
             if (entry.getKey() < columnCount) {
                 final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
-                if (propName.equals("Has Comment")) {
-                    column.setCellRenderer(new HasCommentCellRenderer());
-                }
                 columnMap.put(propName, column);
 
             }
@@ -650,6 +650,39 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    private class IconRendererTableListener implements TableColumnModelListener {
+
+        @Override
+        public void columnAdded(TableColumnModelEvent e) {
+            if (e.getSource() instanceof ETableColumnModel) {
+                if (e.getSource() instanceof ETableColumnModel) {
+                    TableColumn column = ((ETableColumnModel) e.getSource()).getColumn(e.getToIndex());
+                    if (column.getHeaderValue().toString().equals("Has Comment")) {
+                        column.setCellRenderer(new HasCommentCellRenderer());
+                    }
+                }
+            }
+
+        }
+
+        @Override
+        public void columnRemoved(TableColumnModelEvent e) {
+        }
+
+        @Override
+        public void columnMoved(TableColumnModelEvent e) {
+        }
+
+        @Override
+        public void columnMarginChanged(ChangeEvent e) {
+        }
+
+        @Override
+        public void columnSelectionChanged(ListSelectionEvent e) {
+        }
+
+    }
+
     /**
      * Listens to mouse events and table column events and persists column order
      * sorting, and visibility changes.
@@ -834,7 +867,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             setBackground(component.getBackground());  //inherit highlighting
-            setHorizontalAlignment(CENTER);    
+            setHorizontalAlignment(CENTER);
             Object switchValue = null;
             if ((value instanceof NodeProperty)) {
                 //The Outline view has properties in the cell, the value contained in the property is what we want
@@ -859,7 +892,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         setIcon(COMMENT_ICON);
                         setToolTipText("Comment exists on associated tag(s)");
                         break;
-                    case CR_AND_TAG_COMMENTS: 
+                    case CR_AND_TAG_COMMENTS:
                         setIcon(COMMENT_ICON);
                         setToolTipText("Comments exist both in Central Repository and on associated tag(s)");
                         break;
