@@ -90,9 +90,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
-        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        addCommentProperty(sheetSet, tags);
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, getContent());
@@ -101,11 +99,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
-            //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
-            sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
-                    tags.stream().map(t -> t.getName().getDisplayName())
-                            .distinct()
-                            .collect(Collectors.joining(", "))));
+            addTagProperty(sheetSet, tags);
         } else {
             sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),

@@ -268,7 +268,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
     }
-
+    
+    /**
+     * Get all tags from the case database that are associated with the file
+     *
+     * @return a list of tags that are associated with the file
+     */
     protected List<ContentTag> getContentTagsFromDatabase() {
         List<ContentTag> tags = new ArrayList<>();
         try {
@@ -278,8 +283,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return tags;
     }
-
-    protected HasCommentStatus getHasCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+    
+        /**
+     * Used by subclasses of AbstractAbstractFileNode to add the comment property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags the list of tags associated with the file
+     */
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.comment.name=Comment",
+        "AbstractAbstractFileNode.createSheet.comment.displayName=Comment"})
+    protected void addCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
 
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
 
@@ -305,7 +320,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
             }
         }
-        return status;
     }
 
     /**
@@ -324,6 +338,21 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
+        sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
+                        .distinct()
+                        .collect(Collectors.joining(", "))));
+    }
+
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the tags property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags the list of tags associated with the file
+     */
+    protected void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
                         .distinct()

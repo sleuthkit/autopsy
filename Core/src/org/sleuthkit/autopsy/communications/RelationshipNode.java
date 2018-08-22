@@ -67,11 +67,9 @@ final class RelationshipNode extends BlackboardArtifactNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        
+
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
-         DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        addCommentProperty(sheetSet, tags);
 
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
@@ -121,9 +119,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
-        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
-        sheetSet.put(new NodeProperty<>("Tags", "",
-                "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

@@ -83,19 +83,13 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
 
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
-        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        this.addCommentProperty(sheetSet, tags);
 
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsCsvList(this.getContent())));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, StringUtils.defaultString(this.getContent().getMIMEType())));
-        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
-        sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
-                tags.stream().map(t -> t.getName().getDisplayName())
-                        .distinct()
-                        .collect(Collectors.joining(", "))));
+        this.addTagProperty(sheetSet, tags);
 
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, caseName));
         return sheet;

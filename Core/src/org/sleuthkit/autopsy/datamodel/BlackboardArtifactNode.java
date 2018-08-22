@@ -347,9 +347,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
-        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        addCommentProperty(sheetSet, tags);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -497,13 +495,18 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     path));
         }
-
-        sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
-                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }
 
+    /**
+     * Get all tags from the case database relating to the artifact and the file
+     * it is associated with.
+     *
+     * @return a list of tags which on the artifact or the file it is associated
+     *         with
+     */
     protected List<Tag> getAllTagsFromDatabase() {
         List<Tag> tags = new ArrayList<>();
         try {
@@ -538,7 +541,31 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
     }
 
-    protected HasCommentStatus getHasCommentProperty(Sheet.Set sheetSet, List<Tag> tags) {
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the tags property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags which should appear as the value for the
+     *                 property
+     */
+    protected void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the comment
+     * property to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=Comment",
+        "BlackboardArtifactNode.createSheet.comment.displayName=Comment"})
+    protected void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags) {
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
         for (Tag tag : tags) {
             if (tag.getComment() != null && !tag.getComment().trim().isEmpty()) {
@@ -562,7 +589,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 }
             }
         }
-        return status;
+        addTagProperty(sheetSet, tags);
     }
 
     private void updateSheet() {

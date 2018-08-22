@@ -81,9 +81,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 "Name",
                 "Name",
                 getName()));
-        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        addCommentProperty(sheetSet, tags);
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
@@ -94,11 +92,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         }
 
         // add tags property to the sheet
-        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
-        sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
-                tags.stream().map(t -> t.getName().getDisplayName())
-                        .distinct()
-                        .collect(Collectors.joining(", "))));
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

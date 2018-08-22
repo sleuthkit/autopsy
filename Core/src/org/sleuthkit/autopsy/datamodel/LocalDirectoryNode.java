@@ -64,9 +64,7 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
                 Bundle.LocalDirectoryNode_createSheet_name_displayName(),
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
-        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        addCommentProperty(sheetSet, tags);
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
         // file set is a VirtualDirectory
         Map<String, Object> map = new LinkedHashMap<>();
@@ -76,11 +74,7 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
-        sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
-                tags.stream().map(t -> t.getName().getDisplayName())
-                        .distinct()
-                        .collect(Collectors.joining(", "))));
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

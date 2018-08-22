@@ -83,9 +83,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
-        DataResultViewerTable.HasCommentStatus hasCommentStatus = getHasCommentProperty(sheetSet, tags);
-        sheetSet.put(new NodeProperty<>("Has Comment", "Has Comment", "Has Comment",
-                hasCommentStatus));
+        addCommentProperty(sheetSet, tags);
 
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -93,11 +91,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         }
 
         // add tags property to the sheet
-        //WJS-TODO the bundle message was in another package for the tags column make a new one / resolve
-        sheetSet.put(new NodeProperty<>("Tags", "Tags", "",
-                tags.stream().map(t -> t.getName().getDisplayName())
-                        .distinct()
-                        .collect(Collectors.joining(", "))));
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }
