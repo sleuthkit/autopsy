@@ -49,21 +49,6 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private final Long fileId;
 
     /**
-     * Constructor to create an instance given a CorrelationAttribute.
-     *
-     * @param correlationAttribute The correlation attribute to modify.
-     * @param fileId               The file Id for the AbstractFile this comment
-     *                             is being made in relation to
-     */
-    public AddEditCentralRepoCommentAction(CorrelationAttribute correlationAttribute, Long fileId) {
-        super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
-        this.correlationAttribute = correlationAttribute;
-        correlationAttribute.getID();
-        this.fileId = fileId; //without a fileId no notification that the comment changed will be sent
-
-    }
-
-    /**
      * Constructor to create an instance given an AbstractFile.
      *
      * @param file The file from which a correlation attribute to modify is
