@@ -101,6 +101,20 @@ import org.sleuthkit.datamodel.AbstractFile;
       - Hash-C.jpg    
       - Hash-C.pdf
       - Hash-D.doc
+ * 
+ * Frequency Breakdown 
+ * (ratio of datasources a given file appears in to total number of datasources):
+ * 
+ * Hash-0.dat   - moot; these are always excluded
+ * Hash-A.jpg   - 4/6
+ * Hash-A.pdf   - 4/6
+ * Hash-B.jpg   - 1/6
+ * Hash-B.pdf   - 1/6
+ * Hash-C.jpg   - 2/6
+ * Hash-C.pdf   - 2/6
+ * Hash_D.doc   - 2/6
+ * Hash-D.jpg   - 1/6
+ * 
  */
 class InterCaseTestUtils {
 
@@ -304,7 +318,6 @@ class InterCaseTestUtils {
         }
     }
     
-    //TODO refactor
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         try {
