@@ -51,10 +51,10 @@ public final class ExcelReader extends AbstractReader {
     private final Logger logger = services.getLogger(ExcelReader.class.getName());
     
     private Workbook workbook;
-    private final String XLSXMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    private final String XLSMimeType = "application/vnd.ms-excel";
-    private final String EMPTY_CELL_STRING = "";
-    private HashMap<String, Row> headerCache;
+    private final static String XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    private final static String XLS_MIME_TYPE = "application/vnd.ms-excel";
+    private final static String EMPTY_CELL_STRING = "";
+    private Map<String, Row> headerCache;
 
     public ExcelReader(AbstractFile file, String localDiskPath, String mimeType) 
             throws FileReaderInitException {
@@ -84,7 +84,7 @@ public final class ExcelReader extends AbstractReader {
     private Workbook createWorkbook(String localDiskPath, String mimeType) throws 
             IOException, FileReaderInitException {
         switch (mimeType) {
-            case XLSMimeType:
+            case XLS_MIME_TYPE:
                 try {
                     //Apache POI only supports BIFF8 format, anything below is considered
                     //old excel format and is not a concern for us.
@@ -92,7 +92,7 @@ public final class ExcelReader extends AbstractReader {
                 } catch (OldExcelFormatException e) {
                     throw new FileReaderInitException(e);
                 }
-            case XLSXMimeType:
+            case XLSX_MIME_TYPE:
                 //StreamingReader is part of the xlsx streamer dependency that creates
                 //a streaming version of XSSFWorkbook for reading (SXSSFWorkbook is only for writing
                 //large workbooks, not reading). This libary provides a workbook interface

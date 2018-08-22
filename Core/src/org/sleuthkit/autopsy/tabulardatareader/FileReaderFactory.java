@@ -26,6 +26,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public final class FileReaderFactory {
     
+    private FileReaderFactory() {
+    }
     /**
      * Instantiates the appropriate reader given the mimeType argument. Currently
      * supports SQLite files and Excel files (.xls and .xlsx). BIFF5 format of .xls

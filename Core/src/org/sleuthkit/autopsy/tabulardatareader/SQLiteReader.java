@@ -170,10 +170,10 @@ public final class SQLiteReader extends AbstractReader {
     @Override
     public Integer getRowCountFromTable(String tableName) 
             throws FileReaderException {
-        tableName = wrapTableNameStringWithQuotes(tableName);
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
         try (Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
-                        "SELECT count (*) as count FROM " + tableName)){ //NON-NLS
+                        "SELECT count (*) as count FROM " + quotedTableName)){ //NON-NLS
             return resultSet.getInt("count"); //NON-NLS
         } catch (SQLException ex) {
             throw new FileReaderException(ex);
@@ -195,10 +195,10 @@ public final class SQLiteReader extends AbstractReader {
         //This method does not directly call its overloaded counterpart 
         //since the second parameter would need to be retreived from a call to
         //getTableRowCount().
-        tableName = wrapTableNameStringWithQuotes(tableName);
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
-                        "SELECT * FROM " + tableName)) { //NON-NLS
+                        "SELECT * FROM " + quotedTableName)) { //NON-NLS
             return resultSetToList(resultSet);
         } catch (SQLException ex) {
             throw new FileReaderException(ex);
@@ -218,10 +218,10 @@ public final class SQLiteReader extends AbstractReader {
     @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
             int offset, int numRowsToRead) throws FileReaderException{
-        tableName = wrapTableNameStringWithQuotes(tableName);
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
-                        "SELECT * FROM " + tableName    //NON-NLS
+                        "SELECT * FROM " + quotedTableName    //NON-NLS
                         + " LIMIT " + Integer.toString(numRowsToRead) //NON-NLS
                         + " OFFSET " + Integer.toString(offset - 1))) { //NON-NLS
             return resultSetToList(resultSet);
