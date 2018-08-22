@@ -87,11 +87,15 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         this.errorText.setVisible(false);
         this.setupDataSources();
 
-        if (CommonAttributePanel.isEamDbAvailable()) {
+        if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
             this.setupCases();
-            this.enablePercentageOptions();
         } else {
             this.disableIntercaseSearch();
+        }
+        
+        if(CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations()){
+            this.enablePercentageOptions();
+        } else {
             this.disablePercentageOptions();
         }
 
@@ -125,7 +129,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
     }
 
-    private static boolean isEamDbAvailable() {
+    private static boolean isEamDbAvailableForIntercaseSearch() {
         try {
             return EamDb.isEnabled()
                     && EamDb.getInstance() != null
@@ -133,6 +137,17 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     && Case.isCaseOpen()
                     && Case.getCurrentCase() != null
                     && EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
+        }
+        return false;
+    }
+    
+    private static boolean isEamDbAvailableForPercentageFrequencyCalculations(){
+                try {
+            return EamDb.isEnabled()
+                    && EamDb.getInstance() != null
+                    && EamDb.getInstance().getCases().size() > 0;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
