@@ -19,7 +19,9 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -96,9 +98,13 @@ final public class CommonAttributeSearchResults {
      * Remove results which are not found in the portion of available data 
      * sources described by minimumPercentageThreshold.
      * 
-     * @return 
+     * @return metadata
      */
     private Map<Integer, List<CommonAttributeValue>> getMetadata(int minimumPercentageThreshold) throws EamDbException {
+        
+        if(minimumPercentageThreshold == 0){
+            return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+        }
         
         CorrelationAttribute.Type fileAttributeType = CorrelationAttribute
                 .getDefaultCorrelationTypes()
@@ -108,17 +114,36 @@ final public class CommonAttributeSearchResults {
         
         EamDb eamDb = EamDb.getInstance();
         
+        Map<Integer, List<CommonAttributeValue>> itemsToRemove = new HashMap<>();
+        
         for(Entry<Integer, List<CommonAttributeValue>> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
             
-            Integer key = listOfValues.getKey();
+            final Integer key = listOfValues.getKey();
+            final List<CommonAttributeValue> values = listOfValues.getValue();
             
-            for(CommonAttributeValue value : listOfValues.getValue()){
+            for(CommonAttributeValue value : values){
                 
                 int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttribute(fileAttributeType, value.getValue()));
                 
                 if(frequencyPercentage < minimumPercentageThreshold){
-                    this.instanceCountToAttributeValues.get(key).remove(value);
+                    if(itemsToRemove.containsKey(key)){
+                        itemsToRemove.get(key).add(value);
+                    } else {
+                        List<CommonAttributeValue> toRemove = new ArrayList<>();
+                        toRemove.add(value);
+                        itemsToRemove.put(key, toRemove);
+                    }
                 }
+            }
+        }
+        
+        for(Entry<Integer, List<CommonAttributeValue>> valuesToRemove : itemsToRemove.entrySet()){
+            
+            final Integer key = valuesToRemove.getKey();
+            final List<CommonAttributeValue> values = valuesToRemove.getValue();
+            
+            for (CommonAttributeValue value : values){
+                this.instanceCountToAttributeValues.get(key).remove(value);
             }
         }
         
