@@ -24,6 +24,8 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -32,9 +34,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final public class CommonFilesSearchAction extends CallableSystemAction {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchAction.class.getName());
+    
     private static CommonFilesSearchAction instance = null;
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(CommonFilesSearchAction.class.getName());
     
     CommonFilesSearchAction() {
         super();
@@ -45,9 +48,22 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
     public boolean isEnabled(){
         boolean shouldBeEnabled = false;
         try {
-            shouldBeEnabled = Case.isCaseOpen() && Case.getCurrentCase().getDataSources().size() > 1;
+            //dont refactor any of this to pull out common expressions - order of evaluation of each expression is significant
+            shouldBeEnabled = 
+                    (Case.isCaseOpen() && 
+                    Case.getCurrentCase().getDataSources().size() > 1) 
+                    || 
+                    (EamDb.isEnabled() && 
+                    EamDb.getInstance() != null && 
+                    EamDb.getInstance().getCases().size() > 1 && 
+                    Case.isCaseOpen() &&
+                    Case.getCurrentCase() != null && 
+                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null);
+                    
         } catch(TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
+            LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting CR cases for action enabled check", ex);
         }
         return super.isEnabled() && shouldBeEnabled;
     }
@@ -61,12 +77,12 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
 
     @Override
     public void actionPerformed(ActionEvent event) {
-        new CommonFilesDialog().setVisible(true);
+        new CommonAttributePanel().setVisible(true);
     }
 
     @Override
     public void performAction() {
-        new CommonFilesDialog().setVisible(true);
+        new CommonAttributePanel().setVisible(true);
     }
 
     @NbBundle.Messages({

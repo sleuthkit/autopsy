@@ -17,8 +17,9 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
-
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
 import java.io.Reader;
 import java.util.logging.Level;
 import org.apache.tika.parser.txt.CharsetDetector;
@@ -53,15 +54,16 @@ final class TextFileExtractor extends ContentTextExtractor {
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
         CharsetDetector detector = new CharsetDetector();
-        ReadContentInputStream stream = new ReadContentInputStream(source);
+        //wrap stream in a BufferedInputStream so that it supports the mark/reset methods necessary for the CharsetDetector
+        InputStream stream = new BufferedInputStream(new ReadContentInputStream(source));
         try {
             detector.setText(stream);
         } catch (IOException ex) {
-            throw new TextExtractorException("Unable to get string from detected text in UnicodeTextExtractor", ex);
+            throw new TextExtractorException("Unable to get string from detected text in TextFileExtractor", ex);
         }
         CharsetMatch match = detector.detect();
         if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
-            throw new TextExtractorException("Text does not match any character set with a high enough confidence for UnicodeTextExtractor");
+            throw new TextExtractorException("Text does not match any character set with a high enough confidence for TextFileExtractor");
         }
 
         return match.getReader();

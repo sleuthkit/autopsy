@@ -27,13 +27,14 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- * Wrapper node for <code>Md5Node</code> used to display common files search
- * results in the top right pane. Calls <code>InstanceCountNodeFactory</code>.
+ * Top-level node to store common file search results.  Current structure is:
+ * - node for number of matches 
+ * -- node for MD5/commmon attribute
+ * --- node for instance. 
  */
-final public class CommonFilesNode extends DisplayableItemNode {
-    
+final public class CommonAttributeSearchResultRootNode extends DisplayableItemNode {
 
-    CommonFilesNode(CommonFilesMetadata metadataList) {
+    CommonAttributeSearchResultRootNode(CommonAttributeSearchResults metadataList) {
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
@@ -64,27 +65,27 @@ final public class CommonFilesNode extends DisplayableItemNode {
      */
     static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
-        private final CommonFilesMetadata metadata;
+        private final CommonAttributeSearchResults searchResults;
         
         /**
-         * Build a factory which converts a <code>CommonFilesMetadata</code> 
+         * Build a factory which converts a <code>CommonAttributeSearchResults</code> 
          * object into <code>DisplayableItemNode</code>s.
-         * @param metadata 
+         * @param searchResults 
          */
-        InstanceCountNodeFactory(CommonFilesMetadata metadata){
-            this.metadata = metadata;
+        InstanceCountNodeFactory(CommonAttributeSearchResults searchResults){
+            this.searchResults = searchResults;
         }
-        
+
         @Override
         protected boolean createKeys(List<Integer> list) {
-            list.addAll(this.metadata.getMetadata().keySet());
+            list.addAll(this.searchResults.getMetadata().keySet());
             return true;
         }
         
         @Override
         protected Node createNodeForKey(Integer instanceCount){
-            List<Md5Metadata> md5Metadata =  this.metadata.getMetadataForMd5(instanceCount);
-            return new InstanceCountNode(instanceCount, md5Metadata);
-        }        
+            List<CommonAttributeValue> attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
+            return new InstanceCountNode(instanceCount, attributeValues);
+        }
     }
 }

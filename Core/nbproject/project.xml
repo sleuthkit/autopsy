@@ -337,6 +337,7 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
+                <package>org.sleuthkit.autopsy.sqlitereader</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>

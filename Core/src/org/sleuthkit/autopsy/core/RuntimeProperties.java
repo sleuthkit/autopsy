@@ -26,6 +26,8 @@ public class RuntimeProperties {
 
     private static boolean runningWithGUI = true;
     private static boolean runningWithGUIFlagHasBeenSet = false;
+    private static boolean runningInTarget = false;
+    private static boolean runningInTargetFlagHasBeenSet = false;
 
     /**
      * Sets or unsets a flag indicating whether or not the application is
@@ -43,6 +45,33 @@ public class RuntimeProperties {
         } else {
             throw new RuntimePropertiesException("The runningWithGUI flag has already been set and cannot be changed");
         }
+    }
+    
+    /**
+     * Sets or unsets a flag indicating whether or not the application is running in a target system.
+     * The flag can only be set once per application innvocation
+     * 
+     * @param runningInTarget
+     * 
+     * @throws RuntimePropertiesException if the flag has already been set 
+     */
+    
+    public synchronized static void setRunningInTarget(boolean runningInTarget) throws RuntimePropertiesException{
+        if(!runningInTargetFlagHasBeenSet){
+            RuntimeProperties.runningInTarget = runningInTarget;
+            runningInTargetFlagHasBeenSet = true;
+        } else {
+            throw new RuntimePropertiesException("The runningLive Flag has already been set and cannot be changed");
+        }
+    }
+    
+    /**
+     * Gets a flag indicating whether or not the application is running in a target system
+     * 
+     * @return True or false.
+     */
+    public synchronized static boolean isRunningInTarget() {
+        return runningInTarget;
     }
 
     /**

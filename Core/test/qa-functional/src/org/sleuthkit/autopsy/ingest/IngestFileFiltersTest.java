@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import junit.framework.Test;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.LocalFilesDSProcessor;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -117,7 +117,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -153,7 +153,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -198,7 +198,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             }
          } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -234,7 +234,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -283,7 +283,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -313,11 +313,11 @@ public class IngestFileFiltersTest extends NbTestCase {
                 assertEquals("PhotoRec Carver", errs.get(0).getModuleDisplayName());
             } catch (InterruptedException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }        
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -364,7 +364,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             assertEquals(11, numTypeJpgFiles);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;

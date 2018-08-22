@@ -61,6 +61,6 @@ else
 fi
 
 # make sure it is executable
-chmod +x bin/autopsy
+chmod u+x bin/autopsy
 
 echo "Autopsy is now configured. You can execute bin/autopsy to start it"
