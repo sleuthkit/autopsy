@@ -143,7 +143,12 @@ final public class CommonAttributeSearchResults {
             final List<CommonAttributeValue> values = valuesToRemove.getValue();
             
             for (CommonAttributeValue value : values){
-                this.instanceCountToAttributeValues.get(key).remove(value);
+                final List<CommonAttributeValue> instanceCountValue = this.instanceCountToAttributeValues.get(key);
+                instanceCountValue.remove(value);
+                
+                if(instanceCountValue.isEmpty()){
+                    this.instanceCountToAttributeValues.remove(key);
+                }
             }
         }
         
