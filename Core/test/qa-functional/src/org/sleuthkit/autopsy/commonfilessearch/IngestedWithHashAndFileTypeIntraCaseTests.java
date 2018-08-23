@@ -27,7 +27,7 @@ import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -82,7 +82,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -128,7 +128,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -169,7 +169,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -210,7 +210,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -252,7 +252,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -294,7 +294,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -336,7 +336,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -378,7 +378,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -419,7 +419,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -460,7 +460,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 
         } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 }

@@ -28,7 +28,7 @@ import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
@@ -83,7 +83,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
             IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
     
@@ -112,7 +112,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 
         } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -136,7 +136,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 }

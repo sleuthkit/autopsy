@@ -25,7 +25,7 @@ import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
@@ -68,7 +68,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
         } catch (TskCoreException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -126,7 +126,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
     
@@ -179,7 +179,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
     
