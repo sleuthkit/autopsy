@@ -143,7 +143,6 @@ class RecentDocumentsLnkExtractor extends Extract {
             }
         }
 
-        //TODO: why weren't these getting indexed before?
         try {
             blackboard.postArtifacts(bbartifacts, PARENT_MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
