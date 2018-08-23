@@ -361,16 +361,16 @@ public class CorrelationAttributeInstance implements Serializable {
         @Override
         public String toString() {
             StringBuilder str = new StringBuilder(55);
-            str.append("(id=");
-            str.append(getId());
-            str.append(", displayName=");
-            str.append(getDisplayName());
-            str.append(", dbTableName=");
-            str.append(getDbTableName());
-            str.append(", supported=");
-            str.append(isSupported().toString());
-            str.append(", enabled=");
-            str.append(isEnabled().toString());
+            str.append("(id=")
+                    .append(getId());
+            str.append(", displayName=")
+                    .append(getDisplayName());
+            str.append(", dbTableName=")
+                    .append(getDbTableName());
+            str.append(", supported=")
+                    .append(isSupported().toString());
+            str.append(", enabled=")
+                    .append(isEnabled().toString());
             str.append(")");
             return str.toString();
         }
