@@ -589,9 +589,10 @@ final class Chrome extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
-                        TSK_URL, PARENT_MODULE_NAME,
-                        Objects.toString(result.get("origin_url"), "")), //NON-NLS
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                        new BlackboardAttribute(
+                                TSK_URL, PARENT_MODULE_NAME,
+                                Objects.toString(result.get("origin_url"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
                                 (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601), //NON-NLS
@@ -624,23 +625,18 @@ final class Chrome extends Extract {
                             this.getModuleName(), signonFile.getName()));
                 }
 
-                // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
-                //TODO: Why not?  Because it has a different artifact type?  We can just post it seperately?
+                Set<BlackboardAttribute> osAccountAttriubtes = Collections.singleton(
+                        new BlackboardAttribute(
+                                TSK_USER_NAME, PARENT_MODULE_NAME,
+                                Objects.toString(result.get("username_value"), "").replaceAll("'", "''")));//NON-NLS
                 try {
-                    BlackboardAttribute osAcctAttribute = new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME,
-                            Objects.toString(result.get("username_value"), "").replaceAll("'", "''")); //NON-NLS
                     BlackboardArtifact osAccountArtifact = signonFile.newArtifact(TSK_OS_ACCOUNT);
-                    osAccountArtifact.addAttributes(Collections.singleton(osAcctAttribute));
-
-                    blackboard.postArtifact(osAccountArtifact, PARENT_MODULE_NAME);
-
+                    osAccountArtifact.addAttributes(osAccountAttriubtes);
+                    bbartifacts.add(osAccountArtifact);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome os account artifact.", ex); //NON-NLS
                     this.addErrorMessage(NbBundle.getMessage(Chrome.class, "Chrome.getLogin.errMsg.errAnalyzingFiles",
                             this.getModuleName(), signonFile.getName()));
-                } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Error while trying to post Chrome os account artifact.", ex); //NON-NLS
-                    this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
                 }
             }
 
