@@ -77,12 +77,15 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         List<ContentTag> tags = getContentTagsFromDatabase();
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
-        sheetSet.put(new NodeProperty<>("Name",
-                "Name",
-                "Name",
-                getName()));
-        addCommentProperty(sheetSet, tags);
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
+        //add the name property before the comment property to ensure it is first column
+        sheetSet.put(new NodeProperty<>(AbstractFilePropertyType.NAME.toString(), 
+                AbstractFilePropertyType.NAME.toString(),
+                NO_DESCR,
+                getName()));
+        //add the comment property before the propertyMap to ensure it is early in column order
+        addCommentProperty(sheetSet, tags);
+        
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));

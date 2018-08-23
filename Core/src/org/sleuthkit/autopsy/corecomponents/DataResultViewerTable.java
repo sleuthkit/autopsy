@@ -650,6 +650,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /**
+     * Listener which sets the custom icon renderer on columns which contain
+     * icons instead of text when a column is added.
+     */
     private class IconRendererTableListener implements TableColumnModelListener {
 
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=Comment"})
@@ -658,6 +662,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             if (e.getSource() instanceof ETableColumnModel) {
                 if (e.getSource() instanceof ETableColumnModel) {
                     TableColumn column = ((ETableColumnModel) e.getSource()).getColumn(e.getToIndex());
+                    //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
                     if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
                         column.setCellRenderer(new HasCommentCellRenderer());
                     }
@@ -860,10 +865,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /*
+     * A renderer which based on the contents of the cell will display an icon
+     * to indicate the presence of a comment related to the content.
+     */
     private final class HasCommentCellRenderer extends ColorTagCustomRenderer {
 
         private static final long serialVersionUID = 1L;
 
+        @NbBundle.Messages({"DataResultViewerTable.commentRenderer.crComment.toolTip=Comment exists in Central Repository",
+            "DataResultViewerTable.commentRenderer.tagComment.toolTip=Comment exists on associated tag(s)",
+            "DataResultViewerTable.commentRenderer.crAndTagComment.toolTip=Comments exist both in Central Repository and on associated tag(s)",
+            "DataResultViewerTable.commentRenderer.noComment.toolTip=No comments found"})
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -887,21 +900,21 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 switch ((HasCommentStatus) switchValue) {
                     case CR_COMMENT:
                         setIcon(COMMENT_ICON);
-                        setToolTipText("Comment exists in Central Repository");
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_crComment_toolTip());
                         break;
                     case TAG_COMMENT:
                         setIcon(COMMENT_ICON);
-                        setToolTipText("Comment exists on associated tag(s)");
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_tagComment_toolTip());
                         break;
                     case CR_AND_TAG_COMMENTS:
                         setIcon(COMMENT_ICON);
-                        setToolTipText("Comments exist both in Central Repository and on associated tag(s)");
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_crAndTagComment_toolTip());
                         break;
                     case TAG_NO_COMMENT:
                     case NO_COMMENT:
                     default:
                         setIcon(null);
-                        setToolTipText("No comments found");
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_noComment_toolTip());
                 }
             } else {
                 setIcon(null);
@@ -912,9 +925,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     }
 
+    /**
+     * Enum to denote the presence of a comment associated with the content or
+     * artifacts generated from it.
+     */
     public enum HasCommentStatus {
         NO_COMMENT,
-        TAG_NO_COMMENT,
+        TAG_NO_COMMENT, 
         CR_COMMENT,
         TAG_COMMENT,
         CR_AND_TAG_COMMENTS

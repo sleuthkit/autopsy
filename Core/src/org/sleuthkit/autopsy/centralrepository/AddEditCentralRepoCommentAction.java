@@ -97,12 +97,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 }
 
                 comment = centralRepoCommentDialog.getComment();
-                if (fileId != null) {
-                    try {
-                        Case.getCurrentCaseThrows().notifyCentralRepoCommentChanged(fileId, comment);
-                    } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, "Case not open after changing central repository comment", ex);
-                    }
+                try {
+                    Case.getCurrentCaseThrows().notifyCentralRepoCommentChanged(fileId, comment);
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.WARNING, "Case not open after changing central repository comment", ex);
                 }
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error adding comment", ex);
