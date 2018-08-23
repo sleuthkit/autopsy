@@ -272,7 +272,7 @@ public class CorrelationAttributeInstance implements Serializable {
      * Correlation Types which determine which table to query in the CR
      */
     @SuppressWarnings("serial")
-    public static class Type implements Serializable {
+    public static class Type implements Serializable { // NOPMD Avoid short class names like Type
 
         private int typeId;
         private String displayName;
