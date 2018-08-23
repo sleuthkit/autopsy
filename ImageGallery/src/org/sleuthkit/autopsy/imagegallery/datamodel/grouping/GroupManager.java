@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,8 +70,8 @@ import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -91,10 +91,9 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public class GroupManager {
 
-    private static final Logger LOGGER = Logger.getLogger(GroupManager.class.getName());
+    private static final Logger logger = Logger.getLogger(GroupManager.class.getName());
 
     private DrawableDB db;
-
     private final ImageGalleryController controller;
 
     /**
@@ -150,9 +149,8 @@ public class GroupManager {
     }
 
     /**
-     * construct a group manager hooked up to the given db and controller
+     * Construct a group manager hooked up to the given controller.
      *
-     * @param db
      * @param controller
      */
     public GroupManager(ImageGalleryController controller) {
@@ -160,13 +158,13 @@ public class GroupManager {
     }
 
     /**
-     * using the current groupBy set for this manager, find groupkeys for all
-     * the groups the given file is a part of
+     * Using the current groupBy set for this manager, find groupkeys for all
+     * the groups the given file is a part of.
      *
-     * @param file
+     * @param file The DrawableFile to get group keys for.
      *
-     * @returna a set of {@link GroupKey}s representing the group(s) the given
-     * file is a part of
+     * @return A set of GroupKeys representing the group(s) the given file is a
+     *         part of.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) {
@@ -184,11 +182,13 @@ public class GroupManager {
     }
 
     /**
-     * using the current groupBy set for this manager, find groupkeys for all
-     * the groups the given file is a part of
+     * Using the current groupBy set for this manager, find groupkeys for all
+     * the groups the given file is a part of.
      *
-     * @return a a set of {@link GroupKey}s representing the group(s) the given
-     *         file is a part of
+     * @param fileID The file ID to find groups for.
+     *
+     * @return A set of GroupKeys representing the group(s) the given file is a
+     *         part of.
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
@@ -196,19 +196,22 @@ public class GroupManager {
                 DrawableFile file = db.getFileFromID(fileID);
                 return getGroupKeysForFile(file);
             } else {
-                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS
+                logger.log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
+            logger.log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
         }
         return Collections.emptySet();
     }
 
-    /**
+    /** Get the DrawableGroup (if it exists) for the given GroupKey.
+     *
      * @param groupKey
      *
      * @return return the DrawableGroup (if it exists) for the given GroupKey,
      *         or null if no group exists for that key.
+     *
+     * //TODO: use optional?
      */
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
@@ -262,7 +265,8 @@ public class GroupManager {
      * 'mark' the given group as seen. This removes it from the queue of groups
      * to review, and is persisted in the drawable db.
      *
-     * @param group the {@link  DrawableGroup} to mark as seen
+     * @param group the DrawableGroup to mark as seen
+     * @param seen  The seen status to mark.
      */
     @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group, boolean seen) {
@@ -279,12 +283,14 @@ public class GroupManager {
     }
 
     /**
-     * remove the given file from the group with the given key. If the group
+     * Remove the given file from the group with the given key. If the group
      * doesn't exist or doesn't already contain this file, this method is a
      * no-op
      *
      * @param groupKey the value of groupKey
      * @param fileID   the value of file
+     *
+     * @return The group was (or would have been ) removed from.
      */
     public synchronized DrawableGroup removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
@@ -322,6 +328,7 @@ public class GroupManager {
      *
      * These values represent the groups of files.
      *
+     * @param <A>     The type of the values of the groupBy attribute.
      * @param groupBy
      *
      * @return
@@ -352,14 +359,13 @@ public class GroupManager {
                 case MIME_TYPE:
                     if (nonNull(db)) {
                         HashSet<String> types = new HashSet<>();
-                        
+
                         // Use the group_concat function to get a list of files for each mime type.  
                         // This has different syntax on Postgres vs SQLite
                         String groupConcatClause;
                         if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
                             groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
-                        }
-                        else {
+                        } else {
                             groupConcatClause = " group_concat(obj_id) as object_ids";
                         }
                         String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
@@ -389,7 +395,7 @@ public class GroupManager {
 
             return values;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
+            logger.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
             return Collections.emptyList();
         }
 
@@ -454,7 +460,7 @@ public class GroupManager {
                             .collect(Collectors.toSet());
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
+                logger.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
                 throw ex;
             }
         }
@@ -472,7 +478,7 @@ public class GroupManager {
             }
             return files;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
+            logger.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
             throw ex;
         }
     }
@@ -520,6 +526,7 @@ public class GroupManager {
      * regroup all files in the database using given {@link  DrawableAttribute}
      * see {@link ReGroupTask} for more details.
      *
+     * @param <A>       The type of the values of the groupBy attribute.
      * @param groupBy
      * @param sortBy
      * @param sortOrder
@@ -585,11 +592,8 @@ public class GroupManager {
 
     @SuppressWarnings("AssignmentToMethodParameter")
     private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
-        if (g == null) {
-            //if there wasn't already a group check if there should be one now
-            g = popuplateIfAnalyzed(groupKey, null);
-        }
-        DrawableGroup group = g;
+        //if there wasn't already a group check if there should be one now
+        DrawableGroup group = nonNull(g) ? g : popuplateIfAnalyzed(groupKey, null);
         if (group != null) {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             Platform.runLater(() -> group.addFile(fileID));
@@ -626,10 +630,9 @@ public class GroupManager {
     }
 
     /**
-     * handle {@link FileUpdateEvent} sent from Db when files are
-     * inserted/updated
+     * Handle the fileIds of files that were updated.
      *
-     * @param evt
+     * @param updatedFileIDs Handle the fileIds of files that were updated.
      */
     @Subscribe
     synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
@@ -655,8 +658,7 @@ public class GroupManager {
     }
 
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
-
-        if (Objects.nonNull(task) && (task.isCancelled())) {
+        if (nonNull(task) && task.isCancelled()) {
             /*
              * if this method call is part of a ReGroupTask and that task is
              * cancelled, no-op
@@ -665,9 +667,8 @@ public class GroupManager {
              * the user picked a different group by attribute, while the current
              * task was still running)
              */
-
-        } else // no task or un-cancelled task
-        {
+            return null;
+        } else {// no task or un-cancelled task
             if (nonNull(db) && ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey))) {
                 /*
                  * for attributes other than path we can't be sure a group is
@@ -688,8 +689,8 @@ public class GroupManager {
                             } else {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
-                                group.seenProperty().addListener((o, oldSeen, newSeen) -> 
-                                    Platform.runLater(() -> markGroupSeen(group, newSeen))
+                                group.seenProperty().addListener((o, oldSeen, newSeen)
+                                        -> Platform.runLater(() -> markGroupSeen(group, newSeen))
                                 );
                                 groupMap.put(groupKey, group);
                             }
@@ -699,7 +700,7 @@ public class GroupManager {
                                 analyzedGroups.add(group);
                                 if (Objects.isNull(task)) {
                                     FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
-                               }
+                                }
                             }
                             markGroupSeen(group, groupSeen);
                         });
@@ -707,7 +708,7 @@ public class GroupManager {
 
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
                 }
             }
         }
