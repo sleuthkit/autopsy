@@ -573,6 +573,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 break;
             }
         }
+        //currently checks for a comment on the associated file in the central repo not the artifact itself 
+        //what we want the column property to reflect should be revisted when we have added a way to comment
+        //on the artifact itself
         if (EamDbUtil.useCentralRepo()) {
             CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(associated);
             if (attribute != null) {

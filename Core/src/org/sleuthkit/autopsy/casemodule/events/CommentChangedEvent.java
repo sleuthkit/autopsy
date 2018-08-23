@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
 /**
@@ -30,17 +31,22 @@ public class CommentChangedEvent extends AutopsyEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final long contentID;
-
+    private final String caseName; //included so we can eventually use this event between cases
+    
     /**
      * Constructs a CommentChangedEvent which is published when a central
      * repository comment is changed.
      *
      * @param id the objectId of the Content which has had its central repository comment changed
      * @param newComment the new value of the comment
+     * @throws org.sleuthkit.autopsy.casemodule.NoCurrentCaseException if there is no current case open when this event is sent
      */
-    public CommentChangedEvent(long id, String newComment) {
+    public CommentChangedEvent(long id, String newComment) throws NoCurrentCaseException {
         super(Case.Events.CR_COMMENT_CHANGED.toString(), null, newComment);
-        contentID = id;
+         contentID = id;
+        //get the caseName as well so that this event could be used for notifications between cases without method signature change
+        caseName = Case.getCurrentCaseThrows().getName(); 
+       
     }
 
     /**

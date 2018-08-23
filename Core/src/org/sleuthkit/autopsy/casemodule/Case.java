@@ -57,6 +57,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -1548,7 +1549,11 @@ public class Case {
      * @param newComment the new value of the comment
      */
     public void notifyCentralRepoCommentChanged(long id, String newComment) {
-        eventPublisher.publish(new CommentChangedEvent(id, newComment));
+        try {
+            eventPublisher.publish(new CommentChangedEvent(id, newComment));
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to send notifcation regarding comment change due to no current case being open", ex);
+        }
     }
 
     /**
