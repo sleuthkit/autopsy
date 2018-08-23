@@ -447,7 +447,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     /**
      * Test the methods associated with bulk artifacts (addAttributeInstanceBulk and
- commitAttrtibuteInstancesBulk).
+ commitAttributeInstancesBulk).
      * First test the normal use case of a large number of valid artifacts getting added.
      * Next test the error conditions:
      * - Test preparing artifact with null type
@@ -466,7 +466,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // - Make a list of artifacts equal to the threshold size
         // - Call addAttributeInstanceBulk on all of them
         // - Verify that the bulk threshold number of them were written to the database
-        // - Call commitAttrtibuteInstancesBulk to insert the remainder
+        // - Call commitAttributeInstancesBulk to insert the remainder
         // - Verify that the database now has all the artifacts
         try {
             // Make sure there are no artifacts in the database to start
@@ -511,8 +511,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
             assertTrue("Artifact count " + count + " does not match bulkThreshold " + DEFAULT_BULK_THRESHOLD, count == DEFAULT_BULK_THRESHOLD);
 
-            // Now call commitAttrtibuteInstancesBulk() to insert the rest of queue
-            EamDb.getInstance().commitAttrtibuteInstancesBulk();
+            // Now call commitAttributeInstancesBulk() to insert the rest of queue
+            EamDb.getInstance().commitAttributeInstancesBulk();
             count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
             int expectedCount = list1.size() + list2.size();
             assertTrue("Artifact count " + count + " does not match expected count " + expectedCount, count == expectedCount);
@@ -535,7 +535,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance("value", fileType, null, dataSource1fromCase1, "path");
             EamDb.getInstance().addAttributeInstanceBulk(attr);
-            EamDb.getInstance().commitAttrtibuteInstancesBulk();
+            EamDb.getInstance().commitAttributeInstancesBulk();
             Assert.fail("bulkInsertArtifacts failed to throw exception for null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -545,7 +545,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance("value", fileType, case1, null, "path");
             EamDb.getInstance().addAttributeInstanceBulk(attr);
-            EamDb.getInstance().commitAttrtibuteInstancesBulk();
+            EamDb.getInstance().commitAttributeInstancesBulk();
             Assert.fail("prepareBulkArtifact failed to throw exception for null data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -565,7 +565,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance("value", fileType, case1, dataSource1fromCase1, "path", "comment", null);
             EamDb.getInstance().addAttributeInstanceBulk(attr);
-            EamDb.getInstance().commitAttrtibuteInstancesBulk();
+            EamDb.getInstance().commitAttributeInstancesBulk();
             Assert.fail("prepareBulkArtifact failed to throw exception for null known status");
         } catch (EamDbException ex) {
             // This is the expected behavior

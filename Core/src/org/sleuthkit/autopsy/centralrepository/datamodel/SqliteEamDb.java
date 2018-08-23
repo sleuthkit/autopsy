@@ -565,10 +565,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
  addAttributeInstanceBulk() method
      */
     @Override
-    public void commitAttrtibuteInstancesBulk() throws EamDbException {
+    public void commitAttributeInstancesBulk() throws EamDbException {
         try {
             acquireExclusiveLock();
-            super.commitAttrtibuteInstancesBulk();
+            super.commitAttributeInstancesBulk();
         } finally {
             releaseExclusiveLock();
         }

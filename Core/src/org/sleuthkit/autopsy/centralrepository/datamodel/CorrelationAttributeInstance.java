@@ -49,7 +49,6 @@ public class CorrelationAttributeInstance implements Serializable {
     private String comment;
     private TskData.FileKnown knownStatus;
 
-    
     public CorrelationAttributeInstance(
             String correlationValue,
             CorrelationAttributeInstance.Type correlationType,
@@ -71,28 +70,29 @@ public class CorrelationAttributeInstance implements Serializable {
     ) throws EamDbException {
         this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus);
     }
-    
+
     public CorrelationAttributeInstance(
-            Type filesType, 
-            String md5Hash, 
-            CorrelationCase correlationCase, 
-            CorrelationDataSource fromTSKDataSource, 
+            Type correlationType,
+            String correlationValue,
+            CorrelationCase correlationCase,
+            CorrelationDataSource fromTSKDataSource,
             String string) throws EamDbException {
-        this(filesType, md5Hash, -1, correlationCase, fromTSKDataSource, string, "", TskData.FileKnown.UNKNOWN);
+        this(correlationType, correlationValue, -1, correlationCase, fromTSKDataSource, string, "", TskData.FileKnown.UNKNOWN);
     }
 
     /**
      * NOTE: Only used for when EamDB is NOT enabled.
-     * @param aType CorrelationType
-     * @param value md5 value 
+     *
+     * @param aType CorrelationAttributeInstance.Type
+     * @param value correlation value
      */
-    public CorrelationAttributeInstance(Type aType, String value) throws  EamDbException  {
+    public CorrelationAttributeInstance(Type aType, String value) throws EamDbException {
         this(aType, value, -1, null, null, "", "", TskData.FileKnown.UNKNOWN);
     }
 
     CorrelationAttributeInstance(
-            Type type, 
-            String value, 
+            Type type,
+            String value,
             int instanceId,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
@@ -103,9 +103,9 @@ public class CorrelationAttributeInstance implements Serializable {
         if (filePath == null) {
             throw new EamDbException("file path is null");
         }
-        
+
         if (value == null) {
-            throw new EamDbException("md5 value is null");
+            throw new EamDbException("correlation value is null");
         }
 
         this.correlationType = type;
@@ -119,8 +119,6 @@ public class CorrelationAttributeInstance implements Serializable {
         this.knownStatus = knownStatus;
     }
 
-
-    
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
         return ((this.getID() == otherInstance.getID())
                 && (this.getCorrelationCase().equals(otherInstance.getCorrelationCase()))
@@ -139,8 +137,8 @@ public class CorrelationAttributeInstance implements Serializable {
                 + this.getKnownStatus()
                 + this.getComment();
     }
-    
-        /**
+
+    /**
      * @return the correlationValue
      */
     public String getCorrelationValue() {
@@ -169,12 +167,11 @@ public class CorrelationAttributeInstance implements Serializable {
         this.correlationType = correlationType;
     }
 
-
     /**
      * Is this a database instance?
      *
      * @return True if the instance ID is greater or equal to zero; otherwise
-     *         false.
+     * false.
      */
     public boolean isDatabaseInstance() {
         return (ID >= 0);
@@ -237,23 +234,24 @@ public class CorrelationAttributeInstance implements Serializable {
      * as notable and should never be set to KNOWN.
      *
      * @param knownStatus Should be BAD if the item is tagged as notable,
-     *                    UNKNOWN otherwise
+     * UNKNOWN otherwise
      */
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
     }
-    
-        // Type ID's for Default Correlation Types
+
+    // Type ID's for Default Correlation Types
     public static final int FILES_TYPE_ID = 0;
     public static final int DOMAIN_TYPE_ID = 1;
     public static final int EMAIL_TYPE_ID = 2;
     public static final int PHONE_TYPE_ID = 3;
     public static final int USBID_TYPE_ID = 4;
-    
-        /**
+
+    /**
      * Load the default correlation types
-     * 
-     * @throws EamDbException if the Type's dbTableName has invalid characters/format
+     *
+     * @throws EamDbException if the Type's dbTableName has invalid
+     * characters/format
      */
     @Messages({"CorrelationType.FILES.displayName=Files",
         "CorrelationType.DOMAIN.displayName=Domains",
@@ -269,7 +267,8 @@ public class CorrelationAttributeInstance implements Serializable {
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
-       public static class Type implements Serializable {
+
+    public static class Type implements Serializable {
 
         private int id;
         private String displayName;
@@ -277,19 +276,19 @@ public class CorrelationAttributeInstance implements Serializable {
         private Boolean supported;
         private Boolean enabled;
         private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*";
-    
-            /**
-         * 
-         * @param id            Unique ID for this Correlation Type
-         * @param displayName   Name of this type displayed in the UI.
-         * @param dbTableName   Central repository db table where data of this type is stored.
-         *                      Must start with a lowercase letter and only contain
-         *                      lowercase letters, numbers, and '_' characters.
-         * @param supported     Is this Type currently supported
-         * @param enabled       Is this Type currently enabled.
+
+        /**
+         *
+         * @param id Unique ID for this Correlation Type
+         * @param displayName Name of this type displayed in the UI.
+         * @param dbTableName Central repository db table where data of this
+         * type is stored. Must start with a lowercase letter and only contain
+         * lowercase letters, numbers, and '_' characters.
+         * @param supported Is this Type currently supported
+         * @param enabled Is this Type currently enabled.
          */
         public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
-            if(dbTableName == null) {
+            if (dbTableName == null) {
                 throw new EamDbException("dbTableName is null");
             }
             this.id = id;
@@ -304,15 +303,15 @@ public class CorrelationAttributeInstance implements Serializable {
 
         /**
          * Constructor for custom types where we do not know the Type ID until
-         * the row has been entered into the correlation_types table
-         * in the central repository.
-         * 
-         * @param displayName   Name of this type displayed in the UI.
-         * @param dbTableName   Central repository db table where data of this type is stored
-         *                      Must start with a lowercase letter and only contain
-         *                      lowercase letters, numbers, and '_' characters.
-         * @param supported     Is this Type currently supported
-         * @param enabled       Is this Type currently enabled.
+         * the row has been entered into the correlation_types table in the
+         * central repository.
+         *
+         * @param displayName Name of this type displayed in the UI.
+         * @param dbTableName Central repository db table where data of this
+         * type is stored Must start with a lowercase letter and only contain
+         * lowercase letters, numbers, and '_' characters.
+         * @param supported Is this Type currently supported
+         * @param enabled Is this Type currently enabled.
          */
         public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this(-1, displayName, dbTableName, supported, enabled);
@@ -362,11 +361,16 @@ public class CorrelationAttributeInstance implements Serializable {
         @Override
         public String toString() {
             StringBuilder str = new StringBuilder(55);
-            str.append("(id=").append(getId());
-            str.append(", displayName=").append(getDisplayName());
-            str.append(", dbTableName=").append(getDbTableName());
-            str.append(", supported=").append(isSupported().toString());
-            str.append(", enabled=").append(isEnabled().toString());
+            str.append("(id=");
+            str.append(getId());
+            str.append(", displayName=");
+            str.append(getDisplayName());
+            str.append(", dbTableName=");
+            str.append(getDbTableName());
+            str.append(", supported=");
+            str.append(isSupported().toString());
+            str.append(", enabled=");
+            str.append(isEnabled().toString());
             str.append(")");
             return str.toString();
         }
@@ -436,14 +440,14 @@ public class CorrelationAttributeInstance implements Serializable {
         }
 
         /**
-         * To support having different database tables for each Type,
-         * this field provides the prefix/suffix of the table name,
-         * which allows us to automatically compute the table names
-         * and index names.
-         * 
-         * It is the prefix for the instances tables *_instances. (i.e. file_instances)
-         * It is the suffix for the reference tables reference_*. (i.e. reference_file)
-         * 
+         * To support having different database tables for each Type, this field
+         * provides the prefix/suffix of the table name, which allows us to
+         * automatically compute the table names and index names.
+         *
+         * It is the prefix for the instances tables *_instances. (i.e.
+         * file_instances) It is the suffix for the reference tables
+         * reference_*. (i.e. reference_file)
+         *
          * When custom Types are added in the future, they are already supported
          * by just giving the desired value for the table name for each custom
          * Type. Possibly having all custom Types use a common table name.
@@ -455,21 +459,23 @@ public class CorrelationAttributeInstance implements Serializable {
         }
 
         /**
-         * To support having different database tables for each Type,
-         * this field provides the prefix/suffix of the table name,
-         * which allows us to automatically compute the table names
-         * and index names.
-         * 
-         * It is the prefix for the instances tables *_instances. (i.e. file_instances)
-         * It is the suffix for the reference tables reference_*. (i.e. reference_file)
-         * 
+         * To support having different database tables for each Type, this field
+         * provides the prefix/suffix of the table name, which allows us to
+         * automatically compute the table names and index names.
+         *
+         * It is the prefix for the instances tables *_instances. (i.e.
+         * file_instances) It is the suffix for the reference tables
+         * reference_*. (i.e. reference_file)
+         *
          * When custom Types are added in the future, they are already supported
          * by just giving the desired value for the table name for each custom
-         * Type. Possibly having all custom Types use a common table name. (i.e. custom_instances)
-         * 
-         * @param dbTableName the dbTableName to set. Must start with lowercase letter
-         *                      and can only contain lowercase letters, numbers, and '_' characters.
-         * 
+         * Type. Possibly having all custom Types use a common table name. (i.e.
+         * custom_instances)
+         *
+         * @param dbTableName the dbTableName to set. Must start with lowercase
+         * letter and can only contain lowercase letters, numbers, and '_'
+         * characters.
+         *
          * @throws EamDbException if dbTableName contains invalid characters
          */
         public void setDbTableName(String dbTableName) throws EamDbException {

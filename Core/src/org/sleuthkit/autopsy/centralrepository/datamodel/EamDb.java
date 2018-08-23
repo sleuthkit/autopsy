@@ -315,7 +315,7 @@ public interface EamDb {
     /**
      * Adds an eamArtifact to an internal list to be later added to DB. Artifact
  can have 1 or more Artifact Instances. Insert will be triggered by a
- threshold or a call to commitAttrtibuteInstancesBulk().
+ threshold or a call to commitAttributeInstancesBulk().
      *
      * @param eamArtifact The artifact to add
      */
@@ -325,7 +325,7 @@ public interface EamDb {
      * Executes a bulk insert of the eamArtifacts added from the
  addAttributeInstanceBulk() method
      */
-    void commitAttrtibuteInstancesBulk() throws EamDbException;
+    void commitAttributeInstancesBulk() throws EamDbException;
 
     /**
      * Executes a bulk insert of the cases

@@ -62,7 +62,6 @@ public class EamArtifactUtil {
      *
      * @return List of EamArtifacts
      */
-    //TODO, needs overhaul to comdine 72-85 with the second step
     public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact bbArtifact,
             boolean checkEnabled) {
 
@@ -182,10 +181,12 @@ public class EamArtifactUtil {
     }
 
     /**
-     * Uses the determined type and vallue, then looks up instance details to create proper CorrelationAttributeInstance.
+     * Uses the determined type and vallue, then looks up instance details to
+     * create proper CorrelationAttributeInstance.
+     *
      * @param bbArtifact the blackboard artifatc
      * @param correlationType the given type
-     * @param value the artifact md5
+     * @param value the artifact value
      * @return CorrelationAttributeInstance from details
      */
     private static CorrelationAttributeInstance makeCorrelationAttributeInstanceUsingTypeValue(BlackboardArtifact bbArtifact, CorrelationAttributeInstance.Type correlationType, String value) {
@@ -211,7 +212,7 @@ public class EamArtifactUtil {
                     "",
                     TskData.FileKnown.UNKNOWN
             );
-            
+
         } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
             return null;
@@ -240,7 +241,6 @@ public class EamArtifactUtil {
             return null;
         }
 
-        CorrelationAttributeInstance correlationAttributeInstance;
         CorrelationAttributeInstance.Type type;
         CorrelationCase correlationCase;
         CorrelationDataSource correlationDataSource;
@@ -264,6 +264,7 @@ public class EamArtifactUtil {
             return null;
         }
 
+        CorrelationAttributeInstance correlationAttributeInstance;
         try {
             correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
         } catch (EamDbException ex) {

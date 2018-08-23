@@ -129,7 +129,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * Should only be called if isCentralRepoNode() is true.
      * @return the newly created CorrelationAttribute
      */
-    CorrelationAttributeInstance createCorrelationAttribute() throws EamDbException {
+    CorrelationAttributeInstance getCorrelationAttribute() throws EamDbException {
         if (! isCentralRepoNode() ) { 
             throw new EamDbException("Can not create CorrelationAttribute for non central repo node");
         }

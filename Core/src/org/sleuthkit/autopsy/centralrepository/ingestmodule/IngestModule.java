@@ -181,7 +181,7 @@ final class IngestModule implements FileIngestModule {
             return;
         }
         try {
-            dbManager.commitAttrtibuteInstancesBulk();
+            dbManager.commitAttributeInstancesBulk();
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
