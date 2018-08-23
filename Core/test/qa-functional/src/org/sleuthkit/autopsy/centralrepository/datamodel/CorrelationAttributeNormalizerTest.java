@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import junit.framework.Test;
+import org.junit.Assert;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -294,70 +295,22 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
 
     public void testValidateUsbId() {
         final String goodIdOne = "0202:AAFF";       //should pass and be lowered
-        final String goodIdTwo = "0202:aaff";       //should pass
+        //TODO add all this back when theres is something to validate
+        /*final String goodIdTwo = "0202:aaff";       //should pass
         final String badIdThree = "0202:axxf";      //should fail
         final String badIdFour = "";                //should fail
         final String badIdFive = null;              //should fail
         final String goodIdSix = "0202 AAFF";       //should pass
         final String goodIdSeven = "0202AAFF";      //should pass
-        final String goodIdEight = "0202-AAFF";     //should pass
+        final String goodIdEight = "0202-AAFF";     //should pass*/
                 
         final int USBID_TYPE_ID = CorrelationAttribute.USBID_TYPE_ID;
-        
+
         try {
-            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne.toLowerCase()));
+            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne));
         } catch (CorrelationAttributeNormalizationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
+            Assert.fail(ex.getMessage());
         }
-        try {
-            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdTwo).equals(goodIdTwo));
-        } catch (CorrelationAttributeNormalizationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        }
-        try {
-            assertTrue("This USB ID should fail.", CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdThree).equals(badIdThree));
-            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);            
-        }
-        try {
-            CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdFour);
-            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
-        }
-        try {
-            CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdFive);
-            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
-        }
-        try {
-            CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, badIdFive);
-            fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
-            assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
-        }
-        try {
-            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdSix).equals(goodIdSix.toLowerCase()));
-        } catch (CorrelationAttributeNormalizationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        }
-        try {
-            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdSeven).equals(goodIdSeven.toLowerCase()));
-        } catch (CorrelationAttributeNormalizationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        }
-        try {
-            assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdEight).equals(goodIdEight.toLowerCase()));
-        } catch (CorrelationAttributeNormalizationException ex) {
-            Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        }        
     }
     private static final String THIS_USB_ID_SHOULD_PASS = "This USB ID should pass.";
 }

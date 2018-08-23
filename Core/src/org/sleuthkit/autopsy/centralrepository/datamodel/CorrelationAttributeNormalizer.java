@@ -117,7 +117,15 @@ final public class CorrelationAttributeNormalizer {
         if(validator.isValid(data)){
             return data.toLowerCase();
         } else {
-            throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid domain: %s", data));
+            if(data == null){
+                throw new CorrelationAttributeNormalizationException("Data was expected to be a valid domain: null"); 
+            }
+            final String validIpAddressRegex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
+            if(data.matches(validIpAddressRegex)){
+                return data;
+            } else {
+                throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid domain: %s", data));
+            }
         }
     }
 
@@ -146,19 +154,10 @@ final public class CorrelationAttributeNormalizer {
     }
 
     /**
-     * USB ID is of the form: hhhh:hhhh where h is a hex digit.  Convert to lower case.
+     * Vacuous - will be replaced with something reasonable later.
      */
     private static String normalizeUsbId(String data) throws CorrelationAttributeNormalizationException {
-        final String errorMessage = "Data was expected to be a valid USB device ID: %s";
-        if(data == null){
-            throw new CorrelationAttributeNormalizationException(String.format(errorMessage, data));
-        }
-        
-        String validUsbIdRegex = "^(0[Xx])?[A-Fa-f0-9]{4}[:\\\\\\ \\-.]?(0[Xx])?[A-Fa-f0-9]{4}$";
-        if(data.matches(validUsbIdRegex)){
-            return data.toLowerCase();
-        } else {
-            throw new CorrelationAttributeNormalizationException(String.format(errorMessage, data));
-        }
+        //TODO replace with correct usb id validation at a later date
+        return data;
     }
 }
