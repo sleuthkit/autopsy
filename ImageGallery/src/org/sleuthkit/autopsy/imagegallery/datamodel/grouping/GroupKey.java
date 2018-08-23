@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,10 +35,17 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
     private final T val;
 
     private final DrawableAttribute<T> attr;
+    
+    private final long dataSourceObjectId;
 
     public GroupKey(DrawableAttribute<T> attr, T val) {
+       this(attr, val, 0);
+    }
+    
+    public GroupKey(DrawableAttribute<T> attr, T val, long dataSourceObjId) {
         this.attr = attr;
         this.val = val;
+        this.dataSourceObjectId = dataSourceObjId;
     }
 
     public T getValue() {
@@ -49,6 +56,10 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         return attr;
     }
 
+    public long getDataSourceObjId() {
+        return dataSourceObjectId;
+    }
+    
     public String getValueDisplayName() {
         return Objects.equals(attr, DrawableAttribute.TAGS)
                 ? ((TagName) getValue()).getDisplayName()
@@ -65,6 +76,7 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         int hash = 5;
         hash = 29 * hash + Objects.hashCode(this.val);
         hash = 29 * hash + Objects.hashCode(this.attr);
+        hash = 29 * hash + Objects.hashCode(this.dataSourceObjectId);
         return hash;
     }
 
@@ -80,7 +92,9 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         if (this.attr != other.attr) {
             return false;
         }
-
+        if (this.dataSourceObjectId != other.dataSourceObjectId) {
+            return false;
+        }
         return Objects.equals(this.val, other.val);
     }
 
