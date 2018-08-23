@@ -99,7 +99,7 @@ final public class CommonAttributeSearchResults {
         CorrelationAttribute.Type fileAttributeType = CorrelationAttribute
                 .getDefaultCorrelationTypes()
                 .stream()
-                .filter(t -> t.getId() == CorrelationAttribute.FILES_TYPE_ID)
+                .filter(filterType -> filterType.getId() == CorrelationAttribute.FILES_TYPE_ID)
                 .findFirst().get();
         
         EamDb eamDb = EamDb.getInstance();

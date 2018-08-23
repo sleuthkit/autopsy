@@ -110,19 +110,19 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             }
             
             @Override
-            public void insertUpdate(DocumentEvent e) {
+            public void insertUpdate(DocumentEvent event) {
                 this.maintainSize();
                 CommonAttributePanel.this.percentageThresholdChanged();
             }
 
             @Override
-            public void removeUpdate(DocumentEvent e) {
+            public void removeUpdate(DocumentEvent event) {
                 this.maintainSize();
                 CommonAttributePanel.this.percentageThresholdChanged();
             }
 
             @Override
-            public void changedUpdate(DocumentEvent e) {
+            public void changedUpdate(DocumentEvent event) {
                 this.maintainSize();
                 CommonAttributePanel.this.percentageThresholdChanged();
             }
@@ -710,7 +710,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         try {
             this.percentageThresholdValue = Integer.parseInt(percentageString);
             
-        } catch (Exception e) {
+        } catch (NumberFormatException exception) {
             this.percentageThresholdValue = -1;
         }
 

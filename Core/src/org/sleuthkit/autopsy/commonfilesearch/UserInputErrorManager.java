@@ -67,7 +67,7 @@ class UserInputErrorManager {
      * @return true for yes, else false
      */
     boolean anyErrors(){
-        return this.currentErrors.values().stream().anyMatch(errorMessage -> errorMessage.getStatus() == true);
+        return this.currentErrors.values().stream().anyMatch(errorMessage -> errorMessage.isErrorSet() == true);
     }
     
     /**
@@ -75,7 +75,7 @@ class UserInputErrorManager {
      */
     List<String> getErrors(){
         return this.currentErrors.values().stream()
-                .filter(errorMessage -> errorMessage.getStatus() == true)
+                .filter(errorMessage -> errorMessage.isErrorSet() == true)
                 .map(ErrorMessage::getMessage)
                 .collect(Collectors.toList());
     }
@@ -119,7 +119,7 @@ class UserInputErrorManager {
          * Return the status (true for error status, false for no error)
          * @return 
          */
-        boolean getStatus(){
+        boolean isErrorSet(){
             return this.status;
         }
     }
