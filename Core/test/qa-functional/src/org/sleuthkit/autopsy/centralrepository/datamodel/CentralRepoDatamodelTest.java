@@ -284,7 +284,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Try to update artifact with two CorrelationAttributeInstance instances
-        // TODO, this seems like it is no longer a valid test, already moved fail to the catch since it no longe fails.
+        // This appears to no longer be a valid test, already moved fail to the catch since it no longe fails.
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance("badHash", fileType, case1, dataSource1fromCase1, "badPath",
                     "", TskData.FileKnown.KNOWN);
@@ -553,7 +553,6 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test preparing artifact with null path
         // CorrelationAttributeInstance will throw an exception
-        // TODO, still valid?
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance("value", fileType, case1, dataSource1fromCase1, null);
             Assert.fail("CorrelationAttributeInstance failed to throw exception for null path");
@@ -995,7 +994,6 @@ public class CentralRepoDatamodelTest extends TestCase {
         
         // Test updating a correlation attribute instance comment
         try {
-            // TODO
             CorrelationAttributeInstance correlationAttribute = EamDb.getInstance().getCorrelationAttributeInstance(
                     usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
             assertNotNull("getCorrelationAttributeInstance returned null", correlationAttribute);
