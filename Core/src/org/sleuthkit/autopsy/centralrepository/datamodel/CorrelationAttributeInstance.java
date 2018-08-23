@@ -268,9 +268,13 @@ public class CorrelationAttributeInstance implements Serializable {
         return DEFAULT_CORRELATION_TYPES;
     }
 
+    /**
+     * Correlation Types which determine which table to query in the CR
+     */
+    @SuppressWarnings("serial")
     public static class Type implements Serializable {
 
-        private int id;
+        private int typeId;
         private String displayName;
         private String dbTableName;
         private Boolean supported;
@@ -287,11 +291,11 @@ public class CorrelationAttributeInstance implements Serializable {
          * @param supported Is this Type currently supported
          * @param enabled Is this Type currently enabled.
          */
-        public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
+        public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             if (dbTableName == null) {
                 throw new EamDbException("dbTableName is null");
             }
-            this.id = id;
+            this.typeId = typeId;
             this.displayName = displayName;
             this.dbTableName = dbTableName;
             this.supported = supported;
@@ -344,7 +348,7 @@ public class CorrelationAttributeInstance implements Serializable {
          * @return true if it is the same type
          */
         private boolean sameType(CorrelationAttributeInstance.Type that) {
-            return this.id == that.getId()
+            return this.typeId == that.getId()
                     && Objects.equals(this.supported, that.isSupported())
                     && Objects.equals(this.enabled, that.isEnabled());
         }
@@ -352,7 +356,7 @@ public class CorrelationAttributeInstance implements Serializable {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 67 * hash + Objects.hashCode(this.id);
+            hash = 67 * hash + Objects.hashCode(this.typeId);
             hash = 67 * hash + Objects.hashCode(this.supported);
             hash = 67 * hash + Objects.hashCode(this.enabled);
             return hash;
@@ -376,17 +380,17 @@ public class CorrelationAttributeInstance implements Serializable {
         }
 
         /**
-         * @return the id
+         * @return the typeId
          */
         public int getId() {
-            return id;
+            return typeId;
         }
 
         /**
-         * @param id the id to set
+         * @param id the typeId to set
          */
-        public void setId(int id) {
-            this.id = id;
+        public void setId(int typeId) {
+            this.typeId = typeId;
         }
 
         /**
