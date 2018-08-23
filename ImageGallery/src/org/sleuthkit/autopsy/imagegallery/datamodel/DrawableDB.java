@@ -80,7 +80,7 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public final class DrawableDB {
 
-    private static final org.sleuthkit.autopsy.coreutils.Logger logger = Logger.getLogger(DrawableDB.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed"; //NON-NLS
@@ -682,8 +682,9 @@ public final class DrawableDB {
      * also inserts hash set hits and groups into their respective tables for
      * the given file.
      *
-     * //TODO: this is a kinda weird design, is their a better way? //TODO:
-     * implement batch version -jm
+     * //TODO: this is a kinda weird design, is their a better way?
+     *
+     * //TODO: implement batch version -jm
      *
      * @param f    The file to insert.
      * @param tr   a transaction to use, must not be null
@@ -1043,6 +1044,8 @@ public final class DrawableDB {
                             break;
                         case ASCENDING:
                             query.append(" ASC"); //NON-NLS
+                            break;
+                        default:
                             break;
                     }
                 }

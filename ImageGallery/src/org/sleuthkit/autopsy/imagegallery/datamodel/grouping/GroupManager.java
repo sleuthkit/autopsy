@@ -592,11 +592,8 @@ public class GroupManager {
 
     @SuppressWarnings("AssignmentToMethodParameter")
     private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
-        if (g == null) {
-            //if there wasn't already a group check if there should be one now
-            g = popuplateIfAnalyzed(groupKey, null);
-        }
-        DrawableGroup group = g;
+        //if there wasn't already a group check if there should be one now
+        DrawableGroup group = nonNull(g) ? g : popuplateIfAnalyzed(groupKey, null);
         if (group != null) {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             Platform.runLater(() -> group.addFile(fileID));
@@ -661,7 +658,6 @@ public class GroupManager {
     }
 
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
-
         if (nonNull(task) && task.isCancelled()) {
             /*
              * if this method call is part of a ReGroupTask and that task is
@@ -671,7 +667,7 @@ public class GroupManager {
              * the user picked a different group by attribute, while the current
              * task was still running)
              */
-
+            return null;
         } else {// no task or un-cancelled task
             if (nonNull(db) && ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey))) {
                 /*
