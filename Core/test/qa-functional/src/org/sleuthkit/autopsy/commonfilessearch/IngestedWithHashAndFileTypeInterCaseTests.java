@@ -27,6 +27,7 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
@@ -86,7 +87,8 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             //note that the params false and false are presently meaningless because that feature is not supported yet
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
+            CorrelationAttribute.Type fileType = CorrelationAttribute.getDefaultCorrelationTypes().get(0);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, fileType);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
@@ -138,8 +140,8 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
-                        
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false);
+            CorrelationAttribute.Type fileType = CorrelationAttribute.getDefaultCorrelationTypes().get(0);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false, fileType);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             

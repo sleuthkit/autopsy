@@ -78,12 +78,11 @@ final class InterCaseSearchResultsProcessor {
      * @param attrbuteId Row of CorrelationAttribute to retrieve from the EamDb
      * @return CorrelationAttribute object representation of retrieved match
      */
-    CorrelationAttribute findSingleCorrelationAttribute(int attrbuteId) {
+    CorrelationAttribute findSingleCorrelationAttribute(int attrbuteId, CorrelationAttribute.Type theType) {
         try {
             InterCaseCommonAttributeRowCallback instancetableCallback = new InterCaseCommonAttributeRowCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
-            DbManager.processInstanceTableWhere(fileType, String.format("id = %s", attrbuteId), instancetableCallback);
+            DbManager.processInstanceTableWhere(theType, String.format("id = %s", attrbuteId), instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
 
@@ -100,14 +99,14 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<Integer, List<CommonAttributeValue>> findInterCaseCommonAttributeValues(Case currentCase) {
+    Map<Integer, List<CommonAttributeValue>> findInterCaseCommonAttributeValues(Case currentCase, CorrelationAttribute.Type theType) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            
             int caseId = DbManager.getCase(currentCase).getID();
             
-            DbManager.processInstanceTableWhere(fileType, String.format(interCaseWhereClause, caseId,
+            DbManager.processInstanceTableWhere(theType, String.format(interCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue()),
                     instancetableCallback);
             
@@ -127,14 +126,13 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase The case of interest. Matches must exist in this case.
      */
-    Map<Integer, List<CommonAttributeValue>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, List<CommonAttributeValue>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase, CorrelationAttribute.Type theType) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
-            CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             int caseId = DbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
-            DbManager.processInstanceTableWhere(fileType,  String.format(singleInterCaseWhereClause, caseId,
+            DbManager.processInstanceTableWhere(theType,  String.format(singleInterCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
@@ -160,15 +158,15 @@ final class InterCaseSearchResultsProcessor {
                 while (resultSet.next()) {
 
                     int resultId = InstanceTableCallback.getId(resultSet);
-                    String md5Value = InstanceTableCallback.getValue(resultSet);
+                    String corValue = InstanceTableCallback.getValue(resultSet);
                     if (previousRowMd5.isEmpty()) {
-                        previousRowMd5 = md5Value;
+                        previousRowMd5 = corValue;
                     }
-                    if (md5Value == null || HashUtility.isNoDataMd5(md5Value)) {
+                    if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
                         continue;
                     }
 
-                    countAndAddCommonAttributes(md5Value, resultId);
+                    countAndAddCommonAttributes(corValue, resultId);
 
                 }
             } catch (SQLException ex) {
@@ -176,11 +174,11 @@ final class InterCaseSearchResultsProcessor {
             }
         }
 
-        private void countAndAddCommonAttributes(String md5Value, int resultId) {
+        private void countAndAddCommonAttributes(String corValue, int resultId) {
             if (commonAttributeValue == null) {
-                commonAttributeValue = new CommonAttributeValue(md5Value);
+                commonAttributeValue = new CommonAttributeValue(corValue);
             }
-            if (!md5Value.equals(previousRowMd5)) {
+            if (!corValue.equals(previousRowMd5)) {
                 int size = commonAttributeValue.getInstanceCount();
                 if (instanceCollatedCommonFiles.containsKey(size)) {
                     instanceCollatedCommonFiles.get(size).add(commonAttributeValue);
@@ -190,8 +188,8 @@ final class InterCaseSearchResultsProcessor {
                     instanceCollatedCommonFiles.put(size, value);
                 }
 
-                commonAttributeValue = new CommonAttributeValue(md5Value);
-                previousRowMd5 = md5Value;
+                commonAttributeValue = new CommonAttributeValue(corValue);
+                previousRowMd5 = corValue;
             }
             // we don't *have* all the information for the rows in the CR,
             //  so we need to consult the present case via the SleuthkitCase object
@@ -217,12 +215,11 @@ final class InterCaseSearchResultsProcessor {
         public void process(ResultSet resultSet) {
             try {
                 EamDb DbManager = EamDb.getInstance();
-                CorrelationAttribute.Type fileType = DbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
 
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    correlationAttribute = DbManager.getCorrelationAttribute(fileType,
+                    correlationAttribute = DbManager.getCorrelationAttribute(null, // TODO, CorrelationInstance will soon have Type one merged into develop
                             correlationCase,
                             dataSource,
                             InstanceTableCallback.getValue(resultSet),

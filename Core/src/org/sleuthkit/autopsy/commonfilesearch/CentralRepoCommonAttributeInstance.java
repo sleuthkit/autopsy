@@ -109,7 +109,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
+        CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId, currentAttribute.getCorrelationType());
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
 

@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute.Type;
 
 /**
  * 
@@ -44,8 +45,8 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @param filterByDocMimeType
      * @throws EamDbException 
      */
-    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap,filterByMediaMimeType, filterByDocMimeType);
+    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
+        super(dataSourceIdMap,filterByMediaMimeType, filterByDocMimeType, corAttrType);
         
         this.corrleationCaseId = correlationCaseId;
         this.correlationCaseName = "";
@@ -72,7 +73,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
 
     CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
-        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase, corAttrType);
 
         return new CommonAttributeSearchResults(interCaseCommonFiles);
     }

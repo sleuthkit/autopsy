@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
 
+
 /**
  * Prototype for an object which finds files with common attributes.
  * Subclass this and implement findFiles in order 

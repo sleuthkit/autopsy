@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute.Type;
 
 /**
  * Algorithm which finds files anywhere in the Central Repo which also occur in
@@ -41,14 +42,14 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
      * broadly categorized as document types
      * @throws EamDbException 
      */
-    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType);
     }
 
     @Override
     public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
-        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
+        Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase(), corAttrType);
         return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
 
