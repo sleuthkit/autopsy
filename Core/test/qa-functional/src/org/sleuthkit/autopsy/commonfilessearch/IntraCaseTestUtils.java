@@ -218,7 +218,7 @@ class IntraCaseTestUtils {
             return instanceIdToDataSource;
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
             return instanceIdToDataSource;
         }
     }

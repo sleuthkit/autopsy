@@ -231,7 +231,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 }
