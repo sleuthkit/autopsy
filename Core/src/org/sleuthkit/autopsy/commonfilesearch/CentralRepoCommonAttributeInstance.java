@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
@@ -44,7 +43,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
-    private CorrelationAttribute currentAttribute;
+    private CorrelationAttributeInstance currentAttribute;
     private final Map<String, Long> dataSourceNameToIdMap;
 
     CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap) {
@@ -53,7 +52,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
     }
 
-    void setCurrentAttributeInst(CorrelationAttribute attribute) {
+    void setCurrentAttributeInst(CorrelationAttributeInstance attribute) {
         this.currentAttribute = attribute;
     }
 
@@ -63,7 +62,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         Case currentCase;
         if (this.currentAttribute != null) {
             
-            final CorrelationAttributeInstance currentAttributeInstance = this.currentAttribute.getInstances().get(0);
+            final CorrelationAttributeInstance currentAttributeInstance = this.currentAttribute;
             
             String currentFullPath = currentAttributeInstance.getFilePath();
             String currentDataSource = currentAttributeInstance.getCorrelationDataSource().getName();
@@ -109,7 +108,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        CorrelationAttribute corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
+        CorrelationAttributeInstance corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
 
