@@ -78,14 +78,14 @@ import org.sleuthkit.datamodel.DataSource;
  * Controller for the ToolBar
  */
 public class Toolbar extends ToolBar {
-
+    
     private static final Logger LOGGER = Logger.getLogger(Toolbar.class.getName());
     ListeningExecutorService exec
             = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
                     new ThreadFactoryBuilder().setNameFormat("Image Gallery Toolbar BG Thread").build()));
-
+    
     private static final int SIZE_SLIDER_DEFAULT = 100;
-
+    
     @FXML
     private ComboBox<Optional<DataSource>> dataSourceComboBox;
     @FXML
@@ -106,26 +106,26 @@ public class Toolbar extends ToolBar {
     private Label categoryImageViewLabel;
     @FXML
     private Label thumbnailSizeLabel;
-
+    
     private SortChooser<DrawableGroup, GroupSortBy> sortChooser;
-
+    
     private final ImageGalleryController controller;
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<Optional<DataSource>> dataSources = FXCollections.observableArrayList();
-
+    
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
             controller.getGroupManager().regroup(
-                    //dataSourceComboBox.getSelectionModel().getSelectedItem(), TODO-1017: incorporate the selected datasource into this call.
+                    dataSourceComboBox.getSelectionModel().getSelectedItem().orElse(null),
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
                     false);
         }
     };
-
+    
     @FXML
     @NbBundle.Messages(
             {"Toolbar.groupByLabel=Group By:",
@@ -148,12 +148,12 @@ public class Toolbar extends ToolBar {
         assert catGroupMenuButton != null : "fx:id=\"catGroupMenuButton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert thumbnailSizeLabel != null : "fx:id=\"thumbnailSizeLabel\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
-
+        
         controller.viewState().addListener((observable, oldViewState, newViewState) -> {
             Platform.runLater(() -> syncGroupControlsEnabledState(newViewState));
         });
         syncGroupControlsEnabledState(controller.viewState().get());
-
+        
         dataSourceComboBox.setCellFactory(param -> new DataSourceCell());
         dataSourceComboBox.setButtonCell(new DataSourceCell());
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
@@ -161,14 +161,14 @@ public class Toolbar extends ToolBar {
             public String toString(Optional<DataSource> object) {
                 return object.map(DataSource::getName).orElse("All");
             }
-
+            
             @Override
             public Optional<DataSource> fromString(String string) {
                 throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         });
         dataSourceComboBox.setItems(dataSources);
-
+        
         Case.addEventTypeSubscriber(ImmutableSet.of(DATA_SOURCE_ADDED, DATA_SOURCE_DELETED),
                 evt -> {
                     Platform.runLater(() -> {
@@ -180,10 +180,10 @@ public class Toolbar extends ToolBar {
         syncDataSources();
 
         /* TODO: 1010/7 push data source selected in dialog into UI */
-        dataSourceComboBox.getSelectionModel().selectFirst();
-
+        dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
+        
         initTagMenuButton();
-
+        
         CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
         catGroupMenuButton.setOnAction(cat5GroupAction);
         catGroupMenuButton.setText(cat5GroupAction.getText());
@@ -195,33 +195,33 @@ public class Toolbar extends ToolBar {
                 catGroupMenuButton.getItems().setAll(categoryMenues);
             }
         });
-
+        
         groupByLabel.setText(Bundle.Toolbar_groupByLabel());
         tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
         categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
         thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
-
+        
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-
+        
         groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
         groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
-
+        
         sortChooser = new SortChooser<>(GroupSortBy.getValues());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
             final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
             sortChooser.setSortOrderDisabled(orderDisabled);
-
+            
             final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
             sortChooser.setValueType(valueType);
             queryInvalidationListener.invalidated(observable);
         });
-
+        
         sortChooser.setComparator(controller.getGroupManager().getSortBy());
         getItems().add(2, sortChooser);
         sortHelpImageView.setCursor(Cursor.HAND);
-
+        
         sortHelpImageView.setOnMouseClicked(clicked -> {
             Text text = new Text(Bundle.Toolbar_sortHelp());
             text.setWrappingWidth(480);  //This is a hack to fix the layout.
@@ -229,12 +229,12 @@ public class Toolbar extends ToolBar {
                     Bundle.Toolbar_sortHelpTitle(),
                     sortHelpImageView.getImage(), text);
         });
-
+        
         dataSourceComboBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
         groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
     }
-
+    
     private void initTagMenuButton() {
         ListenableFuture<TagGroupAction> future = exec.submit(() -> new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller));
         Futures.addCallback(future, new FutureCallback<TagGroupAction>() {
@@ -244,7 +244,7 @@ public class Toolbar extends ToolBar {
                 tagGroupMenuButton.setText(followUpGroupAction.getText());
                 tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
             }
-
+            
             @Override
             public void onFailure(Throwable t) {
                 /*
@@ -263,7 +263,7 @@ public class Toolbar extends ToolBar {
                 }
             }
         }, Platform::runLater);
-
+        
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
                 List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
@@ -272,7 +272,7 @@ public class Toolbar extends ToolBar {
             }
         });
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
         ListenableFuture<List<DataSource>> future = exec.submit(controller.getSleuthKitCase()::getDataSources);
@@ -282,7 +282,7 @@ public class Toolbar extends ToolBar {
                 dataSources.setAll(Collections.singleton(Optional.empty()));
                 result.forEach(dataSource -> dataSources.add(Optional.of(dataSource)));
             }
-
+            
             @Override
             public void onFailure(Throwable t) {
                 LOGGER.log(Level.SEVERE, "Unable to get datasources for current case.", t); //NON-NLS
@@ -292,10 +292,10 @@ public class Toolbar extends ToolBar {
                         .showError();
             }
         }, Platform::runLater);
-
+        
         return future;
     }
-
+    
     public DoubleProperty thumbnailSizeProperty() {
         return sizeSlider.valueProperty();
     }
@@ -319,11 +319,11 @@ public class Toolbar extends ToolBar {
                 new Label(headerText));
         borderPane.setPadding(new Insets(10));
         borderPane.setPrefWidth(500);
-
+        
         PopOver popOver = new PopOver(borderPane);
         popOver.setDetachable(false);
         popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
-
+        
         popOver.show(owner);
     }
 
@@ -342,14 +342,14 @@ public class Toolbar extends ToolBar {
             catGroupMenuButton.setDisable(noGroupSelected);
         });
     }
-
+    
     public void reset() {
         Platform.runLater(() -> {
             groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
             sizeSlider.setValue(SIZE_SLIDER_DEFAULT);
         });
     }
-
+    
     public Toolbar(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
@@ -359,7 +359,7 @@ public class Toolbar extends ToolBar {
      * Cell used to represent a DataSource in the dataSourceComboBoc
      */
     static private class DataSourceCell extends ListCell<Optional<DataSource>> {
-
+        
         @Override
         protected void updateItem(Optional<DataSource> item, boolean empty) {
             super.updateItem(item, empty);

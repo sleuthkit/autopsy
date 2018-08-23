@@ -18,14 +18,37 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.logging.Level;
 import javafx.scene.control.ButtonBase;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
 import org.controlsfx.control.action.Action;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * Static utility methods for working with GUI components
  */
 public final class GuiUtils {
+
+    private final static Logger logger = Logger.getLogger(GuiUtils.class.getName());
+
+    /** Image to use as title bar icon in dialogs */
+    private static final Image AUTOPSY_ICON;
+
+    static {
+        Image tempImg = null;
+        try {
+            tempImg = new Image(new URL("nbresloc:/org/netbeans/core/startup/frame.gif").openStream()); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to load branded icon for progress dialog.", ex); //NON-NLS
+        }
+        AUTOPSY_ICON = tempImg;
+    }
 
     private GuiUtils() {
     }
@@ -50,5 +73,15 @@ public final class GuiUtils {
             button.setOnAction(action);
         });
         return menuItem;
+    }
+
+    /**
+     * Set the title bar icon for the given Dialog to be the Autopsy logo icon.
+     *
+     * @param dialog The dialog to set the title bar icon for.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    public static void setDialogIcons(Dialog<?> dialog) {
+        ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(AUTOPSY_ICON);
     }
 }
