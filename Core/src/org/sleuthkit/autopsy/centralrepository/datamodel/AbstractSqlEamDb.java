@@ -628,31 +628,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws EamDbException {
-        if (eamArtifact == null) {
-            throw new EamDbException("CorrelationAttribute is null");
-        }
-        if (eamArtifact.getCorrelationType() == null) {
-            throw new EamDbException("Correlation type is null");
-        }
-        if (eamArtifact.getCorrelationValue() == null) {
-            throw new EamDbException("Correlation value is null");
-        }
-        if (eamArtifact.getCorrelationValue().length() >= MAX_VALUE_LENGTH) {
-            throw new EamDbException("Artifact value too long for central repository."
-                    + "\nCorrelationArtifact ID: " + eamArtifact.getID()
-                    + "\nCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
-                    + "\nCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
-
-        }
-        if (eamArtifact.getCorrelationCase() == null) {
-            throw new EamDbException("CorrelationAttributeInstance case is null");
-        }
-        if (eamArtifact.getCorrelationDataSource() == null) {
-            throw new EamDbException("CorrelationAttributeInstance data source is null");
-        }
-        if (eamArtifact.getKnownStatus() == null) {
-            throw new EamDbException("CorrelationAttributeInstance known status is null");
-        }
+        checkAddArtifactInstanceNulls(eamArtifact);
 
         Connection conn = connect();
 
@@ -693,6 +669,34 @@ abstract class AbstractSqlEamDb implements EamDb {
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    private void checkAddArtifactInstanceNulls(CorrelationAttributeInstance eamArtifact) throws EamDbException {
+        if (eamArtifact == null) {
+            throw new EamDbException("CorrelationAttribute is null");
+        }
+        if (eamArtifact.getCorrelationType() == null) {
+            throw new EamDbException("Correlation type is null");
+        }
+        if (eamArtifact.getCorrelationValue() == null) {
+            throw new EamDbException("Correlation value is null");
+        }
+        if (eamArtifact.getCorrelationValue().length() >= MAX_VALUE_LENGTH) {
+            throw new EamDbException("Artifact value too long for central repository."
+                    + "\nCorrelationArtifact ID: " + eamArtifact.getID()
+                    + "\nCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                    + "\nCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
+
+        }
+        if (eamArtifact.getCorrelationCase() == null) {
+            throw new EamDbException("CorrelationAttributeInstance case is null");
+        }
+        if (eamArtifact.getCorrelationDataSource() == null) {
+            throw new EamDbException("CorrelationAttributeInstance data source is null");
+        }
+        if (eamArtifact.getKnownStatus() == null) {
+            throw new EamDbException("CorrelationAttributeInstance known status is null");
         }
     }
 
@@ -2460,7 +2464,27 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (newType == null) {
             throw new EamDbException("Correlation type is null");
         }
+        int typeId;
+        if (-1 == newType.getId()) {
+            typeId = newCorrelationTypeNotKnownId(newType);
+        } else {
+            typeId = newCorrelationTypeKnownId(newType);
+        }
 
+        return typeId;
+    }
+
+    /**
+     * Helper function which adds a new EamArtifact.Type to the db without an
+     * id.
+     *
+     * @param newType New type to add.
+     *
+     * @return ID of this new Correlation Type
+     *
+     * @throws EamDbException
+     */
+    public int newCorrelationTypeNotKnownId(CorrelationAttributeInstance.Type newType) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -2470,28 +2494,71 @@ abstract class AbstractSqlEamDb implements EamDb {
         String insertSql;
         String querySql;
         // if we have a known ID, use it, if not (is -1) let the db assign it.
-        if (-1 == newType.getId()) {
-            insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?) " + getConflictClause();
-        } else {
-            insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();
-        }
+        insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?) " + getConflictClause();
+
         querySql = "SELECT * FROM correlation_types WHERE display_name=? AND db_table_name=?";
 
         try {
             preparedStatement = conn.prepareStatement(insertSql);
 
-            if (-1 == newType.getId()) {
-                preparedStatement.setString(1, newType.getDisplayName());
-                preparedStatement.setString(2, newType.getDbTableName());
-                preparedStatement.setInt(3, newType.isSupported() ? 1 : 0);
-                preparedStatement.setInt(4, newType.isEnabled() ? 1 : 0);
-            } else {
-                preparedStatement.setInt(1, newType.getId());
-                preparedStatement.setString(2, newType.getDisplayName());
-                preparedStatement.setString(3, newType.getDbTableName());
-                preparedStatement.setInt(4, newType.isSupported() ? 1 : 0);
-                preparedStatement.setInt(5, newType.isEnabled() ? 1 : 0);
+            preparedStatement.setString(1, newType.getDisplayName());
+            preparedStatement.setString(2, newType.getDbTableName());
+            preparedStatement.setInt(3, newType.isSupported() ? 1 : 0);
+            preparedStatement.setInt(4, newType.isEnabled() ? 1 : 0);
+
+            preparedStatement.executeUpdate();
+
+            preparedStatementQuery = conn.prepareStatement(querySql);
+            preparedStatementQuery.setString(1, newType.getDisplayName());
+            preparedStatementQuery.setString(2, newType.getDbTableName());
+
+            resultSet = preparedStatementQuery.executeQuery();
+            if (resultSet.next()) {
+                CorrelationAttributeInstance.Type correlationType = getCorrelationTypeFromResultSet(resultSet);
+                typeId = correlationType.getId();
             }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error inserting new correlation type.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeStatement(preparedStatementQuery);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+        return typeId;
+    }
+
+    /**
+     * Helper function which adds a new EamArtifact.Type to the db.
+     *
+     * @param newType New type to add.
+     *
+     * @return ID of this new Correlation Type
+     *
+     * @throws EamDbException
+     */
+    private int newCorrelationTypeKnownId(CorrelationAttributeInstance.Type newType) throws EamDbException {
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        PreparedStatement preparedStatementQuery = null;
+        ResultSet resultSet = null;
+        int typeId = 0;
+        String insertSql;
+        String querySql;
+        // if we have a known ID, use it, if not (is -1) let the db assign it.
+        insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();
+
+        querySql = "SELECT * FROM correlation_types WHERE display_name=? AND db_table_name=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(insertSql);
+
+            preparedStatement.setInt(1, newType.getId());
+            preparedStatement.setString(2, newType.getDisplayName());
+            preparedStatement.setString(3, newType.getDbTableName());
+            preparedStatement.setInt(4, newType.isSupported() ? 1 : 0);
+            preparedStatement.setInt(5, newType.isEnabled() ? 1 : 0);
 
             preparedStatement.executeUpdate();
 

@@ -371,7 +371,7 @@ public class CorrelationAttributeInstance implements Serializable {
                     .append(isSupported().toString())
                     .append(", enabled=")
                     .append(isEnabled().toString())
-                    .append(")");
+                    .append(')');
             return str.toString();
         }
 
