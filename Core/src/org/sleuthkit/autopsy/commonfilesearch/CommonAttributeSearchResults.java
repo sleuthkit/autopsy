@@ -46,19 +46,9 @@ final public class CommonAttributeSearchResults {
      * @param values list of CommonAttributeValue indexed by size of
      * CommonAttributeValue
      */
-    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata) {
-        this.instanceCountToAttributeValues = metadata;
-        this.percentageThreshold = 0;
-    }
-    
-    /**
-     * Create a values object which can be handed off to the node factories.
-     *
-     * @param values list of CommonAttributeValue indexed by size of
-     * CommonAttributeValue
-     */
     CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata, int percentageThreshold) {
-        this.instanceCountToAttributeValues = metadata;
+        //wrap in a new object in case any client code has used an unmodifiable collection
+        this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
     }
 
