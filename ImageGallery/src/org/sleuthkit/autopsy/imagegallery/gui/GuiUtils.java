@@ -25,13 +25,13 @@ import org.controlsfx.control.action.Action;
 /**
  * Static utility methods for working with GUI components
  */
-public class GuiUtils {
+public final class GuiUtils {
 
     private GuiUtils() {
     }
 
     /**
-     * create a MenuItem that performs the given action and also set the Action
+     * Create a MenuItem that performs the given action and also set the Action
      * as the action for the given Button. Usefull to have a SplitMenuButton
      * remember the last chosen menu item as its action.
      *
