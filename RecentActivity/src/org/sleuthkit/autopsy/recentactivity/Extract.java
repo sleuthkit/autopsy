@@ -66,8 +66,7 @@ abstract class Extract {
             blackboard = tskCase.getBlackboard();
             fileManager = currentCase.getServices().getFileManager();
         } catch (NoCurrentCaseException ex) {
-            //TODO: fix this error message
-            throw new IngestModuleException(Bundle.Extract_indexError_message(), ex);
+            throw new IngestModuleException(Bundle.Extract_noOpenCase_errMsg(), ex);
         }
         configExtractor();
     }
