@@ -652,12 +652,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private class IconRendererTableListener implements TableColumnModelListener {
 
+        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=Comment"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
             if (e.getSource() instanceof ETableColumnModel) {
                 if (e.getSource() instanceof ETableColumnModel) {
                     TableColumn column = ((ETableColumnModel) e.getSource()).getColumn(e.getToIndex());
-                    if (column.getHeaderValue().toString().equals("Has Comment")) {
+                    if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
                         column.setCellRenderer(new HasCommentCellRenderer());
                     }
                 }

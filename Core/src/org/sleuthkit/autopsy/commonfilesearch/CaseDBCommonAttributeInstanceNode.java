@@ -19,10 +19,8 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -30,11 +28,11 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 
 /**
- * Node that wraps CaseDBCommonAttributeInstance to represent a file instance stored
- * in the CaseDB. 
+ * Node that wraps CaseDBCommonAttributeInstance to represent a file instance
+ * stored in the CaseDB.
  */
 public class CaseDBCommonAttributeInstanceNode extends FileNode {
-    
+
     private final String caseName;
     private final String dataSource;
 
@@ -62,10 +60,10 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         return visitor.visit(this);
     }
 
-    public String getCase(){
+    public String getCase() {
         return this.caseName;
     }
-    
+
     public String getDataSource() {
         return this.dataSource;
     }
