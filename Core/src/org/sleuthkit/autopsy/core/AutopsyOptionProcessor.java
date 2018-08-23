@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public class AutopsyOptionProcessor extends OptionProcessor {
     
     private static final Logger logger = Logger.getLogger(AutopsyOptionProcessor.class.getName());
-    private final Option liveAutopsyOption = Option.withoutArgument('l', "liveAutopsy");
+    private final Option liveAutopsyOption = Option.optionalArgument('l', "liveAutopsy");
     private final static String PROP_BASECASE = "LBL_BaseCase_PATH";
 
 
@@ -56,7 +56,9 @@ public class AutopsyOptionProcessor extends OptionProcessor {
        if(values.containsKey(liveAutopsyOption)){
            try {
                RuntimeProperties.setRunningInTarget(true);
-               ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE , PlatformUtil.getUserDirectory().toString());
+               String[] dir= values.get(liveAutopsyOption);
+               String directory = dir == null ? PlatformUtil.getUserDirectory().toString() : dir[0];
+               ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, directory);
            } catch (RuntimeProperties.RuntimePropertiesException ex) {
                logger.log(Level.SEVERE, ex.getMessage(), ex);
            }
