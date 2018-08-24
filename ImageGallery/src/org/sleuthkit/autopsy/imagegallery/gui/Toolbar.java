@@ -36,6 +36,8 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -182,7 +184,9 @@ public class Toolbar extends ToolBar {
                 });
         syncDataSources();
 
-        /* TODO: 1010/7 push data source selected in dialog into UI */
+        controller.getGroupManager().getDataSourceProperty().addListener((observable, oldDataSource, newDataSource) -> {
+            dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(newDataSource));
+        });
         dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
 
         initTagMenuButton();
