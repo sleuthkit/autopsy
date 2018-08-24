@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -60,6 +61,13 @@ public class LocalDisk {
     public String getMountPoint() {
         return mountPoint;
     }
+    
+    public String getDetail() {
+        if(isConfigDrive()) {
+            return mountPoint + ", " + "Autopsy Config";
+        }
+        return mountPoint;
+    }
 
     public String getReadableSize() {
         int unit = 1024;
@@ -91,7 +99,6 @@ public class LocalDisk {
             String line = null;
             while ((line = reader.readLine()) != null) {
                 builder.append(line);
-                builder.append(System.getProperty("line.separator"));
             }
             this.mountPoint = builder.toString();
             process.destroy();
@@ -101,7 +108,11 @@ public class LocalDisk {
     }
     
     public boolean isConfigDrive() {
-        return Places.getUserDirectory().toString() == this.mountPoint;
+        System.out.println(this.mountPoint + File.separator + "AutopsyConfig");
+        File autopsyConfig = new File(this.mountPoint + File.separator + "AutopsyConfig");
+        return autopsyConfig.exists();
     }
+    
+    
 
 }

@@ -344,7 +344,7 @@ final class LocalDiskSelectionDialog extends JDialog {
                     case 1:
                         return disks.get(rowIndex).getReadableSize();
                     case 2:
-                        return disks.get(rowIndex).getMountPoint();
+                        return disks.get(rowIndex).getDetail();
                     default:
                         return disks.get(rowIndex).getPath();
                 }
