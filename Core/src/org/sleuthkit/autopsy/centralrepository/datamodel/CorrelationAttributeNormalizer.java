@@ -43,7 +43,7 @@ final public class CorrelationAttributeNormalizer {
      * 
      * @return normalized data
      */
-    public static String normalize(CorrelationAttribute.Type attributeType, String data) throws CorrelationAttributeNormalizationException {
+    public static String normalize(CorrelationAttributeInstance.Type attributeType, String data) throws CorrelationAttributeNormalizationException {
         
         final String errorMessage = "Validator function not found for attribute type: %s";
         
@@ -52,15 +52,15 @@ final public class CorrelationAttributeNormalizer {
         }
         
         switch(attributeType.getId()){
-            case CorrelationAttribute.FILES_TYPE_ID:
+            case CorrelationAttributeInstance.FILES_TYPE_ID:
                 return normalizeMd5(data);
-            case CorrelationAttribute.DOMAIN_TYPE_ID:
+            case CorrelationAttributeInstance.DOMAIN_TYPE_ID:
                 return normalizeDomain(data);
-            case CorrelationAttribute.EMAIL_TYPE_ID:
+            case CorrelationAttributeInstance.EMAIL_TYPE_ID:
                 return normalizeEmail(data);
-            case CorrelationAttribute.PHONE_TYPE_ID:
+            case CorrelationAttributeInstance.PHONE_TYPE_ID:
                 return normalizePhone(data);
-            case CorrelationAttribute.USBID_TYPE_ID:
+            case CorrelationAttributeInstance.USBID_TYPE_ID:
                 return normalizeUsbId(data);
             default:
                 throw new CorrelationAttributeNormalizationException(String.format(errorMessage, attributeType.getDisplayName()));   
@@ -78,11 +78,11 @@ final public class CorrelationAttributeNormalizer {
      */
     public static String normalize(int attributeTypeId, String data) throws CorrelationAttributeNormalizationException {
         try {
-            List<CorrelationAttribute.Type> defaultTypes = CorrelationAttribute.getDefaultCorrelationTypes();
-            Optional<CorrelationAttribute.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
+            List<CorrelationAttributeInstance.Type> defaultTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            Optional<CorrelationAttributeInstance.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
             
             if(typeOption.isPresent()){
-                CorrelationAttribute.Type type = typeOption.get();
+                CorrelationAttributeInstance.Type type = typeOption.get();
                 return CorrelationAttributeNormalizer.normalize(type, data);
             } else {
                 throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));

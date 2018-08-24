@@ -786,7 +786,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         CorrelationAttributeInstance failAttr;
         try {
             failAttr = new CorrelationAttributeInstance(fileType, randomHash());
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
             return;
@@ -799,6 +799,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CorrelationAttributeNormalizationException ex) {
+            fail("was expecting to get EamDbException");
         }
 
         // Test adding instance with invalid case ID
@@ -809,6 +811,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for invalid case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CorrelationAttributeNormalizationException ex) {
+            fail("was expecting to get EamDbException");
         }
 
         // Test adding instance with null data source
@@ -818,6 +822,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for null data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CorrelationAttributeNormalizationException ex) {
+            fail("was expecting to get EamDbException");
         }
 
         // Test adding instance with invalid data source ID
@@ -828,6 +834,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for invalid data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CorrelationAttributeNormalizationException ex) {
+            fail("was expecting to get EamDbException");
         }
 
         // Test adding instance with null path
@@ -837,6 +845,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CorrelationAttributeNormalizationException ex) {
+            fail("was expecting to get EamDbException");
         }
 
         // Test adding instance with null known status
@@ -846,6 +856,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for null known status");
         } catch (EamDbException ex) {
             // This is the expected behavior
+        } catch (CorrelationAttributeNormalizationException ex) {
+            fail("was expecting to get EamDbException");
         }
 
         // Test CorrelationAttribute failure cases
@@ -864,10 +876,12 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test null value
         // This will fail in the CorrelationAttribute constructor
         try {
-            new CorrelationAttribute(fileType, null);
+            new CorrelationAttributeInstance(fileType, null);
             fail("addArtifact failed to throw exception for null value");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+        } catch (EamDbException ex) {
+            fail("expected to get CorrelationAttributeNormalizationException");
         }
 
         // Test getting instances with expected results

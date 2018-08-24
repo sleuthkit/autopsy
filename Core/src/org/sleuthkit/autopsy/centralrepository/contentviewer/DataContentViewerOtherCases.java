@@ -52,6 +52,7 @@ import javax.swing.table.TableColumn;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -140,8 +141,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         }
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);	//NON-NLS
-                    } catch(CorrelationAttributeNormalizationException ex){
-                        LOGGER.log(Level.INFO, "Error performing Add/Edit Comment action", ex);	//NON-NLS
                     }
                 }
             }
@@ -185,12 +184,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     try {
                         percentage = dbManager.getFrequencyPercentage(eamArtifact);
                         msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
-                            eamArtifact.getCorrelationType().getDisplayName(),
-                            eamArtifact.getCorrelationValue()));
+                                eamArtifact.getCorrelationType().getDisplayName(),
+                                eamArtifact.getCorrelationValue()));
                     } catch (CorrelationAttributeNormalizationException ex) {
-                        String message = String.format("Unable to determine commonality for artifact %s", eamArtifact.toString());
-                        LOGGER.log(Level.INFO, message, ex);
-                    }                    
+                        Exceptions.printStackTrace(ex);
+                    }
+
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         msg.toString(),
@@ -435,9 +434,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (bbArtifact != null && EamDb.isEnabled()) {
             ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false));
         }
-        
+
         // we can correlate based on the MD5 if it is enabled      
-        if (this.file != null && EamDb.isEnabled()) {           
+        if (this.file != null && EamDb.isEnabled()) {
             try {
 
                 List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
@@ -446,33 +445,47 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     for (CorrelationAttributeInstance.Type aType : artifactTypes) {
                         if (aType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
                             CorrelationCase corCase = EamDb.getInstance().getCase(Case.getCurrentCase());
-                            ret.add(new CorrelationAttributeInstance(
-                                    md5,
-                                    aType,
-                                    corCase,
-                                    CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
-                                    file.getParentPath() + file.getName(),
-                                    "",
-                                    file.getKnown()));
+                            try {
+                                ret.add(new CorrelationAttributeInstance(
+                                        md5,
+                                        aType,
+                                        corCase,
+                                        CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
+                                        file.getParentPath() + file.getName(),
+                                        "",
+                                        file.getKnown()));
+                            } catch (CorrelationAttributeNormalizationException ex) {
+                                LOGGER.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for value %s and type %s.", md5, aType.toString()), ex);
+                            }
                             break;
                         }
                     }
                 }
             } catch (EamDbException | TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-            } 
+            }
 
         } else {
-            try {
-                // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
-                if (this.file != null) {
-                    String md5 = this.file.getMd5Hash();
-                    if (md5 != null && !md5.isEmpty()) {
-                        ret.add(new CorrelationAttributeInstance(CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0), md5));
+
+            // If EamDb not enabled, get the Files default correlation type to allow Other Occurances to be enabled.   
+            if (this.file != null) {
+                String md5 = this.file.getMd5Hash();
+                if (md5 != null && !md5.isEmpty()) {
+                    try {
+                        final CorrelationAttributeInstance.Type fileAttributeType
+                                = CorrelationAttributeInstance.getDefaultCorrelationTypes()
+                                        .stream()
+                                        .filter(attrType -> attrType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
+                                        .findAny()
+                                        .get();
+
+                        ret.add(new CorrelationAttributeInstance(fileAttributeType, md5));
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        LOGGER.log(Level.INFO, String.format("Unable to create CorrelationAttributeInstance for value %s", md5), ex); // NON-NLS
                     }
                 }
-            } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
         }
 
@@ -519,9 +532,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * artifact. If the central repo is not enabled, this will only return files
      * from the current case with matching MD5 hashes.
      *
-     * @param corAttr        CorrelationAttribute to query for
+     * @param corAttr CorrelationAttribute to query for
      * @param dataSourceName Data source to filter results
-     * @param deviceId       Device Id to filter results
+     * @param deviceId Device Id to filter results
      *
      * @return A collection of correlated artifact instances
      */
@@ -567,7 +580,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             return nodeDataMap;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
-        } catch(CorrelationAttributeNormalizationException ex) {
+        } catch (CorrelationAttributeNormalizationException ex) {
             LOGGER.log(Level.INFO, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
@@ -584,7 +597,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Get all other abstract files in the current case with the same MD5 as the
      * selected node.
      *
-     * @param corAttr  The CorrelationAttribute containing the MD5 to search for
+     * @param corAttr The CorrelationAttribute containing the MD5 to search for
      * @param openCase The current case
      *
      * @return List of matching AbstractFile objects
@@ -737,8 +750,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Adjust a given column for the text provided.
      *
      * @param columnIndex The index of the column to adjust.
-     * @param text        The text whose length will be used to adjust the
-     *                    column width.
+     * @param text The text whose length will be used to adjust the column
+     * width.
      */
     private void setColumnWidthToText(int columnIndex, String text) {
         TableColumn column = otherCasesTable.getColumnModel().getColumn(columnIndex);

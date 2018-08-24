@@ -48,7 +48,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final String emptyHash = "";                                            //should fail
         final String nullHash = null;                                             //should fail
 
-        final int FILES_TYPE_ID = CorrelationAttribute.FILES_TYPE_ID;
+        final int FILES_TYPE_ID = CorrelationAttributeInstance.FILES_TYPE_ID;
 
         try {
             assertTrue("This hash should just work", CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, aValidHash).equals(aValidHash));
@@ -57,7 +57,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
             fail(ex.getMessage());
         }
         try {
-            assertTrue("This hash just needs to be converted to lower case", CorrelationAttributeNormalizer.normalize(CorrelationAttribute.FILES_TYPE_ID, aValidHashWithCaps).equals(aValidHash));
+            assertTrue("This hash just needs to be converted to lower case", CorrelationAttributeNormalizer.normalize(CorrelationAttributeInstance.FILES_TYPE_ID, aValidHashWithCaps).equals(aValidHash));
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -97,7 +97,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final String goodDomainTen = "WWW.TEST.COM";            //should pass but be lowered
         final String goodDomainEleven = "TEST.COM";             //should pass but be lowered
 
-        final int DOMAIN_TYPE_ID = CorrelationAttribute.DOMAIN_TYPE_ID;
+        final int DOMAIN_TYPE_ID = CorrelationAttributeInstance.DOMAIN_TYPE_ID;
 
         try {
             assertTrue(THIS_DOMAIN_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, goodDomainOne).equals(goodDomainOne));
@@ -177,7 +177,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final String badEmailSix = "asdf@asdf"; //TODO looks bad but the lib accepts it...
         final String badEmailSeven = "asdf.asdf";                           //should
 
-        final int EMAIL_TYPE_ID = CorrelationAttribute.EMAIL_TYPE_ID;
+        final int EMAIL_TYPE_ID = CorrelationAttributeInstance.EMAIL_TYPE_ID;
 
         try {
             assertTrue("This email should pass.", CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, goodEmailOne).equals(goodEmailOne));
@@ -234,7 +234,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final String badPnEight = "asdfasdfasdf";
         final String badPnNine = "asdf19784740486adsf";
                 
-        final int PHONE_TYPE_ID = CorrelationAttribute.PHONE_TYPE_ID;
+        final int PHONE_TYPE_ID = CorrelationAttributeInstance.PHONE_TYPE_ID;
 
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnOne).equals(goodPnOne));
@@ -304,7 +304,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final String goodIdSeven = "0202AAFF";      //should pass
         final String goodIdEight = "0202-AAFF";     //should pass*/
                 
-        final int USBID_TYPE_ID = CorrelationAttribute.USBID_TYPE_ID;
+        final int USBID_TYPE_ID = CorrelationAttributeInstance.USBID_TYPE_ID;
 
         try {
             assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne));
