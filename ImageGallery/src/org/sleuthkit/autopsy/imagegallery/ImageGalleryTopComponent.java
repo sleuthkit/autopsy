@@ -131,6 +131,24 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         if (tc != null) {
             topComponentInitialized = true;
             if (tc.isOpened() == false) {
+                try {
+                    List<DataSource> dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
+
+                    Platform.runLater(() -> {
+                        Dialog<DataSource> d = new ChoiceDialog<>(null, dataSources);
+                        d.setTitle("Image Gallery");
+                        d.setHeaderText("Choose a data source to view.");
+                        d.setContentText("Data source:");
+                        d.initOwner(((ImageGalleryTopComponent) tc).jfxPanel.getScene().getWindow());
+                        d.initModality(Modality.WINDOW_MODAL);
+                        GuiUtils.setDialogIcons(d);
+
+                        Optional<DataSource> dataSource = d.showAndWait();
+                        dataSource.ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
+                    });
+                } catch (TskCoreException tskCoreException) {
+                    logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
+                };
                 tc.open();
             }
             tc.toFront();
@@ -161,22 +179,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             fullUIStack = new StackPane(); //this is passed into controller
             myScene = new Scene(fullUIStack);
             jfxPanel.setScene(myScene);
-            try {
 
-                List<DataSource> dataSources = controller.getSleuthKitCase().getDataSources();
-                Dialog<DataSource> d = new ChoiceDialog<>(null, dataSources);
-                d.setTitle("Image Gallery");
-                d.setHeaderText("Choose a data source to view.");
-                d.setContentText("Data source:");
-                d.initOwner(jfxPanel.getScene().getWindow());
-                d.initModality(Modality.WINDOW_MODAL);
-                GuiUtils.setDialogIcons(d);
-
-                Optional<DataSource> dataSource = d.showAndWait();
-                dataSource.ifPresent(ds -> controller.getGroupManager().setDataSource(ds));
-            } catch (TskCoreException tskCoreException) {
-                logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
-            }
             groupPane = new GroupPane(controller);
             centralStack = new StackPane(groupPane);  //this is passed into controller
             fullUIStack.getChildren().add(borderPane);
