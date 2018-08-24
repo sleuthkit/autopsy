@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.sqlitereader;
+package org.sleuthkit.autopsy.tabulardatareader;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,22 +31,27 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Reads rows from SQLite tables and returns results in a list collection.
+ * Reads sqlite databases and returns results in a list collection.
  */
-public class SQLiteReader implements AutoCloseable {
+public final class SQLiteReader extends AbstractReader {
     
     private final Connection connection;
+    private final static IngestServices services = IngestServices.getInstance();
+    private final static Logger logger = services.getLogger(SQLiteReader.class.getName());
     
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC
@@ -54,38 +59,19 @@ public class SQLiteReader implements AutoCloseable {
      * 
      * @param sqliteDbFile Data source abstract file
      * @param localDiskPath Location for database contents to be copied to
-     * @throws ClassNotFoundException missing SQLite JDBC class
-     * @throws SQLException Exception opening JDBC connection
-     * @throws IOException Exception writing file contents
-     * @throws NoCurrentCaseException Current case closed during file copying
-     * @throws TskCoreException Exception finding files from abstract file
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
-    public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws ClassNotFoundException, 
-            SQLException, IOException, NoCurrentCaseException, TskCoreException{
-        
-        writeDataSourceToLocalDisk(sqliteDbFile, localDiskPath);
-        connection = getDatabaseConnection(localDiskPath);
-    }
-    
-    /**
-     * Copies the data source file contents to local drive for processing.
-     * 
-     * @param file AbstractFile from the data source 
-     * @param localDiskPath Local drive path to copy AbstractFile contents
-     * @throws IOException Exception writing file contents
-     * @throws NoCurrentCaseException Current case closed during file copying
-     * @throws TskCoreException Exception finding files from abstract file
-     */
-    private void writeDataSourceToLocalDisk(AbstractFile file, String localDiskPath) 
-        throws IOException, NoCurrentCaseException, TskCoreException {
-        
-        File localDatabaseFile = new File(localDiskPath);
-        if (!localDatabaseFile.exists()) {
-            ContentUtils.writeToFile(file, localDatabaseFile);
-
+    public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws FileReaderInitException {
+        super(sqliteDbFile, localDiskPath);
+        try {
             // Look for any meta files associated with this DB - WAL, SHM, etc. 
-            findAndCopySQLiteMetaFile(file, file.getName() + "-wal");
-            findAndCopySQLiteMetaFile(file, file.getName() + "-shm");
+            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
+            findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
+
+            connection = getDatabaseConnection(localDiskPath);
+        } catch (ClassNotFoundException | SQLException |IOException | 
+                NoCurrentCaseException | TskCoreException ex) {
+            throw new FileReaderInitException(ex);
         }
     }
     
@@ -93,7 +79,7 @@ public class SQLiteReader implements AutoCloseable {
      * Searches for a meta file associated with the give SQLite database. If found,
      * copies the file to the local disk folder
      * 
-     * @param sqliteFile SQLIte db file being processed
+     * @param sqliteFile file being processed
      * @param metaFileName name of meta file to look for
      * @throws NoCurrentCaseException Case has been closed.
      * @throws TskCoreException fileManager cannot find AbstractFile files.
@@ -120,7 +106,7 @@ public class SQLiteReader implements AutoCloseable {
             }
         }
     }
-
+    
     /**
      * Opens a JDBC connection to the sqlite database specified by the path
      * parameter.
@@ -145,10 +131,10 @@ public class SQLiteReader implements AutoCloseable {
      * CREATE TABLE statments).
      * 
      * @return A map of table names to table schemas
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
-    public Map<String, String> getTableSchemas()
-            throws SQLException {
+    @Override
+    public Map<String, String> getTableSchemas() throws FileReaderException {
         
         Map<String, String> dbTablesMap = new TreeMap<>();
         
@@ -158,11 +144,14 @@ public class SQLiteReader implements AutoCloseable {
                     + " WHERE type= 'table' " //NON-NLS
                     + " ORDER BY name;")){ //NON-NLS
             
-            while (resultSet.next()) {
-                String tableName = resultSet.getString("name"); //NON-NLS
-                String tableSQL = resultSet.getString("sql"); //NON-NLS
-                dbTablesMap.put(tableName, tableSQL);
-            }
+                while (resultSet.next()) {
+                    String tableName = resultSet.getString("name"); //NON-NLS
+                    String tableSQL = resultSet.getString("sql"); //NON-NLS
+                    dbTablesMap.put(tableName, tableSQL);
+                }
+                
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
         
         return dbTablesMap;
@@ -173,13 +162,18 @@ public class SQLiteReader implements AutoCloseable {
      * 
      * @param tableName
      * @return Row count from tableName
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
-    public Integer getTableRowCount(String tableName) throws SQLException {
+    @Override
+    public Integer getRowCountFromTable(String tableName) 
+            throws FileReaderException {
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
         try (Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
-                        "SELECT count (*) as count FROM " + tableName)){ //NON-NLS
+                        "SELECT count (*) as count FROM " + quotedTableName)){ //NON-NLS
             return resultSet.getInt("count"); //NON-NLS
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
     }
     
@@ -190,17 +184,21 @@ public class SQLiteReader implements AutoCloseable {
      * @param tableName
      * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
-    public List<Map<String, Object>> getRowsFromTable(String tableName) throws SQLException {
-        
+    @Override
+    public List<Map<String, Object>> getRowsFromTable(String tableName) 
+            throws FileReaderException {
         //This method does not directly call its overloaded counterpart 
         //since the second parameter would need to be retreived from a call to
         //getTableRowCount().
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
-                        "SELECT * FROM " + tableName)) { //NON-NLS
+                        "SELECT * FROM " + quotedTableName)) { //NON-NLS
             return resultSetToList(resultSet);
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
     }
     
@@ -208,22 +206,37 @@ public class SQLiteReader implements AutoCloseable {
      * Retrieves a subset of the rows from a given table in the SQLite database.
      * 
      * @param tableName
-     * @param startRow Desired start index (rows begin at 1)
+     * @param offset Desired start index (rows begin at 1)
      * @param numRowsToRead Number of rows past the start index
      * @return List of rows, where each row is 
      * represented as a column-value map.
-     * @throws SQLException
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
+    @Override
     public List<Map<String, Object>> getRowsFromTable(String tableName, 
-            int startRow, int numRowsToRead) throws SQLException{
-        
+            int offset, int numRowsToRead) throws FileReaderException{
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
         try(Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(
-                        "SELECT * FROM " + tableName    //NON-NLS
+                        "SELECT * FROM " + quotedTableName    //NON-NLS
                         + " LIMIT " + Integer.toString(numRowsToRead) //NON-NLS
-                        + " OFFSET " + Integer.toString(startRow - 1))) { //NON-NLS
+                        + " OFFSET " + Integer.toString(offset - 1))) { //NON-NLS
             return resultSetToList(resultSet);
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
         }
+    }
+    
+    /**
+     * Wraps table name with quotation marks in case table name contains spaces. 
+     * sqliteJDBC cannot read table names with spaces in them unless surrounded 
+     * by quotation marks.
+     * 
+     * @param tableName
+     * @return Input name: Result Table -> "Result Table"
+     */
+    private String wrapTableNameStringWithQuotes(String tableName) {
+        return "\"" + tableName +"\"";
     }
     
     /**
@@ -260,13 +273,18 @@ public class SQLiteReader implements AutoCloseable {
         return rowMap;
     }
 
+    
     /**
-     * Closes underlying JDBC connection.
-     * 
-     * @throws SQLException 
+     * Closes underlying JDBC connection. 
      */
     @Override
-    public void close() throws SQLException {
-        connection.close();
+    public void close() {
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            //Non-essential exception, user has no need for the connection 
+            //object at this stage so closing details are not important
+            logger.log(Level.WARNING, "Could not close JDBC connection", ex);
+        }
     }
 }

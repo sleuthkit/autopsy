@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
@@ -182,7 +182,7 @@ class InterCaseTestUtils {
                 FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
             } catch(IOException | EamDbException ex){
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         }
         CASE_DIRECTORY_PATH.toFile().exists();
@@ -280,7 +280,7 @@ class InterCaseTestUtils {
         }
 
         if (currentCase == null) {
-            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of: CASE1, CASE2, CASE3"));
+            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of: CASE1, CASE2, CASE3").getMessage());
             return null;
         } else {
             return currentCase;
@@ -304,7 +304,6 @@ class InterCaseTestUtils {
         }
     }
     
-    //TODO refactor
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         int tally = 0;
@@ -386,7 +385,7 @@ class InterCaseTestUtils {
             }
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 }

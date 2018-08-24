@@ -59,10 +59,10 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -93,7 +93,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private static final int CELL_TEXT_WIDTH_PADDING = 5;
 
     private final DataContentViewerOtherCasesTableModel tableModel;
-    private final Collection<CorrelationAttribute> correlationAttributes;
+    private final Collection<CorrelationAttributeInstance> correlationAttributes;
     /**
      * Could be null.
      */
@@ -131,7 +131,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 } else if (jmi.equals(addCommentMenuItem)) {
                     try {
                         OtherOccurrenceNodeInstanceData selectedNode = (OtherOccurrenceNodeInstanceData) tableModel.getRow(otherCasesTable.getSelectedRow());
-                        AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.createCorrelationAttribute());
+                        AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.getCorrelationAttribute());
                         action.actionPerformed(null);
                         String currentComment = action.getComment();
                         if (currentComment != null) {
@@ -181,7 +181,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             int percentage;
             try {
                 EamDb dbManager = EamDb.getInstance();
-                for (CorrelationAttribute eamArtifact : correlationAttributes) {
+                for (CorrelationAttributeInstance eamArtifact : correlationAttributes) {
                     try {
                         percentage = dbManager.getFrequencyPercentage(eamArtifact);
                         msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
@@ -427,36 +427,40 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @return A list of attributes that can be used for correlation
      */
-    private Collection<CorrelationAttribute> getCorrelationAttributesFromNode(Node node) {
-        Collection<CorrelationAttribute> ret = new ArrayList<>();
+    private Collection<CorrelationAttributeInstance> getCorrelationAttributesFromNode(Node node) {
+        Collection<CorrelationAttributeInstance> ret = new ArrayList<>();
 
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && EamDb.isEnabled()) {
-            ret.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, false, false));
+            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false));
         }
-
+        
         // we can correlate based on the MD5 if it is enabled      
-        if (this.file != null && EamDb.isEnabled()) {
+        if (this.file != null && EamDb.isEnabled()) {           
             try {
 
-                List<CorrelationAttribute.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
+                List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
                 String md5 = this.file.getMd5Hash();
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                    for (CorrelationAttribute.Type aType : artifactTypes) {
-                        if (aType.getId() == CorrelationAttribute.FILES_TYPE_ID) {
-                            try {
-                                ret.add(new CorrelationAttribute(aType, md5));
-                            } catch (CorrelationAttributeNormalizationException ex) {
-                                LOGGER.log(Level.INFO, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
-                            }
+                    for (CorrelationAttributeInstance.Type aType : artifactTypes) {
+                        if (aType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                            CorrelationCase corCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                            ret.add(new CorrelationAttributeInstance(
+                                    md5,
+                                    aType,
+                                    corCase,
+                                    CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
+                                    file.getParentPath() + file.getName(),
+                                    "",
+                                    file.getKnown()));
                             break;
                         }
                     }
                 }
-            } catch (EamDbException ex) {
+            } catch (EamDbException | TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
-            }
+            } 
 
         } else {
             try {
@@ -464,11 +468,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 if (this.file != null) {
                     String md5 = this.file.getMd5Hash();
                     if (md5 != null && !md5.isEmpty()) {
-                        try {
-                            ret.add(new CorrelationAttribute(CorrelationAttribute.getDefaultCorrelationTypes().get(0), md5));
-                        } catch (CorrelationAttributeNormalizationException ex) {
-                            LOGGER.log(Level.INFO, String.format("MD5 (%s) was not formatted correctly.  Not being considered in correlation attributes.", md5), ex);    //NON-NLS
-                        }
+                        ret.add(new CorrelationAttributeInstance(CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0), md5));
                     }
                 }
             } catch (EamDbException ex) {
@@ -525,7 +525,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *
      * @return A collection of correlated artifact instances
      */
-    private Map<UniquePathKey, OtherOccurrenceNodeInstanceData> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+    private Map<UniquePathKey, OtherOccurrenceNodeInstanceData> getCorrelatedInstances(CorrelationAttributeInstance corAttr, String dataSourceName, String deviceId) {
         // @@@ Check exception
         try {
             final Case openCase = Case.getCurrentCase();
@@ -593,7 +593,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * @throws TskCoreException
      * @throws EamDbException
      */
-    private List<AbstractFile> getCaseDbMatches(CorrelationAttribute corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
+    private List<AbstractFile> getCaseDbMatches(CorrelationAttributeInstance corAttr, Case openCase) throws NoCurrentCaseException, TskCoreException, EamDbException {
         String md5 = corAttr.getCorrelationValue();
         SleuthkitCase tsk = openCase.getSleuthkitCase();
         List<AbstractFile> matches = tsk.findAllFilesWhere(String.format("md5 = '%s'", new Object[]{md5}));
@@ -710,7 +710,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
-        for (CorrelationAttribute corAttr : correlationAttributes) {
+        for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
             // get correlation and reference set instances from DB

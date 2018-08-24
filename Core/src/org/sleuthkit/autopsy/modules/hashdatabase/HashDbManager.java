@@ -41,6 +41,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
@@ -492,7 +493,7 @@ public class HashDbManager implements PropertyChangeListener {
         List<HashDbInfo> crHashSets = new ArrayList<>();
         if(EamDb.isEnabled()){
             try{
-                List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets(EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+                List<EamGlobalSet> crSets = EamDb.getInstance().getAllReferenceSets(EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID));
                 for(EamGlobalSet globalSet:crSets){
                     
                     // Defaults for fields not stored in the central repository:
@@ -1238,7 +1239,7 @@ public class HashDbManager implements PropertyChangeListener {
                     try{
                         EamGlobalFileInstance fileInstance = new EamGlobalFileInstance(referenceSetID, file.getMd5Hash(),
                             type, comment);
-                        EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+                        EamDb.getInstance().addReferenceInstance(fileInstance,EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID));
                     } catch (EamDbException | CorrelationAttributeNormalizationException ex){
                         throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);	//NON-NLS
                     }
@@ -1272,7 +1273,7 @@ public class HashDbManager implements PropertyChangeListener {
             
             try{
                 EamDb.getInstance().bulkInsertReferenceTypeEntries(globalFileInstances, 
-                        EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID));
+                        EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID));
             } catch (EamDbException ex){
                 throw new TskCoreException("Error adding hashes to " + getDisplayName(), ex);
             }

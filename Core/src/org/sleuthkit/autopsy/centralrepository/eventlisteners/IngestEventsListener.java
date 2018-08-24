@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadUtils;
  */
 public class IngestEventsListener {
 
-    private static final Logger LOGGER = Logger.getLogger(CorrelationAttribute.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int correlationModuleInstanceCount;
@@ -249,12 +249,12 @@ public class IngestEventsListener {
             if (null == bbArtifacts) { //the ModuleDataEvents don't always have a collection of artifacts set
                 return;
             }
-            List<CorrelationAttribute> eamArtifacts = new ArrayList<>();
+            List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
                 // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
-                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+                for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job
                         if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
@@ -282,9 +282,9 @@ public class IngestEventsListener {
                 }
             }
             if (FALSE == eamArtifacts.isEmpty()) {
-                for (CorrelationAttribute eamArtifact : eamArtifacts) {
+                for (CorrelationAttributeInstance eamArtifact : eamArtifacts) {
                     try {
-                        dbManager.addArtifact(eamArtifact);
+                        dbManager.addArtifactInstance(eamArtifact);
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Error adding artifact to database.", ex); //NON-NLS
                     }

@@ -26,6 +26,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -43,7 +44,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private static final long serialVersionUID = 1L;
 
     private boolean addToDatabase;
-    private CorrelationAttribute correlationAttribute;
+    private CorrelationAttributeInstance correlationAttributeInstance;
     private String comment;
 
     /**
@@ -51,9 +52,9 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      *
      * @param correlationAttribute The correlation attribute to modify.
      */
-    public AddEditCentralRepoCommentAction(CorrelationAttribute correlationAttribute) {
+    public AddEditCentralRepoCommentAction(CorrelationAttributeInstance correlationAttribute) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
-        this.correlationAttribute = correlationAttribute;
+        this.correlationAttributeInstance = correlationAttribute;
     }
 
     /**
@@ -64,15 +65,10 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
-        try {
-            correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
-        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
-            correlationAttribute = null;
-            LOGGER.log(Level.SEVERE, "Possible problem creating CorrelationAttribute from content: " + file.getMd5Hash(), ex);
-        }
-        if (correlationAttribute == null) {
+        correlationAttributeInstance = EamArtifactUtil.getInstanceFromContent(file);
+        if (correlationAttributeInstance == null) {
             addToDatabase = true;
-            correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
+            correlationAttributeInstance = EamArtifactUtil.makeInstanceFromContent(file);
         }
     }
 
@@ -89,7 +85,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent event) {
-        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
+        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttributeInstance);
         centralRepoCommentDialog.display();
 
         comment = null;
@@ -101,9 +97,9 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 dbManager = EamDb.getInstance();
 
                 if (addToDatabase) {
-                    dbManager.addArtifact(correlationAttribute);
+                    dbManager.addArtifactInstance(correlationAttributeInstance);
                 } else {
-                    dbManager.updateAttributeInstanceComment(correlationAttribute);
+                    dbManager.updateAttributeInstanceComment(correlationAttributeInstance);
                 }
 
                 comment = centralRepoCommentDialog.getComment();
@@ -133,7 +129,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      * 
      * @return The correlation attribute.
      */
-    public CorrelationAttribute getCorrelationAttribute() {
-        return correlationAttribute;
+    public CorrelationAttributeInstance getCorrelationAttribute() {
+        return correlationAttributeInstance;
     }
 }

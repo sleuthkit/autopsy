@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -226,7 +226,7 @@ class IntraCaseTestUtils {
                 files.add(file);
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         }
 

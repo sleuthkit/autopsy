@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +43,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.sqlitereader.SQLiteReader;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
+import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
 
 /**
  * A file content viewer for SQLite database files.
@@ -61,7 +62,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private final SQLiteTableView selectedTableView = new SQLiteTableView();
     private AbstractFile sqliteDbFile;
     private File tmpDbFile;
-    private SQLiteReader sqliteReader;
+    private AbstractReader sqliteReader;
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
 
@@ -339,12 +340,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         // close DB connection to file
         if (null != sqliteReader) {
-            try {
-                sqliteReader.close();
-                sqliteReader = null;
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Failed to close DB connection to file.", ex); //NON-NLS
-            }
+            sqliteReader.close();
+            sqliteReader = null;
         }
         
         sqliteDbFile = null;
@@ -366,7 +363,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         try {
             String localDiskPath = Case.getCurrentCaseThrows().getTempDirectory() + 
                     File.separator + sqliteDbFile.getName();
-            sqliteReader = new SQLiteReader(sqliteDbFile, localDiskPath);
+            
+            sqliteReader = FileReaderFactory.createReader(SUPPORTED_MIMETYPES[0], sqliteDbFile, localDiskPath);
             
             Map<String, String> dbTablesMap = sqliteReader.getTableSchemas();
             
@@ -381,24 +379,16 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
-        } catch (IOException | TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Failed to create temp copy of DB file '%s' (objId=%d)", //NON-NLS
-                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
-            MessageNotifyUtil.Message.error(
-                    Bundle.SQLiteViewer_errorMessage_failedToExtractFile());
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "Failed to initialize JDBC SQLite '%s' (objId=%d)", //NON-NLS
-                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
-            MessageNotifyUtil.Message.error(
-                    Bundle.SQLiteViewer_errorMessage_failedToinitJDBCDriver());
-        } catch (SQLException ex) {
+        } catch (FileReaderException ex) {
             logger.log(Level.SEVERE, String.format(
                     "Failed to get tables from DB file  '%s' (objId=%d)", //NON-NLS
                     sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
             MessageNotifyUtil.Message.error(
                     Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase());
+        } catch (FileReaderInitException ex) {
+            logger.log(Level.SEVERE, String.format(
+                    "Failed to create a SQLiteReader '%s' (objId=%d)", //NON-NLS
+                    sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
         }
     }
 
@@ -407,7 +397,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     })
     private void selectTable(String tableName) {
         try {
-            numRows = sqliteReader.getTableRowCount(tableName);
+            numRows = sqliteReader.getRowCountFromTable(tableName);
             numEntriesField.setText(numRows + " entries");
 
             currPage = 1;
@@ -426,7 +416,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 selectedTableView.setupTable(Collections.emptyList());
             }
             
-        } catch (SQLException ex) {
+        } catch (FileReaderException ex) {
             logger.log(Level.SEVERE, String.format(
                     "Failed to load table %s from DB file '%s' (objId=%d)", tableName, //NON-NLS
                     sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
@@ -447,7 +437,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             } else {
                 selectedTableView.setupTable(Collections.emptyList());
             }
-        } catch (SQLException ex) {
+        } catch (FileReaderException ex) {
             logger.log(Level.SEVERE, String.format(
                     "Failed to read table %s from DB file '%s' (objId=%d)", tableName, //NON-NLS
                     sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
@@ -461,7 +451,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * 
      * @param file
      * @param tableName
-     * @param rowMap -- A list of rows in the table, where each row is represented as a column-value
+     * @param rowMap A list of rows in the table, where each row is represented as a column-value
      * map.
      * @throws FileNotFoundException
      * @throws IOException 
@@ -516,7 +506,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             } else {
                 exportTableToCSV(file, tableName, currentTableRows);
             }
-        } catch (SQLException ex) {
+        } catch (FileReaderException ex) {
             logger.log(Level.SEVERE, String.format(
                     "Failed to read table %s from DB file '%s' (objId=%d)", //NON-NLS
                     tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); 
@@ -534,8 +524,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      * Returns a comma seperated header string from the keys of the column
      * row map.
      * 
-     * @param row -- column header row map
-     * @return -- comma seperated header string
+     * @param row column header row map
+     * @return comma seperated header string
      */
     private String createColumnHeader(Map<String, Object> row) {
         return row.entrySet()
