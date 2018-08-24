@@ -137,6 +137,10 @@ public class FileIDSelectionModel {
         return selected.contains(id);
     }
 
+    public boolean isNotSelected(Long id) {
+        return selected.contains(id) == false;
+    }
+
     public ReadOnlyObjectProperty<Long> lastSelectedProperty() {
         return lastSelectedProp.getReadOnlyProperty();
     }

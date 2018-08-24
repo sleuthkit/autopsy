@@ -67,10 +67,10 @@ import org.sleuthkit.datamodel.TagName;
  * Shows details of the selected file.
  */
 @NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here.",
-        "MetaDataPane.copyMenuItem.text=Copy",
-        "MetaDataPane.titledPane.displayName=Details",
-        "MetaDataPane.attributeColumn.headingName=Attribute",
-        "MetaDataPane.valueColumn.headingName=Value"})
+    "MetaDataPane.copyMenuItem.text=Copy",
+    "MetaDataPane.titledPane.displayName=Details",
+    "MetaDataPane.attributeColumn.headingName=Attribute",
+    "MetaDataPane.valueColumn.headingName=Value"})
 public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
@@ -206,9 +206,11 @@ public class MetaDataPane extends DrawableUIBase {
     }
 
     public void updateAttributesTable() {
-        getFile().ifPresent(file -> {
-            final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList();
-            Platform.runLater(() -> {
+
+        getFile().addFXListener(fileOpt -> {
+            //on FX thread
+            fileOpt.ifPresent(file -> {
+                final List<Pair<DrawableAttribute<?>, Collection<?>>> attributesList = file.getAttributesList(); //this might do BD query...
                 tableView.getItems().clear();
                 tableView.getItems().setAll(attributesList);
             });
