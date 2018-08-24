@@ -37,11 +37,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -264,7 +262,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
     }
-    
+
     /**
      * Get all tags from the case database that are associated with the file
      *
@@ -279,14 +277,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return tags;
     }
-    
-        /**
-     * Used by subclasses of AbstractAbstractFileNode to add the comment property
-     * to their sheets.
+
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the comment
+     * property to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags the list of tags associated with the file
+     * @param tags     the list of tags associated with the file
      */
     @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.comment.name=Comment",
         "AbstractAbstractFileNode.createSheet.comment.displayName=Comment"})
@@ -302,17 +300,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         }
         if (EamDbUtil.useCentralRepo()) {
-            CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(getContent());
-            if (attribute != null) {
-                for (CorrelationAttributeInstance instance : attribute.getInstances()) {
-                    if (instance != null && instance.getComment() != null && !instance.getComment().trim().isEmpty()) {
-                        if (status == HasCommentStatus.TAG_COMMENT) {
-                            status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-                        } else {
-                            status = HasCommentStatus.CR_COMMENT;
-                        }
-                        break;
-                    }
+            CorrelationAttributeInstance attribute = EamArtifactUtil.getInstanceFromContent(getContent());
+            if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                if (status == HasCommentStatus.TAG_COMMENT) {
+                    status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = HasCommentStatus.CR_COMMENT;
                 }
             }
         }
@@ -348,7 +341,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags the list of tags associated with the file
+     * @param tags     the list of tags associated with the file
      */
     protected void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),

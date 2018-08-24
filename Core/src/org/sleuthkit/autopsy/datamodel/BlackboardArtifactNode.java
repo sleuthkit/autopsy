@@ -49,7 +49,6 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
@@ -577,17 +576,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         //what we want the column property to reflect should be revisted when we have added a way to comment
         //on the artifact itself
         if (EamDbUtil.useCentralRepo()) {
-            CorrelationAttribute attribute = EamArtifactUtil.getCorrelationAttributeFromContent(associated);
-            if (attribute != null) {
-                for (CorrelationAttributeInstance instance : attribute.getInstances()) {
-                    if (instance != null && instance.getComment() != null && !instance.getComment().trim().isEmpty()) {
-                        if (status == HasCommentStatus.TAG_COMMENT) {
-                            status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-                        } else {
-                            status = HasCommentStatus.CR_COMMENT;
-                        }
-                        break;
-                    }
+            CorrelationAttributeInstance attribute = EamArtifactUtil.getInstanceFromContent(associated);
+            if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                if (status == HasCommentStatus.TAG_COMMENT) {
+                    status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = HasCommentStatus.CR_COMMENT;
                 }
             }
         }
