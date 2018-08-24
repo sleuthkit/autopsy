@@ -134,20 +134,22 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             if (tc.isOpened() == false) {
                 try {
                     List<DataSource> dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
-                    Map<String, DataSource> dataSourceNames = new HashMap<>();
-                    dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
-                    Platform.runLater(() -> {
-                        ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
-                        d.setTitle("Image Gallery");
-                        d.setHeaderText("Choose a data source to view.");
-                        d.setContentText("Data source:");
-                        d.initOwner(((ImageGalleryTopComponent) tc).jfxPanel.getScene().getWindow());
-                        d.initModality(Modality.WINDOW_MODAL);
-                        GuiUtils.setDialogIcons(d);
+                    if (dataSources.size() > 1) {
+                        Map<String, DataSource> dataSourceNames = new HashMap<>();
+                        dataSourceNames.put("All", null);
+                        dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
+                        Platform.runLater(() -> {
+                            ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
+                            d.setTitle("Image Gallery");
+                            d.setHeaderText("Choose a data source to view.");
+                            d.setContentText("Data source:");
+                            d.initModality(Modality.WINDOW_MODAL);
+                            GuiUtils.setDialogIcons(d);
 
-                        Optional<String> dataSourceName = d.showAndWait();
-                        dataSourceName.map(dataSourceNames::get).ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
-                    });
+                            Optional<String> dataSourceName = d.showAndWait();
+                            dataSourceName.map(dataSourceNames::get).ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
+                        });
+                    }
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
                 };
@@ -176,7 +178,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         initComponents();
 
         Platform.runLater(() -> {
-
             //initialize jfx ui
             fullUIStack = new StackPane(); //this is passed into controller
             myScene = new Scene(fullUIStack);
