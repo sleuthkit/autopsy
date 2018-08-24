@@ -625,7 +625,7 @@ public class GroupManager {
                 /*
                  * for attributes other than path we can't be sure a group is
                  * fully analyzed because we don't know all the files that will
-                 * be a part of that group,. just show them no matter what.
+                 * be a part of that group. just show them no matter what.
                  */
 
                 try {

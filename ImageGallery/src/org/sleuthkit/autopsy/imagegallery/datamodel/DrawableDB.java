@@ -337,7 +337,7 @@ public final class DrawableDB {
 
         statement.setObject(1, groupKey.getValue());
 
-        if (groupKey.getDataSource() != null
+        if (groupKey.getDataSource().isPresent()
             && (groupKey.getAttribute() == DrawableAttribute.PATH)) {
             statement.setObject(2, groupKey.getDataSourceObjId());
         }
@@ -636,7 +636,7 @@ public final class DrawableDB {
         try {
             String groupSeenQueryStmt;
 
-            if (groupKey.getDataSourceObjId() != 0) {
+            if (groupKey.getDataSource().isPresent()) {
                 groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d", groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString(), groupKey.getDataSourceObjId());
             } else {
                 groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\'", groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString());
@@ -657,11 +657,11 @@ public final class DrawableDB {
     public void markGroupSeen(GroupKey<?> gk, boolean seen) {
         try {
             String updateSQL;
-            if (gk.getDataSourceObjId() != 0) {
-                updateSQL = String.format("set seen = %d where value = \'%s\' and attribute = \'%s\' and data_source_obj_id = %d", seen ? 1 : 0,
+            if (gk.getDataSource().isPresent()) {
+                updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d", seen ? 1 : 0,
                         gk.getValueDisplayName(), gk.getAttribute().attrName.toString(), gk.getDataSourceObjId());
             } else {
-                updateSQL = String.format("set seen = %d where value = \'%s\' and attribute = \'%s\'", seen ? 1 : 0,
+                updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\'", seen ? 1 : 0,
                         gk.getValueDisplayName(), gk.getAttribute().attrName.toString());
             }
             tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
@@ -1253,7 +1253,7 @@ public final class DrawableDB {
         if (null != dataSource) {
             return countFilesWhere(" data_source_obj_id = ");
         } else {
-            return countFilesWhere(" true ");
+            return countFilesWhere(" 1 ");
         }
     }
 
