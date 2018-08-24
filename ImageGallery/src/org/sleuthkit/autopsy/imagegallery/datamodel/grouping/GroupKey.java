@@ -18,34 +18,31 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import javafx.scene.Node;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TagName;
 
 /**
- * key identifying information of a {@link Grouping}. Used to look up groups in
- * {@link Map}s and from the db.
+ * Key identifying information of a DrawableGroup. Used to look up groups in
+ * Maps and from the db.
+ *
+ * @param <T> The type of the values of the attribute this key uses.
  */
 @Immutable
 public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>> {
 
     private final T val;
-
     private final DrawableAttribute<T> attr;
-    
-    private final long dataSourceObjectId;
+    private final DataSource dataSource;
 
-    public GroupKey(DrawableAttribute<T> attr, T val) {
-       this(attr, val, 0);
-    }
-    
-    public GroupKey(DrawableAttribute<T> attr, T val, long dataSourceObjId) {
+    public GroupKey(DrawableAttribute<T> attr, T val, DataSource dataSource) {
         this.attr = attr;
         this.val = val;
-        this.dataSourceObjectId = dataSourceObjId;
+        this.dataSource = dataSource;
     }
 
     public T getValue() {
@@ -56,10 +53,10 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         return attr;
     }
 
-    public long getDataSourceObjId() {
-        return dataSourceObjectId;
+    public Optional< DataSource> getDataSource() {
+        return Optional.ofNullable(dataSource);
     }
-    
+
     public String getValueDisplayName() {
         return Objects.equals(attr, DrawableAttribute.TAGS)
                 ? ((TagName) getValue()).getDisplayName()
@@ -74,14 +71,19 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 29 * hash + Objects.hashCode(this.val);
-        hash = 29 * hash + Objects.hashCode(this.attr);
-        hash = 29 * hash + Objects.hashCode(this.dataSourceObjectId);
+
+        hash = 79 * hash + Objects.hashCode(this.val);
+        hash = 79 * hash + Objects.hashCode(this.attr);
+        hash = 79 * hash + Objects.hashCode(this.dataSource);
+
         return hash;
     }
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (obj == null) {
             return false;
         }
@@ -89,13 +91,17 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
             return false;
         }
         final GroupKey<?> other = (GroupKey<?>) obj;
-        if (this.attr != other.attr) {
+        if (!Objects.equals(this.val, other.val)) {
             return false;
         }
-        if (this.dataSourceObjectId != other.dataSourceObjectId) {
+
+        if (!Objects.equals(this.attr, other.attr)) {
             return false;
         }
-        return Objects.equals(this.val, other.val);
+        if (!Objects.equals(this.dataSource, other.dataSource)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -105,5 +111,9 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
     public Node getGraphic() {
         return attr.getGraphicForValue(val);
+    }
+
+    public long getDataSourceObjId() {
+        return getDataSource().map(DataSource::getId).orElse(0L);
     }
 }

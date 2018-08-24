@@ -19,17 +19,21 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
@@ -39,7 +43,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
@@ -47,6 +51,8 @@ import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.GroupPane;
 import org.sleuthkit.autopsy.imagegallery.gui.drawableviews.MetaDataPane;
 import org.sleuthkit.autopsy.imagegallery.gui.navpanel.GroupTree;
 import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Top component which displays ImageGallery interface.
@@ -70,7 +76,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
-    private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
+    private static final Logger logger = Logger.getLogger(ImageGalleryTopComponent.class.getName());
     private static volatile boolean topComponentInitialized = false;
 
     private final ExplorerManager em = new ExplorerManager();
@@ -91,27 +97,27 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     /**
      * Returns whether the ImageGallery window is open or not.
-     * 
+     *
      * @return true, if Image gallery is opened, false otherwise
      */
     public static boolean isImageGalleryOpen() {
-         
-        final TopComponent topComponent =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+
+        final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (topComponent != null) {
             return topComponent.isOpened();
         }
-        return false;   
+        return false;
     }
-    
+
     /**
      * Returns the top component window.
-     * 
+     *
      * @return Image gallery top component window, null if it's not open
      */
     public static TopComponent getTopComponent() {
-        return WindowManager.getDefault().findTopComponent(PREFERRED_ID);  
+        return WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
-    
+
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
         //        synchronized (OpenTimelineAction.class) {
@@ -121,10 +127,28 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final TopComponent tc =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
             if (tc.isOpened() == false) {
+                try {
+                    List<DataSource> dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
+
+                    Platform.runLater(() -> {
+                        Dialog<DataSource> d = new ChoiceDialog<>(null, dataSources);
+                        d.setTitle("Image Gallery");
+                        d.setHeaderText("Choose a data source to view.");
+                        d.setContentText("Data source:");
+                        d.initOwner(((ImageGalleryTopComponent) tc).jfxPanel.getScene().getWindow());
+                        d.initModality(Modality.WINDOW_MODAL);
+                        GuiUtils.setDialogIcons(d);
+
+                        Optional<DataSource> dataSource = d.showAndWait();
+                        dataSource.ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
+                    });
+                } catch (TskCoreException tskCoreException) {
+                    logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
+                };
                 tc.open();
             }
             tc.toFront();
@@ -139,7 +163,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                 try {
                     etc.close();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
+                    logger.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
@@ -149,10 +173,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         setName(Bundle.CTL_ImageGalleryTopComponent());
         initComponents();
 
-        Platform.runLater(() -> {//initialize jfx ui
+        Platform.runLater(() -> {
+
+            //initialize jfx ui
             fullUIStack = new StackPane(); //this is passed into controller
             myScene = new Scene(fullUIStack);
             jfxPanel.setScene(myScene);
+
             groupPane = new GroupPane(controller);
             centralStack = new StackPane(groupPane);  //this is passed into controller
             fullUIStack.getChildren().add(borderPane);
