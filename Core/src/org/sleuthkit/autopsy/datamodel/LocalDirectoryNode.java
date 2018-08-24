@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LocalDirectory;
 

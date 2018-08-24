@@ -566,7 +566,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     protected void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags) {
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
         for (Tag tag : tags) {
-            if (tag.getComment() != null && !tag.getComment().trim().isEmpty()) {
+            if (!StringUtils.isBlank(tag.getComment())) {
                 //if the tag is null or empty or contains just white space it will indicate there is not a comment
                 status = HasCommentStatus.TAG_COMMENT;
                 break;

@@ -293,7 +293,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
 
         for (ContentTag tag : tags) {
-            if (tag.getComment() != null && !tag.getComment().trim().isEmpty()) {
+            if (!StringUtils.isBlank(tag.getComment())) {
                 //if the tag is null or empty or contains just white space it will indicate there is not a comment
                 status = HasCommentStatus.TAG_COMMENT;
                 break;

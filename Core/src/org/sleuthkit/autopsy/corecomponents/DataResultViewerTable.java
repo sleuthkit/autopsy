@@ -659,32 +659,33 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=Comment"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
-            if (e.getSource() instanceof ETableColumnModel) {
                 if (e.getSource() instanceof ETableColumnModel) {
-                    TableColumn column = ((ETableColumnModel) e.getSource()).getColumn(e.getToIndex());
+                    TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
                     //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
                     if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
                         column.setCellRenderer(new HasCommentCellRenderer());
                     }
                 }
-            }
-
         }
 
         @Override
         public void columnRemoved(TableColumnModelEvent e) {
+            //Don't do anything when column removed
         }
 
         @Override
         public void columnMoved(TableColumnModelEvent e) {
+            //Don't do anything when column moved
         }
 
         @Override
         public void columnMarginChanged(ChangeEvent e) {
+            //Don't do anything when column margin changed
         }
 
         @Override
         public void columnSelectionChanged(ListSelectionEvent e) {
+            //Don't do anything when column selection changed
         }
 
     }
@@ -850,6 +851,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                                 try {
                                     tagFound = !prop.getValue().equals("");
                                 } catch (IllegalAccessException | InvocationTargetException ignore) {
+                                    //if unable to get the tags property value, treat it like it not having a comment
                                 }
                                 break;
                             }

@@ -57,7 +57,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -1545,12 +1544,12 @@ public class Case {
      * 
      * This should not be called from the event dispatch thread (EDT)
      * 
-     * @param id the objectId for the Content which has had its central repo comment changed
+     * @param contentId the objectId for the Content which has had its central repo comment changed
      * @param newComment the new value of the comment
      */
-    public void notifyCentralRepoCommentChanged(long id, String newComment) {
+    public void notifyCentralRepoCommentChanged(long contentId, String newComment) {
         try {
-            eventPublisher.publish(new CommentChangedEvent(id, newComment));
+            eventPublisher.publish(new CommentChangedEvent(contentId, newComment));
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to send notifcation regarding comment change due to no current case being open", ex);
         }
