@@ -304,7 +304,6 @@ class InterCaseTestUtils {
         }
     }
     
-    //TODO refactor
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
         
         int tally = 0;

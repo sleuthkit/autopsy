@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -70,7 +69,7 @@ final class IngestModule implements FileIngestModule {
     private CorrelationCase eamCase;
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
-    private CorrelationAttribute.Type filesType;
+    private CorrelationAttributeInstance.Type filesType;
 
     private final boolean flagTaggedNotableItems;
 
@@ -149,16 +148,16 @@ final class IngestModule implements FileIngestModule {
 
         // insert this file into the central repository
         try {
-            CorrelationAttribute eamArtifact = new CorrelationAttribute(filesType, md5);
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
+                    md5,
+                    filesType,
                     eamCase,
                     eamDataSource,
                     abstractFile.getParentPath() + abstractFile.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
-            eamArtifact.addInstance(cefi);
-            dbManager.prepareBulkArtifact(eamArtifact);
+            dbManager.addAttributeInstanceBulk(cefi);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
             return ProcessResult.ERROR;
@@ -182,7 +181,7 @@ final class IngestModule implements FileIngestModule {
             return;
         }
         try {
-            dbManager.bulkInsertArtifacts();
+            dbManager.commitAttributeInstancesBulk();
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
@@ -264,7 +263,7 @@ final class IngestModule implements FileIngestModule {
         }
 
         try {
-            filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS

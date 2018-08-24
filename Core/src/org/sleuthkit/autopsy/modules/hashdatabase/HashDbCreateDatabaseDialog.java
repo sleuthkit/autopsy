@@ -29,7 +29,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
@@ -532,7 +532,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             
             try{
                 int referenceSetID = EamDb.getInstance().newReferenceSet(new EamGlobalSet(selectedOrg.getOrgID(), hashSetNameTextField.getText(),  
-                        "", fileKnown, false, EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID)));
+                        "", fileKnown, false, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID)));
                 newHashDb = HashDbManager.getInstance().addExistingCentralRepoHashSet(hashSetNameTextField.getText(), 
                         "", referenceSetID, 
                         true, sendIngestMessagesCheckbox.isSelected(), type, false);

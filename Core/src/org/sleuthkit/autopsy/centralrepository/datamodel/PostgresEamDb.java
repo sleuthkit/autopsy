@@ -114,10 +114,10 @@ final class PostgresEamDb extends AbstractSqlEamDb {
 
             String instancesTemplate = "TRUNCATE TABLE %s_instances RESTART IDENTITY CASCADE";
             String referencesTemplate = "TRUNCATE TABLE reference_%s RESTART IDENTITY CASCADE";
-            for (CorrelationAttribute.Type type : defaultCorrelationTypes) {
+            for (CorrelationAttributeInstance.Type type : defaultCorrelationTypes) {
                 dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
                 // FUTURE: support other reference types
-                if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
+                if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
                     dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
                 }
             }

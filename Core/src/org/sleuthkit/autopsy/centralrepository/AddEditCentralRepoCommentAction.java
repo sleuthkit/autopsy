@@ -26,7 +26,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -37,6 +37,8 @@ import org.sleuthkit.datamodel.AbstractFile;
  * An AbstractAction to manage adding and modifying a Central Repository file
  * instance comment.
  */
+
+
 @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
@@ -44,7 +46,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
     private static final long serialVersionUID = 1L;
 
     private boolean addToDatabase;
-    private CorrelationAttribute correlationAttribute;
+    private CorrelationAttributeInstance correlationAttributeInstance;
     private String comment;
     private final Long fileId;
 
@@ -57,11 +59,11 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
         super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
-        correlationAttribute = EamArtifactUtil.getCorrelationAttributeFromContent(file);
         fileId = file.getId();
-        if (correlationAttribute == null) {
+        correlationAttributeInstance = EamArtifactUtil.getInstanceFromContent(file);
+        if (correlationAttributeInstance == null) {
             addToDatabase = true;
-            correlationAttribute = EamArtifactUtil.makeCorrelationAttributeFromContent(file);
+            correlationAttributeInstance = EamArtifactUtil.makeInstanceFromContent(file);
         }
 
     }
@@ -79,7 +81,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent event) {
-        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttribute);
+        CentralRepoCommentDialog centralRepoCommentDialog = new CentralRepoCommentDialog(correlationAttributeInstance);
         centralRepoCommentDialog.display();
 
         comment = null;
@@ -91,9 +93,9 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
                 dbManager = EamDb.getInstance();
 
                 if (addToDatabase) {
-                    dbManager.addArtifact(correlationAttribute);
+                    dbManager.addArtifactInstance(correlationAttributeInstance);
                 } else {
-                    dbManager.updateAttributeInstanceComment(correlationAttribute);
+                    dbManager.updateAttributeInstanceComment(correlationAttributeInstance);
                 }
 
                 comment = centralRepoCommentDialog.getComment();
@@ -128,7 +130,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      *
      * @return The correlation attribute.
      */
-    public CorrelationAttribute getCorrelationAttribute() {
-        return correlationAttribute;
+    public CorrelationAttributeInstance getCorrelationAttribute() {
+        return correlationAttributeInstance;
     }
 }
