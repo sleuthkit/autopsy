@@ -30,7 +30,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 
 /**
- * Database connection class & utilities *
+ * Database connection class & utilities.
  */
 public class SQLiteDBConnect implements AutoCloseable {
 
@@ -127,6 +127,7 @@ public class SQLiteDBConnect implements AutoCloseable {
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Unable to close connection to SQLite DB at " + sUrl, ex);
         }
+        //Implementing Autoclosable.close() allows this class to be used in try-with-resources.
     }
 
     @Override
