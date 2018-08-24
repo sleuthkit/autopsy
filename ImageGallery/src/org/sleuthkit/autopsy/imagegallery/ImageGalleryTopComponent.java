@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -26,7 +28,6 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceDialog;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -133,9 +134,10 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             if (tc.isOpened() == false) {
                 try {
                     List<DataSource> dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
-
+                    Map<String, DataSource> dataSourceNames = new HashMap<>();
+                    dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
                     Platform.runLater(() -> {
-                        Dialog<DataSource> d = new ChoiceDialog<>(null, dataSources);
+                        ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
                         d.setTitle("Image Gallery");
                         d.setHeaderText("Choose a data source to view.");
                         d.setContentText("Data source:");
@@ -143,8 +145,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                         d.initModality(Modality.WINDOW_MODAL);
                         GuiUtils.setDialogIcons(d);
 
-                        Optional<DataSource> dataSource = d.showAndWait();
-                        dataSource.ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
+                        Optional<String> dataSourceName = d.showAndWait();
+                        dataSourceName.map(dataSourceNames::get).ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
                     });
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);

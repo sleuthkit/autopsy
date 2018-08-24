@@ -55,6 +55,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.PopOver;
 import org.openide.util.NbBundle;
@@ -117,8 +118,10 @@ public class Toolbar extends ToolBar {
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
-            controller.getGroupManager().regroup(
-                    dataSourceComboBox.getSelectionModel().getSelectedItem().orElse(null),
+            Optional<DataSource> selectedItem = dataSourceComboBox.getSelectionModel().getSelectedItem();
+            selectedItem = defaultIfNull(selectedItem, Optional.empty());
+
+            controller.getGroupManager().regroup(selectedItem.orElse(null),
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
