@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
+import javax.swing.SwingUtilities;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
@@ -131,32 +133,46 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
-            if (tc.isOpened() == false) {
+            if (tc.isOpened()) {
+                tc.toFront();
+                tc.requestActive();
+            } else {
+                List<DataSource> dataSources = Collections.emptyList();
                 try {
-                    List<DataSource> dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
-                    if (dataSources.size() > 1) {
-                        Map<String, DataSource> dataSourceNames = new HashMap<>();
-                        dataSourceNames.put("All", null);
-                        dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
-                        Platform.runLater(() -> {
-                            ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
-                            d.setTitle("Image Gallery");
-                            d.setHeaderText("Choose a data source to view.");
-                            d.setContentText("Data source:");
-                            d.initModality(Modality.WINDOW_MODAL);
-                            GuiUtils.setDialogIcons(d);
-
-                            Optional<String> dataSourceName = d.showAndWait();
-                            dataSourceName.map(dataSourceNames::get).ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
-                        });
-                    }
+                    dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
                 };
-                tc.open();
+                if (dataSources.size() > 1) {
+                    Map<String, DataSource> dataSourceNames = new HashMap<>();
+                    dataSourceNames.put("All", null);
+                    dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
+
+                    Platform.runLater(() -> {
+                        ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
+                        d.setTitle("Image Gallery");
+                        d.setHeaderText("Choose a data source to view.");
+                        d.setContentText("Data source:");
+                        d.initModality(Modality.APPLICATION_MODAL);
+                        GuiUtils.setDialogIcons(d);
+
+                        Optional<String> dataSourceName = d.showAndWait();
+                        dataSourceName.map(dataSourceNames::get).ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
+
+                        SwingUtilities.invokeLater(() -> {
+                            tc.open();
+                            tc.toFront();
+                            tc.requestActive();
+                        });
+                    });
+                } else {
+                    SwingUtilities.invokeLater(() -> {
+                        tc.open();
+                        tc.toFront();
+                        tc.requestActive();
+                    });
+                }
             }
-            tc.toFront();
-            tc.requestActive();
         }
     }
 

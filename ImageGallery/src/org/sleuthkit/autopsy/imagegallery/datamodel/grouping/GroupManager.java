@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,8 +43,6 @@ import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.property.ReadOnlyLongProperty;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -96,8 +94,6 @@ public class GroupManager {
 
     private static final Logger LOGGER = Logger.getLogger(GroupManager.class.getName());
 
-    private DrawableDB db;
-
     private final ImageGalleryController controller;
 
     /**
@@ -139,8 +135,11 @@ public class GroupManager {
     private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
 
     public void setDB(DrawableDB db) {
-        this.db = db;
         regroup(dataSource, groupBy, sortBy, sortOrder, true);
+    }
+
+    DrawableDB getDB() {
+        return controller.getDatabase();
     }
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
@@ -157,7 +156,6 @@ public class GroupManager {
     /**
      * construct a group manager hooked up to the given db and controller
      *
-     * @param db
      * @param controller
      */
     public GroupManager(ImageGalleryController controller) {
@@ -190,14 +188,17 @@ public class GroupManager {
     }
 
     /**
-     * using the current groupBy set for this manager, find groupkeys for all
+     * Using the current groupBy set for this manager, find groupkeys for all
      * the groups the given file is a part of
+     *
+     * @param fileID The Id of the file to get group keys for.
      *
      * @return a a set of {@link GroupKey}s representing the group(s) the given
      *         file is a part of
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
+            DrawableDB db = getDB();
             if (nonNull(db)) {
                 DrawableFile file = db.getFileFromID(fileID);
                 return getGroupKeysForFile(file);
@@ -242,7 +243,6 @@ public class GroupManager {
             groupMap.values().forEach(controller.getCategoryManager()::unregisterListener);
             groupMap.clear();
         }
-        db = null;
     }
 
     public boolean isRegrouping() {
@@ -268,10 +268,12 @@ public class GroupManager {
      * 'mark' the given group as seen. This removes it from the queue of groups
      * to review, and is persisted in the drawable db.
      *
-     * @param group the {@link  DrawableGroup} to mark as seen
+     * @param group The DrawableGroup to mark as seen.
+     * @param seen  The seen stastus to set.
      */
     @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group, boolean seen) {
+        DrawableDB db = getDB();
         if (nonNull(db)) {
             db.markGroupSeen(group.getGroupKey(), seen);
             group.setSeen(seen);
@@ -291,6 +293,7 @@ public class GroupManager {
      *
      * @param groupKey the value of groupKey
      * @param fileID   the value of file
+     *
      */
     public synchronized DrawableGroup removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
@@ -339,6 +342,7 @@ public class GroupManager {
 //            case HASHSET: //comment out this case to use db functionality for hashsets
 //                return getFileIDsWithHashSetName((String) groupKey.getValue());
             default:
+                DrawableDB db = getDB();
                 //straight db query
                 if (nonNull(db)) {
                     fileIDsToReturn = db.getFileIDsInGroup(groupKey);
@@ -351,6 +355,7 @@ public class GroupManager {
     // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
     public Set<Long> getFileIDsWithCategory(DhsImageCategory category) throws TskCoreException {
         Set<Long> fileIDsToReturn = Collections.emptySet();
+        DrawableDB db = getDB();
         if (nonNull(db)) {
             try {
                 final DrawableTagsManager tagsManager = controller.getTagsManager();
@@ -393,6 +398,7 @@ public class GroupManager {
         try {
             Set<Long> files = new HashSet<>();
             List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(tagName);
+            DrawableDB db = getDB();
             for (ContentTag ct : contentTags) {
                 if (ct.getContent() instanceof AbstractFile && nonNull(db) && db.isInDB(ct.getContent().getId())) {
                     files.add(ct.getContent().getId());
@@ -613,8 +619,8 @@ public class GroupManager {
              * task was still running)
              */
 
-        } else // no task or un-cancelled task
-        {
+        } else { // no task or un-cancelled task
+            DrawableDB db = getDB();
             if (nonNull(db) && ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey))) {
                 /*
                  * for attributes other than path we can't be sure a group is
@@ -667,7 +673,7 @@ public class GroupManager {
         String query = (null == mimeType)
                 ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL" //NON-NLS
                 : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'"; //NON-NLS
-
+        DrawableDB db = getDB();
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
@@ -775,6 +781,7 @@ public class GroupManager {
         @SuppressWarnings({"unchecked"})
         public List<AttrType> findValuesForAttribute() {
             List<AttrType> values = Collections.emptyList();
+            DrawableDB db = getDB();
             try {
                 switch (groupBy.attrName) {
                     //these cases get special treatment

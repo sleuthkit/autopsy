@@ -432,7 +432,7 @@ public final class DrawableDB {
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
                          + "( obj_id INTEGER PRIMARY KEY, " //NON-NLS
-                         + " data_source_obj_id INTEGER NOT NULL REFERENCES datasources.ds_obj_id, "
+                         + " data_source_obj_id INTEGER NOT NULL, "
                          + " path VARCHAR(255), " //NON-NLS
                          + " name VARCHAR(255), " //NON-NLS
                          + " created_time integer, " //NON-NLS
