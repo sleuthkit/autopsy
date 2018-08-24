@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute.Type;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
  * Algorithm which finds files anywhere in the Central Repo which also occur in
@@ -35,12 +35,12 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute.Ty
 public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
 
     /**
-     * 
+     *
      * @param filterByMediaMimeType match only on files whose mime types can be
      * broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be
      * broadly categorized as document types
-     * @throws EamDbException 
+     * @throws EamDbException
      */
     public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType);

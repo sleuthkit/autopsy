@@ -35,7 +35,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -47,14 +47,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute.Type;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
  * Panel used for common files search configuration and configuration business
  * logic. Nested within CommonFilesDialog.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class CommonAttributePanel extends javax.swing.JDialog  {
+public final class CommonAttributePanel extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
 
@@ -89,12 +89,12 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
     private static boolean isEamDbAvailable() {
         try {
-            return EamDb.isEnabled() && 
-                    EamDb.getInstance() != null &&
-                    EamDb.getInstance().getCases().size() > 1 && 
-                    Case.isCaseOpen() &&
-                    Case.getCurrentCase() != null &&
-                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
+            return EamDb.isEnabled()
+                    && EamDb.getInstance() != null
+                    && EamDb.getInstance().getCases().size() > 1
+                    && Case.isCaseOpen()
+                    && Case.getCurrentCase() != null
+                    && EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
@@ -163,10 +163,10 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                 if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
 
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        CorrelationAttribute.Type fileType = CorrelationAttribute.getDefaultCorrelationTypes().get(0);
+                        CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
                         builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, fileType);
                     } else {
-                        CorrelationAttribute.Type fileType = CorrelationAttribute.getDefaultCorrelationTypes().get(0);
+                        CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
                         builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, fileType);
                     }
                 } else {
@@ -233,7 +233,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             }
         }.execute();
     }
-
 
     /**
      * Sets up the data sources dropdown and returns the data sources map for

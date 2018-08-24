@@ -27,36 +27,37 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute.Type;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
- * 
- * 
+ *
+ *
  */
 public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
-    
+
     private final int corrleationCaseId;
     private String correlationCaseName;
-    
+
     /**
-     * 
+     *
      * @param correlationCaseId
      * @param filterByMediaMimeType
      * @param filterByDocMimeType
-     * @throws EamDbException 
+     * @throws EamDbException
      */
     public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
-        super(dataSourceIdMap,filterByMediaMimeType, filterByDocMimeType, corAttrType);
-        
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType);
+
         this.corrleationCaseId = correlationCaseId;
         this.correlationCaseName = "";
     }
-    
+
     /**
-     * Collect metadata required to render the tree table where matches must 
+     * Collect metadata required to render the tree table where matches must
      * occur in the case with the given ID.
-     * 
-     * @param correlationCaseId id of case where matches must occur (no other matches will be shown)
+     *
+     * @param correlationCaseId id of case where matches must occur (no other
+     * matches will be shown)
      * @return business object needed to populate tree table with results
      * @throws TskCoreException
      * @throws NoCurrentCaseException
@@ -64,8 +65,8 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws EamDbException
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException { 
-        
+    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
@@ -77,7 +78,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
 
         return new CommonAttributeSearchResults(interCaseCommonFiles);
     }
-    
+
     @Override
     String buildTabTitle() {
         final String buildCategorySelectionString = this.buildCategorySelectionString();
