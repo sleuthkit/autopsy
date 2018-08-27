@@ -56,6 +56,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import org.controlsfx.control.Notifications;
@@ -154,11 +155,71 @@ public class Toolbar extends ToolBar {
         assert thumbnailSizeLabel != null : "fx:id=\"thumbnailSizeLabel\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
 
-        controller.viewState().addListener((observable, oldViewState, newViewState) -> {
-            Platform.runLater(() -> syncGroupControlsEnabledState(newViewState));
-        });
+        //set internationalized label text
+        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
+        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
+        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
+        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
+
+        controller.viewState().addListener((observable, oldViewState, newViewState)
+                -> Platform.runLater(() -> syncGroupControlsEnabledState(newViewState))
+        );
         syncGroupControlsEnabledState(controller.viewState().get());
 
+        initDataSourceComboBox();
+        groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
+        groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
+        groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
+        groupByBox.setCellFactory(listView -> new AttributeListCell());
+        groupByBox.setButtonCell(new AttributeListCell());
+        groupByBox.getSelectionModel().selectedItemProperty().addListener(observable -> {
+            if (groupByBox.getSelectionModel().getSelectedItem() != DrawableAttribute.PATH) {
+                Notifications.create().owner(getScene().getWindow())
+                        .text("Grouping by attributes other than path does not support the data source filter.\nFiles and groups from all data sources will be shown.")
+                        .hideAfter(Duration.seconds(30))
+                        .showInformation();
+            }
+            queryInvalidationListener.invalidated(observable);
+        });
+
+        sortChooser = new SortChooser<>(GroupSortBy.getValues());
+        sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
+            final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
+            sortChooser.setSortOrderDisabled(orderDisabled);
+
+            final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
+            sortChooser.setValueType(valueType);
+            queryInvalidationListener.invalidated(observable);
+        });
+        sortChooser.setComparator(controller.getGroupManager().getSortBy());
+        sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
+        getItems().add(2, sortChooser);
+
+        sortHelpImageView.setCursor(Cursor.HAND);
+        sortHelpImageView.setOnMouseClicked(clicked -> {
+            Text text = new Text(Bundle.Toolbar_sortHelp());
+            text.setWrappingWidth(480);  //This is a hack to fix the layout.
+            showPopoverHelp(sortHelpImageView,
+                    Bundle.Toolbar_sortHelpTitle(),
+                    sortHelpImageView.getImage(), text);
+        });
+        initTagMenuButton();
+
+        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
+        catGroupMenuButton.setOnAction(cat5GroupAction);
+        catGroupMenuButton.setText(cat5GroupAction.getText());
+        catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
+        catGroupMenuButton.showingProperty().addListener(showing -> {
+            if (catGroupMenuButton.isShowing()) {
+                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
+                        cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
+                catGroupMenuButton.getItems().setAll(categoryMenues);
+            }
+        });
+
+    }
+
+    private void initDataSourceComboBox() {
         dataSourceComboBox.setCellFactory(param -> new DataSourceCell());
         dataSourceComboBox.setButtonCell(new DataSourceCell());
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
@@ -188,58 +249,8 @@ public class Toolbar extends ToolBar {
             dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(newDataSource));
         });
         dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
-
-        initTagMenuButton();
-
-        CategorizeGroupAction cat5GroupAction = new CategorizeGroupAction(DhsImageCategory.FIVE, controller);
-        catGroupMenuButton.setOnAction(cat5GroupAction);
-        catGroupMenuButton.setText(cat5GroupAction.getText());
-        catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
-        catGroupMenuButton.showingProperty().addListener(showing -> {
-            if (catGroupMenuButton.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
-                        cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
-                catGroupMenuButton.getItems().setAll(categoryMenues);
-            }
-        });
-
-        groupByLabel.setText(Bundle.Toolbar_groupByLabel());
-        tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
-        categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
-        thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
-
-        groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
-        groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-
-        groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
-        groupByBox.setCellFactory(listView -> new AttributeListCell());
-        groupByBox.setButtonCell(new AttributeListCell());
-
-        sortChooser = new SortChooser<>(GroupSortBy.getValues());
-        sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-            final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
-            sortChooser.setSortOrderDisabled(orderDisabled);
-
-            final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
-            sortChooser.setValueType(valueType);
-            queryInvalidationListener.invalidated(observable);
-        });
-
-        sortChooser.setComparator(controller.getGroupManager().getSortBy());
-        getItems().add(2, sortChooser);
-        sortHelpImageView.setCursor(Cursor.HAND);
-
-        sortHelpImageView.setOnMouseClicked(clicked -> {
-            Text text = new Text(Bundle.Toolbar_sortHelp());
-            text.setWrappingWidth(480);  //This is a hack to fix the layout.
-            showPopoverHelp(sortHelpImageView,
-                    Bundle.Toolbar_sortHelpTitle(),
-                    sortHelpImageView.getImage(), text);
-        });
-
+        dataSourceComboBox.disableProperty().bind(groupByBox.getSelectionModel().selectedItemProperty().isNotEqualTo(DrawableAttribute.PATH));
         dataSourceComboBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
-        groupByBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
-        sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
     }
 
     private void initTagMenuButton() {
