@@ -100,11 +100,11 @@ final class SearchEngineURLQueryExtractor extends Extract {
             this.keyRegExp = keyRegExp;
         }
 
-        String getKey() {
+        private String getKey() {
             return key;
         }
 
-        String getKeyRegExp() {
+        private String getKeyRegExp() {
             return keyRegExp;
         }
 
@@ -124,19 +124,19 @@ final class SearchEngineURLQueryExtractor extends Extract {
             count = 0;
         }
 
-        void increment() {
+        private void increment() {
             ++count;
         }
 
-        String getEngineName() {
+        private String getEngineName() {
             return engineName;
         }
 
-        String getDomainSubstring() {
+        private String getDomainSubstring() {
             return domainSubstring;
         }
 
-        int getTotal() {
+        private int getTotal() {
             return count;
         }
 
@@ -145,7 +145,7 @@ final class SearchEngineURLQueryExtractor extends Extract {
          *
          * @return
          */
-        List<KeyPair> getKeys() {
+        private List<KeyPair> getKeys() {
             return this.keyPairs;
         }
 
@@ -392,7 +392,6 @@ final class SearchEngineURLQueryExtractor extends Extract {
     }
 
     @Override
-
     void configExtractor() throws IngestModuleException {
         try {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryExtractor.class,

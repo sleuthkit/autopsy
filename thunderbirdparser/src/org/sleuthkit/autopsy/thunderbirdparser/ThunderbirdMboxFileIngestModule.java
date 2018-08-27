@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -43,14 +45,16 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Relationship;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -66,35 +70,36 @@ import org.sleuthkit.datamodel.TskException;
 public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private FileManager fileManager;
     private IngestJobContext context;
     private Blackboard blackboard;
+    private CommunicationsManager communicationsManager;
 
     ThunderbirdMboxFileIngestModule() {
     }
 
     @Override
-    @Messages({"ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case."})
+    @Messages({"ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case.",
+        "ThunderbirdMboxFileIngestModule.noCommsManager.errMsg=Exception while getting communications manager."})
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         try {
-            fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
+            Case currentCase = Case.getCurrentCaseThrows();
+            fileManager = currentCase.getServices().getFileManager();
+            blackboard = currentCase.getSleuthkitCase().getBlackboard();
+            communicationsManager = sleuthkitCase.getCommunicationsManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             throw new IngestModuleException(Bundle.ThunderbirdMboxFileIngestModule_noOpenCase_errMsg(), ex);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting communications manager.", ex);
+            throw new IngestModuleException(Bundle.ThunderbirdMboxFileIngestModule_noCommsManager_errMsg(), ex);
         }
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-
-        try {
-            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            return ProcessResult.ERROR;
-        }
 
         // skip known
         if (abstractFile.getKnown().equals(TskData.FileKnown.KNOWN)) {
@@ -176,42 +181,44 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         PstParser parser = new PstParser(services);
         PstParser.ParseResult result = parser.parse(file, abstractFile.getId());
 
-        if (result == PstParser.ParseResult.OK) {
-            try {
-                // parse success: Process email and add artifacts
-                processEmails(parser.getResults(), abstractFile);
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-                return ProcessResult.ERROR;
-            }
-
-        } else if (result == PstParser.ParseResult.ENCRYPT) {
-            // encrypted pst: Add encrypted file artifact
-            try {
-                BlackboardArtifact artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED);
-                artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
-
+        switch (result) {
+            case OK:
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
-                } catch (Blackboard.BlackboardException ex) {
-                    MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    // parse success: Process email and add artifacts
+                    processEmails(parser.getResults(), abstractFile);
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                    return ProcessResult.ERROR;
                 }
+                break;
+            case ENCRYPT:
+                // encrypted pst: Add encrypted file artifact
+                try {
+                    BlackboardArtifact artifact = abstractFile.newArtifact(TSK_ENCRYPTION_DETECTED);
+                    artifact.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, EmailParserModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.encryptionFileLevel")));
 
-                services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED));
-            } catch (TskCoreException ex) {
-                logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
-            }
-        } else {
-            // parsing error: log message
-            postErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
-                            abstractFile.getName()),
-                    NbBundle.getMessage(this.getClass(),
-                            "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
-            logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
-            return ProcessResult.ERROR;
+                    try {
+                        /* Post the encryption artifact, which will index it and
+                         * send out a notification event to the
+                         */
+                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
+                    } catch (Blackboard.BlackboardException ex) {
+                        MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
+                        logger.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.INFO, "Failed to add encryption attribute to file: {0}", abstractFile.getName()); //NON-NLS
+                }
+                break;
+            default:
+                // parsing error: log message
+                postErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.processPst.errProcFile.msg",
+                                abstractFile.getName()),
+                        NbBundle.getMessage(this.getClass(),
+                                "ThunderbirdMboxFileIngestModule.processPst.errProcFile.details"));
+                logger.log(Level.INFO, "PSTParser failed to parse {0}", abstractFile.getName()); //NON-NLS
+                return ProcessResult.ERROR;
         }
 
         if (file.delete() == false) {
@@ -246,7 +253,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         } else if (mboxParentDir.contains("/ImapMail/")) { //NON-NLS
             emailFolder = mboxParentDir.substring(mboxParentDir.indexOf("/ImapMail/") + 9); //NON-NLS
         }
-        emailFolder = emailFolder + mboxFileName;
+        emailFolder += mboxFileName;
         emailFolder = emailFolder.replaceAll(".sbd", ""); //NON-NLS
 
         String fileName;
@@ -363,13 +370,10 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             }
         }
 
-        if (derivedFiles.isEmpty() == false) {
-            for (AbstractFile derived : derivedFiles) {
-                services.fireModuleContentEvent(new ModuleContentEvent(derived));
-            }
+        if (isNotEmpty(derivedFiles)) {
+            derivedFiles.forEach(derived -> services.fireModuleContentEvent(new ModuleContentEvent(derived)));
         }
         context.addFilesToJob(derivedFiles);
-        services.fireModuleDataEvent(new ModuleDataEvent(EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
     }
 
     /**
@@ -423,7 +427,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         Pattern p = Pattern.compile("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b",
                 Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(input);
-        Set<String> emailAddresses = new HashSet<String>();
+        Set<String> emailAddresses = new HashSet<>();
         while (m.find()) {
             emailAddresses.add(m.group());
         }
@@ -447,43 +451,37 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String bcc = email.getBcc();
         String from = email.getSender();
         long dateL = email.getSentDate();
-        String headers = email.getHeaders();
-        String body = email.getTextBody();
-        String bodyHTML = email.getHtmlBody();
-        String rtf = email.getRtfBody();
-        String subject = email.getSubject();
         long id = email.getId();
-        String localPath = email.getLocalPath();
 
         List<String> senderAddressList = new ArrayList<>();
-        String senderAddress;
+
         senderAddressList.addAll(findEmailAddresess(from));
 
         AccountFileInstance senderAccountInstance = null;
 
-        Case openCase = Case.getCurrentCaseThrows();
-
         if (senderAddressList.size() == 1) {
-            senderAddress = senderAddressList.get(0);
+            String senderAddress = senderAddressList.get(0);
             try {
-                senderAccountInstance = openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
+                senderAccountInstance = communicationsManager.
+                        createAccountFileInstance(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
             }
         } else {
-            logger.log(Level.WARNING, "Failed to find sender address, from  = " + from); //NON-NLS
+            logger.log(Level.WARNING, "Failed to find sender address, from  = {0}", from); //NON-NLS
         }
 
+        //TODO: should this be a set?
         List<String> recipientAddresses = new ArrayList<>();
         recipientAddresses.addAll(findEmailAddresess(to));
         recipientAddresses.addAll(findEmailAddresess(cc));
         recipientAddresses.addAll(findEmailAddresess(bcc));
 
         List<AccountFileInstance> recipientAccountInstances = new ArrayList<>();
-        recipientAddresses.forEach((addr) -> {
+        recipientAddresses.forEach(addr -> {
             try {
-                AccountFileInstance recipientAccountInstance
-                        = openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, addr,
+                AccountFileInstance recipientAccountInstance = communicationsManager
+                        .createAccountFileInstance(Account.Type.EMAIL, addr,
                                 EmailParserModuleFactory.getModuleName(), abstractFile);
                 recipientAccountInstances.add(recipientAccountInstance);
             } catch (TskCoreException ex) {
@@ -491,36 +489,35 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             }
         });
 
-        addEmailAttribute(headers, ATTRIBUTE_TYPE.TSK_HEADERS, bbattributes);
+        addEmailAttribute(email.getHeaders(), ATTRIBUTE_TYPE.TSK_HEADERS, bbattributes);
         addEmailAttribute(from, ATTRIBUTE_TYPE.TSK_EMAIL_FROM, bbattributes);
         addEmailAttribute(to, ATTRIBUTE_TYPE.TSK_EMAIL_TO, bbattributes);
-        addEmailAttribute(subject, ATTRIBUTE_TYPE.TSK_SUBJECT, bbattributes);
-
+        addEmailAttribute(cc, ATTRIBUTE_TYPE.TSK_EMAIL_CC, bbattributes);
+        addEmailAttribute(email.getSubject(), ATTRIBUTE_TYPE.TSK_SUBJECT, bbattributes);
         addEmailAttribute(dateL, ATTRIBUTE_TYPE.TSK_DATETIME_RCVD, bbattributes);
         addEmailAttribute(dateL, ATTRIBUTE_TYPE.TSK_DATETIME_SENT, bbattributes);
-
-        addEmailAttribute(body, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN, bbattributes);
+        addEmailAttribute(email.getTextBody(), ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN, bbattributes);
+        addEmailAttribute(email.getHtmlBody(), ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML, bbattributes);
+        addEmailAttribute(email.getRtfBody(), ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, bbattributes);
 
         addEmailAttribute(((id < 0L) ? NbBundle.getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.notAvail") : String.valueOf(id)),
                 ATTRIBUTE_TYPE.TSK_MSG_ID, bbattributes);
 
-        addEmailAttribute(((localPath.isEmpty() == false) ? localPath : "/foo/bar"),
+        addEmailAttribute(StringUtils.defaultIfEmpty(email.getLocalPath(), "/foo/bar"), //TODO: really /foo/bar?
                 ATTRIBUTE_TYPE.TSK_PATH, bbattributes);
 
-        addEmailAttribute(cc, ATTRIBUTE_TYPE.TSK_EMAIL_CC, bbattributes);
-        addEmailAttribute(bodyHTML, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML, bbattributes);
-        addEmailAttribute(rtf, ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, bbattributes);
-
         try {
-
-            bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
+            bbart = abstractFile.newArtifact(TSK_EMAIL_MSG);
             bbart.addAttributes(bbattributes);
 
             // Add account relationships
-            openCase.getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccountInstance, recipientAccountInstances, bbart, Relationship.Type.MESSAGE, dateL);
+            communicationsManager.addRelationships(senderAccountInstance, recipientAccountInstances, bbart, Relationship.Type.MESSAGE, dateL);
 
             try {
-                // index the artifact for keyword search
+                /*
+                 * Post the artifact to the blackboard which will index it for
+                 * keyword search and send a notification for the UI.
+                 */
                 blackboard.postArtifact(bbart, EmailParserModuleFactory.getModuleName());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
@@ -534,7 +531,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     private void addEmailAttribute(String stringVal, ATTRIBUTE_TYPE attrType, Collection<BlackboardAttribute> bbattributes) {
-        if (stringVal.isEmpty() == false) {
+        if (StringUtils.isNotBlank(stringVal)) {
             bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), stringVal));
         }
     }
@@ -548,10 +545,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     void postErrorMessage(String subj, String details) {
         IngestMessage ingestMessage = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleVersion(), subj, details);
         services.postMessage(ingestMessage);
-    }
-
-    IngestServices getServices() {
-        return services;
     }
 
     @Override

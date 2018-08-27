@@ -39,6 +39,7 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -255,7 +256,7 @@ class ExtractRegistry extends Extract {
             }
 
             // parse the autopsy-specific output
-            if (regOutputFiles.autopsyPlugins.isEmpty() == false) {
+            if (isNotEmpty(regOutputFiles.autopsyPlugins)) {
                 if (parseAutopsyPluginOutput(regOutputFiles.autopsyPlugins, regFile) == false) {
                     this.addErrorMessage(
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
@@ -264,7 +265,7 @@ class ExtractRegistry extends Extract {
             }
 
             // create a report for the full output
-            if (regOutputFiles.fullPlugins.isEmpty() == false) {
+            if (isNotEmpty(regOutputFiles.fullPlugins)) {
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"),
