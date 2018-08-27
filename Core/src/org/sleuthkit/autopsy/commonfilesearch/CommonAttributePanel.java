@@ -31,6 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -47,7 +48,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
  * Panel used for common files search configuration and configuration business
@@ -63,6 +63,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     private boolean pictureViewCheckboxState;
     private boolean documentsCheckboxState;
+    private Map<String, CorrelationAttributeInstance.Type> correlationTypeFilters;
 
     /**
      * Creates new form CommonFilesPanel
@@ -82,6 +83,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         if (CommonAttributePanel.isEamDbAvailable()) {
             this.setupCases();
+            this.setupCorrelationTypeFilter();
         } else {
             this.disableIntercaseSearch();
         }
@@ -99,6 +101,20 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
         return false;
+    }
+
+    private void setupCorrelationTypeFilter() {
+        this.correlationTypeFilters = new HashMap<>();
+        try {
+            List<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            for (CorrelationAttributeInstance.Type type : types) {
+                correlationTypeFilters.put(type.getDisplayName(), type);
+                this.correlationTypeComboBox.addItem(type.getDisplayName());
+            }
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
     }
 
     private void disableIntercaseSearch() {
