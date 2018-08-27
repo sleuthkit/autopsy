@@ -287,9 +287,9 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with two CorrelationAttributeInstance instances
         try {
-            CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, "badPath",
+            CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, BAD_PATH,
                     "", TskData.FileKnown.KNOWN);
-            CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase2, "badPath",
+            CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase2, BAD_PATH,
                     "", TskData.FileKnown.KNOWN);
             
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr1, TskData.FileKnown.BAD);
@@ -308,7 +308,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null known status
         try {
-            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, "badPath",
+            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, BAD_PATH,
                     "", TskData.FileKnown.KNOWN);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, null);
@@ -322,7 +322,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null case
         try {
-            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, null, dataSource1fromCase1, "badPath",
+            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, null, dataSource1fromCase1, BAD_PATH,
                     "", TskData.FileKnown.KNOWN);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, TskData.FileKnown.BAD);
@@ -336,7 +336,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Try to update artifact with null data source
         try {
-            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, case1, null, "badPath",
+            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, case1, null, BAD_PATH,
                     "", TskData.FileKnown.KNOWN);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, TskData.FileKnown.BAD);
@@ -372,6 +372,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getArtifactInstancesKnownBad failed to throw exception for null type");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue("This is the expected behavior.", true);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail("should have got CentralRepoValidationException");
@@ -468,6 +469,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             // This is the expected behavior
         }
     }
+    private static final String BAD_PATH = "badPath";
 
     /**
      * Test the methods associated with bulk artifacts (addAttributeInstanceBulk and
@@ -587,7 +589,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test preparing artifact with null path
         // CorrelationAttributeInstance will throw an exception
         try {
-            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, null);
+            new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, null);
             fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -790,7 +792,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test adding instance with null case
         try {
-            CorrelationAttributeInstance failAttrInst = new CorrelationAttributeInstance("badInstances", fileType, null, dataSource1fromCase2, "badPath");
+            CorrelationAttributeInstance failAttrInst = new CorrelationAttributeInstance("badInstances", fileType, null, dataSource1fromCase2, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst);
             fail("addArtifact failed to throw exception for null case");
         } catch (EamDbException ex) {
@@ -802,7 +804,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with invalid case ID
         try {
             CorrelationCase badCase = new CorrelationCase("badCaseUuid", "badCaseName");
-            CorrelationAttributeInstance failAttrInst2 = new CorrelationAttributeInstance(randomHash(), fileType, badCase, dataSource1fromCase2, "badPath");
+            CorrelationAttributeInstance failAttrInst2 = new CorrelationAttributeInstance(randomHash(), fileType, badCase, dataSource1fromCase2, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst2);
             fail("addArtifact failed to throw exception for invalid case");
         } catch (EamDbException ex) {
@@ -813,7 +815,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test adding instance with null data source
         try {
-            CorrelationAttributeInstance failAttrInst3 = new CorrelationAttributeInstance(randomHash(), fileType, case1, null, "badPath");
+            CorrelationAttributeInstance failAttrInst3 = new CorrelationAttributeInstance(randomHash(), fileType, case1, null, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst3);
             fail("addArtifact failed to throw exception for null data source");
         } catch (EamDbException ex) {
@@ -825,7 +827,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with invalid data source ID
         try {
             CorrelationDataSource badDS = new CorrelationDataSource(case1, "badDSUuid", "badDSName");
-            CorrelationAttributeInstance failAttrInst4 = new CorrelationAttributeInstance(randomHash(), fileType, case1, badDS, "badPath");
+            CorrelationAttributeInstance failAttrInst4 = new CorrelationAttributeInstance(randomHash(), fileType, case1, badDS, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst4);
             fail("addArtifact failed to throw exception for invalid data source");
         } catch (EamDbException ex) {

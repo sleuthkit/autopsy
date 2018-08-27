@@ -174,7 +174,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         final String badEmailThree = "";                                    //should fail
         final String badEmailFour = null;                                   //should fail
         final String badEmailFive = "asdf";                                 //should fail
-        final String badEmailSix = "asdf@asdf"; //TODO looks bad but the lib accepts it...
+        final String goodEmailSix = "asdf@asdf"; //TODO looks bad but the lib accepts it...
         final String badEmailSeven = "asdf.asdf";                           //should
 
         final int EMAIL_TYPE_ID = CorrelationAttributeInstance.EMAIL_TYPE_ID;
@@ -209,12 +209,13 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         } catch (CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
-//        try { //TODO consider a better library?
-//            CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailSix);
-//            fail("This should have thrown an exception.");    //TODO do we need a better library?
-//        } catch (CorrelationAttributeNormalizationException ex) {
-//            assertTrue("We expect an exception here.", true);
-//        }
+        try { //TODO consider a better library?
+            assertTrue("This email should pass", CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, goodEmailSix).equals(goodEmailSix));
+            fail("This should have thrown an exception.");
+        } catch (CorrelationAttributeNormalizationException ex) {
+            Exceptions.printStackTrace(ex);
+            fail(ex.getMessage());
+        }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailSeven);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);

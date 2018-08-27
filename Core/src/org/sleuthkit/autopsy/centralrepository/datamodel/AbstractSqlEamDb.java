@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1289,8 +1288,6 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        String normalizedValue = CorrelationAttributeNormalizer.normalize(type, value);
-        
         if (correlationCase == null) {
             throw new EamDbException("Correlation case is null");
         }
@@ -1308,6 +1305,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         CorrelationAttributeInstance correlationAttributeInstance = null;
 
         try {
+            String normalizedValue = CorrelationAttributeNormalizer.normalize(type, value);
+        
             String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
             String sql
                     = "SELECT id, known_status, comment FROM "
