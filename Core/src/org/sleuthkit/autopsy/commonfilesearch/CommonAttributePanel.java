@@ -69,7 +69,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     private boolean pictureViewCheckboxState;
 
     private boolean documentsCheckboxState;
-    private Map<String, CorrelationAttributeInstance.Type> correlationTypeFilters;
 
     private int percentageThresholdValue = 20;
 
@@ -85,34 +84,34 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         super(new JFrame(Bundle.CommonFilesPanel_frame_title()),
                 Bundle.CommonFilesPanel_frame_msg(), true);
         initComponents();
-        
+
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         this.errorText.setVisible(false);
         this.setupDataSources();
 
         if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
             this.setupCases();
-            this.setupCorrelationTypeFilter();
+            this.interCasePanel.setupCorrelationTypeFilter();
         } else {
             this.disableIntercaseSearch();
         }
-        
-        if(CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations()){
+
+        if (CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations()) {
             this.enablePercentageOptions();
         } else {
             this.disablePercentageOptions();
         }
 
         this.errorManager = new UserInputErrorManager();
-        
-        this.percentageThreshold.getDocument().addDocumentListener(new DocumentListener(){
-            
+
+        this.percentageThreshold.getDocument().addDocumentListener(new DocumentListener() {
+
             private Dimension preferredSize = CommonAttributePanel.this.percentageThreshold.getPreferredSize();
-            
-            private void maintainSize(){
+
+            private void maintainSize() {
                 CommonAttributePanel.this.percentageThreshold.setSize(preferredSize);
             }
-            
+
             @Override
             public void insertUpdate(DocumentEvent event) {
                 this.maintainSize();
@@ -146,9 +145,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         }
         return false;
     }
-    
-    private static boolean isEamDbAvailableForPercentageFrequencyCalculations(){
-                try {
+
+    private static boolean isEamDbAvailableForPercentageFrequencyCalculations() {
+        try {
             return EamDb.isEnabled()
                     && EamDb.getInstance() != null
                     && EamDb.getInstance().getCases().size() > 0;
@@ -156,20 +155,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
         return false;
-    }
-
-    private void setupCorrelationTypeFilter() {
-        this.correlationTypeFilters = new HashMap<>();
-        try {
-            List<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-            for (CorrelationAttributeInstance.Type type : types) {
-                correlationTypeFilters.put(type.getDisplayName(), type);
-                this.correlationTypeComboBox.addItem(type.getDisplayName());
-            }
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-
     }
 
     private void disableIntercaseSearch() {
@@ -232,20 +217,22 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                 }
 
                 int percentageThreshold = CommonAttributePanel.this.percentageThresholdValue;
-                
+
                 if (!CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
                     //0 has the effect of disabling the feature
                     percentageThreshold = 0;
                 }
 
                 if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
-
+                    CorrelationAttributeInstance.Type corType = interCasePanel.getSelectedCorrelationType();
+                    if (corType == null) {
+                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                    }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, fileType, percentageThreshold);
+                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, corType, percentageThreshold);
                     } else {
-                        CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, fileType, percentageThreshold);
+
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, corType, percentageThreshold);
                     }
                 } else {
                     if (dataSourceId == CommonAttributePanel.NO_DATA_SOURCE_SELECTED) {
@@ -724,19 +711,19 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         this.handleFrequencyPercentageState();
     }//GEN-LAST:event_percentageThresholdCheckActionPerformed
 
-    private void percentageThresholdChanged(){
+    private void percentageThresholdChanged() {
         String percentageString = this.percentageThreshold.getText();
 
         try {
             this.percentageThresholdValue = Integer.parseInt(percentageString);
-            
+
         } catch (NumberFormatException exception) {
             this.percentageThresholdValue = -1;
         }
 
-        this.handleFrequencyPercentageState();        
+        this.handleFrequencyPercentageState();
     }
-    
+
     private void updateErrorTextAndSearchBox() {
 
         if (this.errorManager.anyErrors()) {
@@ -770,7 +757,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         if (this.allFileCategoriesRadioButton.isSelected()) {
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
-            
+
             this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
         }
 
@@ -788,7 +775,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                 this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
             }
         }
-        
+
         this.updateErrorTextAndSearchBox();
     }
 

@@ -45,7 +45,7 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
      *
      * @throws EamDbException
      */
-    InterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
+    InterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
         super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
         dbManager = EamDb.getInstance();
         this.corAttrType = corAttrType;
