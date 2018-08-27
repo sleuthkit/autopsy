@@ -46,7 +46,6 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -286,7 +285,7 @@ class ExtractIE extends Extract {
     private void getHistory() {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
 
-        //TODO: Why are we getting the pasco library path for datasource we process?
+        //JIRA-2385: Why are we getting the pasco library path for datasource we process?
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
             this.addErrorMessage(
@@ -305,7 +304,6 @@ class ExtractIE extends Extract {
         resultsDir.mkdirs();
 
         // get index.dat files
-        FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> indexFiles;
         try {
             indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
@@ -328,13 +326,12 @@ class ExtractIE extends Extract {
         Collection<BlackboardArtifact> accountArtifacts = new ArrayList<>();
 
         for (AbstractFile indexFile : indexFiles) {
-            /* Since each result represent an index.dat file, just create these
+            /*
+             * Since each result represent an index.dat file, just create these
              * files with the following notation: index<Number>.dat (i.e.
-             * index0.dat, index1.dat,..., indexN.dat) Write each index.dat file
-             * to a temp directory.
-             *
-             * TODO: this comment is not accurate. It implies we use an
-             * sequential id number but actualy we use the file id from the db.
+             * index0.dat, index1.dat,..., indexN.dat), where <Number> is the
+             * obj_id of the file. Write each index.dat file to a temp
+             * directory. *
              */
             String indexFileName = "index" + indexFile.getId() + ".dat"; //NON-NLS
             String temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
@@ -370,7 +367,7 @@ class ExtractIE extends Extract {
                 //Delete index<n>.dat file since it was succcessfully parsed by Pasco
                 datFile.delete();
             } else {
-                logger.log(Level.WARNING, "pasco execution failed on: {0}", this.getModuleName()); //NON-NLS
+                logger.log(Level.WARNING, "pasco execution failed on: {0}", filename); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getModuleName()));
             }
@@ -398,7 +395,7 @@ class ExtractIE extends Extract {
      * @param indexFilePath  Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
      *
-     * @return the boolean
+     * @return Success. False if there is an error executing pasco.
      */
     private boolean executePasco(String pascoLibraryPath, String indexFilePath, String outputFileName) {
         boolean success = true;
@@ -478,7 +475,7 @@ class ExtractIE extends Extract {
                             new BlackboardAttribute(
                                     TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
                                     urlVisit.time),
-                            //TODO: why are we adding an attribute that is always blank?
+                        //JIRA-2386: why are we adding an attribute that is always blank?
                             new BlackboardAttribute(
                                     TSK_REFERRER, PARENT_MODULE_NAME,
                                     ""),

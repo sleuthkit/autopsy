@@ -278,8 +278,6 @@ final class SearchEngineURLQueryExtractor extends Extract {
          * at more formal approaches of splitting on the "?" and then on "&"
          * resulting in missing things.
          */
-
-        //TODO: What does this old comment mean? : Want to determine if string contains a string based on splitkey, but we want to split the string on splitKeyConverted due to regex
         String value = ""; //NON-NLS
 
         String[] tokens = url.split(regExpKey.replace("\\?", "?"));
@@ -335,7 +333,7 @@ final class SearchEngineURLQueryExtractor extends Extract {
             try {
                 final String urlString = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_URL)).getValueString();
                 SearchEngine searchEngine = getSearchEngineFromUrl(urlString);
-                if (searchEngine == null) { //TODO: should we log this?
+                if (searchEngine == null) {
                     continue;
                 }
 

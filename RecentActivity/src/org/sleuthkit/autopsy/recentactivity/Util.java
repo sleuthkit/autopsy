@@ -83,7 +83,7 @@ class Util {
     }
 
     public static String getBaseDomain(String url) {
-        //TODO: There is no utility in apache or guave to do this for us?
+        //JIRA-2384: There is no utility in apache or guave to do this for us?
         //strip protocol
         String cleanUrl = url.replaceFirst(".*:\\/\\/", "");
 
@@ -112,7 +112,7 @@ class Util {
 
     public static String extractDomain(String value) {
 
-        //TODO: There is no utility in apache or guave to do this for us?
+        //JIRA-2384: There is no utility in apache or guave to do this for us?
         if (value == null) {
             return "";
 

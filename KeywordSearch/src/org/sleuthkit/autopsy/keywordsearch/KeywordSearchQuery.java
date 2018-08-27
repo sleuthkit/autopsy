@@ -101,7 +101,7 @@ interface KeywordSearchQuery {
     String getEscapedQueryString();
 
     /**
-     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
+     * Adds a keyword hit artifact for a given keyword hit.
      *
      * @param content      The text source object for the hit.
      * @param foundKeyword The keyword that was found by the search, this may be
@@ -116,5 +116,5 @@ interface KeywordSearchQuery {
      * @return The newly created artifact or null if there was a problem
      *         creating it.
      */
-    BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName);
+    BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName);
 }
