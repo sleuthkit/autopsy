@@ -44,12 +44,14 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttribute;
+    private CorrelationAttributeInstance.Type correlationType;
     private final Map<String, Long> dataSourceNameToIdMap;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap, CorrelationAttributeInstance.Type correlationType) {
         super();
         this.crFileId = attrInstId;
         this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
+        this.correlationType = correlationType;
     }
 
     void setCurrentAttributeInst(CorrelationAttributeInstance attribute) {
@@ -107,7 +109,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
-        CorrelationAttributeInstance corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId, currentAttribute.getCorrelationType());
+        CorrelationAttributeInstance corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId, correlationType);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
 
