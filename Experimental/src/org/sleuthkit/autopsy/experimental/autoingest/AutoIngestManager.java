@@ -1398,10 +1398,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             AutoIngestJob job;
             if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
                 job = new AutoIngestJob(nodeData);
-                Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
-                if (null != caseDirectory) {
-                    job.setCaseDirectoryPath(caseDirectory);
-                }
             } else {
                 job = new AutoIngestJob(manifest);
                 job.setPriority(nodeData.getPriority()); // Retain priority, present in all versions of the node data.
@@ -1591,54 +1587,53 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @throws InterruptedException
          */
         private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws CoordinationServiceException, InterruptedException, AutoIngestJobException {
-            Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
-            if (null != caseDirectoryPath) {
-                AutoIngestJob job;
-                if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
-                    job = new AutoIngestJob(nodeData);
-                    job.setCaseDirectoryPath(caseDirectoryPath);
-                } else {
-                    /**
-                     * Use the manifest rather than the node data here to create
-                     * a new AutoIngestJob instance because the AutoIngestJob
-                     * constructor that takes a node data object expects the
-                     * node data to have fields that do not exist in earlier
-                     * versions.
-                     */
-                    job = new AutoIngestJob(manifest);
-                    job.setCaseDirectoryPath(caseDirectoryPath);
+            Path caseDirectoryPath = nodeData.getCaseDirectoryPath();
+            if (!caseDirectoryPath.toFile().exists()) {
+                sysLogger.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory, ignoring job", nodeData.getManifestFilePath()));
+                return;
+            }
 
-                    /**
-                     * Update the job with the fields that exist in all versions
-                     * of the nodeData.
-                     */
-                    job.setCompletedDate(nodeData.getCompletedDate());
-                    job.setErrorsOccurred(nodeData.getErrorsOccurred());
-                    job.setPriority(nodeData.getPriority());
-                    job.setNumberOfCrashes(nodeData.getNumberOfCrashes());
-                    job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
-                    job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
+            AutoIngestJob job;
+            if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
+                job = new AutoIngestJob(nodeData);
+                job.setCaseDirectoryPath(caseDirectoryPath);
+            } else {
+                /**
+                 * Use the manifest rather than the node data here to create a
+                 * new AutoIngestJob instance because the AutoIngestJob
+                 * constructor that takes a node data object expects the node
+                 * data to have fields that do not exist in earlier versions.
+                 */
+                job = new AutoIngestJob(manifest);
+                job.setCaseDirectoryPath(caseDirectoryPath);
 
-                    /*
+                /**
+                 * Update the job with the fields that exist in all versions of
+                 * the nodeData.
+                 */
+                job.setCompletedDate(nodeData.getCompletedDate());
+                job.setErrorsOccurred(nodeData.getErrorsOccurred());
+                job.setPriority(nodeData.getPriority());
+                job.setNumberOfCrashes(nodeData.getNumberOfCrashes());
+                job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
+                job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
+
+                /*
                      * Try to upgrade/update the coordination service manifest
                      * node data for the job. It is possible that two hosts will
                      * both try to obtain the lock to do the upgrade operation
                      * at the same time. If this happens, the host that is
                      * holding the lock will complete the upgrade operation.
-                     */
-                    try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
-                        if (null != manifestLock) {
-                            updateCoordinationServiceManifestNode(job);
-                        }
-                    } catch (CoordinationServiceException ex) {
-                        sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
+                 */
+                try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
+                    if (null != manifestLock) {
+                        updateCoordinationServiceManifestNode(job);
                     }
+                } catch (CoordinationServiceException ex) {
+                    sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
                 }
-                newCompletedJobsList.add(job);
-
-            } else {
-                sysLogger.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory, ignoring job", nodeData.getManifestFilePath()));
             }
+            newCompletedJobsList.add(job);
         }
 
         /**
@@ -2452,6 +2447,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
                         }
                         currentJob.setCaseDirectoryPath(caseDirectoryPath);
+                        updateCoordinationServiceManifestNode(currentJob);  // update case directory path
                         Case caseForJob = Case.getCurrentCase();
                         sysLogger.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
                         return caseForJob;
