@@ -536,6 +536,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
+     *
+     * @throws EamDbException
      */
     @Override
     public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
@@ -544,36 +546,50 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCache.get(correlationCase.getCaseUUID() + dataSourceDeviceId, () -> {
-                Connection conn = connect();
-
-                CorrelationDataSource eamDataSourceResult = null;
-                PreparedStatement preparedStatement = null;
-                ResultSet resultSet = null;
-
-                String sql = "SELECT * FROM data_sources WHERE device_id=? AND case_id=?"; // NON-NLS
-
-                try {
-                    preparedStatement = conn.prepareStatement(sql);
-                    preparedStatement.setString(1, dataSourceDeviceId);
-                    preparedStatement.setInt(2, correlationCase.getID());
-                    resultSet = preparedStatement.executeQuery();
-                    if (resultSet.next()) {
-                        eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
-                    }
-                } catch (SQLException ex) {
-                    throw new EamDbException("Error getting data source.", ex); // NON-NLS
-                } finally {
-                    EamDbUtil.closeStatement(preparedStatement);
-                    EamDbUtil.closeResultSet(resultSet);
-                    EamDbUtil.closeConnection(conn);
-                }
-
-                return eamDataSourceResult;
-            });
+            return dataSourceCache.get(correlationCase.getCaseUUID() + dataSourceDeviceId, () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
+    }
+
+    /**
+     * Gets the Data Source details based on data source device ID from the
+     * central repository.
+     *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
+     * @param dataSourceDeviceId the data source device ID number
+     *
+     * @return The data source
+     *
+     * @throws EamDbException
+     */
+    private CorrelationDataSource getDataSourceFromCr(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+        Connection conn = connect();
+
+        CorrelationDataSource eamDataSourceResult = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String sql = "SELECT * FROM data_sources WHERE device_id=? AND case_id=?"; // NON-NLS
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, dataSourceDeviceId);
+            preparedStatement.setInt(2, correlationCase.getID());
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting data source.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return eamDataSourceResult;
     }
 
     /**
@@ -2756,35 +2772,46 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException {
         try {
-            return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () -> {
-                Connection conn = connect();
-
-                CorrelationAttributeInstance.Type aType;
-                PreparedStatement preparedStatement = null;
-                ResultSet resultSet = null;
-                String sql = "SELECT * FROM correlation_types WHERE id=?";
-
-                try {
-                    preparedStatement = conn.prepareStatement(sql);
-                    preparedStatement.setInt(1, typeId);
-                    resultSet = preparedStatement.executeQuery();
-                    if (resultSet.next()) {
-                        aType = getCorrelationTypeFromResultSet(resultSet);
-                        return aType;
-                    } else {
-                        throw new EamDbException("Failed to find entry for correlation type ID = " + typeId);
-                    }
-
-                } catch (SQLException ex) {
-                    throw new EamDbException("Error getting correlation type by id.", ex); // NON-NLS
-                } finally {
-                    EamDbUtil.closeStatement(preparedStatement);
-                    EamDbUtil.closeResultSet(resultSet);
-                    EamDbUtil.closeConnection(conn);
-                }
-            });
+            return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () ->getCorrelationTypeByIdFromCr(typeId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting correlation type", ex);
+        }
+    }
+    
+   /**
+     * Get the EamArtifact.Type that has the given Type.Id from the central repo
+     *
+     * @param typeId Type.Id of Correlation Type to get
+     *
+     * @return EamArtifact.Type or null if it doesn't exist.
+     *
+     * @throws EamDbException
+     */
+    private CorrelationAttributeInstance.Type getCorrelationTypeByIdFromCr(int typeId) throws EamDbException {
+        Connection conn = connect();
+
+        CorrelationAttributeInstance.Type aType;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        String sql = "SELECT * FROM correlation_types WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, typeId);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                aType = getCorrelationTypeFromResultSet(resultSet);
+                return aType;
+            } else {
+                throw new EamDbException("Failed to find entry for correlation type ID = " + typeId);
+            }
+
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting correlation type by id.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
         }
     }
 
