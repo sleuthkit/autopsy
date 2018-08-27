@@ -46,6 +46,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
@@ -121,6 +122,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         return WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
 
+    @Messages({
+        "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.headerText=Choose a data source to view.",
+        "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.contentText=Data source:",
+        "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.all=All",
+        "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.titleText=Image Gallery",})
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
         //        synchronized (OpenTimelineAction.class) {
@@ -138,26 +144,28 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                 tc.requestActive();
             } else {
                 List<DataSource> dataSources = Collections.emptyList();
+                ImageGalleryController controller = ((ImageGalleryTopComponent) tc).controller;
                 try {
-                    dataSources = ((ImageGalleryTopComponent) tc).controller.getSleuthKitCase().getDataSources();
+                    dataSources = controller.getSleuthKitCase().getDataSources();
                 } catch (TskCoreException tskCoreException) {
                     logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
-                };
-                if (dataSources.size() > 1) {
+                }
+                if (dataSources.size() > 1
+                    && controller.getGroupManager().getGroupBy() == DrawableAttribute.PATH) {
                     Map<String, DataSource> dataSourceNames = new HashMap<>();
                     dataSourceNames.put("All", null);
                     dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
 
                     Platform.runLater(() -> {
                         ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
-                        d.setTitle("Image Gallery");
-                        d.setHeaderText("Choose a data source to view.");
-                        d.setContentText("Data source:");
+                        d.setTitle(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_titleText());
+                        d.setHeaderText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_headerText());
+                        d.setContentText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_contentText());
                         d.initModality(Modality.APPLICATION_MODAL);
                         GuiUtils.setDialogIcons(d);
 
                         Optional<String> dataSourceName = d.showAndWait();
-                        dataSourceName.map(dataSourceNames::get).ifPresent(ds -> ((ImageGalleryTopComponent) tc).controller.getGroupManager().setDataSource(ds));
+                        dataSourceName.map(dataSourceNames::get).ifPresent(ds -> controller.getGroupManager().setDataSource(ds));
 
                         SwingUtilities.invokeLater(() -> {
                             tc.open();

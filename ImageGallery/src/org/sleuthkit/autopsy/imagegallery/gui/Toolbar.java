@@ -36,8 +36,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -84,10 +82,6 @@ import org.sleuthkit.datamodel.DataSource;
 public class Toolbar extends ToolBar {
 
     private static final Logger LOGGER = Logger.getLogger(Toolbar.class.getName());
-    ListeningExecutorService exec
-            = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
-                    new ThreadFactoryBuilder().setNameFormat("Image Gallery Toolbar BG Thread").build()));
-
     private static final int SIZE_SLIDER_DEFAULT = 100;
 
     @FXML
@@ -110,8 +104,11 @@ public class Toolbar extends ToolBar {
     private Label categoryImageViewLabel;
     @FXML
     private Label thumbnailSizeLabel;
-
     private SortChooser<DrawableGroup, GroupSortBy> sortChooser;
+
+    private final ListeningExecutorService exec
+            = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
+                    new ThreadFactoryBuilder().setNameFormat("Image Gallery Toolbar BG Thread").build()));
 
     private final ImageGalleryController controller;
 
@@ -143,7 +140,8 @@ public class Toolbar extends ToolBar {
                 "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):",
                 "Toolbar.sortHelp=The sort direction (ascending/descending) affects the queue of unseen groups that Image Gallery maintains, but changes to this queue aren't apparent until the \"Next Unseen Group\" button is pressed.",
                 "Toolbar.sortHelpTitle=Group Sorting",
-                "Toolbar.getDataSources.errMessage=Unable to get datasources for current case."})
+                "Toolbar.getDataSources.errMessage=Unable to get datasources for current case.",
+                "Toolbar.nonPathGroupingWarning.message=Grouping by attributes other than path does not support the data source filter.\nFiles and groups from all data sources will be shown."})
     void initialize() {
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert dataSourceComboBox != null : "fx:id=\"dataSourceComboBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -172,24 +170,25 @@ public class Toolbar extends ToolBar {
         groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
         groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
-        groupByBox.getSelectionModel().selectedItemProperty().addListener(observable -> {
-            if (groupByBox.getSelectionModel().getSelectedItem() != DrawableAttribute.PATH) {
-                Notifications.create().owner(getScene().getWindow())
-                        .text("Grouping by attributes other than path does not support the data source filter.\nFiles and groups from all data sources will be shown.")
-                        .hideAfter(Duration.seconds(30))
-                        .showInformation();
+        groupByBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue == DrawableAttribute.PATH
+                && newValue != DrawableAttribute.PATH) {
+                Notifications.create().owner(getScene().getRoot())
+                        .text(Bundle.Toolbar_nonPathGroupingWarning_message())
+                        .hideAfter(Duration.seconds(20))
+                        .showWarning();
             }
             queryInvalidationListener.invalidated(observable);
         });
 
         sortChooser = new SortChooser<>(GroupSortBy.getValues());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-            final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
-            sortChooser.setSortOrderDisabled(orderDisabled);
+                    final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
+                    sortChooser.setSortOrderDisabled(orderDisabled);
 
-            final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
-            sortChooser.setValueType(valueType);
-            queryInvalidationListener.invalidated(observable);
+                    final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
+                    sortChooser.setValueType(valueType);
+                    queryInvalidationListener.invalidated(observable);
         });
         sortChooser.setComparator(controller.getGroupManager().getSortBy());
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
@@ -210,11 +209,11 @@ public class Toolbar extends ToolBar {
         catGroupMenuButton.setText(cat5GroupAction.getText());
         catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
-            if (catGroupMenuButton.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
-                        cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
-                catGroupMenuButton.getItems().setAll(categoryMenues);
-            }
+                    if (catGroupMenuButton.isShowing()) {
+                        List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
+                                cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
+                        catGroupMenuButton.getItems().setAll(categoryMenues);
+                    }
         });
 
     }
