@@ -19,6 +19,11 @@
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,9 +36,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -86,13 +94,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
- * Provides an abstraction layer on top of {@link  DrawableDB} ( and to some
- * extent {@link SleuthkitCase} ) to facilitate creation, retrieval, updating,
- * and sorting of {@link DrawableGroup}s.
+ * Provides an abstraction layer on top of DrawableDB ( and to some extent
+ * SleuthkitCase ) to facilitate creation, retrieval, updating, and sorting of
+ * DrawableGroups.
  */
 public class GroupManager {
 
-    private static final Logger LOGGER = Logger.getLogger(GroupManager.class.getName());
+    private static final Logger logger = Logger.getLogger(GroupManager.class.getName());
+
+    /** An executor to submit async UI related background tasks to. */
+    private final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
+            new BasicThreadFactory.Builder().namingPattern("GUI Task -%d").build())); //NON-NLS
 
     private final ImageGalleryController controller;
 
@@ -265,25 +277,40 @@ public class GroupManager {
     }
 
     /**
-     * 'mark' the given group as seen. This removes it from the queue of groups
-     * to review, and is persisted in the drawable db.
+     * 'Save' the given group as seen in the drawable db.
      *
      * @param group The DrawableGroup to mark as seen.
-     * @param seen  The seen stastus to set.
+     * @param seen  The seen state to set for the given group.
+     *
+     * @return A ListenableFuture that encapsulates saving the seen state to the
+     *         DB.
      */
-    @ThreadConfined(type = ThreadType.JFX)
-    public void markGroupSeen(DrawableGroup group, boolean seen) {
-        DrawableDB db = getDB();
-        if (nonNull(db)) {
-            db.markGroupSeen(group.getGroupKey(), seen);
-            group.setSeen(seen);
-            if (seen) {
-                unSeenGroups.removeAll(group);
-            } else if (unSeenGroups.contains(group) == false) {
-                unSeenGroups.add(group);
+    public ListenableFuture<?> saveGroupSeen(DrawableGroup group, boolean seen) {
+        synchronized (controller) {
+            DrawableDB db = getDB();
+            if (nonNull(db)) {
+                return exec.submit(() -> {
+                    try {
+                        db.markGroupSeen(group.getGroupKey(), seen);
+                        group.setSeen(seen);
+
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
+                    }
+                });
             }
-            FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
         }
+        return Futures.immediateFuture(null);
+    }
+
+    @ThreadConfined(type = ThreadType.JFX)
+    private void updateUnSeenGroups(DrawableGroup group, boolean seen) {
+        if (seen) {
+            unSeenGroups.removeAll(group);
+        } else if (unSeenGroups.contains(group) == false) {
+            unSeenGroups.add(group);
+        }
+        FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
     }
 
     /**
@@ -387,7 +414,7 @@ public class GroupManager {
                             .collect(Collectors.toSet());
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
+                logger.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
                 throw ex;
             }
         }
@@ -406,7 +433,7 @@ public class GroupManager {
             }
             return files;
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
+            logger.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
             throw ex;
         }
     }
@@ -495,7 +522,7 @@ public class GroupManager {
 
             groupByTask = new ReGroupTask<>(dataSource, groupBy, sortBy, sortOrder);
             Platform.runLater(() -> regroupProgress.bind(groupByTask.progressProperty()));
-            regroupExecutor.submit(groupByTask);
+            exec.submit(groupByTask);
         } else {
             // resort the list of groups
             setSortBy(sortBy);
@@ -506,11 +533,6 @@ public class GroupManager {
             });
         }
     }
-
-    /**
-     * an executor to submit async ui related background tasks to.
-     */
-    final ExecutorService regroupExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder().namingPattern("ui task -%d").build()); //NON-NLS
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regroupProgress.getReadOnlyProperty();
@@ -579,10 +601,9 @@ public class GroupManager {
     }
 
     /**
-     * handle {@link FileUpdateEvent} sent from Db when files are
-     * inserted/updated
+     * Handle notificationsS sent from Db when files are inserted/updated
      *
-     * @param evt
+     * @param updatedFileIDs The ID of the inserted/updated files.
      */
     @Subscribe
     synchronized public void handleFileUpdate(Collection<Long> updatedFileIDs) {
@@ -608,26 +629,22 @@ public class GroupManager {
     }
 
     private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
-
-        if (Objects.nonNull(task) && (task.isCancelled())) {
-            /*
-             * if this method call is part of a ReGroupTask and that task is
-             * cancelled, no-op
-             *
-             * this allows us to stop if a regroup task has been cancelled (e.g.
-             * the user picked a different group by attribute, while the current
-             * task was still running)
-             */
-
-        } else { // no task or un-cancelled task
+        /*
+         * If this method call is part of a ReGroupTask and that task is
+         * cancelled, no-op.
+         *
+         * This allows us to stop if a regroup task has been cancelled (e.g. the
+         * user picked a different group by attribute, while the current task
+         * was still running)
+         */
+        if (isNull(task) || task.isCancelled() == false) {
             DrawableDB db = getDB();
+            /*
+             * For attributes other than path we can't be sure a group is fully
+             * analyzed because we don't know all the files that will be a part
+             * of that group. just show them no matter what.
+             */
             if (nonNull(db) && ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey))) {
-                /*
-                 * for attributes other than path we can't be sure a group is
-                 * fully analyzed because we don't know all the files that will
-                 * be a part of that group. just show them no matter what.
-                 */
-
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
@@ -636,34 +653,38 @@ public class GroupManager {
                         synchronized (groupMap) {
                             if (groupMap.containsKey(groupKey)) {
                                 group = groupMap.get(groupKey);
-
                                 group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
+                                group.setSeen(groupSeen);
                             } else {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
                                 group.seenProperty().addListener((o, oldSeen, newSeen)
-                                        -> Platform.runLater(() -> markGroupSeen(group, newSeen))
-                                );
+                                        -> saveGroupSeen(group, newSeen)
+                                                .addListener(() -> updateUnSeenGroups(group, newSeen),
+                                                        Platform::runLater));
+
                                 groupMap.put(groupKey, group);
                             }
                         }
+
                         Platform.runLater(() -> {
                             if (analyzedGroups.contains(group) == false) {
                                 analyzedGroups.add(group);
-                                if (Objects.isNull(task)) {
+                                if (isNull(task)) {
                                     FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
                                 }
                             }
-                            markGroupSeen(group, groupSeen);
+                            updateUnSeenGroups(group, groupSeen);
                         });
                         return group;
 
                     }
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
                 }
             }
         }
+
         return null;
     }
 
@@ -687,6 +708,7 @@ public class GroupManager {
         } catch (Exception ex) {
             Exceptions.printStackTrace(ex);
             throw new TskCoreException("Failed to get file ids with mime type " + mimeType, ex);
+
         }
     }
 
@@ -842,7 +864,7 @@ public class GroupManager {
 
                 return values;
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
+                logger.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
                 return Collections.emptyList();
             }
         }

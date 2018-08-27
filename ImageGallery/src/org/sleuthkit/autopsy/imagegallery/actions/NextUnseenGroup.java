@@ -69,7 +69,7 @@ public class NextUnseenGroup extends Action {
             Optional.ofNullable(controller.viewState())
                     .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
-                    .ifPresent(group -> groupManager.markGroupSeen(group, true));
+                    .ifPresent(group -> groupManager.saveGroupSeen(group, true));
 
             if (unSeenGroups.isEmpty() == false) {
                 controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
