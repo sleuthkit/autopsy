@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
@@ -96,10 +96,10 @@ final public class CommonAttributeSearchResults {
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
         }
         
-        CorrelationAttribute.Type fileAttributeType = CorrelationAttribute
+        CorrelationAttributeInstance.Type fileAttributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()
-                .filter(filterType -> filterType.getId() == CorrelationAttribute.FILES_TYPE_ID)
+                .filter(filterType -> filterType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
                 .findFirst().get();
         
         EamDb eamDb = EamDb.getInstance();
@@ -113,7 +113,7 @@ final public class CommonAttributeSearchResults {
             
             for(CommonAttributeValue value : values){
                 
-                int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttribute(fileAttributeType, value.getValue()));
+                int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
                 
                 if(frequencyPercentage < minimumPercentageThreshold){
                     if(itemsToRemove.containsKey(key)){

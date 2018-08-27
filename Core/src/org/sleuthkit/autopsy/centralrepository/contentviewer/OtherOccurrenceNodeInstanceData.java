@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -42,7 +41,6 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
     private String dataSourceName;
     private final String filePath;
     private final String typeStr;
-    private final CorrelationAttribute.Type type;
     private final String value;
     private TskData.FileKnown known;
     private String comment;
@@ -56,13 +54,12 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * @param type     The type of the instance
      * @param value    The value of the instance
      */
-    OtherOccurrenceNodeInstanceData(CorrelationAttributeInstance instance, CorrelationAttribute.Type type, String value) {
+    OtherOccurrenceNodeInstanceData(CorrelationAttributeInstance instance, CorrelationAttributeInstance.Type type, String value) {
         caseName = instance.getCorrelationCase().getDisplayName();
         deviceID = instance.getCorrelationDataSource().getDeviceID();
         dataSourceName = instance.getCorrelationDataSource().getName();
         filePath = instance.getFilePath();
         this.typeStr = type.getDisplayName();
-        this.type = type;
         this.value = value;
         known = instance.getKnownStatus();
         comment = instance.getComment();
@@ -88,7 +85,6 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
         
         filePath = newFile.getParentPath() + newFile.getName();
         typeStr = FILE_TYPE_STR;
-        this.type = null;
         value = newFile.getMd5Hash();
         known = newFile.getKnown();
         comment = "";
@@ -133,13 +129,11 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * Should only be called if isCentralRepoNode() is true.
      * @return the newly created CorrelationAttribute
      */
-    CorrelationAttribute createCorrelationAttribute() throws EamDbException {
+    CorrelationAttributeInstance getCorrelationAttribute() throws EamDbException {
         if (! isCentralRepoNode() ) { 
             throw new EamDbException("Can not create CorrelationAttribute for non central repo node");
         }
-        CorrelationAttribute attr = new CorrelationAttribute(type, value);
-        attr.addInstance(originalCorrelationInstance);
-        return attr;
+        return originalCorrelationInstance;
     }
     
     /**

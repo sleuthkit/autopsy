@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
-
 /**
  * Marker interface for Other Occurrences nodes.
  */

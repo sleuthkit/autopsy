@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.Executors;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
@@ -47,6 +47,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
+
+    private static final long serialVersionUID = 1L;
 
     private CentralRepoImportWorker worker;   // Swing worker that will import the file and send updates to the dialog
 
@@ -239,11 +241,11 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
                 // Create an empty hashset in the central repository
                 EamDb dbManager = EamDb.getInstance();
                 referenceSetID.set(dbManager.newReferenceSet(new EamGlobalSet(orgId, hashSetName, version, knownStatus, 
-                        readOnly, EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID))));
+                        readOnly, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID))));
 
                 // Get the "FILES" content type. This is a database lookup so we
                 // only want to do it once.
-                CorrelationAttribute.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+                CorrelationAttributeInstance.Type contentType = dbManager.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
 
                 // Holds the current batch of hashes that need to be written to the central repo
                 Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
