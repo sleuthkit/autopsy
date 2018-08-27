@@ -118,7 +118,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     }
 
     private void disableIntercaseSearch() {
-        this.intercaseTabPanel.setEnabled(false);
+        this.intraCaseRadio.setSelected(true);
+        this.interCaseRadio.setEnabled(false);
     }
 
     @NbBundle.Messages({
@@ -175,7 +176,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     }
                 }
 
-                if (CommonAttributePanel.this.intracaseTabPanel.isFocusOwner()) {
+                if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
 
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
                         CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
@@ -407,27 +408,25 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         fileTypeFilterButtonGroup = new javax.swing.ButtonGroup();
         interIntraButtonGroup = new javax.swing.ButtonGroup();
-        correlationTab = new javax.swing.JTabbedPane();
-        intercaseTabPanel = new javax.swing.JPanel();
-        interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
-        selectTypeLabel = new javax.swing.JLabel();
-        correlationTypeComboBox = new javax.swing.JComboBox<>();
-        jLabel1 = new javax.swing.JLabel();
-        intracaseTabPanel = new javax.swing.JPanel();
+        jPanel1 = new javax.swing.JPanel();
         commonFilesSearchLabel2 = new javax.swing.JLabel();
+        searchButton = new javax.swing.JButton();
+        cancelButton = new javax.swing.JButton();
         allFileCategoriesRadioButton = new javax.swing.JRadioButton();
         selectedFileCategoriesButton = new javax.swing.JRadioButton();
         pictureVideoCheckbox = new javax.swing.JCheckBox();
         documentsCheckbox = new javax.swing.JCheckBox();
         categoriesLabel = new javax.swing.JLabel();
-        commonFilesSearchLabel1 = new javax.swing.JLabel();
-        intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
-        jPanel3 = new javax.swing.JPanel();
         errorText = new javax.swing.JLabel();
-        searchButton = new javax.swing.JButton();
-        cancelButton = new javax.swing.JButton();
+        commonFilesSearchLabel1 = new javax.swing.JLabel();
+        intraCaseRadio = new javax.swing.JRadioButton();
+        interCaseRadio = new javax.swing.JRadioButton();
+        layoutPanel = new java.awt.Panel();
+        intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
+        interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
 
         setMinimumSize(new java.awt.Dimension(412, 350));
+        setPreferredSize(new java.awt.Dimension(412, 350));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -435,58 +434,28 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             }
         });
 
-        correlationTab.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.correlationTab.toolTipText")); // NOI18N
-        correlationTab.setName(""); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(selectTypeLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectTypeLabel.text")); // NOI18N
-
-        correlationTypeComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.correlationTypeComboBox.toolTipText")); // NOI18N
-        correlationTypeComboBox.setVerifyInputWhenFocusTarget(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.jLabel1.text")); // NOI18N
-
-        javax.swing.GroupLayout intercaseTabPanelLayout = new javax.swing.GroupLayout(intercaseTabPanel);
-        intercaseTabPanel.setLayout(intercaseTabPanelLayout);
-        intercaseTabPanelLayout.setHorizontalGroup(
-            intercaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(intercaseTabPanelLayout.createSequentialGroup()
-                .addGroup(intercaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(intercaseTabPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(interCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 425, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(intercaseTabPanelLayout.createSequentialGroup()
-                        .addGap(16, 16, 16)
-                        .addComponent(correlationTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(intercaseTabPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(selectTypeLabel))
-                    .addGroup(intercaseTabPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        intercaseTabPanelLayout.setVerticalGroup(
-            intercaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(intercaseTabPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(selectTypeLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(correlationTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(interCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        selectTypeLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectTypeLabel.AccessibleContext.accessibleName")); // NOI18N
-
-        correlationTab.addTab(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.intercaseTabPanel.TabConstraints.tabTitle"), intercaseTabPanel); // NOI18N
-
-        intracaseTabPanel.setPreferredSize(new java.awt.Dimension(412, 350));
+        jPanel1.setPreferredSize(new java.awt.Dimension(412, 350));
 
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel2.text")); // NOI18N
         commonFilesSearchLabel2.setFocusable(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.searchButton.text")); // NOI18N
+        searchButton.setEnabled(false);
+        searchButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.cancelButton.text")); // NOI18N
+        cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.cancelButton.actionCommand")); // NOI18N
+        cancelButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelButtonActionPerformed(evt);
+            }
+        });
 
         fileTypeFilterButtonGroup.add(allFileCategoriesRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.text")); // NOI18N
@@ -526,45 +495,82 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.categoriesLabel.text")); // NOI18N
         categoriesLabel.setName(""); // NOI18N
 
+        errorText.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.errorText.text")); // NOI18N
+
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel1.text")); // NOI18N
         commonFilesSearchLabel1.setFocusable(false);
 
-        javax.swing.GroupLayout intracaseTabPanelLayout = new javax.swing.GroupLayout(intracaseTabPanel);
-        intracaseTabPanel.setLayout(intracaseTabPanelLayout);
-        intracaseTabPanelLayout.setHorizontalGroup(
-            intracaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(intracaseTabPanelLayout.createSequentialGroup()
-                .addGroup(intracaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(intracaseTabPanelLayout.createSequentialGroup()
+        interIntraButtonGroup.add(intraCaseRadio);
+        intraCaseRadio.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(intraCaseRadio, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.intraCaseRadio.text")); // NOI18N
+        intraCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                intraCaseRadioActionPerformed(evt);
+            }
+        });
+
+        interIntraButtonGroup.add(interCaseRadio);
+        org.openide.awt.Mnemonics.setLocalizedText(interCaseRadio, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonFilesPanel.jRadioButton2.text")); // NOI18N
+        interCaseRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                interCaseRadioActionPerformed(evt);
+            }
+        });
+
+        layoutPanel.setLayout(new java.awt.CardLayout());
+        layoutPanel.add(intraCasePanel, "card3");
+        layoutPanel.add(interCasePanel, "card2");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(searchButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(errorText))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(commonFilesSearchLabel2)
+                            .addComponent(intraCaseRadio)
+                            .addComponent(interCaseRadio)
+                            .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(categoriesLabel)
+                            .addComponent(selectedFileCategoriesButton)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(35, 35, 35)
-                        .addGroup(intracaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(documentsCheckbox)
                             .addComponent(pictureVideoCheckbox)))
-                    .addGroup(intracaseTabPanelLayout.createSequentialGroup()
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(allFileCategoriesRadioButton))
-                    .addGroup(intracaseTabPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(intracaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(categoriesLabel)
-                            .addComponent(selectedFileCategoriesButton)
-                            .addComponent(commonFilesSearchLabel2)
-                            .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(intracaseTabPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(intraCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(allFileCategoriesRadioButton)))
                 .addContainerGap())
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(20, 20, 20)
+                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(10, 10, 10)))
         );
-        intracaseTabPanelLayout.setVerticalGroup(
-            intracaseTabPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(intracaseTabPanelLayout.createSequentialGroup()
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(commonFilesSearchLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(intraCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(12, 12, 12)
+                .addComponent(intraCaseRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(interCaseRadio)
+                .addGap(79, 79, 79)
                 .addComponent(categoriesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(selectedFileCategoriesButton)
@@ -574,59 +580,20 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                 .addComponent(documentsCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(allFileCategoriesRadioButton)
-                .addGap(48, 48, 48))
-        );
-
-        correlationTab.addTab(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.intracaseTabPanel.TabConstraints.tabTitle"), intracaseTabPanel); // NOI18N
-
-        getContentPane().add(correlationTab, java.awt.BorderLayout.PAGE_START);
-        correlationTab.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.AccessibleContext.accessibleName")); // NOI18N
-
-        errorText.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.errorText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.searchButton.text")); // NOI18N
-        searchButton.setEnabled(false);
-        searchButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
-        searchButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.cancelButton.text")); // NOI18N
-        cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.cancelButton.actionCommand")); // NOI18N
-        cancelButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(searchButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cancelButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, 394, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(cancelButton)
                     .addComponent(errorText))
                 .addContainerGap())
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addGap(98, 98, 98)
+                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(180, 180, 180)))
         );
 
-        getContentPane().add(jPanel3, java.awt.BorderLayout.LINE_START);
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
@@ -655,6 +622,11 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         this.toggleErrorTextAndSearchBox();
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
+    private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
+        handleIntraCaseSearchCriteriaChanged();
+    }//GEN-LAST:event_intraCaseRadioActionPerformed
+
     public void handleIntraCaseSearchCriteriaChanged() {
         if (this.areIntraCaseSearchCriteriaMet()) {
             this.searchButton.setEnabled(true);
@@ -665,6 +637,11 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             this.showIntraCaseErrorMessage();
         }
     }
+
+    private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
+        handleInterCaseSearchCriteriaChanged();
+    }//GEN-LAST:event_interCaseRadioActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         SwingUtilities.windowForComponent(this).dispose();
@@ -719,21 +696,18 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     private javax.swing.JLabel categoriesLabel;
     private javax.swing.JLabel commonFilesSearchLabel1;
     private javax.swing.JLabel commonFilesSearchLabel2;
-    private javax.swing.JTabbedPane correlationTab;
-    private javax.swing.JComboBox<String> correlationTypeComboBox;
     private javax.swing.JCheckBox documentsCheckbox;
     private javax.swing.JLabel errorText;
     private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
     private org.sleuthkit.autopsy.commonfilesearch.InterCasePanel interCasePanel;
+    private javax.swing.JRadioButton interCaseRadio;
     private javax.swing.ButtonGroup interIntraButtonGroup;
-    private javax.swing.JPanel intercaseTabPanel;
     private org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel intraCasePanel;
-    private javax.swing.JPanel intracaseTabPanel;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel3;
+    private javax.swing.JRadioButton intraCaseRadio;
+    private javax.swing.JPanel jPanel1;
+    private java.awt.Panel layoutPanel;
     private javax.swing.JCheckBox pictureVideoCheckbox;
     private javax.swing.JButton searchButton;
-    private javax.swing.JLabel selectTypeLabel;
     private javax.swing.JRadioButton selectedFileCategoriesButton;
     // End of variables declaration//GEN-END:variables
 
