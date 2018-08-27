@@ -425,20 +425,22 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
-     * Event handler for ArtifactPublished events from SleuthkitCase.
+     * Event handler for ArtifactsPostedEvents from SleuthkitCase.
      *
-     * @param event The ArtifactPublished event to handle.
+     * @param event The ArtifactsPostedEvent to handle.
      */
     @NbBundle.Messages("SolrSearchService.indexingError=Unable to index blackboard artifact.")
     @Subscribe
     void handleNewArtifacts(Blackboard.ArtifactsPostedEvent event) {
         for (BlackboardArtifact artifact : event.getArtifacts()) {
-            try {
-                index(artifact);
-            } catch (TskCoreException ex) {
-                //TODO: is this the right error handling?
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), artifact.getDisplayName());
+            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) { //don't index KWH artifacts.
+                try {
+                    index(artifact);
+                } catch (TskCoreException ex) {
+                    //TODO: is this the right error handling?
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), artifact.getDisplayName());
+                }
             }
         }
     }
