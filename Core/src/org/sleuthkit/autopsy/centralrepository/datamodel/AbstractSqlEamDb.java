@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -64,13 +65,18 @@ abstract class AbstractSqlEamDb implements EamDb {
     private static final int CASE_CACHE_TIMEOUT = 5;
     private static final int DATA_SOURCE_CACHE_TIMEOUT = 5;
     private static final Cache<Integer, CorrelationAttributeInstance.Type> typeCache = CacheBuilder.newBuilder().build();
-    private static final Cache<String, CorrelationCase> caseCache = CacheBuilder.newBuilder()
+    private static final Cache<String, CorrelationCase> caseCacheByUUID = CacheBuilder.newBuilder()
             .expireAfterWrite(CASE_CACHE_TIMEOUT, TimeUnit.MINUTES).
             build();
-    private static final Cache<String, CorrelationDataSource> dataSourceCache = CacheBuilder.newBuilder()
+    private static final Cache<Integer, CorrelationCase> caseCacheById = CacheBuilder.newBuilder()
+            .expireAfterWrite(CASE_CACHE_TIMEOUT, TimeUnit.MINUTES).
+            build();
+    private static final Cache<String, CorrelationDataSource> dataSourceCacheByDeviceId = CacheBuilder.newBuilder()
             .expireAfterWrite(DATA_SOURCE_CACHE_TIMEOUT, TimeUnit.MINUTES).
             build();
-
+    private static final Cache<String, CorrelationDataSource> dataSourceCacheById = CacheBuilder.newBuilder()
+            .expireAfterWrite(DATA_SOURCE_CACHE_TIMEOUT, TimeUnit.MINUTES).
+            build();
     // Maximum length for the value column in the instance tables
     static final int MAX_VALUE_LENGTH = 256;
 
@@ -167,8 +173,10 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     protected final void clearCaches() {
         typeCache.invalidateAll();
-        caseCache.invalidateAll();
-        dataSourceCache.invalidateAll();
+        caseCacheByUUID.invalidateAll();
+        caseCacheById.invalidateAll();
+        dataSourceCacheByDeviceId.invalidateAll();
+        dataSourceCacheById.invalidateAll();
     }
 
     /**
@@ -225,7 +233,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + getConflictClause();
 
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             preparedStatement.setString(1, eamCase.getCaseUUID());
             if (null == eamCase.getOrg()) {
@@ -262,6 +270,17 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
 
             preparedStatement.executeUpdate();
+            //update the case in the caches
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if (!resultSet.next()) {
+                throw new EamDbException(String.format("Failed to INSERT case %s in central repo", eamCase.getCaseUUID()));
+            }
+            int caseID = resultSet.getInt(1); //last_insert_rowid()    
+            CorrelationCase correlationCase = new CorrelationCase(caseID, eamCase.getCaseUUID(), eamCase.getOrg(),
+                    eamCase.getDisplayName(), eamCase.getCreationDate(), eamCase.getCaseNumber(), eamCase.getExaminerName(),
+                    eamCase.getExaminerEmail(), eamCase.getExaminerPhone(), eamCase.getNotes());
+            caseCacheByUUID.put(eamCase.getCaseUUID(), correlationCase);
+            caseCacheById.put(caseID, correlationCase);
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new case.", ex); // NON-NLS
         } finally {
@@ -300,11 +319,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     @Override
     public CorrelationCase getCase(Case autopsyCase) throws EamDbException {
-        try {
-            return caseCache.get(autopsyCase.getName(), () -> getCaseByUUID(autopsyCase.getName()));
-        } catch (ExecutionException ex) {
-            throw new EamDbException("Error getting autopsy case from Central repo", ex);
-        }
+        return getCaseByUUID(autopsyCase.getName());
     }
 
     /**
@@ -365,11 +380,30 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(9, eamCase.getCaseUUID());
 
             preparedStatement.executeUpdate();
+            //update the case in the cache
+            caseCacheById.put(eamCase.getID(), eamCase);
+            caseCacheByUUID.put(eamCase.getCaseUUID(), eamCase);
         } catch (SQLException ex) {
             throw new EamDbException("Error updating case.", ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
+     * Retrieves Case details based on Case UUID from the central repo
+     *
+     * @param caseUUID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    @Override
+    public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
+        try {
+            return caseCacheByUUID.get(caseUUID, () -> getCaseByUUIDFromCr(caseUUID));
+        } catch (ExecutionException ex) {
+            throw new EamDbException("Error getting autopsy case from Central repo", ex);
         }
     }
 
@@ -380,10 +414,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @return The retrieved case
      */
-    @Override
-    public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
-        // @@@ We should have a cache here...
-
+    private CorrelationCase getCaseByUUIDFromCr(String caseUUID) throws EamDbException {
         Connection conn = connect();
 
         CorrelationCase eamCaseResult = null;
@@ -402,6 +433,10 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamCaseResult = getEamCaseFromResultSet(resultSet);
+            }
+            if (eamCaseResult != null) {
+                //Update the version in the other cache
+                caseCacheById.put(eamCaseResult.getID(), eamCaseResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting case details.", ex); // NON-NLS
@@ -423,8 +458,21 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public CorrelationCase getCaseById(int caseId) throws EamDbException {
-        // @@@ We should have a cache here...
+        try {
+            return caseCacheById.get(caseId, () -> getCaseByIdFromCr(caseId));
+        } catch (ExecutionException ex) {
+            throw new EamDbException("Error getting autopsy case from Central repo", ex);
+        }
+    }
 
+    /**
+     * Retrieves Case details based on Case ID
+     *
+     * @param caseID unique identifier for a case
+     *
+     * @return The retrieved case
+     */
+    private CorrelationCase getCaseByIdFromCr(int caseId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationCase eamCaseResult = null;
@@ -436,13 +484,16 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + "FROM cases "
                 + "LEFT JOIN organizations ON cases.org_id=organizations.id "
                 + "WHERE cases.id=?";
-
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, caseId);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamCaseResult = getEamCaseFromResultSet(resultSet);
+            }
+            if (eamCaseResult != null) {
+                //Update the version in the other cache
+                caseCacheByUUID.put(eamCaseResult.getCaseUUID(), eamCaseResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting case details.", ex); // NON-NLS
@@ -492,6 +543,14 @@ abstract class AbstractSqlEamDb implements EamDb {
         return cases;
     }
 
+    private static String getDataSourceCacheKey(int caseId, String dataSourceDeviceId) {
+        return "Case" + caseId + "DeviceId" + dataSourceDeviceId;
+    }
+
+    private static String getDataSourceCacheKey(int caseId, int dataSourceId) {
+        return "Case" + caseId + "Id" + dataSourceId;
+    }
+
     /**
      * Creates new Data Source in the database
      *
@@ -513,13 +572,21 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + getConflictClause();
 
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             preparedStatement.setString(1, eamDataSource.getDeviceID());
             preparedStatement.setInt(2, eamDataSource.getCaseID());
             preparedStatement.setString(3, eamDataSource.getName());
 
             preparedStatement.executeUpdate();
+            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            if (!resultSet.next()) {
+                throw new EamDbException(String.format("Failed to INSERT data source %s in central repo", eamDataSource.getName()));
+            }
+            int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
+            CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName());
+            dataSourceCacheByDeviceId.put(getDataSourceCacheKey(dataSource.getCaseID(), dataSource.getDeviceID()), dataSource);
+            dataSourceCacheById.put(getDataSourceCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
         } finally {
@@ -546,7 +613,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCache.get(correlationCase.getCaseUUID() + dataSourceDeviceId, () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
+            return dataSourceCacheByDeviceId.get(getDataSourceCacheKey(correlationCase.getID(), dataSourceDeviceId), () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
@@ -581,6 +648,9 @@ abstract class AbstractSqlEamDb implements EamDb {
             if (resultSet.next()) {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
+            if (eamDataSourceResult != null) {
+                dataSourceCacheById.put(getDataSourceCacheKey(correlationCase.getID(), eamDataSourceResult.getID()), eamDataSourceResult);
+            }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
         } finally {
@@ -606,7 +676,23 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (correlationCase == null) {
             throw new EamDbException("Correlation case is null");
         }
+        try {
+            return dataSourceCacheByDeviceId.get(getDataSourceCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
+        } catch (ExecutionException ex) {
+            throw new EamDbException("Error getting data source from central repository", ex);
+        }
+    }
 
+    /**
+     * Retrieves Data Source details based on data source ID
+     *
+     * @param correlationCase the current CorrelationCase used for ensuring
+     *                        uniqueness of DataSource
+     * @param dataSourceId    the data source ID number
+     *
+     * @return The data source
+     */
+    private CorrelationDataSource getDataSourceByIdFromCr(CorrelationCase correlationCase, int dataSourceId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -622,6 +708,9 @@ abstract class AbstractSqlEamDb implements EamDb {
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
+            }
+            if (eamDataSourceResult != null) {
+                dataSourceCacheByDeviceId.put(getDataSourceCacheKey(correlationCase.getID(), eamDataSourceResult.getDeviceID()), eamDataSourceResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
@@ -2750,7 +2839,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setInt(4, aType.isEnabled() ? 1 : 0);
             preparedStatement.setInt(5, aType.getId());
             preparedStatement.executeUpdate();
-
+            typeCache.put(aType.getId(), aType);
         } catch (SQLException ex) {
             throw new EamDbException("Error updating correlation type.", ex); // NON-NLS
         } finally {
@@ -2772,13 +2861,13 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException {
         try {
-            return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () ->getCorrelationTypeByIdFromCr(typeId));
+            return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () -> getCorrelationTypeByIdFromCr(typeId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting correlation type", ex);
         }
     }
-    
-   /**
+
+    /**
      * Get the EamArtifact.Type that has the given Type.Id from the central repo
      *
      * @param typeId Type.Id of Correlation Type to get
