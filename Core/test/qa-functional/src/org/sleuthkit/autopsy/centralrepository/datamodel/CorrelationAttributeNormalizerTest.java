@@ -294,8 +294,8 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
     private static final String THIS_PHONE_NUMBER_SHOULD_PASS = "This phone number should pass.";
 
     public void testValidateUsbId() {
-        final String goodIdOne = "0202:AAFF";       //should pass and be lowered
-        //TODO add all this back when theres is something to validate
+        //TODO will need to be updated once usb validation does somethign interesting
+        final String goodIdOne = "0202:AAFF";       //should pass
         /*final String goodIdTwo = "0202:aaff";       //should pass
         final String badIdThree = "0202:axxf";      //should fail
         final String badIdFour = "";                //should fail
