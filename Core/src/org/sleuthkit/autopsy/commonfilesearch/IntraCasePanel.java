@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
-import org.openide.util.NbBundle;
-
 /**
  * UI controls for Common Files Search scenario where the user intends to find
  * common files between datasources. It is an inner panel which provides the ability
@@ -40,15 +38,12 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private boolean singleDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private final Map<Long, String> dataSourceMap;
-    
-    private String errorMessage;
 
     /**
      * Creates new form IntraCasePanel
      */
     public IntraCasePanel() {
         initComponents();
-        this.errorMessage = "";
         this.dataSourceMap = new HashMap<>();
         this.singleDataSource = true;
     }
@@ -174,21 +169,5 @@ public class IntraCasePanel extends javax.swing.JPanel {
     void setDataSourceMap(Map<Long, String> dataSourceMap) {
         this.dataSourceMap.clear();
         this.dataSourceMap.putAll(dataSourceMap);
-    }
-
-    @NbBundle.Messages({
-        "IntraCasePanel.areSearchCriteriaMet.message=Cannot run intra-case correlation search."
-    })
-    boolean areSearchCriteriaMet() {
-        if(this.dataSourceMap.isEmpty()){
-            this.errorMessage = Bundle.IntraCasePanel_areSearchCriteriaMet_message();
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    String getErrorMessage() {
-        return this.errorMessage;
     }
 }

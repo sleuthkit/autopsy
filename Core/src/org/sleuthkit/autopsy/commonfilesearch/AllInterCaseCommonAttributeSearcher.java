@@ -43,14 +43,14 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
      * @throws EamDbException
      */
     public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType);
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
     }
 
     @Override
     public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase(), corAttrType);
-        return new CommonAttributeSearchResults(interCaseCommonFiles);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
     }
 
     @Override

@@ -46,7 +46,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws EamDbException
      */
     public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType);
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
 
         this.corrleationCaseId = correlationCaseId;
         this.correlationCaseName = "";
@@ -76,7 +76,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
         Map<Integer, List<CommonAttributeValue>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase, corAttrType);
 
-        return new CommonAttributeSearchResults(interCaseCommonFiles);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
     }
 
     @Override

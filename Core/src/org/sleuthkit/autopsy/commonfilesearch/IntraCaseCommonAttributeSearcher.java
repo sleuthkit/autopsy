@@ -55,8 +55,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @param filterByDocMimeType match only on files whose mime types can be
      * broadly categorized as document types
      */
-    IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
     }
 
     /**
@@ -130,7 +130,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
         Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
 
-        return new CommonAttributeSearchResults(instanceCollatedCommonFiles);
+        return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }
 
     /**
