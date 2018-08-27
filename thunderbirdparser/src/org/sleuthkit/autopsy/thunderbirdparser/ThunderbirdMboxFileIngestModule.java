@@ -88,7 +88,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             Case currentCase = Case.getCurrentCaseThrows();
             fileManager = currentCase.getServices().getFileManager();
             blackboard = currentCase.getSleuthkitCase().getBlackboard();
-            communicationsManager = sleuthkitCase.getCommunicationsManager();
+            communicationsManager = currentCase.getSleuthkitCase().getCommunicationsManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             throw new IngestModuleException(Bundle.ThunderbirdMboxFileIngestModule_noOpenCase_errMsg(), ex);
