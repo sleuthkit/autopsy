@@ -85,6 +85,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
                     connectionPool.close();
                     connectionPool = null; // force it to be re-created on next connect()
                 }
+                clearCaches();
             }
         } catch (SQLException ex) {
             throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS
