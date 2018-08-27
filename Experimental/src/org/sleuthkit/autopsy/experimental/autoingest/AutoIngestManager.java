@@ -1431,10 +1431,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
                 }
             }
-            Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
-            if (null != caseDirectory) {
-                job.setCaseDirectoryPath(caseDirectory);
-            }
             newPendingJobsList.add(job);
         }
 
