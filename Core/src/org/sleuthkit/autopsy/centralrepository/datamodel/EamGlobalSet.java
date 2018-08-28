@@ -32,7 +32,7 @@ public class EamGlobalSet {
     private String version;
     private TskData.FileKnown fileKnownStatus;
     private boolean isReadOnly;
-    private CorrelationAttribute.Type type;
+    private CorrelationAttributeInstance.Type type;
     private LocalDate importDate;
 
     public EamGlobalSet(
@@ -42,7 +42,7 @@ public class EamGlobalSet {
             String version,
             TskData.FileKnown knownStatus,
             boolean isReadOnly,
-            CorrelationAttribute.Type type,
+            CorrelationAttributeInstance.Type type,
             LocalDate importDate) {
         this.globalSetID = globalSetID;
         this.orgID = orgID;
@@ -60,7 +60,7 @@ public class EamGlobalSet {
             String version,
             TskData.FileKnown knownStatus,
             boolean isReadOnly,
-            CorrelationAttribute.Type type,
+            CorrelationAttributeInstance.Type type,
             LocalDate importDate) {
         this(-1, orgID, setName, version, knownStatus, isReadOnly, type, importDate);
     }
@@ -83,7 +83,7 @@ public class EamGlobalSet {
             String version,
             TskData.FileKnown knownStatus,
             boolean isReadOnly,
-            CorrelationAttribute.Type type) {
+            CorrelationAttributeInstance.Type type) {
         this(-1, orgID, setName, version, knownStatus, isReadOnly, type, LocalDate.now());
     }
 
@@ -176,7 +176,7 @@ public class EamGlobalSet {
      * 
      * @return the type (files, phone numbers, etc)
      */
-    public CorrelationAttribute.Type getType() {
+    public CorrelationAttributeInstance.Type getType() {
         return type;
     }
     
@@ -185,7 +185,7 @@ public class EamGlobalSet {
      * 
      * @param type 
      */
-    void setType(CorrelationAttribute.Type type) {
+    void setType(CorrelationAttributeInstance.Type type) {
         this.type = type;
     }
 
