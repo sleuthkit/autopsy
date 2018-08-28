@@ -286,8 +286,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
      */
-    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.comment.name=Comment",
-        "AbstractAbstractFileNode.createSheet.comment.displayName=Comment"})
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.comment.name=C",
+        "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     protected void addCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
 
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;

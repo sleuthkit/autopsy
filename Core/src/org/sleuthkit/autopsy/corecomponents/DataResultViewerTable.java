@@ -656,7 +656,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private class IconRendererTableListener implements TableColumnModelListener {
 
-        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=Comment"})
+        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
                 if (e.getSource() instanceof ETableColumnModel) {

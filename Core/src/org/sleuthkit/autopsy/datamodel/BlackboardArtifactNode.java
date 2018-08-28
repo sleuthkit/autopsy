@@ -561,8 +561,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
      */
-    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=Comment",
-        "BlackboardArtifactNode.createSheet.comment.displayName=Comment"})
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
+        "BlackboardArtifactNode.createSheet.comment.displayName=C"})
     protected void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags) {
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
         for (Tag tag : tags) {
