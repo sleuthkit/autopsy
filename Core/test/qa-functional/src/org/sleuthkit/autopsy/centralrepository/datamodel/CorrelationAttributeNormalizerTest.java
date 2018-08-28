@@ -211,9 +211,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         }
         try { //TODO consider a better library?
             assertTrue("This email should pass", CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, goodEmailSix).equals(goodEmailSix));
-            fail("This should have thrown an exception.");
         } catch (CorrelationAttributeNormalizationException ex) {
-            Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
