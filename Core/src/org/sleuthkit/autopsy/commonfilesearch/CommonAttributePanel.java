@@ -34,7 +34,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -76,13 +75,13 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
      * Creates new form CommonFilesPanel
      */
     @NbBundle.Messages({
-        "CommonFilesPanel.title=Common Files Panel",
-        "CommonFilesPanel.exception=Unexpected Exception loading DataSources.",
-        "CommonFilesPanel.frame.title=Find Common Files",
-        "CommonFilesPanel.frame.msg=Find Common Files"})
+        "CommonAttributePanel.title=Common Attribute Panel",
+        "CommonAttributePanel.exception=Unexpected Exception loading DataSources.",
+        "CommonAttributePanel.frame.title=Find Common Attributes",
+        "CommonAttributePanel.frame.msg=Find Common Attributes"})
     public CommonAttributePanel() {
-        super(new JFrame(Bundle.CommonFilesPanel_frame_title()),
-                Bundle.CommonFilesPanel_frame_msg(), true);
+        super(new JFrame(Bundle.CommonAttributePanel_frame_title()),
+                Bundle.CommonAttributePanel_frame_msg(), true);
         initComponents();
 
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
@@ -163,18 +162,18 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     }
 
     @NbBundle.Messages({
-        "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
-        "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
-        "CommonFilesPanel.search.results.pathText=Common Files Search Results",
-        "CommonFilesPanel.search.done.searchProgressGathering=Gathering Common Files Search Results.",
-        "CommonFilesPanel.search.done.searchProgressDisplay=Displaying Common Files Search Results.",
-        "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
-        "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
-        "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
-        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files.",
-        "CommonFilesPanel.search.done.sqlException=Unable to query db for files or data sources."})
+        "CommonAttributePanel.search.results.titleAll=Common Attributes (All Data Sources)",
+        "CommonAttributePanel.search.results.titleSingle=Common Attributes (Match Within Data Source: %s)",
+        "CommonAttributePanel.search.results.pathText=Common Attribute Search Results",
+        "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Attribute Search Results.",
+        "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Attribute Search Results.",
+        "CommonAttributePanel.search.done.tskCoreException=Unable to run query against DB.",
+        "CommonAttributePanel.search.done.noCurrentCaseException=Unable to open case file.",
+        "CommonAttributePanel.search.done.exception=Unexpected exception running Common Attribute Search.",
+        "CommonAttributePanel.search.done.interupted=Something went wrong finding common attributes.",
+        "CommonAttributePanel.search.done.sqlException=Unable to query db for attributes or data sources."})
     private void search() {
-        String pathText = Bundle.CommonFilesPanel_search_results_pathText();
+        String pathText = Bundle.CommonAttributePanel_search_results_pathText();
 
         new SwingWorker<CommonAttributeSearchResults, Void>() {
 
@@ -182,20 +181,20 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             private ProgressHandle progress;
 
             private void setTitleForAllDataSources() {
-                this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
+                this.tabTitle = Bundle.CommonAttributePanel_search_results_titleAll();
             }
 
             private void setTitleForSingleSource(Long dataSourceId) {
-                final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
+                final String CommonAttributePanel_search_results_titleSingle = Bundle.CommonAttributePanel_search_results_titleSingle();
                 final Object[] dataSourceName = new Object[]{intraCasePanel.getDataSourceMap().get(dataSourceId)};
 
-                this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
+                this.tabTitle = String.format(CommonAttributePanel_search_results_titleSingle, dataSourceName);
             }
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
             protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-                progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
+                progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
 
@@ -270,28 +269,28 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
 
-                    progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgressDisplay());
+                    progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
                     progress.finish();
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_search_done_interupted());
                 } catch (ExecutionException ex) {
                     String errorMessage;
                     Throwable inner = ex.getCause();
                     if (inner instanceof TskCoreException) {
                         LOGGER.log(Level.SEVERE, "Failed to load files from database.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_tskCoreException();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
                         LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_noCurrentCaseException();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_noCurrentCaseException();
                     } else if (inner instanceof SQLException) {
                         LOGGER.log(Level.SEVERE, "Unable to query db for files.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_sqlException();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_sqlException();
                     } else {
                         LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_exception();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
                 }
@@ -307,12 +306,12 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
      * names
      */
     @NbBundle.Messages({
-        "CommonFilesPanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
-        "CommonFilesPanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
-        "CommonFilesPanel.setupDataSources.done.exception=Unexpected exception loading data sources.",
-        "CommonFilesPanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
-        "CommonFilesPanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
+        "CommonAttributePanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
+        "CommonAttributePanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
+        "CommonAttributePanel.setupDataSources.done.exception=Unexpected exception loading data sources.",
+        "CommonAttributePanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
+        "CommonAttributePanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
+        "CommonAttributePanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
     private void setupDataSources() {
 
         new SwingWorker<Map<Long, String>, Void>() {
@@ -354,22 +353,22 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupDataSources_done_interupted());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_setupDataSources_done_interupted());
                 } catch (ExecutionException ex) {
                     String errorMessage;
                     Throwable inner = ex.getCause();
                     if (inner instanceof TskCoreException) {
                         LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_tskCoreException();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
                         LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_noCurrentCaseException();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_noCurrentCaseException();
                     } else if (inner instanceof SQLException) {
                         LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_sqlException();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_sqlException();
                     } else {
                         LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_exception();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
                 }
@@ -378,8 +377,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     }
 
     @NbBundle.Messages({
-        "CommonFilesPanel.setupCases.done.interruptedException=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.setupCases.done.exeutionException=Unexpected exception loading cases."})
+        "CommonAttributePanel.setupCases.done.interruptedException=Something went wrong building the Common Files Search dialog box.",
+        "CommonAttributePanel.setupCases.done.exeutionException=Unexpected exception loading cases."})
     private void setupCases() {
 
         new SwingWorker<Map<Integer, String>, Void>() {
@@ -431,10 +430,10 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     this.updateUi();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupCases_done_interruptedException());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_setupCases_done_interruptedException());
                 } catch (ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupCases_done_exeutionException());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_setupCases_done_exeutionException());
                 }
             }
 

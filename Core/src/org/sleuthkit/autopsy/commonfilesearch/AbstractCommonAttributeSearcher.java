@@ -76,10 +76,10 @@ public abstract class AbstractCommonAttributeSearcher {
      * @return an informative string
      */
     @NbBundle.Messages({
-        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraAll=Common Files (All Data Sources, %s)",
-        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraSingle=Common Files (Data Source: %s, %s)",
-        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleInterAll=Common Files (All Central Repository Cases, %s)",
-        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleInterSingle=Common Files (Central Repository Case: %s, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraAll=Common Attributes (All Data Sources, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleIntraSingle=Common Attributes (Data Source: %s, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleInterAll=Common Attributes (All Central Repository Cases, %s)",
+        "AbstractCommonFilesMetadataBuilder.buildTabTitle.titleInterSingle=Common Attributes (Central Repository Case: %s, %s)",
     })
     abstract String buildTabTitle();
     
@@ -88,6 +88,7 @@ public abstract class AbstractCommonAttributeSearcher {
         "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.media=Media",
         "AbstractCommonFilesMetadataBuilder.buildCategorySelectionString.all=All File Categories"
     })
+    
     String buildCategorySelectionString() {
         if (!this.isFilterByDoc() && !this.isFilterByMedia()) {
             return Bundle.AbstractCommonFilesMetadataBuilder_buildCategorySelectionString_all();

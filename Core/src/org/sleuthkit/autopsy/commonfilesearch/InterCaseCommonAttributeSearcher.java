@@ -59,4 +59,5 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
         }
         throw new IllegalArgumentException("Cannot locate case.");
     }
+    
 }

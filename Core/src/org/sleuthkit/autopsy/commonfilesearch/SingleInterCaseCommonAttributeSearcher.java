@@ -84,6 +84,6 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
     String buildTabTitle() {
         final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterSingle();
-        return String.format(titleTemplate, new Object[]{correlationCaseName, buildCategorySelectionString});
+        return String.format(titleTemplate, new Object[]{correlationCaseName, corAttrType.getDisplayName()});
     }
 }

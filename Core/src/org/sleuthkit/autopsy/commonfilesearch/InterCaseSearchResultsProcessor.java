@@ -212,8 +212,10 @@ final class InterCaseSearchResultsProcessor {
                 }
                 //Add the final instances
                 ArrayList<CommonAttributeValue> value = new ArrayList<>();
-                value.add(commonAttributeValue);
-                instanceCollatedCommonFiles.put(commonAttributeValue.getInstanceCount(), value);
+                if(commonAttributeValue != null) {
+                    value.add(commonAttributeValue);
+                    instanceCollatedCommonFiles.put(commonAttributeValue.getInstanceCount(), value);
+                }
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }

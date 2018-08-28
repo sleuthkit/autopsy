@@ -57,6 +57,6 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     String buildTabTitle() {
         final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterAll();
-        return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
+        return String.format(titleTemplate, new Object[]{corAttrType.getDisplayName()});
     }
 }
