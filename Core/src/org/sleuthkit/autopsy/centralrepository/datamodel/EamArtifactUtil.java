@@ -251,7 +251,8 @@ public class EamArtifactUtil {
             type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
             correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
             if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
+                //if the correlationCase is not in the Central repo then attributes generated in relation to it will not be
+                return null;
             }
             correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
             value = file.getMd5Hash();
