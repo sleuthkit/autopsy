@@ -1817,8 +1817,6 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public boolean isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        String normalizeValued = CorrelationAttributeNormalizer.normalize(aType, value);
-        
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttributeInstance.FILES_TYPE_ID) {
             return false;
@@ -1832,6 +1830,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql = "SELECT count(*) FROM %s WHERE value=? AND known_status=?";
 
         try {
+            String normalizeValued = CorrelationAttributeNormalizer.normalize(aType, value);
+        
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(aType)));
             preparedStatement.setString(1, normalizeValued);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());

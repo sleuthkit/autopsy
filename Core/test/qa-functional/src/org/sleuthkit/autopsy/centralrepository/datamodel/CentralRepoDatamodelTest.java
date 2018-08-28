@@ -372,7 +372,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getArtifactInstancesKnownBad failed to throw exception for null type");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue("This is the expected behavior.", true);
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail("should have got CentralRepoValidationException");
@@ -384,6 +384,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("should get an exception for null inout");
         } catch (CorrelationAttributeNormalizationException ex) {
             //this is expecpted
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -416,6 +417,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting notable instance count with null value (should throw an exception)
@@ -426,6 +428,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting cases with notable instances (all instances are notable)
@@ -456,6 +459,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting cases with null value (should throw exception)
@@ -467,6 +471,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
     private static final String BAD_PATH = "badPath";
@@ -558,6 +563,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test preparing artifact with null case
@@ -568,6 +574,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("bulkInsertArtifacts failed to throw exception for null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -581,6 +588,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("prepareBulkArtifact failed to throw exception for null data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -593,6 +601,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -606,6 +615,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("prepareBulkArtifact failed to throw exception for null known status");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -779,15 +789,12 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail(ex.getMessage());
         }
 
-        // Test CorrelationAttributeInstance failure cases
-        // Create an attribute to use in the next few tests
-        CorrelationAttributeInstance failAttr;
+        // Test CorrelationAttributeInstance creation
         try {
-            failAttr = new CorrelationAttributeInstance(fileType, randomHash());
+            new CorrelationAttributeInstance(fileType, randomHash());
         } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
-            return;
         }
 
         // Test adding instance with null case
@@ -799,6 +806,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("was expecting to get CorrelationAttributeNormalizationException");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test adding instance with invalid case ID
@@ -809,6 +817,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for invalid case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             fail("was expecting to get EamDbException");
         }
@@ -820,6 +829,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for null data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             fail("was expecting to get EamDbException");
         }
@@ -832,6 +842,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for invalid data source");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             fail("was expecting to get EamDbException");
         }
@@ -843,6 +854,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             fail("was expecting to get EamDbException");
         }
@@ -854,6 +866,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for null known status");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             fail("was expecting to get EamDbException");
         }
@@ -869,6 +882,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test null value
@@ -878,6 +892,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addArtifact failed to throw exception for null value");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (EamDbException ex) {
             fail("expected to get CorrelationAttributeNormalizationException");
         }
@@ -906,6 +921,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with null type
@@ -917,6 +933,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with null value
@@ -928,6 +945,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch(CorrelationAttributeNormalizationException ex){
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with path that should produce results
@@ -954,6 +972,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getArtifactInstancesByPath failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with null path
@@ -962,6 +981,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getArtifactInstancesByPath failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instance count with path that should produce results
@@ -991,6 +1011,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch(CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instance count with null value
@@ -1002,6 +1023,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch(CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting frequency of value that is in all three data sources
@@ -1051,6 +1073,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getFrequencyPercentage failed to throw exception for null type");
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting frequency with null attribute
@@ -1059,6 +1082,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getFrequencyPercentage failed to throw exception for null attribute");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -1146,6 +1170,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting data source count for null value
@@ -1157,6 +1182,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
         
         // Test running processinstance which queries all rows from instances table
@@ -1182,7 +1208,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().processInstanceTable(null, null);
             fail("processinstance method failed to throw exception for null type value");
         } catch (EamDbException ex) {
-            // This is the expected 
+            // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
         
          // Test running processinstance which queries all rows from instances table
@@ -1208,7 +1235,8 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().processInstanceTableWhere(null, null, null);
             fail("processinstance method failed to throw exception for null type value");
         } catch (EamDbException ex) {
-            // This is the expected 
+            // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
 
@@ -1258,6 +1286,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newCorrelationType failed to throw exception for duplicate name/db table");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test new type with null name
@@ -1267,6 +1296,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newCorrelationType failed to throw exception for null name table");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test new type with null db name
@@ -1276,6 +1306,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("CorrelationAttributeInstance.Type failed to throw exception for null db table name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test new type with null type
@@ -1284,6 +1315,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newCorrelationType failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting all correlation types
@@ -1335,6 +1367,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getCorrelationTypeById failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test updating a valid type
@@ -1378,6 +1411,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateCorrelationType failed to throw exception for null name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test updating a null type
@@ -1387,6 +1421,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateCorrelationType failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
 
@@ -1453,6 +1488,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newOrganization failed to throw exception for duplicate org name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test adding null organization
@@ -1461,6 +1497,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newOrganization failed to throw exception for null org");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test adding organization with null name
@@ -1470,6 +1507,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newOrganization failed to throw exception for null name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting organizations
@@ -1502,6 +1540,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getOrganizationByID failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test updating valid org
@@ -1537,6 +1576,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateOrganization worked for invalid ID");
         } catch (EamDbException ex) {
             // this is the expected behavior  
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test updating null org
@@ -1545,6 +1585,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateOrganization failed to throw exception for null org");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test updating org to null name
@@ -1555,6 +1596,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateOrganization failed to throw exception for null name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test deleting existing org that isn't in use
@@ -1585,6 +1627,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("deleteOrganization failed to throw exception for in use organization");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test deleting non-existent org
@@ -1594,6 +1637,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("deleteOrganization failed to throw exception for non-existent organization");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test deleting null org
@@ -1602,6 +1646,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("deleteOrganization failed to throw exception for null organization");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
 
@@ -1715,6 +1760,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addReferenceInstance failed to throw exception for invalid ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -1731,6 +1777,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test adding file instance with null known status
@@ -1741,6 +1788,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("EamGlobalFileInstance failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -1753,6 +1801,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("addReferenceInstance failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -1786,6 +1835,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("bulkInsertReferenceTypeEntries failed to throw exception for null list");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test bulk add file instance with invalid reference set ID
@@ -1807,6 +1857,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("bulkInsertReferenceTypeEntries failed to throw exception for null type");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
@@ -1836,6 +1887,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getReferenceInstancesByTypeValue failed to throw exception for invalid table");
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting reference instances with null type
@@ -1847,6 +1899,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting reference instances with null value
@@ -1858,6 +1911,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch(CorrelationAttributeNormalizationException ex){
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test checking existing hash/ID
@@ -1893,6 +1947,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch(CorrelationAttributeNormalizationException ex){
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test checking existing hash/ID
@@ -1931,6 +1986,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex){
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test checking invalid type
@@ -1942,6 +1998,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test known bad with notable data
@@ -1980,6 +2037,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test known bad with null type
@@ -1991,6 +2049,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());            
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test known bad with invalid type
@@ -2002,6 +2061,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
 
@@ -2078,6 +2138,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newReferenceSet failed to throw exception from duplicate name/version pair");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a reference set with the same name but different version
@@ -2097,6 +2158,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newReferenceSet failed to throw exception from invalid org ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a reference set with null name
@@ -2106,6 +2168,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newReferenceSet failed to throw exception from null name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a reference set with null version
@@ -2115,6 +2178,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newReferenceSet failed to throw exception from null version");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a reference set with null file known status
@@ -2124,6 +2188,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newReferenceSet failed to throw exception from null file known status");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a reference set with null file type
@@ -2243,6 +2308,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getAllReferenceSets failed to throw exception from null type argument");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test deleting an existing reference set
@@ -2290,6 +2356,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getReferenceSetOrganization failed to throw exception for invalid reference set ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
 
@@ -2355,6 +2422,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newDataSource did not throw exception from invalid case ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a data source with null device ID
@@ -2364,6 +2432,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newDataSource did not throw exception from null device ID");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test creating a data source with null name
@@ -2373,6 +2442,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newDataSource did not throw exception from null name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting a data source with valid case and ID
@@ -2399,6 +2469,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("getDataSource did not throw exception from null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting a data source with null ID
@@ -2496,6 +2567,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 fail("newCase did not throw expected exception from null uuid");
             } catch (EamDbException ex) {
                 // This is the expected behavior
+                assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
             }
 
             // Test null name
@@ -2505,6 +2577,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 fail("newCase did not throw expected exception from null name");
             } catch (EamDbException ex) {
                 // This is the expected behavior
+                assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
             }
 
             // Test creating a case with an already used UUID
@@ -2539,6 +2612,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 fail("newCase did not throw expected exception from null case");
             } catch (EamDbException ex) {
                 // This is the expected behavior
+                assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
             }
 
             // Test update case
@@ -2589,6 +2663,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 fail("updateCase did not throw expected exception from null case");
             } catch (EamDbException ex) {
                 // This is the expected behavior
+                assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
             }
 
             // Test getting a case from an Autopsy case
@@ -2672,6 +2747,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 fail("bulkInsertCases did not throw expected exception from null list");
             } catch (EamDbException ex) {
                 // This is the expected behavior
+                assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
             }
         } finally {
             try {
@@ -2734,6 +2810,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("newDbInfo did not throw expected exception from null value");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Try getting the dbInfo entry that should exist
@@ -2778,6 +2855,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateDbInfo did not throw expected exception from null value");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Try updating a null name
@@ -2795,8 +2873,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("updateDbInfo did not throw expected exception from non-existent name");
         } catch (EamDbException ex) {
             // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
+    private static final String THIS_IS_THE_EXPECTED_BEHAVIOR = "This is the expected behavior.";
 
     private static String randomHash() {
         
