@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.util.Exceptions;
+import java.util.logging.Level;
 
 /**
  * Representation of a PhysicalDisk or partition.
@@ -37,6 +37,7 @@ public class LocalDisk {
     private String path;
     private long size;
     private String mountPoint = null;
+    private static final Logger logger = Logger.getLogger(LocalDisk.class.getName());
 
     public LocalDisk(String name, String path, long size) {
         this.name = name;
@@ -106,7 +107,7 @@ public class LocalDisk {
             this.mountPoint = builder.toString();
             process.destroy();
         } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "Unable to find the mount point for the device", ex);
         }
     }
     
