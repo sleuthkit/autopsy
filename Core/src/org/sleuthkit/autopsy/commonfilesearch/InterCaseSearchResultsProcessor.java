@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
@@ -45,36 +46,70 @@ import org.sleuthkit.datamodel.HashUtility;
 final class InterCaseSearchResultsProcessor {
 
     private Map<Long, String> dataSources;
-    private static Type correlationType;
+    
+    /**
+     * The CorrelationAttributeInstance.Type this Processor will query on
+     */
+    private final Type correlationType;
 
     private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
 
-    private final String interCaseWhereClause = "value IN (SELECT value FROM file_instances"
-            + " WHERE value IN (SELECT value FROM  file_instances"
-            + " WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)"
-            + " GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value";
+    /**
+     * The initial CorrelationAttributeInstance ids lookup query.
+     */
+    private final String interCaseWhereClause;
 
-    private final String singleInterCaseWhereClause = "value IN (SELECT value FROM file_instances "
-            + "WHERE value IN (SELECT value FROM  file_instances "
-            + "WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value) "
-            + "AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value";
+    /**
+     * The single CorrelationAttributeInstance object retrieval query
+     */
+    private final String singleInterCaseWhereClause;
 
     /**
      * Used in the InterCaseCommonAttributeSearchers to find common attribute
      * instances and generate nodes at the UI level.
      *
-     * @param dataSources
+     * @param dataSources the cases to filter and correlate on
+     * @param theType the type of CR data to search
      */
-    InterCaseSearchResultsProcessor(Map<Long, String> dataSources) {
+    InterCaseSearchResultsProcessor(Map<Long, String> dataSources, CorrelationAttributeInstance.Type theType) {
+        this.correlationType = theType;
         this.dataSources = dataSources;
+        interCaseWhereClause = getInterCaseWhereClause();
+        singleInterCaseWhereClause = getSingleInterCaseWhereClause();
     }
-
+    
+    private String getInterCaseWhereClause() {
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(correlationType);
+        StringBuilder sqlString = new StringBuilder(6);
+        sqlString.append("value IN (SELECT value FROM ")
+                .append(tableName)
+                .append(" WHERE value IN (SELECT value FROM ")
+                .append(tableName)
+                .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
+                .append(" GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
+        return sqlString.toString();
+    }
+    private String getSingleInterCaseWhereClause() {
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(correlationType);
+        StringBuilder sqlString = new StringBuilder(6);
+        sqlString.append("value IN (SELECT value FROM ")
+                .append(tableName)
+                .append("WHERE value IN (SELECT value FROM ")
+                .append(tableName)
+                .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
+                .append(" AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
+        return sqlString.toString();
+    }
     /**
      * Used in the CentralRepoCommonAttributeInstance to find common attribute
      * instances and generate nodes at the UI level.
+     * 
+     * @param theType the type of CR data to search
      */
-    InterCaseSearchResultsProcessor() {
-        //intentionally emtpy - we need a constructor which does not set the data sources field
+    InterCaseSearchResultsProcessor(CorrelationAttributeInstance.Type theType) {
+        this.correlationType = theType;
+        interCaseWhereClause = getInterCaseWhereClause();
+        singleInterCaseWhereClause = getSingleInterCaseWhereClause();
     }
 
     /**
@@ -83,12 +118,12 @@ final class InterCaseSearchResultsProcessor {
      * @param attrbuteId Row of CorrelationAttribute to retrieve from the EamDb
      * @return CorrelationAttribute object representation of retrieved match
      */
-    CorrelationAttributeInstance findSingleCorrelationAttribute(int attrbuteId, CorrelationAttributeInstance.Type theType) {
+    CorrelationAttributeInstance findSingleCorrelationAttribute(int attrbuteId) {
         try {
-            correlationType = theType;
+            
             InterCaseCommonAttributeRowCallback instancetableCallback = new InterCaseCommonAttributeRowCallback();
             EamDb DbManager = EamDb.getInstance();
-            DbManager.processInstanceTableWhere(theType, String.format("id = %s", attrbuteId), instancetableCallback);
+            DbManager.processInstanceTableWhere(correlationType, String.format("id = %s", attrbuteId), instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
 
@@ -105,15 +140,14 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<Integer, List<CommonAttributeValue>> findInterCaseCommonAttributeValues(Case currentCase, CorrelationAttributeInstance.Type theType) {
+    Map<Integer, List<CommonAttributeValue>> findInterCaseCommonAttributeValues(Case currentCase) {
         try {
-            correlationType = theType;
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
 
             int caseId = DbManager.getCase(currentCase).getID();
 
-            DbManager.processInstanceTableWhere(theType, String.format(interCaseWhereClause, caseId,
+            DbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue()),
                     instancetableCallback);
 
@@ -133,14 +167,13 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase The case of interest. Matches must exist in this case.
      */
-    Map<Integer, List<CommonAttributeValue>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase, CorrelationAttributeInstance.Type theType) {
+    Map<Integer, List<CommonAttributeValue>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
         try {
-            correlationType = theType;
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             int caseId = DbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
-            DbManager.processInstanceTableWhere(theType, String.format(singleInterCaseWhereClause, caseId,
+            DbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
@@ -177,6 +210,10 @@ final class InterCaseSearchResultsProcessor {
                     countAndAddCommonAttributes(corValue, resultId);
 
                 }
+                //Add the final instances
+                ArrayList<CommonAttributeValue> value = new ArrayList<>();
+                value.add(commonAttributeValue);
+                instanceCollatedCommonFiles.put(commonAttributeValue.getInstanceCount(), value);
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
