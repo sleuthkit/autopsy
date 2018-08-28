@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.Optional;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -41,52 +42,57 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 public class NextUnseenGroup extends Action {
 
     private static final String IMAGE_PATH = "/org/sleuthkit/autopsy/imagegallery/images/"; //NON-NLS
-    private static final Image END = new Image(NextUnseenGroup.class.getResourceAsStream(
+    private static final Image END_IMAGE = new Image(NextUnseenGroup.class.getResourceAsStream(
             IMAGE_PATH + "control-stop.png")); //NON-NLS
-    private static final Image ADVANCE = new Image(NextUnseenGroup.class.getResourceAsStream(
+    private static final Image ADVANCE_IMAGE = new Image(NextUnseenGroup.class.getResourceAsStream(
             IMAGE_PATH + "control-double.png")); //NON-NLS
 
     private static final String MARK_GROUP_SEEN = Bundle.NextUnseenGroup_markGroupSeen();
     private static final String NEXT_UNSEEN_GROUP = Bundle.NextUnseenGroup_nextUnseenGroup();
 
+    private final ImageGalleryController controller;
+    private final ObservableList<DrawableGroup> unSeenGroups;
+
     public NextUnseenGroup(ImageGalleryController controller) {
         super(NEXT_UNSEEN_GROUP);
+        setGraphic(new ImageView(ADVANCE_IMAGE));
+
+        this.controller = controller;
         GroupManager groupManager = controller.getGroupManager();
+        unSeenGroups = groupManager.getUnSeenGroups();
+        unSeenGroups.addListener((Observable observable) -> this.updateButton());
 
-        ObservableList<DrawableGroup> unSeenGroups = groupManager.getUnSeenGroups();
-        setGraphic(new ImageView(ADVANCE));
-
-        unSeenGroups.addListener((Observable o) -> this.updateButton(unSeenGroups));
-
-        setEventHandler(event -> {
-            //fx-thread
+        setEventHandler(event -> {    //on fx-thread
             //if there is a group assigned to the view, mark it as seen
             Optional.ofNullable(controller.viewState())
                     .map(ObservableValue<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
-                    .ifPresent(group -> groupManager.saveGroupSeen(group, true));
+                    .ifPresent(group -> {
+                        groupManager.saveGroupSeen(group, true)
+                                .addListener(this::advanceToNextUnseenGroup, Platform::runLater);
+                    });
 
-            if (unSeenGroups.isEmpty() == false) {
-                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
-                updateButton(unSeenGroups);
-            }
         });
-        updateButton(unSeenGroups);
+        updateButton();
     }
 
-    /**
-     *
-     * @param unSeenGroups the value of unSeenGroups
-     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void updateButton(ObservableList<DrawableGroup> unSeenGroups) {
+    private void advanceToNextUnseenGroup() {
+        if (unSeenGroups.isEmpty() == false) {
+            controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+        }
+        updateButton();
+    }
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private void updateButton() {
         setDisabled(unSeenGroups.isEmpty());
         if (unSeenGroups.size() <= 1) {
             setText(MARK_GROUP_SEEN);
-            setGraphic(new ImageView(END));
+            setGraphic(new ImageView(END_IMAGE));
         } else {
             setText(NEXT_UNSEEN_GROUP);
-            setGraphic(new ImageView(ADVANCE));
+            setGraphic(new ImageView(ADVANCE_IMAGE));
         }
     }
 }

@@ -286,20 +286,19 @@ public class GroupManager {
      *         DB.
      */
     public ListenableFuture<?> saveGroupSeen(DrawableGroup group, boolean seen) {
-        synchronized (controller) {
-            DrawableDB db = getDB();
-            if (nonNull(db)) {
-                return exec.submit(() -> {
-                    try {
-                        db.markGroupSeen(group.getGroupKey(), seen);
-                        group.setSeen(seen);
-
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
-                    }
-                });
-            }
+        DrawableDB db = getDB();
+        if (nonNull(db)) {
+            return exec.submit(() -> {
+                try {
+                    db.markGroupSeen(group.getGroupKey(), seen);
+                    group.setSeen(seen);
+                    Platform.runLater(() -> updateUnSeenGroups(group, seen));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
+                }
+            });
         }
+
         return Futures.immediateFuture(null);
     }
 
@@ -659,9 +658,7 @@ public class GroupManager {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
                                 group.seenProperty().addListener((o, oldSeen, newSeen)
-                                        -> saveGroupSeen(group, newSeen)
-                                                .addListener(() -> updateUnSeenGroups(group, newSeen),
-                                                        Platform::runLater));
+                                        -> saveGroupSeen(group, newSeen));
 
                                 groupMap.put(groupKey, group);
                             }
@@ -857,7 +854,6 @@ public class GroupManager {
                     default:
                         //otherwise do straight db query 
                         if (nonNull(db)) {
-                            //TODO -1017:  pass datasource in here as appropriate
                             values = db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource);
                         }
                 }
