@@ -1589,7 +1589,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws CoordinationServiceException, InterruptedException, AutoIngestJobException {
             Path caseDirectoryPath = nodeData.getCaseDirectoryPath();
             if (!caseDirectoryPath.toFile().exists()) {
-                sysLogger.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory, ignoring job", nodeData.getManifestFilePath()));
+                sysLogger.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory %s, ignoring job", nodeData.getManifestFilePath(), caseDirectoryPath.toString()));
                 return;
             }
 
