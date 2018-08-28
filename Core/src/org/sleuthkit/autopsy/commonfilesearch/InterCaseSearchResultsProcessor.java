@@ -94,7 +94,7 @@ final class InterCaseSearchResultsProcessor {
         StringBuilder sqlString = new StringBuilder(6);
         sqlString.append("value IN (SELECT value FROM ")
                 .append(tableName)
-                .append("WHERE value IN (SELECT value FROM ")
+                .append(" WHERE value IN (SELECT value FROM ")
                 .append(tableName)
                 .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
                 .append(" AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
