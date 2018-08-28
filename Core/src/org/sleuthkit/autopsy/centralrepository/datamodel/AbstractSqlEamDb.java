@@ -542,12 +542,27 @@ abstract class AbstractSqlEamDb implements EamDb {
         return cases;
     }
 
-    private static String getDataSourceCacheKey(int caseId, String dataSourceDeviceId) {
-        return "Case" + caseId + "DeviceId" + dataSourceDeviceId;
+    /**
+     * Create a key to the DataSourceCacheByDeviceId 
+     *
+     * @param caseId - the id of the CorrelationCase in the Central Repository
+     * @param dataSourceDeviceId - the device Id of the data source
+     *
+     * @return a String to be used as a key for the dataSourceCacheByDeviceId
+     */
+    private static String getDataSourceByDeviceIdCacheKey(int caseId, String dataSourceDeviceId) {
+        return "Case" + caseId + "DeviceId" + dataSourceDeviceId; //NON-NLS
     }
 
-    private static String getDataSourceCacheKey(int caseId, int dataSourceId) {
-        return "Case" + caseId + "Id" + dataSourceId;
+    /**
+     * Create a key to the DataSourceCacheById
+     *
+     * @param caseId - the id of the CorrelationCase in the Central Repository
+     * @param dataSourceId - the id of the datasource in the central repository
+     * @return a String to be used as a key for the dataSourceCacheById
+     */
+    private static String getDataSourceByIdCacheKey(int caseId, int dataSourceId) {
+        return "Case" + caseId + "Id" + dataSourceId; //NON-NLS
     }
 
     /**
@@ -584,8 +599,8 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
             CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName());
-            dataSourceCacheByDeviceId.put(getDataSourceCacheKey(dataSource.getCaseID(), dataSource.getDeviceID()), dataSource);
-            dataSourceCacheById.put(getDataSourceCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
+            dataSourceCacheByDeviceId.put(getDataSourceByDeviceIdCacheKey(dataSource.getCaseID(), dataSource.getDeviceID()), dataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
         } finally {
@@ -612,7 +627,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCacheByDeviceId.get(getDataSourceCacheKey(correlationCase.getID(), dataSourceDeviceId), () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
+            return dataSourceCacheByDeviceId.get(getDataSourceByDeviceIdCacheKey(correlationCase.getID(), dataSourceDeviceId), () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
@@ -648,7 +663,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
             if (eamDataSourceResult != null) {
-                dataSourceCacheById.put(getDataSourceCacheKey(correlationCase.getID(), eamDataSourceResult.getID()), eamDataSourceResult);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCase.getID(), eamDataSourceResult.getID()), eamDataSourceResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
@@ -676,7 +691,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCacheByDeviceId.get(getDataSourceCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
+            return dataSourceCacheByDeviceId.get(getDataSourceByIdCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
@@ -709,7 +724,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
             if (eamDataSourceResult != null) {
-                dataSourceCacheByDeviceId.put(getDataSourceCacheKey(correlationCase.getID(), eamDataSourceResult.getDeviceID()), eamDataSourceResult);
+                dataSourceCacheByDeviceId.put(getDataSourceByDeviceIdCacheKey(correlationCase.getID(), eamDataSourceResult.getDeviceID()), eamDataSourceResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
