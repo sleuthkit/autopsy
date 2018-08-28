@@ -86,13 +86,13 @@ final public class CommonAttributeSearchResults {
      * search.
      * 
      * Remove results which are not found in the portion of available data 
-     * sources described by minimumPercentageThreshold.
+ sources described by maximumPercentageThreshold.
      * 
      * @return metadata
      */
-    private Map<Integer, List<CommonAttributeValue>> getMetadata(int minimumPercentageThreshold) throws EamDbException {
+    private Map<Integer, List<CommonAttributeValue>> getMetadata(int maximumPercentageThreshold) throws EamDbException {
         
-        if(minimumPercentageThreshold == 0){
+        if(maximumPercentageThreshold == 0){
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
         }
         
@@ -115,7 +115,7 @@ final public class CommonAttributeSearchResults {
                 
                 int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
                 
-                if(frequencyPercentage < minimumPercentageThreshold){
+                if(frequencyPercentage > maximumPercentageThreshold){
                     if(itemsToRemove.containsKey(key)){
                         itemsToRemove.get(key).add(value);
                     } else {
