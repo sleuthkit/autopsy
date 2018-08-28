@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,6 +70,7 @@ import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
@@ -636,10 +639,12 @@ public final class DrawableDB {
         try {
             String groupSeenQueryStmt;
 
-            if (groupKey.getDataSource().isPresent()) {
-                groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d", groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString(), groupKey.getDataSourceObjId());
+            if (groupKey.getAttribute() == DrawableAttribute.PATH) {
+                groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d",
+                        groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString(), groupKey.getDataSourceObjId());
             } else {
-                groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\'", groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString());
+                groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = 0",
+                        groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString());
             }
 
             GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
@@ -654,14 +659,14 @@ public final class DrawableDB {
         return false;
     }
 
-    public void markGroupSeen(GroupKey<?> gk, boolean seen) throws TskCoreException {
+    public void setGroupSeen(GroupKey<?> gk, boolean seen) throws TskCoreException {
         String updateSQL;
-        if (gk.getDataSource().isPresent()) {
-            updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d", seen ? 1 : 0,
-                    gk.getValueDisplayName(), gk.getAttribute().attrName.toString(), gk.getDataSourceObjId());
+        if (gk.getAttribute() == DrawableAttribute.PATH) {
+            updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d",
+                    seen ? 1 : 0, gk.getValueDisplayName(), gk.getAttribute().attrName.toString(), gk.getDataSourceObjId());
         } else {
-            updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\'", seen ? 1 : 0,
-                    gk.getValueDisplayName(), gk.getAttribute().attrName.toString());
+            updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = 0",
+                    seen ? 1 : 0, gk.getValueDisplayName(), gk.getAttribute().attrName.toString());
         }
         tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
     }
@@ -697,30 +702,6 @@ public final class DrawableDB {
             logger.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
         }
 
-    }
-
-    public void insertFile(DrawableFile f) {
-        DrawableTransaction trans = null;
-        CaseDbTransaction caseDbTransaction = null;
-        try {
-            trans = beginTransaction();
-            caseDbTransaction = tskCase.beginTransaction();
-            insertFile(f, trans, caseDbTransaction);
-            commitTransaction(trans, true);
-            caseDbTransaction.commit();
-        } catch (TskCoreException ex) {
-            if (null != trans) {
-                rollbackTransaction(trans);
-            }
-            if (null != caseDbTransaction) {
-                try {
-                    caseDbTransaction.rollback();
-                } catch (TskCoreException ex2) {
-                    logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
-                }
-            }
-            logger.log(Level.SEVERE, "Error inserting file", ex); //NON-NLS
-        }
     }
 
     public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
@@ -795,7 +776,6 @@ public final class DrawableDB {
             for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Comparable<?> val : vals) {
-                    //use empty string for null values (mime_type), this shouldn't happen!
                     if (null != val) {
                         if (attr == DrawableAttribute.PATH) {
                             insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
@@ -1065,9 +1045,10 @@ public final class DrawableDB {
      *
      * @return
      */
-    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder, DataSource dataSource) {
+    @SuppressWarnings("unchecked")
+    public <A extends Comparable<A>> Multimap<DataSource, A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder, DataSource dataSource) throws TskDataException, TskCoreException {
 
-        List<A> vals = new ArrayList<>();
+        Multimap<DataSource, A> values = HashMultimap.create();
 
         switch (groupBy.attrName) {
             case ANALYZED:
@@ -1080,13 +1061,13 @@ public final class DrawableDB {
                 dbReadLock();
                 //TODO: convert this to prepared statement 
 
-                StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
+                StringBuilder query = new StringBuilder("SELECT data_source_obj_id, " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
 
                 if (dataSource != null) {
                     query.append(" WHERE data_source_obj_id = ").append(dataSource.getId());
                 }
 
-                query.append(" GROUP BY ").append(groupBy.attrName.toString());
+                query.append(" GROUP BY data_source_obj_id, ").append(groupBy.attrName.toString());
 
                 String orderByClause = "";
 
@@ -1115,17 +1096,16 @@ public final class DrawableDB {
                 }
 
                 try (Statement stmt = con.createStatement();
-                        ResultSet valsResults = stmt.executeQuery(query.toString())) {
-                    while (valsResults.next()) {
+                        ResultSet results = stmt.executeQuery(query.toString())) {
+                    while (results.next()) {
                         /*
                          * I don't like that we have to do this cast here, but
                          * can't think of a better alternative at the momment
                          * unless something has gone seriously wrong, we know
                          * this should be of type A even if JAVA doesn't
                          */
-                        @SuppressWarnings("unchecked")
-                        A value = (A) valsResults.getObject(groupBy.attrName.toString());
-                        vals.add(value);
+                        values.put(tskCase.getDataSource(results.getLong("data_source_obj_id")),
+                                (A) results.getObject(groupBy.attrName.toString()));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "Unable to get values for attribute", ex); //NON-NLS
@@ -1134,7 +1114,7 @@ public final class DrawableDB {
                 }
         }
 
-        return vals;
+        return values;
     }
 
     /**
@@ -1157,12 +1137,14 @@ public final class DrawableDB {
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
     private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
-        String insertSQL = "";
+        String insertSQL;
         try {
-            insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (\'%d\', \'%s\', \'%s\')", ds_obj_id, value, groupBy.attrName.toString());
+            insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (\'%d\', \'%s\', \'%s\')",
+                    ds_obj_id, value, groupBy.attrName.toString());
 
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-                insertSQL += String.format(" ON CONFLICT (data_source_obj_id, value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'", value, groupBy.attrName.toString());
+                insertSQL += String.format(" ON CONFLICT (data_source_obj_id, value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'",
+                        value, groupBy.attrName.toString());
             }
 
             tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
@@ -1170,7 +1152,6 @@ public final class DrawableDB {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
                 logger.log(Level.SEVERE, "Unable to insert group", ex); //NON-NLS
-
             }
         }
     }

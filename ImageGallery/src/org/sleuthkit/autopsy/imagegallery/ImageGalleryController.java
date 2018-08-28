@@ -39,7 +39,6 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -61,7 +60,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -126,9 +124,6 @@ public final class ImageGalleryController {
     private final HashSetManager hashSetManager = new HashSetManager();
     private final CategoryManager categoryManager = new CategoryManager(this);
     private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
-
-    // RAMAN TBD: initialize this to 0
-    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(1);
 
     private Runnable showTree;
     private Toolbar toolbar;

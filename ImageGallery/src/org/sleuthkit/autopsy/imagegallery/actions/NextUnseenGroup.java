@@ -68,10 +68,9 @@ public class NextUnseenGroup extends Action {
                     .map(ObservableValue<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
                     .ifPresent(group -> {
-                        groupManager.saveGroupSeen(group, true)
+                        groupManager.setGroupSeen(group, true)
                                 .addListener(this::advanceToNextUnseenGroup, Platform::runLater);
                     });
-
         });
         updateButton();
     }

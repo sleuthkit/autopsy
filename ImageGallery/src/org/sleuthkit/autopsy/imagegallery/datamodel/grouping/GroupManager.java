@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -92,6 +94,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Provides an abstraction layer on top of DrawableDB ( and to some extent
@@ -137,7 +140,7 @@ public class GroupManager {
     private volatile GroupSortBy sortBy = GroupSortBy.PRIORITY;
     private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
     private volatile SortOrder sortOrder = SortOrder.ASCENDING;
-    private volatile DataSource dataSource = null;
+    private volatile DataSource dataSource = null; //null indicates all datasources
 
     private final ReadOnlyObjectWrapper< Comparator<DrawableGroup>> sortByProp = new ReadOnlyObjectWrapper<>(sortBy);
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(groupBy);
@@ -285,12 +288,12 @@ public class GroupManager {
      * @return A ListenableFuture that encapsulates saving the seen state to the
      *         DB.
      */
-    public ListenableFuture<?> saveGroupSeen(DrawableGroup group, boolean seen) {
+    public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
         DrawableDB db = getDB();
         if (nonNull(db)) {
             return exec.submit(() -> {
                 try {
-                    db.markGroupSeen(group.getGroupKey(), seen);
+                    db.setGroupSeen(group.getGroupKey(), seen);
                     group.setSeen(seen);
                     Platform.runLater(() -> updateUnSeenGroups(group, seen));
                 } catch (TskCoreException ex) {
@@ -657,8 +660,8 @@ public class GroupManager {
                             } else {
                                 group = new DrawableGroup(groupKey, fileIDs, groupSeen);
                                 controller.getCategoryManager().registerListener(group);
-                                group.seenProperty().addListener((o, oldSeen, newSeen)
-                                        -> saveGroupSeen(group, newSeen));
+//                                group.seenProperty().addListener((o, oldSeen, newSeen)
+//                                        -> saveGroupSeen(group, newSeen));
 
                                 groupMap.put(groupKey, group);
                             }
@@ -721,16 +724,16 @@ public class GroupManager {
         "# {0} - groupBy attribute Name",
         "# {1} - atribute value",
         "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
-    private class ReGroupTask<AttrType extends Comparable<AttrType>> extends LoggedTask<Void> {
+    private class ReGroupTask<AttrValType extends Comparable<AttrValType>> extends LoggedTask<Void> {
 
         private final DataSource dataSource;
-        private final DrawableAttribute<AttrType> groupBy;
+        private final DrawableAttribute<AttrValType> groupBy;
         private final GroupSortBy sortBy;
         private final SortOrder sortOrder;
 
         private ProgressHandle groupProgress;
 
-        ReGroupTask(DataSource dataSource, DrawableAttribute<AttrType> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+        ReGroupTask(DataSource dataSource, DrawableAttribute<AttrValType> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
             super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), true);
             this.dataSource = dataSource;
             this.groupBy = groupBy;
@@ -757,23 +760,24 @@ public class GroupManager {
             });
 
             // Get the list of group keys
-            final List<AttrType> vals = findValuesForAttribute();
+            final Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
 
-            groupProgress.start(vals.size());
+            groupProgress.start(valsByDataSource.size());
 
             int p = 0;
             // For each key value, partially create the group and add it to the list.
-            for (final AttrType val : vals) {
+            for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
                 if (isCancelled()) {
                     return null;//abort
                 }
                 p++;
-                updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val));
-                updateProgress(p, vals.size());
+                updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
+                updateProgress(p, valsByDataSource.size());
                 groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-                popuplateIfAnalyzed(new GroupKey<>(groupBy, val, dataSource), this);
+                popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
             }
             Platform.runLater(() -> FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy)));
+            Platform.runLater(() -> FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy)));
 
             updateProgress(1, 1);
             return null;
@@ -797,28 +801,27 @@ public class GroupManager {
          *
          * @return
          */
-        @SuppressWarnings({"unchecked"})
-        public List<AttrType> findValuesForAttribute() {
-            List<AttrType> values = Collections.emptyList();
+        public Multimap<DataSource, AttrValType> findValuesForAttribute() {
             DrawableDB db = getDB();
+            Multimap results = HashMultimap.create();
             try {
                 switch (groupBy.attrName) {
                     //these cases get special treatment
                     case CATEGORY:
-                        values = (List<AttrType>) Arrays.asList(DhsImageCategory.values());
+                        results.putAll(null, Arrays.asList(DhsImageCategory.values()));
                         break;
                     case TAGS:
-                        values = (List<AttrType>) controller.getTagsManager().getTagNamesInUse().stream()
+                        results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
                                 .filter(CategoryManager::isNotCategoryTagName)
-                                .collect(Collectors.toList());
+                                .collect(Collectors.toList()));
                         break;
+
                     case ANALYZED:
-                        values = (List<AttrType>) Arrays.asList(false, true);
+                        results.putAll(null, Arrays.asList(false, true));
                         break;
                     case HASHSET:
                         if (nonNull(db)) {
-                            TreeSet<AttrType> names = new TreeSet<>((Collection<? extends AttrType>) db.getHashSetNames());
-                            values = new ArrayList<>(names);
+                            results.putAll(null, new TreeSet<>(db.getHashSetNames()));
                         }
                         break;
                     case MIME_TYPE:
@@ -848,21 +851,20 @@ public class GroupManager {
                             } catch (SQLException | TskCoreException ex) {
                                 Exceptions.printStackTrace(ex);
                             }
-                            values = new ArrayList<>((Collection<? extends AttrType>) types);
+                            results.putAll(null, types);
                         }
                         break;
                     default:
                         //otherwise do straight db query 
                         if (nonNull(db)) {
-                            values = db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource);
+                            results.putAll(db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
                         }
                 }
 
-                return values;
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
-                return Collections.emptyList();
+            } catch (TskCoreException | TskDataException ex) {
+                logger.log(Level.SEVERE, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
             }
+            return results;
         }
     }
 
