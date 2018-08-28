@@ -45,7 +45,7 @@ class UserInputErrorManager {
         //  and add them to the map.
         
         this.currentErrors = new HashMap<>();
-        this.currentErrors.put(FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, new ErrorMessage("Frequency percentage must be greater than zero and less than or equal to 100."));
+        this.currentErrors.put(FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, new ErrorMessage("Invalid Frequency Percentage: 0 < % < 100."));
         this.currentErrors.put(NO_FILE_CATEGORIES_SELECTED_KEY, new ErrorMessage("No file categories are included in the search."));
     }
     
