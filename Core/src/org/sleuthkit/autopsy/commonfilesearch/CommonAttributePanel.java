@@ -477,7 +477,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         setMaximumSize(new java.awt.Dimension(412, 440));
         setMinimumSize(new java.awt.Dimension(412, 440));
-        setPreferredSize(new java.awt.Dimension(412, 440));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -511,8 +510,10 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         fileTypeFilterButtonGroup.add(allFileCategoriesRadioButton);
+        allFileCategoriesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.text")); // NOI18N
         allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
+        allFileCategoriesRadioButton.setEnabled(false);
         allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 allFileCategoriesRadioButtonActionPerformed(evt);
@@ -520,9 +521,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
-        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
+        selectedFileCategoriesButton.setEnabled(false);
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 selectedFileCategoriesButtonActionPerformed(evt);
@@ -531,6 +532,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         pictureVideoCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.pictureVideoCheckbox.text")); // NOI18N
+        pictureVideoCheckbox.setEnabled(false);
         pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pictureVideoCheckboxActionPerformed(evt);
@@ -539,6 +541,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         documentsCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.documentsCheckbox.text")); // NOI18N
+        documentsCheckbox.setEnabled(false);
         documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 documentsCheckboxActionPerformed(evt);
@@ -546,6 +549,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.categoriesLabel.text")); // NOI18N
+        categoriesLabel.setEnabled(false);
         categoriesLabel.setName(""); // NOI18N
 
         errorText.setForeground(new java.awt.Color(255, 0, 0));
