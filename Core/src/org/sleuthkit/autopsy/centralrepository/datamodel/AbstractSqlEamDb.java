@@ -691,7 +691,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCacheByDeviceId.get(getDataSourceByIdCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
+            return dataSourceCacheById.get(getDataSourceByIdCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
