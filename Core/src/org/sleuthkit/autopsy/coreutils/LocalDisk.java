@@ -22,9 +22,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 
 /**
@@ -65,6 +66,8 @@ public class LocalDisk {
     public String getDetail() {
         if(isConfigDrive()) {
             return mountPoint + ", " + "Autopsy Config";
+        } else if (isAutopsyISO()) {
+            return mountPoint + ", " + "Autopsy ISO";
         }
         return mountPoint;
     }
@@ -107,12 +110,15 @@ public class LocalDisk {
         }
     }
     
-    public boolean isConfigDrive() {
-        System.out.println(this.mountPoint + File.separator + "AutopsyConfig");
-        File autopsyConfig = new File(this.mountPoint + File.separator + "AutopsyConfig");
-        return autopsyConfig.exists();
+    public boolean isConfigDrive() {        
+        Path path = Paths.get(this.mountPoint, "AutopsyConfig");
+        File configFile = new File(path.toString());
+        return configFile.exists();
     }
     
+    public boolean isAutopsyISO() {
+        Path path = Paths.get(this.mountPoint);
+        return path.toString().equals("/cdrom");
+    }
     
-
 }
