@@ -29,12 +29,12 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -143,40 +143,49 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param file     A selected file, or a source file of the selected artifact.
      */
     private void populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile file) {
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDb.isEnabled()) {
             startSection(html, "Central Repository Comments");
-            List<CorrelationAttribute> attributesList = new ArrayList<>();
+            List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
-                attributesList.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(artifact, false, false));
+                instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(artifact, false));
             }
             try {
-                List<CorrelationAttribute.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
+                List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
                 String md5 = file.getMd5Hash();
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                    for (CorrelationAttribute.Type aType : artifactTypes) {
-                        if (aType.getId() == CorrelationAttribute.FILES_TYPE_ID) {
-                            attributesList.add(new CorrelationAttribute(aType, md5));
+                    for (CorrelationAttributeInstance.Type attributeType : artifactTypes) {
+                        if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                            CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
+                            instancesList.add(new CorrelationAttributeInstance(
+                                    md5,
+                                    attributeType,
+                                    correlationCase,
+                                    CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource()),
+                                    file.getParentPath() + file.getName(),
+                                    "",
+                                    file.getKnown()));
                             break;
                         }
                     }
                 }
 
                 boolean commentDataFound = false;
-                for (CorrelationAttribute attribute : attributesList) {
-                    List<CorrelationAttributeInstance> instancesList =
-                            EamDb.getInstance().getArtifactInstancesByTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
-                    for (CorrelationAttributeInstance attributeInstance : instancesList) {
-                        if (attributeInstance.getComment() != null && attributeInstance.getComment().isEmpty() == false) {
+                
+                for (CorrelationAttributeInstance instance : instancesList) {
+                    List<CorrelationAttributeInstance> correlatedInstancesList =
+                            EamDb.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
+                    for (CorrelationAttributeInstance correlatedInstance : correlatedInstancesList) {
+                        if (correlatedInstance.getComment() != null && correlatedInstance.getComment().isEmpty() == false) {
                             commentDataFound = true;
-                            addCentralRepositoryEntry(html, attributeInstance, attribute.getCorrelationType());
+                            addCentralRepositoryEntry(html, correlatedInstance);
                         }
                     }
                 }
-
+                
                 if (commentDataFound == false) {
                     addMessage(html, "There is no comment data for the selected content in the central repository.");
                 }
-            } catch (EamDbException ex) {
+            } catch (EamDbException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error connecting to the central repository database.", ex); // NON-NLS
             }
             endSection(html);
@@ -239,10 +248,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      *                          used to populate the table.
      * @param correlationType   The correlation data type.
      */
-    private void addCentralRepositoryEntry(StringBuilder html, CorrelationAttributeInstance attributeInstance, CorrelationAttribute.Type correlationType) {
+    private void addCentralRepositoryEntry(StringBuilder html, CorrelationAttributeInstance attributeInstance) {
         startTable(html);
         addRow(html, "Case:", attributeInstance.getCorrelationCase().getDisplayName());
-        addRow(html, "Type:", correlationType.getDisplayName());
+        addRow(html, "Type:", attributeInstance.getCorrelationType().getDisplayName());
         addRow(html, "Comment:", convertLineBreaksToHtml(attributeInstance.getComment()));
         addRow(html, "Path:", attributeInstance.getFilePath());
         endTable(html);
@@ -310,17 +319,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        rightClickMenu = new javax.swing.JPopupMenu();
-        copyMenuItem = new javax.swing.JMenuItem();
-        selectAllMenuItem = new javax.swing.JMenuItem();
         jScrollPane5 = new javax.swing.JScrollPane();
         jTextPane1 = new javax.swing.JTextPane();
-
-        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(AnnotationsContentViewer.class, "AnnotationsContentViewer.copyMenuItem.text")); // NOI18N
-        rightClickMenu.add(copyMenuItem);
-
-        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(AnnotationsContentViewer.class, "AnnotationsContentViewer.selectAllMenuItem.text")); // NOI18N
-        rightClickMenu.add(selectAllMenuItem);
 
         setPreferredSize(new java.awt.Dimension(100, 58));
 
@@ -342,11 +342,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTextPane jTextPane1;
-    private javax.swing.JPopupMenu rightClickMenu;
-    private javax.swing.JMenuItem selectAllMenuItem;
     // End of variables declaration//GEN-END:variables
 
     @Override
