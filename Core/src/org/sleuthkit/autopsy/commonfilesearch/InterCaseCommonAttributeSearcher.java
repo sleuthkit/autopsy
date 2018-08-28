@@ -32,6 +32,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
     private final EamDb dbManager;
+    /**
+     * The Correlation Type to find matches on.
+     */
     final Type corAttrType;
 
     /**

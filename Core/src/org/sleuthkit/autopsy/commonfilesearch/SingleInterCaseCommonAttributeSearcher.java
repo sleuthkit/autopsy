@@ -66,7 +66,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws EamDbException
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         correlationCaseName = cCase.getDisplayName();

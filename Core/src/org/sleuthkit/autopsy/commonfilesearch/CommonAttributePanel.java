@@ -244,7 +244,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                         setTitleForSingleSource(dataSourceId);
                     }
                 }
-                metadata = builder.findFiles();
+                metadata = builder.findMatches();
                 this.tabTitle = builder.buildTabTitle();
 
                 return metadata;

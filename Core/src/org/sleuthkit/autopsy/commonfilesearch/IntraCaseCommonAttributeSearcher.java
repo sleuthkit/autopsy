@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findFiles()</code> is called, which organizes files by md5 to prepare
+ * <code>findMatches()</code> is called, which organizes files by md5 to prepare
  * to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
@@ -93,7 +93,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @throws SQLException
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException {
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
 
         final Case currentCase = Case.getCurrentCaseThrows();

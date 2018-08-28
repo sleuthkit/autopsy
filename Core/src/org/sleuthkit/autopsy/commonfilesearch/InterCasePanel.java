@@ -68,6 +68,10 @@ public class InterCasePanel extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * If the EamDB is enabled, the UI will populate the correlation type ComboBox with 
+     * available types in the CR.
+     */
     void setupCorrelationTypeFilter() {
         this.correlationTypeFilters = new HashMap<>();
         try {
@@ -222,6 +226,10 @@ public class InterCasePanel extends javax.swing.JPanel {
         return InterCasePanel.NO_CASE_SELECTED;
     }
     
+    /**
+     * Returns the selected Correlation Type by getting the Type from the stored HashMap.
+     * @return Type the selected Correlation Type to query for.
+     */
     CorrelationAttributeInstance.Type getSelectedCorrelationType() {
         return correlationTypeFilters.get(this.correlationTypeComboBox.getSelectedItem().toString());
     }

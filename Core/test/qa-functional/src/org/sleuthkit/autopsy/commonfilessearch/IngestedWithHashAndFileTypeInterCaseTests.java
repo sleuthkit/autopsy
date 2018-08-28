@@ -89,7 +89,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             //note that the params false and false are presently meaningless because that feature is not supported yet
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
             AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, fileType, 0);
-            CommonAttributeSearchResults metadata = builder.findFiles();
+            CommonAttributeSearchResults metadata = builder.findMatches();
 
             assertTrue("Results should not be empty", metadata.size() != 0);
 
@@ -141,7 +141,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
             AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false, fileType, 0);
             
-            CommonAttributeSearchResults metadata = builder.findFiles();
+            CommonAttributeSearchResults metadata = builder.findMatches();
 
             assertTrue("Results should not be empty", metadata.size() != 0);
 
@@ -194,7 +194,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
             AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, fileType, 50);
             
-            CommonAttributeSearchResults metadata = builder.findFiles();
+            CommonAttributeSearchResults metadata = builder.findMatches();
             
             assertTrue("Results should not be empty", metadata.size() != 0);
             

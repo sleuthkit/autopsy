@@ -221,6 +221,12 @@ final class InterCaseSearchResultsProcessor {
             }
         }
 
+        /**
+         * Add a resultId to the list of matches for a given corValue, which counts to number of
+         * instances of that match, determining which InstanceCountNode the match will be added to.
+         * @param corValue the value which matches
+         * @param resultId the CorrelationAttributeInstance id to be retrieved later.
+         */
         private void countAndAddCommonAttributes(String corValue, int resultId) {
             if (commonAttributeValue == null) {
                 commonAttributeValue = new CommonAttributeValue(corValue);
