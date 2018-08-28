@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 
 import java.util.Optional;
 import javafx.beans.Observable;
-import javafx.beans.binding.ObjectExpression;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,47 +40,46 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
     "NextUnseenGroup.nextUnseenGroup=Next Unseen group"})
 public class NextUnseenGroup extends Action {
 
-    private static final Image END =
-            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-stop.png")); //NON-NLS
-    private static final Image ADVANCE =
-            new Image(NextUnseenGroup.class.getResourceAsStream("/org/sleuthkit/autopsy/imagegallery/images/control-double.png")); //NON-NLS
+    private static final String IMAGE_PATH = "/org/sleuthkit/autopsy/imagegallery/images/"; //NON-NLS
+    private static final Image END = new Image(NextUnseenGroup.class.getResourceAsStream(
+            IMAGE_PATH + "control-stop.png")); //NON-NLS
+    private static final Image ADVANCE = new Image(NextUnseenGroup.class.getResourceAsStream(
+            IMAGE_PATH + "control-double.png")); //NON-NLS
 
     private static final String MARK_GROUP_SEEN = Bundle.NextUnseenGroup_markGroupSeen();
     private static final String NEXT_UNSEEN_GROUP = Bundle.NextUnseenGroup_nextUnseenGroup();
 
-    private final GroupManager groupManager;
-    private final ObservableList<DrawableGroup> unSeenGroups;
-    private final ObservableList<DrawableGroup> analyzedGroups;
-
     public NextUnseenGroup(ImageGalleryController controller) {
         super(NEXT_UNSEEN_GROUP);
-        groupManager = controller.getGroupManager();
-        unSeenGroups = groupManager.getUnSeenGroups();
-        analyzedGroups = groupManager.getAnalyzedGroups();
+        GroupManager groupManager = controller.getGroupManager();
+
+        ObservableList<DrawableGroup> unSeenGroups = groupManager.getUnSeenGroups();
         setGraphic(new ImageView(ADVANCE));
 
-        //TODO: do we need both these listeners?
-        analyzedGroups.addListener((Observable o) -> this.updateButton());
-        unSeenGroups.addListener((Observable o) -> this.updateButton());
+        unSeenGroups.addListener((Observable o) -> this.updateButton(unSeenGroups));
 
         setEventHandler(event -> {
             //fx-thread
             //if there is a group assigned to the view, mark it as seen
             Optional.ofNullable(controller.viewState())
-                    .map(ObjectExpression<GroupViewState>::getValue)
+                    .map(ObservableValue<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
                     .ifPresent(group -> groupManager.saveGroupSeen(group, true));
 
             if (unSeenGroups.isEmpty() == false) {
                 controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
-                updateButton();
+                updateButton(unSeenGroups);
             }
         });
-        updateButton();
+        updateButton(unSeenGroups);
     }
 
+    /**
+     *
+     * @param unSeenGroups the value of unSeenGroups
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void updateButton() {
+    private void updateButton(ObservableList<DrawableGroup> unSeenGroups) {
         setDisabled(unSeenGroups.isEmpty());
         if (unSeenGroups.size() <= 1) {
             setText(MARK_GROUP_SEEN);
