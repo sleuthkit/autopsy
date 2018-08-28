@@ -47,7 +47,6 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import javax.swing.event.TreeExpansionListener;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
@@ -103,20 +102,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public DataResultViewerTable() {
         this(null, Bundle.DataResultViewerTable_title());
     }
-    /**
-     * Constructs a tabular result viewer that displays the children of the
-     * given root node using an OutlineView. The viewer should have an ancestor
-     * top component to connect the lookups of the nodes displayed in the
-     * OutlineView to the actions global context. The explorer manager will be
-     * discovered at runtime.
-     * @param listener
-     */
-    public DataResultViewerTable(TreeExpansionListener listener) {
-        this(null, Bundle.DataResultViewerTable_title());
-        outlineView.addTreeExpansionListener(listener);
-    }
     
- 
 
     /**
      * Constructs a tabular result viewer that displays the children of a given
@@ -201,6 +187,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public String getTitle() {
         return title;
     }
+   
     
     /**
      * Indicates whether a given node is supported as a root node for this
@@ -852,7 +839,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.openide.explorer.view.OutlineView outlineView;
+    protected org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
 }

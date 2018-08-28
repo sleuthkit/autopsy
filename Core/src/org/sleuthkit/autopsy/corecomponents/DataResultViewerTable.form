@@ -29,6 +29,7 @@
     <Container class="org.openide.explorer.view.OutlineView" name="outlineView">
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);"/>
+        <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
       </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
