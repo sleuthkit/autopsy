@@ -84,7 +84,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         initComponents();
         
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        //this.errorText.setVisible(false);
         this.setupDataSources();
 
         if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
