@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -205,8 +206,9 @@ class IntraCaseTestUtils {
     static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
 
-        for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
-            for (CommonAttributeValue md : entry.getValue()) {
+        for (Map.Entry<Integer, CommonAttributeValueList> entry : metadata.getMetadata().entrySet()) {
+            entry.getValue().displayDelayedMetadata();
+            for (CommonAttributeValue md : entry.getValue().getMetadataList()) {
                 for (AbstractCommonAttributeInstance fim : md.getInstances()) {
                     instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
                 }

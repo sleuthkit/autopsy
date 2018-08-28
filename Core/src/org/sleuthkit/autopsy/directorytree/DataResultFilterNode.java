@@ -140,6 +140,11 @@ public class DataResultFilterNode extends FilterNode {
         this.sourceEm = em;
     }
 
+   /**
+     * Refreshes the inner node. If the actual underlying node is an InstanceCountNode,
+     * refresh() that node, which refreshes the children.
+     * 
+     */
     public void refresh() {
         if (getOriginal() instanceof InstanceCountNode) {
             InstanceCountNode innerNode = getLookup().lookup(InstanceCountNode.class);

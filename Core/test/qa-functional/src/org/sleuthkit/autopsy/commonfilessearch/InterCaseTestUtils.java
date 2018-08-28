@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -309,9 +310,9 @@ class InterCaseTestUtils {
         
         int tally = 0;
         
-        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getMetadata().entrySet()){
-            
-            for(CommonAttributeValue value : entry.getValue()){
+        for(Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()){
+            entry.getValue().displayDelayedMetadata();
+            for(CommonAttributeValue value : entry.getValue().getMetadataList()) {
                 
                 for(AbstractCommonAttributeInstance commonAttribute : value.getInstances()){
                     

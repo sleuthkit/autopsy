@@ -129,6 +129,10 @@ public class TableFilterNode extends FilterNode {
         }
     }
     
+    /**
+     * Refreshes the inner node, which depending on the actual node type that was wrapped
+     * could trigger a dynamic refresh of the children, if supported.
+     */
     void refresh() {
         DataResultFilterNode innerNode = getLookup().lookup(DataResultFilterNode.class);
         innerNode.refresh();

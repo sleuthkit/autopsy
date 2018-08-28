@@ -39,7 +39,7 @@ public final class DelayedLoadChildNodesOnTreeExpansion implements TreeExpansion
 
     @Override
     public synchronized void treeCollapsed(final TreeExpansionEvent event) {
-
+        // Do nothing on collapse. Netbeans should manage nodes falling out of scope and GC.
     }
 
     @Override

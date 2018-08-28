@@ -23,9 +23,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import javax.swing.SwingWorker;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -76,26 +73,14 @@ final public class InstanceCountNode extends DisplayableItemNode {
         return this.instanceCount;
     }
 
+    /**
+     * Refresh the node, by dynamically loading in the children when called, and
+     * calling the CommonAttributeValueNodeFactory to generate nodes for the 
+     * children in attributeValues.
+     */
     public void refresh() {
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                attributeValues.displayDelayedMetadata();
-                setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.SEVERE, "Unexpected exception while loading common search result instances", ex); //NON-NLS
-                }
-            }
-        }.execute();
+        attributeValues.displayDelayedMetadata();
+        setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), true));
     }
 
     /**
@@ -147,7 +132,7 @@ final public class InstanceCountNode extends DisplayableItemNode {
 
     /**
      * ChildFactory which builds CommonFileParentNodes from the
-     * CommonFilesMetaaData models.
+     * CommonAttributeValue metadata models.
      */
     static class CommonAttributeValueNodeFactory extends ChildFactory<String> {
 
