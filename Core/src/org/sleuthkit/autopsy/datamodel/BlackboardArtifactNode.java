@@ -619,9 +619,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
         try {
-            //WJS-TODO two seperate queries or one for all artifacts then filter down? probably one for all then filter
-            if (status == CrStatus.NO_STATUS && (!content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()).isEmpty()
-                    || !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty())) {
+            if (status == CrStatus.NO_STATUS && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
                 status = CrStatus.STATUS_2;
                 description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
             }

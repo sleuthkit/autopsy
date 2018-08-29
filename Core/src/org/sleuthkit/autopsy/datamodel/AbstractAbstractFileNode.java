@@ -342,8 +342,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
         }
         try {
-            if (status == CrStatus.NO_STATUS && (!content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()).isEmpty()
-                    || !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty())) {
+            if (status == CrStatus.NO_STATUS && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
                 status = CrStatus.STATUS_2;
                 description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
             }
