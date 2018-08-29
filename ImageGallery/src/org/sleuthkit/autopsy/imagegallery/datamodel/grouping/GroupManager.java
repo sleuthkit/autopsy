@@ -112,22 +112,18 @@ public class GroupManager {
     private final ImageGalleryController controller;
 
     /**
-     * map from {@link GroupKey}s to {@link  DrawableGroup}s. All groups (even
-     * not fully analyzed or not visible groups could be in this map
+     * map from GroupKey} to DrawableGroupSs. All groups (even not fully
+     * analyzed or not visible groups could be in this map
      */
     @GuardedBy("this")
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
-    /**
-     * list of all analyzed groups
-     */
+    /** list of all analyzed groups */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
 
-    /**
-     * list of unseen groups
-     */
+    /** list of unseen groups */
     @ThreadConfined(type = ThreadType.JFX)
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
@@ -776,8 +772,6 @@ public class GroupManager {
                 groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
                 popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
             }
-            Platform.runLater(() -> FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy)));
-            Platform.runLater(() -> FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy)));
 
             updateProgress(1, 1);
             return null;
@@ -789,6 +783,9 @@ public class GroupManager {
             if (groupProgress != null) {
                 groupProgress.finish();
                 groupProgress = null;
+            }
+            if (unSeenGroups.isEmpty() == false) {
+                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
             }
         }
 

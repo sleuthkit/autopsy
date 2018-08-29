@@ -239,12 +239,12 @@ public final class ImageGalleryController {
             }
         });
 
-        groupManager.getUnSeenGroups().addListener((Observable observable) -> {
-            //if there are unseen groups and none being viewed
-            if (groupManager.getUnSeenGroups().isEmpty() == false && (getViewState() == null || getViewState().getGroup() == null)) {
-                advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)), true);
-            }
-        });
+//        groupManager.getUnSeenGroups().addListener((Observable observable) -> {
+//            //if there are unseen groups and none being viewed
+//            if (groupManager.getUnSeenGroups().isEmpty() == false && (getViewState() == null || getViewState().getGroup() == null)) {
+//                advance(GroupViewState.tile(groupManager.getUnSeenGroups().get(0)), true);
+//            }
+//        });
 
         viewState().addListener((Observable observable) -> {
             //when the viewed group changes, clear the selection and the undo/redo history

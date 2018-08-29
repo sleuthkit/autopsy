@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -42,10 +43,13 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToolBar;
@@ -54,6 +58,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
@@ -114,14 +119,15 @@ public class Toolbar extends ToolBar {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<Optional<DataSource>> dataSources = FXCollections.observableArrayList();
+    private SingleSelectionModel<Optional<DataSource>> dataSourceSelectionModel;
 
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
-            Optional<DataSource> selectedItem = dataSourceComboBox.getSelectionModel().getSelectedItem();
-            selectedItem = defaultIfNull(selectedItem, Optional.empty());
+            Optional<DataSource> selectedDataSource
+                    = defaultIfNull(dataSourceSelectionModel.getSelectedItem(), Optional.empty());
 
-            controller.getGroupManager().regroup(selectedItem.orElse(null),
+            controller.getGroupManager().regroup(selectedDataSource.orElse(null),
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
@@ -141,7 +147,9 @@ public class Toolbar extends ToolBar {
                 "Toolbar.sortHelp=The sort direction (ascending/descending) affects the queue of unseen groups that Image Gallery maintains, but changes to this queue aren't apparent until the \"Next Unseen Group\" button is pressed.",
                 "Toolbar.sortHelpTitle=Group Sorting",
                 "Toolbar.getDataSources.errMessage=Unable to get datasources for current case.",
-                "Toolbar.nonPathGroupingWarning.message=Grouping by attributes other than path does not support the data source filter.\nFiles and groups from all data sources will be shown."})
+                "Toolbar.nonPathGroupingWarning.content=Proceed with regrouping?",
+                "Toolbar.nonPathGroupingWarning.header=Grouping by attributes other than path does not support the data source filter.\nFiles and groups from all data sources will be shown.",
+                "Toolbar.nonPathGroupingWarning.title=Image Gallery"})
     void initialize() {
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert dataSourceComboBox != null : "fx:id=\"dataSourceComboBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -152,6 +160,7 @@ public class Toolbar extends ToolBar {
         assert catGroupMenuButton != null : "fx:id=\"catGroupMenuButton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert thumbnailSizeLabel != null : "fx:id=\"thumbnailSizeLabel\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert sizeSlider != null : "fx:id=\"sizeSlider\" was not injected: check your FXML file 'Toolbar.fxml'.";
+        this.dataSourceSelectionModel = dataSourceComboBox.getSelectionModel();
 
         //set internationalized label text
         groupByLabel.setText(Bundle.Toolbar_groupByLabel());
@@ -173,22 +182,31 @@ public class Toolbar extends ToolBar {
         groupByBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue == DrawableAttribute.PATH
                 && newValue != DrawableAttribute.PATH) {
-                Notifications.create().owner(getScene().getRoot())
-                        .text(Bundle.Toolbar_nonPathGroupingWarning_message())
-                        .hideAfter(Duration.seconds(20))
-                        .showWarning();
+
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Bundle.Toolbar_nonPathGroupingWarning_content());
+                alert.setHeaderText(Bundle.Toolbar_nonPathGroupingWarning_header());
+                alert.setTitle(Bundle.Toolbar_nonPathGroupingWarning_title());
+                alert.initModality(Modality.APPLICATION_MODAL);
+                alert.initOwner(getScene().getWindow());
+                GuiUtils.setDialogIcons(alert);
+                if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+                    queryInvalidationListener.invalidated(observable);
+                } else {
+                    Platform.runLater(() -> groupByBox.getSelectionModel().select(DrawableAttribute.PATH));
+                }
+            } else {
+                queryInvalidationListener.invalidated(observable);
             }
-            queryInvalidationListener.invalidated(observable);
         });
 
         sortChooser = new SortChooser<>(GroupSortBy.getValues());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-                    final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
-                    sortChooser.setSortOrderDisabled(orderDisabled);
+            final boolean orderDisabled = newComparator == GroupSortBy.NONE || newComparator == GroupSortBy.PRIORITY;
+            sortChooser.setSortOrderDisabled(orderDisabled);
 
-                    final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
-                    sortChooser.setValueType(valueType);
-                    queryInvalidationListener.invalidated(observable);
+            final SortChooser.ValueType valueType = newComparator == GroupSortBy.GROUP_BY_VALUE ? SortChooser.ValueType.LEXICOGRAPHIC : SortChooser.ValueType.NUMERIC;
+            sortChooser.setValueType(valueType);
+            queryInvalidationListener.invalidated(observable);
         });
         sortChooser.setComparator(controller.getGroupManager().getSortBy());
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
@@ -209,11 +227,11 @@ public class Toolbar extends ToolBar {
         catGroupMenuButton.setText(cat5GroupAction.getText());
         catGroupMenuButton.setGraphic(cat5GroupAction.getGraphic());
         catGroupMenuButton.showingProperty().addListener(showing -> {
-                    if (catGroupMenuButton.isShowing()) {
-                        List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
-                                cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
-                        catGroupMenuButton.getItems().setAll(categoryMenues);
-                    }
+            if (catGroupMenuButton.isShowing()) {
+                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
+                        cat -> GuiUtils.createAutoAssigningMenuItem(catGroupMenuButton, new CategorizeGroupAction(cat, controller)));
+                catGroupMenuButton.getItems().setAll(categoryMenues);
+            }
         });
 
     }
@@ -237,19 +255,18 @@ public class Toolbar extends ToolBar {
         Case.addEventTypeSubscriber(ImmutableSet.of(DATA_SOURCE_ADDED, DATA_SOURCE_DELETED),
                 evt -> {
                     Platform.runLater(() -> {
-                        Optional<DataSource> selectedItem = dataSourceComboBox.getSelectionModel().getSelectedItem();
-                        syncDataSources()
-                                .addListener(() -> dataSourceComboBox.getSelectionModel().select(selectedItem), Platform::runLater);
+                        Optional<DataSource> selectedItem = dataSourceSelectionModel.getSelectedItem();
+                        syncDataSources().addListener(() -> dataSourceSelectionModel.select(selectedItem), Platform::runLater);
                     });
                 });
         syncDataSources();
 
         controller.getGroupManager().getDataSourceProperty().addListener((observable, oldDataSource, newDataSource) -> {
-            dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(newDataSource));
+            dataSourceSelectionModel.select(Optional.ofNullable(newDataSource));
         });
-        dataSourceComboBox.getSelectionModel().select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
+        dataSourceSelectionModel.select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
         dataSourceComboBox.disableProperty().bind(groupByBox.getSelectionModel().selectedItemProperty().isNotEqualTo(DrawableAttribute.PATH));
-        dataSourceComboBox.getSelectionModel().selectedItemProperty().addListener(queryInvalidationListener);
+        dataSourceSelectionModel.selectedItemProperty().addListener(queryInvalidationListener);
     }
 
     private void initTagMenuButton() {
@@ -368,6 +385,7 @@ public class Toolbar extends ToolBar {
     }
 
     public Toolbar(ImageGalleryController controller) {
+
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
     }

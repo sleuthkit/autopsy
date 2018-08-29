@@ -84,9 +84,7 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
             sortGroups();
         });
 
-        for (DrawableGroup g : getGroupManager().getAnalyzedGroups()) {
-            insertGroup(g);
-        }
+        getGroupManager().getAnalyzedGroups().forEach(this::insertGroup);
         sortGroups();
     }
 
@@ -102,12 +100,10 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
 
         if (treeItemForGroup != null) {
             groupTree.getSelectionModel().select(treeItemForGroup);
-            Platform.runLater(() -> {
-                int row = groupTree.getRow(treeItemForGroup);
-                if (row != -1) {
-                    groupTree.scrollTo(row - 2); //put newly selected row 3 from the top
-                }
-            });
+            int row = groupTree.getRow(treeItemForGroup);
+            if (row != -1) {
+                groupTree.scrollTo(row - 2); //put newly selected row 3 from the top
+            }
         }
     }
 
