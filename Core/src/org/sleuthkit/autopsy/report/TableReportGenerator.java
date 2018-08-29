@@ -1068,7 +1068,7 @@ class TableReportGenerator {
                 orderedRowData.add(makeCommaSeparatedList(getTags()));
 
             } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                String[] attributeDataArray = new String[3];
+                String[] attributeDataArray = new String[5];
                 // Array is used so that order of the attributes is maintained.
                 for (BlackboardAttribute attr : attributes) {
                     if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME))) {
