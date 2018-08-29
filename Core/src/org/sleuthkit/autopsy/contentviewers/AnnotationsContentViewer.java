@@ -22,6 +22,10 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JButton;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -36,9 +40,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
@@ -67,60 +73,119 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     
     @Override
     public void setNode(Node node) {
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        if ((node == null) || (!isSupported(node))) {
+            resetComponent();
+            return;
+        }
+        
         StringBuilder html = new StringBuilder();
         
-        populateTagData(html, artifact, file);
-        populateCentralRepositoryData(html, artifact, file);
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        Content content = null;
+        
+        try {
+            if (artifact != null) {
+                /*
+                 * Get the source content based on the artifact to ensure we
+                 * display the correct data instead of whatever was in the node.
+                 */
+                content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+            } else {
+                /*
+                 * No artifact is present, so get the content based on what's
+                 * present in the node.
+                 */
+                content = DataContentViewerUtility.getDefaultContent(node);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format(
+                    "Exception while trying to retrieve an AbstractFile instance from the BlackboardArtifact '%s' (id=%d).",
+                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
+        }
+        
+        if (artifact != null) {
+            populateTagData(html, artifact, content);
+        } else {
+            populateTagData(html, content);
+        }
+        
+        if (content instanceof AbstractFile) {
+            populateCentralRepositoryData(html, artifact, (AbstractFile) content);
+        }
         
         setText(html.toString());
         jTextPane1.setCaretPosition(0);
     }
     
     /**
-     * Populate the "Selected Item" and "Source File" sections with tag data.
+     * Populate the "Selected Item" sections with tag data for the supplied
+     * content.
      * 
-     * @param html     The HTML text to update.
-     * @param artifact A selected artifact (can be null).
-     * @param file     A selected file, or a source file of the selected
-     *                 artifact.
+     * @param html    The HTML text to update.
+     * @param content Selected content.
      */
-    private void populateTagData(StringBuilder html, BlackboardArtifact artifact, AbstractFile file) {
+    private void populateTagData(StringBuilder html, Content content) {
         Case openCase;
         SleuthkitCase tskCase;
         try {
             openCase = Case.getCurrentCaseThrows();
             tskCase = openCase.getSleuthkitCase();
+            
+            startSection(html, "Selected Item");
+            List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(content);
+            if (fileTagsList.isEmpty()) {
+                addMessage(html, "There are no tags for the selected content.");
+            } else {
+                for (ContentTag tag : fileTagsList) {
+                    addTagEntry(html, tag);
+                }
+            }
+            endSection(html);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
+        }
+    }
+    
+    /**
+     * Populate the "Selected Item" and "Source File" sections with tag data for
+     * a supplied artifact.
+     * 
+     * @param html     The HTML text to update.
+     * @param artifact A selected artifact.
+     * @param content  Selected content, or the source content of the selected
+     *                 artifact.
+     */
+    private void populateTagData(StringBuilder html, BlackboardArtifact artifact, Content content) {
+        Case openCase;
+        SleuthkitCase tskCase;
+        try {
+            Content contentFromArtifact = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+            if (contentFromArtifact instanceof AbstractFile) {
+                content = contentFromArtifact;
+            }
+            
+            openCase = Case.getCurrentCaseThrows();
+            tskCase = openCase.getSleuthkitCase();
             List<ContentTag> fileTagsList = null;
             
             startSection(html, "Selected Item");
-            if (artifact != null) {
-                List<BlackboardArtifactTag> artifactTagsList = tskCase.getBlackboardArtifactTagsByArtifact(artifact);
-                if (artifactTagsList.isEmpty()) {
-                    addMessage(html, "There are no tags for the selected artifact.");
-                } else {
-                    for (BlackboardArtifactTag tag : artifactTagsList) {
-                        addTagEntry(html, tag);
-                    }
-                }
+            List<BlackboardArtifactTag> artifactTagsList = tskCase.getBlackboardArtifactTagsByArtifact(artifact);
+            if (artifactTagsList.isEmpty()) {
+                addMessage(html, "There are no tags for the selected artifact.");
             } else {
-                fileTagsList = tskCase.getContentTagsByContent(file);
-                if (fileTagsList.isEmpty()) {
-                    addMessage(html, "There are no tags for the selected file.");
-                } else {
-                    for (ContentTag tag : fileTagsList) {
-                        addTagEntry(html, tag);
-                    }
+                for (BlackboardArtifactTag tag : artifactTagsList) {
+                    addTagEntry(html, tag);
                 }
             }
             endSection(html);
             
-            if (fileTagsList == null) {
+            if (content != null) {
                 startSection(html, "Source File");
-                fileTagsList = tskCase.getContentTagsByContent(file);
+                fileTagsList = tskCase.getContentTagsByContent(content);
                 if (fileTagsList.isEmpty()) {
-                    addMessage(html, "There are no tags for the source file.");
+                    addMessage(html, "There are no tags for the source content.");
                 } else {
                     for (ContentTag tag : fileTagsList) {
                         addTagEntry(html, tag);
@@ -140,7 +205,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * 
      * @param html     The HTML text to update.
      * @param artifact A selected artifact (can be null).
-     * @param file     A selected file, or a source file of the selected artifact.
+     * @param file     A selected file, or a source file of the selected
+     *                 artifact.
      */
     private void populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile file) {
         if (EamDb.isEnabled()) {
