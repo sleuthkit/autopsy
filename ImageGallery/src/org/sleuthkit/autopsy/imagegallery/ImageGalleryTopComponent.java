@@ -47,6 +47,7 @@ import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
 import org.sleuthkit.autopsy.imagegallery.gui.SummaryTablePane;
@@ -165,7 +166,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                         GuiUtils.setDialogIcons(d);
 
                         Optional<String> dataSourceName = d.showAndWait();
-                        dataSourceName.map(dataSourceNames::get).ifPresent(ds -> controller.getGroupManager().setDataSource(ds));
+                        DataSource ds = dataSourceName.map(dataSourceNames::get).orElse(null);
+                        GroupManager groupManager = controller.getGroupManager();
+                        groupManager.regroup(ds,groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true );
 
                         SwingUtilities.invokeLater(() -> {
                             tc.open();

@@ -479,7 +479,7 @@ public class GroupManager {
         return dataSource;
     }
 
-    public void setDataSource(DataSource dataSource) {
+    void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         Platform.runLater(() -> dataSourceProp.set(dataSource));
     }
