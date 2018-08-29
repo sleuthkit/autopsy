@@ -124,10 +124,7 @@ public class Toolbar extends ToolBar {
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
-            Optional<DataSource> selectedDataSource
-                    = defaultIfNull(dataSourceSelectionModel.getSelectedItem(), Optional.empty());
-
-            controller.getGroupManager().regroup(selectedDataSource.orElse(null),
+            controller.getGroupManager().regroup(getSelectedDataSource(),
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
@@ -181,7 +178,8 @@ public class Toolbar extends ToolBar {
         groupByBox.setButtonCell(new AttributeListCell());
         groupByBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue == DrawableAttribute.PATH
-                && newValue != DrawableAttribute.PATH) {
+                && newValue != DrawableAttribute.PATH
+                && getSelectedDataSource() != null) {
 
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Bundle.Toolbar_nonPathGroupingWarning_content());
                 alert.setHeaderText(Bundle.Toolbar_nonPathGroupingWarning_header());
@@ -234,6 +232,11 @@ public class Toolbar extends ToolBar {
             }
         });
 
+    }
+
+    private DataSource getSelectedDataSource() {
+        Optional<DataSource> empty = Optional.empty();
+        return defaultIfNull(dataSourceSelectionModel.getSelectedItem(), empty).orElse(null);
     }
 
     private void initDataSourceComboBox() {
