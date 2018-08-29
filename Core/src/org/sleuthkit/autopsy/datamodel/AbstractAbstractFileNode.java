@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -37,9 +38,13 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.CrStatus;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -47,9 +52,11 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStat
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -311,6 +318,51 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         sheetSet.put(new NodeProperty<>(AbstractAbstractFileNode_createSheet_comment_name(), AbstractAbstractFileNode_createSheet_comment_displayName(), NO_DESCR,
                 status));
+    }
+
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the status property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.status.name=S",
+        "AbstractAbstractFileNode.createSheet.status.displayName=S",
+        "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
+        "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
+        "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
+        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag."})
+    protected void addStatusProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+        CrStatus status = CrStatus.NO_STATUS;
+        String description = NO_DESCR;
+        if (content.getKnown() == TskData.FileKnown.BAD) {
+            status = CrStatus.STATUS_3;
+            description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
+        }
+        try {
+            if (status == CrStatus.NO_STATUS && (!content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()).isEmpty()
+                    || !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty())) {
+                status = CrStatus.STATUS_2;
+                description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
+        }
+        if (tags.size() > 0 && status == CrStatus.NO_STATUS) {
+            status = CrStatus.STATUS_1;
+            description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
+            for (ContentTag tag : tags) {
+                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
+                    status = CrStatus.STATUS_3;
+                    description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
+                    break;
+                }
+            }
+        }
+        sheetSet.put(
+                new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_status_name(), Bundle.AbstractAbstractFileNode_createSheet_status_displayName(), description, status));
     }
 
     /**

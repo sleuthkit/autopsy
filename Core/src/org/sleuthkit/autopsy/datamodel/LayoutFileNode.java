@@ -89,6 +89,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));
+        addStatusProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {

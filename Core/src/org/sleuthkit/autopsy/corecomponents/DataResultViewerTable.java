@@ -87,6 +87,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/notepad16.png", false));
+    private static final ImageIcon STATUS_ICON_1 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/blue-tag-icon-16.png", false));
+    private static final ImageIcon STATUS_ICON_2 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/interesting_item.png", false));
+    private static final ImageIcon STATUS_ICON_3 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-3-red.png", false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
@@ -656,35 +659,42 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private class IconRendererTableListener implements TableColumnModelListener {
 
-        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C"})
+        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
+            "DataResultViewerTable.statusRender.name=S"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
-                if (e.getSource() instanceof ETableColumnModel) {
-                    TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
-                    //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
-                    if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
-                        column.setCellRenderer(new HasCommentCellRenderer());
-                    }
+            if (e.getSource() instanceof ETableColumnModel) {
+                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
+                //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
+                if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
+                    column.setCellRenderer(new HasCommentCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_statusRender_name())) {
+                    column.setCellRenderer(new CrStatusCellRenderer());
                 }
+            }
         }
 
         @Override
-        public void columnRemoved(TableColumnModelEvent e) {
+        public void columnRemoved(TableColumnModelEvent e
+        ) {
             //Don't do anything when column removed
         }
 
         @Override
-        public void columnMoved(TableColumnModelEvent e) {
+        public void columnMoved(TableColumnModelEvent e
+        ) {
             //Don't do anything when column moved
         }
 
         @Override
-        public void columnMarginChanged(ChangeEvent e) {
+        public void columnMarginChanged(ChangeEvent e
+        ) {
             //Don't do anything when column margin changed
         }
 
         @Override
-        public void columnSelectionChanged(ListSelectionEvent e) {
+        public void columnSelectionChanged(ListSelectionEvent e
+        ) {
             //Don't do anything when column selection changed
         }
 
@@ -927,16 +937,84 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     }
 
+    /*
+     * A renderer which based on the contents of the cell will display an icon
+     * to indicate the status of information in the central repository.
+     */
+    private final class CrStatusCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(CENTER);
+            Object switchValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    switchValue = ((Node.Property) value).getValue();
+                    setToolTipText(((Node.Property)value).getShortDescription());
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+                
+            } else {
+                //JTables contain the value we want directly in the cell
+                switchValue = value;
+            }
+            setText("");
+            if ((switchValue instanceof CrStatus)) {
+
+                switch ((CrStatus) switchValue) {
+                    case STATUS_1:
+                        setIcon(STATUS_ICON_1);
+                      
+                        break;
+                    case STATUS_2:
+                        setIcon(STATUS_ICON_2);
+//                        setToolTipText("This icon doens't mean anything yet,it is just second");
+                        break;
+                    case STATUS_3:
+                        setIcon(STATUS_ICON_3);
+//                        setToolTipText("This icon doens't mean anything yet,it is just third");
+                        break;
+                    case NO_STATUS:
+                    default:
+                        setIcon(null);
+//                        setToolTipText("Nothing of interest was detected for this item");
+                }
+            } else {
+                setIcon(null);
+            }
+            return this;
+        }
+
+    }
+
     /**
      * Enum to denote the presence of a comment associated with the content or
      * artifacts generated from it.
      */
     public enum HasCommentStatus {
         NO_COMMENT,
-        TAG_NO_COMMENT, 
+        TAG_NO_COMMENT,
         CR_COMMENT,
         TAG_COMMENT,
         CR_AND_TAG_COMMENTS
+    }
+
+    /**
+     * Enum to denote the presence of a comment associated with the content or
+     * artifacts generated from it.
+     */
+    public enum CrStatus {
+        NO_STATUS,
+        STATUS_1,
+        STATUS_2,
+        STATUS_3,
+
     }
 
     /**

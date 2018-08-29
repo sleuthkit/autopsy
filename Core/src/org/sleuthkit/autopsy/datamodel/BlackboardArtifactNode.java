@@ -49,9 +49,13 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.CrStatus;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
@@ -66,6 +70,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Node wrapping a blackboard artifact object. This is generated from several
@@ -345,6 +350,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
+        addStatusProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
@@ -587,6 +593,54 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
                 status));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the Status property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.status.name=S",
+        "BlackboardArtifactNode.createSheet.status.displayName=S",
+        "BlackboardArtifactNode.createSheet.notableFile.description=Associated file recognized as notable.",
+        "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
+        "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
+        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
+    protected void addStatusProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        CrStatus status = CrStatus.NO_STATUS;
+        String description = "";
+        if (status != CrStatus.STATUS_3 && associated instanceof AbstractFile) {
+            if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
+                status = CrStatus.STATUS_3;
+                description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
+            }
+        }
+        try {
+            //WJS-TODO two seperate queries or one for all artifacts then filter down? probably one for all then filter
+            if (status == CrStatus.NO_STATUS && (!content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()).isEmpty()
+                    || !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty())) {
+                status = CrStatus.STATUS_2;
+                description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting artifacts for artifact: " + content.getName(), ex);
+        }
+        if (tags.size() > 0 && status == CrStatus.NO_STATUS) {
+            status = CrStatus.STATUS_1;
+            description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
+            for (Tag tag : tags) {
+                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
+                    status = CrStatus.STATUS_3;
+                    description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
+                    break;
+                }
+            }
+        }
+        sheetSet.put(
+                new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_status_name(), Bundle.BlackboardArtifactNode_createSheet_status_displayName(), description, status));
     }
 
     private void updateSheet() {
