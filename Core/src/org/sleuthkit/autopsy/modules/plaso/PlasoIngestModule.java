@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -66,9 +67,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String PLASO32 = "plaso//plaso-20180127-win32";
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";
     private static final String PSORT_EXECUTABLE = "psort.exe";
-    private IngestJobContext context;
+
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
+
+    private IngestJobContext context;
+
     private File log2TimeLineExecutable;
     private File psortExecutable;
     private Image image;
@@ -80,8 +84,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     @NbBundle.Messages({
         "PlasoIngestModule_error_running=Error running Plaso, see log file.",
         "PlasoIngestModule_log2timeline_executable_not_found=Log2timeline Executable Not Found",
-        "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found"
-    })
+        "PlasoIngestModule_psort_executable_not_found=psort Executable Not Found"})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -97,7 +100,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
             throw new IngestModuleException(Bundle.PlasoIngestModule_psort_executable_not_found());
         }
-
     }
 
     @NbBundle.Messages({
@@ -111,8 +113,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_running_log2timeline=Running Log2timeline",
         "PlasoIngestModule_running_psort=Running Psort",
         "PlasoIngestModule_completed=Plaso Processing Completed",
-        "PlasoIngestModule_has_run=Plaso Plugin has been run."
-    })
+        "PlasoIngestModule_has_run=Plaso Plugin has been run."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         statusHelper.switchToIndeterminate();
@@ -181,20 +182,21 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName, String timeZone) {
 
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add("\"" + log2TimeLineExecutable + "\""); //NON-NLS 
-        commandLine.add("--vss-stores"); //NON-NLS
-        commandLine.add("all"); //NON-NLS
-        commandLine.add("-z");
-        commandLine.add(timeZone);
-        commandLine.add("--partitions");
-        commandLine.add("all");
-        commandLine.add("--hasher_file_size_limit");
-        commandLine.add("1");
-        commandLine.add("--hashers");
-        commandLine.add("none");
-        commandLine.add(moduleOutputPath + File.separator + PLASO);
-        commandLine.add(imageName);
+        List<String> commandLine = Arrays.asList(
+                "\"" + log2TimeLineExecutable + "\"", //NON-NLS 
+                "--vss-stores", //NON-NLS
+                "all", //NON-NLS
+                "-z",
+                timeZone,
+                "--partitions",
+                "all",
+                "--hasher_file_size_limit",
+                "1",
+                "--hashers",
+                "none",
+                moduleOutputPath + File.separator + PLASO,
+                imageName
+        );
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
@@ -210,13 +212,13 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     private ProcessBuilder buildPsortCommand(File psortExecutable, String moduleOutputPath) {
 
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add("\"" + psortExecutable + "\""); //NON-NLS
-        commandLine.add("-o"); //NON-NLS
-        commandLine.add("4n6time_sqlite"); //NON-NLS
-        commandLine.add("-w");
-        commandLine.add(moduleOutputPath + File.separator + "plasodb.db3");
-        commandLine.add(moduleOutputPath + File.separator + PLASO);
+        List<String> commandLine = Arrays.asList(
+                "\"" + psortExecutable + "\"", //NON-NLS
+                "-o", //NON-NLS
+                "4n6time_sqlite", //NON-NLS
+                "-w",
+                moduleOutputPath + File.separator + "plasodb.db3",
+                moduleOutputPath + File.separator + PLASO);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
@@ -260,8 +262,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_exception_adding_artifact=Exception Adding Artifact",
         "PlasoIngestModule_exception_database_error=Error while trying to read into a sqlite db.",
         "PlasoIngestModule_error_posting_artifact=Error Posting Artifact  ",
-        "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation "
-    })
+        "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation "})
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         org.sleuthkit.datamodel.Blackboard blackboard;
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
@@ -295,32 +296,35 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                         logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
                         resolvedFile = image;
                     }
+                    long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
+                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                            new BlackboardAttribute(
+                                    ATTRIBUTE_TYPE.TSK_DATETIME, MODULE_NAME,
+                                    resultSet.getLong("epoch_date")),
+                            new BlackboardAttribute(
+                                    ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME,
+                                    resultSet.getString("description")),
+                            new BlackboardAttribute(
+                                    ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, MODULE_NAME,
+                                    eventType));
 
                     try {
-                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, MODULE_NAME, resultSet.getLong("epoch_date")));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME, resultSet.getString("description")));
-                        long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, MODULE_NAME, eventType));
-
-                        BlackboardArtifact bbart = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT);
-                        if (bbart != null) {
-                            bbart.addAttributes(bbattributes);
-                            try {
-                                /*
-                                 * post the artifact which will index the
-                                 * artifact for keyword search, and fire an
-                                 * event to notify UI of this new artifact
-                                 */
-                                blackboard.postArtifact(bbart, MODULE_NAME);
-                            } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
-                                logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
-                            }
+                        BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
+                        bbart.addAttributes(bbattributes);
+                        try {
+                            /*
+                             * post the artifact which will index the artifact
+                             * for keyword search, and fire an event to notify
+                             * UI of this new artifact
+                             */
+                            blackboard.postArtifact(bbart, MODULE_NAME);
+                        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
+                            logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
                         }
+
                     } catch (TskCoreException ex) {
                         logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                     }
-
                 }
             }
             tempdbconnect.closeConnection();
@@ -381,6 +385,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             }
             return EventType.REGISTRY.getTypeID();
         }
-        return EventType.CUSTOM_TYPES.getTypeID();
+        return EventType.OTHER.getTypeID();
     }
 }
