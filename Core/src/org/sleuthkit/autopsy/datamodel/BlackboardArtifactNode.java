@@ -627,7 +627,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             logger.log(Level.WARNING, "Error getting artifacts for artifact: " + content.getName(), ex);
         }
         if (tags.size() > 0 && status == CrStatus.NO_STATUS) {
-            status = CrStatus.STATUS_1;
+            status = CrStatus.STATUS_2;
             description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
             for (Tag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {

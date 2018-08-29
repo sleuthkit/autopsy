@@ -350,7 +350,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
         }
         if (tags.size() > 0 && status == CrStatus.NO_STATUS) {
-            status = CrStatus.STATUS_1;
+            status = CrStatus.STATUS_2;
             description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
             for (ContentTag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {

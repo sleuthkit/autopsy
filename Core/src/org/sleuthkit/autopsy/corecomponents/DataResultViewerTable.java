@@ -26,6 +26,7 @@ import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.FeatureDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -87,8 +88,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/notepad16.png", false));
-    private static final ImageIcon STATUS_ICON_1 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/blue-tag-icon-16.png", false));
-    private static final ImageIcon STATUS_ICON_2 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/interesting_item.png", false));
+    private static final ImageIcon STATUS_ICON_1 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-1-green.png", false));
+    private static final ImageIcon STATUS_ICON_2 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-2-yellow.png", false));
     private static final ImageIcon STATUS_ICON_3 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-3-red.png", false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
@@ -955,7 +956,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //The Outline view has properties in the cell, the value contained in the property is what we want
                 try {
                     switchValue = ((Node.Property) value).getValue();
-                    setToolTipText(((Node.Property)value).getShortDescription());
+                    setToolTipText(((FeatureDescriptor)value).getShortDescription());
                 } catch (IllegalAccessException | InvocationTargetException ex) {
                     //Unable to get the value from the NodeProperty no Icon will be displayed
                 }
@@ -974,16 +975,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         break;
                     case STATUS_2:
                         setIcon(STATUS_ICON_2);
-//                        setToolTipText("This icon doens't mean anything yet,it is just second");
                         break;
                     case STATUS_3:
                         setIcon(STATUS_ICON_3);
-//                        setToolTipText("This icon doens't mean anything yet,it is just third");
                         break;
                     case NO_STATUS:
                     default:
                         setIcon(null);
-//                        setToolTipText("Nothing of interest was detected for this item");
                 }
             } else {
                 setIcon(null);
