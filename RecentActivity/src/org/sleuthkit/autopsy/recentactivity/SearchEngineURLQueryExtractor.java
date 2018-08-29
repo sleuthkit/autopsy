@@ -344,9 +344,8 @@ final class SearchEngineURLQueryExtractor extends Extract {
 
                 String browser = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_PROG_NAME)).getValueString();
                 String searchEngineDomain = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_DOMAIN)).getValueString();
-                long last_accessed = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_DATETIME_ACCESSED)).getValueLong();
 
-                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>(Arrays.asList(
                         new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
                                 searchEngineDomain),
@@ -355,10 +354,16 @@ final class SearchEngineURLQueryExtractor extends Extract {
                                 query),
                         new BlackboardAttribute(
                                 TSK_PROG_NAME, PARENT_MODULE_NAME,
-                                browser),
-                        new BlackboardAttribute(
-                                TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                last_accessed));
+                                browser)
+                ));
+                BlackboardAttribute accessedAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_DATETIME_ACCESSED));
+                if (accessedAttr != null) {
+                    bbattributes.add(
+                            new BlackboardAttribute(
+                                    TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
+                                    accessedAttr.getValueLong())
+                    );
+                }
 
                 BlackboardArtifact bbart = file.newArtifact(TSK_WEB_SEARCH_QUERY);
                 bbart.addAttributes(bbattributes);
