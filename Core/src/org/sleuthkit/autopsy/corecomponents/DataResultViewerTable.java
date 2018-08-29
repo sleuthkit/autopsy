@@ -102,6 +102,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public DataResultViewerTable() {
         this(null, Bundle.DataResultViewerTable_title());
     }
+    
 
     /**
      * Constructs a tabular result viewer that displays the children of a given
@@ -179,13 +180,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets the title of this tabular result viewer.
-     * @return  title of tab.
+     * @return 
      */
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
     public String getTitle() {
         return title;
     }
+   
     
     /**
      * Indicates whether a given node is supported as a root node for this
@@ -837,7 +839,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.openide.explorer.view.OutlineView outlineView;
+    protected org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
 }

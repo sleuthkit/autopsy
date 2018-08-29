@@ -29,6 +29,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.corecomponents.DelayedLoadChildNodesOnTreeExpansion;
 
 /**
  * <code>DataResultViewerTable</code> which overrides the default column
@@ -59,7 +60,19 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
 
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
     }
-
+    /**
+     * Implements a DataResultViewerTable which constructs a tabular result viewer that
+     * displays the children of the given root node using an OutlineView. The explorer
+     * manager will be discovered at runtime.
+     * 
+     * Adds a TreeExpansionsListener to the outlineView to receive tree expansion events
+     * which dynamically loads children nodes when requested.
+     */
+    public CommonAttributesSearchResultsViewerTable() {
+        super();
+         outlineView.addTreeExpansionListener(new DelayedLoadChildNodesOnTreeExpansion());
+    }
+    
     @NbBundle.Messages({
         "CommonFilesSearchResultsViewerTable.noDescText= ",
         "CommonFilesSearchResultsViewerTable.filesColLbl=Files",

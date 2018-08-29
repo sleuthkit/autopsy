@@ -93,7 +93,7 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
         
         @Override
         protected Node createNodeForKey(Integer instanceCount){
-            List<CommonAttributeValue> attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
+            CommonAttributeValueList attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
             return new InstanceCountNode(instanceCount, attributeValues);
         }
     }
