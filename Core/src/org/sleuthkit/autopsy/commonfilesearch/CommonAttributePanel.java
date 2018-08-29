@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.awt.Dimension;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,6 +30,8 @@ import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
@@ -52,15 +55,20 @@ import org.sleuthkit.datamodel.TskCoreException;
  * logic. Nested within CommonFilesDialog.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public final class CommonAttributePanel extends javax.swing.JDialog  {
+public final class CommonAttributePanel extends javax.swing.JDialog {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     private static final long serialVersionUID = 1L;
 
     private static final Long NO_DATA_SOURCE_SELECTED = -1L;
 
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
+    private final UserInputErrorManager errorManager;
+
     private boolean pictureViewCheckboxState;
+
     private boolean documentsCheckboxState;
+
+    private int percentageThresholdValue = 20;
 
     /**
      * Creates new form CommonFilesPanel
@@ -74,21 +82,71 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         super(new JFrame(Bundle.CommonFilesPanel_frame_title()),
                 Bundle.CommonFilesPanel_frame_msg(), true);
         initComponents();
+        
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        this.errorText.setVisible(false);
         this.setupDataSources();
 
-        if (CommonAttributePanel.isEamDbAvailable()) {
+        if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
             this.setupCases();
         } else {
             this.disableIntercaseSearch();
         }
+        
+        if(CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations()){
+            this.enablePercentageOptions();
+        } else {
+            this.disablePercentageOptions();
+        }
+
+        this.errorManager = new UserInputErrorManager();
+        
+        this.percentageThresholdTextOne.getDocument().addDocumentListener(new DocumentListener(){
+            
+            private Dimension preferredSize = CommonAttributePanel.this.percentageThresholdTextOne.getPreferredSize();
+            
+            private void maintainSize(){
+                CommonAttributePanel.this.percentageThresholdTextOne.setSize(preferredSize);
+            }
+            
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                this.maintainSize();
+                CommonAttributePanel.this.percentageThresholdChanged();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                this.maintainSize();
+                CommonAttributePanel.this.percentageThresholdChanged();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                this.maintainSize();
+                CommonAttributePanel.this.percentageThresholdChanged();
+            }
+        });
     }
 
-    private static boolean isEamDbAvailable() {
+    private static boolean isEamDbAvailableForIntercaseSearch() {
         try {
-            EamDb DbManager = EamDb.getInstance();
-            return DbManager != null;
+            return EamDb.isEnabled()
+                    && EamDb.getInstance() != null
+                    && EamDb.getInstance().getCases().size() > 1
+                    && Case.isCaseOpen()
+                    && Case.getCurrentCase() != null
+                    && EamDb.getInstance().getCase(Case.getCurrentCase()) != null;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
+        }
+        return false;
+    }
+    
+    private static boolean isEamDbAvailableForPercentageFrequencyCalculations(){
+                try {
+            return EamDb.isEnabled()
+                    && EamDb.getInstance() != null
+                    && EamDb.getInstance().getCases().size() > 0;
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
@@ -132,7 +190,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
-            protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException, Exception {
+            protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
                 progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -154,20 +212,27 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                     }
                 }
 
+                int percentageThreshold = CommonAttributePanel.this.percentageThresholdValue;
+                
+                if (!CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
+                    //0 has the effect of disabling the feature
+                    percentageThreshold = 0;
+                }
+
                 if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
 
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
                     } else {
-                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
                     }
                 } else {
                     if (dataSourceId == CommonAttributePanel.NO_DATA_SOURCE_SELECTED) {
-                        builder = new AllIntraCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new AllIntraCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
 
                         setTitleForAllDataSources();
                     } else {
-                        builder = new SingleIntraCaseCommonAttributeSearcher(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments);
+                        builder = new SingleIntraCaseCommonAttributeSearcher(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
 
                         setTitleForSingleSource(dataSourceId);
                     }
@@ -226,7 +291,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         }.execute();
     }
 
-
     /**
      * Sets up the data sources dropdown and returns the data sources map for
      * future usage.
@@ -259,8 +323,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                     boolean multipleDataSources = this.caseHasMultipleSources();
                     CommonAttributePanel.this.intraCasePanel.rigForMultipleDataSources(multipleDataSources);
 
-                    //TODO this should be attached to the intra/inter radio buttons
-                    CommonAttributePanel.this.setSearchButtonEnabled(true);
+                    CommonAttributePanel.this.updateErrorTextAndSearchBox();
                 }
             }
 
@@ -331,7 +394,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                 }
             }
 
-            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws Exception {
+            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws EamDbException {
                 Map<Integer, String> casemap = new HashMap<>();
                 CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
@@ -344,7 +407,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             }
 
             @Override
-            protected Map<Integer, String> doInBackground() throws Exception {
+            protected Map<Integer, String> doInBackground() throws EamDbException {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
                 Map<Integer, String> caseMap = mapDataSources(dataSources);
@@ -401,9 +464,14 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         layoutPanel = new java.awt.Panel();
         intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
         interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
+        percentageThresholdCheck = new javax.swing.JCheckBox();
+        percentageThresholdTextOne = new javax.swing.JTextField();
+        percentageThresholdTextTwo = new javax.swing.JLabel();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
 
-        setMinimumSize(new java.awt.Dimension(412, 350));
-        setPreferredSize(new java.awt.Dimension(412, 350));
+        setMaximumSize(new java.awt.Dimension(450, 375));
+        setMinimumSize(new java.awt.Dimension(450, 375));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -411,7 +479,10 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             }
         });
 
-        jPanel1.setPreferredSize(new java.awt.Dimension(412, 350));
+        jPanel1.setMaximumSize(new java.awt.Dimension(450, 375));
+        jPanel1.setMinimumSize(new java.awt.Dimension(450, 375));
+        jPanel1.setPreferredSize(new java.awt.Dimension(450, 375));
+        jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel2.text")); // NOI18N
         commonFilesSearchLabel2.setFocusable(false);
@@ -474,6 +545,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
 
         errorText.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.errorText.text")); // NOI18N
+        errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel1, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel1.text")); // NOI18N
         commonFilesSearchLabel1.setFocusable(false);
@@ -499,42 +571,64 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         layoutPanel.add(intraCasePanel, "card3");
         layoutPanel.add(interCasePanel, "card2");
 
+        org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdCheck, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdCheck.text_1")); // NOI18N
+        percentageThresholdCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                percentageThresholdCheckActionPerformed(evt);
+            }
+        });
+
+        percentageThresholdTextOne.setText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextOne.text")); // NOI18N
+        percentageThresholdTextOne.setMaximumSize(new java.awt.Dimension(40, 24));
+        percentageThresholdTextOne.setMinimumSize(new java.awt.Dimension(40, 24));
+        percentageThresholdTextOne.setPreferredSize(new java.awt.Dimension(40, 24));
+
+        org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdTextTwo, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextTwo.text_1")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(errorText))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(commonFilesSearchLabel2)
-                            .addComponent(intraCaseRadio)
-                            .addComponent(interCaseRadio)
-                            .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(categoriesLabel)
-                            .addComponent(selectedFileCategoriesButton)))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(80, 80, 80)
+                                .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(errorText)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(35, 35, 35)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(documentsCheckbox)
-                            .addComponent(pictureVideoCheckbox)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(allFileCategoriesRadioButton)))
-                .addContainerGap())
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addGap(20, 20, 20)
-                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(10, 10, 10)))
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(commonFilesSearchLabel2)
+                                .addComponent(intraCaseRadio)
+                                .addComponent(interCaseRadio)
+                                .addComponent(commonFilesSearchLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(categoriesLabel)
+                                .addComponent(selectedFileCategoriesButton)
+                                .addGroup(jPanel1Layout.createSequentialGroup()
+                                    .addGap(29, 29, 29)
+                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(documentsCheckbox)
+                                        .addComponent(pictureVideoCheckbox)))
+                                .addComponent(allFileCategoriesRadioButton)
+                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                    .addGap(10, 10, 10)
+                                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(percentageThresholdCheck)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(percentageThresholdTextOne, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(percentageThresholdTextTwo)))
+                        .addContainerGap(9, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -547,7 +641,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                 .addComponent(intraCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(interCaseRadio)
-                .addGap(79, 79, 79)
+                .addGap(2, 2, 2)
+                .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(categoriesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(selectedFileCategoriesButton)
@@ -559,85 +655,90 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
                 .addComponent(allFileCategoriesRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(searchButton)
-                    .addComponent(cancelButton)
-                    .addComponent(errorText))
+                    .addComponent(percentageThresholdCheck)
+                    .addComponent(percentageThresholdTextOne, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(percentageThresholdTextTwo))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(filler2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(searchButton)
+                        .addComponent(cancelButton)
+                        .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                    .addGap(98, 98, 98)
-                    .addComponent(layoutPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(180, 180, 180)))
         );
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        SwingUtilities.windowForComponent(this).dispose();
+    }//GEN-LAST:event_formWindowClosed
+
+    private void percentageThresholdCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdCheckActionPerformed
+        if (this.percentageThresholdCheck.isSelected()) {
+            this.percentageThresholdTextOne.setEnabled(true);
+        } else {
+            this.percentageThresholdTextOne.setEnabled(false);
+        }
+
+        this.handleFrequencyPercentageState();
+    }//GEN-LAST:event_percentageThresholdCheckActionPerformed
+
+    private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
+    }//GEN-LAST:event_interCaseRadioActionPerformed
+
+    private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
+        ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
+    }//GEN-LAST:event_intraCaseRadioActionPerformed
+
+    private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
+        this.handleFileTypeCheckBoxState();
+    }//GEN-LAST:event_documentsCheckboxActionPerformed
+
+    private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
+        this.handleFileTypeCheckBoxState();
+    }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
+
+    private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
+        this.handleFileTypeCheckBoxState();
+    }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
+
+    private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
+        this.handleFileTypeCheckBoxState();
+    }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
+
+    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        SwingUtilities.windowForComponent(this).dispose();
+    }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         search();
         SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_searchButtonActionPerformed
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        SwingUtilities.windowForComponent(this).dispose();
-    }//GEN-LAST:event_cancelButtonActionPerformed
+    private void percentageThresholdChanged(){
+        String percentageString = this.percentageThresholdTextOne.getText();
 
-    private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
-        this.manageCheckBoxState();
-        this.toggleErrorTextAndSearchBox();
-    }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
-
-    private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
-        this.manageCheckBoxState();
-    }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
-
-    private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
-        this.toggleErrorTextAndSearchBox();
-    }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
-
-    private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
-        this.toggleErrorTextAndSearchBox();
-    }//GEN-LAST:event_documentsCheckboxActionPerformed
-
-    private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
-        ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
-        handleIntraCaseSearchCriteriaChanged();
-    }//GEN-LAST:event_intraCaseRadioActionPerformed
-
-    public void handleIntraCaseSearchCriteriaChanged() {
-        if (this.areIntraCaseSearchCriteriaMet()) {
-            this.searchButton.setEnabled(true);
-            this.hideErrorMessages();
-        } else {
-            this.searchButton.setEnabled(false);
-            this.hideErrorMessages();
-            this.showIntraCaseErrorMessage();
+        try {
+            this.percentageThresholdValue = Integer.parseInt(percentageString);
+            
+        } catch (NumberFormatException exception) {
+            this.percentageThresholdValue = -1;
         }
+
+        this.handleFrequencyPercentageState();        
     }
+    
+    private void updateErrorTextAndSearchBox() {
 
-    private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
-        ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
-        handleInterCaseSearchCriteriaChanged();
-    }//GEN-LAST:event_interCaseRadioActionPerformed
-
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        SwingUtilities.windowForComponent(this).dispose();
-    }//GEN-LAST:event_formWindowClosed
-
-    public void handleInterCaseSearchCriteriaChanged() {
-        if (this.areInterCaseSearchCriteriaMet()) {
-            this.searchButton.setEnabled(true);
-            this.hideErrorMessages();
-        } else {
+        if (this.errorManager.anyErrors()) {
             this.searchButton.setEnabled(false);
-            this.hideErrorMessages();
-            this.showInterCaseErrorMessage();
-        }
-    }
-
-    private void toggleErrorTextAndSearchBox() {
-        if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected() && !this.allFileCategoriesRadioButton.isSelected()) {
-            this.searchButton.setEnabled(false);
+            //grab the first error error and show it
+            this.errorText.setText(this.errorManager.getErrors().get(0));
             this.errorText.setVisible(true);
         } else {
             this.searchButton.setEnabled(true);
@@ -645,7 +746,21 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         }
     }
 
-    private void manageCheckBoxState() {
+    private void enablePercentageOptions() {
+        this.percentageThresholdTextOne.setEnabled(true);
+        this.percentageThresholdCheck.setEnabled(true);
+        this.percentageThresholdCheck.setSelected(true);
+        this.percentageThresholdTextTwo.setEnabled(true);
+    }
+
+    private void disablePercentageOptions() {
+        this.percentageThresholdTextOne.setEnabled(false);
+        this.percentageThresholdCheck.setEnabled(false);
+        this.percentageThresholdCheck.setSelected(false);
+        this.percentageThresholdTextTwo.setEnabled(false);
+    }
+
+    private void handleFileTypeCheckBoxState() {
 
         this.pictureViewCheckboxState = this.pictureVideoCheckbox.isSelected();
         this.documentsCheckboxState = this.documentsCheckbox.isSelected();
@@ -653,6 +768,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
         if (this.allFileCategoriesRadioButton.isSelected()) {
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
+            
+            this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
         }
 
         if (this.selectedFileCategoriesButton.isSelected()) {
@@ -663,8 +780,24 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
             this.pictureVideoCheckbox.setEnabled(true);
             this.documentsCheckbox.setEnabled(true);
 
-            this.toggleErrorTextAndSearchBox();
+            if (!this.pictureVideoCheckbox.isSelected() && !this.documentsCheckbox.isSelected() && !this.allFileCategoriesRadioButton.isSelected()) {
+                this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, true);
+            } else {
+                this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
+            }
         }
+        
+        this.updateErrorTextAndSearchBox();
+    }
+
+    private void handleFrequencyPercentageState() {
+        if (this.percentageThresholdValue > 0 && this.percentageThresholdValue <= 100) {
+            this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, false);
+        } else {
+            this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, true);
+        }
+
+        this.updateErrorTextAndSearchBox();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -676,6 +809,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
     private javax.swing.JCheckBox documentsCheckbox;
     private javax.swing.JLabel errorText;
     private javax.swing.ButtonGroup fileTypeFilterButtonGroup;
+    private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
     private org.sleuthkit.autopsy.commonfilesearch.InterCasePanel interCasePanel;
     private javax.swing.JRadioButton interCaseRadio;
     private javax.swing.ButtonGroup interIntraButtonGroup;
@@ -683,34 +818,11 @@ public final class CommonAttributePanel extends javax.swing.JDialog  {
     private javax.swing.JRadioButton intraCaseRadio;
     private javax.swing.JPanel jPanel1;
     private java.awt.Panel layoutPanel;
+    private javax.swing.JCheckBox percentageThresholdCheck;
+    private javax.swing.JTextField percentageThresholdTextOne;
+    private javax.swing.JLabel percentageThresholdTextTwo;
     private javax.swing.JCheckBox pictureVideoCheckbox;
     private javax.swing.JButton searchButton;
     private javax.swing.JRadioButton selectedFileCategoriesButton;
     // End of variables declaration//GEN-END:variables
-
-    void setSearchButtonEnabled(boolean enabled) {
-        this.searchButton.setEnabled(enabled);
-    }
-
-    private boolean areIntraCaseSearchCriteriaMet() {
-        return this.intraCasePanel.areSearchCriteriaMet();
-    }
-
-    private boolean areInterCaseSearchCriteriaMet() {
-        return this.interCasePanel.areSearchCriteriaMet();
-    }
-
-    private void hideErrorMessages() {
-        this.errorText.setVisible(false);
-    }
-
-    private void showIntraCaseErrorMessage() {
-        this.errorText.setText(this.intraCasePanel.getErrorMessage());
-        this.errorText.setVisible(true);
-    }
-
-    private void showInterCaseErrorMessage() {
-        this.errorText.setText(this.interCasePanel.getErrorMessage());
-        this.errorText.setVisible(true);
-    }
 }

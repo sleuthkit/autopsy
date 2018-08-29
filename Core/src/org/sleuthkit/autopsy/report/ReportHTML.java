@@ -784,8 +784,14 @@ class ReportHTML implements TableReportModule {
             localFileFolder.mkdirs();
         }
 
-        // Construct a file tagName for the local file that incorporates the file id to ensure uniqueness.
-        String fileName = file.getName();
+        /*
+         * Construct a file tagName for the local file that incorporates the
+         * file ID to ensure uniqueness.
+         *
+         * Note: File name is normalized to account for possible attribute name
+         * which will be separated by a ':' character.
+         */
+        String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
         String objectIdSuffix = "_" + file.getId();
         int lastDotIndex = fileName.lastIndexOf(".");
         if (lastDotIndex != -1 && lastDotIndex != 0) {
@@ -1294,9 +1300,24 @@ class ReportHTML implements TableReportModule {
         return summary;
     }
 
+    /**
+     * Create a thumbnail of a given file.
+     *
+     * @param file The file from which to create the thumbnail.
+     *
+     * @return The path to the thumbnail file, or null if a thumbnail couldn't
+     *         be created.
+     */
     private String prepareThumbnail(AbstractFile file) {
         BufferedImage bufferedThumb = ImageUtils.getThumbnail(file, ImageUtils.ICON_SIZE_MEDIUM);
-        File thumbFile = Paths.get(thumbsPath, file.getName() + ".png").toFile();
+
+        /*
+         * File name is normalized to account for possible attribute name which
+         * will be separated by a ':' character.
+         */
+        String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
+
+        File thumbFile = Paths.get(thumbsPath, fileName + ".png").toFile();
         if (bufferedThumb == null) {
             return null;
         }

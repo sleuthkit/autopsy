@@ -68,6 +68,20 @@ final public class CommonAttributeValueList {
     }
     
     /**
+     * Get the delayed list of value nodes. Only use for
+     * determining how many CommonAttributeValues
+     * actually exist in the list.
+     * @return metadataList the list of nodes
+     */
+    List<CommonAttributeValue> getDelayedMetadataList() {
+        return Collections.unmodifiableList(this.delayedMetadataList);
+    }
+    
+    void removeMetaData(CommonAttributeValue commonVal) {
+        this.delayedMetadataList.remove(commonVal);
+    }
+    
+    /**
      * Return the size of the backing list, in case 
      * displayDelayedMetadata() has not be called yet.
      * @return int the number of matches for this value

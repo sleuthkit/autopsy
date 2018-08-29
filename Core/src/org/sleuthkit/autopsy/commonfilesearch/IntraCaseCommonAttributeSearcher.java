@@ -55,8 +55,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @param filterByDocMimeType match only on files whose mime types can be
      * broadly categorized as document types
      */
-    IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType) {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType);
+    IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
     }
 
     /**
@@ -130,7 +130,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         
         Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
         
-        return new CommonAttributeSearchResults(instanceCollatedCommonFiles);
+        return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }
 
     /**
@@ -156,11 +156,13 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
         StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
         if (!mimeTypesToFilterOn.isEmpty()) {
             for (String mimeType : mimeTypesToFilterOn) {
-                mimeTypeFilter.append("'").append(mimeType).append("',");
+                mimeTypeFilter.append(SINGLE_QUOTE).append(mimeType).append(SINGLE_QUTOE_COMMA);
             }
             mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
             mimeTypeString = String.format(FILTER_BY_MIME_TYPES_WHERE_CLAUSE, new Object[]{mimeTypeString});
         }
         return mimeTypeString;
     }
+    static final String SINGLE_QUTOE_COMMA = "',";
+    static final String SINGLE_QUOTE = "'";
 }

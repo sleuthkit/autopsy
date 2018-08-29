@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
-import org.openide.util.NbBundle;
 
 /**
  * UI controls for Common Files Search scenario where the user intends to find
@@ -39,16 +38,18 @@ public class InterCasePanel extends javax.swing.JPanel {
     private ComboBoxModel<String> casesList = new DataSourceComboBoxModel();
     
     private final Map<Integer, String> caseMap;
-    
-    private String errorMessage;
+        
+    //True if we are looking in any or all cases,
+    //  false if we must find matches in a given case plus the current case
+    private boolean anyCase;
     
     /**
      * Creates new form InterCasePanel
      */
     public InterCasePanel() {
         initComponents();
-        this.errorMessage = "";
         this.caseMap = new HashMap<>();
+        this.anyCase = true;
     }
 
     private void specificCaseSelected(boolean selected) {
@@ -57,10 +58,6 @@ public class InterCasePanel extends javax.swing.JPanel {
             this.caseComboBox.setEnabled(true);
             this.caseComboBox.setSelectedIndex(0);
         }
-    }
-    
-    String getErrorMessage(){
-        return this.errorMessage;
     }
     
     /**
@@ -127,10 +124,12 @@ public class InterCasePanel extends javax.swing.JPanel {
         if(this.caseComboBox.isEnabled() && this.caseComboBox.getSelectedItem() == null){
             this.caseComboBox.setSelectedIndex(0);
         }
+        this.anyCase = false;
     }//GEN-LAST:event_specificCentralRepoCaseRadioActionPerformed
 
     private void anyCentralRepoCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_anyCentralRepoCaseRadioActionPerformed
         this.caseComboBox.setEnabled(false);
+        this.anyCase = true;
     }//GEN-LAST:event_anyCentralRepoCaseRadioActionPerformed
 
 
@@ -170,6 +169,10 @@ public class InterCasePanel extends javax.swing.JPanel {
     }
     
     Integer getSelectedCaseId(){
+        if(this.anyCase){
+            return InterCasePanel.NO_CASE_SELECTED;
+        }
+        
         for(Entry<Integer, String> entry : this.caseMap.entrySet()){
             if(entry.getValue().equals(this.caseComboBox.getSelectedItem())){
                 return entry.getKey();
@@ -177,17 +180,5 @@ public class InterCasePanel extends javax.swing.JPanel {
         }
         
         return InterCasePanel.NO_CASE_SELECTED;
-    }
-
-    @NbBundle.Messages({
-        "InterCasePanel.showInterCaseErrorMessage.message=Cannot run intercase correlation search: no cases in Central Repository."
-    })
-    boolean areSearchCriteriaMet() {
-        if(this.caseMap.isEmpty()){
-            this.errorMessage = Bundle.InterCasePanel_showInterCaseErrorMessage_message();
-            return false;
-        } else {
-            return true;
-        }
     }
 }

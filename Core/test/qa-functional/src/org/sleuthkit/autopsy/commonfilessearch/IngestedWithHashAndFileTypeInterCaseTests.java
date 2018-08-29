@@ -19,17 +19,21 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.sql.SQLException;
 import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.SingleInterCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.*;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Tests with case 3 as the current case.
@@ -62,9 +66,9 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
         try {
             this.utils.enableCentralRepo();
             this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
-        } catch (Exception ex) {
+        } catch (TskCoreException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -82,7 +86,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             //note that the params false and false are presently meaningless because that feature is not supported yet
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, 0);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
@@ -120,9 +124,9 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
             
-        } catch (Exception ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
     
@@ -135,7 +139,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
                         
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false, 0);
             
             CommonAttributeSearchResults metadata = builder.findFiles();
             
@@ -173,9 +177,61 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
             
-        } catch (Exception ex) {
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }
+    
+    /**
+     * We should be able to observe that certain files o no longer returned
+     * in the result set since they do not appear frequently enough.
+     */
+    public void testThree(){
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            
+            //note that the params false and false are presently meaningless because that feature is not supported yet
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, 50);
+            
+            CommonAttributeSearchResults metadata = builder.findFiles();
+            
+            assertTrue("Results should not be empty", metadata.size() != 0);
+            
+            //case 1 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            
+            //case 1 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            
+            //case 2 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            
+            //case 2 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 0));
+            
+            //case 3 data set 1
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));            
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            
+            //case 3 data set 2
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 0)); 
+            
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex); 
+            Assert.fail(ex.getMessage());
         }
     }
 }

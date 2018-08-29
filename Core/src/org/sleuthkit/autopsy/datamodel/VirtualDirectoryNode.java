@@ -50,8 +50,6 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
         this.setDisplayName(nameForVirtualDirectory(ld));
 
-        String name = ld.getName();
-
         //set icon for name, special case for logical file set
         if (ld.isDataSource()) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
@@ -59,7 +57,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-virtual.png"); //TODO NON-NLS
         }
     }
-    
+
     @Override
     @NbBundle.Messages({"VirtualDirectoryNode.createSheet.size.name=Size (Bytes)",
         "VirtualDirectoryNode.createSheet.size.displayName=Size (Bytes)",

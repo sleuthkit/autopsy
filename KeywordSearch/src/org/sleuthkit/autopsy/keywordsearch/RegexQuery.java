@@ -36,6 +36,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -49,13 +50,11 @@ import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.KEYWORD_SE
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -75,7 +74,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 final class RegexQuery implements KeywordSearchQuery {
 
-    public static final Logger logger = Logger.getLogger(RegexQuery.class.getName());
+    public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
 
     /**
      * Lucene regular expressions do not support the following Java predefined
@@ -214,7 +213,7 @@ final class RegexQuery implements KeywordSearchQuery {
                             hitsForKeyword.add(hit);
                         }
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error creating keyword hits", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Error creating keyword hits", ex); //NON-NLS
                     }
                 }
 
@@ -224,7 +223,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 }
                 cursorMark = nextCursorMark;
             } catch (KeywordSearchModuleException ex) {
-                logger.log(Level.SEVERE, "Error executing Regex Solr Query: " + keywordString, ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Error executing Regex Solr Query: " + keywordString, ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
         }
@@ -438,16 +437,16 @@ final class RegexQuery implements KeywordSearchQuery {
      * @param listName     The name of the keyword list that contained the
      *                     keyword for which the hit was found.
      *
-     * @return The newly created artifact, or null if one wasn't created due to
-     *         either the artifact already existing or an error while trying to
-     *         create it.
+     *
+     * @return The newly created artifact or null if there was a problem
+     *         creating it.
      */
     @Override
     public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {
-            logger.log(Level.WARNING, "Error adding artifact for keyword hit to blackboard"); //NON-NLS
+            LOGGER.log(Level.WARNING, "Error adding artifact for keyword hit to blackboard"); //NON-NLS
             return null;
         }
 
@@ -459,52 +458,41 @@ final class RegexQuery implements KeywordSearchQuery {
             return null;
         }
         
-        List<BlackboardAttribute> attributesList = new ArrayList<>();
-        attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
-        attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
-        attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
-        if (StringUtils.isNotBlank(listName)) {
-            attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-        }
-
-        try {
-            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            Blackboard blackboard = tskCase.getBlackboard();
-            if (blackboard.artifactExists(content, BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, attributesList)) {
-                return null;
-            }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format(
-                    "A problem occurred while checking for existing artifacts for file '%s' (id=%d).",
-                    content.getName(), content.getId()), ex); //NON-NLS
-        }
-        
         /*
          * Create a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes
          */
         BlackboardArtifact newArtifact;
+        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
         
         try {
             newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
             return null;
         }
         
+        if (StringUtils.isNotBlank(listName)) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+        }
         if (snippet != null) {
-            attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
 
         hit.getArtifactID().ifPresent(artifactID
-                -> attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+                -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+
         try {
-            newArtifact.addAttributes(attributesList);
+            newArtifact.addAttributes(attributes);
             return newArtifact;
         } catch (TskCoreException e) {
-            logger.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
         }
     }
@@ -514,7 +502,7 @@ final class RegexQuery implements KeywordSearchQuery {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            logger.log(Level.SEVERE, "Keyword hit is not a credit card number"); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Keyword hit is not a credit card number"); //NON-NLS
             return;
         }
         /*
@@ -537,13 +525,13 @@ final class RegexQuery implements KeywordSearchQuery {
         if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
            
             if (hit.isArtifactHit()) {
-                logger.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
+                LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
             } else {
                 try {
-                    logger.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s' ", foundKeyword.getSearchTerm(), hit.getSnippet())); //NON-NLS
-                    logger.log(Level.SEVERE, "There was a error getting contentID for keyword hit.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s' ", foundKeyword.getSearchTerm(), hit.getSnippet())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "There was a error getting contentID for keyword hit.", ex); //NON-NLS
                 }
             }
             return;
@@ -611,7 +599,7 @@ final class RegexQuery implements KeywordSearchQuery {
             ccAccountInstance.addAttributes(attributes);
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS
             
         }
         

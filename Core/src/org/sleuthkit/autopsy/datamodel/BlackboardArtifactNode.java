@@ -48,8 +48,6 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
@@ -456,10 +454,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         dataSourceStr));
             }
         }
-        
+
         // If EXIF, add props for file size and path
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
-            
+
             long size = 0;
             String path = ""; //NON-NLS
             if (associated instanceof AbstractFile) {
