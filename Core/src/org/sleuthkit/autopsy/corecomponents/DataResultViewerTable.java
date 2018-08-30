@@ -88,9 +88,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
     private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/notepad16.png", false));
-    private static final ImageIcon STATUS_ICON_1 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-1-green.png", false));
-    private static final ImageIcon STATUS_ICON_2 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-2-yellow.png", false));
-    private static final ImageIcon STATUS_ICON_3 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/roman-numeral-3-red.png", false));
+    private static final ImageIcon SCORE_ICON_1 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/yellow-circle-yield.png", false));
+    private static final ImageIcon SCORE_ICON_2 = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/red-circle-exclamation.png", false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
@@ -661,16 +660,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private class IconRendererTableListener implements TableColumnModelListener {
 
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
-            "DataResultViewerTable.statusRender.name=S"})
+            "DataResultViewerTable.scoreRender.name=S"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
             if (e.getSource() instanceof ETableColumnModel) {
-                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
-                //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
+                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());          
                 if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
+                    //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
                     column.setCellRenderer(new HasCommentCellRenderer());
-                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_statusRender_name())) {
-                    column.setCellRenderer(new CrStatusCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_scoreRender_name())) {
+                    //if the current column is a score column set the cell renderer to be the ScoreCellRenderer
+                    column.setCellRenderer(new ScoreCellRenderer());
                 }
             }
         }
@@ -940,9 +940,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /*
      * A renderer which based on the contents of the cell will display an icon
-     * to indicate the status of information in the central repository.
+     * to indicate the score associated with the item.
      */
-    private final class CrStatusCellRenderer extends ColorTagCustomRenderer {
+    private final class ScoreCellRenderer extends ColorTagCustomRenderer {
 
         private static final long serialVersionUID = 1L;
 
@@ -966,20 +966,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 switchValue = value;
             }
             setText("");
-            if ((switchValue instanceof CrStatus)) {
+            if ((switchValue instanceof Score)) {
 
-                switch ((CrStatus) switchValue) {
-                    case STATUS_1:
-                        setIcon(STATUS_ICON_1);
-                      
+                switch ((Score) switchValue) {
+                    case SCORE_1:
+                        setIcon(SCORE_ICON_1);
                         break;
-                    case STATUS_2:
-                        setIcon(STATUS_ICON_2);
+                    case SCORE_2:
+                        setIcon(SCORE_ICON_2);
                         break;
-                    case STATUS_3:
-                        setIcon(STATUS_ICON_3);
-                        break;
-                    case NO_STATUS:
+                    case NO_SCORE:
                     default:
                         setIcon(null);
                 }
@@ -1004,15 +1000,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Enum to denote the presence of a comment associated with the content or
-     * artifacts generated from it.
+     * Enum to denote the score given to an item to draw the users attention
      */
-    public enum CrStatus {
-        NO_STATUS,
-        STATUS_1,
-        STATUS_2,
-        STATUS_3,
-
+    public enum Score {
+        NO_SCORE,
+        SCORE_1,
+        SCORE_2
     }
 
     /**

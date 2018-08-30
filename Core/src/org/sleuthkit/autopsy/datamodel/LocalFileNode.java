@@ -81,7 +81,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
-        addStatusProperty(sheetSet, tags);
+        addScoreProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {

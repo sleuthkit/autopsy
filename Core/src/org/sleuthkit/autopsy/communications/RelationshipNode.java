@@ -67,7 +67,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
-        addStatusProperty(sheetSet, tags);
+        addScoreProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());

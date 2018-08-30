@@ -82,7 +82,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 NO_DESCR,
                 getName()));
         //add the cr status property before the propertyMap to ensure it is early in column order
-        addStatusProperty(sheetSet, tags);
+        addScoreProperty(sheetSet, tags);
         //add the comment property before the propertyMap to ensure it is early in column order
         addCommentProperty(sheetSet, tags);
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {

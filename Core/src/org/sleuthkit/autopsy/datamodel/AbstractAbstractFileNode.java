@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.CrStatus;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -321,47 +321,46 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /**
-     * Used by subclasses of AbstractAbstractFileNode to add the status property
+     * Used by subclasses of AbstractAbstractFileNode to add the Score property
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
      */
-    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.status.name=S",
-        "AbstractAbstractFileNode.createSheet.status.displayName=S",
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.score.name=S",
+        "AbstractAbstractFileNode.createSheet.score.displayName=S",
         "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
         "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
         "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
         "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag."})
-    protected void addStatusProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
-        CrStatus status = CrStatus.NO_STATUS;
+    protected void addScoreProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+        Score score = Score.NO_SCORE;
         String description = NO_DESCR;
         if (content.getKnown() == TskData.FileKnown.BAD) {
-            status = CrStatus.STATUS_3;
+            score = Score.SCORE_2;
             description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
         }
         try {
-            if (status == CrStatus.NO_STATUS && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
-                status = CrStatus.STATUS_2;
+            if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
+                score = Score.SCORE_1;
                 description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
         }
-        if (tags.size() > 0 && status == CrStatus.NO_STATUS) {
-            status = CrStatus.STATUS_2;
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.SCORE_1)) {
+            score = Score.SCORE_1;
             description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
             for (ContentTag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    status = CrStatus.STATUS_3;
+                    score = Score.SCORE_2;
                     description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
                     break;
                 }
             }
         }
-        sheetSet.put(
-                new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_status_name(), Bundle.AbstractAbstractFileNode_createSheet_status_displayName(), description, status));
+        sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_score_name(), Bundle.AbstractAbstractFileNode_createSheet_score_displayName(), description, score));
     }
 
     /**

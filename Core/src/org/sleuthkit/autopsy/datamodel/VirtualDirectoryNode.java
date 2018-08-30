@@ -89,7 +89,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
         if (!this.content.isDataSource()) {
-            addStatusProperty(sheetSet, tags);
+            addScoreProperty(sheetSet, tags);
             addCommentProperty(sheetSet, tags);
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, getContent());

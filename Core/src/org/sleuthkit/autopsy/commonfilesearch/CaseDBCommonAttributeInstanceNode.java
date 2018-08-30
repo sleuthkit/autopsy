@@ -81,7 +81,7 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
 
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
-        this.addStatusProperty(sheetSet, tags);
+        this.addScoreProperty(sheetSet, tags);
         this.addCommentProperty(sheetSet, tags);
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsCsvList(this.getContent())));

@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.CrStatus;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
@@ -350,7 +350,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
-        addStatusProperty(sheetSet, tags);
+        addScoreProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
@@ -596,49 +596,48 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
 
     /**
-     * Used by (subclasses of) BlackboardArtifactNode to add the Status property
+     * Used by (subclasses of) BlackboardArtifactNode to add the Score property
      * to their sheets.
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
      */
-    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.status.name=S",
-        "BlackboardArtifactNode.createSheet.status.displayName=S",
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.score.name=S",
+        "BlackboardArtifactNode.createSheet.score.displayName=S",
         "BlackboardArtifactNode.createSheet.notableFile.description=Associated file recognized as notable.",
         "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
         "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
         "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
-    protected void addStatusProperty(Sheet.Set sheetSet, List<Tag> tags) {
-        CrStatus status = CrStatus.NO_STATUS;
+    protected void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        Score score = Score.NO_SCORE;
         String description = "";
-        if (status != CrStatus.STATUS_3 && associated instanceof AbstractFile) {
+        if (associated instanceof AbstractFile) {
             if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
-                status = CrStatus.STATUS_3;
+                score = Score.SCORE_2;
                 description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
             }
         }
         try {
-            if (status == CrStatus.NO_STATUS && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
-                status = CrStatus.STATUS_2;
+            if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
+                score = Score.SCORE_1;
                 description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting artifacts for artifact: " + content.getName(), ex);
         }
-        if (tags.size() > 0 && status == CrStatus.NO_STATUS) {
-            status = CrStatus.STATUS_2;
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.SCORE_1)) {
+            score = Score.SCORE_1;
             description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
             for (Tag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    status = CrStatus.STATUS_3;
+                    score = Score.SCORE_2;
                     description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
                     break;
                 }
             }
         }
-        sheetSet.put(
-                new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_status_name(), Bundle.BlackboardArtifactNode_createSheet_status_displayName(), description, status));
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), description, score));
     }
 
     private void updateSheet() {
