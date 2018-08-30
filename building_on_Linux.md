@@ -1,10 +1,10 @@
-#Building Autopsy from source on Debian based Linux.
+# Building Autopsy from source on Debian based Linux.
 
-##Install Oracle Java and set JAVA_HOME.
--- Use the instructions here: https://medium.com/coderscorner/installing-oracle-java-8-in-ubuntu-16-10-845507b13343
+## Install Oracle Java and set JAVA_HOME.
+- Use the instructions here: https://medium.com/coderscorner/installing-oracle-java-8-in-ubuntu-16-10-845507b13343
           NOTE: You may need to log out and login again to make JAVA_HOME environment variable visible to netbeans.
 
-##Building sleuthkit from source.
+## Building sleuthkit from source.
 
 -Install all necessary packages to build sleuthkit
 '''
@@ -27,11 +27,11 @@ make
 ```
 ln -s sleuthkit-VERSION.jar sleuthkit-postgresql-VERSION.jar
 ```
-##Building Autopsy from source
+## Building Autopsy from source
 
 - After building the sleuthkit now its time to build Autopsy
 
-####Setting Up TSK_HOME environment variable:
+#### Setting Up TSK_HOME environment variable:
 - Add TSK_HOME env to the /etc/environment
 - TSK_HOME environment variable is the directory of sleuthkit
      NOTE: You may need to log out and login again to make JAVA_HOME environment variable visible to netbeans.
