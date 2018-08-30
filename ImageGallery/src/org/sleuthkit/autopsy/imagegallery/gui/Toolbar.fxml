@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuItem?>
@@ -14,22 +13,7 @@
 <?import javafx.scene.layout.HBox?>
 
 <fx:root minWidth="-1.0" orientation="HORIZONTAL" prefWidth="-1.0" type="javafx.scene.control.ToolBar" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1">
-    <items> 
-        <HBox alignment="CENTER" spacing="5.0">
-            <children>
-                <Label  mnemonicParsing="false" text=" Data Source: ">
-                    <graphic>
-                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../images/datasource.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                </Label>
-                <ComboBox fx:id="dataSourceComboBox" editable="false" />
-    
-            </children>
-        </HBox>
+    <items>
         <HBox alignment="CENTER" spacing="5.0">
             <children>
                 <Label fx:id="groupByLabel" text="Group By:">
@@ -42,7 +26,22 @@
             <image>
                 <Image url="@../images/question-frame.png" />
             </image>
-        </ImageView>
+        </ImageView> 
+        <HBox alignment="CENTER" spacing="5.0">
+            <children>
+                <Label mnemonicParsing="false" text=" Data Source: ">
+                    <graphic>
+                        <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@../images/datasource.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+                </Label>
+                <ComboBox fx:id="dataSourceComboBox" editable="false" maxWidth="200.0" />
+    
+            </children>
+        </HBox>
           
   
    

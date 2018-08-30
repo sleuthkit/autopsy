@@ -52,7 +52,7 @@ public class CategorizeGroupAction extends CategorizeAction {
     public CategorizeGroupAction(DhsImageCategory newCat, ImageGalleryController controller) {
         super(controller, newCat, null);
         setEventHandler(actionEvent -> {
-            ObservableList<Long> fileIDs = controller.viewState().get().getGroup().getFileIDs();
+            ObservableList<Long> fileIDs = controller.getViewState().getGroup().getFileIDs();
 
             if (ImageGalleryPreferences.isGroupCategorizationWarningDisabled()) {
                 //if they have preveiously disabled the warning, just go ahead and apply categories.

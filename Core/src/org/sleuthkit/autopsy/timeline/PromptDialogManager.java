@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-17 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,9 +56,7 @@ public final class PromptDialogManager {
     @NbBundle.Messages("PrompDialogManager.buttonType.update=Update DB")
     private static final ButtonType UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_update(), ButtonBar.ButtonData.OK_DONE);
 
-    /**
-     * Image to use as title bar icon in dialogs
-     */
+    /** Image to use as title bar icon in dialogs */
     private static final Image AUTOPSY_ICON;
 
     static {
@@ -222,7 +220,7 @@ public final class PromptDialogManager {
         dialog.setHeaderText(Bundle.PromptDialogManager_showTooManyFiles_headerText());
         dialog.showAndWait();
     }
-    
+
     @NbBundle.Messages({
         "PromptDialogManager.showTimeLineDisabledMessage.contentText="
         + "Timeline functionality is not available yet."
