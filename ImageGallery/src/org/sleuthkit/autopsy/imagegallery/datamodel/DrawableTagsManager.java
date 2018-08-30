@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,11 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import static java.util.Objects.isNull;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -37,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -50,10 +50,10 @@ import org.sleuthkit.datamodel.TskCoreException;
     "DrawableTagsManager.bookMark=Bookmark"})
 public class DrawableTagsManager {
 
-    private static final Logger LOGGER = Logger.getLogger(DrawableTagsManager.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableTagsManager.class.getName());
 
-    private static Image FOLLOW_UP_IMAGE;
-    private static Image BOOKMARK_IMAGE;
+    private static final Image FOLLOW_UP_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
+    private static final Image BOOKMARK_IMAGE = new Image("/org/sleuthkit/autopsy/images/star-bookmark-icon-16.png");
 
     final private Object autopsyTagsManagerLock = new Object();
     private TagsManager autopsyTagsManager;
@@ -63,9 +63,11 @@ public class DrawableTagsManager {
      */
     private final EventBus tagsEventBus = new AsyncEventBus(
             Executors.newSingleThreadExecutor(
-                    new BasicThreadFactory.Builder().namingPattern("Tags Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> { //NON-NLS
-                        LOGGER.log(Level.SEVERE, "uncaught exception in event bus handler", e); //NON-NLS
-                    }).build()
+                    new BasicThreadFactory.Builder()
+                            .namingPattern("Tags Event Bus")//NON-NLS
+                            .uncaughtExceptionHandler((Thread thread, Throwable throwable)
+                                    -> logger.log(Level.SEVERE, "uncaught exception in event bus handler", throwable))//NON-NLS  
+                            .build()
             ));
 
     /**
@@ -137,8 +139,8 @@ public class DrawableTagsManager {
      */
     public TagName getFollowUpTagName() throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
-            if (Objects.isNull(followUpTagName)) {
-                followUpTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.followUp"));
+            if (isNull(followUpTagName)) {
+                followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
             }
             return followUpTagName;
         }
@@ -146,13 +148,12 @@ public class DrawableTagsManager {
 
     private Object getBookmarkTagName() throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
-            if (Objects.isNull(bookmarkTagName)) {
-                bookmarkTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.bookMark"));
+            if (isNull(bookmarkTagName)) {
+                bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
             }
             return bookmarkTagName;
         }
     }
-
 
     /**
      * get all the TagNames that are not categories
@@ -170,7 +171,7 @@ public class DrawableTagsManager {
                         .distinct().sorted()
                         .collect(Collectors.toList());
             } catch (TskCoreException | IllegalStateException ex) {
-                LOGGER.log(Level.WARNING, "couldn't access case", ex); //NON-NLS
+                logger.log(Level.WARNING, "couldn't access case", ex); //NON-NLS
             }
             return Collections.emptyList();
         }
@@ -223,7 +224,7 @@ public class DrawableTagsManager {
                     throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
                 }
             } catch (NullPointerException | IllegalStateException ex) {
-                LOGGER.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
                 throw new TskCoreException("Case was closed out from underneath", ex);
             }
         }
@@ -243,9 +244,9 @@ public class DrawableTagsManager {
         }
     }
 
-    public List<ContentTag> getContentTagsByTagName(TagName t) throws TskCoreException {
+    public List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.getContentTagsByTagName(t);
+            return autopsyTagsManager.getContentTagsByTagName(tagName);
         }
     }
 
@@ -261,37 +262,23 @@ public class DrawableTagsManager {
         }
     }
 
-    public void deleteContentTag(ContentTag ct) throws TskCoreException {
+    public void deleteContentTag(ContentTag contentTag) throws TskCoreException {
         synchronized (autopsyTagsManagerLock) {
-            autopsyTagsManager.deleteContentTag(ct);
+            autopsyTagsManager.deleteContentTag(contentTag);
         }
     }
 
     public Node getGraphic(TagName tagname) {
         try {
             if (tagname.equals(getFollowUpTagName())) {
-                return new ImageView(getFollowUpImage());
+                return new ImageView(FOLLOW_UP_IMAGE);
             } else if (tagname.equals(getBookmarkTagName())) {
-                return new ImageView(getBookmarkImage());
+                return new ImageView(BOOKMARK_IMAGE);
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get \"Follow Up\" or \"Bookmark\"tag name from db.", ex);
+            logger.log(Level.SEVERE, "Failed to get \"Follow Up\" or \"Bookmark\"tag name from db.", ex);
         }
         return DrawableAttribute.TAGS.getGraphicForValue(tagname);
-    }
-
-    synchronized private static Image getFollowUpImage() {
-        if (FOLLOW_UP_IMAGE == null) {
-            FOLLOW_UP_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
-        }
-        return FOLLOW_UP_IMAGE;
-    }
-
-    synchronized private static Image getBookmarkImage() {
-        if (BOOKMARK_IMAGE == null) {
-            BOOKMARK_IMAGE = new Image("/org/sleuthkit/autopsy/images/star-bookmark-icon-16.png");
-        }
-        return BOOKMARK_IMAGE;
     }
 
 }
