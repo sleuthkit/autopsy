@@ -40,6 +40,8 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -74,8 +76,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -107,6 +107,15 @@ public class GroupManager {
 
     private final ImageGalleryController controller;
 
+    /** list of all analyzed groups */
+    @GuardedBy("this")
+    private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
+    private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
+
+    /** list of unseen groups */
+    @GuardedBy("this")
+    private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
+    private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
     /**
      * map from GroupKey} to DrawableGroupSs. All groups (even not fully
      * analyzed or not visible groups could be in this map
@@ -114,38 +123,21 @@ public class GroupManager {
     @GuardedBy("this")
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
-    /** list of all analyzed groups */
-    @ThreadConfined(type = ThreadType.JFX)
-    private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
-    private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
-
-    /** list of unseen groups */
-    @ThreadConfined(type = ThreadType.JFX)
-    private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
-    private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
-
+    @GuardedBy("this")
     private ReGroupTask<?> groupByTask;
 
     /*
      * --- current grouping/sorting attributes ---
      */
-    private volatile GroupSortBy sortBy = GroupSortBy.PRIORITY;
-    private volatile DrawableAttribute<?> groupBy = DrawableAttribute.PATH;
-    private volatile SortOrder sortOrder = SortOrder.ASCENDING;
-    private volatile DataSource dataSource = null; //null indicates all datasources
-
-    private final ReadOnlyObjectWrapper< Comparator<DrawableGroup>> sortByProp = new ReadOnlyObjectWrapper<>(sortBy);
-    private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(groupBy);
-    private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(sortOrder);
-    private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(dataSource);
+    @GuardedBy("this")
+    private final ReadOnlyObjectWrapper< GroupSortBy> sortByProp = new ReadOnlyObjectWrapper<>(GroupSortBy.PRIORITY);
+    private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(DrawableAttribute.PATH);
+    private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
+    private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
 
     private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
 
-    public void setDB(DrawableDB db) {
-        regroup(dataSource, groupBy, sortBy, sortOrder, true);
-    }
-
-    DrawableDB getDB() {
+    synchronized DrawableDB getDB() {
         return controller.getDatabase();
     }
 
@@ -154,7 +146,6 @@ public class GroupManager {
         return unmodifiableAnalyzedGroups;
     }
 
-    @ThreadConfined(type = ThreadType.JFX)
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableList<DrawableGroup> getUnSeenGroups() {
         return unmodifiableUnSeenGroups;
@@ -182,26 +173,26 @@ public class GroupManager {
     @SuppressWarnings({"rawtypes", "unchecked"})
     synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) {
         Set<GroupKey<?>> resultSet = new HashSet<>();
-        for (Comparable<?> val : groupBy.getValue(file)) {
-            if (groupBy == DrawableAttribute.TAGS) {
+        for (Comparable<?> val : getGroupBy().getValue(file)) {
+            if (getGroupBy() == DrawableAttribute.TAGS) {
                 if (CategoryManager.isNotCategoryTagName((TagName) val)) {
-                    resultSet.add(new GroupKey(groupBy, val, dataSource));
+                    resultSet.add(new GroupKey(getGroupBy(), val, getDataSource()));
                 }
             } else {
-                resultSet.add(new GroupKey(groupBy, val, dataSource));
+                resultSet.add(new GroupKey(getGroupBy(), val, getDataSource()));
             }
         }
         return resultSet;
     }
 
     /**
-     * Using the current groupBy set for this manager, find groupkeys for all
-     * the groups the given file is a part of
+     * Using the current grouping paramaters set for this manager, find
+     * GroupKeys for all the Groups the given file is a part of.
      *
      * @param fileID The Id of the file to get group keys for.
      *
-     * @return a a set of {@link GroupKey}s representing the group(s) the given
-     *         file is a part of
+     * @return A set of GroupKeys representing the group(s) the given file is a
+     *         part of
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
@@ -225,34 +216,29 @@ public class GroupManager {
      *         or null if no group exists for that key.
      */
     @Nullable
-    public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
-        synchronized (groupMap) {
-            return groupMap.get(groupKey);
-        }
+    synchronized public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
+        return groupMap.get(groupKey);
     }
 
-    synchronized public void clear() {
-
+    synchronized public void reset() {
         if (groupByTask != null) {
             groupByTask.cancel(true);
         }
-        sortBy = GroupSortBy.GROUP_BY_VALUE;
-        groupBy = DrawableAttribute.PATH;
-        sortOrder = SortOrder.ASCENDING;
-        Platform.runLater(() -> {
-            unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
-            unSeenGroups.clear();
-            analyzedGroups.forEach(controller.getCategoryManager()::unregisterListener);
-            analyzedGroups.clear();
+        setSortBy(GroupSortBy.GROUP_BY_VALUE);
+        setGroupBy(DrawableAttribute.PATH);
+        setSortOrder(SortOrder.ASCENDING);
+        setDataSource(null);
 
-        });
-        synchronized (groupMap) {
-            groupMap.values().forEach(controller.getCategoryManager()::unregisterListener);
-            groupMap.clear();
-        }
+        unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
+        unSeenGroups.clear();
+        analyzedGroups.forEach(controller.getCategoryManager()::unregisterListener);
+        analyzedGroups.clear();
+
+        groupMap.values().forEach(controller.getCategoryManager()::unregisterListener);
+        groupMap.clear();
     }
 
-    public boolean isRegrouping() {
+    synchronized public boolean isRegrouping() {
         if (groupByTask == null) {
             return false;
         }
@@ -264,7 +250,6 @@ public class GroupManager {
                 return true;
             case CANCELLED:
             case FAILED:
-
             case SUCCEEDED:
             default:
                 return false;
@@ -280,14 +265,15 @@ public class GroupManager {
      * @return A ListenableFuture that encapsulates saving the seen state to the
      *         DB.
      */
-    public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
+    synchronized public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
         DrawableDB db = getDB();
         if (nonNull(db)) {
             return exec.submit(() -> {
                 try {
+
                     db.setGroupSeen(group.getGroupKey(), seen);
                     group.setSeen(seen);
-                    Platform.runLater(() -> updateUnSeenGroups(group, seen));
+                    updateUnSeenGroups(group, seen);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
                 }
@@ -297,14 +283,13 @@ public class GroupManager {
         return Futures.immediateFuture(null);
     }
 
-    @ThreadConfined(type = ThreadType.JFX)
-    private void updateUnSeenGroups(DrawableGroup group, boolean seen) {
+    synchronized private void updateUnSeenGroups(DrawableGroup group, boolean seen) {
         if (seen) {
             unSeenGroups.removeAll(group);
         } else if (unSeenGroups.contains(group) == false) {
             unSeenGroups.add(group);
         }
-        FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
+        sortUnseenGroups();
     }
 
     /**
@@ -315,39 +300,48 @@ public class GroupManager {
      * @param groupKey the value of groupKey
      * @param fileID   the value of file
      *
+     * @return The DrawableGroup the file was removed from.
+     *
      */
     public synchronized DrawableGroup removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
         final DrawableGroup group = getGroupForKey(groupKey);
         if (group != null) {
-            Platform.runLater(() -> {
+            synchronized (group) {
                 group.removeFile(fileID);
-            });
 
-            // If we're grouping by category, we don't want to remove empty groups.
-            if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
-                if (group.getFileIDs().isEmpty()) {
-                    Platform.runLater(() -> {
+                // If we're grouping by category, we don't want to remove empty groups.
+                if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
+                    if (group.getFileIDs().isEmpty()) {
                         if (analyzedGroups.contains(group)) {
                             analyzedGroups.remove(group);
-                            FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
+                            sortAnalyzedGroups();
                         }
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
-                            FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
+                            sortUnseenGroups();
                         }
-                    });
+
+                    }
                 }
-            } else { //group == null
-                // It may be that this was the last unanalyzed file in the group, so test
-                // whether the group is now fully analyzed.
-                popuplateIfAnalyzed(groupKey, null);
+                return group;
             }
+        } else { //group == null
+            // It may be that this was the last unanalyzed file in the group, so test
+            // whether the group is now fully analyzed.
+            return popuplateIfAnalyzed(groupKey, null);
         }
-        return group;
     }
 
-    public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
+    synchronized private void sortUnseenGroups() {
+        FXCollections.sort(unSeenGroups, makeGroupComparator(getSortOrder(), getSortBy()));
+    }
+
+    synchronized private void sortAnalyzedGroups() {
+        FXCollections.sort(analyzedGroups, makeGroupComparator(getSortOrder(), getSortBy()));
+    }
+
+    synchronized public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
         Set<Long> fileIDsToReturn = Collections.emptySet();
         switch (groupKey.getAttribute().attrName) {
             //these cases get special treatment
@@ -374,14 +368,15 @@ public class GroupManager {
 
     // @@@ This was kind of slow in the profiler.  Maybe we should cache it.
     // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
-    public Set<Long> getFileIDsWithCategory(DhsImageCategory category) throws TskCoreException {
+    synchronized public Set<Long> getFileIDsWithCategory(DhsImageCategory category) throws TskCoreException {
         Set<Long> fileIDsToReturn = Collections.emptySet();
         DrawableDB db = getDB();
         if (nonNull(db)) {
             try {
                 final DrawableTagsManager tagsManager = controller.getTagsManager();
                 if (category == DhsImageCategory.ZERO) {
-                    List< TagName> tns = Stream.of(DhsImageCategory.ONE, DhsImageCategory.TWO, DhsImageCategory.THREE, DhsImageCategory.FOUR, DhsImageCategory.FIVE)
+                    List< TagName> tns = Stream.of(DhsImageCategory.ONE, DhsImageCategory.TWO,
+                            DhsImageCategory.THREE, DhsImageCategory.FOUR, DhsImageCategory.FIVE)
                             .map(tagsManager::getTagName)
                             .collect(Collectors.toList());
 
@@ -415,9 +410,10 @@ public class GroupManager {
         return fileIDsToReturn;
     }
 
-    public Set<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
+    synchronized public Set<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
+        Set<Long> files = new HashSet<>();
         try {
-            Set<Long> files = new HashSet<>();
+
             List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(tagName);
             DrawableDB db = getDB();
             for (ContentTag ct : contentTags) {
@@ -432,52 +428,48 @@ public class GroupManager {
         }
     }
 
-    public GroupSortBy getSortBy() {
-        return sortBy;
+    public synchronized GroupSortBy getSortBy() {
+        return sortByProp.get();
     }
 
-    void setSortBy(GroupSortBy sortBy) {
-        this.sortBy = sortBy;
-        Platform.runLater(() -> sortByProp.set(sortBy));
+    synchronized void setSortBy(GroupSortBy sortBy) {
+        sortByProp.set(sortBy);
     }
 
-    public ReadOnlyObjectProperty< Comparator<DrawableGroup>> getSortByProperty() {
+    public ReadOnlyObjectProperty< GroupSortBy> getSortByProperty() {
         return sortByProp.getReadOnlyProperty();
     }
 
-    public DrawableAttribute<?> getGroupBy() {
-        return groupBy;
+    public synchronized DrawableAttribute<?> getGroupBy() {
+        return groupByProp.get();
     }
 
-    void setGroupBy(DrawableAttribute<?> groupBy) {
-        this.groupBy = groupBy;
-        Platform.runLater(() -> groupByProp.set(groupBy));
+    synchronized void setGroupBy(DrawableAttribute<?> groupBy) {
+        groupByProp.set(groupBy);
     }
 
     public ReadOnlyObjectProperty<DrawableAttribute<?>> getGroupByProperty() {
         return groupByProp.getReadOnlyProperty();
     }
 
-    public SortOrder getSortOrder() {
-        return sortOrder;
+    public synchronized SortOrder getSortOrder() {
+        return sortOrderProp.get();
     }
 
-    void setSortOrder(SortOrder sortOrder) {
-        this.sortOrder = sortOrder;
-        Platform.runLater(() -> sortOrderProp.set(sortOrder));
+    synchronized void setSortOrder(SortOrder sortOrder) {
+        sortOrderProp.set(sortOrder);
     }
 
     public ReadOnlyObjectProperty<SortOrder> getSortOrderProperty() {
         return sortOrderProp.getReadOnlyProperty();
     }
 
-    public DataSource getDataSource() {
-        return dataSource;
+    public synchronized DataSource getDataSource() {
+        return dataSourceProp.get();
     }
 
-    void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-        Platform.runLater(() -> dataSourceProp.set(dataSource));
+    synchronized void setDataSource(DataSource dataSource) {
+        dataSourceProp.set(dataSource);
     }
 
     public ReadOnlyObjectProperty<DataSource> getDataSourceProperty() {
@@ -485,17 +477,17 @@ public class GroupManager {
     }
 
     /**
-     * Regroup all files in the database using given {@link  DrawableAttribute}
-     * see {@link ReGroupTask} for more details.
+     * Regroup all files in the database. see ReGroupTask for more details.
      *
      * @param <A>        The type of the values of the groupBy attriubte.
      * @param dataSource The DataSource to show. Null for all data sources.
-     * @param groupBy
-     * @param sortBy
-     * @param sortOrder
-     * @param force      true to force a full db query regroup
+     * @param groupBy    The DrawableAttribute to group by
+     * @param sortBy     The GroupSortBy to sort the groups by
+     * @param sortOrder  The SortOrder to use when sorting the groups.
+     * @param force      true to force a full db query regroup, even if only the
+     *                   sorting has changed.
      */
-    public synchronized <A extends Comparable<A>> void regroup(DataSource dataSource, final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
+    public synchronized <A extends Comparable<A>> void regroup(DataSource dataSource, DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder, Boolean force) {
 
         if (!Case.isCaseOpen()) {
             return;
@@ -522,8 +514,8 @@ public class GroupManager {
             setSortBy(sortBy);
             setSortOrder(sortOrder);
             Platform.runLater(() -> {
-                FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
-                FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
+                FXCollections.sort(analyzedGroups, makeGroupComparator(sortOrder, sortBy));
+                FXCollections.sort(unSeenGroups, makeGroupComparator(sortOrder, sortBy));
             });
         }
     }
@@ -533,18 +525,18 @@ public class GroupManager {
     }
 
     @Subscribe
-    public void handleTagAdded(ContentTagAddedEvent evt) {
+    synchronized public void handleTagAdded(ContentTagAddedEvent evt) {
         GroupKey<?> newGroupKey = null;
         final long fileID = evt.getAddedTag().getContent().getId();
-        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getAddedTag().getName())) {
-            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()), dataSource);
+        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getAddedTag().getName())) {
+            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()), getDataSource());
             for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
                 if (oldGroupKey.equals(newGroupKey) == false) {
                     removeFromGroup(oldGroupKey, fileID);
                 }
             }
-        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getAddedTag().getName())) {
-            newGroupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName(), dataSource);
+        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getAddedTag().getName())) {
+            newGroupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName(), getDataSource());
         }
         if (newGroupKey != null) {
             DrawableGroup g = getGroupForKey(newGroupKey);
@@ -553,7 +545,7 @@ public class GroupManager {
     }
 
     @SuppressWarnings("AssignmentToMethodParameter")
-    private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
+    synchronized private void addFileToGroup(DrawableGroup g, final GroupKey<?> groupKey, final long fileID) {
         if (g == null) {
             //if there wasn't already a group check if there should be one now
             g = popuplateIfAnalyzed(groupKey, null);
@@ -561,19 +553,19 @@ public class GroupManager {
         DrawableGroup group = g;
         if (group != null) {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
-            Platform.runLater(() -> group.addFile(fileID));
+            group.addFile(fileID);
         }
     }
 
     @Subscribe
-    public void handleTagDeleted(ContentTagDeletedEvent evt) {
+    synchronized public void handleTagDeleted(ContentTagDeletedEvent evt) {
         GroupKey<?> groupKey = null;
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         final TagName tagName = deletedTagInfo.getName();
-        if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(tagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName), dataSource);
-        } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(tagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.TAGS, tagName, dataSource);
+        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(tagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName), getDataSource());
+        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(tagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.TAGS, tagName, getDataSource());
         }
         if (groupKey != null) {
             final long fileID = deletedTagInfo.getContentID();
@@ -622,7 +614,7 @@ public class GroupManager {
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
 
-    private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
+    synchronized private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
         /*
          * If this method call is part of a ReGroupTask and that task is
          * cancelled, no-op.
@@ -644,30 +636,24 @@ public class GroupManager {
                     if (Objects.nonNull(fileIDs)) {
                         DrawableGroup group;
                         final boolean groupSeen = db.isGroupSeen(groupKey);
-                        synchronized (groupMap) {
-                            if (groupMap.containsKey(groupKey)) {
-                                group = groupMap.get(groupKey);
-                                group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
-                                group.setSeen(groupSeen);
-                            } else {
-                                group = new DrawableGroup(groupKey, fileIDs, groupSeen);
-                                controller.getCategoryManager().registerListener(group);
-//                                group.seenProperty().addListener((o, oldSeen, newSeen)
-//                                        -> saveGroupSeen(group, newSeen));
-
-                                groupMap.put(groupKey, group);
-                            }
+                        if (groupMap.containsKey(groupKey)) {
+                            group = groupMap.get(groupKey);
+                            group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
+                            group.setSeen(groupSeen);
+                        } else {
+                            group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                            controller.getCategoryManager().registerListener(group);
+                            groupMap.put(groupKey, group);
                         }
 
-                        Platform.runLater(() -> {
-                            if (analyzedGroups.contains(group) == false) {
-                                analyzedGroups.add(group);
-                                if (isNull(task)) {
-                                    FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy));
-                                }
+                        if (analyzedGroups.contains(group) == false) {
+                            analyzedGroups.add(group);
+                            if (isNull(task)) {
+                                sortAnalyzedGroups();
                             }
-                            updateUnSeenGroups(group, groupSeen);
-                        });
+                        }
+                        updateUnSeenGroups(group, groupSeen);
+
                         return group;
 
                     }
@@ -680,7 +666,7 @@ public class GroupManager {
         return null;
     }
 
-    public Set<Long> getFileIDsWithMimeType(String mimeType) throws TskCoreException {
+    synchronized public Set<Long> getFileIDsWithMimeType(String mimeType) throws TskCoreException {
 
         HashSet<Long> hashSet = new HashSet<>();
         String query = (null == mimeType)
@@ -698,9 +684,7 @@ public class GroupManager {
             return hashSet;
 
         } catch (Exception ex) {
-            Exceptions.printStackTrace(ex);
             throw new TskCoreException("Failed to get file ids with mime type " + mimeType, ex);
-
         }
     }
 
@@ -723,7 +707,7 @@ public class GroupManager {
         private final GroupSortBy sortBy;
         private final SortOrder sortOrder;
 
-        private ProgressHandle groupProgress;
+        private final ProgressHandle groupProgress;
 
         ReGroupTask(DataSource dataSource, DrawableAttribute<AttrValType> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
             super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), true);
@@ -731,11 +715,13 @@ public class GroupManager {
             this.groupBy = groupBy;
             this.sortBy = sortBy;
             this.sortOrder = sortOrder;
+
+            groupProgress = ProgressHandle.createHandle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), this);
         }
 
         @Override
         public boolean isCancelled() {
-            return super.isCancelled() || groupBy != getGroupBy() || sortBy != getSortBy() || sortOrder != getSortOrder();
+            return super.isCancelled();
         }
 
         @Override
@@ -744,31 +730,33 @@ public class GroupManager {
             if (isCancelled()) {
                 return null;
             }
+            groupProgress.start();
 
-            groupProgress = ProgressHandle.createHandle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), this);
-            Platform.runLater(() -> {
+            synchronized (GroupManager.this) {
                 analyzedGroups.clear();
                 unSeenGroups.clear();
-            });
 
-            // Get the list of group keys
-            final Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
-
-            groupProgress.start(valsByDataSource.size());
-
-            int p = 0;
-            // For each key value, partially create the group and add it to the list.
-            for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
-                if (isCancelled()) {
-                    return null;//abort
+                // Get the list of group keys
+                final Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
+                groupProgress.switchToDeterminate(valsByDataSource.size());
+                int p = 0;
+                // For each key value, partially create the group and add it to the list.
+                for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
+                    if (isCancelled()) {
+                        return null;
+                    }
+                    p++;
+                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
+                    updateProgress(p, valsByDataSource.size());
+                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
+                    popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
                 }
-                p++;
-                updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
-                updateProgress(p, valsByDataSource.size());
-                groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-                popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
             }
 
+            if (isNotEmpty(unSeenGroups)) {
+                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+            }
+            groupProgress.finish();
             updateProgress(1, 1);
             return null;
         }
@@ -776,12 +764,12 @@ public class GroupManager {
         @Override
         protected void done() {
             super.done();
-            if (groupProgress != null) {
-                groupProgress.finish();
-                groupProgress = null;
-            }
-            if (isNotEmpty(unSeenGroups)) {
-                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+            try {
+                get();
+            } catch (CancellationException cancelEx) {
+                //cancellation is normal
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error while regrouping.", ex);
             }
         }
 
@@ -795,73 +783,75 @@ public class GroupManager {
          * @return
          */
         public Multimap<DataSource, AttrValType> findValuesForAttribute() {
-            DrawableDB db = getDB();
-            Multimap results = HashMultimap.create();
-            try {
-                switch (groupBy.attrName) {
-                    //these cases get special treatment
-                    case CATEGORY:
-                        results.putAll(null, Arrays.asList(DhsImageCategory.values()));
-                        break;
-                    case TAGS:
-                        results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
-                                .filter(CategoryManager::isNotCategoryTagName)
-                                .collect(Collectors.toList()));
-                        break;
+            synchronized (GroupManager.this) {
+                DrawableDB db = getDB();
+                Multimap results = HashMultimap.create();
+                try {
+                    switch (groupBy.attrName) {
+                        //these cases get special treatment
+                        case CATEGORY:
+                            results.putAll(null, Arrays.asList(DhsImageCategory.values()));
+                            break;
+                        case TAGS:
+                            results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
+                                    .filter(CategoryManager::isNotCategoryTagName)
+                                    .collect(Collectors.toList()));
+                            break;
 
-                    case ANALYZED:
-                        results.putAll(null, Arrays.asList(false, true));
-                        break;
-                    case HASHSET:
-                        if (nonNull(db)) {
-                            results.putAll(null, new TreeSet<>(db.getHashSetNames()));
-                        }
-                        break;
-                    case MIME_TYPE:
-                        if (nonNull(db)) {
-                            HashSet<String> types = new HashSet<>();
-
-                            // Use the group_concat function to get a list of files for each mime type.  
-                            // This has different syntax on Postgres vs SQLite
-                            String groupConcatClause;
-                            if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
-                                groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
-                            } else {
-                                groupConcatClause = " group_concat(obj_id) as object_ids";
+                        case ANALYZED:
+                            results.putAll(null, Arrays.asList(false, true));
+                            break;
+                        case HASHSET:
+                            if (nonNull(db)) {
+                                results.putAll(null, new TreeSet<>(db.getHashSetNames()));
                             }
-                            String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
-                            try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
-                                    ResultSet resultSet = executeQuery.getResultSet();) {
-                                while (resultSet.next()) {
-                                    final String mimeType = resultSet.getString("mime_type"); //NON-NLS
-                                    String objIds = resultSet.getString("object_ids"); //NON-NLS
+                            break;
+                        case MIME_TYPE:
+                            if (nonNull(db)) {
+                                HashSet<String> types = new HashSet<>();
 
-                                    Pattern.compile(",").splitAsStream(objIds)
-                                            .map(Long::valueOf)
-                                            .filter(db::isInDB)
-                                            .findAny().ifPresent(obj_id -> types.add(mimeType));
+                                // Use the group_concat function to get a list of files for each mime type.  
+                                // This has different syntax on Postgres vs SQLite
+                                String groupConcatClause;
+                                if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
+                                    groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
+                                } else {
+                                    groupConcatClause = " group_concat(obj_id) as object_ids";
                                 }
-                            } catch (SQLException | TskCoreException ex) {
-                                Exceptions.printStackTrace(ex);
-                            }
-                            results.putAll(null, types);
-                        }
-                        break;
-                    default:
-                        //otherwise do straight db query 
-                        if (nonNull(db)) {
-                            results.putAll(db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
-                        }
-                }
+                                String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
+                                try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
+                                        ResultSet resultSet = executeQuery.getResultSet();) {
+                                    while (resultSet.next()) {
+                                        final String mimeType = resultSet.getString("mime_type"); //NON-NLS
+                                        String objIds = resultSet.getString("object_ids"); //NON-NLS
 
-            } catch (TskCoreException | TskDataException ex) {
-                logger.log(Level.SEVERE, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
+                                        Pattern.compile(",").splitAsStream(objIds)
+                                                .map(Long::valueOf)
+                                                .filter(db::isInDB)
+                                                .findAny().ifPresent(obj_id -> types.add(mimeType));
+                                    }
+                                } catch (SQLException | TskCoreException ex) {
+                                    Exceptions.printStackTrace(ex);
+                                }
+                                results.putAll(null, types);
+                            }
+                            break;
+                        default:
+                            //otherwise do straight db query 
+                            if (nonNull(db)) {
+                                results.putAll(db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
+                            }
+                    }
+
+                } catch (TskCoreException | TskDataException ex) {
+                    logger.log(Level.SEVERE, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
+                }
+                return results;
             }
-            return results;
         }
     }
 
-    private static <T> Comparator<T> applySortOrder(final SortOrder sortOrder, Comparator<T> comparator) {
+    private static Comparator<DrawableGroup> makeGroupComparator(final SortOrder sortOrder, GroupSortBy comparator) {
         switch (sortOrder) {
             case ASCENDING:
                 return comparator;

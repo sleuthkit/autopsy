@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.Optional;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -52,15 +54,19 @@ public class NextUnseenGroup extends Action {
 
     private final ImageGalleryController controller;
     private final ObservableList<DrawableGroup> unSeenGroups;
+    private final GroupManager groupManager;
 
     public NextUnseenGroup(ImageGalleryController controller) {
         super(NEXT_UNSEEN_GROUP);
         setGraphic(new ImageView(ADVANCE_IMAGE));
 
         this.controller = controller;
-        GroupManager groupManager = controller.getGroupManager();
+        groupManager = controller.getGroupManager();
         unSeenGroups = groupManager.getUnSeenGroups();
-        unSeenGroups.addListener((Observable observable) -> this.updateButton());
+        unSeenGroups.addListener((Observable observable) -> {
+            updateButton();
+
+        });
 
         setEventHandler(event -> {    //on fx-thread
             //if there is a group assigned to the view, mark it as seen
@@ -68,29 +74,33 @@ public class NextUnseenGroup extends Action {
                     .map(GroupViewState::getGroup)
                     .ifPresent(group -> {
                         groupManager.setGroupSeen(group, true)
-                                .addListener(this::advanceToNextUnseenGroup, Platform::runLater);
+                                .addListener(this::advanceToNextUnseenGroup, MoreExecutors.newDirectExecutorService());
                     });
         });
         updateButton();
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void advanceToNextUnseenGroup() {
-        if (unSeenGroups.isEmpty() == false) {
-            controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+        synchronized (groupManager) {
+            if (unSeenGroups.isEmpty() == false) {
+                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+            }
+
+            updateButton();
         }
-        updateButton();
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void updateButton() {
-        setDisabled(unSeenGroups.isEmpty());
-        if (unSeenGroups.size() <= 1) {
-            setText(MARK_GROUP_SEEN);
-            setGraphic(new ImageView(END_IMAGE));
-        } else {
-            setText(NEXT_UNSEEN_GROUP);
-            setGraphic(new ImageView(ADVANCE_IMAGE));
-        }
+        int size = unSeenGroups.size();
+        Platform.runLater(() -> {
+            setDisabled(size == 0);
+            if (size <= 1) {
+                setText(MARK_GROUP_SEEN);
+                setGraphic(new ImageView(END_IMAGE));
+            } else {
+                setText(NEXT_UNSEEN_GROUP);
+                setGraphic(new ImageView(ADVANCE_IMAGE));
+            }
+        });
     }
 }

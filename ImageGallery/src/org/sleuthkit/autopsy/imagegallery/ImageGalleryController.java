@@ -232,12 +232,7 @@ public final class ImageGalleryController {
             }
         });
 
-        groupManager.getAnalyzedGroups().addListener((Observable o) -> {
-            //analyzed groups is confined  to JFX thread
-            if (Case.isCaseOpen()) {
-                checkForGroups();
-            }
-        });
+        groupManager.getAnalyzedGroups().addListener((Observable o) -> checkForGroups());
 
         viewState().addListener((Observable observable) -> {
             //when the viewed group changes, clear the selection and the undo/redo history
@@ -291,7 +286,6 @@ public final class ImageGalleryController {
      * GroupManager and remove blocking progress spinners if there are. If there
      * aren't, add a blocking progress spinner with appropriate message.
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({"ImageGalleryController.noGroupsDlg.msg1=No groups are fully analyzed; but listening to ingest is disabled. "
                         + " No groups will be available until ingest is finished and listening is re-enabled.",
         "ImageGalleryController.noGroupsDlg.msg2=No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
@@ -303,45 +297,46 @@ public final class ImageGalleryController {
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
     synchronized private void checkForGroups() {
-        if (groupManager.getAnalyzedGroups().isEmpty()) {
-            if (IngestManager.getInstance().isIngestRunning()) {
-                if (listeningEnabled.not().get()) {
-                    replaceNotification(fullUIStackPane,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
-                } else {
-                    replaceNotification(fullUIStackPane,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                    new ProgressIndicator()));
-                }
-
-            } else if (dbTaskQueueSize.get() > 0) {
-                replaceNotification(fullUIStackPane,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                new ProgressIndicator()));
-            } else if (db != null) {
-                try {
-                    if (db.countAllFiles() <= 0) {
-
-                        // there are no files in db
-                        if (listeningEnabled.not().get()) {
-                            replaceNotification(fullUIStackPane,
-                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
-                        } else {
-                            replaceNotification(fullUIStackPane,
-                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
-                        }
+        if (Case.isCaseOpen()) {
+            if (groupManager.getAnalyzedGroups().isEmpty()) {
+                if (IngestManager.getInstance().isIngestRunning()) {
+                    if (listeningEnabled.get()) {
+                        replaceNotification(fullUIStackPane,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                        new ProgressIndicator()));
+                    } else {
+                        replaceNotification(fullUIStackPane,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error counting files in drawable db.", ex);
+
+                } else if (dbTaskQueueSize.get() > 0) {
+                    replaceNotification(fullUIStackPane,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                                    new ProgressIndicator()));
+                } else if (db != null) {
+                    try {
+                        if (db.countAllFiles() <= 0) {
+                            // there are no files in db
+                            if (listeningEnabled.get()) {
+                                replaceNotification(fullUIStackPane,
+                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
+                            } else {
+                                replaceNotification(fullUIStackPane,
+                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+                            }
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Error counting files in drawable db.", ex);
+                    }
+
+                } else if (false == groupManager.isRegrouping()) {
+                    replaceNotification(centralStackPane,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
                 }
 
-            } else if (!groupManager.isRegrouping()) {
-                replaceNotification(centralStackPane,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
+            } else {
+                Platform.runLater(this::clearNotification);
             }
-
-        } else {
-            clearNotification();
         }
     }
 
@@ -357,14 +352,15 @@ public final class ImageGalleryController {
         }
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void replaceNotification(StackPane stackPane, Node newNode) {
-        clearNotification();
+        Platform.runLater(() -> {
+            clearNotification();
 
-        infoOverlay = new StackPane(infoOverLayBackground, newNode);
-        if (stackPane != null) {
-            stackPane.getChildren().add(infoOverlay);
-        }
+            infoOverlay = new StackPane(infoOverLayBackground, newNode);
+            if (stackPane != null) {
+                stackPane.getChildren().add(infoOverlay);
+            }
+        });
     }
 
     /**
@@ -385,7 +381,7 @@ public final class ImageGalleryController {
             // if we add this line icons are made as files are analyzed rather than on demand.
             // db.addUpdatedFileListener(IconCache.getDefault());
             historyManager.clear();
-            groupManager.setDB(db);
+            groupManager.reset();
             hashSetManager.setDb(db);
             categoryManager.setDb(db);
             tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
@@ -416,7 +412,7 @@ public final class ImageGalleryController {
         setListeningEnabled(false);
         ThumbnailCache.getDefault().clearCache();
         historyManager.clear();
-        groupManager.clear();
+        groupManager.reset();
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
@@ -850,8 +846,8 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                taskDB.commitTransaction(drawableDbTransaction, true);
                 caseDbTransaction.commit();
+                taskDB.commitTransaction(drawableDbTransaction, true);
 
             } catch (TskCoreException ex) {
                 if (null != drawableDbTransaction) {

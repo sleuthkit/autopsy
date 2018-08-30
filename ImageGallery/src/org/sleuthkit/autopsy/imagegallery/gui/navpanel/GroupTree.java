@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.collections.ListChangeListener;
@@ -76,15 +77,16 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+
             while (change.next()) {
                 change.getAddedSubList().stream().forEach(this::insertGroup);
                 change.getRemoved().stream().forEach(this::removeFromTree);
             }
-            sortGroups();
+            Platform.runLater(this::sortGroups);
         });
 
         getGroupManager().getAnalyzedGroups().forEach(this::insertGroup);
-        sortGroups();
+        Platform.runLater(this::sortGroups);
     }
 
     /**

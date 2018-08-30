@@ -262,9 +262,9 @@ public class Toolbar extends ToolBar {
                 });
         syncDataSources();
 
-        controller.getGroupManager().getDataSourceProperty().addListener((observable, oldDataSource, newDataSource) -> {
-            dataSourceSelectionModel.select(Optional.ofNullable(newDataSource));
-        });
+        controller.getGroupManager().getDataSourceProperty()
+                .addListener((observable, oldDataSource, newDataSource)
+                        -> dataSourceSelectionModel.select(Optional.ofNullable(newDataSource)));
         dataSourceSelectionModel.select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
         dataSourceComboBox.disableProperty().bind(groupByBox.getSelectionModel().selectedItemProperty().isNotEqualTo(DrawableAttribute.PATH));
         dataSourceSelectionModel.selectedItemProperty().addListener(queryInvalidationListener);

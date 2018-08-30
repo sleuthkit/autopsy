@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
 import java.util.Collections;
+import static java.util.Collections.singleton;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -154,9 +155,7 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
         if (parent != null) {
             parent.childMap.remove(getValue().getPath());
 
-            Platform.runLater(() -> {
-                parent.getChildren().removeAll(Collections.singleton(GroupTreeItem.this));
-            });
+            Platform.runLater(() -> parent.getChildren().removeAll(singleton(GroupTreeItem.this)));
 
             if (parent.childMap.isEmpty()) {
                 parent.removeFromParent();
