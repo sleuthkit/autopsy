@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,6 +50,7 @@ import javax.swing.SortOrder;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
@@ -61,11 +61,11 @@ import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -83,7 +83,7 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public final class DrawableDB {
 
-    private static final org.sleuthkit.autopsy.coreutils.Logger logger = Logger.getLogger(DrawableDB.class.getName());
+    private static final  Logger logger = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed"; //NON-NLS

@@ -95,7 +95,7 @@ abstract class NavPanel<X> extends Tab {
         //keep selection in sync with controller
         controller.viewState().addListener(observable -> {
             Platform.runLater(() -> {
-                Optional.ofNullable(controller.viewState().get())
+                Optional.ofNullable(controller.getViewState())
                         .map(GroupViewState::getGroup)
                         .ifPresent(this::setFocusedGroup);
             });

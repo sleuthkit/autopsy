@@ -161,7 +161,7 @@ public final class ImageGalleryController {
         return thumbnailSize.getReadOnlyProperty();
     }
 
-    private GroupViewState getViewState() {
+    public GroupViewState getViewState() {
         return historyManager.getCurrentState();
     }
 
@@ -955,8 +955,6 @@ public final class ImageGalleryController {
      */
     @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=committing image/video database"})
     static private class PrePopulateDataSourceFiles extends BulkTransferTask {
-
-        private static final Logger LOGGER = Logger.getLogger(PrePopulateDataSourceFiles.class.getName());
 
         /**
          *

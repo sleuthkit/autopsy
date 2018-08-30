@@ -64,8 +64,7 @@ public class NextUnseenGroup extends Action {
 
         setEventHandler(event -> {    //on fx-thread
             //if there is a group assigned to the view, mark it as seen
-            Optional.ofNullable(controller.viewState())
-                    .map(ObservableValue<GroupViewState>::getValue)
+            Optional.ofNullable(controller.getViewState())
                     .map(GroupViewState::getGroup)
                     .ifPresent(group -> {
                         groupManager.setGroupSeen(group, true)

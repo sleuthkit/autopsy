@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,9 +40,6 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -67,6 +62,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -508,7 +504,7 @@ public class GroupManager {
         //only re-query the db if the data source or group by attribute changed or it is forced
         if (dataSource != getDataSource()
             || groupBy != getGroupBy()
-            || force == true) {
+            || force) {
 
             setDataSource(dataSource);
             setGroupBy(groupBy);
@@ -784,7 +780,7 @@ public class GroupManager {
                 groupProgress.finish();
                 groupProgress = null;
             }
-            if (unSeenGroups.isEmpty() == false) {
+            if (isNotEmpty(unSeenGroups)) {
                 controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
             }
         }
