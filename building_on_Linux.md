@@ -2,7 +2,7 @@
 
 ## Install Oracle Java and set JAVA_HOME.
 - Use the instructions here: https://medium.com/coderscorner/installing-oracle-java-8-in-ubuntu-16-10-845507b13343
- - **NOTE: You may need to log out and login again to make JAVA_HOME environment variable visible to netbeans.**
+  - **NOTE: You may need to log out and login again to make JAVA_HOME environment variable visible to netbeans.**
 
 ## Building sleuthkit from source.
 
