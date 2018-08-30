@@ -159,9 +159,9 @@ public final class ExcelReader extends AbstractReader {
     }
 
     /**
-     * Returns a window of rows starting at the offset and ending when the
-     * number of rows read equals the 'numRowsToRead' parameter or the iterator
-     * has nothing left to read.
+     * Currently not supported. Returns a window of rows starting at the offset
+     * and ending when the number of rows read equals the 'numRowsToRead'
+     * parameter or the iterator has nothing left to read.
      *
      * For instance: offset 1, numRowsToRead 5 would return 5 results (1-5).
      * offset 0, numRowsToRead 5 would return 5 results (0-4).
