@@ -7,10 +7,10 @@
 ## Building sleuthkit from source.
 
 - Install all necessary packages to build sleuthkit
-'''
+```
 sudo apt-get update
 sudo apt-get install libtool automake libpq-dev postgresql libewf-dev libafflib-dev libvhdi-dev libvmdk-dev git testdisk ant
-'''
+```
 - Clone sleuthkit repository 
 ```
 git clone https://github.com/sleuthkit/sleuthkit
