@@ -83,7 +83,7 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public final class DrawableDB {
 
-    private static final  Logger logger = Logger.getLogger(DrawableDB.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed"; //NON-NLS
@@ -686,8 +686,9 @@ public final class DrawableDB {
             trans = beginTransaction();
             caseDbTransaction = tskCase.beginTransaction();
             updateFile(f, trans, caseDbTransaction);
-            commitTransaction(trans, true);
             caseDbTransaction.commit();
+            commitTransaction(trans, true);
+
         } catch (TskCoreException ex) {
             if (null != trans) {
                 rollbackTransaction(trans);
