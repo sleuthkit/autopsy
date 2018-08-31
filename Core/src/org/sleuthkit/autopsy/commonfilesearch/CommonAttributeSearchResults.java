@@ -154,7 +154,7 @@ final public class CommonAttributeSearchResults {
 
         int count = 0;
         for (CommonAttributeValueList data : this.instanceCountToAttributeValues.values()) {
-            for(CommonAttributeValue md5 : data.getMetadataList()){
+            for(CommonAttributeValue md5 : data.getDelayedMetadataList()){
                 count += md5.getInstanceCount();
             }
         }
