@@ -58,19 +58,19 @@ public final class SQLiteReader extends AbstractReader {
      * connection. 
      * 
      * @param sqliteDbFile Data source abstract file
-     * @param localDiskPath Location for database contents to be copied to
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
-    public SQLiteReader(AbstractFile sqliteDbFile, String localDiskPath) throws FileReaderInitException {
-        super(sqliteDbFile, localDiskPath);
+    public SQLiteReader(AbstractFile sqliteDbFile) throws FileReaderInitException {
+        super(sqliteDbFile);
         try {
+            final String localDiskPath = super.getLocalDiskPath(sqliteDbFile);
             // Look for any meta files associated with this DB - WAL, SHM, etc. 
             findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
             findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
 
             connection = getDatabaseConnection(localDiskPath);
         } catch (ClassNotFoundException | SQLException |IOException | 
-                NoCurrentCaseException | TskCoreException ex) {
+                NoCurrentCaseException | TskCoreException | FileReaderException ex) {
             throw new FileReaderInitException(ex);
         }
     }

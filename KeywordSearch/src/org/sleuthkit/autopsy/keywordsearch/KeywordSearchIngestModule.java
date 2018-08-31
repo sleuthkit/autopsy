@@ -249,6 +249,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
         textExtractors.add(new HtmlTextExtractor());
+        textExtractors.add(new SqliteTextExtractor());
         textExtractors.add(new TikaTextExtractor());
 
         indexer = new Indexer();
@@ -438,6 +439,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             //go over available text extractors in order, and pick the first one (most specific one)
             for (ContentTextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
+                    System.out.println(fe);
                     extractor = fe;
                     break;
                 }

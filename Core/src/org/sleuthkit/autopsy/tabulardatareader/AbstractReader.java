@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -32,10 +35,33 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractReader implements AutoCloseable {
     
-    public AbstractReader(AbstractFile file, String localDiskPath) 
+    public AbstractReader(AbstractFile file) 
             throws FileReaderInitException {
         
-        writeDataSourceToLocalDisk(file, localDiskPath);
+        try {
+            writeDataSourceToLocalDisk(file, getLocalDiskPath(file));
+        } catch (FileReaderException ex) {
+            throw new FileReaderInitException(ex);
+        }
+
+    }
+    
+     /**
+     * Generates a local disk path for abstract file contents to be copied.
+     * All file sources must be copied to local disk to be opened by 
+     * abstract reader.
+     * 
+     * @param file The database abstract file
+     * @return Valid local path for copying
+     * @throws NoCurrentCaseException if the current case has been closed.
+     */
+    final String getLocalDiskPath(AbstractFile file) throws FileReaderException {
+        try {
+            return Case.getCurrentCaseThrows().getTempDirectory() + 
+                    File.separator + file.getName();
+        } catch (NoCurrentCaseException ex) {
+            throw new FileReaderException(ex);
+        }
     }
     
     /**

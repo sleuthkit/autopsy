@@ -34,20 +34,19 @@ public final class FileReaderFactory {
      * is not supported.
      * 
      * @param mimeType mimeType passed in from the ingest module
-g     * @param file current file under inspection
-     * @param localDiskPath path for abstract file contents to be written
+     * @param file current file under inspection
      * @return The correct reader class needed to read the file contents
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException 
      */
-    public static AbstractReader createReader(String mimeType, AbstractFile file, 
-            String localDiskPath) throws FileReaderInitException {
+    public static AbstractReader createReader(String mimeType, AbstractFile file) 
+            throws FileReaderInitException {
         switch (mimeType) {
             case "application/x-sqlite3":
-                return new SQLiteReader(file, localDiskPath);
+                return new SQLiteReader(file);
             case "application/vnd.ms-excel":
             case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 try {
-                    return new ExcelReader(file, localDiskPath, mimeType);
+                    return new ExcelReader(file, mimeType);
                     //Catches runtime exceptions being emitted from Apache
                     //POI (such as EncryptedDocumentException) and wraps them
                     //into FileReaderInitException to be caught and logged

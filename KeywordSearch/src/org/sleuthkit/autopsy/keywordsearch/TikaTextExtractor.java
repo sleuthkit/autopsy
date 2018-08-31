@@ -193,13 +193,16 @@ class TikaTextExtractor extends ContentTextExtractor {
 
     @Override
     public boolean isSupported(Content content, String detectedFormat) {
+        final String SQLITE_MIMETYPE = "application/x-sqlite3";
         if (detectedFormat == null
                 || ContentTextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
                 || ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
                 || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
+                || detectedFormat.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. See SqliteTextExtractor class
                 ) {
             return false;
         }
+        System.out.println(detectedFormat);
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
 

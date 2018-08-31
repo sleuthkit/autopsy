@@ -58,13 +58,14 @@ public final class ExcelReader extends AbstractReader {
     private final static String EMPTY_CELL_STRING = "";
     private Map<String, Row> headerCache;
 
-    public ExcelReader(AbstractFile file, String localDiskPath, String mimeType)
+    public ExcelReader(AbstractFile file, String mimeType)
             throws FileReaderInitException {
-        super(file, localDiskPath);
+        super(file);
         try {
+            final String localDiskPath = super.getLocalDiskPath(file);
             this.workbook = createWorkbook(localDiskPath, mimeType);
             headerCache = new HashMap<>();
-        } catch (IOException ex) {
+        } catch (IOException | FileReaderException ex) {
             throw new FileReaderInitException(ex);
         }
     }
