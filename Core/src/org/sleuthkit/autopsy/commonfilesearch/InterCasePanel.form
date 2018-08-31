@@ -25,12 +25,14 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="anyCentralRepoCaseRadio" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="specificCentralRepoCaseRadio" min="-2" max="-2" attributes="0"/>
-                  <Component id="comboBoxLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="correlationTypeComboBox" alignment="1" min="-2" pref="260" max="-2" attributes="0"/>
                           <Component id="caseComboBox" min="-2" pref="261" max="-2" attributes="0"/>
+                          <Group type="103" alignment="1" groupAlignment="0" attributes="0">
+                              <Component id="comboBoxLabel" min="-2" max="-2" attributes="0"/>
+                              <Component id="correlationTypeComboBox" min="-2" pref="260" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                   </Group>
               </Group>

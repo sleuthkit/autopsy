@@ -209,9 +209,9 @@ final class InterCaseSearchResultsProcessor {
 
                 }
                 //Add the final instances
-                ArrayList<CommonAttributeValue> value = new ArrayList<>();
+                CommonAttributeValueList value = new CommonAttributeValueList();
                 if(commonAttributeValue != null) {
-                    value.add(commonAttributeValue);
+                    value.addMetadataToList(commonAttributeValue);
                     instanceCollatedCommonFiles.put(commonAttributeValue.getInstanceCount(), value);
                 }
             } catch (SQLException ex) {
