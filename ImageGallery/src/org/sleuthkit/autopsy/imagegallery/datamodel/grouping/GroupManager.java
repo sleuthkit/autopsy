@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
@@ -753,9 +754,23 @@ public class GroupManager {
                 }
             }
 
-            if (isNotEmpty(unSeenGroups)) {
-                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+            DataSource dataSourceOfCurrentGroup
+                    = Optional.ofNullable(controller.getViewState())
+                            .flatMap(GroupViewState::getGroup)
+                            .map(DrawableGroup::getGroupKey)
+                            .flatMap(GroupKey::getDataSource)
+                            .orElse(null);
+            if (getDataSource() == null
+                || Objects.equals(dataSourceOfCurrentGroup, getDataSource())) {
+                //the current group is for the given datasource, so just keep it in view.
+            } else {                //the current group should not be visible so ...
+                if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
+                    controller.advance(GroupViewState.tile(unSeenGroups.get(0)), false);
+                } else { // clear the group area.
+                    controller.advance(GroupViewState.tile(null), false);
+                }
             }
+
             groupProgress.finish();
             updateProgress(1, 1);
             return null;
