@@ -301,7 +301,7 @@ public final class ImageGalleryController {
             if (groupManager.getAnalyzedGroups().isEmpty()) {
                 if (IngestManager.getInstance().isIngestRunning()) {
                     if (listeningEnabled.get()) {
-                        replaceNotification(fullUIStackPane,
+                        replaceNotification(centralStackPane,
                                 new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
                                         new ProgressIndicator()));
                     } else {
