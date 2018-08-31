@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.openide.util.NbBundle;
 
 /**
  * Manager for present state of errors on the Common Files Search.
@@ -39,14 +40,17 @@ class UserInputErrorManager {
      * of all known error states, retrieve error messages, and determine if 
      * anything is in an error state.
      */
+    @NbBundle.Messages({
+        "UserInputErrorManager.frequency=Invalid Frequency Percentage: 0 < % < 100.",
+        "UserInputErrorManager.categories=No file categories are included in the search."})
     UserInputErrorManager (){
         
         //when new errors are needed for the dialog, define a key and a value
         //  and add them to the map.
         
         this.currentErrors = new HashMap<>();
-        this.currentErrors.put(FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, new ErrorMessage("Frequency percentage must be greater than zero and less than or equal to 100."));
-        this.currentErrors.put(NO_FILE_CATEGORIES_SELECTED_KEY, new ErrorMessage("No file categories are included in the search."));
+        this.currentErrors.put(FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, new ErrorMessage(Bundle.UserInputErrorManager_frequency()));
+        this.currentErrors.put(NO_FILE_CATEGORIES_SELECTED_KEY, new ErrorMessage(Bundle.UserInputErrorManager_categories()));
     }
     
     /**

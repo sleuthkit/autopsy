@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 final public class CommonAttributeSearchResults {
 
     // maps instance count to list of attribute values. 
-    private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
+    private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
 
     private final int percentageThreshold;
     
@@ -46,7 +46,7 @@ final public class CommonAttributeSearchResults {
      * @param values list of CommonAttributeValue indexed by size of
      * CommonAttributeValue
      */
-    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata, int percentageThreshold) {
+    CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold) {
         //wrap in a new object in case any client code has used an unmodifiable collection
         this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
@@ -61,7 +61,7 @@ final public class CommonAttributeSearchResults {
      * @param instanceCount key
      * @return list of values which represent matches
      */
-    List<CommonAttributeValue> getAttributeValuesForInstanceCount(Integer instanceCount) {
+    CommonAttributeValueList getAttributeValuesForInstanceCount(Integer instanceCount) {
         return this.instanceCountToAttributeValues.get(instanceCount);
     }
 
@@ -72,7 +72,7 @@ final public class CommonAttributeSearchResults {
      *
      * @return map of sizes of children to list of matches
      */
-    public Map<Integer, List<CommonAttributeValue>> getMetadata() throws EamDbException {
+    public Map<Integer, CommonAttributeValueList> getMetadata() throws EamDbException {
         if(this.percentageThreshold == 0){
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
         } else {
@@ -86,13 +86,13 @@ final public class CommonAttributeSearchResults {
      * search.
      * 
      * Remove results which are not found in the portion of available data 
-     * sources described by minimumPercentageThreshold.
+ sources described by maximumPercentageThreshold.
      * 
      * @return metadata
      */
-    private Map<Integer, List<CommonAttributeValue>> getMetadata(int minimumPercentageThreshold) throws EamDbException {
+    private Map<Integer, CommonAttributeValueList> getMetadata(int maximumPercentageThreshold) throws EamDbException {
         
-        if(minimumPercentageThreshold == 0){
+        if(maximumPercentageThreshold == 0){
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
         }
         
@@ -106,16 +106,16 @@ final public class CommonAttributeSearchResults {
         
         Map<Integer, List<CommonAttributeValue>> itemsToRemove = new HashMap<>();
         
-        for(Entry<Integer, List<CommonAttributeValue>> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
+        for(Entry<Integer, CommonAttributeValueList> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
             
             final Integer key = listOfValues.getKey();
-            final List<CommonAttributeValue> values = listOfValues.getValue();
+            final CommonAttributeValueList values = listOfValues.getValue();
             
-            for(CommonAttributeValue value : values){
+            for(CommonAttributeValue value : values.getDelayedMetadataList()){ // Need the real metadata
                 
                 int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
                 
-                if(frequencyPercentage < minimumPercentageThreshold){
+                if(frequencyPercentage > maximumPercentageThreshold){
                     if(itemsToRemove.containsKey(key)){
                         itemsToRemove.get(key).add(value);
                     } else {
@@ -133,10 +133,10 @@ final public class CommonAttributeSearchResults {
             final List<CommonAttributeValue> values = valuesToRemove.getValue();
             
             for (CommonAttributeValue value : values){
-                final List<CommonAttributeValue> instanceCountValue = this.instanceCountToAttributeValues.get(key);
-                instanceCountValue.remove(value);
+                final CommonAttributeValueList instanceCountValue = this.instanceCountToAttributeValues.get(key);
+                instanceCountValue.removeMetaData(value);
                 
-                if(instanceCountValue.isEmpty()){
+                if(instanceCountValue.getDelayedMetadataList().isEmpty()){ // Check the real metadata
                     this.instanceCountToAttributeValues.remove(key);
                 }
             }
@@ -153,8 +153,8 @@ final public class CommonAttributeSearchResults {
     public int size() {
 
         int count = 0;
-        for (List<CommonAttributeValue> data : this.instanceCountToAttributeValues.values()) {
-            for (CommonAttributeValue md5 : data) {
+        for (CommonAttributeValueList data : this.instanceCountToAttributeValues.values()) {
+            for(CommonAttributeValue md5 : data.getMetadataList()){
                 count += md5.getInstanceCount();
             }
         }

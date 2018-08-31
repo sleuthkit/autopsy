@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -50,24 +51,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * Data set definitions:
  *
- * set 1 
- * + file1 
- *  - IMG_6175.jpg 
- * + file2 
- *  - IMG_6175.jpg 
- * + file3 
- *  - BasicStyleGuide.doc
+ * set 1 + file1 - IMG_6175.jpg + file2 - IMG_6175.jpg + file3 -
+ * BasicStyleGuide.doc
  *
- * set 2 
- *  - adsf.pdf 
- *  - IMG_6175.jpg
+ * set 2 - adsf.pdf - IMG_6175.jpg
  *
- * set 3 
- *  - BasicStyleGuide.doc 
- *  - IMG_6175.jpg
+ * set 3 - BasicStyleGuide.doc - IMG_6175.jpg
  *
- * set 4 
- *  - file.dat (empty file)
+ * set 4 - file.dat (empty file)
  */
 class IntraCaseTestUtils {
 
@@ -92,13 +83,13 @@ class IntraCaseTestUtils {
     private final DataSourceLoader dataSourceLoader;
 
     private final String caseName;
-    
-    IntraCaseTestUtils(NbTestCase nbTestCase, String caseName){
+
+    IntraCaseTestUtils(NbTestCase nbTestCase, String caseName) {
         this.imagePath1 = Paths.get(nbTestCase.getDataDir().toString(), SET1);
         this.imagePath2 = Paths.get(nbTestCase.getDataDir().toString(), SET2);
         this.imagePath3 = Paths.get(nbTestCase.getDataDir().toString(), SET3);
         this.imagePath4 = Paths.get(nbTestCase.getDataDir().toString(), SET4);
-        
+
         this.dataSourceLoader = new DataSourceLoader();
 
         this.caseName = caseName;
@@ -197,24 +188,25 @@ class IntraCaseTestUtils {
     }
 
     /**
-     * Create a convenience lookup table mapping file instance object ids to 
-     * the data source they appear in.
-     * 
-     * @param metadata object returned by the code under test 
+     * Create a convenience lookup table mapping file instance object ids to the
+     * data source they appear in.
+     *
+     * @param metadata object returned by the code under test
      * @return mapping of objectId to data source name
      */
     static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
-            
+
         try {
-            for (Map.Entry<Integer, List<CommonAttributeValue>> entry : metadata.getMetadata().entrySet()) {
-                for (CommonAttributeValue md : entry.getValue()) {
+            for (Map.Entry<Integer, CommonAttributeValueList> entry : metadata.getMetadata().entrySet()) {
+                entry.getValue().displayDelayedMetadata();
+                for (CommonAttributeValue md : entry.getValue().getMetadataList()) {
                     for (AbstractCommonAttributeInstance fim : md.getInstances()) {
                         instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
                     }
                 }
             }
-            
+
             return instanceIdToDataSource;
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -223,7 +215,6 @@ class IntraCaseTestUtils {
         }
     }
 
-    
     static List<AbstractFile> getFiles(Set<Long> objectIds) {
         List<AbstractFile> files = new ArrayList<>(objectIds.size());
 

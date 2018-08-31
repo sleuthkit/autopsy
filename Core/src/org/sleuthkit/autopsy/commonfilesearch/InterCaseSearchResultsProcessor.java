@@ -20,10 +20,8 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -140,7 +138,7 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<Integer, List<CommonAttributeValue>> findInterCaseCommonAttributeValues(Case currentCase) {
+    Map<Integer, CommonAttributeValueList> findInterCaseCommonAttributeValues(Case currentCase) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
@@ -167,7 +165,7 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase The case of interest. Matches must exist in this case.
      */
-    Map<Integer, List<CommonAttributeValue>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, CommonAttributeValueList> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
@@ -188,7 +186,7 @@ final class InterCaseSearchResultsProcessor {
      */
     private class InterCaseCommonAttributesCallback implements InstanceTableCallback {
 
-        final Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new HashMap<>();
+        final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
 
         private CommonAttributeValue commonAttributeValue = null;
         private String previousRowMd5 = "";
@@ -234,10 +232,10 @@ final class InterCaseSearchResultsProcessor {
             if (!corValue.equals(previousRowMd5)) {
                 int size = commonAttributeValue.getInstanceCount();
                 if (instanceCollatedCommonFiles.containsKey(size)) {
-                    instanceCollatedCommonFiles.get(size).add(commonAttributeValue);
+                    instanceCollatedCommonFiles.get(size).addMetadataToList(commonAttributeValue);
                 } else {
-                    ArrayList<CommonAttributeValue> value = new ArrayList<>();
-                    value.add(commonAttributeValue);
+                    CommonAttributeValueList value = new CommonAttributeValueList();
+                    value.addMetadataToList(commonAttributeValue);
                     instanceCollatedCommonFiles.put(size, value);
                 }
 
@@ -251,7 +249,7 @@ final class InterCaseSearchResultsProcessor {
             commonAttributeValue.addInstance(searchResult);
         }
 
-        Map<Integer, List<CommonAttributeValue>> getInstanceCollatedCommonFiles() {
+        Map<Integer, CommonAttributeValueList> getInstanceCollatedCommonFiles() {
             return Collections.unmodifiableMap(instanceCollatedCommonFiles);
         }
     }
