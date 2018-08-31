@@ -183,7 +183,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
     }
     
     /**
-     * We should be able to observe that certain files o no longer returned
+     * We should be able to observe that certain files are no longer returned
      * in the result set since they do not appear frequently enough.
      */
     public void testThree(){
@@ -200,26 +200,26 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             
             //case 1 data set 1
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 0));
             
             //case 1 data set 2
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 0));
             
             //case 2 data set 1
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
             
             //case 2 data set 2
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
             
             //case 3 data set 1
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 0));
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 0));
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));            
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
@@ -227,7 +227,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             //case 3 data set 2
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
             assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 0)); 
+            assertTrue(verifyInstanceExistanceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1)); 
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex); 

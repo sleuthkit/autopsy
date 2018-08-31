@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
@@ -73,19 +72,50 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Description of Test Data: (Note: files of the same name and extension are
  * identical; files of the same name and differing extension are not identical.)
  *
- * Case 1 +Data Set 1 - Hash-0.dat [testFile of size 0] - Hash-A.jpg -
- * Hash-A.pdf +Data Set2 - Hash-0.dat [testFile of size 0] - Hash-A.jpg -
- * Hash-A.pdf Case 2 +Data Set 1 - Hash-B.jpg - Hash-B.pdf +Data Set 2 -
- * Hash-A.jpg - Hash-A.pdf - Hash_D.doc Case 3 +Data Set 1 - Hash-A.jpg -
- * Hash-A.pdf - Hash-C.jpg - Hash-C.pdf - Hash-D.jpg +Data Set 2 - Hash-C.jpg -
- * Hash-C.pdf - Hash-D.doc
+ * Case 1 
+ * +Data Set 1 
+ * - Hash-0.dat [testFile of size 0] 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
+ * 
+ * +Data Set2 
+ * - Hash-0.dat [testFile of size 0] 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
+ * 
+ * Case 2 
+ * +Data Set 1 
+ * - Hash-B.jpg 
+ * - Hash-B.pdf 
+ * +Data Set 2 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
+ * - Hash_D.doc 
+ * 
+ * Case 3 
+ * +Data Set 1 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
+ * - Hash-C.jpg 
+ * - Hash-C.pdf 
+ * - Hash-D.jpg 
+ * +Data Set 2 
+ * - Hash-C.jpg 
+ * - Hash-C.pdf 
+ * - Hash-D.doc
  *
  * Frequency Breakdown (ratio of datasources a given file appears in to total
  * number of datasources):
  *
- * Hash-0.dat - moot; these are always excluded Hash-A.jpg - 4/6 Hash-A.pdf -
- * 4/6 Hash-B.jpg - 1/6 Hash-B.pdf - 1/6 Hash-C.jpg - 2/6 Hash-C.pdf - 2/6
- * Hash_D.doc - 2/6 Hash-D.jpg - 1/6
+ * Hash-0.dat - moot; these are always excluded 
+ * Hash-A.jpg - 4/6 
+ * Hash-A.pdf - 4/6 
+ * Hash-B.jpg - 1/6 
+ * Hash-B.pdf - 1/6 
+ * Hash-C.jpg - 2/6 
+ * Hash-C.pdf - 2/6
+ * Hash_D.doc - 2/6 
+ * Hash-D.jpg - 1/6
  *
  */
 class InterCaseTestUtils {
