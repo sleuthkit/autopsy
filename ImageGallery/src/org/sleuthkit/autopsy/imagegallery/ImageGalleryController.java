@@ -850,13 +850,10 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                taskDB.commitTransaction(drawableDbTransaction, true);
                 caseDbTransaction.commit();
+                taskDB.commitTransaction(drawableDbTransaction, true);
 
             } catch (TskCoreException ex) {
-                if (null != drawableDbTransaction) {
-                    taskDB.rollbackTransaction(drawableDbTransaction);
-                }
                 if (null != caseDbTransaction) {
                     try {
                         caseDbTransaction.rollback();
@@ -864,6 +861,10 @@ public final class ImageGalleryController {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
                     }
                 }
+                if (null != drawableDbTransaction) {
+                    taskDB.rollbackTransaction(drawableDbTransaction);
+                }
+
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());

@@ -83,7 +83,7 @@ import org.sqlite.SQLiteJDBCLoader;
  */
 public final class DrawableDB {
 
-    private static final  Logger logger = Logger.getLogger(DrawableDB.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed"; //NON-NLS
@@ -686,18 +686,18 @@ public final class DrawableDB {
             trans = beginTransaction();
             caseDbTransaction = tskCase.beginTransaction();
             updateFile(f, trans, caseDbTransaction);
-            commitTransaction(trans, true);
             caseDbTransaction.commit();
+            commitTransaction(trans, true);
         } catch (TskCoreException ex) {
-            if (null != trans) {
-                rollbackTransaction(trans);
-            }
             if (null != caseDbTransaction) {
                 try {
                     caseDbTransaction.rollback();
                 } catch (TskCoreException ex2) {
                     logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
                 }
+            }
+            if (null != trans) {
+                rollbackTransaction(trans);
             }
             logger.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
         }
