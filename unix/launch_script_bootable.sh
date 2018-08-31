@@ -121,7 +121,8 @@ showWarning() {
   NC='\033[0m'
   local e match="$1"
   shift
-  for e; do [[ "$e" != "$match" ]] && echo -e "${RED}Warning: Case data stored in non removable disk cannot be saved${NC}"; done
+  for e; do [[ "$e" == "$match" ]] && return 0; done
+  echo -e "${RED}Warning: Case data stored in non removable disk cannot be saved${NC}"
 }
 
 
@@ -148,8 +149,8 @@ done
 
 if [ "$option" != "$options_length" ]; then
   index=$(( (option - 1) * 4 + 1 ))
-  casedirIndex=$(( (casedirOption - 1) * 3 + 1 ))
-  read -p 'Autopsy configurations will be stored in" "${mnt[$index]}"". Are you sure? (y/n): ' affirmation
+  casedirIndex=$(( (casedirOption - 1) * 3 + 2 ))
+  read -p "Autopsy configurations will be stored in ${mnt[$index]}. Are you sure? (y/n): " affirmation
   if [ "$affirmation" == "y" ] || [ "$affirmation" == "Y" ]; then
     if [[ -d "${mnt[$index]}" ]]; then
       selectedMount=${mnt[$index]}
@@ -169,7 +170,7 @@ if [ "$option" != "$options_length" ]; then
     createConfigDirectories $autopsyConfigDir && createConfigDirectories $userDirectory
 
     if [ $? -eq 0 ]; then
-      sh $AUTOPSY_BIN --userdir $userDirectory --liveAutopsy ${casedir[$casedirIndex]}
+      sh $AUTOPSY_BIN --userdir $userDirectory --liveAutopsy=${casedir[$casedirIndex]}
     fi
   fi
 else
