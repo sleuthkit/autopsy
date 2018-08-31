@@ -613,11 +613,11 @@ public class GroupPane extends BorderPane {
             });
             
         } else {
-            if (getGroup() != viewState.getGroup()) {
+            if (getGroup() != viewState.getGroup().orElse(null) ) {
                 if (nonNull(getGroup())) {
                     getGroup().getFileIDs().removeListener(filesSyncListener);
                 }
-                this.grouping.set(viewState.getGroup());
+                this.grouping.set(viewState.getGroup().orElse(null) );
                 
                 getGroup().getFileIDs().addListener(filesSyncListener);
                 

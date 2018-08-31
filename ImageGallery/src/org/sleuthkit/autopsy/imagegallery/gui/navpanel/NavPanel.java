@@ -96,7 +96,7 @@ abstract class NavPanel<X> extends Tab {
         controller.viewState().addListener(observable -> {
             Platform.runLater(() -> {
                 Optional.ofNullable(controller.getViewState())
-                        .map(GroupViewState::getGroup)
+                        .flatMap(GroupViewState::getGroup)
                         .ifPresent(this::setFocusedGroup);
             });
         });

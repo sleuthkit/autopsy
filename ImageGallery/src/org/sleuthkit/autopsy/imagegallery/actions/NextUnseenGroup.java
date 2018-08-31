@@ -71,7 +71,7 @@ public class NextUnseenGroup extends Action {
         setEventHandler(event -> {    //on fx-thread
             //if there is a group assigned to the view, mark it as seen
             Optional.ofNullable(controller.getViewState())
-                    .map(GroupViewState::getGroup)
+                    .flatMap(GroupViewState::getGroup)
                     .ifPresent(group -> {
                         groupManager.setGroupSeen(group, true)
                                 .addListener(this::advanceToNextUnseenGroup, MoreExecutors.newDirectExecutorService());
@@ -83,7 +83,7 @@ public class NextUnseenGroup extends Action {
     private void advanceToNextUnseenGroup() {
         synchronized (groupManager) {
             if (unSeenGroups.isEmpty() == false) {
-                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), false);
             }
 
             updateButton();
