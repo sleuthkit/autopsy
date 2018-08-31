@@ -90,7 +90,8 @@ showCaseDirOptions () {
   casedirremovable=( $(lsblk -lno NAME,RM,MOUNTPOINT,LABEL | awk '$3 != "" {print $1,$2,$3,$4}' | awk '$2 == 1 {print $3}') )
   casedir=( $(lsblk -lno NAME,SIZE,MOUNTPOINT | awk '$3 != "" {print $1,$2,$3}') )
   local lengthCaseDir=${#casedir[@]}
-  optionsCasedirLength=$(( lengthCaseDir / 3 ))
+  casedir[lengthCaseDir]="No Drive to Choose"
+  optionsCasedirLength=$(( lengthCaseDir / 3 + 1 ))
   printf "%-10s\t%-10s\t%-10s\t%-30s\t\n" "Selection" "Disk" "Size" "Mount"
 
   echo "-----------------------------------------------------------------------------------------------------"
