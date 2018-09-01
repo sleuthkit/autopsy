@@ -487,7 +487,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         jPanel1.setMaximumSize(new java.awt.Dimension(450, 440));
         jPanel1.setMinimumSize(new java.awt.Dimension(450, 440));
-        jPanel1.setPreferredSize(new java.awt.Dimension(450, 375));
+        jPanel1.setPreferredSize(new java.awt.Dimension(450, 440));
         jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel2.text")); // NOI18N
@@ -515,7 +515,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         allFileCategoriesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.text")); // NOI18N
         allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
-        allFileCategoriesRadioButton.setEnabled(false);
         allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 allFileCategoriesRadioButtonActionPerformed(evt);
@@ -525,7 +524,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
-        selectedFileCategoriesButton.setEnabled(false);
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 selectedFileCategoriesButtonActionPerformed(evt);
@@ -551,7 +549,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.categoriesLabel.text")); // NOI18N
-        categoriesLabel.setEnabled(false);
         categoriesLabel.setName(""); // NOI18N
 
         errorText.setForeground(new java.awt.Color(255, 0, 0));
@@ -639,7 +636,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                                 .addComponent(percentageThresholdTextOne, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(percentageThresholdTextTwo)))
-                        .addContainerGap(9, Short.MAX_VALUE))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -700,10 +697,19 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
+        this.categoriesLabel.setEnabled(false);
+        this.selectedFileCategoriesButton.setEnabled(false);
+        this.allFileCategoriesRadioButton.setEnabled(false);
+        this.allFileCategoriesRadioButton.setSelected(true);
+        this.documentsCheckbox.setEnabled(false);
+        this.pictureVideoCheckbox.setEnabled(false);
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
+        this.categoriesLabel.setEnabled(true);
+        this.selectedFileCategoriesButton.setEnabled(true);
+        this.allFileCategoriesRadioButton.setEnabled(true);
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
     private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
