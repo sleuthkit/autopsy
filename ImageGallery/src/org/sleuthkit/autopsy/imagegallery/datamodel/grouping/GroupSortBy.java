@@ -28,7 +28,8 @@ import org.openide.util.NbBundle;
 /**
  * Pseudo enum of possible properties to sort groups by.
  */
-@NbBundle.Messages({"GroupSortBy.groupSize=Group Size",
+@NbBundle.Messages({
+    "GroupSortBy.groupSize=Group Size",
     "GroupSortBy.groupName=Group Name",
     "GroupSortBy.none=None",
     "GroupSortBy.priority=Priority"})
@@ -37,39 +38,34 @@ public class GroupSortBy implements Comparator<DrawableGroup> {
     /**
      * sort the groups by the number of files in each
      */
-    public final static GroupSortBy FILE_COUNT =
-            new GroupSortBy(Bundle.GroupSortBy_groupSize(), "folder-open-image.png",
+    public final static GroupSortBy FILE_COUNT
+            = new GroupSortBy(Bundle.GroupSortBy_groupSize(), "folder-open-image.png",
                     Comparator.comparing(DrawableGroup::getSize));
 
     /**
      * sort the groups by the natural order of the grouping value ( eg group
      * them by path alphabetically )
      */
-    public final static GroupSortBy GROUP_BY_VALUE =
-            new GroupSortBy(Bundle.GroupSortBy_groupName(), "folder-rename.png",
+    public final static GroupSortBy GROUP_BY_VALUE
+            = new GroupSortBy(Bundle.GroupSortBy_groupName(), "folder-rename.png",
                     Comparator.comparing(DrawableGroup::getGroupByValueDislpayName));
 
     /**
      * don't sort the groups just use what ever order they come in (ingest
      * order)
      */
-    public final static GroupSortBy NONE =
-            new GroupSortBy(Bundle.GroupSortBy_none(), "prohibition.png",
+    public final static GroupSortBy NONE
+            = new GroupSortBy(Bundle.GroupSortBy_none(), "prohibition.png",
                     new AllEqualComparator<>());
 
     /**
      * sort the groups by some priority metric to be determined and implemented
      */
-    public final static GroupSortBy PRIORITY =
-            new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png",
+    public final static GroupSortBy PRIORITY
+            = new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png",
                     Comparator.comparing(DrawableGroup::getHashHitDensity)
                             .thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount))
                             .reversed());
-
-    @Override
-    public int compare(DrawableGroup o1, DrawableGroup o2) {
-        return delegate.compare(o1, o2);
-    }
 
     private final static ObservableList<GroupSortBy> values = FXCollections.unmodifiableObservableList(FXCollections.observableArrayList(PRIORITY, NONE, GROUP_BY_VALUE, FILE_COUNT));
 
@@ -107,6 +103,11 @@ public class GroupSortBy implements Comparator<DrawableGroup> {
             }
         }
         return icon;
+    }
+
+    @Override
+    public int compare(DrawableGroup o1, DrawableGroup o2) {
+        return delegate.compare(o1, o2);
     }
 
     static class AllEqualComparator<A> implements Comparator<A> {

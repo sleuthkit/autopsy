@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,8 +35,10 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -97,6 +103,7 @@ import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.ActionUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
@@ -107,6 +114,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined.ThreadType;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.FileIDSelectionModel;
@@ -122,12 +130,12 @@ import org.sleuthkit.autopsy.imagegallery.actions.RedoAction;
 import org.sleuthkit.autopsy.imagegallery.actions.SwingMenuItemAdapter;
 import org.sleuthkit.autopsy.imagegallery.actions.TagSelectedFilesAction;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoAction;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -145,10 +153,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class GroupPane extends BorderPane {
     
-    private static final Logger LOGGER = Logger.getLogger(GroupPane.class.getName());
+    private static final Logger logger = Logger.getLogger(GroupPane.class.getName());
+    private final ListeningExecutorService exec = TaskUtils.getExecutorForClass(GroupPane.class);
+    
     private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
     private static final CornerRadii CORNER_RADII_2 = new CornerRadii(2);
-    
     private static final DropShadow DROP_SHADOW = new DropShadow(10, Color.BLUE);
     
     private static final Timeline flashAnimation = new Timeline(new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 1, Interpolator.LINEAR)),
@@ -156,8 +165,9 @@ public class GroupPane extends BorderPane {
     );
     
     private final FileIDSelectionModel selectionModel;
-    private static final List<KeyCode> categoryKeyCodes = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
-            KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
+    private static final List<KeyCode> categoryKeyCodes
+            = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
+                    KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
     
     private final Back backAction;
     
@@ -306,7 +316,7 @@ public class GroupPane extends BorderPane {
         slideShowPane.requestFocus();
         
     }
-
+    
     void syncCatToggle(DrawableFile file) {
         getToggleForCategory(file.getCategory()).setSelected(true);
     }
@@ -426,27 +436,35 @@ public class GroupPane extends BorderPane {
         catSelectedSplitMenu.disableProperty().bind(isSelectionEmpty);
         tagSelectedSplitMenu.disableProperty().bind(isSelectionEmpty);
         
+        TagSelectedFilesAction followUpSelectedAction = new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller); //NON-NLS
         Platform.runLater(() -> {
-            try {
-                TagSelectedFilesAction followUpSelectedACtion = new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller);
-                tagSelectedSplitMenu.setText(followUpSelectedACtion.getText());
-                tagSelectedSplitMenu.setGraphic(followUpSelectedACtion.getGraphic());
-                tagSelectedSplitMenu.setOnAction(followUpSelectedACtion);
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.WARNING, "failed to load FollowUpTagName", tskCoreException); //NON-NLS
-            }
+            tagSelectedSplitMenu.setText(followUpSelectedAction.getText());
+            tagSelectedSplitMenu.setGraphic(followUpSelectedAction.getGraphic());
+            tagSelectedSplitMenu.setOnAction(followUpSelectedAction);
             tagSelectedSplitMenu.showingProperty().addListener(showing -> {
                 if (tagSelectedSplitMenu.isShowing()) {
-                    List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
-                            tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
-                    tagSelectedSplitMenu.getItems().setAll(selTagMenues);
+                    
+                    ListenableFuture<List<MenuItem>> getTagsFuture = exec.submit(()
+                            -> Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
+                                    tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller))));
+                    Futures.addCallback(getTagsFuture, new FutureCallback<List<MenuItem>>() {
+                        @Override
+                        public void onSuccess(List<MenuItem> result) {
+                            tagSelectedSplitMenu.getItems().setAll(result);
+                        }
+                        
+                        @Override
+                        public void onFailure(Throwable t) {
+                            logger.log(Level.SEVERE, "Error getting tag names.", t);
+                        }
+                    }, Platform::runLater);
                 }
             });
-            
         });
-        
         CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(DhsImageCategory.FIVE, controller);
+        
         catSelectedSplitMenu.setOnAction(cat5SelectedAction);
+        
         catSelectedSplitMenu.setText(cat5SelectedAction.getText());
         catSelectedSplitMenu.setGraphic(cat5SelectedAction.getGraphic());
         catSelectedSplitMenu.showingProperty().addListener(showing -> {
@@ -516,7 +534,7 @@ public class GroupPane extends BorderPane {
         //listen to tile selection and make sure it is visible in scroll area
         selectionModel.lastSelectedProperty().addListener((observable, oldFileID, newFileId) -> {
             if (groupViewMode.get() == GroupViewMode.SLIDE_SHOW
-                    && slideShowPane != null) {
+                && slideShowPane != null) {
                 slideShowPane.setFile(newFileId);
             } else {
                 scrollToFileID(newFileId);
@@ -831,24 +849,26 @@ public class GroupPane extends BorderPane {
         
         private ContextMenu buildContextMenu() {
             ArrayList<MenuItem> menuItems = new ArrayList<>();
-
             
             menuItems.add(CategorizeAction.getCategoriesMenu(controller));
-            menuItems.add(AddTagAction.getTagMenu(controller));
-
-
-            Collection<? extends ContextMenuActionsProvider> menuProviders = Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class);
-            
-            for (ContextMenuActionsProvider provider : menuProviders) {
-                for (final Action act : provider.getActions()) {
-                    if (act instanceof Presenter.Popup) {
-                        Presenter.Popup aact = (Presenter.Popup) act;
-                        menuItems.add(SwingMenuItemAdapter.create(aact.getPopupPresenter()));
-                    }
-                }
+            try {
+                menuItems.add(AddTagAction.getTagMenu(controller));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error building tagging context menu.", ex);
             }
+            
+            Lookup.getDefault().lookupAll(ContextMenuActionsProvider.class).stream()
+                    .map(ContextMenuActionsProvider::getActions)
+                    .flatMap(Collection::stream)
+                    .filter(Presenter.Popup.class::isInstance)
+                    .map(Presenter.Popup.class::cast)
+                    .map(Presenter.Popup::getPopupPresenter)
+                    .map(SwingMenuItemAdapter::create)
+                    .forEachOrdered(menuItems::add);
+            
             final MenuItem extractMenuItem = new MenuItem(Bundle.GroupPane_gridViewContextMenuItem_extractFiles());
-            extractMenuItem.setOnAction((ActionEvent t) -> {
+            
+            extractMenuItem.setOnAction(actionEvent -> {
                 SwingUtilities.invokeLater(() -> {
                     TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
                     ExtractAction.getInstance().actionPerformed(new java.awt.event.ActionEvent(etc, 0, null));
@@ -857,7 +877,9 @@ public class GroupPane extends BorderPane {
             menuItems.add(extractMenuItem);
             
             ContextMenu contextMenu = new ContextMenu(menuItems.toArray(new MenuItem[]{}));
-            contextMenu.setAutoHide(true);
+            
+            contextMenu.setAutoHide(
+                    true);
             return contextMenu;
         }
         

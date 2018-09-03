@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -77,6 +78,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
+import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -84,7 +86,7 @@ import org.sleuthkit.datamodel.DataSource;
  */
 public class Toolbar extends ToolBar {
 
-    private static final Logger LOGGER = Logger.getLogger(Toolbar.class.getName());
+    private static final Logger logger = Logger.getLogger(Toolbar.class.getName());
     private static final int SIZE_SLIDER_DEFAULT = 100;
 
     @FXML
@@ -109,9 +111,7 @@ public class Toolbar extends ToolBar {
     private Label thumbnailSizeLabel;
     private SortChooser<DrawableGroup, GroupSortBy> sortChooser;
 
-    private final ListeningExecutorService exec
-            = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
-                    new ThreadFactoryBuilder().setNameFormat("Image Gallery Toolbar BG Thread").build()));
+    private final ListeningExecutorService exec = TaskUtils.getExecutorForClass(Toolbar.class);
 
     private final ImageGalleryController controller;
 
@@ -291,19 +291,31 @@ public class Toolbar extends ToolBar {
                  * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
                  */
                 if (Case.isCaseOpen()) {
-                    LOGGER.log(Level.WARNING, "Could not create Follow Up tag menu item", t); //NON-NLS
+                    logger.log(Level.WARNING, "Could not create Follow Up tag menu item", t); //NON-NLS
                 } else {
                     // don't add stack trace to log because it makes looking for real errors harder
-                    LOGGER.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
+                    logger.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
                 }
             }
         }, Platform::runLater);
 
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
-                List<MenuItem> selTagMenues = Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
-                        tagName -> GuiUtils.createAutoAssigningMenuItem(tagGroupMenuButton, new TagGroupAction(tagName, controller)));
-                tagGroupMenuButton.getItems().setAll(selTagMenues);
+                ListenableFuture<List<MenuItem>> getTagsFuture = exec.submit(() -> {
+                    return Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
+                            tagName -> GuiUtils.createAutoAssigningMenuItem(tagGroupMenuButton, new TagGroupAction(tagName, controller)));
+                });
+                Futures.addCallback(getTagsFuture, new FutureCallback<List<MenuItem>>() {
+                    @Override
+                    public void onSuccess(List<MenuItem> result) {
+                        tagGroupMenuButton.getItems().setAll(result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        logger.log(Level.SEVERE, "Error getting non-gategory tag names.", t);
+                    }
+                }, Platform::runLater);
             }
         });
     }
@@ -320,7 +332,7 @@ public class Toolbar extends ToolBar {
 
             @Override
             public void onFailure(Throwable t) {
-                LOGGER.log(Level.SEVERE, "Unable to get datasources for current case.", t); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to get datasources for current case.", t); //NON-NLS
                 Notifications.create().owner(getScene().getRoot())
                         .title("Image Gallery Error")
                         .text(Bundle.Toolbar_getDataSources_errMessage())
@@ -389,6 +401,7 @@ public class Toolbar extends ToolBar {
 
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
+
     }
 
     /**
