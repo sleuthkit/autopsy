@@ -231,7 +231,7 @@ public class GroupManager {
         }
     }
 
-    synchronized public void clear() {
+    synchronized public void reset() {
 
         if (groupByTask != null) {
             groupByTask.cancel(true);

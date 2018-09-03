@@ -188,9 +188,9 @@ public abstract class DrawableTileBase extends DrawableUIBase {
 
                 menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
                 menuItems.add(AddTagAction.getTagMenu(getController()));
-                
+
                 final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                if(selectedFilesList.size() == 1) {
+                if (selectedFilesList.size() == 1) {
                     menuItems.add(DeleteTagAction.getTagMenu(getController()));
                 }
 
@@ -243,32 +243,24 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected abstract String getTextForLabel();
 
     protected void initialize() {
-        followUpToggle.setOnAction(actionEvent -> {
-            getFile().ifPresent(file -> {
-                if (followUpToggle.isSelected() == true) {
-                    try {
-                        selectionModel.clearAndSelect(file.getId());
-                        new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to add Follow Up tag.  Could not load TagName.", ex); //NON-NLS
-                    }
-                } else {
-                    new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
-                }
-            });
-        });
+        followUpToggle.setOnAction(
+                actionEvent -> getFile().ifPresent(
+                        file -> {
+                            if (followUpToggle.isSelected() == true) {
+                                selectionModel.clearAndSelect(file.getId());
+                                new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
+                            } else {
+                                new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
+                            }
+                        })
+        );
     }
 
     protected boolean hasFollowUp() {
         if (getFileID().isPresent()) {
-            try {
-                TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
-                return DrawableAttribute.TAGS.getValue(getFile().get()).stream()
-                        .anyMatch(followUpTagName::equals);
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.WARNING, "failed to get follow up tag name ", ex); //NON-NLS
-                return true;
-            }
+            TagName followUpTagName = getController().getTagsManager().getFollowUpTagName(); //NON-NLS
+            return DrawableAttribute.TAGS.getValue(getFile().get()).stream()
+                    .anyMatch(followUpTagName::equals);
         } else {
             return false;
         }
@@ -342,18 +334,14 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Override
     public void handleTagAdded(ContentTagAddedEvent evt) {
         getFileID().ifPresent(fileID -> {
-            try {
-                final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
-                final ContentTag addedTag = evt.getAddedTag();
-                if (fileID == addedTag.getContent().getId()
-                        && addedTag.getName().equals(followUpTagName)) {
-                    Platform.runLater(() -> {
-                        followUpImageView.setImage(followUpIcon);
-                        followUpToggle.setSelected(true);
-                    });
-                }
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex); //NON-NLS
+            final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName(); //NON-NLS
+            final ContentTag addedTag = evt.getAddedTag();
+            if (fileID == addedTag.getContent().getId()
+                && addedTag.getName().equals(followUpTagName)) {
+                Platform.runLater(() -> {
+                    followUpImageView.setImage(followUpIcon);
+                    followUpToggle.setSelected(true);
+                });
             }
         });
     }
@@ -362,15 +350,11 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     @Override
     public void handleTagDeleted(ContentTagDeletedEvent evt) {
         getFileID().ifPresent(fileID -> {
-            try {
-                final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
-                final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-                if (fileID == deletedTagInfo.getContentID()
-                        && deletedTagInfo.getName().equals(followUpTagName)) {
-                    updateFollowUpIcon();
-                }
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get followup tag name.  Unable to update follow up status for file. ", ex); //NON-NLS
+            final TagName followUpTagName = getController().getTagsManager().getFollowUpTagName(); //NON-NLS
+            final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
+            if (fileID == deletedTagInfo.getContentID()
+                && deletedTagInfo.getName().equals(followUpTagName)) {
+                updateFollowUpIcon();
             }
         });
     }

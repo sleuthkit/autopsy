@@ -60,6 +60,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -123,7 +124,7 @@ public final class ImageGalleryController {
     private final GroupManager groupManager = new GroupManager(this);
     private final HashSetManager hashSetManager = new HashSetManager();
     private final CategoryManager categoryManager = new CategoryManager(this);
-    private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
+    private DrawableTagsManager tagsManager;
 
     private Runnable showTree;
     private Toolbar toolbar;
@@ -144,7 +145,11 @@ public final class ImageGalleryController {
 
     public static synchronized ImageGalleryController getDefault() {
         if (instance == null) {
-            instance = new ImageGalleryController();
+            try {
+                instance = new ImageGalleryController();
+            } catch (NoClassDefFoundError error) {
+                Exceptions.printStackTrace(error);
+            }
         }
         return instance;
     }
@@ -232,12 +237,7 @@ public final class ImageGalleryController {
             }
         });
 
-        groupManager.getAnalyzedGroups().addListener((Observable o) -> {
-            //analyzed groups is confined  to JFX thread
-            if (Case.isCaseOpen()) {
-                checkForGroups();
-            }
-        });
+        groupManager.getAnalyzedGroups().addListener((Observable o) -> checkForGroups());
 
         viewState().addListener((Observable observable) -> {
             //when the viewed group changes, clear the selection and the undo/redo history
@@ -291,7 +291,6 @@ public final class ImageGalleryController {
      * GroupManager and remove blocking progress spinners if there are. If there
      * aren't, add a blocking progress spinner with appropriate message.
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({"ImageGalleryController.noGroupsDlg.msg1=No groups are fully analyzed; but listening to ingest is disabled. "
                         + " No groups will be available until ingest is finished and listening is re-enabled.",
         "ImageGalleryController.noGroupsDlg.msg2=No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
@@ -303,45 +302,46 @@ public final class ImageGalleryController {
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
     synchronized private void checkForGroups() {
-        if (groupManager.getAnalyzedGroups().isEmpty()) {
-            if (IngestManager.getInstance().isIngestRunning()) {
-                if (listeningEnabled.not().get()) {
-                    replaceNotification(fullUIStackPane,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
-                } else {
-                    replaceNotification(fullUIStackPane,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                    new ProgressIndicator()));
-                }
-
-            } else if (dbTaskQueueSize.get() > 0) {
-                replaceNotification(fullUIStackPane,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                new ProgressIndicator()));
-            } else if (db != null) {
-                try {
-                    if (db.countAllFiles() <= 0) {
-
-                        // there are no files in db
-                        if (listeningEnabled.not().get()) {
-                            replaceNotification(fullUIStackPane,
-                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
-                        } else {
-                            replaceNotification(fullUIStackPane,
-                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
-                        }
+        if (Case.isCaseOpen()) {
+            if (groupManager.getAnalyzedGroups().isEmpty()) {
+                if (IngestManager.getInstance().isIngestRunning()) {
+                    if (listeningEnabled.get()) {
+                        replaceNotification(centralStackPane,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                        new ProgressIndicator()));
+                    } else {
+                        replaceNotification(fullUIStackPane,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error counting files in drawable db.", ex);
+
+                } else if (dbTaskQueueSize.get() > 0) {
+                    replaceNotification(fullUIStackPane,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                                    new ProgressIndicator()));
+                } else if (db != null) {
+                    try {
+                        if (db.countAllFiles() <= 0) {
+                            // there are no files in db
+                            if (listeningEnabled.get()) {
+                                replaceNotification(fullUIStackPane,
+                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
+                            } else {
+                                replaceNotification(fullUIStackPane,
+                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+                            }
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Error counting files in drawable db.", ex);
+                    }
+
+                } else if (false == groupManager.isRegrouping()) {
+                    replaceNotification(centralStackPane,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
                 }
 
-            } else if (!groupManager.isRegrouping()) {
-                replaceNotification(centralStackPane,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
+            } else {
+                Platform.runLater(this::clearNotification);
             }
-
-        } else {
-            clearNotification();
         }
     }
 
@@ -357,22 +357,25 @@ public final class ImageGalleryController {
         }
     }
 
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void replaceNotification(StackPane stackPane, Node newNode) {
-        clearNotification();
+        Platform.runLater(() -> {
+            clearNotification();
 
-        infoOverlay = new StackPane(infoOverLayBackground, newNode);
-        if (stackPane != null) {
-            stackPane.getChildren().add(infoOverlay);
-        }
+            infoOverlay = new StackPane(infoOverLayBackground, newNode);
+            if (stackPane != null) {
+                stackPane.getChildren().add(infoOverlay);
+            }
+        });
     }
 
     /**
      * configure the controller for a specific case.
      *
      * @param theNewCase the case to configure the controller for
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public synchronized void setCase(Case theNewCase) {
+    public synchronized void setCase(Case theNewCase) throws TskCoreException {
         if (null == theNewCase) {
             reset();
         } else {
@@ -385,10 +388,15 @@ public final class ImageGalleryController {
             // if we add this line icons are made as files are analyzed rather than on demand.
             // db.addUpdatedFileListener(IconCache.getDefault());
             historyManager.clear();
-            groupManager.setDB(db);
+            groupManager.reset();
             hashSetManager.setDb(db);
             categoryManager.setDb(db);
-            tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
+
+            if (tagsManager != null) {
+                tagsManager.unregisterListener(groupManager);
+                tagsManager.unregisterListener(categoryManager);
+            }
+            tagsManager = new DrawableTagsManager(theNewCase.getServices().getTagsManager());
             tagsManager.registerListener(groupManager);
             tagsManager.registerListener(categoryManager);
             shutDownDBExecutor();
@@ -416,10 +424,11 @@ public final class ImageGalleryController {
         setListeningEnabled(false);
         ThumbnailCache.getDefault().clearCache();
         historyManager.clear();
-        groupManager.clear();
-        tagsManager.clearFollowUpTagName();
+        groupManager.reset();
+
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
+        tagsManager = null;
         shutDownDBExecutor();
 
         if (toolbar != null) {
@@ -854,15 +863,15 @@ public final class ImageGalleryController {
                 taskDB.commitTransaction(drawableDbTransaction, true);
 
             } catch (TskCoreException ex) {
+                if (null != drawableDbTransaction) {
+                    taskDB.rollbackTransaction(drawableDbTransaction);
+                }
                 if (null != caseDbTransaction) {
                     try {
                         caseDbTransaction.rollback();
                     } catch (TskCoreException ex2) {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
                     }
-                }
-                if (null != drawableDbTransaction) {
-                    taskDB.rollbackTransaction(drawableDbTransaction);
                 }
 
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
@@ -1065,8 +1074,13 @@ public final class ImageGalleryController {
                         //close window, reset everything
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         reset();
-                    } else { // a new case has been opened
-                        setCase(newCase);    //connect db, groupmanager, start worker thread
+                    } else {
+                        try {
+                            // a new case has been opened
+                            setCase(newCase);    //connect db, groupmanager, start worker thread
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Error changing case in ImageGallery.", ex);
+                        }
                     }
                     break;
                 case DATA_SOURCE_ADDED:
