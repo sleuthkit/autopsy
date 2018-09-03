@@ -20,16 +20,13 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import java.util.Collections;
 import java.util.List;
-import static java.util.Objects.isNull;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javax.annotation.Nonnull;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -44,41 +41,39 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Manages Tags, Tagging, and the relationship between Categories and Tags in
- * the autopsy Db. Delegates some work to the backing {@link TagsManager}.
+ * the autopsy Db. Delegates some work to the backing autopsy TagsManager.
  */
 @NbBundle.Messages({"DrawableTagsManager.followUp=Follow Up",
     "DrawableTagsManager.bookMark=Bookmark"})
-public class DrawableTagsManager {
+public final class DrawableTagsManager {
 
     private static final Logger logger = Logger.getLogger(DrawableTagsManager.class.getName());
 
     private static final Image FOLLOW_UP_IMAGE = new Image("/org/sleuthkit/autopsy/imagegallery/images/flag_red.png");
     private static final Image BOOKMARK_IMAGE = new Image("/org/sleuthkit/autopsy/images/star-bookmark-icon-16.png");
 
-    final private Object autopsyTagsManagerLock = new Object();
-    private TagsManager autopsyTagsManager;
+    private final TagsManager autopsyTagsManager;
+    /** The tag name corresponding to the "built-in" tag "Follow Up" */
+    private final TagName followUpTagName;
+    private final TagName bookmarkTagName;
 
     /**
      * Used to distribute {@link TagsChangeEvent}s
      */
-    private final EventBus tagsEventBus = new AsyncEventBus(
-            Executors.newSingleThreadExecutor(
-                    new BasicThreadFactory.Builder()
-                            .namingPattern("Tags Event Bus")//NON-NLS
-                            .uncaughtExceptionHandler((Thread thread, Throwable throwable)
-                                    -> logger.log(Level.SEVERE, "uncaught exception in event bus handler", throwable))//NON-NLS  
-                            .build()
-            ));
+    private final EventBus tagsEventBus
+            = new AsyncEventBus(
+                    Executors.newSingleThreadExecutor(
+                            new BasicThreadFactory.Builder()
+                                    .namingPattern("Tags Event Bus")//NON-NLS
+                                    .uncaughtExceptionHandler((Thread t, Throwable e) -> {
+                                        logger.log(Level.SEVERE, "Uncaught exception in DrawableTagsManager event bus handler.", e); //NON-NLS
+                                    })
+                                    .build()));
 
-    /**
-     * The tag name corresponding to the "built-in" tag "Follow Up"
-     */
-    private TagName followUpTagName;
-    private TagName bookmarkTagName;
-
-    public DrawableTagsManager(TagsManager autopsyTagsManager) {
+    public DrawableTagsManager(TagsManager autopsyTagsManager) throws TskCoreException {
         this.autopsyTagsManager = autopsyTagsManager;
-
+        followUpTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.followUp"));
+        bookmarkTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.bookMark"));
     }
 
     /**
@@ -108,73 +103,35 @@ public class DrawableTagsManager {
     }
 
     /**
-     * assign a new TagsManager to back this one, ie when the current case
-     * changes
+     * Get the follow up TagName.
      *
-     * @param autopsyTagsManager
+     * @return The follow up TagName.
      */
-    public void setAutopsyTagsManager(TagsManager autopsyTagsManager) {
-        synchronized (autopsyTagsManagerLock) {
-            this.autopsyTagsManager = autopsyTagsManager;
-            clearFollowUpTagName();
-        }
+    public TagName getFollowUpTagName() {
+        return followUpTagName;
     }
 
     /**
-     * Use when closing a case to make sure everything is re-initialized in the
-     * next case.
+     * Get the bookmark TagName.
+     *
+     * @return The bookmark TagName.
      */
-    public void clearFollowUpTagName() {
-        synchronized (autopsyTagsManagerLock) {
-            followUpTagName = null;
-        }
+    private TagName getBookmarkTagName() throws TskCoreException {
+        return bookmarkTagName;
     }
 
     /**
-     * get the (cached) follow up TagName
+     * Get all the TagNames that are not categories
      *
-     * @return
-     *
-     * @throws TskCoreException
+     * @return All the TagNames that are not categories, in alphabetical order
+     *         by displayName.
      */
-    public TagName getFollowUpTagName() throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            if (isNull(followUpTagName)) {
-                followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
-            }
-            return followUpTagName;
-        }
-    }
+    public List<TagName> getNonCategoryTagNames() throws TskCoreException {
 
-    private Object getBookmarkTagName() throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            if (isNull(bookmarkTagName)) {
-                bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
-            }
-            return bookmarkTagName;
-        }
-    }
-
-    /**
-     * get all the TagNames that are not categories
-     *
-     * @return all the TagNames that are not categories, in alphabetical order
-     *         by displayName, or, an empty set if there was an exception
-     *         looking them up from the db.
-     */
-    @Nonnull
-    public List<TagName> getNonCategoryTagNames() {
-        synchronized (autopsyTagsManagerLock) {
-            try {
-                return autopsyTagsManager.getAllTagNames().stream()
-                        .filter(CategoryManager::isNotCategoryTagName)
-                        .distinct().sorted()
-                        .collect(Collectors.toList());
-            } catch (TskCoreException | IllegalStateException ex) {
-                logger.log(Level.WARNING, "couldn't access case", ex); //NON-NLS
-            }
-            return Collections.emptyList();
-        }
+        return autopsyTagsManager.getAllTagNames().stream()
+                .filter(CategoryManager::isNotCategoryTagName)
+                .distinct().sorted()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -188,9 +145,7 @@ public class DrawableTagsManager {
      * @throws TskCoreException if there was an error reading from the db
      */
     public List<ContentTag> getContentTags(Content content) throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.getContentTagsByContent(content);
-        }
+        return autopsyTagsManager.getContentTagsByContent(content);
     }
 
     /**
@@ -208,25 +163,29 @@ public class DrawableTagsManager {
     }
 
     public TagName getTagName(String displayName) throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
+        try {
+            TagName returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
+            if (returnTagName != null) {
+                return returnTagName;
+            }
             try {
-                TagName returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
+                return autopsyTagsManager.addTagName(displayName);
+            } catch (TagsManager.TagNameAlreadyExistsException ex) {
+                returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
                 if (returnTagName != null) {
                     return returnTagName;
                 }
-                try {
-                    return autopsyTagsManager.addTagName(displayName);
-                } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
-                    if (returnTagName != null) {
-                        return returnTagName;
-                    }
-                    throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
-                }
+
+                throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
+
             } catch (NullPointerException | IllegalStateException ex) {
                 logger.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
                 throw new TskCoreException("Case was closed out from underneath", ex);
+
             }
+        } catch (NullPointerException | IllegalStateException ex) {
+            logger.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
+            throw new TskCoreException("Case was closed out from underneath", ex);
         }
     }
 
@@ -234,38 +193,29 @@ public class DrawableTagsManager {
         try {
             return getTagName(cat.getDisplayName());
         } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting tag for Category: " + cat.getDisplayName(), ex);
             return null;
         }
     }
 
     public ContentTag addContentTag(DrawableFile file, TagName tagName, String comment) throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.addContentTag(file.getAbstractFile(), tagName, comment);
-        }
+        return autopsyTagsManager.addContentTag(file.getAbstractFile(), tagName, comment);
     }
 
     public List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.getContentTagsByTagName(tagName);
-        }
+        return autopsyTagsManager.getContentTagsByTagName(tagName);
     }
 
     public List<TagName> getAllTagNames() throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.getAllTagNames();
-        }
+        return autopsyTagsManager.getAllTagNames();
     }
 
     public List<TagName> getTagNamesInUse() throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            return autopsyTagsManager.getTagNamesInUse();
-        }
+        return autopsyTagsManager.getTagNamesInUse();
     }
 
     public void deleteContentTag(ContentTag contentTag) throws TskCoreException {
-        synchronized (autopsyTagsManagerLock) {
-            autopsyTagsManager.deleteContentTag(contentTag);
-        }
+        autopsyTagsManager.deleteContentTag(contentTag);
     }
 
     public Node getGraphic(TagName tagname) {
@@ -280,5 +230,4 @@ public class DrawableTagsManager {
         }
         return DrawableAttribute.TAGS.getGraphicForValue(tagname);
     }
-
 }

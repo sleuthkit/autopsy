@@ -589,7 +589,7 @@ public class GroupManager {
     }
 
     /**
-     * Handle notificationsS sent from Db when files are inserted/updated
+     * Handle notifications sent from Db when files are inserted/updated
      *
      * @param updatedFileIDs The ID of the inserted/updated files.
      */

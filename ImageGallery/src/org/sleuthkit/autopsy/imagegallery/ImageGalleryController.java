@@ -391,8 +391,11 @@ public final class ImageGalleryController {
             groupManager.reset();
             hashSetManager.setDb(db);
             categoryManager.setDb(db);
-            tagsManager.unregisterListener(groupManager);
-            tagsManager.unregisterListener(categoryManager);
+
+            if (tagsManager != null) {
+                tagsManager.unregisterListener(groupManager);
+                tagsManager.unregisterListener(categoryManager);
+            }
             tagsManager = new DrawableTagsManager(theNewCase.getServices().getTagsManager());
             tagsManager.registerListener(groupManager);
             tagsManager.registerListener(categoryManager);

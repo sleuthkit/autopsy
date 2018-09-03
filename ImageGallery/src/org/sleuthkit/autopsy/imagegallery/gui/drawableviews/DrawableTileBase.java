@@ -187,11 +187,13 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 final ArrayList<MenuItem> menuItems = new ArrayList<>();
 
                 menuItems.add(CategorizeAction.getCategoriesMenu(getController()));
+ 
                 try {
                     menuItems.add(AddTagAction.getTagMenu(getController()));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error building tagging context menu.", ex);
                 }
+ 
 
                 final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
                 if (selectedFilesList.size() == 1) {
@@ -246,22 +248,26 @@ public abstract class DrawableTileBase extends DrawableUIBase {
     protected abstract String getTextForLabel();
 
     protected void initialize() {
-        followUpToggle.setOnAction(actionEvent
-                -> getFile().ifPresent(file -> {
-                    if (followUpToggle.isSelected()) {
-                        selectionModel.clearAndSelect(file.getId());
-                        new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected())
-                                .handle(actionEvent);
-                    } else {
-                        new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
-                    }
-                })
+ 
+        followUpToggle.setOnAction(
+                actionEvent -> getFile().ifPresent(
+                        file -> {
+                            if (followUpToggle.isSelected() == true) {
+                                selectionModel.clearAndSelect(file.getId());
+                                new AddTagAction(getController(), getController().getTagsManager().getFollowUpTagName(), selectionModel.getSelected()).handle(actionEvent);
+                            } else {
+                                new DeleteFollowUpTagAction(getController(), file).handle(actionEvent);
+                            }
+                        })
+ 
         );
     }
 
     protected boolean hasFollowUp() {
         if (getFileID().isPresent()) {
+ 
             TagName followUpTagName = getController().getTagsManager().getFollowUpTagName();
+ 
             return DrawableAttribute.TAGS.getValue(getFile().get()).stream()
                     .anyMatch(followUpTagName::equals);
         } else {
