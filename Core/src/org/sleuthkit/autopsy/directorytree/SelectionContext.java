@@ -28,8 +28,8 @@ import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 enum SelectionContext {
     DATA_SOURCES(SelectionContext_dataSources()),
     VIEWS(SelectionContext_views()),
-    OTHER(""),
-    DATA_SOURCE_FILES(SelectionContext_dataSourceFiles());  // Subnode of another node.
+    OTHER(""),  // Subnode of another node.
+    DATA_SOURCE_FILES(SelectionContext_dataSourceFiles()); 
 
     private final String displayName;
 
@@ -68,7 +68,7 @@ enum SelectionContext {
         } else {
             // In Group by Data Source mode, the node under root is the data source name, and
             // under that is Data Source Files, Views, or Results. Before moving up the tree, check
-            // if one of those applies
+            // if one of those applies.
             if (n.getParentNode().getParentNode().getParentNode() == null) {
                 SelectionContext context = SelectionContext.getContextFromName(n.getDisplayName());
                 if (context != SelectionContext.OTHER) {
