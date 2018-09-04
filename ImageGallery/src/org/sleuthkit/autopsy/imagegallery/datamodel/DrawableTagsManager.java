@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
@@ -58,7 +59,7 @@ public final class DrawableTagsManager {
     private final TagName bookmarkTagName;
 
     /**
-     * Used to distribute {@link TagsChangeEvent}s
+     * Used to distribute TagsChangeEvents
      */
     private final EventBus tagsEventBus
             = new AsyncEventBus(
@@ -70,10 +71,10 @@ public final class DrawableTagsManager {
                                     })
                                     .build()));
 
-    public DrawableTagsManager(TagsManager autopsyTagsManager) throws TskCoreException {
-        this.autopsyTagsManager = autopsyTagsManager;
-        followUpTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.followUp"));
-        bookmarkTagName = getTagName(NbBundle.getMessage(DrawableTagsManager.class, "DrawableTagsManager.bookMark"));
+    public DrawableTagsManager(ImageGalleryController controller) throws TskCoreException {
+        this.autopsyTagsManager = controller.getAutopsyCase().getServices().getTagsManager();
+        followUpTagName = getTagName(Bundle.DrawableTagsManager_followUp());
+        bookmarkTagName = getTagName(Bundle.DrawableTagsManager_bookMark());
     }
 
     /**
@@ -125,6 +126,8 @@ public final class DrawableTagsManager {
      *
      * @return All the TagNames that are not categories, in alphabetical order
      *         by displayName.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<TagName> getNonCategoryTagNames() throws TskCoreException {
 
