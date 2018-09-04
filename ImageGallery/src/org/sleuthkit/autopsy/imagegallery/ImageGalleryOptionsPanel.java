@@ -19,12 +19,10 @@
 package org.sleuthkit.autopsy.imagegallery;
 
 import java.awt.event.ActionEvent;
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The Image/Video Gallery panel in the NetBeans provided Options Dialogs
@@ -45,13 +43,8 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
             enabledForCaseBox.setEnabled(Case.isCaseOpen() && IngestManager.getInstance().isIngestRunning() == false);
         });
 
-        enabledByDefaultBox.addActionListener((ActionEvent e) -> {
-            controller.changed();
-        });
-
-        enabledForCaseBox.addActionListener((ActionEvent e) -> {
-            controller.changed();
-        });
+        enabledByDefaultBox.addActionListener(actionEvent -> controller.changed());
+        enabledForCaseBox.addActionListener(actionEvent -> controller.changed());
     }
 
     /**
@@ -204,19 +197,18 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
     void store() {
         ImageGalleryPreferences.setEnabledByDefault(enabledByDefaultBox.isSelected());
-        ImageGalleryController.getDefault().setListeningEnabled(enabledForCaseBox.isSelected());
+
         ImageGalleryPreferences.setGroupCategorizationWarningDisabled(groupCategorizationWarningBox.isSelected());
 
         // If a case is open, save the per case setting
         try {
             Case openCase = Case.getCurrentCaseThrows();
+            ImageGalleryModule.getController().setListeningEnabled(enabledForCaseBox.isSelected());
             new PerCaseProperties(openCase).setConfigSetting(ImageGalleryModule.getModuleName(), PerCaseProperties.ENABLED, Boolean.toString(enabledForCaseBox.isSelected()));
         } catch (NoCurrentCaseException ex) {
             // It's not an error if there's no case open
         }
-        
-        
-        
+
     }
 
     /**

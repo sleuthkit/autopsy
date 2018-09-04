@@ -62,16 +62,16 @@ import org.sleuthkit.datamodel.TskCoreException;
     + "Choosing 'yes' will update the database and enable listening to future ingests.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
-
+    
     private static final Logger logger = Logger.getLogger(OpenAction.class.getName());
     private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
     private static final long FILE_LIMIT = 6_000_000;
-
+    
     private final PropertyChangeListener pcl;
     private final JMenuItem menuItem;
     private final JButton toolbarButton = new JButton(this.getName(),
             new ImageIcon(getClass().getResource("btn_icon_image_gallery_26.png")));
-
+    
     public OpenAction() {
         super();
         toolbarButton.addActionListener(actionEvent -> performAction());
@@ -84,7 +84,7 @@ public final class OpenAction extends CallableSystemAction {
         Case.addPropertyChangeListener(pcl);
         this.setEnabled(false);
     }
-
+    
     @Override
     public boolean isEnabled() {
         Case openCase;
@@ -103,10 +103,10 @@ public final class OpenAction extends CallableSystemAction {
      */
     @Override
     public Component getToolbarPresenter() {
-
+        
         return toolbarButton;
     }
-
+    
     @Override
     public JMenuItem getMenuPresenter() {
         return menuItem;
@@ -123,7 +123,7 @@ public final class OpenAction extends CallableSystemAction {
         menuItem.setEnabled(value);
         toolbarButton.setEnabled(value);
     }
-
+    
     @Override
     @SuppressWarnings("fallthrough")
     @NbBundle.Messages({"OpenAction.dialogTitle=Image Gallery"})
@@ -137,7 +137,7 @@ public final class OpenAction extends CallableSystemAction {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
         }
-
+        
         if (tooManyFiles()) {
             Platform.runLater(OpenAction::showTooManyFiles);
             setEnabled(false);
@@ -147,18 +147,25 @@ public final class OpenAction extends CallableSystemAction {
             //drawable db is stale, ask what to do
             int answer = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), Bundle.OpenAction_stale_confDlg_msg(),
                     Bundle.OpenAction_stale_confDlg_title(), JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
+            
             switch (answer) {
                 case JOptionPane.YES_OPTION:
-
-                    // For a single-user case, we favor user experience, and rebuild the database 
-                    // as soon as Image Gallery is enabled for the case.
-                    // For a multi-user case, we favor overall performance and user experience, not every user may want to review images, 
-                    // so we rebuild the database only when a user launches Image Gallery
-                    if (currentCase.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                        ImageGalleryController.getDefault().setListeningEnabled(true);
-                    } else {
-                        ImageGalleryController.getDefault().rebuildDB();
+                    /* For a single-user case, we favor user experience, and
+                     * rebuild the database as soon as Image Gallery is enabled
+                     * for the case. For a multi-user case, we favor overall
+                     * performance and user experience, not every user may want
+                     * to review images, so we rebuild the database only when a
+                     * user launches Image Gallery.
+                     */ try {
+                        ImageGalleryController controller = ImageGalleryModule.getController();
+                        
+                        if (currentCase.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                            controller.setListeningEnabled(true);
+                        } else {
+                            controller.rebuildDB();
+                        }
+                    } catch (NoCurrentCaseException noCurrentCaseException) {
+                        logger.log(Level.WARNING, "There was no case open when Image Gallery was opened.", noCurrentCaseException);
                     }
 
                 //fall through
@@ -173,7 +180,7 @@ public final class OpenAction extends CallableSystemAction {
             ImageGalleryTopComponent.openTopComponent();
         }
     }
-
+    
     private boolean tooManyFiles() {
         try {
             return FILE_LIMIT < Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1 = 1");
@@ -185,7 +192,7 @@ public final class OpenAction extends CallableSystemAction {
         //if there is any doubt (no case, tskcore error, etc) just disable .
         return false;
     }
-
+    
     @NbBundle.Messages({
         "ImageGallery.showTooManyFiles.contentText="
         + "There are too many files in the DB to ensure reasonable performance."
@@ -200,17 +207,17 @@ public final class OpenAction extends CallableSystemAction {
         dialog.setHeaderText(Bundle.ImageGallery_showTooManyFiles_headerText());
         dialog.showAndWait();
     }
-
+    
     @Override
     public String getName() {
         return VIEW_IMAGES_VIDEOS;
     }
-
+    
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-
+    
     @Override
     public boolean asynchronous() {
         return false; // run on edt

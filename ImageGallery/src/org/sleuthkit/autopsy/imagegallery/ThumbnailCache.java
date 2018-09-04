@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,9 +54,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  * TODO: this was only a singleton for convenience, convert this to
  * non-singleton class -jm?
  */
-public enum ThumbnailCache {
+public class ThumbnailCache {
 
-    instance;
+    private final ImageGalleryController controller;
+
+    public ThumbnailCache(ImageGalleryController controller) {
+        this.controller = controller;
+    }
 
     private static final int MAX_THUMBNAIL_SIZE = 300;
 
@@ -70,10 +74,6 @@ public enum ThumbnailCache {
             .maximumSize(1000)
             .softValues()
             .expireAfterAccess(10, TimeUnit.MINUTES).build();
-
-    public static ThumbnailCache getDefault() {
-        return instance;
-    }
 
     /**
      * currently desired icon size. is bound in {@link Toolbar}
@@ -109,7 +109,7 @@ public enum ThumbnailCache {
     @Nullable
     public Image get(Long fileID) {
         try {
-            return get(ImageGalleryController.getDefault().getFileFromId(fileID));
+            return get(controller.getFileFromId(fileID));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause()); //NON-NLS
             return null;

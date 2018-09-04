@@ -21,14 +21,13 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.Optional;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import org.apache.commons.collections4.CollectionUtils;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
@@ -38,7 +37,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  * Marks the currently displayed group as "seen" and advances to the next unseen
  * group
  */
-@NbBundle.Messages({"NextUnseenGroup.markGroupSeen=Mark Group Seen",
+@NbBundle.Messages({
+    "NextUnseenGroup.markGroupSeen=Mark Group Seen",
     "NextUnseenGroup.nextUnseenGroup=Next Unseen group"})
 public class NextUnseenGroup extends Action {
 
@@ -62,10 +62,7 @@ public class NextUnseenGroup extends Action {
         this.controller = controller;
         groupManager = controller.getGroupManager();
         unSeenGroups = groupManager.getUnSeenGroups();
-        unSeenGroups.addListener((Observable observable) -> {
-            updateButton();
-
-        });
+        unSeenGroups.addListener((Observable observable) -> updateButton());
 
         setEventHandler(event -> {    //on fx-thread
             //if there is a group assigned to the view, mark it as seen
@@ -81,8 +78,8 @@ public class NextUnseenGroup extends Action {
 
     private void advanceToNextUnseenGroup() {
         synchronized (groupManager) {
-            if (unSeenGroups.isEmpty() == false) {
-                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), false);
+            if (CollectionUtils.isNotEmpty(unSeenGroups)) {
+                controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
             }
 
             updateButton();

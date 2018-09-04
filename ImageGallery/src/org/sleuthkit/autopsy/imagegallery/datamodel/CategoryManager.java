@@ -40,7 +40,6 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
  * Provides a cached view of the number of files per category, and fires
  * {@link CategoryChangeEvent}s when files are categorized.
@@ -80,36 +79,24 @@ public class CategoryManager {
      * the count related methods go through this cache, which loads initial
      * values from the database if needed.
      */
-    private final LoadingCache<DhsImageCategory, LongAdder> categoryCounts =
-            CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
+    private final LoadingCache<DhsImageCategory, LongAdder> categoryCounts
+            = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
     /**
      * cached TagNames corresponding to Categories, looked up from
      * autopsyTagManager at initial request or if invalidated by case change.
      */
-    private final LoadingCache<DhsImageCategory, TagName> catTagNameMap =
-            CacheBuilder.newBuilder().build(CacheLoader.from(
-                            cat -> getController().getTagsManager().getTagName(cat)
-                    ));
+    private final LoadingCache<DhsImageCategory, TagName> catTagNameMap
+            = CacheBuilder.newBuilder().build(CacheLoader.from(
+                    cat -> getController().getTagsManager().getTagName(cat)
+            ));
 
     public CategoryManager(ImageGalleryController controller) {
         this.controller = controller;
+        this.db = controller.getDatabase();
     }
 
     private ImageGalleryController getController() {
         return controller;
-    }
-
-    /**
-     * assign a new db. the counts cache is invalidated and all subsequent db
-     * lookups go to the new db.
-     *
-     * Also clears the Category TagNames
-     *
-     * @param db
-     */
-    synchronized public void setDb(DrawableDB db) {
-        this.db = db;
-        invalidateCaches();
     }
 
     synchronized public void invalidateCaches() {
@@ -258,7 +245,7 @@ public class CategoryManager {
                 //remove old category tag(s) if necessary
                 for (ContentTag ct : tagsManager.getContentTags(addedTag.getContent())) {
                     if (ct.getId() != addedTag.getId()
-                            && CategoryManager.isCategoryTagName(ct.getName())) {
+                        && CategoryManager.isCategoryTagName(ct.getName())) {
                         try {
                             tagsManager.deleteContentTag(ct);
                         } catch (TskCoreException tskException) {

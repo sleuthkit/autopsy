@@ -162,7 +162,7 @@ public class Toolbar extends ToolBar {
         tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
         categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
         thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
-
+        sizeSlider.valueProperty().bindBidirectional(controller.thumbnailSize());
         controller.viewState().addListener((observable, oldViewState, newViewState)
                 -> Platform.runLater(() -> syncGroupControlsEnabledState(newViewState))
         );
@@ -171,7 +171,7 @@ public class Toolbar extends ToolBar {
         initDataSourceComboBox();
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-        groupByBox.disableProperty().bind(ImageGalleryController.getDefault().regroupDisabled());
+        groupByBox.disableProperty().bind(controller.regroupDisabled());
         groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
         groupByBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -343,10 +343,6 @@ public class Toolbar extends ToolBar {
         return future;
     }
 
-    public DoubleProperty thumbnailSizeProperty() {
-        return sizeSlider.valueProperty();
-    }
-
     /**
      *
      * Static utility to to show a Popover with the given Node as owner.
@@ -398,7 +394,6 @@ public class Toolbar extends ToolBar {
     }
 
     public Toolbar(ImageGalleryController controller) {
-
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
 

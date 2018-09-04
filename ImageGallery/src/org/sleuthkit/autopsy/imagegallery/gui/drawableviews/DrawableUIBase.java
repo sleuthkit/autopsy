@@ -147,7 +147,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         myTask.setOnFailed(failed -> {
             Throwable exception = myTask.getException();
             if (exception instanceof OutOfMemoryError
-                    && exception.getMessage().contains("Java heap space")) { //NON-NLS
+                && exception.getMessage().contains("Java heap space")) { //NON-NLS
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_OOMText(), file);
             } else {
                 showErrorNode(Bundle.DrawableUIBase_errorLabel_text(), file);

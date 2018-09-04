@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imagegallery;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.List;
@@ -33,10 +32,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -55,24 +54,19 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
@@ -87,7 +81,6 @@ import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -101,7 +94,6 @@ import org.sleuthkit.datamodel.TskData;
 public final class ImageGalleryController {
 
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
-    private static ImageGalleryController instance;
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -113,7 +105,7 @@ public final class ImageGalleryController {
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
-    private final ReadOnlyDoubleWrapper thumbnailSize = new ReadOnlyDoubleWrapper(100);
+    private final SimpleDoubleProperty thumbnailSize = new SimpleDoubleProperty(100);
     private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
     private final ReadOnlyIntegerWrapper dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
 
@@ -121,22 +113,11 @@ public final class ImageGalleryController {
 
     private final History<GroupViewState> historyManager = new History<>();
     private final UndoRedoManager undoManager = new UndoRedoManager();
-    private final GroupManager groupManager = new GroupManager(this);
-    private final HashSetManager hashSetManager = new HashSetManager();
-    private final CategoryManager categoryManager = new CategoryManager(this);
+    private final ThumbnailCache thumbnailCache = new ThumbnailCache(this);
+    private final GroupManager groupManager;
+    private final HashSetManager hashSetManager;
+    private final CategoryManager categoryManager;
     private DrawableTagsManager tagsManager;
-
-    private Runnable showTree;
-    private Toolbar toolbar;
-    private StackPane fullUIStackPane;
-    private StackPane centralStackPane;
-    private Node infoOverlay;
-    private final Region infoOverLayBackground = new Region() {
-        {
-            setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-            setOpacity(.4);
-        }
-    };
 
     private ListeningExecutorService dbExecutor;
 
@@ -148,17 +129,6 @@ public final class ImageGalleryController {
     private SleuthkitCase sleuthKitCase;
     private DrawableDB db;
 
-    public static synchronized ImageGalleryController getDefault() {
-        if (instance == null) {
-            try {
-                instance = new ImageGalleryController();
-            } catch (NoClassDefFoundError error) {
-                Exceptions.printStackTrace(error);
-            }
-        }
-        return instance;
-    }
-
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
     }
@@ -167,8 +137,8 @@ public final class ImageGalleryController {
         this.metaDataCollapsed.set(metaDataCollapsed);
     }
 
-    public ReadOnlyDoubleProperty thumbnailSizeProperty() {
-        return thumbnailSize.getReadOnlyProperty();
+    public DoubleProperty thumbnailSize() {
+        return thumbnailSize;
     }
 
     public GroupViewState getViewState() {
@@ -223,7 +193,23 @@ public final class ImageGalleryController {
         return stale.get();
     }
 
-    private ImageGalleryController() {
+    ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
+
+        this.autopsyCase = Objects.requireNonNull(newCase);
+        this.sleuthKitCase = newCase.getSleuthkitCase();
+        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(newCase), this);
+
+        setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
+        setStale(ImageGalleryModule.isDrawableDBStale(newCase));
+
+        groupManager = new GroupManager(this);
+        tagsManager = new DrawableTagsManager(this);
+        hashSetManager = new HashSetManager(db);
+        categoryManager = new CategoryManager(this);
+        tagsManager.registerListener(groupManager);
+        tagsManager.registerListener(categoryManager);
+        shutDownDBExecutor();
+        dbExecutor = getNewDBExecutor();
 
         // listener for the boolean property about when IG is listening / enabled
         listeningEnabled.addListener((observable, wasPreviouslyEnabled, isEnabled) -> {
@@ -242,15 +228,11 @@ public final class ImageGalleryController {
             }
         });
 
-        groupManager.getAnalyzedGroups().addListener((Observable o) -> checkForGroups());
-
         viewState().addListener((Observable observable) -> {
             //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
             undoManager.clear();
         });
-
-        regroupDisabled.addListener(observable -> checkForGroups());
 
         IngestManager ingestManager = IngestManager.getInstance();
         PropertyChangeListener ingestEventHandler
@@ -271,10 +253,7 @@ public final class ImageGalleryController {
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    public void advance(GroupViewState newState, boolean forceShowTree) {
-        if (forceShowTree && showTree != null) {
-            showTree.run();
-        }
+    public void advance(GroupViewState newState) {
         historyManager.advance(newState);
     }
 
@@ -292,124 +271,12 @@ public final class ImageGalleryController {
     }
 
     /**
-     * Check if there are any fully analyzed groups available from the
-     * GroupManager and remove blocking progress spinners if there are. If there
-     * aren't, add a blocking progress spinner with appropriate message.
-     */
-    @NbBundle.Messages({"ImageGalleryController.noGroupsDlg.msg1=No groups are fully analyzed; but listening to ingest is disabled. "
-                        + " No groups will be available until ingest is finished and listening is re-enabled.",
-        "ImageGalleryController.noGroupsDlg.msg2=No groups are fully analyzed yet, but ingest is still ongoing.  Please Wait.",
-        "ImageGalleryController.noGroupsDlg.msg3=No groups are fully analyzed yet, but image / video data is still being populated.  Please Wait.",
-        "ImageGalleryController.noGroupsDlg.msg4=There are no images/videos available from the added datasources;  but listening to ingest is disabled. "
-        + " No groups will be available until ingest is finished and listening is re-enabled.",
-        "ImageGalleryController.noGroupsDlg.msg5=There are no images/videos in the added datasources.",
-        "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:"
-        + "  the current Group By setting resulted in no groups, "
-        + "or no groups are fully analyzed but ingest is not running."})
-    synchronized private void checkForGroups() {
-        if (Case.isCaseOpen()) {
-            if (groupManager.getAnalyzedGroups().isEmpty()) {
-                if (IngestManager.getInstance().isIngestRunning()) {
-                    if (listeningEnabled.get()) {
-                        replaceNotification(centralStackPane,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                        new ProgressIndicator()));
-                    } else {
-                        replaceNotification(fullUIStackPane,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
-                    }
-
-                } else if (dbTaskQueueSize.get() > 0) {
-                    replaceNotification(fullUIStackPane,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                    new ProgressIndicator()));
-                } else if (db != null) {
-                    try {
-                        if (db.countAllFiles() <= 0) {
-                            // there are no files in db
-                            if (listeningEnabled.get()) {
-                                replaceNotification(fullUIStackPane,
-                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
-                            } else {
-                                replaceNotification(fullUIStackPane,
-                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
-                            }
-                        }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error counting files in drawable db.", ex);
-                    }
-
-                } else if (false == groupManager.isRegrouping()) {
-                    replaceNotification(centralStackPane,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
-                }
-
-            } else {
-                Platform.runLater(this::clearNotification);
-            }
-        }
-    }
-
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private void clearNotification() {
-        //remove the ingest spinner
-        if (fullUIStackPane != null) {
-            fullUIStackPane.getChildren().remove(infoOverlay);
-        }
-        //remove the ingest spinner
-        if (centralStackPane != null) {
-            centralStackPane.getChildren().remove(infoOverlay);
-        }
-    }
-
-    private void replaceNotification(StackPane stackPane, Node newNode) {
-        Platform.runLater(() -> {
-            clearNotification();
-
-            infoOverlay = new StackPane(infoOverLayBackground, newNode);
-            if (stackPane != null) {
-                stackPane.getChildren().add(infoOverlay);
-            }
-        });
-    }
-
-    /**
      * configure the controller for a specific case.
      *
      * @param theNewCase the case to configure the controller for
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public synchronized void setCase(Case theNewCase) throws TskCoreException {
-        if (null == theNewCase) {
-            reset();
-        } else {
-            this.autopsyCase = theNewCase;
-            this.sleuthKitCase = theNewCase.getSleuthkitCase();
-            this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
-
-            setListeningEnabled(ImageGalleryModule.isEnabledforCase(theNewCase));
-            setStale(ImageGalleryModule.isDrawableDBStale(theNewCase));
-
-            // if we add this line icons are made as files are analyzed rather than on demand.
-            // db.addUpdatedFileListener(IconCache.getDefault());
-            historyManager.clear();
-            groupManager.reset();
-            hashSetManager.setDb(db);
-            categoryManager.setDb(db);
-
-            if (tagsManager != null) {
-                tagsManager.unregisterListener(groupManager);
-                tagsManager.unregisterListener(categoryManager);
-            }
-            tagsManager = new DrawableTagsManager(this);
-            tagsManager.registerListener(groupManager);
-            tagsManager.registerListener(categoryManager);
-            shutDownDBExecutor();
-            dbExecutor = getNewDBExecutor();
-        }
-    }
-
     /**
      * Rebuilds the DrawableDB database.
      *
@@ -417,19 +284,20 @@ public final class ImageGalleryController {
     public void rebuildDB() {
         // queue a rebuild task for each stale data source
         getStaleDataSourceIds().forEach((dataSourceObjId) -> {
-            queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, instance, db, sleuthKitCase));
+            queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, this, db, sleuthKitCase));
         });
     }
 
     /**
      * reset the state of the controller (eg if the case is closed)
      */
-    public synchronized void reset() {
-        logger.info("resetting ImageGalleryControler to initial state."); //NON-NLS
+    public synchronized void shutDown() {
+        logger.info("Closing ImageGalleryControler for case."); //NON-NLS
+
         autopsyCase = null;
         selectionModel.clearSelection();
         setListeningEnabled(false);
-        ThumbnailCache.getDefault().clearCache();
+        thumbnailCache.clearCache();
         historyManager.clear();
         groupManager.reset();
 
@@ -438,14 +306,11 @@ public final class ImageGalleryController {
         tagsManager = null;
         shutDownDBExecutor();
 
-        if (toolbar != null) {
-            toolbar.reset();
-        }
-
         if (db != null) {
             db.closeDBCon();
         }
         db = null;
+
     }
 
     /**
@@ -454,7 +319,7 @@ public final class ImageGalleryController {
      * @return true if datasources table is stale
      */
     boolean isDataSourcesTableStale() {
-        return (getStaleDataSourceIds().isEmpty() == false);
+        return isNotEmpty(getStaleDataSourceIds());
     }
 
     /**
@@ -554,22 +419,6 @@ public final class ImageGalleryController {
         return db.getFileFromID(fileID);
     }
 
-    public void setStacks(StackPane fullUIStack, StackPane centralStack) {
-        fullUIStackPane = fullUIStack;
-        this.centralStackPane = centralStack;
-        Platform.runLater(this::checkForGroups);
-    }
-
-    public synchronized void setToolbar(Toolbar toolbar) {
-        if (this.toolbar != null) {
-            throw new IllegalStateException("Can not set the toolbar a second time!");
-        }
-        this.toolbar = toolbar;
-        thumbnailSize.bind(toolbar.thumbnailSizeProperty());
-
-        // RAMAN TBD: bind filterByDataSourceId to the data source dropdown in the toolbar.
-    }
-
     public ReadOnlyDoubleProperty regroupProgress() {
         return groupManager.regroupProgress();
     }
@@ -579,12 +428,7 @@ public final class ImageGalleryController {
      * get setup as early as possible, and do other setup stuff.
      */
     void onStart() {
-        Platform.setImplicitExit(false);
-        logger.info("setting up ImageGallery listeners"); //NON-NLS
 
-        IngestManager.getInstance().addIngestJobEventListener(new IngestJobEventListener());
-        IngestManager.getInstance().addIngestModuleEventListener(new IngestModuleEventListener());
-        Case.addPropertyChangeListener(new CaseEventListener());
     }
 
     public HashSetManager getHashSetManager() {
@@ -599,10 +443,6 @@ public final class ImageGalleryController {
         return tagsManager;
     }
 
-    public void setShowTree(Runnable showTree) {
-        this.showTree = showTree;
-    }
-
     public UndoRedoManager getUndoManager() {
         return undoManager;
     }
@@ -614,6 +454,10 @@ public final class ImageGalleryController {
     public synchronized SleuthkitCase getSleuthKitCase() {
         return sleuthKitCase;
 
+    }
+
+    public ThumbnailCache getThumbsCache() {
+        return thumbnailCache;
     }
 
     /**
@@ -703,7 +547,7 @@ public final class ImageGalleryController {
     /**
      * task that updates one file in database with results from ingest
      */
-    static private class UpdateFileTask extends FileTask {
+    static class UpdateFileTask extends FileTask {
 
         UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
             super(f, taskDB);
@@ -730,7 +574,7 @@ public final class ImageGalleryController {
     /**
      * task that updates one file in database with results from ingest
      */
-    static private class RemoveFileTask extends FileTask {
+    static class RemoveFileTask extends FileTask {
 
         RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
             super(f, taskDB);
@@ -760,7 +604,7 @@ public final class ImageGalleryController {
      * Base abstract class for various methods of copying image files data, for
      * a given data source, into the Image gallery DB.
      */
-    abstract static private class BulkTransferTask extends BackgroundTask {
+    abstract static class BulkTransferTask extends BackgroundTask {
 
         static private final String FILE_EXTENSION_CLAUSE
                 = "(extension LIKE '" //NON-NLS
@@ -914,7 +758,7 @@ public final class ImageGalleryController {
     @NbBundle.Messages({"CopyAnalyzedFiles.committingDb.status=committing image/video database",
         "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
         "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
-    private class CopyAnalyzedFiles extends BulkTransferTask {
+    class CopyAnalyzedFiles extends BulkTransferTask {
 
         CopyAnalyzedFiles(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
             super(dataSourceObjId, controller, taskDB, tskCase);
@@ -971,7 +815,7 @@ public final class ImageGalleryController {
      * netbeans and ImageGallery progress/status
      */
     @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=committing image/video database"})
-    static private class PrePopulateDataSourceFiles extends BulkTransferTask {
+    static class PrePopulateDataSourceFiles extends BulkTransferTask {
 
         /**
          *
@@ -997,166 +841,4 @@ public final class ImageGalleryController {
         }
     }
 
-    private class IngestModuleEventListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (RuntimeProperties.runningWithGUI() == false) {
-                /*
-                 * Running in "headless" mode, no need to process any events.
-                 * This cannot be done earlier because the switch to core
-                 * components inactive may not have been made at start up.
-                 */
-                IngestManager.getInstance().removeIngestModuleEventListener(this);
-                return;
-            }
-            switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
-                case CONTENT_CHANGED:
-                //TODO: do we need to do anything here?  -jm
-                case DATA_ADDED:
-                    /*
-                     * we could listen to DATA events and progressivly update
-                     * files, and get data from DataSource ingest modules, but
-                     * given that most modules don't post new artifacts in the
-                     * events and we would have to query for them, without
-                     * knowing which are the new ones, we just ignore these
-                     * events for now. The relevant data should all be captured
-                     * by file done event, anyways -jm
-                     */
-                    break;
-                case FILE_DONE:
-                    /**
-                     * getOldValue has fileID getNewValue has
-                     * {@link Abstractfile}
-                     */
-
-                    AbstractFile file = (AbstractFile) evt.getNewValue();
-
-                    // only process individual files in realtime on the node that is running the ingest
-                    // on a remote node, image files are processed enblock when ingest is complete
-                    if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                        if (isListeningEnabled()) {
-                            if (file.isFile()) {
-                                try {
-                                    synchronized (ImageGalleryController.this) {
-                                        if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
-                                            //this file should be included and we don't already know about it from hash sets (NSRL)
-                                            queueDBTask(new UpdateFileTask(file, db));
-                                        } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                                            //doing this check results in fewer tasks queued up, and faster completion of db update
-                                            //this file would have gotten scooped up in initial grab, but actually we don't need it
-                                            queueDBTask(new RemoveFileTask(file, db));
-                                        }
-                                    }
-                                } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
-                                    logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                                    MessageNotifyUtil.Notify.error("Image Gallery Error",
-                                            "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
-                                }
-                            }
-                        }
-                    }
-                    break;
-            }
-        }
-    }
-
-    private class CaseEventListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (RuntimeProperties.runningWithGUI() == false) {
-                /*
-                 * Running in "headless" mode, no need to process any events.
-                 * This cannot be done earlier because the switch to core
-                 * components inactive may not have been made at start up.
-                 */
-                Case.removePropertyChangeListener(this);
-                return;
-            }
-            switch (Case.Events.valueOf(evt.getPropertyName())) {
-                case CURRENT_CASE:
-                    Case newCase = (Case) evt.getNewValue();
-                    if (newCase == null) { // case is closing
-                        //close window, reset everything
-                        SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
-                        reset();
-                    } else {
-                        try {
-                            // a new case has been opened
-                            setCase(newCase);    //connect db, groupmanager, start worker thread
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Error changing case in ImageGallery.", ex);
-                        }
-                    }
-                    break;
-                case DATA_SOURCE_ADDED:
-                    //For a data source added on the local node, prepopulate all file data to drawable database
-                    if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                        Content newDataSource = (Content) evt.getNewValue();
-                        if (isListeningEnabled()) {
-                            queueDBTask(new PrePopulateDataSourceFiles(newDataSource.getId(), ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
-                        }
-                    }
-                    break;
-
-                case CONTENT_TAG_ADDED:
-                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
-                        getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                    }
-                    break;
-                case CONTENT_TAG_DELETED:
-                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    if (getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                        getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                    }
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Listener for Ingest Job events.
-     */
-    private class IngestJobEventListener implements PropertyChangeListener {
-
-        @NbBundle.Messages({
-            "ImageGalleryController.dataSourceAnalyzed.confDlg.msg= A new data source was added and finished ingest.\n"
-            + "The image / video database may be out of date. "
-            + "Do you want to update the database with ingest results?\n",
-            "ImageGalleryController.dataSourceAnalyzed.confDlg.title=Image Gallery"
-        })
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String eventName = evt.getPropertyName();
-            if (eventName.equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())) {
-                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
-                    // A remote node added a new data source and just finished ingest on it. 
-                    //drawable db is stale, and if ImageGallery is open, ask user what to do
-                    setStale(true);
-
-                    SwingUtilities.invokeLater(() -> {
-                        if (isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-
-                            int answer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                            switch (answer) {
-                                case JOptionPane.YES_OPTION:
-                                    rebuildDB();
-                                    break;
-                                case JOptionPane.NO_OPTION:
-                                case JOptionPane.CANCEL_OPTION:
-                                default:
-                                    break; //do nothing
-                            }
-                        }
-                    });
-                }
-            }
-        }
-    }
 }

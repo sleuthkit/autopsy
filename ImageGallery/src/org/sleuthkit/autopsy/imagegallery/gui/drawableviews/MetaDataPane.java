@@ -67,10 +67,10 @@ import org.sleuthkit.datamodel.TagName;
  * Shows details of the selected file.
  */
 @NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here.",
-        "MetaDataPane.copyMenuItem.text=Copy",
-        "MetaDataPane.titledPane.displayName=Details",
-        "MetaDataPane.attributeColumn.headingName=Attribute",
-        "MetaDataPane.valueColumn.headingName=Value"})
+    "MetaDataPane.copyMenuItem.text=Copy",
+    "MetaDataPane.titledPane.displayName=Details",
+    "MetaDataPane.attributeColumn.headingName=Attribute",
+    "MetaDataPane.valueColumn.headingName=Value"})
 public class MetaDataPane extends DrawableUIBase {
 
     private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
@@ -202,7 +202,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     @Override
     Task<Image> newReadImageTask(DrawableFile file) {
-        return file.getThumbnailTask();
+        return getController().getThumbsCache().getThumbnailTask(file);
     }
 
     public void updateAttributesTable() {

@@ -429,7 +429,7 @@ public class GroupPane extends BorderPane {
         flashAnimation.setAutoReverse(true);
 
         //configure gridView cell properties
-        DoubleBinding cellSize = controller.thumbnailSizeProperty().add(75);
+        DoubleBinding cellSize = controller.thumbnailSize().add(75);
         gridView.cellHeightProperty().bind(cellSize);
         gridView.cellWidthProperty().bind(cellSize);
         gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
@@ -613,9 +613,9 @@ public class GroupPane extends BorderPane {
      *
      * @param grouping the new grouping assigned to this group
      */
-    void setViewState(GroupViewState viewState) {
+    void setViewState(GroupViewState newViewState) {
 
-        if (isNull(viewState) || isNull(viewState.getGroup())) {
+        if (isNull(newViewState) || isNull(newViewState.getGroup().orElse(null))) {
             if (nonNull(getGroup())) {
                 getGroup().getFileIDs().removeListener(filesSyncListener);
             }
@@ -634,37 +634,35 @@ public class GroupPane extends BorderPane {
             });
 
         } else {
-            if (getGroup() != viewState.getGroup().orElse(null)) {
+            if (getGroup() != newViewState.getGroup().get()) {
                 if (nonNull(getGroup())) {
                     getGroup().getFileIDs().removeListener(filesSyncListener);
                 }
-
-                this.grouping.set(viewState.getGroup().orElse(null));
-
-                getGroup().getFileIDs().addListener(filesSyncListener);
-
-                final String header = getHeaderString();
-
-                Platform.runLater(() -> {
-                    gridView.getItems().setAll(getGroup().getFileIDs());
-                    slideShowToggle.setDisable(gridView.getItems().isEmpty());
-                    groupLabel.setText(header);
-                    resetScrollBar();
-                    if (viewState.getMode() == GroupViewMode.TILE) {
-                        activateTileViewer();
-                    } else {
-                        activateSlideShowViewer(viewState.getSlideShowfileID().orElse(null));
-                    }
-                });
             }
+
+            this.grouping.set(newViewState.getGroup().get());
+
+            getGroup().getFileIDs().addListener(filesSyncListener);
+
+            final String header = getHeaderString();
+
+            Platform.runLater(() -> {
+                gridView.getItems().setAll(getGroup().getFileIDs());
+                slideShowToggle.setDisable(gridView.getItems().isEmpty());
+                groupLabel.setText(header);
+                resetScrollBar();
+                if (newViewState.getMode() == GroupViewMode.TILE) {
+                    activateTileViewer();
+                } else {
+                    activateSlideShowViewer(newViewState.getSlideShowfileID().orElse(null));
+                }
+            });
         }
     }
 
     @ThreadConfined(type = ThreadType.JFX)
     private void resetScrollBar() {
-        getScrollBar().ifPresent((scrollBar) -> {
-            scrollBar.setValue(0);
-        });
+        getScrollBar().ifPresent(scrollBar -> scrollBar.setValue(0));
     }
 
     @ThreadConfined(type = ThreadType.JFX)
@@ -689,6 +687,7 @@ public class GroupPane extends BorderPane {
         } else {
             selectionAnchorIndex = null;
             selectionModel.clearAndSelect(newFileID);
+
         }
     }
 

@@ -63,8 +63,8 @@ public class DrawableTile extends DrawableTileBase {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
-        imageView.fitHeightProperty().bind(getController().thumbnailSizeProperty());
-        imageView.fitWidthProperty().bind(getController().thumbnailSizeProperty());
+        imageView.fitHeightProperty().bind(getController().thumbnailSize());
+        imageView.fitWidthProperty().bind(getController().thumbnailSize());
 
         selectionModel.lastSelectedProperty().addListener(new WeakChangeListener<>(lastSelectionListener));
 
@@ -106,7 +106,7 @@ public class DrawableTile extends DrawableTileBase {
 
     @Override
     Task<Image> newReadImageTask(DrawableFile file) {
-        return file.getThumbnailTask();
+        return getController().getThumbsCache().getThumbnailTask(file);
     }
 
     @Override

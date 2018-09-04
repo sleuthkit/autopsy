@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -108,6 +106,8 @@ public class GroupManager {
 
     private final ImageGalleryController controller;
 
+    boolean isRegrouping;
+
     /** list of all analyzed groups */
     @GuardedBy("this")
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
@@ -137,10 +137,7 @@ public class GroupManager {
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
 
     private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
-
-    private synchronized DrawableDB getDB() {
-        return controller.getDatabase();
-    }
+    private final DrawableDB db;
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableList<DrawableGroup> getAnalyzedGroups() {
@@ -159,6 +156,7 @@ public class GroupManager {
      */
     public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
+        this.db = controller.getDatabase();
     }
 
     /**
@@ -197,13 +195,8 @@ public class GroupManager {
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
-            DrawableDB db = getDB();
-            if (nonNull(db)) {
-                DrawableFile file = db.getFileFromID(fileID);
-                return getGroupKeysForFile(file);
-            } else {
-                Logger.getLogger(GroupManager.class.getName()).log(Level.WARNING, "Failed to load file with id: {0} from database.  There is no database assigned.", fileID); //NON-NLS
-            }
+            DrawableFile file = db.getFileFromID(fileID);
+            return getGroupKeysForFile(file);
         } catch (TskCoreException ex) {
             Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
         }
@@ -224,6 +217,7 @@ public class GroupManager {
     synchronized public void reset() {
         if (groupByTask != null) {
             groupByTask.cancel(true);
+            isRegrouping = false;
         }
         setSortBy(GroupSortBy.GROUP_BY_VALUE);
         setGroupBy(DrawableAttribute.PATH);
@@ -240,21 +234,7 @@ public class GroupManager {
     }
 
     synchronized public boolean isRegrouping() {
-        if (groupByTask == null) {
-            return false;
-        }
-
-        switch (groupByTask.getState()) {
-            case READY:
-            case RUNNING:
-            case SCHEDULED:
-                return true;
-            case CANCELLED:
-            case FAILED:
-            case SUCCEEDED:
-            default:
-                return false;
-        }
+        return isRegrouping;
     }
 
     /**
@@ -266,22 +246,16 @@ public class GroupManager {
      * @return A ListenableFuture that encapsulates saving the seen state to the
      *         DB.
      */
-    synchronized public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
-        DrawableDB db = getDB();
-        if (nonNull(db)) {
-            return exec.submit(() -> {
-                try {
-
-                    db.setGroupSeen(group.getGroupKey(), seen);
-                    group.setSeen(seen);
-                    updateUnSeenGroups(group, seen);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
-                }
-            });
-        }
-
-        return Futures.immediateFuture(null);
+    public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
+        return exec.submit(() -> {
+            try {
+                db.setGroupSeen(group.getGroupKey(), seen);
+                group.setSeen(seen);
+                updateUnSeenGroups(group, seen);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
+            }
+        });
     }
 
     synchronized private void updateUnSeenGroups(DrawableGroup group, boolean seen) {
@@ -343,82 +317,73 @@ public class GroupManager {
     }
 
     synchronized public Set<Long> getFileIDsInGroup(GroupKey<?> groupKey) throws TskCoreException {
-        Set<Long> fileIDsToReturn = Collections.emptySet();
+
         switch (groupKey.getAttribute().attrName) {
             //these cases get special treatment
             case CATEGORY:
-                fileIDsToReturn = getFileIDsWithCategory((DhsImageCategory) groupKey.getValue());
-                break;
+                return getFileIDsWithCategory((DhsImageCategory) groupKey.getValue());
             case TAGS:
-                fileIDsToReturn = getFileIDsWithTag((TagName) groupKey.getValue());
-                break;
+                return getFileIDsWithTag((TagName) groupKey.getValue());
             case MIME_TYPE:
-                fileIDsToReturn = getFileIDsWithMimeType((String) groupKey.getValue());
-                break;
+                return getFileIDsWithMimeType((String) groupKey.getValue());
 //            case HASHSET: //comment out this case to use db functionality for hashsets
 //                return getFileIDsWithHashSetName((String) groupKey.getValue());
             default:
-                DrawableDB db = getDB();
                 //straight db query
-                if (nonNull(db)) {
-                    fileIDsToReturn = db.getFileIDsInGroup(groupKey);
-                }
+                return db.getFileIDsInGroup(groupKey);
         }
-        return fileIDsToReturn;
     }
 
     // @@@ This was kind of slow in the profiler.  Maybe we should cache it.
     // Unless the list of file IDs is necessary, use countFilesWithCategory() to get the counts.
     synchronized public Set<Long> getFileIDsWithCategory(DhsImageCategory category) throws TskCoreException {
         Set<Long> fileIDsToReturn = Collections.emptySet();
-        DrawableDB db = getDB();
-        if (nonNull(db)) {
-            try {
-                final DrawableTagsManager tagsManager = controller.getTagsManager();
-                if (category == DhsImageCategory.ZERO) {
-                    List< TagName> tns = Stream.of(DhsImageCategory.ONE, DhsImageCategory.TWO,
-                            DhsImageCategory.THREE, DhsImageCategory.FOUR, DhsImageCategory.FIVE)
-                            .map(tagsManager::getTagName)
-                            .collect(Collectors.toList());
 
-                    Set<Long> files = new HashSet<>();
-                    for (TagName tn : tns) {
-                        if (tn != null) {
-                            List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tn);
-                            files.addAll(contentTags.stream()
-                                    .filter(ct -> ct.getContent() instanceof AbstractFile)
-                                    .filter(ct -> db.isInDB(ct.getContent().getId()))
-                                    .map(ct -> ct.getContent().getId())
-                                    .collect(Collectors.toSet()));
-                        }
+        try {
+            final DrawableTagsManager tagsManager = controller.getTagsManager();
+            if (category == DhsImageCategory.ZERO) {
+                List< TagName> tns = Stream.of(DhsImageCategory.ONE, DhsImageCategory.TWO,
+                        DhsImageCategory.THREE, DhsImageCategory.FOUR, DhsImageCategory.FIVE)
+                        .map(tagsManager::getTagName)
+                        .collect(Collectors.toList());
+
+                Set<Long> files = new HashSet<>();
+                for (TagName tn : tns) {
+                    if (tn != null) {
+                        List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tn);
+                        files.addAll(contentTags.stream()
+                                .filter(ct -> ct.getContent() instanceof AbstractFile)
+                                .filter(ct -> db.isInDB(ct.getContent().getId()))
+                                .map(ct -> ct.getContent().getId())
+                                .collect(Collectors.toSet()));
                     }
-
-                    fileIDsToReturn = db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")"); //NON-NLS
-                } else {
-
-                    List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
-                    fileIDsToReturn = contentTags.stream()
-                            .filter(ct -> ct.getContent() instanceof AbstractFile)
-                            .filter(ct -> db.isInDB(ct.getContent().getId()))
-                            .map(ct -> ct.getContent().getId())
-                            .collect(Collectors.toSet());
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
-                throw ex;
+
+                fileIDsToReturn = db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")"); //NON-NLS
+            } else {
+
+                List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
+                fileIDsToReturn = contentTags.stream()
+                        .filter(ct -> ct.getContent() instanceof AbstractFile)
+                        .filter(ct -> db.isInDB(ct.getContent().getId()))
+                        .map(ct -> ct.getContent().getId())
+                        .collect(Collectors.toSet());
             }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "TSK error getting files in Category:" + category.getDisplayName(), ex); //NON-NLS
+            throw ex;
         }
+
         return fileIDsToReturn;
     }
 
     synchronized public Set<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
         Set<Long> files = new HashSet<>();
         try {
-
             List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(tagName);
-            DrawableDB db = getDB();
+
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && nonNull(db) && db.isInDB(ct.getContent().getId())) {
+                if (ct.getContent() instanceof AbstractFile && db.isInDB(ct.getContent().getId())) {
                     files.add(ct.getContent().getId());
                 }
             }
@@ -506,7 +471,7 @@ public class GroupManager {
             if (groupByTask != null) {
                 groupByTask.cancel(true);
             }
-
+            isRegrouping = true;
             groupByTask = new ReGroupTask<>(dataSource, groupBy, sortBy, sortOrder);
             Platform.runLater(() -> regroupProgress.bind(groupByTask.progressProperty()));
             exec.submit(groupByTask);
@@ -625,13 +590,13 @@ public class GroupManager {
          * was still running)
          */
         if (isNull(task) || task.isCancelled() == false) {
-            DrawableDB db = getDB();
+
             /*
              * For attributes other than path we can't be sure a group is fully
              * analyzed because we don't know all the files that will be a part
              * of that group. just show them no matter what.
              */
-            if (nonNull(db) && ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey))) {
+            if (((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey))) {
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
@@ -673,12 +638,12 @@ public class GroupManager {
         String query = (null == mimeType)
                 ? "SELECT obj_id FROM tsk_files WHERE mime_type IS NULL" //NON-NLS
                 : "SELECT obj_id FROM tsk_files WHERE mime_type = '" + mimeType + "'"; //NON-NLS
-        DrawableDB db = getDB();
+
         try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
                 final long fileID = resultSet.getLong("obj_id"); //NON-NLS
-                if (nonNull(db) && db.isInDB(fileID)) {
+                if (db.isInDB(fileID)) {
                     hashSet.add(fileID);
                 }
             }
@@ -752,6 +717,7 @@ public class GroupManager {
                     groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
                     popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
                 }
+                isRegrouping = false;
             }
 
             DataSource dataSourceOfCurrentGroup
@@ -765,14 +731,15 @@ public class GroupManager {
                 //the current group is for the given datasource, so just keep it in view.
             } else {                //the current group should not be visible so ...
                 if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
-                    controller.advance(GroupViewState.tile(unSeenGroups.get(0)), false);
+                    controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
                 } else { // clear the group area.
-                    controller.advance(GroupViewState.tile(null), false);
+                    controller.advance(GroupViewState.tile(null));
                 }
             }
 
             groupProgress.finish();
             updateProgress(1, 1);
+
             return null;
         }
 
@@ -799,7 +766,7 @@ public class GroupManager {
          */
         public Multimap<DataSource, AttrValType> findValuesForAttribute() {
             synchronized (GroupManager.this) {
-                DrawableDB db = getDB();
+
                 Multimap results = HashMultimap.create();
                 try {
                     switch (groupBy.attrName) {
@@ -817,45 +784,43 @@ public class GroupManager {
                             results.putAll(null, Arrays.asList(false, true));
                             break;
                         case HASHSET:
-                            if (nonNull(db)) {
-                                results.putAll(null, new TreeSet<>(db.getHashSetNames()));
-                            }
+
+                            results.putAll(null, new TreeSet<>(db.getHashSetNames()));
+
                             break;
                         case MIME_TYPE:
-                            if (nonNull(db)) {
-                                HashSet<String> types = new HashSet<>();
 
-                                // Use the group_concat function to get a list of files for each mime type.  
-                                // This has different syntax on Postgres vs SQLite
-                                String groupConcatClause;
-                                if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
-                                    groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
-                                } else {
-                                    groupConcatClause = " group_concat(obj_id) as object_ids";
-                                }
-                                String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
-                                try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
-                                        ResultSet resultSet = executeQuery.getResultSet();) {
-                                    while (resultSet.next()) {
-                                        final String mimeType = resultSet.getString("mime_type"); //NON-NLS
-                                        String objIds = resultSet.getString("object_ids"); //NON-NLS
+                            HashSet<String> types = new HashSet<>();
 
-                                        Pattern.compile(",").splitAsStream(objIds)
-                                                .map(Long::valueOf)
-                                                .filter(db::isInDB)
-                                                .findAny().ifPresent(obj_id -> types.add(mimeType));
-                                    }
-                                } catch (SQLException | TskCoreException ex) {
-                                    Exceptions.printStackTrace(ex);
-                                }
-                                results.putAll(null, types);
+                            // Use the group_concat function to get a list of files for each mime type.  
+                            // This has different syntax on Postgres vs SQLite
+                            String groupConcatClause;
+                            if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
+                                groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
+                            } else {
+                                groupConcatClause = " group_concat(obj_id) as object_ids";
                             }
+                            String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
+                            try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
+                                    ResultSet resultSet = executeQuery.getResultSet();) {
+                                while (resultSet.next()) {
+                                    final String mimeType = resultSet.getString("mime_type"); //NON-NLS
+                                    String objIds = resultSet.getString("object_ids"); //NON-NLS
+
+                                    Pattern.compile(",").splitAsStream(objIds)
+                                            .map(Long::valueOf)
+                                            .filter(db::isInDB)
+                                            .findAny().ifPresent(obj_id -> types.add(mimeType));
+                                }
+                            } catch (SQLException | TskCoreException ex) {
+                                Exceptions.printStackTrace(ex);
+                            }
+                            results.putAll(null, types);
+
                             break;
                         default:
                             //otherwise do straight db query 
-                            if (nonNull(db)) {
-                                results.putAll(db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
-                            }
+                            results.putAll(db.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
                     }
 
                 } catch (TskCoreException | TskDataException ex) {
