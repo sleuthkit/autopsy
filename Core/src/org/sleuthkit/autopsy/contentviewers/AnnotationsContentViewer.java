@@ -95,7 +95,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format(
-                    "Exception while trying to retrieve an AbstractFile instance from the BlackboardArtifact '%s' (id=%d).",
+                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
                     artifact.getDisplayName(), artifact.getArtifactID()), ex);
         }
         
