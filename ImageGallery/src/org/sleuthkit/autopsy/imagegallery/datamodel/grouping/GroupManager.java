@@ -145,7 +145,7 @@ public class GroupManager {
         regroup(dataSource, groupBy, sortBy, sortOrder, true);
     }
 
-    DrawableDB getDB() {
+    private DrawableDB getDB() {
         return controller.getDatabase();
     }
 

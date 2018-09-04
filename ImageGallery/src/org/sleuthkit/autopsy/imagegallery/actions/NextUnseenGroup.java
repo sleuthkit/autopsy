@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import java.util.Optional;
 import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
