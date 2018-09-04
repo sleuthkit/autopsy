@@ -12,6 +12,7 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -20,6 +21,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Interface for classes that are views of a single DrawableFile. Implementation
@@ -60,9 +62,8 @@ public interface DrawableView {
 
     /**
      * update the visual representation of the category of the assigned file.
-     * Implementations of {@link DrawableView} must register themselves with
-     * {@link CategoryManager#registerListener(java.lang.Object)} to ahve this
-     * method invoked
+     * Implementations of DrawableView } must register themselves with
+     * CategoryManager.registerListener()} to have this method invoked
      *
      * @param evt the CategoryChangeEvent to handle
      */
@@ -95,6 +96,7 @@ public interface DrawableView {
             Logger.getLogger(DrawableView.class.getName()).log(Level.WARNING, "Error looking up hash set hits"); //NON-NLS
             return false;
         }
+
     }
 
     static Border getCategoryBorder(DhsImageCategory category) {

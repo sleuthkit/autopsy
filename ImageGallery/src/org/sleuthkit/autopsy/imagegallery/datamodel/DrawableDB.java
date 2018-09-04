@@ -214,7 +214,7 @@ public final class DrawableDB {
      *
      * @throws SQLException if there is problem creating or configuring the db
      */
-    private DrawableDB(Path dbPath, ImageGalleryController controller) throws SQLException, ExceptionInInitializerError, IOException {
+    private DrawableDB(Path dbPath, ImageGalleryController controller) throws TskCoreException, SQLException, IOException {
         this.dbPath = dbPath;
         this.controller = controller;
         this.tskCase = controller.getSleuthKitCase();
@@ -267,12 +267,12 @@ public final class DrawableDB {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2);
                     }
                 }
-                throw new ExceptionInInitializerError(ex);
+                throw ex;
             }
 
             initializeImageList();
         } else {
-            throw new ExceptionInInitializerError();
+            throw new TskCoreException("Failed to initialize Image Gallery db schema");
         }
 
     }
@@ -350,22 +350,22 @@ public final class DrawableDB {
 
     /**
      * public factory method. Creates and opens a connection to a new database *
-     * at the given path.
+     * at the given path. *
      *
-     * @param dbPath
+     * @param controller
      *
-     * @return
+     * @return A DrawableDB for the given controller.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public static DrawableDB getDrawableDB(Path dbPath, ImageGalleryController controller) {
-
+    public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
+        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase());
         try {
             return new DrawableDB(dbPath.resolve("drawable.db"), controller); //NON-NLS
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "sql error creating database connection", ex); //NON-NLS
-            return null;
-        } catch (ExceptionInInitializerError | IOException ex) {
-            logger.log(Level.SEVERE, "error creating database connection", ex); //NON-NLS
-            return null;
+            throw new TskCoreException("sql error creating database connection", ex); //NON-NLS
+        } catch (IOException ex) {
+            throw new TskCoreException("Error creating database connection", ex); //NON-NLS
         }
     }
 
@@ -1174,7 +1174,7 @@ public final class DrawableDB {
                     areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "there is no case open; failed to load file with id: {0}", id); //NON-NLS
-            return null;
+            throw new TskCoreException("there is no case open; failed to load file with id: " + id, ex);
         }
     }
 

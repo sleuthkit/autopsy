@@ -96,7 +96,7 @@ public class ImageGalleryModule {
      *
      * @return the Path to the ModuleOuput subfolder for Image Gallery
      */
-    static Path getModuleOutputDir(Case theCase) {
+    public static Path getModuleOutputDir(Case theCase) {
         return Paths.get(theCase.getModuleDirectory(), getModuleName());
     }
 

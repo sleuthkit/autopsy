@@ -109,7 +109,7 @@ public class ThumbnailCache {
     @Nullable
     public Image get(Long fileID) {
         try {
-            return get(controller.getFileFromId(fileID));
+            return get(controller.getFileFromID(fileID));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to load thumbnail for file: " + fileID, ex.getCause()); //NON-NLS
             return null;

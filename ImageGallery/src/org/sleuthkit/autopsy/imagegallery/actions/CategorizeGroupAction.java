@@ -65,7 +65,7 @@ public class CategorizeGroupAction extends CategorizeAction {
 
                     for (Long fileID : fileIDs) {
                         try {
-                            DhsImageCategory category = controller.getFileFromId(fileID).getCategory();
+                            DhsImageCategory category = controller.getFileFromID(fileID).getCategory();
                             if (false == DhsImageCategory.ZERO.equals(category) && newCat.equals(category) == false) {
                                 catCountMap.merge(category, 1L, Long::sum);
                             }

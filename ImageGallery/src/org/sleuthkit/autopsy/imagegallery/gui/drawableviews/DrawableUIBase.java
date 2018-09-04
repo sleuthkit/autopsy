@@ -25,7 +25,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
+import static java.util.logging.Level.SEVERE;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -57,7 +57,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     static final Executor exec = Executors.newSingleThreadExecutor();
 
-    private static final Logger LOGGER = Logger.getLogger(DrawableUIBase.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableUIBase.class.getName());
 
     @FXML
     BorderPane imageBorder;
@@ -96,20 +96,18 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     @Override
     synchronized public Optional<DrawableFile> getFile() {
         if (fileIDOpt.isPresent()) {
-            if (fileOpt.isPresent() && fileOpt.get().getId() == fileIDOpt.get()) {
-                return fileOpt;
-            } else {
+            if (!fileOpt.isPresent() || fileOpt.get().getId() != fileIDOpt.get()) {
                 try {
-                    fileOpt = Optional.ofNullable(getController().getFileFromId(fileIDOpt.get()));
+                    fileOpt = Optional.ofNullable(getController().getFileFromID(fileIDOpt.get()));
                 } catch (TskCoreException ex) {
-                    Logger.getAnonymousLogger().log(Level.WARNING, "failed to get DrawableFile for obj_id" + fileIDOpt.get(), ex); //NON-NLS
+                    logger.log(SEVERE, "Error getting file by id.", ex);
                     fileOpt = Optional.empty();
                 }
-                return fileOpt;
             }
         } else {
-            return Optional.empty();
+            fileOpt = Optional.empty();
         }
+        return fileOpt;
     }
 
     protected abstract void setFileHelper(Long newFileID);
@@ -125,10 +123,8 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         }
     }
 
-    synchronized protected void updateContent() {
-        if (getFile().isPresent()) {
-            doReadImageTask(getFile().get());
-        }
+    synchronized protected void updateContent()  {
+        getFile().ifPresent(this::doReadImageTask);
     }
 
     synchronized Node doReadImageTask(DrawableFile file) {

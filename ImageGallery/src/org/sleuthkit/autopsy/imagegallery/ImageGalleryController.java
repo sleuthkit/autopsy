@@ -120,17 +120,17 @@ public final class ImageGalleryController {
     private final GroupManager groupManager;
     private final HashSetManager hashSetManager;
     private final CategoryManager categoryManager;
-    private DrawableTagsManager tagsManager;
+    private final DrawableTagsManager tagsManager;
 
     private ListeningExecutorService dbExecutor;
 
-    private Case autopsyCase;
+    private final Case autopsyCase;
 
     public Case getAutopsyCase() {
         return autopsyCase;
     }
-    private SleuthkitCase sleuthKitCase;
-    private DrawableDB db;
+    private final SleuthkitCase sleuthKitCase;
+    private final DrawableDB db;
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -200,7 +200,7 @@ public final class ImageGalleryController {
 
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
-        this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(newCase), this);
+        this.db = DrawableDB.getDrawableDB(this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
         setStale(ImageGalleryModule.isDrawableDBStale(newCase));
@@ -297,7 +297,6 @@ public final class ImageGalleryController {
     public synchronized void shutDown() {
         logger.info("Closing ImageGalleryControler for case."); //NON-NLS
 
-     
         selectionModel.clearSelection();
         setListeningEnabled(false);
         thumbnailCache.clearCache();
@@ -306,12 +305,12 @@ public final class ImageGalleryController {
 
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
-       
+
         shutDownDBExecutor();
 
-        if (db != null) {
-            db.closeDBCon();
-        }
+//        if (db != null) {
+//            db.closeDBCon();
+//        }
     }
 
     /**
@@ -411,12 +410,7 @@ public final class ImageGalleryController {
         Platform.runLater(() -> dbTaskQueueSize.set(dbTaskQueueSize.get() - 1));
     }
 
-    @Nullable
-    synchronized public DrawableFile getFileFromId(Long fileID) throws TskCoreException {
-        if (Objects.isNull(db)) {
-            logger.log(Level.WARNING, "Could not get file from id, no DB set.  The case is probably closed."); //NON-NLS
-            return null;
-        }
+    public DrawableFile getFileFromID(Long fileID) throws TskCoreException {
         return db.getFileFromID(fileID);
     }
 

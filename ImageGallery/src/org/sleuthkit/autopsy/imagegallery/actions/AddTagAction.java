@@ -93,7 +93,7 @@ public class AddTagAction extends Action {
                 DrawableTagsManager tagsManager = controller.getTagsManager();
                 for (Long fileID : selectedFiles) {
                     try {
-                        final DrawableFile file = controller.getFileFromId(fileID);
+                        final DrawableFile file = controller.getFileFromID(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
 
                         List<ContentTag> contentTags = tagsManager.getContentTags(file);

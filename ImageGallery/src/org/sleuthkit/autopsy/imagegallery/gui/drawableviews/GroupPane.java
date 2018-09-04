@@ -710,7 +710,6 @@ public class GroupPane extends BorderPane {
                         }
                     }
                     cellMap.put(newValue, DrawableCell.this);
-
                 }
             });
 
