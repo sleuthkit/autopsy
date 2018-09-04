@@ -121,6 +121,7 @@ public class CorrelationAttributeInstance implements Serializable {
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
         return ((this.getID() == otherInstance.getID())
+                && (this.getCorrelationValue().equals(otherInstance.getCorrelationValue()))
                 && (this.getCorrelationCase().equals(otherInstance.getCorrelationCase()))
                 && (this.getCorrelationDataSource().equals(otherInstance.getCorrelationDataSource()))
                 && (this.getFilePath().equals(otherInstance.getFilePath()))
@@ -134,6 +135,7 @@ public class CorrelationAttributeInstance implements Serializable {
                 + this.getCorrelationCase().getCaseUUID()
                 + this.getCorrelationDataSource().getDeviceID()
                 + this.getFilePath()
+                + this.getCorrelationValue()
                 + this.getKnownStatus()
                 + this.getComment();
     }
