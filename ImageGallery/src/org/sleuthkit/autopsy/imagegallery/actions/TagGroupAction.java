@@ -30,7 +30,7 @@ public class TagGroupAction extends AddTagAction {
     public TagGroupAction(final TagName tagName, ImageGalleryController controller) {
         super(controller, tagName, null);
         setEventHandler(actionEvent ->
-                new AddTagAction(controller, tagName, ImmutableSet.copyOf(controller.viewState().get().getGroup().getFileIDs())).
+                new AddTagAction(controller, tagName, ImmutableSet.copyOf(controller.getViewState().getGroup().getFileIDs())).
                 handle(actionEvent)
         );
     }

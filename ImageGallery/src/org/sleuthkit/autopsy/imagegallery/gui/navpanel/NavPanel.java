@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Function;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.SelectionModel;
@@ -91,12 +92,20 @@ abstract class NavPanel<X> extends Tab {
 
         //keep selection in sync with controller
         controller.viewState().addListener(observable -> {
-            Optional.ofNullable(controller.viewState().get())
-                    .map(GroupViewState::getGroup)
-                    .ifPresent(this::setFocusedGroup);
+            Platform.runLater(() -> {
+                Optional.ofNullable(controller.getViewState())
+                        .map(GroupViewState::getGroup)
+                        .ifPresent(this::setFocusedGroup);
+            });
         });
 
-        getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
+        // notify controller about group selection in this view
+        getSelectionModel().selectedItemProperty()
+                .addListener((observable, oldItem, newSelectedItem) -> {
+                    Optional.ofNullable(newSelectedItem)
+                            .map(getDataItemMapper())
+                            .ifPresent(group -> controller.advance(GroupViewState.tile(group), false));
+                });
     }
 
     /**
@@ -119,16 +128,6 @@ abstract class NavPanel<X> extends Tab {
         return (sortChooser.getSortOrder() == SortOrder.ASCENDING)
                 ? comparator
                 : comparator.reversed();
-    }
-
-    /**
-     * notify controller about group selection in this view
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void updateControllersGroup() {
-        Optional.ofNullable(getSelectionModel().getSelectedItem())
-                .map(getDataItemMapper())
-                .ifPresent(group -> controller.advance(GroupViewState.tile(group), false));
     }
 
     /**

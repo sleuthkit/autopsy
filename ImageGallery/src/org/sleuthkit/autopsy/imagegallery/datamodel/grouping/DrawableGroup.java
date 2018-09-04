@@ -174,6 +174,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         }
     }
 
+    
     synchronized void addFile(Long f) {
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
