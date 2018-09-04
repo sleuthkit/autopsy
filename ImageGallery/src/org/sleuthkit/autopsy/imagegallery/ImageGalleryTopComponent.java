@@ -227,7 +227,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         setController(ImageGalleryModule.getController());
     }
 
-    synchronized void setController(ImageGalleryController controller) {
+    synchronized private void setController(ImageGalleryController controller) {
         if (this.controller != null) {
             this.controller.shutDown();
         }
@@ -310,12 +310,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     @Override
     public void componentOpened() {
         super.componentOpened();
-//        try {
-//            setController(ImageGalleryModule.getController());
-//        } catch (NoCurrentCaseException ex) {
-//            logger.log(Level.WARNING, "ImageGellery opened with no open case.", ex);
-//        }
-        WindowManager.getDefault().setTopComponentFloating(this, true);
+         WindowManager.getDefault().setTopComponentFloating(this, true);
     }
 
     @Override

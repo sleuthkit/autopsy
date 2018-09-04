@@ -56,6 +56,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.swing.SortOrder;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -69,12 +70,14 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB.DrawableDbBuildStatusEnum;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
@@ -294,7 +297,7 @@ public final class ImageGalleryController {
     public synchronized void shutDown() {
         logger.info("Closing ImageGalleryControler for case."); //NON-NLS
 
-        autopsyCase = null;
+     
         selectionModel.clearSelection();
         setListeningEnabled(false);
         thumbnailCache.clearCache();
@@ -303,14 +306,12 @@ public final class ImageGalleryController {
 
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
-        tagsManager = null;
+       
         shutDownDBExecutor();
 
         if (db != null) {
             db.closeDBCon();
         }
-        db = null;
-
     }
 
     /**

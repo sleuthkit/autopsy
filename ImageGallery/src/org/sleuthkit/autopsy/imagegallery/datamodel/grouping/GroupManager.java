@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
@@ -65,6 +66,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.apache.commons.lang3.ObjectUtils;
+import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.netbeans.api.progress.ProgressHandle;
@@ -614,9 +616,7 @@ public class GroupManager {
 
                         if (analyzedGroups.contains(group) == false) {
                             analyzedGroups.add(group);
-                            if (isNull(task)) {
-                                sortAnalyzedGroups();
-                            }
+                            sortAnalyzedGroups();
                         }
                         updateUnSeenGroups(group, groupSeen);
 
@@ -704,7 +704,7 @@ public class GroupManager {
 
                 // Get the list of group keys
                 final Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
-                groupProgress.switchToDeterminate(valsByDataSource.size());
+                groupProgress.switchToDeterminate(valsByDataSource.entries().size());
                 int p = 0;
                 // For each key value, partially create the group and add it to the list.
                 for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
@@ -718,25 +718,34 @@ public class GroupManager {
                     popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
                 }
                 isRegrouping = false;
-            }
 
-            DataSource dataSourceOfCurrentGroup
-                    = Optional.ofNullable(controller.getViewState())
-                            .flatMap(GroupViewState::getGroup)
-                            .map(DrawableGroup::getGroupKey)
-                            .flatMap(GroupKey::getDataSource)
-                            .orElse(null);
-            if (getDataSource() == null
-                || Objects.equals(dataSourceOfCurrentGroup, getDataSource())) {
-                //the current group is for the given datasource, so just keep it in view.
-            } else {                //the current group should not be visible so ...
-                if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
-                    controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                } else { // clear the group area.
-                    controller.advance(GroupViewState.tile(null));
-                }
-            }
+                Optional<DrawableGroup> viewedGroup
+                        = Optional.ofNullable(controller.getViewState())
+                                .flatMap(GroupViewState::getGroup);
+                Optional<GroupKey<?>> viewedKey = viewedGroup.map(DrawableGroup::getGroupKey);
+                DataSource dataSourceOfCurrentGroup
+                        = viewedKey.flatMap(GroupKey::getDataSource)
+                                .orElse(null);
+                DrawableAttribute attributeOfCurrentGroup
+                        = viewedKey.map(GroupKey::getAttribute)
+                                .orElse(null);
 
+                /* if no group or if groupbies are different or if data source
+                 * != null and does not equal group */
+                if (viewedGroup.isPresent() == false
+                    || (getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))
+                    || getGroupBy() != attributeOfCurrentGroup) {
+                    //the current group should not be visible so ...
+                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
+                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                    } else if (isNotEmpty(analyzedGroups)) {
+                        //show the first analyzed group.
+                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                    } else { //there are no groups,  clear the group area.
+                        controller.advance(GroupViewState.tile(null));
+                    }
+                }   //else, the current group is for the given datasource, so just keep it in view.
+            }
             groupProgress.finish();
             updateProgress(1, 1);
 

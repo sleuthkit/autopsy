@@ -89,6 +89,7 @@ public class NextUnseenGroup extends Action {
     private void updateButton() {
         int size = unSeenGroups.size();
         Platform.runLater(() -> {
+
             setDisabled(size == 0);
             if (size <= 1) {
                 setText(MARK_GROUP_SEEN);
