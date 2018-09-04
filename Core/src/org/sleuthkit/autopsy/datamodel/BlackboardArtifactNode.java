@@ -653,12 +653,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.count.displayName=O",
         "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
         "BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated",
-        "BlackboardArtifactNode.createSheet.count.noValue.text=?",
         "# {0} - occuranceCount",
         "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
 
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
-        Long count = -1L;
+        Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description();
         try {
             //don't perform the query if there is no correlation value
@@ -671,7 +670,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         }
-        //if we couldn't perform the query add ? instead to show that we don't know how many 
         sheetSet.put(
                 new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), description, count));
     }

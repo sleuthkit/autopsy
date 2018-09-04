@@ -991,9 +991,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /*
-     * A renderer which based on the contents of the cell will display a question mark if no count 
-     * 
-     * to indicate the score associated with the item.
+     * A renderer which based on the contents of the cell will display an empty
+     * cell if no count was available.
      */
     private final class CountCellRenderer extends ColorTagCustomRenderer {
 
@@ -1019,12 +1018,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
             setText("");
             if ((countValue instanceof Long)) {
-                if ((Long) countValue < 0) {
-                    setText("?");
-                } else {
+                //Don't display value if value is negative used so that sorting will behave as desired
+                if ((Long) countValue >= 0) {
                     setText(countValue.toString());
                 }
-
             }
             return this;
         }
