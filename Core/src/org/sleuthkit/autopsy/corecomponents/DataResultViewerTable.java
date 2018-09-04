@@ -111,7 +111,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public DataResultViewerTable() {
         this(null, Bundle.DataResultViewerTable_title());
     }
-    
 
     /**
      * Constructs a tabular result viewer that displays the children of a given
@@ -661,17 +660,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private class IconRendererTableListener implements TableColumnModelListener {
 
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
-            "DataResultViewerTable.scoreRender.name=S"})
+            "DataResultViewerTable.scoreRender.name=S",
+            "DataResultViewerTable.countRender.name=O"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
             if (e.getSource() instanceof ETableColumnModel) {
-                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());          
+                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
                 if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
                     //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
                     column.setCellRenderer(new HasCommentCellRenderer());
                 } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_scoreRender_name())) {
                     //if the current column is a score column set the cell renderer to be the ScoreCellRenderer
                     column.setCellRenderer(new ScoreCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_countRender_name())) {
+                    column.setCellRenderer(new CountCellRenderer());
                 }
             }
         }
@@ -957,11 +959,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //The Outline view has properties in the cell, the value contained in the property is what we want
                 try {
                     switchValue = ((Node.Property) value).getValue();
-                    setToolTipText(((FeatureDescriptor)value).getShortDescription());
+                    setToolTipText(((FeatureDescriptor) value).getShortDescription());
                 } catch (IllegalAccessException | InvocationTargetException ex) {
                     //Unable to get the value from the NodeProperty no Icon will be displayed
                 }
-                
+
             } else {
                 //JTables contain the value we want directly in the cell
                 switchValue = value;
@@ -982,6 +984,47 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
             } else {
                 setIcon(null);
+            }
+            return this;
+        }
+
+    }
+
+    /*
+     * A renderer which based on the contents of the cell will display a question mark if no count 
+     * 
+     * to indicate the score associated with the item.
+     */
+    private final class CountCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(LEFT);
+            Object countValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    countValue = ((Node.Property) value).getValue();
+                    setToolTipText(((FeatureDescriptor) value).getShortDescription());
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+            } else {
+                //JTables contain the value we want directly in the cell
+                countValue = value;
+            }
+            setText("");
+            if ((countValue instanceof Long)) {
+                if ((Long) countValue < 0) {
+                    setText("?");
+                } else {
+                    setText(countValue.toString());
+                }
+
             }
             return this;
         }

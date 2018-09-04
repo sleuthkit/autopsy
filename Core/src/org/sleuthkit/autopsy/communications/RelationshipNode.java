@@ -23,6 +23,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -67,8 +68,10 @@ final class RelationshipNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
+        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
         addScoreProperty(sheetSet, tags);
-        addCommentProperty(sheetSet, tags);
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        addCountProperty(sheetSet, correlationAttribute);
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
         if (null != fromID) {
