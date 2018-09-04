@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -82,7 +81,6 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
 
     @Override
     String buildTabTitle() {
-        final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterSingle();
         return String.format(titleTemplate, new Object[]{correlationCaseName, corAttrType.getDisplayName()});
     }

@@ -78,7 +78,7 @@ final class InterCaseSearchResultsProcessor {
     
     private String getInterCaseWhereClause() {
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(correlationType);
-        StringBuilder sqlString = new StringBuilder(6);
+        StringBuilder sqlString = new StringBuilder(250);
         sqlString.append("value IN (SELECT value FROM ")
                 .append(tableName)
                 .append(" WHERE value IN (SELECT value FROM ")
