@@ -22,10 +22,6 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JButton;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLEditorKit;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -40,7 +36,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -81,7 +76,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         StringBuilder html = new StringBuilder();
         
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        Content content = null;
+        Content sourceFile = null;
         
         try {
             if (artifact != null) {
@@ -89,13 +84,14 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                  * Get the source content based on the artifact to ensure we
                  * display the correct data instead of whatever was in the node.
                  */
-                content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+                sourceFile = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
             } else {
                 /*
                  * No artifact is present, so get the content based on what's
-                 * present in the node.
+                 * present in the node. In this case, the selected item IS the
+                 * source file.
                  */
-                content = DataContentViewerUtility.getDefaultContent(node);
+                sourceFile = (Content) node.getLookup().lookupAll(Content.class);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format(
@@ -104,13 +100,13 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         }
         
         if (artifact != null) {
-            populateTagData(html, artifact, content);
+            populateTagData(html, artifact, sourceFile);
         } else {
-            populateTagData(html, content);
+            populateTagData(html, sourceFile);
         }
         
-        if (content instanceof AbstractFile) {
-            populateCentralRepositoryData(html, artifact, (AbstractFile) content);
+        if (sourceFile instanceof AbstractFile) {
+            populateCentralRepositoryData(html, artifact, (AbstractFile) sourceFile);
         }
         
         setText(html.toString());
@@ -125,11 +121,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param content Selected content.
      */
     private void populateTagData(StringBuilder html, Content content) {
-        Case openCase;
-        SleuthkitCase tskCase;
         try {
-            openCase = Case.getCurrentCaseThrows();
-            tskCase = openCase.getSleuthkitCase();
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             
             startSection(html, "Selected Item");
             List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(content);
@@ -152,23 +145,13 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * Populate the "Selected Item" and "Source File" sections with tag data for
      * a supplied artifact.
      * 
-     * @param html     The HTML text to update.
-     * @param artifact A selected artifact.
-     * @param content  Selected content, or the source content of the selected
-     *                 artifact.
+     * @param html       The HTML text to update.
+     * @param artifact   A selected artifact.
+     * @param sourceFile The source content of the selected artifact.
      */
-    private void populateTagData(StringBuilder html, BlackboardArtifact artifact, Content content) {
-        Case openCase;
-        SleuthkitCase tskCase;
+    private void populateTagData(StringBuilder html, BlackboardArtifact artifact, Content sourceFile) {
         try {
-            Content contentFromArtifact = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
-            if (contentFromArtifact instanceof AbstractFile) {
-                content = contentFromArtifact;
-            }
-            
-            openCase = Case.getCurrentCaseThrows();
-            tskCase = openCase.getSleuthkitCase();
-            List<ContentTag> fileTagsList = null;
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             
             startSection(html, "Selected Item");
             List<BlackboardArtifactTag> artifactTagsList = tskCase.getBlackboardArtifactTagsByArtifact(artifact);
@@ -181,9 +164,9 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             }
             endSection(html);
             
-            if (content != null) {
+            if (sourceFile != null) {
                 startSection(html, "Source File");
-                fileTagsList = tskCase.getContentTagsByContent(content);
+                List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(sourceFile);
                 if (fileTagsList.isEmpty()) {
                     addMessage(html, "There are no tags for the source content.");
                 } else {
@@ -203,12 +186,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     /**
      * Populate the "Central Repository Comments" section with data.
      * 
-     * @param html     The HTML text to update.
-     * @param artifact A selected artifact (can be null).
-     * @param file     A selected file, or a source file of the selected
-     *                 artifact.
+     * @param html       The HTML text to update.
+     * @param artifact   A selected artifact (can be null).
+     * @param sourceFile A selected file, or a source file of the selected
+     *                   artifact.
      */
-    private void populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile file) {
+    private void populateCentralRepositoryData(StringBuilder html, BlackboardArtifact artifact, AbstractFile sourceFile) {
         if (EamDb.isEnabled()) {
             startSection(html, "Central Repository Comments");
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
@@ -217,7 +200,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             }
             try {
                 List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
-                String md5 = file.getMd5Hash();
+                String md5 = sourceFile.getMd5Hash();
                 if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
                     for (CorrelationAttributeInstance.Type attributeType : artifactTypes) {
                         if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
@@ -226,10 +209,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                                     md5,
                                     attributeType,
                                     correlationCase,
-                                    CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource()),
-                                    file.getParentPath() + file.getName(),
+                                    CorrelationDataSource.fromTSKDataSource(correlationCase, sourceFile.getDataSource()),
+                                    sourceFile.getParentPath() + sourceFile.getName(),
                                     "",
-                                    file.getKnown()));
+                                    sourceFile.getKnown()));
                             break;
                         }
                     }
