@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -91,7 +92,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                  * present in the node. In this case, the selected item IS the
                  * source file.
                  */
-                sourceFile = (Content) node.getLookup().lookupAll(Content.class);
+                sourceFile = (Content) node.getLookup().lookup(Content.class);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format(
@@ -280,11 +281,16 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param html The HTML text to add the table to.
      * @param tag  The tag whose information will be used to populate the table.
      */
+    @NbBundle.Messages({
+        "AnnotationsContentViewer.tagEntryDataLabel.tag=Tag:",
+        "AnnotationsContentViewer.tagEntryDataLabel.tagUser=Tag User:",
+        "AnnotationsContentViewer.tagEntryDataLabel.comment=Comment:"
+    })
     private void addTagEntry(StringBuilder html, Tag tag) {
         startTable(html);
-        addRow(html, "Tag:", tag.getName().getDisplayName());
-        addRow(html, "Tag User:", tag.getUserName());
-        addRow(html, "Comment:", convertLineBreaksToHtml(tag.getComment()));
+        addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_tag(), tag.getName().getDisplayName());
+        addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_tagUser(), tag.getUserName());
+        addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), formatHtmlString(tag.getComment()));
         endTable(html);
     }
     
@@ -297,12 +303,18 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      *                          used to populate the table.
      * @param correlationType   The correlation data type.
      */
+    @NbBundle.Messages({
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.type=Type:",
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.comment=Comment:",
+        "AnnotationsContentViewer.centralRepositoryEntryDataLabel.path=Path:"
+    })
     private void addCentralRepositoryEntry(StringBuilder html, CorrelationAttributeInstance attributeInstance) {
         startTable(html);
-        addRow(html, "Case:", attributeInstance.getCorrelationCase().getDisplayName());
-        addRow(html, "Type:", attributeInstance.getCorrelationType().getDisplayName());
-        addRow(html, "Comment:", convertLineBreaksToHtml(attributeInstance.getComment()));
-        addRow(html, "Path:", attributeInstance.getFilePath());
+        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_case(), attributeInstance.getCorrelationCase().getDisplayName());
+        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_type(), attributeInstance.getCorrelationType().getDisplayName());
+        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_comment(), formatHtmlString(attributeInstance.getComment()));
+        addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), attributeInstance.getFilePath());
         endTable(html);
     }
     
@@ -349,14 +361,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     }
     
     /**
-     * Convert line feed and carriage return character combinations to HTML line
-     * breaks.
+     * Apply escape sequence to special characters. Line feed and carriage
+     * return character combinations will be converted to HTML line breaks.
      * 
-     * @param text The text to apply conversions.
-     * @return The converted text.
+     * @param text The text to format.
+     * @return The formatted text.
      */
-    private String convertLineBreaksToHtml(String text) {
-        return text.replaceAll("(\r\n|\r|\n|\n\r)", "<br>");
+    private String formatHtmlString(String text) {
+        String formattedString = StringEscapeUtils.escapeHtml4(text);
+        return formattedString.replaceAll("(\r\n|\r|\n|\n\r)", "<br>");
     }
 
     /**
