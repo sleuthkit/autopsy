@@ -452,8 +452,8 @@ public class GroupPane extends BorderPane {
                         }
 
                         @Override
-                        public void onFailure(Throwable t) {
-                            logger.log(Level.SEVERE, "Error getting tag names.", t);
+                        public void onFailure(Throwable throwable) {
+                            logger.log(Level.SEVERE, "Error getting tag names.", throwable);
                         }
                     }, Platform::runLater);
                 }

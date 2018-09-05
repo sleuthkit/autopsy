@@ -398,14 +398,6 @@ public final class ImageGalleryController {
         return groupManager.regroupProgress();
     }
 
-    /**
-     * invoked by {@link OnStart} to make sure that the ImageGallery listeners
-     * get setup as early as possible, and do other setup stuff.
-     */
-    void onStart() {
-
-    }
-
     public HashSetManager getHashSetManager() {
         return hashSetManager;
     }

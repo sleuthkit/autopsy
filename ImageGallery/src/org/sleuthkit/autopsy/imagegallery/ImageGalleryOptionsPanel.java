@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import java.awt.event.ActionEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;

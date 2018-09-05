@@ -275,7 +275,7 @@ public class Toolbar extends ToolBar {
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(Throwable throwable) {
                 /*
                  * The problem appears to be a timing issue where a case is
                  * closed before this initialization is completed, which It
@@ -285,7 +285,7 @@ public class Toolbar extends ToolBar {
                  * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
                  */
                 if (Case.isCaseOpen()) {
-                    logger.log(Level.WARNING, "Could not create Follow Up tag menu item", t); //NON-NLS
+                    logger.log(Level.WARNING, "Could not create Follow Up tag menu item", throwable); //NON-NLS
                 } else {
                     // don't add stack trace to log because it makes looking for real errors harder
                     logger.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS

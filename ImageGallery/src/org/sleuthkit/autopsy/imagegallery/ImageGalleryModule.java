@@ -264,6 +264,9 @@ public class ImageGalleryModule {
                             controller.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                         }
                         break;
+                    default:
+                        //we don't need to do anything for other events.
+                        break;
                 }
             }
         }

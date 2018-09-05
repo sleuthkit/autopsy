@@ -197,11 +197,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         });
     }
 
-    public static void showTopComponent(TopComponent tc) {
+    public static void showTopComponent(TopComponent topComponent) {
         SwingUtilities.invokeLater(() -> {
-            tc.open();
-            tc.toFront();
-            tc.requestActive();
+            topComponent.open();
+            topComponent.toFront();
+            topComponent.requestActive();
         });
     }
 
@@ -405,6 +405,10 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         centralStack.getChildren().remove(infoOverlay);
     }
 
+    /**
+     * Region with partialy opacity used to block out parts of the UI behind a
+     * pseudo dialog.
+     */
     static final private class TranslucentRegion extends Region {
 
         TranslucentRegion() {

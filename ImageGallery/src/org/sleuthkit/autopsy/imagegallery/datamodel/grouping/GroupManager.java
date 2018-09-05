@@ -77,6 +77,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -367,20 +368,12 @@ public class GroupManager {
     }
 
     synchronized public Set<Long> getFileIDsWithTag(TagName tagName) throws TskCoreException {
-        Set<Long> files = new HashSet<>();
-        try {
-            List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(tagName);
-
-            for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && getDrawableDB().isInDB(ct.getContent().getId())) {
-                    files.add(ct.getContent().getId());
-                }
-            }
-            return files;
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "TSK error getting files with Tag:" + tagName.getDisplayName(), ex); //NON-NLS
-            throw ex;
-        }
+        return controller.getTagsManager().getContentTagsByTagName(tagName).stream()
+                .map(ContentTag::getContent)
+                .filter(AbstractFile.class::isInstance)
+                .map(Content::getId)
+                .filter(getDrawableDB()::isInDB)
+                .collect(Collectors.toSet());
     }
 
     public synchronized GroupSortBy getSortBy() {
