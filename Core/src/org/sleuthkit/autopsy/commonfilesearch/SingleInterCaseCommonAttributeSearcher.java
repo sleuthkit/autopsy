@@ -68,20 +68,20 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
     public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
-        correlationCaseName = cCase.getDisplayName();
+        this.correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
 
     CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap(), corAttrType);
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap(), this.corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
 
-        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
 
     @Override
     String buildTabTitle() {
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterSingle();
-        return String.format(titleTemplate, new Object[]{correlationCaseName, corAttrType.getDisplayName()});
+        return String.format(titleTemplate, new Object[]{this.correlationCaseName, this.corAttrType.getDisplayName()});
     }
 }

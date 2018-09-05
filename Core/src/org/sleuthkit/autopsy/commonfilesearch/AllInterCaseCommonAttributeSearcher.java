@@ -49,12 +49,12 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap(), corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
-        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
 
     @Override
     String buildTabTitle() {
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterAll();
-        return String.format(titleTemplate, new Object[]{corAttrType.getDisplayName()});
+        return String.format(titleTemplate, new Object[]{this.corAttrType.getDisplayName()});
     }
 }
