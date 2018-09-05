@@ -100,7 +100,6 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                 try {
                     fileOpt = Optional.ofNullable(getController().getFileFromID(fileIDOpt.get()));
                 } catch (TskCoreException ex) {
-                    logger.log(SEVERE, "Error getting file by id.", ex);
                     fileOpt = Optional.empty();
                 }
             }
@@ -123,7 +122,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         }
     }
 
-    synchronized protected void updateContent()  {
+    synchronized protected void updateContent() {
         getFile().ifPresent(this::doReadImageTask);
     }
 

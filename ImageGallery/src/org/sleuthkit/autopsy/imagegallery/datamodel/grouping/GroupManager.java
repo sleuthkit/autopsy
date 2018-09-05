@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel.grouping;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.eventbus.Subscribe;
@@ -27,6 +26,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +43,8 @@ import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -54,12 +56,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import static javafx.concurrent.Worker.State.CANCELLED;
-import static javafx.concurrent.Worker.State.FAILED;
-import static javafx.concurrent.Worker.State.READY;
-import static javafx.concurrent.Worker.State.RUNNING;
-import static javafx.concurrent.Worker.State.SCHEDULED;
-import static javafx.concurrent.Worker.State.SUCCEEDED;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -344,24 +340,18 @@ public class GroupManager {
         try {
             final DrawableTagsManager tagsManager = controller.getTagsManager();
             if (category == DhsImageCategory.ZERO) {
-                List< TagName> tns = Stream.of(DhsImageCategory.ONE, DhsImageCategory.TWO,
-                        DhsImageCategory.THREE, DhsImageCategory.FOUR, DhsImageCategory.FIVE)
-                        .map(tagsManager::getTagName)
-                        .collect(Collectors.toList());
-
-                Set<Long> files = new HashSet<>();
-                for (TagName tn : tns) {
-                    if (tn != null) {
-                        List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tn);
-                        files.addAll(contentTags.stream()
+                Set<Long> fileIDs = new HashSet<>();
+                for (TagName catTagName : tagsManager.getCategoryTagNames()) {
+                    if (notEqual(catTagName.getDisplayName(), DhsImageCategory.ZERO.getDisplayName())) {
+                        tagsManager.getContentTagsByTagName(catTagName).stream()
                                 .filter(ct -> ct.getContent() instanceof AbstractFile)
-                                .filter(ct -> db.isInDB(ct.getContent().getId()))
                                 .map(ct -> ct.getContent().getId())
-                                .collect(Collectors.toSet()));
+                                .filter(db::isInDB)
+                                .forEach(fileIDs::add);
                     }
                 }
 
-                fileIDsToReturn = db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(files, ',') + ")"); //NON-NLS
+                fileIDsToReturn = db.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(fileIDs, ',') + ")"); //NON-NLS
             } else {
 
                 List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));

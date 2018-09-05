@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
  * limitations under the License.
  */package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -34,19 +35,19 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides a cached view of the number of files per category, and fires
- * {@link CategoryChangeEvent}s when files are categorized.
+ * CategoryChangeEvents when files are categorized.
  *
  * To receive CategoryChangeEvents, a listener must register itself, and
- * implement a public method annotated with {@link Subscribe} that accepts one
- * argument of type CategoryChangeEvent
+ * implement a public method annotated with Subscribe that accepts one argument
+ * of type CategoryChangeEvent
  *
  * TODO: currently these two functions (cached counts and events) are separate
  * although they are related. Can they be integrated more?
@@ -86,9 +87,12 @@ public class CategoryManager {
      * autopsyTagManager at initial request or if invalidated by case change.
      */
     private final LoadingCache<DhsImageCategory, TagName> catTagNameMap
-            = CacheBuilder.newBuilder().build(CacheLoader.from(
-                    cat -> getController().getTagsManager().getTagName(cat)
-            ));
+            = CacheBuilder.newBuilder().build(new CacheLoader<DhsImageCategory, TagName>() {
+                @Override
+                public TagName load(DhsImageCategory cat) throws Exception {
+                    return getController().getTagsManager().getTagName(cat);
+                }
+            });
 
     public CategoryManager(ImageGalleryController controller) {
         this.controller = controller;

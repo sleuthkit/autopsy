@@ -130,9 +130,23 @@ public final class DrawableTagsManager {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<TagName> getNonCategoryTagNames() throws TskCoreException {
-
         return autopsyTagsManager.getAllTagNames().stream()
                 .filter(CategoryManager::isNotCategoryTagName)
+                .distinct().sorted()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all the TagNames that are categories
+     *
+     * @return All the TagNames that are categories, in alphabetical order by
+     *         displayName.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public List<TagName> getCategoryTagNames() throws TskCoreException {
+        return autopsyTagsManager.getAllTagNames().stream()
+                .filter(CategoryManager::isCategoryTagName)
                 .distinct().sorted()
                 .collect(Collectors.toList());
     }
@@ -192,13 +206,8 @@ public final class DrawableTagsManager {
         }
     }
 
-    public TagName getTagName(DhsImageCategory cat) {
-        try {
-            return getTagName(cat.getDisplayName());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting tag for Category: " + cat.getDisplayName(), ex);
-            return null;
-        }
+    public TagName getTagName(DhsImageCategory cat) throws TskCoreException {
+        return getTagName(cat.getDisplayName());
     }
 
     public ContentTag addContentTag(DrawableFile file, TagName tagName, String comment) throws TskCoreException {

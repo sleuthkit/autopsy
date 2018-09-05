@@ -43,11 +43,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
+import org.apache.commons.lang3.ObjectUtils;
+import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1397,18 +1401,18 @@ public final class DrawableDB {
      *
      * @return the number of files in the given set with Cat-0
      */
-    public long getUncategorizedCount(Collection<Long> fileIDs) {
+    public long getUncategorizedCount(Collection<Long> fileIDs) throws TskCoreException {
 
         // if the fileset is empty, return count as 0
         if (fileIDs.isEmpty()) {
             return 0;
         }
 
+        // get a comma seperated list of TagName ids for non zero categories
         DrawableTagsManager tagsManager = controller.getTagsManager();
 
-        // get a comma seperated list of TagName ids for non zero categories
-        String catTagNameIDs = DhsImageCategory.getNonZeroCategories().stream()
-                .map(tagsManager::getTagName)
+        String catTagNameIDs = tagsManager.getCategoryTagNames().stream()
+                .filter(tagName -> notEqual(tagName.getDisplayName(), DhsImageCategory.ZERO.getDisplayName()))
                 .map(TagName::getId)
                 .map(Object::toString)
                 .collect(Collectors.joining(",", "(", ")"));
@@ -1424,9 +1428,10 @@ public final class DrawableDB {
             while (resultSet.next()) {
                 return resultSet.getLong("obj_count"); //NON-NLS
             }
-        } catch (SQLException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting category count.", ex); //NON-NLS
+        } catch (SQLException ex) {
+            throw new TskCoreException("Error getting category count.", ex); //NON-NLS
         }
+
         return -1;
     }
 
