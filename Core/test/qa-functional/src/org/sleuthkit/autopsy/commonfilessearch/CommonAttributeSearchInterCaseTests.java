@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Search for commonality in different sorts of attributes (files, usb devices,
  * emails, domains). Observe that frequency filtering works for various types.
- *
+ * 
  */
 public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
@@ -132,15 +132,28 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
     }
     
     /**
-     * Test that 
+     * Test that the frequency filter behaves reasonably for attributes other
+     * than the file type.
      */
     public void testTwo(){
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
+            AbstractCommonAttributeSearcher builder;
+            CommonAttributeSearchResults metadata;
             
-            CommonAttributeSearchResults metadata = builder.findMatches();
+            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
+            metadata = builder.findMatches();
+            assertTrue("This should yield no results.", metadata.size() == 0);
+            
+            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 90);
+            metadata = builder.findMatches();
+            assertTrue("This should yield no results.", metadata.size() == 2);
+            
+            
+            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 100);
+            metadata = builder.findMatches();
+            assertTrue("This should yield no results.", metadata.size() == 13);
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
