@@ -53,6 +53,11 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
         this.correlationType = correlationType;
     }
+    
+    @Override
+    public CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType(){
+        return this.correlationType;
+    }
 
     void setCurrentAttributeInst(CorrelationAttributeInstance attribute) {
         this.currentAttribute = attribute;

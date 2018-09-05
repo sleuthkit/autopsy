@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.Map;
 import junit.framework.Test;
@@ -66,7 +67,18 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
         this.utils.clearTestDir();
         try {
             this.utils.enableCentralRepo();
-            this.utils.createCases(this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
+            
+            String[] cases = new String[]{
+                CASE1,
+                CASE2,
+                CASE3};
+
+            Path[][] paths = {
+                {this.utils.case1DataSet1Path, this.utils.case1DataSet2Path},
+                {this.utils.case2DataSet1Path, this.utils.case2DataSet2Path},
+                {this.utils.case3DataSet1Path, this.utils.case3DataSet2Path}};
+            
+            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
         } catch (TskCoreException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -87,8 +99,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             //note that the params false and false are presently meaningless because that feature is not supported yet
-            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, fileType, 0);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.FILE_TYPE, 0);
             CommonAttributeSearchResults metadata = builder.findMatches();
 
             assertTrue("Results should not be empty", metadata.size() != 0);

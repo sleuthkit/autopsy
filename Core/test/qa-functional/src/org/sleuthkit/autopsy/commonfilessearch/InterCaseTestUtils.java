@@ -26,7 +26,9 @@ import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -119,7 +121,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  */
 class InterCaseTestUtils {
-
+    
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "InterCaseCommonFilesSearchTest");
     private static final String CR_DB_NAME = "testcentralrepo.db";
 
@@ -151,13 +153,29 @@ class InterCaseTestUtils {
     static final String CASE2_DATASET_2 = "c2ds2_v1.vhd";
     static final String CASE3_DATASET_1 = "c3ds1_v1.vhd";
     static final String CASE3_DATASET_2 = "c3ds2_v1.vhd";
-
+    
+    final Path attrCase1Path;
+    final Path attrCase2Path;
+    final Path attrCase3Path;
+    final Path attrCase4Path;
+    
+    static final String ATTR_CASE1 = "CommonFilesAttrs_img1_v1.vhd";
+    static final String ATTR_CASE2 = "CommonFilesAttrs_img2_v1.vhd";
+    static final String ATTR_CASE3 = "CommonFilesAttrs_img3_v1.vhd";
+    static final String ATTR_CASE4 = "CommonFilesAttrs_img4_v1.vhd";
+    
     private final ImageDSProcessor imageDSProcessor;
 
     private final IngestJobSettings hashAndFileType;
     private final IngestJobSettings hashAndNoFileType;
     private final DataSourceLoader dataSourceLoader;
-
+    
+    CorrelationAttributeInstance.Type FILE_TYPE;
+    CorrelationAttributeInstance.Type DOMAIN_TYPE;
+    CorrelationAttributeInstance.Type USB_ID_TYPE;
+    CorrelationAttributeInstance.Type EMAIL_TYPE;
+    CorrelationAttributeInstance.Type PHONE_TYPE;
+    
     InterCaseTestUtils(NbTestCase testCase) {
 
         this.case1DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_1);
@@ -166,6 +184,11 @@ class InterCaseTestUtils {
         this.case2DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE2_DATASET_2);
         this.case3DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_1);
         this.case3DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_2);
+        
+        this.attrCase1Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE1);
+        this.attrCase2Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE2);
+        this.attrCase3Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE3);
+        this.attrCase4Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE4);
 
         this.imageDSProcessor = new ImageDSProcessor();
 
@@ -187,6 +210,26 @@ class InterCaseTestUtils {
         this.hashAndNoFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 
         this.dataSourceLoader = new DataSourceLoader();
+        
+        try {
+            Stream<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes().stream();
+                   
+            FILE_TYPE = types.filter(type -> type.getDisplayName().equals("Files")).findAny().get();
+            DOMAIN_TYPE = types.filter(type -> type.getDisplayName().equals("Domains")).findAny().get();
+            USB_ID_TYPE = types.filter(type -> type.getDisplayName().equals("USB Devices")).findAny().get();
+            EMAIL_TYPE = types.filter(type -> type.getDisplayName().equals("Email Addresses")).findAny().get();
+            PHONE_TYPE = types.filter(type -> type.getDisplayName().equals("Phone Numbers")).findAny().get();
+            
+        } catch (EamDbException ex) {
+            Assert.fail(ex.getMessage());
+            
+            //none of this really matters but satisfies the compiler
+            FILE_TYPE = null;
+            DOMAIN_TYPE = null;
+            USB_ID_TYPE = null;
+            EMAIL_TYPE = null;
+            PHONE_TYPE = null;
+        }
     }
 
     void clearTestDir() {
@@ -252,33 +295,33 @@ class InterCaseTestUtils {
     }
 
     /**
-     * Create 3 cases and ingest each with the given settings. Null settings are
-     * permitted but IngestUtils will not be run.
+     * Create the cases defined by caseNames and caseDataSourcePaths and ingest 
+     * each with the given settings. Null settings are permitted but 
+     * IngestUtils will not be run.
+     * 
+     * The length of caseNames and caseDataSourcePaths should be the same, and
+     * cases should appear in the same order.
      *
+     * @param caseNames list case names
+     * @param caseDataSourcePaths two dimensional array listing the datasources in each case
      * @param ingestJobSettings HashLookup FileType etc...
      * @param caseReferenceToStore
      */
-    Case createCases(IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException {
+    Case createCases(String[] caseNames, Path[][] caseDataSourcePaths, IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException {
 
         Case currentCase = null;
 
-        String[] cases = new String[]{
-            CASE1,
-            CASE2,
-            CASE3};
-
-        Path[][] paths = {
-            {this.case1DataSet1Path, this.case1DataSet2Path},
-            {this.case2DataSet1Path, this.case2DataSet2Path},
-            {this.case3DataSet1Path, this.case3DataSet2Path}};
+        if(caseNames.length != caseDataSourcePaths.length){
+            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of the values given in the 'cases' parameter.").getMessage());
+        }
 
         String lastCaseName = null;
         Path[] lastPathsForCase = null;
         //iterate over the collections above, creating cases, and storing
         //  just one of them for future reference
-        for (int i = 0; i < cases.length; i++) {
-            String caseName = cases[i];
-            Path[] pathsForCase = paths[i];
+        for (int i = 0; i < caseNames.length; i++) {
+            String caseName = caseNames[i];
+            Path[] pathsForCase = caseDataSourcePaths[i];
 
             if (caseName.equals(caseReferenceToStore)) {
                 //put aside and do this one last so we can hang onto the case
@@ -296,7 +339,7 @@ class InterCaseTestUtils {
         }
 
         if (currentCase == null) {
-            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of: CASE1, CASE2, CASE3").getMessage());
+            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of the values given in the 'cases' parameter.").getMessage());
             return null;
         } else {
             return currentCase;
@@ -409,6 +452,30 @@ class InterCaseTestUtils {
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * 
+     * @param metadata
+     * @param USB_ID_TYPE
+     * @return 
+     */
+    boolean areAllResultsOfType(CommonAttributeSearchResults metadata, CorrelationAttributeInstance.Type USB_ID_TYPE) {
+        try {
+            for(CommonAttributeValueList matches : metadata.getMetadata().values()){
+                for(CommonAttributeValue value : matches.getMetadataList()){
+                    return value
+                            .getInstances()
+                            .stream()
+                            .allMatch(inst -> inst.getCorrelationAttributeInstanceType().equals(USB_ID_TYPE));    
+                }
+                return false;
+            }
+            return false;
+        } catch (EamDbException ex) {
+            Assert.fail(ex.getMessage());
+            return false;
         }
     }
 }
