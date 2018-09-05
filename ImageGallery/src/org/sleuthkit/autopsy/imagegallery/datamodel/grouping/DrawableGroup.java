@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a set of image/video files in a group. The UI listens to changes
@@ -144,7 +145,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
             try {
                 uncatCount.set(ImageGalleryModule.getController().getDatabase().getUncategorizedCount(fileIDs));
 
-            } catch (NoCurrentCaseException | IllegalStateException | NullPointerException ex) {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             }
         }

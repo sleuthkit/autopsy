@@ -333,10 +333,6 @@ public class Toolbar extends ToolBar {
             @Override
             public void onFailure(Throwable t) {
                 logger.log(Level.SEVERE, "Unable to get datasources for current case.", t); //NON-NLS
-                Notifications.create().owner(getScene().getRoot())
-                        .title("Image Gallery Error")
-                        .text(Bundle.Toolbar_getDataSources_errMessage())
-                        .showError();
             }
         }, Platform::runLater);
 

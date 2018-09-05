@@ -206,11 +206,13 @@ public final class ImageGalleryController {
         setStale(ImageGalleryModule.isDrawableDBStale(newCase));
 
         groupManager = new GroupManager(this);
-        tagsManager = new DrawableTagsManager(this);
-        hashSetManager = new HashSetManager(db);
         categoryManager = new CategoryManager(this);
+        tagsManager = new DrawableTagsManager(this);
         tagsManager.registerListener(groupManager);
         tagsManager.registerListener(categoryManager);
+
+        hashSetManager = new HashSetManager(db);
+
         shutDownDBExecutor();
         dbExecutor = getNewDBExecutor();
 
@@ -303,14 +305,7 @@ public final class ImageGalleryController {
         historyManager.clear();
         groupManager.reset();
 
-        tagsManager.unregisterListener(groupManager);
-        tagsManager.unregisterListener(categoryManager);
-
         shutDownDBExecutor();
-
-//        if (db != null) {
-//            db.closeDBCon();
-//        }
     }
 
     /**

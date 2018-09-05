@@ -3,6 +3,7 @@ package org.sleuthkit.autopsy.imagegallery.datamodel;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.logging.Level;
@@ -15,14 +16,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class HashSetManager {
 
+    /** The db that initial values are loaded from. */
+    private final DrawableDB db;
+
     public HashSetManager(DrawableDB db) {
         this.db = db;
     }
-
-    /**
-     * The db that initial values are loaded from.
-     */
-    private DrawableDB db = null;
 
     /**
      * the internal cache from fileID to a set of hashset names.
@@ -38,9 +37,14 @@ public class HashSetManager {
      */
     private Set<String> getHashSetsForFileHelper(long fileID) {
         try {
-            return db.getHashSetsForFile(fileID);
-        } catch (TskCoreException ex) {
-            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file", ex); //NON-NLS
+            if (db.isClosed()) {
+                Logger.getLogger(HashSetManager.class.getName()).log(Level.WARNING, "Failed to get Hash Sets for file. The Db connection was already closed."); //NON-NLS
+                return Collections.emptySet();
+            } else {
+                return db.getHashSetsForFile(fileID);
+            }
+        } catch (TskCoreException | SQLException ex) {
+            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file."); //NON-NLS
             return Collections.emptySet();
         }
     }

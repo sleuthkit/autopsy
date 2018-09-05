@@ -108,7 +108,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     private SplitPane splitPane;
     private StackPane centralStack;
-    private BorderPane borderPane = new BorderPane();
+    private final BorderPane borderPane = new BorderPane();
     private StackPane fullUIStack;
     private MetaDataPane metaDataTable;
     private GroupPane groupPane;
@@ -153,7 +153,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.contentText=Data source:",
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.titleText=Image Gallery",})
-    public static void openTopComponent() {
+    public static void openTopComponent() throws NoCurrentCaseException {
 
         final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc == null) {
@@ -166,7 +166,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
 
         List<DataSource> dataSources = Collections.emptyList();
-        ImageGalleryController controller = ((ImageGalleryTopComponent) tc).controller;
+        ImageGalleryController controller = ImageGalleryModule.getController();
+        ((ImageGalleryTopComponent) tc).setController(controller);
         try {
             dataSources = controller.getSleuthKitCase().getDataSources();
         } catch (TskCoreException tskCoreException) {
@@ -310,7 +311,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     @Override
     public void componentOpened() {
         super.componentOpened();
-         WindowManager.getDefault().setTopComponentFloating(this, true);
+        WindowManager.getDefault().setTopComponentFloating(this, true);
     }
 
     @Override

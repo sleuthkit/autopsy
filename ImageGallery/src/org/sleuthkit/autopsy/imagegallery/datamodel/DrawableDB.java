@@ -278,7 +278,6 @@ public final class DrawableDB {
         } else {
             throw new TskCoreException("Failed to initialize Image Gallery db schema");
         }
-
     }
 
     /**
@@ -1043,17 +1042,22 @@ public final class DrawableDB {
     }
 
     /**
+     * Get all the values that are in db for the given attribute.
      *
      *
-     *
-     * @param groupBy
-     * @param sortBy
-     * @param sortOrder
+     * @param <A>        The type of values for the given attribute.
+     * @param groupBy    The attribute to get the values for.
+     * @param sortBy     The way to sort the results. Only GROUP_BY_VAL and
+     *                   FILE_COUNT are supported.
+     * @param sortOrder  Sort ascending or descending.
+     * @param dataSource
      *
      * @return
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     @SuppressWarnings("unchecked")
-    public <A extends Comparable<A>> Multimap<DataSource, A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder, DataSource dataSource) throws TskDataException, TskCoreException {
+    public <A extends Comparable<A>> Multimap<DataSource, A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder, DataSource dataSource) throws TskCoreException {
 
         Multimap<DataSource, A> values = HashMultimap.create();
 
@@ -1106,16 +1110,26 @@ public final class DrawableDB {
                         ResultSet results = stmt.executeQuery(query.toString())) {
                     while (results.next()) {
                         /*
-                         * I don't like that we have to do this cast here, but
-                         * can't think of a better alternative at the momment
-                         * unless something has gone seriously wrong, we know
-                         * this should be of type A even if JAVA doesn't
+                         * I don't like that we have to do this cast to A here,
+                         * but can't think of a better alternative at the
+                         * momment unless something has gone seriously wrong, we
+                         * know this should be of type A even if JAVA doesn't
                          */
                         values.put(tskCase.getDataSource(results.getLong("data_source_obj_id")),
                                 (A) results.getObject(groupBy.attrName.toString()));
                     }
                 } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Unable to get values for attribute", ex); //NON-NLS
+                    if (ex.getCause() instanceof java.lang.InterruptedException) {
+                        /* It seems like this originaly comes out of c3p0 when
+                         * its thread is intereupted (cancelled because of
+                         * regroup). It should be safe to just swallow this and
+                         * move on.
+                         */
+                    } else {
+                        throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS
+                    }
+                } catch (TskDataException ex) {
+                    throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS
                 } finally {
                     dbReadUnlock();
                 }
