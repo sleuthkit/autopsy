@@ -1,0 +1,150 @@
+/*
+ * 
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.commonfilessearch;
+
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Map;
+import junit.framework.Assert;
+import junit.framework.Test;
+import org.netbeans.junit.NbModuleSuite;
+import org.netbeans.junit.NbTestCase;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE2;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE3;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE4;
+import org.sleuthkit.datamodel.TskCoreException;
+
+/**
+ * Search for commonality in different sorts of attributes (files, usb devices,
+ * emails, domains). Observe that frequency filtering works for various types.
+ *
+ */
+public class CommonAttributeSearchInterCaseTests extends NbTestCase {
+
+    private final InterCaseTestUtils utils;
+
+    public static Test suite() {
+        NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(CommonAttributeSearchInterCaseTests.class).
+                clusters(".*").
+                enableModules(".*");
+        return conf.suite();
+    }
+
+    CommonAttributeSearchInterCaseTests(String name) {
+        super(name);
+        this.utils = new InterCaseTestUtils(this);
+    }
+
+    @Override
+    public void setUp() {
+        this.utils.clearTestDir();
+        try {
+            this.utils.enableCentralRepo();
+
+            String[] cases = new String[]{
+                CASE1,
+                CASE2,
+                CASE3,
+                CASE4};
+
+            Path[][] paths = {
+                {this.utils.attrCase1Path},
+                {this.utils.attrCase2Path},
+                {this.utils.attrCase3Path},
+                {this.utils.attrCase4Path}};
+
+            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE1);
+        } catch (TskCoreException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    @Override
+    public void tearDown() {
+        this.utils.clearTestDir();
+        this.utils.tearDown();
+    }
+
+    /**
+     * Run a search on the given type and ensure that all results are off that
+     * type.
+     * 
+     * @param type 
+     */
+    private void assertResultsAreOfType(CorrelationAttributeInstance.Type type) {
+
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, type, 0);
+
+            CommonAttributeSearchResults metadata = builder.findMatches();
+
+            assertTrue(metadata.size() > 0);
+
+            assertTrue(this.utils.areAllResultsOfType(metadata, type));
+
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * Test that a search for each type returns results of that type only.
+     */
+    public void testOne() {
+        assertResultsAreOfType(this.utils.USB_ID_TYPE);
+        assertResultsAreOfType(this.utils.DOMAIN_TYPE);
+        assertResultsAreOfType(this.utils.FILE_TYPE);
+        assertResultsAreOfType(this.utils.EMAIL_TYPE);
+        assertResultsAreOfType(this.utils.PHONE_TYPE);   
+    }
+    
+    /**
+     * Test that 
+     */
+    public void testTwo(){
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+            
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
+            
+            CommonAttributeSearchResults metadata = builder.findMatches();
+            
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }
+}
