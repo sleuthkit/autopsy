@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import com.monitorjbl.xlsx.StreamingReader;
 import org.apache.poi.hssf.OldExcelFormatException;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Reads excel files and implements the abstract reader api for interfacing with
@@ -58,7 +59,7 @@ public final class ExcelReader extends AbstractReader {
     private final static String EMPTY_CELL_STRING = "";
     private Map<String, Row> headerCache;
 
-    public ExcelReader(AbstractFile file, String mimeType)
+    public ExcelReader(Content file, String mimeType)
             throws FileReaderInitException {
         super(file);
         try {

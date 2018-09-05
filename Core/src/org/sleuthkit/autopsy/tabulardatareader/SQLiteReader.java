@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -60,7 +61,7 @@ public final class SQLiteReader extends AbstractReader {
      * @param sqliteDbFile Data source abstract file
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
-    public SQLiteReader(AbstractFile sqliteDbFile) throws FileReaderInitException {
+    public SQLiteReader(Content sqliteDbFile) throws FileReaderInitException {
         super(sqliteDbFile);
         try {
             final String localDiskPath = super.getLocalDiskPath(sqliteDbFile);
@@ -85,17 +86,17 @@ public final class SQLiteReader extends AbstractReader {
      * @throws TskCoreException fileManager cannot find AbstractFile files.
      * @throws IOException Issue during writing to file.
      */
-    private void findAndCopySQLiteMetaFile(AbstractFile sqliteFile,
+    private void findAndCopySQLiteMetaFile(Content sqliteFile,
             String metaFileName) throws NoCurrentCaseException, TskCoreException, IOException {
         
         Case openCase = Case.getCurrentCaseThrows();
         SleuthkitCase sleuthkitCase = openCase.getSleuthkitCase();
         Services services = new Services(sleuthkitCase);
         FileManager fileManager = services.getFileManager();
-        
+       
         List<AbstractFile> metaFiles = fileManager.findFiles(
-                sqliteFile.getDataSource(), metaFileName, 
-                sqliteFile.getParent().getName());
+            sqliteFile.getDataSource(), metaFileName, 
+            sqliteFile.getParent().getName());   
         
         if (metaFiles != null) {
             for (AbstractFile metaFile : metaFiles) {
