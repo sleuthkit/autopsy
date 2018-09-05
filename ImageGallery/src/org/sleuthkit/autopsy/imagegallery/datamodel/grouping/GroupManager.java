@@ -98,7 +98,6 @@ public class GroupManager {
             new BasicThreadFactory.Builder().namingPattern("GUI Task -%d").build())); //NON-NLS
 
     private final ImageGalleryController controller;
-    private final DrawableDB drawableDB;
 
     @GuardedBy("this") //NOPMD
     boolean regrouping;
@@ -150,7 +149,6 @@ public class GroupManager {
      */
     public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
-        this.drawableDB = controller.getDatabase();
     }
 
     /**
@@ -189,7 +187,7 @@ public class GroupManager {
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
-            DrawableFile file = drawableDB.getFileFromID(fileID);
+            DrawableFile file = getDrawableDB().getFileFromID(fileID);
             return getGroupKeysForFile(file);
         } catch (TskCoreException ex) {
             Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
@@ -243,7 +241,7 @@ public class GroupManager {
     public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
         return exec.submit(() -> {
             try {
-                drawableDB.setGroupSeen(group.getGroupKey(), seen);
+                getDrawableDB().setGroupSeen(group.getGroupKey(), seen);
                 group.setSeen(seen);
                 updateUnSeenGroups(group, seen);
             } catch (TskCoreException ex) {
@@ -327,7 +325,7 @@ public class GroupManager {
 //                return getFileIDsWithHashSetName((String) groupKey.getValue());
             default:
                 //straight db query
-                return drawableDB.getFileIDsInGroup(groupKey);
+                return getDrawableDB().getFileIDsInGroup(groupKey);
         }
     }
 
@@ -345,18 +343,18 @@ public class GroupManager {
                         tagsManager.getContentTagsByTagName(catTagName).stream()
                                 .filter(ct -> ct.getContent() instanceof AbstractFile)
                                 .map(ct -> ct.getContent().getId())
-                                .filter(drawableDB::isInDB)
+                                .filter(getDrawableDB()::isInDB)
                                 .forEach(fileIDs::add);
                     }
                 }
 
-                fileIDsToReturn = drawableDB.findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(fileIDs, ',') + ")"); //NON-NLS
+                fileIDsToReturn = getDrawableDB().findAllFileIdsWhere("obj_id NOT IN (" + StringUtils.join(fileIDs, ',') + ")"); //NON-NLS
             } else {
 
                 List<ContentTag> contentTags = tagsManager.getContentTagsByTagName(tagsManager.getTagName(category));
                 fileIDsToReturn = contentTags.stream()
                         .filter(ct -> ct.getContent() instanceof AbstractFile)
-                        .filter(ct -> drawableDB.isInDB(ct.getContent().getId()))
+                        .filter(ct -> getDrawableDB().isInDB(ct.getContent().getId()))
                         .map(ct -> ct.getContent().getId())
                         .collect(Collectors.toSet());
             }
@@ -374,7 +372,7 @@ public class GroupManager {
             List<ContentTag> contentTags = controller.getTagsManager().getContentTagsByTagName(tagName);
 
             for (ContentTag ct : contentTags) {
-                if (ct.getContent() instanceof AbstractFile && drawableDB.isInDB(ct.getContent().getId())) {
+                if (ct.getContent() instanceof AbstractFile && getDrawableDB().isInDB(ct.getContent().getId())) {
                     files.add(ct.getContent().getId());
                 }
             }
@@ -585,12 +583,12 @@ public class GroupManager {
              * of that group. just show them no matter what.
              */
             if (groupKey.getAttribute() != DrawableAttribute.PATH
-                || drawableDB.isGroupAnalyzed(groupKey)) {
+                || getDrawableDB().isGroupAnalyzed(groupKey)) {
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
                         DrawableGroup group;
-                        final boolean groupSeen = drawableDB.isGroupSeen(groupKey);
+                        final boolean groupSeen = getDrawableDB().isGroupSeen(groupKey);
                         if (groupMap.containsKey(groupKey)) {
                             group = groupMap.get(groupKey);
                             group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
@@ -630,7 +628,7 @@ public class GroupManager {
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
                 final long fileID = resultSet.getLong("obj_id"); //NON-NLS
-                if (drawableDB.isInDB(fileID)) {
+                if (getDrawableDB().isInDB(fileID)) {
                     hashSet.add(fileID);
                 }
             }
@@ -778,7 +776,7 @@ public class GroupManager {
                             break;
                         case HASHSET:
 
-                            results.putAll(null, new TreeSet<>(drawableDB.getHashSetNames()));
+                            results.putAll(null, new TreeSet<>(getDrawableDB().getHashSetNames()));
 
                             break;
                         case MIME_TYPE:
@@ -802,7 +800,7 @@ public class GroupManager {
 
                                     Pattern.compile(",").splitAsStream(objIds)
                                             .map(Long::valueOf)
-                                            .filter(drawableDB::isInDB)
+                                            .filter(getDrawableDB()::isInDB)
                                             .findAny().ifPresent(obj_id -> types.add(mimeType));
                                 }
                             } catch (SQLException | TskCoreException ex) {
@@ -813,7 +811,7 @@ public class GroupManager {
                             break;
                         default:
                             //otherwise do straight db query 
-                            results.putAll(drawableDB.findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
+                            results.putAll(getDrawableDB().findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
@@ -833,5 +831,12 @@ public class GroupManager {
             default:
                 return new GroupSortBy.AllEqualComparator<>();
         }
+    }
+
+    /**
+     * @return the drawableDB
+     */
+    private DrawableDB getDrawableDB() {
+        return controller.getDatabase();
     }
 }

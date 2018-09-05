@@ -47,6 +47,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javax.swing.SwingUtilities;
 import org.apache.commons.collections4.CollectionUtils;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
@@ -166,10 +167,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
         }
+        GroupManager groupManager = controller.getGroupManager();
         if (dataSources.size() <= 1
-            || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
+            || groupManager.getGroupBy() != DrawableAttribute.PATH) {
             /* if there is only one datasource or the grouping is already set to
              * something other than path , don't both to ask for datasource */
+            groupManager.regroup(null, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
+
             showTopComponent(topComponent);
             return;
         }
@@ -188,7 +192,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
             Optional<String> dataSourceName = datasourceDialog.showAndWait();
             DataSource dataSource = dataSourceName.map(dataSourceNames::get).orElse(null);
-            GroupManager groupManager = controller.getGroupManager();
             groupManager.regroup(dataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
             showTopComponent(topComponent);
         });
@@ -261,6 +264,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
         InvalidationListener checkGroupsListener = observable -> checkForGroups();
         controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListener);
+        controller.getGroupManager().getUnSeenGroups().addListener(checkGroupsListener);
         controller.regroupDisabledProperty().addListener(checkGroupsListener);
         checkForGroups();
     }
@@ -336,49 +340,50 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         + "or no groups are fully analyzed but ingest is not running."})
     synchronized private void checkForGroups() {
         GroupManager groupManager = controller.getGroupManager();
-        if (CollectionUtils.isNotEmpty(groupManager.getAnalyzedGroups())) {
-            Platform.runLater(this::clearNotification);
-            return;
-        }
-
-        if (IngestManager.getInstance().isIngestRunning()) {
-            if (controller.isListeningEnabled()) {
-                replaceNotification(centralStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                new ProgressIndicator()));
-            } else {
-                replaceNotification(fullUIStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
+        synchronized (groupManager) {
+            if (isNotEmpty(groupManager.getAnalyzedGroups())) {
+                Platform.runLater(this::clearNotification);
+                return;
             }
-            return;
-        }
-        if (controller.getDBTasksQueueSizeProperty().get() > 0) {
-            replaceNotification(fullUIStack,
-                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                            new ProgressIndicator()));
-            return;
-        }
-        try {
-            if (controller.getDatabase().countAllFiles() <= 0) {
-                // there are no files in db
+
+            if (IngestManager.getInstance().isIngestRunning()) {
                 if (controller.isListeningEnabled()) {
-                    replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
+                    replaceNotification(centralStack,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                    new ProgressIndicator()));
                 } else {
                     replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
                 }
                 return;
             }
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
-        }
+            if (controller.getDBTasksQueueSizeProperty().get() > 0) {
+                replaceNotification(fullUIStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                                new ProgressIndicator()));
+                return;
+            }
+            try {
+                if (controller.getDatabase().countAllFiles() <= 0) {
+                    // there are no files in db
+                    if (controller.isListeningEnabled()) {
+                        replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
+                    } else {
+                        replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+                    }
+                    return;
+                }
+            } catch (TskCoreException tskCoreException) {
+                logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
+            }
 
-        if (false == groupManager.isRegrouping()) {
-            replaceNotification(centralStack,
-                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
+            if (false == groupManager.isRegrouping()) {
+                replaceNotification(centralStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
+            }
         }
-
     }
 
     private void replaceNotification(StackPane stackPane, Node newNode) {

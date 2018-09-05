@@ -185,12 +185,12 @@ public final class ImageGalleryController {
 
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
-        this.drawableDB = DrawableDB.getDrawableDB(this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
         setStale(ImageGalleryModule.isDrawableDBStale(newCase));
 
         groupManager = new GroupManager(this);
+        this.drawableDB = DrawableDB.getDrawableDB(this);
         categoryManager = new CategoryManager(this);
         tagsManager = new DrawableTagsManager(this);
         tagsManager.registerListener(groupManager);
