@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -50,7 +49,6 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -118,12 +116,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     private Scene myScene;
 
     private Node infoOverlay;
-    private final Region infoOverLayBackground = new Region() {
-        {
-            setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-            setOpacity(.4);
-        }
-    };
+    private final Region infoOverLayBackground = new TranslucentRegion();
 
     /**
      * Returns whether the ImageGallery window is open or not.
@@ -155,19 +148,19 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.titleText=Image Gallery",})
     public static void openTopComponent() throws NoCurrentCaseException {
 
-        final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (tc == null) {
+        final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (topComponent == null) {
             return;
         }
         topComponentInitialized = true;
-        if (tc.isOpened()) {
-            showTopComponent(tc);
+        if (topComponent.isOpened()) {
+            showTopComponent(topComponent);
             return;
         }
 
         List<DataSource> dataSources = Collections.emptyList();
         ImageGalleryController controller = ImageGalleryModule.getController();
-        ((ImageGalleryTopComponent) tc).setController(controller);
+        ((ImageGalleryTopComponent) topComponent).setController(controller);
         try {
             dataSources = controller.getSleuthKitCase().getDataSources();
         } catch (TskCoreException tskCoreException) {
@@ -177,7 +170,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
             /* if there is only one datasource or the grouping is already set to
              * something other than path , don't both to ask for datasource */
-            showTopComponent(tc);
+            showTopComponent(topComponent);
             return;
         }
 
@@ -186,18 +179,18 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
 
         Platform.runLater(() -> {
-            ChoiceDialog<String> d = new ChoiceDialog<>(null, dataSourceNames.keySet());
-            d.setTitle(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_titleText());
-            d.setHeaderText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_headerText());
-            d.setContentText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_contentText());
-            d.initModality(Modality.APPLICATION_MODAL);
-            GuiUtils.setDialogIcons(d);
+            ChoiceDialog<String> datasourceDialog = new ChoiceDialog<>(null, dataSourceNames.keySet());
+            datasourceDialog.setTitle(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_titleText());
+            datasourceDialog.setHeaderText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_headerText());
+            datasourceDialog.setContentText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_contentText());
+            datasourceDialog.initModality(Modality.APPLICATION_MODAL);
+            GuiUtils.setDialogIcons(datasourceDialog);
 
-            Optional<String> dataSourceName = d.showAndWait();
-            DataSource ds = dataSourceName.map(dataSourceNames::get).orElse(null);
+            Optional<String> dataSourceName = datasourceDialog.showAndWait();
+            DataSource dataSource = dataSourceName.map(dataSourceNames::get).orElse(null);
             GroupManager groupManager = controller.getGroupManager();
-            groupManager.regroup(ds, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
-            showTopComponent(tc);
+            groupManager.regroup(dataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
+            showTopComponent(topComponent);
         });
     }
 
@@ -266,8 +259,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
         splitPane.setDividerPositions(0.1, 1.0);
 
-        controller.getGroupManager().getAnalyzedGroups().addListener((Observable o) -> checkForGroups());
-        controller.regroupDisabled().addListener((Observable observable) -> checkForGroups());
+        InvalidationListener checkGroupsListener = observable -> checkForGroups();
+        controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListener);
+        controller.regroupDisabledProperty().addListener(checkGroupsListener);
         checkForGroups();
     }
 
@@ -404,5 +398,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         fullUIStack.getChildren().remove(infoOverlay);
         //remove the ingest spinner
         centralStack.getChildren().remove(infoOverlay);
+    }
+
+    static final private class TranslucentRegion extends Region {
+
+        TranslucentRegion() {
+            setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+            setOpacity(.4);
+        }
     }
 }

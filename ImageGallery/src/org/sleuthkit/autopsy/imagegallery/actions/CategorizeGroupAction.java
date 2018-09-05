@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.apache.commons.lang.ObjectUtils;
 import static org.apache.commons.lang.ObjectUtils.notEqual;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;

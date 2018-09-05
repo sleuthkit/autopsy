@@ -24,19 +24,14 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -61,7 +56,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.util.StringConverter;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
-import org.controlsfx.control.Notifications;
 import org.controlsfx.control.PopOver;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -162,16 +156,16 @@ public class Toolbar extends ToolBar {
         tagImageViewLabel.setText(Bundle.Toolbar_tagImageViewLabel());
         categoryImageViewLabel.setText(Bundle.Toolbar_categoryImageViewLabel());
         thumbnailSizeLabel.setText(Bundle.Toolbar_thumbnailSizeLabel());
-        sizeSlider.valueProperty().bindBidirectional(controller.thumbnailSize());
-        controller.viewState().addListener((observable, oldViewState, newViewState)
+        sizeSlider.valueProperty().bindBidirectional(controller.thumbnailSizeProperty());
+        controller.viewStateProperty().addListener((observable, oldViewState, newViewState)
                 -> Platform.runLater(() -> syncGroupControlsEnabledState(newViewState))
         );
-        syncGroupControlsEnabledState(controller.viewState().get());
+        syncGroupControlsEnabledState(controller.viewStateProperty().get());
 
         initDataSourceComboBox();
         groupByBox.setItems(FXCollections.observableList(DrawableAttribute.getGroupableAttrs()));
         groupByBox.getSelectionModel().select(DrawableAttribute.PATH);
-        groupByBox.disableProperty().bind(controller.regroupDisabled());
+        groupByBox.disableProperty().bind(controller.regroupDisabledProperty());
         groupByBox.setCellFactory(listView -> new AttributeListCell());
         groupByBox.setButtonCell(new AttributeListCell());
         groupByBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {

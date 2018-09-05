@@ -42,18 +42,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
-import org.apache.commons.lang3.ObjectUtils;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
@@ -80,12 +75,9 @@ import org.sleuthkit.datamodel.TskDataException;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
- * This class is the public interface to the Image / Video Analyzer SQLite
- * database. This class borrows a lot of ideas and techniques (for good or ill)
- * from {@link  SleuthkitCase}.
- *
- * TODO: Creating an abstract base class for sqlite databases may make sense in
- * the future. see also {@link EventsDB} in the timeline viewer.
+ * This class is the public interface to the Image Gallery SQLite database. This
+ * class borrows a lot of ideas and techniques (for good or ill) from
+ * SleuthkitCase
  */
 public final class DrawableDB {
 
@@ -664,14 +656,23 @@ public final class DrawableDB {
         return false;
     }
 
-    public void setGroupSeen(GroupKey<?> gk, boolean seen) throws TskCoreException {
+    /**
+     * Record in the DB that the group with the given key has the given seen
+     * state.
+     *
+     * @param groupKey
+     * @param seen
+     *
+     * @throws TskCoreException
+     */
+    public void setGroupSeen(GroupKey<?> groupKey, boolean seen) throws TskCoreException {
         String updateSQL;
-        if (gk.getAttribute() == DrawableAttribute.PATH) {
+        if (groupKey.getAttribute() == DrawableAttribute.PATH) {
             updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d",
-                    seen ? 1 : 0, gk.getValueDisplayName(), gk.getAttribute().attrName.toString(), gk.getDataSourceObjId());
+                    seen ? 1 : 0, groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString(), groupKey.getDataSourceObjId());
         } else {
             updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = 0",
-                    seen ? 1 : 0, gk.getValueDisplayName(), gk.getAttribute().attrName.toString());
+                    seen ? 1 : 0, groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString());
         }
         tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
     }
@@ -1120,10 +1121,14 @@ public final class DrawableDB {
                     }
                 } catch (SQLException ex) {
                     if (ex.getCause() instanceof java.lang.InterruptedException) {
+
                         /* It seems like this originaly comes out of c3p0 when
                          * its thread is intereupted (cancelled because of
                          * regroup). It should be safe to just swallow this and
                          * move on.
+                         *
+                         * see
+                         * https://sourceforge.net/p/c3p0/mailman/c3p0-users/thread/EBB32BB8-6487-43AF-B291-9464C9051869@mchange.com/
                          */
                     } else {
                         throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS

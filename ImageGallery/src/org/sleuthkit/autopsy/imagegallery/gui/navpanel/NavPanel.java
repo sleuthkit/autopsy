@@ -91,7 +91,7 @@ abstract class NavPanel<X> extends Tab {
         toolBar.getItems().add(sortChooser);
 
         //keep selection in sync with controller
-        controller.viewState().addListener(observable -> {
+        controller.viewStateProperty().addListener(observable -> {
             Platform.runLater(() -> {
                 Optional.ofNullable(controller.getViewState())
                         .flatMap(GroupViewState::getGroup)

@@ -45,18 +45,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.concurrent.Worker;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.control.ProgressIndicator;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.swing.SortOrder;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
@@ -70,17 +59,13 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.actions.UndoRedoManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
-import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB.DrawableDbBuildStatusEnum;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
-import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
-import org.sleuthkit.autopsy.imagegallery.gui.Toolbar;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -108,7 +93,7 @@ public final class ImageGalleryController {
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
-    private final SimpleDoubleProperty thumbnailSize = new SimpleDoubleProperty(100);
+    private final SimpleDoubleProperty thumbnailSizeProp = new SimpleDoubleProperty(100);
     private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
     private final ReadOnlyIntegerWrapper dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
 
@@ -130,9 +115,9 @@ public final class ImageGalleryController {
         return autopsyCase;
     }
     private final SleuthkitCase sleuthKitCase;
-    private final DrawableDB db;
+    private final DrawableDB drawableDB;
 
-    public ReadOnlyBooleanProperty getMetaDataCollapsed() {
+    public ReadOnlyBooleanProperty metaDataCollapsedProperty() {
         return metaDataCollapsed.getReadOnlyProperty();
     }
 
@@ -140,19 +125,19 @@ public final class ImageGalleryController {
         this.metaDataCollapsed.set(metaDataCollapsed);
     }
 
-    public DoubleProperty thumbnailSize() {
-        return thumbnailSize;
+    public DoubleProperty thumbnailSizeProperty() {
+        return thumbnailSizeProp;
     }
 
     public GroupViewState getViewState() {
         return historyManager.getCurrentState();
     }
 
-    public ReadOnlyBooleanProperty regroupDisabled() {
+    public ReadOnlyBooleanProperty regroupDisabledProperty() {
         return regroupDisabled.getReadOnlyProperty();
     }
 
-    public ReadOnlyObjectProperty<GroupViewState> viewState() {
+    public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
         return historyManager.currentState();
     }
 
@@ -165,7 +150,7 @@ public final class ImageGalleryController {
     }
 
     synchronized public DrawableDB getDatabase() {
-        return db;
+        return drawableDB;
     }
 
     public void setListeningEnabled(boolean enabled) {
@@ -187,7 +172,7 @@ public final class ImageGalleryController {
         });
     }
 
-    public ReadOnlyBooleanProperty stale() {
+    public ReadOnlyBooleanProperty staleProperty() {
         return stale.getReadOnlyProperty();
     }
 
@@ -200,7 +185,7 @@ public final class ImageGalleryController {
 
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
-        this.db = DrawableDB.getDrawableDB(this);
+        this.drawableDB = DrawableDB.getDrawableDB(this);
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
         setStale(ImageGalleryModule.isDrawableDBStale(newCase));
@@ -211,7 +196,7 @@ public final class ImageGalleryController {
         tagsManager.registerListener(groupManager);
         tagsManager.registerListener(categoryManager);
 
-        hashSetManager = new HashSetManager(db);
+        hashSetManager = new HashSetManager(drawableDB);
 
         shutDownDBExecutor();
         dbExecutor = getNewDBExecutor();
@@ -233,7 +218,7 @@ public final class ImageGalleryController {
             }
         });
 
-        viewState().addListener((Observable observable) -> {
+        viewStateProperty().addListener((Observable observable) -> {
             //when the viewed group changes, clear the selection and the undo/redo history
             selectionModel.clearSelection();
             undoManager.clear();
@@ -288,9 +273,9 @@ public final class ImageGalleryController {
      */
     public void rebuildDB() {
         // queue a rebuild task for each stale data source
-        getStaleDataSourceIds().forEach((dataSourceObjId) -> {
-            queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, this, db, sleuthKitCase));
-        });
+        getStaleDataSourceIds().forEach((dataSourceObjId)
+                -> queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, this))
+        );
     }
 
     /**
@@ -406,7 +391,7 @@ public final class ImageGalleryController {
     }
 
     public DrawableFile getFileFromID(Long fileID) throws TskCoreException {
-        return db.getFileFromID(fileID);
+        return drawableDB.getFileFromID(fileID);
     }
 
     public ReadOnlyDoubleProperty regroupProgress() {
@@ -617,10 +602,10 @@ public final class ImageGalleryController {
         ProgressHandle progressHandle;
         private boolean taskCompletionStatus;
 
-        BulkTransferTask(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
+        BulkTransferTask(long dataSourceObjId, ImageGalleryController controller) {
             this.controller = controller;
-            this.taskDB = taskDB;
-            this.tskCase = tskCase;
+            this.taskDB = controller.getDatabase();
+            this.tskCase = controller.getSleuthKitCase();
             this.dataSourceObjId = dataSourceObjId;
 
             DATASOURCE_CLAUSE = " (data_source_obj_id = " + dataSourceObjId + ") ";
@@ -748,17 +733,17 @@ public final class ImageGalleryController {
     @NbBundle.Messages({"CopyAnalyzedFiles.committingDb.status=committing image/video database",
         "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
         "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
-    class CopyAnalyzedFiles extends BulkTransferTask {
+    static class CopyAnalyzedFiles extends BulkTransferTask {
 
-        CopyAnalyzedFiles(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
-            super(dataSourceObjId, controller, taskDB, tskCase);
+        CopyAnalyzedFiles(long dataSourceObjId, ImageGalleryController controller) {
+            super(dataSourceObjId, controller);
         }
 
         @Override
         protected void cleanup(boolean success) {
             // at the end of the task, set the stale status based on the 
             // cumulative status of all data sources
-            controller.setStale(isDataSourcesTableStale());
+            controller.setStale(controller.isDataSourcesTableStale());
         }
 
         @Override
@@ -811,8 +796,8 @@ public final class ImageGalleryController {
          *
          * @param dataSourceId Data source object ID
          */
-        PrePopulateDataSourceFiles(long dataSourceObjId, ImageGalleryController controller, DrawableDB taskDB, SleuthkitCase tskCase) {
-            super(dataSourceObjId, controller, taskDB, tskCase);
+        PrePopulateDataSourceFiles(long dataSourceObjId, ImageGalleryController controller) {
+            super(dataSourceObjId, controller);
         }
 
         @Override

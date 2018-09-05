@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.lang.ref.SoftReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -32,6 +31,7 @@ import java.util.stream.Collectors;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import javax.annotation.Nonnull;
@@ -40,9 +40,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -81,8 +80,8 @@ public abstract class DrawableFile {
                 : new ImageFile(file, analyzed);
     }
 
-    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
-        return create(Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(id), analyzed);
+    public static DrawableFile create(Long fileID, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
+        return create(Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileID), analyzed);
     }
 
     private SoftReference<Image> imageRef;
@@ -156,8 +155,8 @@ public abstract class DrawableFile {
         return file.getSleuthkitCase();
     }
 
-    private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> t) {
-        return new Pair<>(t, t.getValue(DrawableFile.this));
+    private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> attribute) {
+        return new Pair<>(attribute, attribute.getValue(this));
     }
 
     public String getModel() {
@@ -266,14 +265,12 @@ public abstract class DrawableFile {
         if (image == null || image.isError()) {
             Task<Image> readImageTask = getReadFullSizeImageTaskHelper();
             readImageTask.stateProperty().addListener(stateProperty -> {
-                switch (readImageTask.getState()) {
-                    case SUCCEEDED:
-                        try {
-                            imageRef = new SoftReference<>(readImageTask.get());
-                        } catch (InterruptedException | ExecutionException exception) {
-                            LOGGER.log(Level.WARNING, getMessageTemplate(exception), getContentPathSafe());
-                        }
-                        break;
+                if (readImageTask.getState() == Worker.State.SUCCEEDED) {
+                    try {
+                        imageRef = new SoftReference<>(readImageTask.get());
+                    } catch (InterruptedException | ExecutionException exception) {
+                        LOGGER.log(Level.WARNING, getMessageTemplate(exception), getContentPathSafe());
+                    }
                 }
             });
             return readImageTask;

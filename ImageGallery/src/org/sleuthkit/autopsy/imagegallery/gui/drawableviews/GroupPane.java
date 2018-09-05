@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,10 +35,8 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -96,14 +94,12 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 import org.controlsfx.control.SegmentedButton;
 import org.controlsfx.control.action.ActionUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
@@ -429,7 +425,7 @@ public class GroupPane extends BorderPane {
         flashAnimation.setAutoReverse(true);
 
         //configure gridView cell properties
-        DoubleBinding cellSize = controller.thumbnailSize().add(75);
+        DoubleBinding cellSize = controller.thumbnailSizeProperty().add(75);
         gridView.cellHeightProperty().bind(cellSize);
         gridView.cellWidthProperty().bind(cellSize);
         gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
@@ -503,7 +499,7 @@ public class GroupPane extends BorderPane {
         slideShowToggle.setOnAction(onAction -> activateSlideShowViewer(selectionModel.lastSelectedProperty().get()));
         tileToggle.setOnAction(onAction -> activateTileViewer());
 
-        controller.viewState().addListener((observable, oldViewState, newViewState) -> setViewState(newViewState));
+        controller.viewStateProperty().addListener((observable, oldViewState, newViewState) -> setViewState(newViewState));
 
         addEventFilter(KeyEvent.KEY_PRESSED, tileKeyboardNavigationHandler);
         gridView.addEventHandler(MouseEvent.MOUSE_CLICKED, new MouseHandler());
@@ -544,7 +540,7 @@ public class GroupPane extends BorderPane {
             }
         });
 
-        setViewState(controller.viewState().get());
+        setViewState(controller.viewStateProperty().get());
     }
 
     //TODO: make sure we are testing complete visability not just bounds intersection
@@ -634,10 +630,8 @@ public class GroupPane extends BorderPane {
             });
 
         } else {
-            if (getGroup() != newViewState.getGroup().get()) {
-                if (nonNull(getGroup())) {
-                    getGroup().getFileIDs().removeListener(filesSyncListener);
-                }
+            if (nonNull(getGroup()) && getGroup() != newViewState.getGroup().get()) {
+                getGroup().getFileIDs().removeListener(filesSyncListener);
             }
 
             this.grouping.set(newViewState.getGroup().get());

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18  Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,10 +32,8 @@ import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -128,7 +126,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                         .map(ImageGalleryModule.getController().getHashSetManager()::isInAnyHashSet)
                         .filter(Boolean::booleanValue)
                         .count());
-            } catch (NoCurrentCaseException | IllegalStateException | NullPointerException ex) {
+            } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             }
         }

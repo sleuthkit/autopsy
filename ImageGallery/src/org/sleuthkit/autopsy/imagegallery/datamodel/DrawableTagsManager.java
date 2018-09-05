@@ -66,9 +66,8 @@ public final class DrawableTagsManager {
                     Executors.newSingleThreadExecutor(
                             new BasicThreadFactory.Builder()
                                     .namingPattern("Tags Event Bus")//NON-NLS
-                                    .uncaughtExceptionHandler((Thread t, Throwable e) -> {
-                                        logger.log(Level.SEVERE, "Uncaught exception in DrawableTagsManager event bus handler.", e); //NON-NLS
-                                    })
+                                    .uncaughtExceptionHandler((Thread thread, Throwable throwable)
+                                            -> logger.log(Level.SEVERE, "Uncaught exception in DrawableTagsManager event bus handler.", throwable)) //NON-NLS
                                     .build()));
 
     public DrawableTagsManager(ImageGalleryController controller) throws TskCoreException {
@@ -180,29 +179,19 @@ public final class DrawableTagsManager {
     }
 
     public TagName getTagName(String displayName) throws TskCoreException {
+
+        TagName returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
+        if (returnTagName != null) {
+            return returnTagName;
+        }
         try {
-            TagName returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
+            return autopsyTagsManager.addTagName(displayName);
+        } catch (TagsManager.TagNameAlreadyExistsException ex) {
+            returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
             if (returnTagName != null) {
                 return returnTagName;
             }
-            try {
-                return autopsyTagsManager.addTagName(displayName);
-            } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                returnTagName = autopsyTagsManager.getDisplayNamesToTagNamesMap().get(displayName);
-                if (returnTagName != null) {
-                    return returnTagName;
-                }
-
-                throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
-
-            } catch (NullPointerException | IllegalStateException ex) {
-                logger.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
-                throw new TskCoreException("Case was closed out from underneath", ex);
-
-            }
-        } catch (NullPointerException | IllegalStateException ex) {
-            logger.log(Level.SEVERE, "Case was closed out from underneath", ex); //NON-NLS
-            throw new TskCoreException("Case was closed out from underneath", ex);
+            throw new TskCoreException("Tag name exists but an error occured in retrieving it", ex);
         }
     }
 

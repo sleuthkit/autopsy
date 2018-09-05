@@ -63,8 +63,8 @@ public class DrawableTile extends DrawableTileBase {
         setCache(true);
         setCacheHint(CacheHint.SPEED);
         nameLabel.prefWidthProperty().bind(imageView.fitWidthProperty());
-        imageView.fitHeightProperty().bind(getController().thumbnailSize());
-        imageView.fitWidthProperty().bind(getController().thumbnailSize());
+        imageView.fitHeightProperty().bind(getController().thumbnailSizeProperty());
+        imageView.fitWidthProperty().bind(getController().thumbnailSizeProperty());
 
         selectionModel.lastSelectedProperty().addListener(new WeakChangeListener<>(lastSelectionListener));
 

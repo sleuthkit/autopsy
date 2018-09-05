@@ -1,4 +1,21 @@
-package org.sleuthkit.autopsy.imagegallery.datamodel;
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2013-18 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */package org.sleuthkit.autopsy.imagegallery.datamodel;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -17,10 +34,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class HashSetManager {
 
     /** The db that initial values are loaded from. */
-    private final DrawableDB db;
+    private final DrawableDB drawableDB;
 
-    public HashSetManager(DrawableDB db) {
-        this.db = db;
+    public HashSetManager(DrawableDB drawableDB) {
+        this.drawableDB = drawableDB;
     }
 
     /**
@@ -37,11 +54,11 @@ public class HashSetManager {
      */
     private Set<String> getHashSetsForFileHelper(long fileID) {
         try {
-            if (db.isClosed()) {
+            if (drawableDB.isClosed()) {
                 Logger.getLogger(HashSetManager.class.getName()).log(Level.WARNING, "Failed to get Hash Sets for file. The Db connection was already closed."); //NON-NLS
                 return Collections.emptySet();
             } else {
-                return db.getHashSetsForFile(fileID);
+                return drawableDB.getHashSetsForFile(fileID);
             }
         } catch (TskCoreException | SQLException ex) {
             Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file."); //NON-NLS
