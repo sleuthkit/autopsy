@@ -331,7 +331,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                     //formatted header, minus the one tab added at the beginning
                     //of the row (we want to count the vertical delimiters since 
                     //we want it all to line up.
-                    barLength = outputTable.length() - 2;
+                    barLength = outputTable.length() - 4;
                 }
                 addFormattedHeaderToBuffer(outputTable, barLength, header);
                 header = false;
