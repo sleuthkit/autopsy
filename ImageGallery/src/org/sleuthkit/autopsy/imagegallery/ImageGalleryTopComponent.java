@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -46,7 +47,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javax.swing.SwingUtilities;
-import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
@@ -168,14 +168,17 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
         }
         GroupManager groupManager = controller.getGroupManager();
-        if (dataSources.size() <= 1
-            || groupManager.getGroupBy() != DrawableAttribute.PATH) {
-            /* if there is only one datasource or the grouping is already set to
-             * something other than path , don't both to ask for datasource */
-            groupManager.regroup(null, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
+        synchronized (groupManager) {
+            if (dataSources.size() <= 1
+                || groupManager.getGroupBy() != DrawableAttribute.PATH) {
+                /* if there is only one datasource or the grouping is already
+                 * set to something other than path , don't both to ask for
+                 * datasource */
+                groupManager.regroup(null, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
 
-            showTopComponent(topComponent);
-            return;
+                showTopComponent(topComponent);
+                return;
+            }
         }
 
         Map<String, DataSource> dataSourceNames = new HashMap<>();
@@ -192,17 +195,18 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
             Optional<String> dataSourceName = datasourceDialog.showAndWait();
             DataSource dataSource = dataSourceName.map(dataSourceNames::get).orElse(null);
-            groupManager.regroup(dataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
-            showTopComponent(topComponent);
+            synchronized (groupManager) {
+                groupManager.regroup(dataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
+            }
+            SwingUtilities.invokeLater(() -> showTopComponent(topComponent));
         });
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public static void showTopComponent(TopComponent topComponent) {
-        SwingUtilities.invokeLater(() -> {
-            topComponent.open();
-            topComponent.toFront();
-            topComponent.requestActive();
-        });
+        topComponent.open();
+        topComponent.toFront();
+        topComponent.requestActive();
     }
 
     public static void closeTopComponent() {
@@ -229,44 +233,41 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             this.controller.shutDown();
         }
         this.controller = controller;
-        Platform.runLater(() -> this.initJavaFXUI());
-    }
-
-    synchronized private void initJavaFXUI() {
-        //initialize jfx ui
-        fullUIStack = new StackPane(); //this is passed into controller
-        myScene = new Scene(fullUIStack);
-        jfxPanel.setScene(myScene);
-
-        groupPane = new GroupPane(controller);
-        centralStack = new StackPane(groupPane);  //this is passed into controller
-        fullUIStack.getChildren().add(borderPane);
-        splitPane = new SplitPane();
-        borderPane.setCenter(splitPane);
-        Toolbar toolbar = new Toolbar(controller);
-        borderPane.setTop(toolbar);
-        borderPane.setBottom(new StatusBar(controller));
-
-        metaDataTable = new MetaDataPane(controller);
-        groupTree = new GroupTree(controller);
-        hashHitList = new HashHitGroupList(controller);
-
-        TabPane tabPane = new TabPane(groupTree, hashHitList);
-        tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
-        tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
-        VBox.setVgrow(tabPane, Priority.ALWAYS);
-        leftPane = new VBox(tabPane, new SummaryTablePane(controller));
-        SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
-        SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
-        SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
-        splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
-        splitPane.setDividerPositions(0.1, 1.0);
-
-        InvalidationListener checkGroupsListener = observable -> checkForGroups();
-        controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListener);
-        controller.getGroupManager().getUnSeenGroups().addListener(checkGroupsListener);
-        controller.regroupDisabledProperty().addListener(checkGroupsListener);
-        checkForGroups();
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                //initialize jfx ui
+                fullUIStack = new StackPane(); //this is passed into controller
+                myScene = new Scene(fullUIStack);
+                jfxPanel.setScene(myScene);
+                groupPane = new GroupPane(controller);
+                centralStack = new StackPane(groupPane); //this is passed into controller
+                fullUIStack.getChildren().add(borderPane);
+                splitPane = new SplitPane();
+                borderPane.setCenter(splitPane);
+                Toolbar toolbar = new Toolbar(controller);
+                borderPane.setTop(toolbar);
+                borderPane.setBottom(new StatusBar(controller));
+                metaDataTable = new MetaDataPane(controller);
+                groupTree = new GroupTree(controller);
+                hashHitList = new HashHitGroupList(controller);
+                TabPane tabPane = new TabPane(groupTree, hashHitList);
+                tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
+                tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
+                VBox.setVgrow(tabPane, Priority.ALWAYS);
+                leftPane = new VBox(tabPane, new SummaryTablePane(controller));
+                SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
+                SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
+                SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
+                splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
+                splitPane.setDividerPositions(0.1, 1.0);
+                InvalidationListener checkGroupsListener = (Observable observable) -> checkForGroups();
+                controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListener);
+                controller.getGroupManager().getUnSeenGroups().addListener(checkGroupsListener);
+                controller.regroupDisabledProperty().addListener(checkGroupsListener);
+                checkForGroups();
+            }
+        });
     }
 
     /**
@@ -348,30 +349,35 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (controller.isListeningEnabled()) {
-                    replaceNotification(centralStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                    new ProgressIndicator()));
+                    Platform.runLater(()
+                            -> replaceNotification(centralStack,
+                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                            new ProgressIndicator())));
                 } else {
-                    replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
+                    Platform.runLater(()
+                            -> replaceNotification(fullUIStack,
+                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1())));
                 }
                 return;
             }
             if (controller.getDBTasksQueueSizeProperty().get() > 0) {
-                replaceNotification(fullUIStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                new ProgressIndicator()));
+                Platform.runLater(()
+                        -> replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                                        new ProgressIndicator())));
                 return;
             }
             try {
                 if (controller.getDatabase().countAllFiles() <= 0) {
                     // there are no files in db
                     if (controller.isListeningEnabled()) {
-                        replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
+                        Platform.runLater(()
+                                -> replaceNotification(fullUIStack,
+                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5())));
                     } else {
-                        replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+                        Platform.runLater(()
+                                -> replaceNotification(fullUIStack,
+                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4())));
                     }
                     return;
                 }
@@ -380,21 +386,21 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             }
 
             if (false == groupManager.isRegrouping()) {
-                replaceNotification(centralStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
+                Platform.runLater(()
+                        -> replaceNotification(centralStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6())));
             }
         }
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void replaceNotification(StackPane stackPane, Node newNode) {
-        Platform.runLater(() -> {
-            clearNotification();
+        clearNotification();
+        infoOverlay = new StackPane(infoOverLayBackground, newNode);
+        if (stackPane != null) {
+            stackPane.getChildren().add(infoOverlay);
+        }
 
-            infoOverlay = new StackPane(infoOverLayBackground, newNode);
-            if (stackPane != null) {
-                stackPane.getChildren().add(infoOverlay);
-            }
-        });
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
