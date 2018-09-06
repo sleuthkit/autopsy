@@ -563,7 +563,8 @@ public class HashDbManager implements PropertyChangeListener {
         for (HashDbInfo hashDbInfo : hashDbInfoList) {
             try {
                 if(hashDbInfo.isFileDatabaseType()){
-                    String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath());
+                    // ELTODO 
+                    String dbPath = this.getValidFilePath(hashDbInfo.getHashSetName(), hashDbInfo.getPath(), hashDbInfo.isPathIsRelative());
                     if (dbPath != null) {
                         addHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDbInfo.getHashSetName(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), hashDbInfo.getKnownFilesType());
                     } else {
@@ -644,7 +645,12 @@ public class HashDbManager implements PropertyChangeListener {
         return true;
     }
 
-    private String getValidFilePath(String hashSetName, String configuredPath) {
+    private String getValidFilePath(String hashSetName, String configuredPath, boolean pathIsRelative) {
+        
+        if (pathIsRelative) {
+            // the path should be modified to be inside the current UserConfigFolder 
+            // (e.g. C:\Users\elivis\AppData\Roaming\autopsy\config)
+        }
         // Check the configured path.
         File database = new File(configuredPath);
         if (database.exists()) {
