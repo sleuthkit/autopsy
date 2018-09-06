@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
  * Shows path based groups as a tree and others kinds of groups as a flat list (
@@ -82,7 +83,12 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
                 change.getAddedSubList().stream().forEach(this::insertGroup);
                 change.getRemoved().stream().forEach(this::removeFromTree);
             }
-            Platform.runLater(this::sortGroups);
+            Platform.runLater(() -> {
+                GroupTree.this.sortGroups();
+                Optional.ofNullable(getController().getViewState())
+                        .flatMap(GroupViewState::getGroup)
+                        .ifPresent(this::setFocusedGroup);
+            });
         });
 
         getGroupManager().getAnalyzedGroups().forEach(this::insertGroup);

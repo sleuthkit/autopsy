@@ -703,12 +703,12 @@ public class GroupManager {
                     DrawableAttribute attributeOfCurrentGroup
                             = viewedKey.map(GroupKey::getAttribute)
                                     .orElse(null);
-
                     /* if no group or if groupbies are different or if data
                      * source != null and does not equal group */
                     if (viewedGroup.isPresent() == false
                         || (getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))
                         || getGroupBy() != attributeOfCurrentGroup) {
+
                         //the current group should not be visible so ...
                         if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
                             controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
@@ -718,7 +718,7 @@ public class GroupManager {
                         } else { //there are no groups,  clear the group area.
                             controller.advance(GroupViewState.tile(null));
                         }
-                    }   //else, the current group is for the given datasource, so just keep it in view.
+                    }
                 }
             } finally {
                 groupProgress.finish();
