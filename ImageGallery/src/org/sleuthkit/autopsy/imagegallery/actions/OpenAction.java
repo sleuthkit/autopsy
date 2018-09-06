@@ -125,7 +125,6 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     @Override
-    @SuppressWarnings("fallthrough")
     @NbBundle.Messages({"OpenAction.dialogTitle=Image Gallery"})
     public void performAction() {
 
@@ -169,8 +168,9 @@ public final class OpenAction extends CallableSystemAction {
                         } else {
                             controller.rebuildDB();
                         }
+                        ImageGalleryTopComponent.openTopComponent();
+                        break;
 
-                    //fall through
                     case JOptionPane.NO_OPTION: {
                         ImageGalleryTopComponent.openTopComponent();
                     }

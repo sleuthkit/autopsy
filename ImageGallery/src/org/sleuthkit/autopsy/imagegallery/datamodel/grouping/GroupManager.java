@@ -675,9 +675,9 @@ public class GroupManager {
                     analyzedGroups.clear();
                     unSeenGroups.clear();
 
-                    Multimap<DataSource, AttrValType> valsByDataSource = null;
                     // Get the list of group keys
-                    valsByDataSource = findValuesForAttribute();
+                    Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
+
                     groupProgress.switchToDeterminate(valsByDataSource.entries().size());
                     int p = 0;
                     // For each key value, partially create the group and add it to the list.

@@ -932,7 +932,6 @@ public final class DrawableDB {
         dbReadLock();
         try {
             Set<Long> fileIDsInGroup = getFileIDsInGroup(gk);
-
             try {
                 // In testing, this method appears to be a lot faster than doing one large select statement
                 for (Long fileID : fileIDsInGroup) {

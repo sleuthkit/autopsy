@@ -169,8 +169,6 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
     synchronized void resortChildren(Comparator<DrawableGroup> newComp) {
         this.comp = newComp;
         getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
-        for (GroupTreeItem ti : childMap.values()) {
-            ti.resortChildren(comp);
-        }
+        childMap.values().forEach(treeItem -> treeItem.resortChildren(comp));
     }
 }

@@ -115,7 +115,7 @@ abstract class NavPanel<X> extends Tab {
 
     @Subscribe
     public void handleCategoryChange(CategoryManager.CategoryChangeEvent event) {
-        sortGroups();
+        Platform.runLater(this::sortGroups);
     }
 
     /**
