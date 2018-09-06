@@ -25,10 +25,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
@@ -212,13 +211,13 @@ class InterCaseTestUtils {
         this.dataSourceLoader = new DataSourceLoader();
         
         try {
-            Stream<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes().stream();
+            Collection<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
                    
-            FILE_TYPE = types.filter(type -> type.getDisplayName().equals("Files")).findAny().get();
-            DOMAIN_TYPE = types.filter(type -> type.getDisplayName().equals("Domains")).findAny().get();
-            USB_ID_TYPE = types.filter(type -> type.getDisplayName().equals("USB Devices")).findAny().get();
-            EMAIL_TYPE = types.filter(type -> type.getDisplayName().equals("Email Addresses")).findAny().get();
-            PHONE_TYPE = types.filter(type -> type.getDisplayName().equals("Phone Numbers")).findAny().get();
+            FILE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Files")).findAny().get();
+            DOMAIN_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Domains")).findAny().get();
+            USB_ID_TYPE = types.stream().filter(type -> type.getDisplayName().equals("USB Devices")).findAny().get();
+            EMAIL_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Email Addresses")).findAny().get();
+            PHONE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Phone Numbers")).findAny().get();
             
         } catch (EamDbException ex) {
             Assert.fail(ex.getMessage());
@@ -362,6 +361,27 @@ class InterCaseTestUtils {
             return null;
         }
     }
+    
+    static boolean verifyInstanceCount(CommonAttributeSearchResults searchDomain, int instanceCount){
+        try {
+            int tally = 0;
+
+            for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
+                entry.getValue().displayDelayedMetadata();
+                for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
+
+                    tally += value.getInstanceCount();
+                }
+            }
+
+            return tally == instanceCount;
+
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+            return false;
+        }
+    }
 
     static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
 
@@ -456,19 +476,20 @@ class InterCaseTestUtils {
     }
 
     /**
+     * Is everything in metadata a result of the given attribute type?
      * 
      * @param metadata
-     * @param USB_ID_TYPE
-     * @return 
+     * @param attributeType
+     * @return true if yes, else false
      */
-    boolean areAllResultsOfType(CommonAttributeSearchResults metadata, CorrelationAttributeInstance.Type USB_ID_TYPE) {
+    boolean areAllResultsOfType(CommonAttributeSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
         try {
             for(CommonAttributeValueList matches : metadata.getMetadata().values()){
                 for(CommonAttributeValue value : matches.getMetadataList()){
                     return value
                             .getInstances()
                             .stream()
-                            .allMatch(inst -> inst.getCorrelationAttributeInstanceType().equals(USB_ID_TYPE));    
+                            .allMatch(inst -> inst.getCorrelationAttributeInstanceType().equals(attributeType));    
                 }
                 return false;
             }

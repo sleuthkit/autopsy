@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Map;
 import junit.framework.Assert;
 import junit.framework.Test;
@@ -31,16 +30,14 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE2;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE3;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE4;
+import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.verifyInstanceCount;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -59,7 +56,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
         return conf.suite();
     }
 
-    CommonAttributeSearchInterCaseTests(String name) {
+   public  CommonAttributeSearchInterCaseTests(String name) {
         super(name);
         this.utils = new InterCaseTestUtils(this);
     }
@@ -110,7 +107,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
             CommonAttributeSearchResults metadata = builder.findMatches();
 
-            assertTrue(metadata.size() > 0);
+            assertTrue(verifyInstanceCount(metadata, 0));
 
             assertTrue(this.utils.areAllResultsOfType(metadata, type));
 
@@ -144,16 +141,15 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
             
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
             metadata = builder.findMatches();
-            assertTrue("This should yield no results.", metadata.size() == 0);
+            assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
             
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 90);
             metadata = builder.findMatches();
-            assertTrue("This should yield no results.", metadata.size() == 2);
-            
-            
+            assertTrue("This should yield no results.", verifyInstanceCount(metadata, 2));
+                        
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 100);
             metadata = builder.findMatches();
-            assertTrue("This should yield no results.", metadata.size() == 13);
+            assertTrue("This should yield no results.", verifyInstanceCount(metadata, 13));
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
