@@ -428,7 +428,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         
         try {
-            if (artifact != null && artifact.getSleuthkitCase().getContentById(artifact.getObjectID()) != null) {
+            if (artifact != null && artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID()) != null) {
                 return true;
             } else if (node.getLookup().lookup(AbstractFile.class) != null) {
                 return true;
