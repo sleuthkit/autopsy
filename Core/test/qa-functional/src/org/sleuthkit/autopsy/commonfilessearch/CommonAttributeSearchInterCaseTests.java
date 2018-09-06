@@ -96,6 +96,8 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
      * Run a search on the given type and ensure that all results are off that
      * type.
      * 
+     * No frequency filtering applied.
+     * 
      * @param type 
      */
     private void assertResultsAreOfType(CorrelationAttributeInstance.Type type) {
@@ -107,7 +109,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
             CommonAttributeSearchResults metadata = builder.findMatches();
 
-            assertTrue(verifyInstanceCount(metadata, 0));
+            assertFalse(verifyInstanceCount(metadata, 0));
 
             assertTrue(this.utils.areAllResultsOfType(metadata, type));
 
