@@ -279,13 +279,13 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
         }
         try {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnEight);
-            //fail("This should have thrown an exception.");    //this will eventually pass when we do a better job at this
+            fail("This should have thrown an exception.");
         } catch (CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);    
         }
         try {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnNine);
-            //fail("This should have thrown an exception.");    //this will eventually pass when we do a better job at this
+            fail("This should have thrown an exception.");
         } catch (CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true); 
         }

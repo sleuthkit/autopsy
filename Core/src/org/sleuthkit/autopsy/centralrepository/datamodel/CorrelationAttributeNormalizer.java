@@ -142,8 +142,8 @@ final public class CorrelationAttributeNormalizer {
      * Verify it is only numbers and '+'. Strip spaces, dashes, and parentheses.
      */
     private static String normalizePhone(String data) throws CorrelationAttributeNormalizationException {
-        String phoneNumber = data.replaceAll("[^0-9\\+]", "");
-        if(phoneNumber.matches("\\+?[0-9]+")){
+        if(data.matches("\\+?[0-9()\\-\\s]+")){
+            String phoneNumber = data.replaceAll("[^0-9\\+]", "");
             return phoneNumber;
         } else {
             throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid phone number: %s", data));
