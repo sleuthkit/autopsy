@@ -44,11 +44,12 @@ final public class CorrelationAttributeNormalizer {
      * @return normalized data
      */
     public static String normalize(CorrelationAttributeInstance.Type attributeType, String data) throws CorrelationAttributeNormalizationException {
-        
-        final String errorMessage = "Validator function not found for attribute type: %s";
-        
+
         if(attributeType == null){
-            throw new CorrelationAttributeNormalizationException(String.format(errorMessage, "null"));
+            throw new CorrelationAttributeNormalizationException("Attribute type was null.");
+        }
+        if(data == null){
+            throw new CorrelationAttributeNormalizationException("Data was null.");
         }
         
         switch(attributeType.getId()){
@@ -63,7 +64,10 @@ final public class CorrelationAttributeNormalizer {
             case CorrelationAttributeInstance.USBID_TYPE_ID:
                 return normalizeUsbId(data);
             default:
-                throw new CorrelationAttributeNormalizationException(String.format(errorMessage, attributeType.getDisplayName()));   
+                final String errorMessage = String.format(
+                        "Validator function not found for attribute type: %s", 
+                        attributeType.getDisplayName());
+                throw new CorrelationAttributeNormalizationException(errorMessage);   
         }
     }
     
@@ -96,16 +100,12 @@ final public class CorrelationAttributeNormalizer {
      * Verify MD5 is the correct length and values. Make lower case.
      */
     private static String normalizeMd5(String data) throws CorrelationAttributeNormalizationException {
-        final String errorMessage = "Data purporting to be an MD5 was found not to comform to expected format: %s";
-        if(data == null){
-            throw new CorrelationAttributeNormalizationException(String.format(errorMessage, data));
-        }
         final String validMd5Regex = "^[a-f0-9]{32}$";
         final String dataLowered = data.toLowerCase();
         if(dataLowered.matches(validMd5Regex)){
             return dataLowered;
         } else {
-            throw new CorrelationAttributeNormalizationException(String.format(errorMessage, data));
+            throw new CorrelationAttributeNormalizationException(String.format("Data purporting to be an MD5 was found not to comform to expected format: %s", data));
         }
     }
 
@@ -117,9 +117,6 @@ final public class CorrelationAttributeNormalizer {
         if(validator.isValid(data)){
             return data.toLowerCase();
         } else {
-            if(data == null){
-                throw new CorrelationAttributeNormalizationException("Data was expected to be a valid domain: null"); 
-            }
             final String validIpAddressRegex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
             if(data.matches(validIpAddressRegex)){
                 return data;
