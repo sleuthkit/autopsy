@@ -109,6 +109,8 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
             CommonAttributeSearchResults metadata = builder.findMatches();
 
+            metadata.size();
+            
             assertFalse(verifyInstanceCount(metadata, 0));
 
             assertTrue(this.utils.areAllResultsOfType(metadata, type));
@@ -141,17 +143,20 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
             AbstractCommonAttributeSearcher builder;
             CommonAttributeSearchResults metadata;
             
+            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 100);
+            metadata = builder.findMatches();
+            metadata.size();
+            assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
+            
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
             metadata = builder.findMatches();
+            metadata.size();
             assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
             
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 90);
             metadata = builder.findMatches();
-            assertTrue("This should yield no results.", verifyInstanceCount(metadata, 2));
-                        
-            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 100);
-            metadata = builder.findMatches();
-            assertTrue("This should yield no results.", verifyInstanceCount(metadata, 13));
+            metadata.size();
+            assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
             
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);

@@ -68,7 +68,7 @@ public final class IngestJobRunner {
     }
 
     /**
-     * IngestRunner instances cannot be instatiated.
+     * IngestRunner instances cannot be instantiated.
      */
     private IngestJobRunner() {
     }

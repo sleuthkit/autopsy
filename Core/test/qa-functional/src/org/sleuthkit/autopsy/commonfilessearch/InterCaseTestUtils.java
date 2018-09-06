@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -167,6 +168,8 @@ class InterCaseTestUtils {
 
     private final IngestJobSettings hashAndFileType;
     private final IngestJobSettings hashAndNoFileType;
+    private final IngestJobSettings kitchenShink;
+    
     private final DataSourceLoader dataSourceLoader;
     
     CorrelationAttributeInstance.Type FILE_TYPE;
@@ -194,7 +197,9 @@ class InterCaseTestUtils {
         final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
         final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
-
+        final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
+        
+        //hash and mime
         ArrayList<IngestModuleTemplate> hashAndMimeTemplate = new ArrayList<>(2);
         hashAndMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(mimeTypeLookupTemplate);
@@ -202,17 +207,28 @@ class InterCaseTestUtils {
 
         this.hashAndFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
 
+        //hash and no mime
         ArrayList<IngestModuleTemplate> hashAndNoMimeTemplate = new ArrayList<>(1);
         hashAndNoMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(eamDbTemplate);
 
         this.hashAndNoFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 
+        //kitchen sink
+        ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();
+        kitchenSink.add(hashLookupTemplate);
+        kitchenSink.add(mimeTypeLookupTemplate);
+        kitchenSink.add(eamDbTemplate);
+        kitchenSink.add(interestingItemsTemplate);
+        
+        this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
+        
         this.dataSourceLoader = new DataSourceLoader();
         
         try {
             Collection<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
                    
+            //TODO use ids instead of strings
             FILE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Files")).findAny().get();
             DOMAIN_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Domains")).findAny().get();
             USB_ID_TYPE = types.stream().filter(type -> type.getDisplayName().equals("USB Devices")).findAny().get();
@@ -273,6 +289,10 @@ class InterCaseTestUtils {
     IngestJobSettings getIngestSettingsForHashAndNoFileType() {
         return this.hashAndNoFileType;
     }
+    
+    IngestJobSettings getIngestSettingsForKitchenSink(){
+        
+    }
 
     void enableCentralRepo() throws EamDbException {
 
@@ -286,7 +306,7 @@ class InterCaseTestUtils {
         crSettings.initializeDatabaseSchema();
         crSettings.insertDefaultDatabaseContent();
 
-        crSettings.saveSettings();
+       crSettings.saveSettings();
 
         EamDbUtil.setUseCentralRepo(true);
         EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
