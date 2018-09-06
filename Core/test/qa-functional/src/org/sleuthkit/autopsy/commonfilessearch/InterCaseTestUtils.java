@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
+import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.iOS.iOSModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
@@ -210,8 +211,11 @@ class InterCaseTestUtils {
         final IngestModuleTemplate photoRecTemplate = IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory());
         final IngestModuleTemplate e01VerifierTemplate = IngestUtils.getIngestModuleTemplate(new E01VerifierModuleFactory());
         final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
-        final IngestModuleTemplate interestingArtifactsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
-        final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
+        final IngestModuleTemplate fileExtMismatchDetectorTemplate = IngestUtils.getIngestModuleTemplate(new FileExtMismatchDetectorModuleFactory());
+//        final IngestModuleTemplate objectDetectorTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.experimental.objectdetection.ObjectDetectionModuleFactory());
+//        final IngestModuleTemplate emailParserTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory());
+//        final IngestModuleTemplate recentActivityTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory());
+//        final IngestModuleTemplate keywordSearchTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory());
         
         //hash and mime
         ArrayList<IngestModuleTemplate> hashAndMimeTemplate = new ArrayList<>(2);
@@ -229,11 +233,22 @@ class InterCaseTestUtils {
         this.hashAndNoFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 
         //kitchen sink
-        ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();
-        kitchenSink.add(hashLookupTemplate);
-        kitchenSink.add(mimeTypeLookupTemplate);
-        kitchenSink.add(eamDbTemplate);
+        ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();        
+        kitchenSink.add(exifTemplate);
+        kitchenSink.add(iOsTemplate);
+        kitchenSink.add(embeddedFileExtractorTemplate);
         kitchenSink.add(interestingItemsTemplate);
+        kitchenSink.add(mimeTypeLookupTemplate);
+        kitchenSink.add(hashLookupTemplate);
+        kitchenSink.add(vmExtractorTemplate);
+        kitchenSink.add(photoRecTemplate);
+        kitchenSink.add(e01VerifierTemplate);
+        kitchenSink.add(eamDbTemplate);
+        kitchenSink.add(fileExtMismatchDetectorTemplate);
+//        kitchenSink.add(objectDetectorTemplate);
+//        kitchenSink.add(emailParserTemplate);
+//        kitchenSink.add(recentActivityTemplate);
+//        kitchenSink.add(keywordSearchTemplate);
         
         this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
         
