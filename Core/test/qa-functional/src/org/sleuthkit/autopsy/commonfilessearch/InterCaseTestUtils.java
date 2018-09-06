@@ -59,7 +59,13 @@ import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
+import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
+import org.sleuthkit.autopsy.modules.iOS.iOSModuleFactory;
 import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -194,9 +200,17 @@ class InterCaseTestUtils {
 
         this.imageDSProcessor = new ImageDSProcessor();
 
-        final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        final IngestModuleTemplate exifTemplate = IngestUtils.getIngestModuleTemplate(new ExifParserModuleFactory());
+        final IngestModuleTemplate iOsTemplate = IngestUtils.getIngestModuleTemplate(new iOSModuleFactory());
+        final IngestModuleTemplate embeddedFileExtractorTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
+        final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
+        final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        final IngestModuleTemplate vmExtractorTemplate = IngestUtils.getIngestModuleTemplate(new VMExtractorIngestModuleFactory());
+        final IngestModuleTemplate photoRecTemplate = IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory());
+        final IngestModuleTemplate e01VerifierTemplate = IngestUtils.getIngestModuleTemplate(new E01VerifierModuleFactory());
         final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
+        final IngestModuleTemplate interestingArtifactsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         
         //hash and mime
@@ -291,7 +305,7 @@ class InterCaseTestUtils {
     }
     
     IngestJobSettings getIngestSettingsForKitchenSink(){
-        
+        return this.kitchenShink;
     }
 
     void enableCentralRepo() throws EamDbException {

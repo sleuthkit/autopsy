@@ -79,7 +79,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
                 {this.utils.attrCase3Path},
                 {this.utils.attrCase4Path}};
 
-            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE1);
+            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForKitchenSink(), InterCaseTestUtils.CASE1);
         } catch (TskCoreException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
