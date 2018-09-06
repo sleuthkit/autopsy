@@ -85,14 +85,14 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                  * Get the source content based on the artifact to ensure we
                  * display the correct data instead of whatever was in the node.
                  */
-                sourceFile = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+                sourceFile = artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID());
             } else {
                 /*
                  * No artifact is present, so get the content based on what's
                  * present in the node. In this case, the selected item IS the
                  * source file.
                  */
-                sourceFile = (Content) node.getLookup().lookup(Content.class);
+                sourceFile = (AbstractFile) node.getLookup().lookup(AbstractFile.class);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format(
@@ -425,8 +425,21 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     @Override
     public boolean isSupported(Node node) {
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        return file != null;
+        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+        
+        try {
+            if (artifact != null && artifact.getSleuthkitCase().getContentById(artifact.getObjectID()) != null) {
+                return true;
+            } else if (node.getLookup().lookup(AbstractFile.class) != null) {
+                return true;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format(
+                    "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
+                    artifact.getDisplayName(), artifact.getArtifactID()), ex);
+        }
+        
+        return false;
     }
 
     @Override
