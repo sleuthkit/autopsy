@@ -1619,7 +1619,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         
-        String normalizeValuedd = CorrelationAttributeNormalizer.normalize(aType, value);
+        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
 
@@ -1642,7 +1642,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, normalizeValuedd);
+            preparedStatement.setString(1, normalizedValue);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {

@@ -187,9 +187,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                 eamArtifact.getCorrelationType().getDisplayName(),
                                 eamArtifact.getCorrelationValue()));
                     } catch (CorrelationAttributeNormalizationException ex) {
-                        Exceptions.printStackTrace(ex);
+                        LOGGER.log(Level.WARNING, String.format("Error getting commonality details for artifact with ID: %s.", eamArtifact.getID()), ex);
                     }
-
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         msg.toString(),
