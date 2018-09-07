@@ -296,17 +296,13 @@ final class HashLookupSettings implements Serializable {
         database paths are in Windows user directory. If so, replace the path 
         with USER_DIR_PLACEHOLDER so that it always gets updated to be the 
         current user directory path. Therefore we have to modify HashLookupSettings
-        contents that are stored to disk. To make sure that some thread doesn't 
-        access the path at the wrong time (i.e. while it is replaced USER_DIR_PLACEHOLDER),
-        we need to make a copy of the HashLookupSettings, edit the copy, and save 
-        the copy to disk. This way the HashLookupSettings objects that the rest 
-        of the code is using is never modified and always contains actual full path 
-        to the hash database.
+        object contents that are stored to disk.
          */
-        HashLookupSettings editedCopyOfSettings = copyAndEditHashLookupSettings(settings);
+        editHashDbPaths(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
-            // save the edited copy, not the original settings
-            out.writeObject(editedCopyOfSettings);
+            out.writeObject(settings);
+            // restore the paths, in case they are going to be used somewhere
+            editHashDbPaths(settings);
             return true;
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Could not write hash set settings.");
