@@ -25,9 +25,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Stores the results from the various types of common attribute searching
@@ -35,6 +38,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
  */
 final public class CommonAttributeSearchResults {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeSearchResults.class.getName());
+    
     // maps instance count to list of attribute values. 
     private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
 
@@ -86,7 +91,7 @@ final public class CommonAttributeSearchResults {
      * search.
      * 
      * Remove results which are not found in the portion of available data 
- sources described by maximumPercentageThreshold.
+     * sources described by maximumPercentageThreshold.
      * 
      * @return metadata
      */
@@ -113,16 +118,20 @@ final public class CommonAttributeSearchResults {
             
             for(CommonAttributeValue value : values.getDelayedMetadataList()){ // Need the real metadata
                 
-                int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
+                try {
+                    int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
                 
-                if(frequencyPercentage > maximumPercentageThreshold){
-                    if(itemsToRemove.containsKey(key)){
-                        itemsToRemove.get(key).add(value);
-                    } else {
-                        List<CommonAttributeValue> toRemove = new ArrayList<>();
-                        toRemove.add(value);
-                        itemsToRemove.put(key, toRemove);
+                    if(frequencyPercentage > maximumPercentageThreshold){
+                        if(itemsToRemove.containsKey(key)){
+                            itemsToRemove.get(key).add(value);
+                        } else {
+                            List<CommonAttributeValue> toRemove = new ArrayList<>();
+                            toRemove.add(value);
+                            itemsToRemove.put(key, toRemove);
+                        }
                     }
+                } catch(CorrelationAttributeNormalizationException ex){
+                    LOGGER.log(Level.WARNING, "Unable to determine frequency percentage attribute - frequency filter may not be accurate for these results.", ex);
                 }
             }
         }
