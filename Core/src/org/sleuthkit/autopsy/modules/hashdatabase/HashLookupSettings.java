@@ -125,11 +125,17 @@ final class HashLookupSettings implements Serializable {
      * @throws HashLookupSettingsException If there's a problem importing the
      *                                     settings
      */
-    private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {
+    private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {        
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(SERIALIZATION_FILE_PATH))) {
                 HashLookupSettings filesSetsSettings = (HashLookupSettings) in.readObject();
-                editHashDbPathsInUserDir(filesSetsSettings);
+
+                /* NOTE: to support JIRA-4177, we need to check if any of the hash 
+                database paths are in Windows user directory. If so, we replace the path 
+                with USER_DIR_PLACEHOLDER before saving to disk. When reading from disk, 
+                USER_DIR_PLACEHOLDER needs to be replaced with current user directory path.
+                 */
+                editHashDbPaths(filesSetsSettings);
                 return filesSetsSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
@@ -294,16 +300,13 @@ final class HashLookupSettings implements Serializable {
         access the path at the wrong time (i.e. while it is replaced USER_DIR_PLACEHOLDER),
         we need to make a copy of the HashLookupSettings, edit the copy, and save 
         the copy to disk. This way the HashLookupSettings objects that the rest 
-        of the code is using is never modified and alsways contains actual path 
+        of the code is using is never modified and always contains actual full path 
         to the hash database.
          */
-        boolean modified = editHashDbPathsInUserDir(settings);
+        HashLookupSettings editedCopyOfSettings = copyAndEditHashLookupSettings(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
-            out.writeObject(settings);
-            if (modified) {
-                // revert the paths the way they were before
-                editHashDbPathsInUserDir(settings);
-            }
+            // save the edited copy, not the original settings
+            out.writeObject(editedCopyOfSettings);
             return true;
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Could not write hash set settings.");
@@ -311,31 +314,43 @@ final class HashLookupSettings implements Serializable {
         }
     }
     
-    // USER_DIR_PLACEHOLDER = "[UserConfigFolder]";
-    // CURRENT_USER_DIR = PlatformUtil.getUserConfigDirectory();
-
-    static boolean editHashDbPathsInUserDir(HashLookupSettings settings) {
-        boolean modified = false;
-        List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
-        for (HashDbInfo hashDbInfo : hashDbInfoList) {
+    static HashLookupSettings copyAndEditHashLookupSettings(HashLookupSettings settings) {
+        List<HashDbInfo> copyHashDbInfoList = new ArrayList<>();
+        for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
             if (hashDbInfo.isFileDatabaseType()) {
-                String dbPath = hashDbInfo.getPath();
-                if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
-                    // replace the place holder with current user directory
-                    String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
-                    String newPath = CURRENT_USER_DIR + remainingPath;
-                    hashDbInfo.setPath(newPath);
-                    modified = true;
-                } else if (dbPath.startsWith(CURRENT_USER_DIR)) {
-                    // replace the current user directory with place holder
-                    String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
-                    String newPath = USER_DIR_PLACEHOLDER + remainingPath;
-                    hashDbInfo.setPath(newPath);
-                    modified = true;
-                }
+                String newPath = editPathInUserDir(hashDbInfo.getPath());
+                HashDbInfo copyHashDbInfo = new HashDbInfo(hashDbInfo.getHashSetName(), hashDbInfo.getKnownFilesType(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), newPath);
+                copyHashDbInfoList.add(copyHashDbInfo);
+            } else {
+                // we are only modifying data for FILE type databases, so for other types there is no need to create a copy object
+                copyHashDbInfoList.add(hashDbInfo);
             }
         }
-        return modified;
+        HashLookupSettings copyOfSettings = new HashLookupSettings(copyHashDbInfoList);
+        return copyOfSettings;
+    }
+
+    static String editPathInUserDir(String dbPath) {
+        String newPath = dbPath;
+        if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
+            // replace the place holder with current user directory
+            String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
+            newPath = CURRENT_USER_DIR + remainingPath;
+        } else if (dbPath.startsWith(CURRENT_USER_DIR)) {
+            // replace the current user directory with place holder
+            String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
+            newPath = USER_DIR_PLACEHOLDER + remainingPath;
+        }
+        return newPath;
+    }
+    
+    static void editHashDbPaths(HashLookupSettings settings) {
+        for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
+            if (hashDbInfo.isFileDatabaseType()) {
+                String newPath = editPathInUserDir(hashDbInfo.getPath());
+                hashDbInfo.setPath(newPath);
+            }
+        }
     }
 
     /**
@@ -492,15 +507,15 @@ final class HashLookupSettings implements Serializable {
          */
         String getPath() {
             return path;
-        }
-        
+        }       
+
         /**
          * Sets the path.
          * @param path the path to set
          */
-        void setPath(String path) {
+        public void setPath(String path) {
             this.path = path;
-        }        
+        }
         
         int getReferenceSetID(){
             return referenceSetID;
