@@ -286,8 +286,17 @@ final class HashLookupSettings implements Serializable {
      */
     static boolean writeSettings(HashLookupSettings settings) {
         
-        // Check if any of the hash database paths are in Windows user directory. 
-        // If so, edit the path so that it always gets updated to be the current user directory path.
+        /* NOTE: to support JIRA-4177, we need to check if any of the hash 
+        database paths are in Windows user directory. If so, replace the path 
+        with USER_DIR_PLACEHOLDER so that it always gets updated to be the 
+        current user directory path. Therefore we have to modify HashLookupSettings
+        contents that are stored to disk. To make sure that some thread doesn't 
+        access the path at the wrong time (i.e. while it is replaced USER_DIR_PLACEHOLDER),
+        we need to make a copy of the HashLookupSettings, edit the copy, and save 
+        the copy to disk. This way the HashLookupSettings objects that the rest 
+        of the code is using is never modified and alsways contains actual path 
+        to the hash database.
+         */
         boolean modified = editHashDbPathsInUserDir(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
             out.writeObject(settings);
@@ -347,7 +356,6 @@ final class HashLookupSettings implements Serializable {
         private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
         private String path;
-        private final boolean pathIsRelative; // flag that the path is relative to PlatformUtil.getUserConfigDirectory()
         private final String version;
         private final boolean readOnly;
         private final int referenceSetID;
@@ -368,7 +376,6 @@ final class HashLookupSettings implements Serializable {
             this.knownFilesType = knownFilesType;
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
-            this.pathIsRelative = true; // ELTODO
             this.path = path;
             this.referenceSetID = -1;
             this.version = "";
@@ -385,7 +392,6 @@ final class HashLookupSettings implements Serializable {
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.path = "";
-            this.pathIsRelative = true; // ELTODO
             dbType = DatabaseType.CENTRAL_REPOSITORY;     
         }
         
@@ -400,7 +406,6 @@ final class HashLookupSettings implements Serializable {
                 this.version = "";
                 this.readOnly = false;
                 this.dbType = DatabaseType.FILE;
-                this.pathIsRelative = true; // ELTODO
                 if (fileTypeDb.hasIndexOnly()) {
                     this.path = fileTypeDb.getIndexPath();
                 } else {
@@ -414,7 +419,6 @@ final class HashLookupSettings implements Serializable {
                 this.readOnly = ! centralRepoDb.isUpdateable();
                 this.searchDuringIngest = centralRepoDb.getSearchDuringIngest();
                 this.sendIngestMessages = centralRepoDb.getSendIngestMessages();
-                this.pathIsRelative = true; // ELTODO
                 this.path = "";
                 this.referenceSetID = centralRepoDb.getReferenceSetID();
                 this.dbType = DatabaseType.CENTRAL_REPOSITORY;
@@ -497,13 +501,6 @@ final class HashLookupSettings implements Serializable {
         void setPath(String path) {
             this.path = path;
         }        
-        
-        /**
-         * @return ELTODO 
-         */
-        boolean isPathIsRelative() {
-            return pathIsRelative;
-        }
         
         int getReferenceSetID(){
             return referenceSetID;
