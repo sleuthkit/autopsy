@@ -36,7 +36,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.AbstractFile;
 import com.monitorjbl.xlsx.StreamingReader;
 import org.apache.poi.hssf.OldExcelFormatException;
 import org.sleuthkit.datamodel.Content;

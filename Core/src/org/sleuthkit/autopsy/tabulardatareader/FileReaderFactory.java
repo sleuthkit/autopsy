@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.tabulardatareader;
 
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**

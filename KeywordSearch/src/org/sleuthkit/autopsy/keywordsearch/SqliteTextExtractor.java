@@ -55,6 +55,16 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         return true;
     }
 
+    @Override
+    public boolean isDisabled() {
+        return false;
+    }
+
+    @Override
+    public void logWarning(String msg, Exception ex) {
+        logger.log(Level.WARNING, msg, ex); //NON-NLS
+    }
+
     /**
      * Supports only the sqlite mimetypes
      *
@@ -81,48 +91,39 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
         StringBuilder databaseBuffer = new StringBuilder();
-        
-        /**
-         * The buffer is filled during initialization, meaning the whole sqlite
-         * file is read during construction.
-         *
-         * @param source Content file that is the sqlite database
-         *
-         * @throws
-         * org.sleuthkit.autopsy.keywordsearch.TextExtractor.TextExtractorException
-         */
+
         try (AbstractReader reader = FileReaderFactory.createReader(
-                    SQLITE_MIMETYPE, source)) {
-                databaseBuffer = new StringBuilder();
-                //Fill the entire buffer upon instantiation
-                copyDatabaseIntoBuffer(source, reader, databaseBuffer);
-            } catch (FileReaderInitException ex) {
-                throw new TextExtractorException(
-                        String.format("Encountered a FileReaderInitException" //NON-NLS
-                                + " when trying to initialize a SQLiteReader" //NON-NLS
-                                + " for Content with id:[%s], name:[%s].", //NON-NLS
-                                source.getId(), source.getName()));
-            }
-        
-        try {
+                SQLITE_MIMETYPE, source)) {
+            databaseBuffer = new StringBuilder();
+            //Fill the buffer with table names and table data
+            copyDatabaseIntoBuffer(source, reader, databaseBuffer);
+            //Once the buffer is full, wrap it into a CharSource and open the reader
+            //This is necessary to maintain integrity of unicode string. Returning 
+            //character by character will not work.
             return CharSource.wrap(databaseBuffer.toString()).openStream();
-        } catch (IOException ex) {
-            throw new TextExtractorException(String.format("Unable to open CharSource stream on the databaseBuffer"
-                    + "for content source name: [%s] with id: [%d]", source.getName(), source.getId()));
+        } catch (FileReaderInitException | IOException ex) {
+            throw new TextExtractorException(
+                    String.format("Encountered a FileReaderInitException" //NON-NLS
+                            + " when trying to initialize a SQLiteReader" //NON-NLS
+                            + " for Content with id: [%s], name: [%s].", //NON-NLS
+                            source.getId(), source.getName()));
         }
     }
-    
+
     /**
-    * Queries the sqlite database and adds all tables and rows to a
-    * TableBuilder, which formats the strings into a table view for clean
-    * results while searching for keywords in the application.
-    *
-    * @param reader
-    */
-    private void copyDatabaseIntoBuffer(Content source, AbstractReader reader, StringBuilder databaseBuffer) {
+     * Queries the sqlite database and adds all tables and rows to a
+     * TableBuilder, which formats the strings into a table view for clean
+     * results while searching for keywords in the application.
+     *
+     * @param reader         Sqlite reader for the content source
+     * @param source         Sqlite file source
+     * @param databaseBuffer Buffer containing all of the database content
+     */
+    private void copyDatabaseIntoBuffer(Content source, AbstractReader reader,
+            StringBuilder databaseBuffer) {
         try {
             Map<String, String> tables = reader.getTableSchemas();
-            iterateTablesAndPopulateBuffer(tables, reader, source, databaseBuffer);
+            copyDatabaseIntoBuffer(tables, reader, source, databaseBuffer);
         } catch (AbstractReader.FileReaderException ex) {
             logger.log(Level.WARNING, String.format(
                     "Error attempting to get tables from file: " //NON-NLS
@@ -132,14 +133,16 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     /**
-    * Iterates all of the tables and passes the rows to a helper function
-    * for reading.
-    *
-    * @param tables A map of table names to table schemas
-    * @param reader SqliteReader for interfacing with the database
-    * @param source Source database file for logging
-    */
-    private void iterateTablesAndPopulateBuffer(Map<String, String> tables,
+     * Iterates all of the tables and populate the TableBuilder with all of the
+     * rows from the table. This TableBuilder object string will be added to the
+     * databaseBuffer.
+     *
+     * @param tables         A map of table names to table schemas
+     * @param reader         SqliteReader for interfacing with the database
+     * @param source         Source database file for logging
+     * @param databaseBuffer Buffer containing all of the database content
+     */
+    private void copyDatabaseIntoBuffer(Map<String, String> tables,
             AbstractReader reader, Content source, StringBuilder databaseBuffer) {
 
         for (String tableName : tables.keySet()) {
@@ -148,7 +151,17 @@ public class SqliteTextExtractor extends ContentTextExtractor {
             try {
                 List<Map<String, Object>> rowsInTable
                         = reader.getRowsFromTable(tableName);
-                addRowsToTableBuilder(tableBuilder, rowsInTable, databaseBuffer);
+                if (!rowsInTable.isEmpty()) {
+                    //Create a collection from the header set, so that the TableBuilder
+                    //can easily format it
+                    tableBuilder.addHeader(new ArrayList<>(
+                            rowsInTable.get(0).keySet()));
+                    for (Map<String, Object> row : rowsInTable) {
+                        tableBuilder.addRow(row.values());
+                    }
+                }
+                //If rowsInTable was empty, just append the table as is
+                databaseBuffer.append(tableBuilder);
             } catch (AbstractReader.FileReaderException ex) {
                 logger.log(Level.WARNING, String.format(
                         "Error attempting to read file table: [%s]" //NON-NLS
@@ -156,38 +169,6 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                         source.getName(), source.getId()), ex);
             }
         }
-    }
-    
-    /**
-    * Iterates all rows in the table and adds the rows to the TableBuilder
-    * class which formats the input into a table view.
-    *
-    * @param tableBuilder
-    * @param rowsInTable  list of rows from the sqlite table
-    */
-    private void addRowsToTableBuilder(TableBuilder tableBuilder,
-            List<Map<String, Object>> rowsInTable, StringBuilder databaseBuffer) {
-        if (!rowsInTable.isEmpty()) {
-            //Create a collection from the header set, so that the TableBuilder
-            //can easily format it
-            tableBuilder.addHeader(new ArrayList<>(
-                    rowsInTable.get(0).keySet()));
-            for (Map<String, Object> row : rowsInTable) {
-                tableBuilder.addRow(row.values());
-            }
-        }
-        //If rowsInTable was empty, just append the table as is
-        databaseBuffer.append(tableBuilder);
-    }
-        
-    @Override
-    public boolean isDisabled() {
-        return false;
-    }
-
-    @Override
-    public void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS
     }
 
     /*
@@ -262,7 +243,9 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         /**
          * Gets the max width of a cell in each column and the max number of
          * columns in any given row. This ensures that there is enough space for
-         * even the longest entry and enough columns.
+         * even the longest entry and enough columns. The length of the string
+         * seems to be different from the length of the print statement in some
+         * languages. For instance, arabic will cause the table to look off.
          *
          * @return
          */
@@ -278,7 +261,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                 for (int colNum = 0; colNum < row.length; colNum++) {
                     widths[colNum] = Math.max(
                             widths[colNum],
-                            StringUtils.length(row[colNum])
+                            row[colNum].length()
                     );
                 }
             }
@@ -322,9 +305,10 @@ public class SqliteTextExtractor extends ContentTextExtractor {
          *
          * Example: \t| John | 12345678 | john@email.com |\n
          *
-         * @param row
-         * @param colMaxWidths
-         * @param buf
+         * @param row          Array containing unformatted row content
+         * @param colMaxWidths An array of column maximum widths, so that
+         *                     everything is pretty printed.
+         * @param outputTable  Buffer that formatted contents are written to
          */
         private void addFormattedRowToBuffer(String[] row,
                 int[] colMaxWidths, StringBuilder outputTable) {
@@ -348,13 +332,16 @@ public class SqliteTextExtractor extends ContentTextExtractor {
          *          \t| Email | Phone | Name |\n
          *          \t+----------------------+\n
          *
-         * @param buf
-         * @param barLength
-         * @param header
+         * @param outputTable Buffer that formatted contents are written to
+         * @param barLength   Length of the bar (i.e. +---------+) that will
+         *                    surround the header, based off of the length of
+         *                    the formatted header row
+         * @param needsHeader Boolean denoting if the header has been added to
+         *                    the buffer
          */
         private void addFormattedHeaderToBuffer(StringBuilder outputTable,
-                int barLength, boolean header) {
-            if (header) {
+                int barLength, boolean needsHeader) {
+            if (needsHeader) {
                 outputTable.insert(0, buildHorizontalBar(barLength));
                 outputTable.insert(0, section);
                 outputTable.append(buildHorizontalBar(barLength));

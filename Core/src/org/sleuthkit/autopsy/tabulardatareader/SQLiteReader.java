@@ -51,8 +51,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class SQLiteReader extends AbstractReader {
     
     private final Connection connection;
-    private final static IngestServices services = IngestServices.getInstance();
-    private final static Logger logger = services.getLogger(SQLiteReader.class.getName());
+    private final static IngestServices ingestServices = IngestServices.getInstance();
+    private final static Logger logger = ingestServices.getLogger(SQLiteReader.class.getName());
     
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC
