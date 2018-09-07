@@ -39,7 +39,7 @@ public final class IngestJobRunner {
      * Runs an ingest job, blocking until the job is completed.
      *
      * @param dataSources The data sources for the ingest job.
-     * @param settings    The settings for the ingst job
+     * @param settings    The settings for the ingest job
      *
      * @return A list of ingest module start up error messages, empty if the job
      *         was started sucessfully.
