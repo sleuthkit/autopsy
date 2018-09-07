@@ -59,7 +59,7 @@ public abstract class AbstractReader implements AutoCloseable {
     final String getLocalDiskPath(Content file) throws FileReaderException {
         try {
             return Case.getCurrentCaseThrows().getTempDirectory() + 
-                    File.separator + file.getName();
+                    File.separator + file.getId() + "-" + file.getName();
         } catch (NoCurrentCaseException ex) {
             throw new FileReaderException(ex);
         }
