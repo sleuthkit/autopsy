@@ -19,10 +19,13 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
@@ -65,6 +68,8 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
      */
     static class InstanceCountNodeFactory extends ChildFactory<Integer>{
 
+        private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
+        
         private final CommonAttributeSearchResults searchResults;
         
         /**
@@ -78,13 +83,17 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
 
         @Override
         protected boolean createKeys(List<Integer> list) {
-            list.addAll(this.searchResults.getMetadata().keySet());
+            try {
+                list.addAll(this.searchResults.getMetadata().keySet());
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to create keys.", ex);
+            }
             return true;
         }
         
         @Override
         protected Node createNodeForKey(Integer instanceCount){
-            List<CommonAttributeValue> attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
+            CommonAttributeValueList attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
             return new InstanceCountNode(instanceCount, attributeValues);
         }
     }

@@ -132,12 +132,24 @@ public class DataResultFilterNode extends FilterNode {
      * wrapped node and may filter out some of its children.
      *
      * @param node The node to wrap.
-     * @param em   The ExplorerManager for the component that is creating the
-     *             node.
+     * @param em The ExplorerManager for the component that is creating the
+     * node.
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
+    }
+
+   /**
+     * Refreshes the inner node. If the actual underlying node is an InstanceCountNode,
+     * refresh() that node, which refreshes the children.
+     * 
+     */
+    public void refresh() {
+        if (getOriginal() instanceof InstanceCountNode) {
+            InstanceCountNode innerNode = getLookup().lookup(InstanceCountNode.class);
+            innerNode.refresh();
+        }
     }
 
     /**
@@ -145,13 +157,13 @@ public class DataResultFilterNode extends FilterNode {
      * result viewers. The wrapper node defines the actions associated with the
      * wrapped node and may filter out some of its children.
      *
-     * @param node        The node to wrap.
-     * @param em          The ExplorerManager for the component that is creating
-     *                    the node.
+     * @param node The node to wrap.
+     * @param em The ExplorerManager for the component that is creating the
+     * node.
      * @param filterKnown Whether or not to filter out children that represent
-     *                    known files.
+     * known files.
      * @param filterSlack Whether or not to filter out children that represent
-     *                    virtual slack space files.
+     * virtual slack space files.
      */
     private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
@@ -261,7 +273,7 @@ public class DataResultFilterNode extends FilterNode {
      * selected.
      *
      * @return The child node selection information, or null if no child should
-     *         be selected.
+     * be selected.
      */
     public NodeSelectionInfo getChildNodeSelectionInfo() {
         if (getOriginal() instanceof DisplayableItemNode) {
@@ -390,14 +402,14 @@ public class DataResultFilterNode extends FilterNode {
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                                // action to go to the source file of the artifact
+                // action to go to the source file of the artifact
                 Content fileContent = ban.getLookup().lookup(AbstractFile.class);
                 if (fileContent == null) {
                     Content content = ban.getLookup().lookup(Content.class);
                     actionsList.add(new ViewContextAction("View Source Content in Directory", content));
                 } else {
                     actionsList.add(new ViewContextAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
+                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
                 }
             }
             Content c = ban.getLookup().lookup(File.class);
@@ -524,21 +536,21 @@ public class DataResultFilterNode extends FilterNode {
      */
     private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction> {
 
-        @Override 
-        public AbstractAction visit(InstanceCountNode icn){
+        @Override
+        public AbstractAction visit(InstanceCountNode icn) {
             return null;
         }
-        
+
         @Override
         public AbstractAction visit(CommonAttributeValueNode md5n){
             return null;
         }
-        
+
         @Override
         public AbstractAction visit(CaseDBCommonAttributeInstanceNode fin){
             return null;
         }
-        
+
         @Override
         public AbstractAction visit(CentralRepoCommonAttributeInstanceNode iccan){
             return null;
