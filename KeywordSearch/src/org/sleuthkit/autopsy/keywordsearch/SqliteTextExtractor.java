@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.io.CharSource;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -82,30 +80,8 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
-        return new InputStreamReader(new SqliteTextReader(source));
-    }
-
-    @Override
-    public boolean isDisabled() {
-        return false;
-    }
-
-    @Override
-    public void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS
-    }
-
-    /**
-     * InputStream that is returned from the getReader method. This stream opens
-     * a sqlite file and loads its contents into a buffer that can be read from
-     * the read function.
-     */
-    private final class SqliteTextReader extends InputStream {
-
-        private StringBuilder databaseBuffer;
-        private int currReadIndex;
-        private final int NO_CONTENT_LEFT = -1;
-
+        StringBuilder databaseBuffer = new StringBuilder();
+        
         /**
          * The buffer is filled during initialization, meaning the whole sqlite
          * file is read during construction.
@@ -115,12 +91,11 @@ public class SqliteTextExtractor extends ContentTextExtractor {
          * @throws
          * org.sleuthkit.autopsy.keywordsearch.TextExtractor.TextExtractorException
          */
-        public SqliteTextReader(Content source) throws TextExtractorException {
-            try (AbstractReader reader = FileReaderFactory.createReader(
+        try (AbstractReader reader = FileReaderFactory.createReader(
                     SQLITE_MIMETYPE, source)) {
-                this.databaseBuffer = new StringBuilder();
+                databaseBuffer = new StringBuilder();
                 //Fill the entire buffer upon instantiation
-                copyDatabaseIntoBuffer(source, reader);
+                copyDatabaseIntoBuffer(source, reader, databaseBuffer);
             } catch (FileReaderInitException ex) {
                 throw new TextExtractorException(
                         String.format("Encountered a FileReaderInitException" //NON-NLS
@@ -128,92 +103,91 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                                 + " for Content with id:[%s], name:[%s].", //NON-NLS
                                 source.getId(), source.getName()));
             }
+        
+        try {
+            return CharSource.wrap(databaseBuffer.toString()).openStream();
+        } catch (IOException ex) {
+            throw new TextExtractorException(String.format("Unable to open CharSource stream on the databaseBuffer"
+                    + "for content source name: [%s] with id: [%d]", source.getName(), source.getId()));
         }
+    }
+    
+    /**
+    * Queries the sqlite database and adds all tables and rows to a
+    * TableBuilder, which formats the strings into a table view for clean
+    * results while searching for keywords in the application.
+    *
+    * @param reader
+    */
+    private void copyDatabaseIntoBuffer(Content source, AbstractReader reader, StringBuilder databaseBuffer) {
+        try {
+            Map<String, String> tables = reader.getTableSchemas();
+            iterateTablesAndPopulateBuffer(tables, reader, source, databaseBuffer);
+        } catch (AbstractReader.FileReaderException ex) {
+            logger.log(Level.WARNING, String.format(
+                    "Error attempting to get tables from file: " //NON-NLS
+                    + "[%s] (id=%d).", source.getName(), //NON-NLS
+                    source.getId()), ex);
+        }
+    }
 
-        /**
-         * Queries the sqlite database and adds all tables and rows to a
-         * TableBuilder, which formats the strings into a table view for clean
-         * results while searching for keywords in the application.
-         *
-         * @param reader
-         */
-        private void copyDatabaseIntoBuffer(Content source, AbstractReader reader) {
+    /**
+    * Iterates all of the tables and passes the rows to a helper function
+    * for reading.
+    *
+    * @param tables A map of table names to table schemas
+    * @param reader SqliteReader for interfacing with the database
+    * @param source Source database file for logging
+    */
+    private void iterateTablesAndPopulateBuffer(Map<String, String> tables,
+            AbstractReader reader, Content source, StringBuilder databaseBuffer) {
+
+        for (String tableName : tables.keySet()) {
+            TableBuilder tableBuilder = new TableBuilder();
+            tableBuilder.addSection(tableName);
             try {
-                Map<String, String> tables = reader.getTableSchemas();
-                iterateTablesAndPopulateBuffer(tables, reader, source);
+                List<Map<String, Object>> rowsInTable
+                        = reader.getRowsFromTable(tableName);
+                addRowsToTableBuilder(tableBuilder, rowsInTable, databaseBuffer);
             } catch (AbstractReader.FileReaderException ex) {
                 logger.log(Level.WARNING, String.format(
-                        "Error attempting to get tables from file: " //NON-NLS
-                        + "[%s] (id=%d).", source.getName(), //NON-NLS
-                        source.getId()), ex);
+                        "Error attempting to read file table: [%s]" //NON-NLS
+                        + " for file: [%s] (id=%d).", tableName, //NON-NLS
+                        source.getName(), source.getId()), ex);
             }
         }
-
-        /**
-         * Iterates all of the tables and passes the rows to a helper function
-         * for reading.
-         *
-         * @param tables A map of table names to table schemas
-         * @param reader SqliteReader for interfacing with the database
-         * @param source Source database file for logging
-         */
-        private void iterateTablesAndPopulateBuffer(Map<String, String> tables,
-                AbstractReader reader, Content source) {
-
-            for (String tableName : tables.keySet()) {
-                TableBuilder tableBuilder = new TableBuilder();
-                tableBuilder.addSection(tableName);
-                try {
-                    List<Map<String, Object>> rowsInTable
-                            = reader.getRowsFromTable(tableName);
-                    addRowsToTableBuilder(tableBuilder, rowsInTable);
-                } catch (AbstractReader.FileReaderException ex) {
-                    logger.log(Level.WARNING, String.format(
-                            "Error attempting to read file table: [%s]" //NON-NLS
-                            + " for file: [%s] (id=%d).", tableName, //NON-NLS
-                            source.getName(), source.getId()), ex);
-                }
+    }
+    
+    /**
+    * Iterates all rows in the table and adds the rows to the TableBuilder
+    * class which formats the input into a table view.
+    *
+    * @param tableBuilder
+    * @param rowsInTable  list of rows from the sqlite table
+    */
+    private void addRowsToTableBuilder(TableBuilder tableBuilder,
+            List<Map<String, Object>> rowsInTable, StringBuilder databaseBuffer) {
+        if (!rowsInTable.isEmpty()) {
+            //Create a collection from the header set, so that the TableBuilder
+            //can easily format it
+            tableBuilder.addHeader(new ArrayList<>(
+                    rowsInTable.get(0).keySet()));
+            for (Map<String, Object> row : rowsInTable) {
+                tableBuilder.addRow(row.values());
             }
         }
+        //If rowsInTable was empty, just append the table as is
+        databaseBuffer.append(tableBuilder);
+    }
+        
+    @Override
+    public boolean isDisabled() {
+        return false;
+    }
 
-        /**
-         * Iterates all rows in the table and adds the rows to the TableBuilder
-         * class which formats the input into a table view.
-         *
-         * @param tableBuilder
-         * @param rowsInTable  list of rows from the sqlite table
-         */
-        private void addRowsToTableBuilder(TableBuilder tableBuilder,
-                List<Map<String, Object>> rowsInTable) {
-            if (!rowsInTable.isEmpty()) {
-                //Create a collection from the header set, so that the TableBuilder
-                //can easily format it
-                tableBuilder.addHeader(new ArrayList<>(
-                        rowsInTable.get(0).keySet()));
-                for (Map<String, Object> row : rowsInTable) {
-                    tableBuilder.addRow(row.values());
-                }
-            }
-            //If rowsInTable was empty, just append the table as is
-            databaseBuffer.append(tableBuilder);
-        }
-
-        /**
-         * Returns one byte of the buffer at a time. This buffer was completely
-         * loaded during construction. Consider a lazy approach or a
-         * multi-threaded one if too slow.
-         *
-         * @return @throws IOException
-         */
-        @Override
-        public int read() throws IOException {
-            //End of the buffer if true
-            if (currReadIndex == databaseBuffer.length() - 1) {
-                return NO_CONTENT_LEFT;
-            }
-
-            return databaseBuffer.charAt(currReadIndex++);
-        }
+    @Override
+    public void logWarning(String msg, Exception ex) {
+        logger.log(Level.WARNING, msg, ex); //NON-NLS
     }
 
     /*
@@ -279,7 +253,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         public void addRow(Collection<Object> vals) {
             List<String> rowValues = new ArrayList<>();
             vals.forEach((val) -> {
-                rowValues.add(String.valueOf(val));
+                rowValues.add(val.toString());
             });
             rows.add(rowValues.toArray(
                     new String[rowValues.size()]));

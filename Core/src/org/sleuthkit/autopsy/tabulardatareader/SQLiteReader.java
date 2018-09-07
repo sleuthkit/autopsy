@@ -101,7 +101,7 @@ public final class SQLiteReader extends AbstractReader {
         if (metaFiles != null) {
             for (AbstractFile metaFile : metaFiles) {
                 String tmpMetafilePathName = openCase.getTempDirectory() + 
-                        File.separator + metaFile.getId() + "-" + metaFile.getName();
+                        File.separator + metaFile.getId() + metaFile.getName();
                 File tmpMetafile = new File(tmpMetafilePathName);
                 ContentUtils.writeToFile(metaFile, tmpMetafile);
             }

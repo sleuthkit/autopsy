@@ -202,7 +202,6 @@ class TikaTextExtractor extends ContentTextExtractor {
                 ) {
             return false;
         }
-        System.out.println(detectedFormat);
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
 
