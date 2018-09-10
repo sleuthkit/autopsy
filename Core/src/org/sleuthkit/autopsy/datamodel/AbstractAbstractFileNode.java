@@ -343,23 +343,23 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         Score score = Score.NO_SCORE;
         String description = NO_DESCR;
         if (content.getKnown() == TskData.FileKnown.BAD) {
-            score = Score.SCORE_2;
+            score = Score.NOTABLE_SCORE;
             description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
         }
         try {
             if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
-                score = Score.SCORE_1;
+                score = Score.INTERESTING_SCORE;
                 description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
         }
-        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.SCORE_1)) {
-            score = Score.SCORE_1;
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
+            score = Score.INTERESTING_SCORE;
             description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
             for (ContentTag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = Score.SCORE_2;
+                    score = Score.NOTABLE_SCORE;
                     description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
                     break;
                 }

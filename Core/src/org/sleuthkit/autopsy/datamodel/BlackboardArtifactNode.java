@@ -623,24 +623,24 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         String description = "";
         if (associated instanceof AbstractFile) {
             if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
-                score = Score.SCORE_2;
+                score = Score.NOTABLE_SCORE;
                 description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
             }
         }
         try {
             if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
-                score = Score.SCORE_1;
+                score = Score.INTERESTING_SCORE;
                 description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting artifacts for artifact: " + content.getName(), ex);
         }
-        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.SCORE_1)) {
-            score = Score.SCORE_1;
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
+            score = Score.INTERESTING_SCORE;
             description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
             for (Tag tag : tags) {
                 if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = Score.SCORE_2;
+                    score = Score.NOTABLE_SCORE;
                     description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
                     break;
                 }
