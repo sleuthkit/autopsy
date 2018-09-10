@@ -302,12 +302,12 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         public String toString() {
             StringBuilder outputTable = new StringBuilder(charactersAdded);
             int[] colMaxWidths = getMaxWidthPerColumn();
-            int headerLength = 0;
+            int borderLength = 0;
 
             Iterator<String[]> rowIterator = rows.iterator();
             if (rowIterator.hasNext()) {
                 //Length of the header defines the table boundaries
-                headerLength = appendFormattedHeader(rowIterator.next(),
+                borderLength = appendFormattedHeader(rowIterator.next(),
                         colMaxWidths, outputTable);
 
                 while (rowIterator.hasNext()) {
@@ -315,7 +315,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                 }
 
                 outputTable.insert(0, tableName);
-                outputTable.append(createBorder(headerLength));
+                outputTable.append(createBorder(borderLength));
                 outputTable.append(NEW_LINE);
             }
 
@@ -367,14 +367,14 @@ public class SqliteTextExtractor extends ContentTextExtractor {
             appendFormattedRow(row, colMaxWidths, outputTable);
             //Printable table dimensions are equal to the length of the header minus
             //the number of escape sequences used to for formatting.
-            int barLength = outputTable.length() - ESCAPE_SEQUENCES;
-            String border = createBorder(barLength);
+            int borderLength = outputTable.length() - ESCAPE_SEQUENCES;
+            String border = createBorder(borderLength);
 
             //Surround the header with borders above and below.
             outputTable.insert(0, border);
             outputTable.append(border);
 
-            return barLength;
+            return borderLength;
         }
     }
 }
