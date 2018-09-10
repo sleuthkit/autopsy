@@ -42,11 +42,13 @@ public abstract class AbstractCommonAttributeSearcher {
     private final Map<Long, String> dataSourceIdToNameMap;
     private boolean filterByMedia;
     private boolean filterByDoc;
+    final int frequencyPercentageThreshold;
     
-    AbstractCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMedia, boolean filterByDoc){
+    AbstractCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMedia, boolean filterByDoc, int percentageThreshold){
         this.filterByDoc = filterByDoc;
         this.filterByMedia = filterByMedia;
         this.dataSourceIdToNameMap = dataSourceIdMap;
+        this.frequencyPercentageThreshold = percentageThreshold;
     }
     
     Map<Long, String> getDataSourceIdToNameMap(){
@@ -100,17 +102,18 @@ public abstract class AbstractCommonAttributeSearcher {
         }
     }
     
-    static Map<Integer, List<CommonAttributeValue>> collateMatchesByNumberOfInstances(Map<String, CommonAttributeValue> commonFiles) {
+    static Map<Integer, CommonAttributeValueList> collateMatchesByNumberOfInstances(Map<String, CommonAttributeValue> commonFiles) {
         //collate matches by number of matching instances - doing this in sql doesnt seem efficient
-        Map<Integer, List<CommonAttributeValue>> instanceCollatedCommonFiles = new TreeMap<>();
+        Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new TreeMap<>();
+        
         for(CommonAttributeValue md5Metadata : commonFiles.values()){
             Integer size = md5Metadata.getInstanceCount();
             
             if(instanceCollatedCommonFiles.containsKey(size)){
-                instanceCollatedCommonFiles.get(size).add(md5Metadata);
+                instanceCollatedCommonFiles.get(size).addMetadataToList(md5Metadata);
             } else {
-                ArrayList<CommonAttributeValue> value = new ArrayList<>();
-                value.add(md5Metadata);
+                CommonAttributeValueList value = new CommonAttributeValueList();
+                value.addMetadataToList(md5Metadata);
                 instanceCollatedCommonFiles.put(size, value);
             }
         }

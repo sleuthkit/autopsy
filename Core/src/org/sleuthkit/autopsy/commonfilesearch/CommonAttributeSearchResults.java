@@ -19,27 +19,37 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
  * Stores the results from the various types of common attribute searching
  * Stores results based on how they are currently displayed in the UI
  */
 final public class CommonAttributeSearchResults {
-    
+
     // maps instance count to list of attribute values. 
-    private final Map<Integer, List<CommonAttributeValue>> instanceCountToAttributeValues;
+    private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
+
+    private final int percentageThreshold;
     
     /**
      * Create a values object which can be handed off to the node factories.
-     * 
-     * @param values list of CommonAttributeValue indexed by size of 
+     *
+     * @param values list of CommonAttributeValue indexed by size of
      * CommonAttributeValue
      */
-    CommonAttributeSearchResults(Map<Integer, List<CommonAttributeValue>> metadata){
-        this.instanceCountToAttributeValues = metadata;
+    CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold) {
+        //wrap in a new object in case any client code has used an unmodifiable collection
+        this.instanceCountToAttributeValues = new HashMap<>(metadata);
+        this.percentageThreshold = percentageThreshold;
     }
 
     /**
@@ -48,32 +58,103 @@ final public class CommonAttributeSearchResults {
      * This is a convenience method - you can also iterate over
      * <code>getValues()</code>.
      *
-     * @param isntanceCound key
+     * @param instanceCount key
      * @return list of values which represent matches
      */
-    List<CommonAttributeValue> getAttributeValuesForInstanceCount(Integer instanceCount) {
+    CommonAttributeValueList getAttributeValuesForInstanceCount(Integer instanceCount) {
         return this.instanceCountToAttributeValues.get(instanceCount);
     }
 
- /**
-     * Get an unmodifiable collection of values, indexed by number of 
-     * grandchildren, which represents the common attributes found in the 
+    /**
+     * Get an unmodifiable collection of values, indexed by number of
+     * grandchildren, which represents the common attributes found in the
      * search.
+     *
      * @return map of sizes of children to list of matches
-     */    
-public Map<Integer, List<CommonAttributeValue>> getMetadata() {
+     */
+    public Map<Integer, CommonAttributeValueList> getMetadata() throws EamDbException {
+        if(this.percentageThreshold == 0){
+            return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+        } else {
+            return this.getMetadata(this.percentageThreshold);
+        }
+    }
+    
+    /**
+     * Get an unmodifiable collection of values, indexed by number of
+     * grandchildren, which represents the common attributes found in the
+     * search.
+     * 
+     * Remove results which are not found in the portion of available data 
+ sources described by maximumPercentageThreshold.
+     * 
+     * @return metadata
+     */
+    private Map<Integer, CommonAttributeValueList> getMetadata(int maximumPercentageThreshold) throws EamDbException {
+        
+        if(maximumPercentageThreshold == 0){
+            return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+        }
+        
+        CorrelationAttributeInstance.Type fileAttributeType = CorrelationAttributeInstance
+                .getDefaultCorrelationTypes()
+                .stream()
+                .filter(filterType -> filterType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
+                .findFirst().get();
+        
+        EamDb eamDb = EamDb.getInstance();
+        
+        Map<Integer, List<CommonAttributeValue>> itemsToRemove = new HashMap<>();
+        
+        for(Entry<Integer, CommonAttributeValueList> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
+            
+            final Integer key = listOfValues.getKey();
+            final CommonAttributeValueList values = listOfValues.getValue();
+            
+            for(CommonAttributeValue value : values.getDelayedMetadataList()){ // Need the real metadata
+                
+                int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
+                
+                if(frequencyPercentage > maximumPercentageThreshold){
+                    if(itemsToRemove.containsKey(key)){
+                        itemsToRemove.get(key).add(value);
+                    } else {
+                        List<CommonAttributeValue> toRemove = new ArrayList<>();
+                        toRemove.add(value);
+                        itemsToRemove.put(key, toRemove);
+                    }
+                }
+            }
+        }
+        
+        for(Entry<Integer, List<CommonAttributeValue>> valuesToRemove : itemsToRemove.entrySet()){
+            
+            final Integer key = valuesToRemove.getKey();
+            final List<CommonAttributeValue> values = valuesToRemove.getValue();
+            
+            for (CommonAttributeValue value : values){
+                final CommonAttributeValueList instanceCountValue = this.instanceCountToAttributeValues.get(key);
+                instanceCountValue.removeMetaData(value);
+                
+                if(instanceCountValue.getDelayedMetadataList().isEmpty()){ // Check the real metadata
+                    this.instanceCountToAttributeValues.remove(key);
+                }
+            }
+        }
+        
         return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
     /**
      * How many distinct common files exist for this search results?
+     *
      * @return number of common files
      */
     public int size() {
-                
+
         int count = 0;
-        for (List<CommonAttributeValue> data : this.instanceCountToAttributeValues.values()) {
-            for(CommonAttributeValue md5 : data){
+        for (CommonAttributeValueList data : this.instanceCountToAttributeValues.values()) {
+            for(CommonAttributeValue md5 : data.getMetadataList()){
                 count += md5.getInstanceCount();
             }
         }
