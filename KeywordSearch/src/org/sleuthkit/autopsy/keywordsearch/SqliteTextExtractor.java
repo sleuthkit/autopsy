@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.text.Segment;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
@@ -38,17 +39,21 @@ import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
  * Dedicated SqliteTextExtractor to solve the problems associated with Tika's
  * Sqlite parser.
  *
- * Tika problems: 
- *  1) Tika fails to open virtual tables 
- *  2) Tika fails to open tables with spaces in table name 
- *  3) Tika fails to include the table names in output (except for the first table it parses) 
- *  4) BasisTech > Apache
+ *  Tika problems: 
+ *      1) Tika fails to open virtual tables 
+ *      2) Tika fails to open tables with spaces in table name 
+ *      3) Tika fails to include the table names in output (except for the 
+ *         first table it parses)
  *
  */
 public class SqliteTextExtractor extends ContentTextExtractor {
 
     private final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
+    private final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
+
+    LinkedList<String> databaseContents;
+    Integer characterCount = 0;
 
     @Override
     boolean isContentTypeSpecific() {
@@ -90,17 +95,11 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
-        StringBuilder databaseBuffer = new StringBuilder();
-
         try (AbstractReader reader = FileReaderFactory.createReader(
                 SQLITE_MIMETYPE, source)) {
-            databaseBuffer = new StringBuilder();
-            //Fill the buffer with table names and table data
-            copyDatabaseIntoBuffer(source, reader, databaseBuffer);
-            //Once the buffer is full, wrap it into a CharSource and open the reader
-            //This is necessary to maintain integrity of unicode string. Returning 
-            //character by character will not work.
-            return CharSource.wrap(databaseBuffer.toString()).openStream();
+            final CharSequence databaseContents = getDatabaseContents(source, reader);
+            //CharSource will maintain unicode strings correctly
+            return CharSource.wrap(databaseContents).openStream();
         } catch (FileReaderInitException | IOException ex) {
             throw new TextExtractorException(
                     String.format("Encountered a FileReaderInitException" //NON-NLS
@@ -117,19 +116,43 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      *
      * @param reader         Sqlite reader for the content source
      * @param source         Sqlite file source
-     * @param databaseBuffer Buffer containing all of the database content
      */
-    private void copyDatabaseIntoBuffer(Content source, AbstractReader reader,
-            StringBuilder databaseBuffer) {
+    private CharSequence getDatabaseContents(Content source, AbstractReader reader) {
         try {
             Map<String, String> tables = reader.getTableSchemas();
-            copyDatabaseIntoBuffer(tables, reader, source, databaseBuffer);
+            databaseContents = new LinkedList<>();
+            copyDatabaseIntoBuffer(tables, reader, source, databaseContents);
+            return databaseContentsToCharSequence();
         } catch (AbstractReader.FileReaderException ex) {
             logger.log(Level.WARNING, String.format(
                     "Error attempting to get tables from file: " //NON-NLS
                     + "[%s] (id=%d).", source.getName(), //NON-NLS
                     source.getId()), ex);
         }
+
+        //Failed to get tables from file
+        return EMPTY_CHARACTER_SEQUENCE;
+    }
+
+    /**
+     * Copy linkedList elements into a character array to be wrapped into a 
+     * CharSequence.
+     * 
+     * @return A character seqeunces of the database contents
+     */
+    private CharSequence databaseContentsToCharSequence() {
+        final char[] databaseCharacters = new char[characterCount];
+
+        int currSequenceIndex = 0;
+        for (String table : databaseContents) {
+            System.arraycopy(table.toCharArray(), 0, databaseCharacters, currSequenceIndex, table.length());
+            currSequenceIndex += table.length();
+        }
+
+        //Segment class does not make an internal copy of the character array
+        //being passed in (more efficient). It also implements a CharSequences 
+        //necessary for the CharSource class to create a compatible reader.
+        return new Segment(databaseCharacters, 0, characterCount);
     }
 
     /**
@@ -140,10 +163,10 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      * @param tables         A map of table names to table schemas
      * @param reader         SqliteReader for interfacing with the database
      * @param source         Source database file for logging
-     * @param databaseBuffer Buffer containing all of the database content
+     * @param databaseContents List containing all of the database content
      */
     private void copyDatabaseIntoBuffer(Map<String, String> tables,
-            AbstractReader reader, Content source, StringBuilder databaseBuffer) {
+            AbstractReader reader, Content source, LinkedList<String> databaseContents) {
 
         for (String tableName : tables.keySet()) {
             TableBuilder tableBuilder = new TableBuilder();
@@ -152,16 +175,16 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                 List<Map<String, Object>> rowsInTable
                         = reader.getRowsFromTable(tableName);
                 if (!rowsInTable.isEmpty()) {
-                    //Create a collection from the header set, so that the TableBuilder
-                    //can easily format it
                     tableBuilder.addHeader(new ArrayList<>(
                             rowsInTable.get(0).keySet()));
                     for (Map<String, Object> row : rowsInTable) {
                         tableBuilder.addRow(row.values());
                     }
                 }
-                //If rowsInTable was empty, just append the table as is
-                databaseBuffer.append(tableBuilder);
+
+                String formattedTable = tableBuilder.toString();
+                characterCount += formattedTable.length();
+                databaseContents.add(formattedTable);
             } catch (AbstractReader.FileReaderException ex) {
                 logger.log(Level.WARNING, String.format(
                         "Error attempting to read file table: [%s]" //NON-NLS
@@ -177,7 +200,8 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      */
     private class TableBuilder {
 
-        private List<String[]> rows = new LinkedList<>();
+        private final List<String[]> rows = new LinkedList<>();
+        private Integer characterCount = 0;
 
         //Formatters
         private final String HORIZONTAL_DELIMITER = "-";
@@ -187,6 +211,9 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         private final String TAB = "\t";
         private final String NEW_LINE = "\n";
         private final String SPACE = " ";
+
+        //Number of escape sequences in the header row
+        private final int ESCAPE_SEQUENCES = 4;
 
         private String section = "";
 
@@ -235,6 +262,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
             List<String> rowValues = new ArrayList<>();
             vals.forEach((val) -> {
                 rowValues.add(val.toString());
+                characterCount += val.toString().length();
             });
             rows.add(rowValues.toArray(
                     new String[rowValues.size()]));
@@ -242,10 +270,8 @@ public class SqliteTextExtractor extends ContentTextExtractor {
 
         /**
          * Gets the max width of a cell in each column and the max number of
-         * columns in any given row. This ensures that there is enough space for
-         * even the longest entry and enough columns. The length of the string
-         * seems to be different from the length of the print statement in some
-         * languages. For instance, arabic will cause the table to look off.
+         * columns in any given row. This ensures that there are enough columns 
+         * and enough space for even the longest entry.
          *
          * @return
          */
@@ -277,7 +303,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
          */
         @Override
         public String toString() {
-            StringBuilder outputTable = new StringBuilder();
+            StringBuilder outputTable = new StringBuilder(characterCount);
 
             int barLength = 0;
             int[] colMaxWidths = getMaxWidthPerColumn();
@@ -289,7 +315,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                     //formatted header, minus the one tab added at the beginning
                     //of the row (we want to count the vertical delimiters since 
                     //we want it all to line up.
-                    barLength = outputTable.length() - 4;
+                    barLength = outputTable.length() - ESCAPE_SEQUENCES;
                 }
                 addFormattedHeaderToBuffer(outputTable, barLength, header);
                 header = false;
@@ -328,9 +354,8 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         /**
          * Outputs a fully formatted header.
          *
-         * Example: \t+----------------------+\n 
-         *          \t| Email | Phone | Name |\n
-         *          \t+----------------------+\n
+         * Example: \t+----------------------+\n \t| Email | Phone | Name |\n
+         * \t+----------------------+\n
          *
          * @param outputTable Buffer that formatted contents are written to
          * @param barLength   Length of the bar (i.e. +---------+) that will
