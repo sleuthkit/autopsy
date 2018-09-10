@@ -40,8 +40,10 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
      * Create a node which can be used in a multilayer tree table and is based
      * on an <code>AbstractFile</code>.
      *
-     * @param fsContent
-     * @param dataSource
+     * @param fsContent the file which is being represented by this node
+     * @param caseName the name of the case
+     * @param dataSource the datasource which contains the file
+     * 
      */
     public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
         super(fsContent);
