@@ -294,9 +294,8 @@ final class HashLookupSettings implements Serializable {
         
         /* NOTE: to support JIRA-4177, we need to check if any of the hash 
         database paths are in Windows user directory. If so, replace the path 
-        with USER_DIR_PLACEHOLDER so that it always gets updated to be the 
-        current user directory path. Therefore we have to modify HashLookupSettings
-        object contents that are stored to disk.
+        with USER_DIR_PLACEHOLDER so that when it is read, it gets updated to be 
+        the current user directory path. 
          */
         editHashDbPaths(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
@@ -309,37 +308,13 @@ final class HashLookupSettings implements Serializable {
             return false;
         }
     }
-    
-    static HashLookupSettings copyAndEditHashLookupSettings(HashLookupSettings settings) {
-        List<HashDbInfo> copyHashDbInfoList = new ArrayList<>();
-        for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
-            if (hashDbInfo.isFileDatabaseType()) {
-                String newPath = editPathInUserDir(hashDbInfo.getPath());
-                HashDbInfo copyHashDbInfo = new HashDbInfo(hashDbInfo.getHashSetName(), hashDbInfo.getKnownFilesType(), hashDbInfo.getSearchDuringIngest(), hashDbInfo.getSendIngestMessages(), newPath);
-                copyHashDbInfoList.add(copyHashDbInfo);
-            } else {
-                // we are only modifying data for FILE type databases, so for other types there is no need to create a copy object
-                copyHashDbInfoList.add(hashDbInfo);
-            }
-        }
-        HashLookupSettings copyOfSettings = new HashLookupSettings(copyHashDbInfoList);
-        return copyOfSettings;
-    }
 
-    static String editPathInUserDir(String dbPath) {
-        String newPath = dbPath;
-        if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
-            // replace the place holder with current user directory
-            String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
-            newPath = CURRENT_USER_DIR + remainingPath;
-        } else if (dbPath.startsWith(CURRENT_USER_DIR)) {
-            // replace the current user directory with place holder
-            String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
-            newPath = USER_DIR_PLACEHOLDER + remainingPath;
-        }
-        return newPath;
-    }
-    
+    /**
+     * For file type hash sets, check if hash set paths needs to be modified 
+     * per JIRA-4177.
+     * 
+     * @param settings HashLookupSettings settings object to examiner and modify
+     */
     static void editHashDbPaths(HashLookupSettings settings) {
         for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
             if (hashDbInfo.isFileDatabaseType()) {
@@ -348,6 +323,29 @@ final class HashLookupSettings implements Serializable {
             }
         }
     }
+    
+    /**
+     * If the file path is in current Windows user directory,
+     * replace the path with USER_DIR_PLACEHOLDER. And vice versa, 
+     * replace USER_DIR_PLACEHOLDER with path to current Windows user directory.
+     * 
+     * @param dbPath path to check
+     * @return path modified per algorithm above, original path otherwise
+     */
+    static String editPathInUserDir(String dbPath) {
+        if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
+            // replace the place holder with current user directory
+            String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
+            return CURRENT_USER_DIR + remainingPath;
+        } else if (dbPath.startsWith(CURRENT_USER_DIR)) {
+            // replace the current user directory with place holder
+            String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
+            return USER_DIR_PLACEHOLDER + remainingPath;
+        } else {
+            return dbPath;
+        }        
+    }
+
 
     /**
      * Represents the serializable information within a hash lookup in order to
