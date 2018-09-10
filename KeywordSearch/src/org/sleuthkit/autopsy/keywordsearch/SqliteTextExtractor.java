@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -39,21 +40,16 @@ import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
  * Dedicated SqliteTextExtractor to solve the problems associated with Tika's
  * Sqlite parser.
  *
- *  Tika problems: 
- *      1) Tika fails to open virtual tables 
- *      2) Tika fails to open tables with spaces in table name 
- *      3) Tika fails to include the table names in output (except for the 
- *         first table it parses)
- *
+ * Tika problems: 
+ *  1) Tika fails to open virtual tables 
+ *  2) Tika fails to open tables with spaces in table name 
+ *  3) Tika fails to include the table names in output (except for the first table it parses)
  */
 public class SqliteTextExtractor extends ContentTextExtractor {
 
     private final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
     private final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
-
-    LinkedList<String> databaseContents;
-    Integer characterCount = 0;
 
     @Override
     boolean isContentTypeSpecific() {
@@ -97,9 +93,9 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     public Reader getReader(Content source) throws TextExtractorException {
         try (AbstractReader reader = FileReaderFactory.createReader(
                 SQLITE_MIMETYPE, source)) {
-            final CharSequence databaseContents = getDatabaseContents(source, reader);
+            final CharSequence databaseContent = getDatabaseContents(source, reader);
             //CharSource will maintain unicode strings correctly
-            return CharSource.wrap(databaseContents).openStream();
+            return CharSource.wrap(databaseContent).openStream();
         } catch (FileReaderInitException | IOException ex) {
             throw new TextExtractorException(
                     String.format("Encountered a FileReaderInitException" //NON-NLS
@@ -114,15 +110,18 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      * TableBuilder, which formats the strings into a table view for clean
      * results while searching for keywords in the application.
      *
-     * @param reader         Sqlite reader for the content source
-     * @param source         Sqlite file source
+     * @param reader Sqlite reader for the content source
+     * @param source Sqlite file source
      */
     private CharSequence getDatabaseContents(Content source, AbstractReader reader) {
         try {
             Map<String, String> tables = reader.getTableSchemas();
-            databaseContents = new LinkedList<>();
-            copyDatabaseIntoBuffer(tables, reader, source, databaseContents);
-            return databaseContentsToCharSequence();
+            LinkedList<String> databaseStorage = new LinkedList<>();
+
+            Integer charactersCopied = loadDatabaseIntoList(databaseStorage,
+                    tables, reader, source);
+
+            return toCharSequence(databaseStorage, charactersCopied);
         } catch (AbstractReader.FileReaderException ex) {
             logger.log(Level.WARNING, String.format(
                     "Error attempting to get tables from file: " //NON-NLS
@@ -135,63 +134,66 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     /**
-     * Copy linkedList elements into a character array to be wrapped into a 
-     * CharSequence.
-     * 
-     * @return A character seqeunces of the database contents
-     */
-    private CharSequence databaseContentsToCharSequence() {
-        final char[] databaseCharacters = new char[characterCount];
-
-        int currSequenceIndex = 0;
-        for (String table : databaseContents) {
-            System.arraycopy(table.toCharArray(), 0, databaseCharacters, currSequenceIndex, table.length());
-            currSequenceIndex += table.length();
-        }
-
-        //Segment class does not make an internal copy of the character array
-        //being passed in (more efficient). It also implements a CharSequences 
-        //necessary for the CharSource class to create a compatible reader.
-        return new Segment(databaseCharacters, 0, characterCount);
-    }
-
-    /**
      * Iterates all of the tables and populate the TableBuilder with all of the
-     * rows from the table. This TableBuilder object string will be added to the
-     * databaseBuffer.
+     * rows from the table. The table string will be added to the list of
+     * contents.
      *
-     * @param tables         A map of table names to table schemas
-     * @param reader         SqliteReader for interfacing with the database
-     * @param source         Source database file for logging
-     * @param databaseContents List containing all of the database content
+     * @param databaseStorage List containing all of the database content
+     * @param tables          A map of table names to table schemas
+     * @param reader          SqliteReader for interfacing with the database
+     * @param source          Source database file for logging
      */
-    private void copyDatabaseIntoBuffer(Map<String, String> tables,
-            AbstractReader reader, Content source, LinkedList<String> databaseContents) {
+    private int loadDatabaseIntoList(LinkedList<String> databaseStorage,
+            Map<String, String> tables, AbstractReader reader, Content source) {
 
+        int charactersCopied = 0;
         for (String tableName : tables.keySet()) {
             TableBuilder tableBuilder = new TableBuilder();
-            tableBuilder.addSection(tableName);
+            tableBuilder.setTableName(tableName);
+
             try {
-                List<Map<String, Object>> rowsInTable
-                        = reader.getRowsFromTable(tableName);
+                List<Map<String, Object>> rowsInTable = reader.getRowsFromTable(tableName);
                 if (!rowsInTable.isEmpty()) {
-                    tableBuilder.addHeader(new ArrayList<>(
-                            rowsInTable.get(0).keySet()));
+                    tableBuilder.addHeader(new ArrayList<>(rowsInTable.get(0).keySet()));
                     for (Map<String, Object> row : rowsInTable) {
                         tableBuilder.addRow(row.values());
                     }
                 }
-
-                String formattedTable = tableBuilder.toString();
-                characterCount += formattedTable.length();
-                databaseContents.add(formattedTable);
             } catch (AbstractReader.FileReaderException ex) {
                 logger.log(Level.WARNING, String.format(
                         "Error attempting to read file table: [%s]" //NON-NLS
                         + " for file: [%s] (id=%d).", tableName, //NON-NLS
                         source.getName(), source.getId()), ex);
             }
+
+            String formattedTable = tableBuilder.toString();
+            charactersCopied += formattedTable.length();
+            databaseStorage.add(formattedTable);
         }
+        return charactersCopied;
+    }
+
+    /**
+     * Copy linkedList elements into a CharSequence
+     *
+     * @return A character seqeunces of the database contents
+     */
+    private CharSequence toCharSequence(LinkedList<String> databaseStorage,
+            int characterCount) {
+
+        final char[] databaseCharArray = new char[characterCount];
+
+        int currIndex = 0;
+        for (String table : databaseStorage) {
+            System.arraycopy(table.toCharArray(), 0, databaseCharArray,
+                    currIndex, table.length());
+            currIndex += table.length();
+        }
+
+        //Segment class does not make an internal copy of the character array
+        //being passed in (more efficient). It also implements a CharSequences 
+        //necessary for the CharSource class to create a compatible reader.
+        return new Segment(databaseCharArray, 0, characterCount);
     }
 
     /*
@@ -201,7 +203,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     private class TableBuilder {
 
         private final List<String[]> rows = new LinkedList<>();
-        private Integer characterCount = 0;
+        private Integer charactersAdded = 0;
 
         //Formatters
         private final String HORIZONTAL_DELIMITER = "-";
@@ -215,29 +217,24 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         //Number of escape sequences in the header row
         private final int ESCAPE_SEQUENCES = 4;
 
-        private String section = "";
+        private String tableName = "";
 
         /**
          * Add the section to the top left corner of the table. This is where
          * the name of the table should go.
          *
-         * @param section Table name
+         * @param tableName Table name
          */
-        public void addSection(String section) {
-            this.section = section + NEW_LINE + NEW_LINE;
+        public void setTableName(String tableName) {
+            this.tableName = tableName + NEW_LINE + NEW_LINE;
         }
 
         /**
-         * Creates a horizontal bar given the length param. These are used to
-         * box the header up and at the bottom of the table.
+         * Creates a border given the length param.
          *
          * @return Ex: \t+----------------------+\n
          */
-        private String buildHorizontalBar(int length) {
-            if (length == 0) {
-                return "";
-            }
-            //Output: \t+----------------------+\n
+        private String createBorder(int length) {
             return TAB + HEADER_CORNER + StringUtils.repeat(
                     HORIZONTAL_DELIMITER, length) + HEADER_CORNER + NEW_LINE;
         }
@@ -262,7 +259,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
             List<String> rowValues = new ArrayList<>();
             vals.forEach((val) -> {
                 rowValues.add(val.toString());
-                characterCount += val.toString().length();
+                charactersAdded += val.toString().length();
             });
             rows.add(rowValues.toArray(
                     new String[rowValues.size()]));
@@ -270,10 +267,10 @@ public class SqliteTextExtractor extends ContentTextExtractor {
 
         /**
          * Gets the max width of a cell in each column and the max number of
-         * columns in any given row. This ensures that there are enough columns 
+         * columns in any given row. This ensures that there are enough columns
          * and enough space for even the longest entry.
          *
-         * @return
+         * @return array of column widths
          */
         private int[] getMaxWidthPerColumn() {
             int maxNumberOfColumns = 0;
@@ -296,32 +293,31 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Returns a string version of the table, when printed to console it
-         * will be fully formatted.
+         * Returns a string version of the table, with all of the formatters and
+         * escape sequences necessary to print nicely in the console output.
          *
          * @return
          */
         @Override
         public String toString() {
-            StringBuilder outputTable = new StringBuilder(characterCount);
-
-            int barLength = 0;
+            StringBuilder outputTable = new StringBuilder(charactersAdded);
             int[] colMaxWidths = getMaxWidthPerColumn();
-            boolean header = true;
-            for (String[] row : rows) {
-                addFormattedRowToBuffer(row, colMaxWidths, outputTable);
-                if (header) {
-                    //Get the length of the horizontal bar from the length of the
-                    //formatted header, minus the one tab added at the beginning
-                    //of the row (we want to count the vertical delimiters since 
-                    //we want it all to line up.
-                    barLength = outputTable.length() - ESCAPE_SEQUENCES;
+            int headerLength = 0;
+
+            Iterator<String[]> rowIterator = rows.iterator();
+            if (rowIterator.hasNext()) {
+                //Length of the header defines the table boundaries
+                headerLength = appendFormattedHeader(rowIterator.next(),
+                        colMaxWidths, outputTable);
+
+                while (rowIterator.hasNext()) {
+                    appendFormattedRow(rowIterator.next(), colMaxWidths, outputTable);
                 }
-                addFormattedHeaderToBuffer(outputTable, barLength, header);
-                header = false;
+
+                outputTable.insert(0, tableName);
+                outputTable.append(createBorder(headerLength));
+                outputTable.append(NEW_LINE);
             }
-            outputTable.append(buildHorizontalBar(barLength));
-            outputTable.append(NEW_LINE);
 
             return outputTable.toString();
         }
@@ -336,7 +332,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
          *                     everything is pretty printed.
          * @param outputTable  Buffer that formatted contents are written to
          */
-        private void addFormattedRowToBuffer(String[] row,
+        private void appendFormattedRow(String[] row,
                 int[] colMaxWidths, StringBuilder outputTable) {
             outputTable.append(TAB);
             for (int colNum = 0; colNum < row.length; colNum++) {
@@ -352,25 +348,33 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Outputs a fully formatted header.
+         * Adds a fully formatted header to the table builder and returns the
+         * length of this header. The length of the header is needed to set the
+         * table boundaries
          *
-         * Example: \t+----------------------+\n \t| Email | Phone | Name |\n
-         * \t+----------------------+\n
+         * Example: \t+----------------------+\n 
+         *          \t| Email | Phone | Name |\n
+         *          \t+----------------------+\n
          *
-         * @param outputTable Buffer that formatted contents are written to
-         * @param barLength   Length of the bar (i.e. +---------+) that will
-         *                    surround the header, based off of the length of
-         *                    the formatted header row
-         * @param needsHeader Boolean denoting if the header has been added to
-         *                    the buffer
+         * @param row          Array of contents in each column
+         * @param colMaxWidths Widths for each column in the table
+         * @param outputTable  Output stringbuilder
+         *
+         * @return length of the formatted header, this length will be needed to
+         *         correctly print the bottom table border.
          */
-        private void addFormattedHeaderToBuffer(StringBuilder outputTable,
-                int barLength, boolean needsHeader) {
-            if (needsHeader) {
-                outputTable.insert(0, buildHorizontalBar(barLength));
-                outputTable.insert(0, section);
-                outputTable.append(buildHorizontalBar(barLength));
-            }
+        private int appendFormattedHeader(String[] row, int[] colMaxWidths, StringBuilder outputTable) {
+            appendFormattedRow(row, colMaxWidths, outputTable);
+            //Printable table dimensions are equal to the length of the header minus
+            //the number of escape sequences used to for formatting.
+            int barLength = outputTable.length() - ESCAPE_SEQUENCES;
+            String border = createBorder(barLength);
+
+            //Surround the header with borders above and below.
+            outputTable.insert(0, border);
+            outputTable.append(border);
+
+            return barLength;
         }
     }
 }
