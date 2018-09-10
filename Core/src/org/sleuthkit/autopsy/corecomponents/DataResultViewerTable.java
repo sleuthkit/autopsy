@@ -86,7 +86,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
-    private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/notepad16.png", false));
+    private static final String NOTEPAD_ICON_PATH = "org/sleuthkit/autopsy/images/notepad16.png";
+    private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage(NOTEPAD_ICON_PATH, false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
