@@ -135,7 +135,7 @@ final class HashLookupSettings implements Serializable {
                 with USER_DIR_PLACEHOLDER before saving to disk. When reading from disk, 
                 USER_DIR_PLACEHOLDER needs to be replaced with current user directory path.
                  */
-                editHashDbPaths(filesSetsSettings);
+                convertPlaceholderToPath(filesSetsSettings);
                 return filesSetsSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
@@ -297,11 +297,11 @@ final class HashLookupSettings implements Serializable {
         with USER_DIR_PLACEHOLDER so that when it is read, it gets updated to be 
         the current user directory path. 
          */
-        editHashDbPaths(settings);
+        convertPathToPlaceholder(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
             out.writeObject(settings);
             // restore the paths, in case they are going to be used somewhere
-            editHashDbPaths(settings);
+            convertPlaceholderToPath(settings);
             return true;
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Could not write hash set settings.");
@@ -311,39 +311,42 @@ final class HashLookupSettings implements Serializable {
 
     /**
      * For file type hash sets, check if hash set paths needs to be modified 
-     * per JIRA-4177.
+     * per JIRA-4177. If the file path is in current Windows user directory,
+     * replace the path with USER_DIR_PLACEHOLDER.
      * 
      * @param settings HashLookupSettings settings object to examiner and modify
      */
-    static void editHashDbPaths(HashLookupSettings settings) {
+    static void convertPathToPlaceholder(HashLookupSettings settings) {
         for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
             if (hashDbInfo.isFileDatabaseType()) {
-                String newPath = editPathInUserDir(hashDbInfo.getPath());
-                hashDbInfo.setPath(newPath);
+                String dbPath = hashDbInfo.getPath();
+                if (dbPath.startsWith(CURRENT_USER_DIR)) {
+                    // replace the current user directory with place holder
+                    String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
+                    hashDbInfo.setPath(USER_DIR_PLACEHOLDER + remainingPath);
+                }
             }
         }
     }
     
     /**
-     * If the file path is in current Windows user directory,
-     * replace the path with USER_DIR_PLACEHOLDER. And vice versa, 
-     * replace USER_DIR_PLACEHOLDER with path to current Windows user directory.
-     * 
-     * @param dbPath path to check
-     * @return path modified per algorithm above, original path otherwise
+     * For file type hash sets, check if hash set paths needs to be modified per
+     * JIRA-4177. Replace USER_DIR_PLACEHOLDER with path to current Windows user
+     * directory.
+     *
+     * @param settings HashLookupSettings settings object to examiner and modify
      */
-    static String editPathInUserDir(String dbPath) {
-        if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
-            // replace the place holder with current user directory
-            String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
-            return CURRENT_USER_DIR + remainingPath;
-        } else if (dbPath.startsWith(CURRENT_USER_DIR)) {
-            // replace the current user directory with place holder
-            String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
-            return USER_DIR_PLACEHOLDER + remainingPath;
-        } else {
-            return dbPath;
-        }        
+    static void convertPlaceholderToPath(HashLookupSettings settings) {
+        for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
+            if (hashDbInfo.isFileDatabaseType()) {
+                String dbPath = hashDbInfo.getPath();
+                if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
+                    // replace the place holder with current user directory
+                    String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
+                    hashDbInfo.setPath(CURRENT_USER_DIR + remainingPath);
+                }
+            }
+        }
     }
 
 
