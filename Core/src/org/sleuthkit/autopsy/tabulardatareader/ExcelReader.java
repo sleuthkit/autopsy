@@ -159,6 +159,7 @@ public final class ExcelReader extends AbstractReader {
     }
     
     /**
+     * Returns a map of column numbers to a list of column values.
      * 
      * @param tableName
      * @return

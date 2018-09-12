@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -277,11 +276,14 @@ public final class SQLiteReader extends AbstractReader {
     }
     
     /**
+     * Returns a column view of the table. Maps the column name to a list of that 
+     * column's values.
      * 
      * @param tableName
      * @return
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
+    @Override
     public Map<String, List<Object>> getColumnsFromTable(String tableName) 
             throws FileReaderException {
         

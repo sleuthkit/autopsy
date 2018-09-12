@@ -89,9 +89,10 @@ public abstract class AbstractReader implements AutoCloseable {
     public abstract List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException;
 
     /**
+     * Returns a map of column names to a list of column values.
      * 
      * @param tableName
-     * @return
+     * @return A map of column names to a list of column values
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
      */
     public abstract Map<String, List<Object>> getColumnsFromTable(String tableName) throws FileReaderException;
