@@ -453,8 +453,7 @@ public class GroupManager {
             setGroupBy(groupBy);
             setSortBy(sortBy);
             setSortOrder(sortOrder);
-
-            regrouper.restart();
+            Platform.runLater(regrouper::restart);
         } else {
             // resort the list of groups
             setSortBy(sortBy);
