@@ -52,6 +52,9 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -100,9 +103,6 @@ public class GroupManager {
 
     private final ImageGalleryController controller;
 
-    @GuardedBy("this") //NOPMD
-    boolean regrouping;
-
     /** list of all analyzed groups */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
@@ -119,9 +119,6 @@ public class GroupManager {
     @GuardedBy("this") //NOPMD
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
-    @GuardedBy("this") //NOPMD
-    private ReGroupTask<?> groupByTask;
-
     /*
      * --- current grouping/sorting attributes ---
      */
@@ -131,7 +128,7 @@ public class GroupManager {
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
 
-    private final ReadOnlyDoubleWrapper regroupProgress = new ReadOnlyDoubleWrapper();
+    private final GroupingService regrouper;
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableList<DrawableGroup> getAnalyzedGroups() {
@@ -150,6 +147,8 @@ public class GroupManager {
      */
     public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
+        this.regrouper = new GroupingService();
+        regrouper.setExecutor(exec);
     }
 
     /**
@@ -208,10 +207,8 @@ public class GroupManager {
     }
 
     synchronized public void reset() {
-        if (groupByTask != null) {
-            groupByTask.cancel(true);
-            regrouping = false;
-        }
+        regrouper.cancel();
+
         setSortBy(GroupSortBy.GROUP_BY_VALUE);
         setGroupBy(DrawableAttribute.PATH);
         setSortOrder(SortOrder.ASCENDING);
@@ -226,8 +223,14 @@ public class GroupManager {
         groupMap.clear();
     }
 
-    synchronized public boolean isRegrouping() {
-        return regrouping;
+    public boolean isRegrouping() {
+        Worker.State state = regrouper.getState();
+        return Arrays.asList(Worker.State.READY, Worker.State.RUNNING, Worker.State.SCHEDULED)
+                .contains(state);
+    }
+
+    public ReadOnlyObjectProperty<Worker.State> reGroupingState() {
+        return regrouper.stateProperty();
     }
 
     /**
@@ -450,13 +453,8 @@ public class GroupManager {
             setGroupBy(groupBy);
             setSortBy(sortBy);
             setSortOrder(sortOrder);
-            if (groupByTask != null) {
-                groupByTask.cancel(true);
-            }
-            regrouping = true;
-            groupByTask = new ReGroupTask<>(dataSource, groupBy, sortBy, sortOrder);
-            Platform.runLater(() -> regroupProgress.bind(groupByTask.progressProperty()));
-            exec.submit(groupByTask);
+
+            regrouper.restart();
         } else {
             // resort the list of groups
             setSortBy(sortBy);
@@ -467,7 +465,7 @@ public class GroupManager {
     }
 
     public ReadOnlyDoubleProperty regroupProgress() {
-        return regroupProgress.getReadOnlyProperty();
+        return regrouper.progressProperty();
     }
 
     @Subscribe
@@ -644,7 +642,7 @@ public class GroupManager {
         "# {0} - groupBy attribute Name",
         "# {1} - atribute value",
         "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
-    private class ReGroupTask<AttrValType extends Comparable<AttrValType>> extends LoggedTask<Void> {
+    class ReGroupTask<AttrValType extends Comparable<AttrValType>> extends LoggedTask<Void> {
 
         private final DataSource dataSource;
         private final DrawableAttribute<AttrValType> groupBy;
@@ -691,7 +689,6 @@ public class GroupManager {
                         groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
                         popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
                     }
-                    regrouping = false;
 
                     Optional<DrawableGroup> viewedGroup
                             = Optional.ofNullable(controller.getViewState())
@@ -705,12 +702,31 @@ public class GroupManager {
                                     .orElse(null);
                     /* if no group or if groupbies are different or if data
                      * source != null and does not equal group */
-                    if (viewedGroup.isPresent() == false
-                        || (getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))
-                        || getGroupBy() != attributeOfCurrentGroup) {
+                    if (viewedGroup.isPresent() == false) {
 
                         //the current group should not be visible so ...
                         if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
+                            controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                        } else if (isNotEmpty(analyzedGroups)) {
+                            //show the first analyzed group.
+                            controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                        } else { //there are no groups,  clear the group area.
+                            controller.advance(GroupViewState.tile(null));
+                        }
+                    } else if ((getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))) {
+
+                        //the current group should not be visible so ...
+                        if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
+                            controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                        } else if (isNotEmpty(analyzedGroups)) {
+                            //show the first analyzed group.
+                            controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                        } else { //there are no groups,  clear the group area.
+                            controller.advance(GroupViewState.tile(null));
+                        }
+                    } else if (getGroupBy() != attributeOfCurrentGroup) {
+                        //the current group should not be visible so ...
+                        if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
                             controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
                         } else if (isNotEmpty(analyzedGroups)) {
                             //show the first analyzed group.
@@ -831,5 +847,15 @@ public class GroupManager {
      */
     private DrawableDB getDrawableDB() {
         return controller.getDatabase();
+    }
+
+    class GroupingService extends Service< Void> {
+
+        @Override
+        protected Task<Void> createTask() {
+            synchronized (GroupManager.this) {
+                return new ReGroupTask<>(getDataSource(), getGroupBy(), getSortBy(), getSortOrder());
+            }
+        }
     }
 }

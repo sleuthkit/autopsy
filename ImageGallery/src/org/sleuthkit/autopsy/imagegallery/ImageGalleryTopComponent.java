@@ -261,11 +261,16 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                 SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
                 splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
                 splitPane.setDividerPositions(0.1, 1.0);
+
                 InvalidationListener checkGroupsListener = (Observable observable) -> checkForGroups();
-                controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListener);
-                controller.getGroupManager().getUnSeenGroups().addListener(checkGroupsListener);
+                controller.getGroupManager().reGroupingState().addListener(checkGroupsListener);
                 controller.regroupDisabledProperty().addListener(checkGroupsListener);
-                checkForGroups();
+
+                InvalidationListener checkGroupsListenerFX = (Observable observable) -> Platform.runLater(() -> checkForGroups());
+                controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListenerFX);
+                controller.getGroupManager().getUnSeenGroups().addListener(checkGroupsListenerFX);
+
+                Platform.runLater(() -> checkForGroups());
             }
         });
     }
@@ -328,6 +333,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      * GroupManager and remove blocking progress spinners if there are. If there
      * aren't, add a blocking progress spinner with appropriate message.
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
         "ImageGalleryController.noGroupsDlg.msg1=No groups are fully analyzed; but listening to ingest is disabled. "
         + " No groups will be available until ingest is finished and listening is re-enabled.",
@@ -339,45 +345,40 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:"
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
-    synchronized private void checkForGroups() {
+    private void checkForGroups() {
         GroupManager groupManager = controller.getGroupManager();
         synchronized (groupManager) {
             if (isNotEmpty(groupManager.getAnalyzedGroups())) {
-                Platform.runLater(this::clearNotification);
+                clearNotification();
                 return;
             }
 
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (controller.isListeningEnabled()) {
-                    Platform.runLater(()
-                            -> replaceNotification(centralStack,
-                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                            new ProgressIndicator())));
+                    replaceNotification(centralStack,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                    new ProgressIndicator()));
                 } else {
-                    Platform.runLater(()
-                            -> replaceNotification(fullUIStack,
-                                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1())));
+                    replaceNotification(fullUIStack,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
                 }
                 return;
             }
             if (controller.getDBTasksQueueSizeProperty().get() > 0) {
-                Platform.runLater(()
-                        -> replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                        new ProgressIndicator())));
+                replaceNotification(fullUIStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                                new ProgressIndicator()));
                 return;
             }
             try {
                 if (controller.getDatabase().countAllFiles() <= 0) {
                     // there are no files in db
                     if (controller.isListeningEnabled()) {
-                        Platform.runLater(()
-                                -> replaceNotification(fullUIStack,
-                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5())));
+                        replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
                     } else {
-                        Platform.runLater(()
-                                -> replaceNotification(fullUIStack,
-                                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4())));
+                        replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
                     }
                     return;
                 }
@@ -386,9 +387,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             }
 
             if (false == groupManager.isRegrouping()) {
-                Platform.runLater(()
-                        -> replaceNotification(centralStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6())));
+                replaceNotification(centralStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
             }
         }
     }
@@ -409,6 +409,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         fullUIStack.getChildren().remove(infoOverlay);
         //remove the ingest spinner
         centralStack.getChildren().remove(infoOverlay);
+
     }
 
     /**
