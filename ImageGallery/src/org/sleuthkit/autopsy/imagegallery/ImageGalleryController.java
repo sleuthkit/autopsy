@@ -149,7 +149,7 @@ public final class ImageGalleryController {
         return groupManager;
     }
 
-    synchronized public DrawableDB getDatabase() {
+    public DrawableDB getDatabase() {
         return drawableDB;
     }
 
