@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,18 +23,21 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Observable;
+import java.util.Observer;
 import javax.swing.ComboBoxModel;
+
 /**
  * UI controls for Common Files Search scenario where the user intends to find
- * common files between datasources. It is an inner panel which provides the ability
- * to select all datasources or a single datasource from a dropdown list of
- * sources in the current case.
+ * common files between datasources. It is an inner panel which provides the
+ * ability to select all datasources or a single datasource from a dropdown list
+ * of sources in the current case.
  */
-public class IntraCasePanel extends javax.swing.JPanel {
-    
+public final class IntraCasePanel extends javax.swing.JPanel {
+
     private static final long serialVersionUID = 1L;
     static final long NO_DATA_SOURCE_SELECTED = -1;
-        
+    private final Observable fileTypeFilterObservable;
     private boolean singleDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private final Map<Long, String> dataSourceMap;
@@ -46,25 +49,51 @@ public class IntraCasePanel extends javax.swing.JPanel {
         initComponents();
         this.dataSourceMap = new HashMap<>();
         this.singleDataSource = true;
+        this.onlySpecificDataSourceCheckbox.setEnabled(true);
+        fileTypeFilterObservable = new Observable() {
+            @Override 
+            public void notifyObservers(){
+                //set changed before notify observers
+                //we want this observerable to always cause the observer to update when notified
+                this.setChanged();
+                super.notifyObservers();
+            }
+        };
     }
-    
-    public Map<Long, String> getDataSourceMap(){
+
+    void addObserver(Observer observer) {
+        fileTypeFilterObservable.addObserver(observer);
+    }
+
+    Map<Long, String> getDataSourceMap() {
         return Collections.unmodifiableMap(this.dataSourceMap);
     }
-    
-    Long getSelectedDataSourceId(){
-        if(!this.singleDataSource){
+
+    Long getSelectedDataSourceId() {
+        if (!this.singleDataSource) {
             return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
         }
-        
-        for(Entry<Long, String> entry : this.dataSourceMap.entrySet()){
-            if(entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())){
+
+        for (Entry<Long, String> entry : this.dataSourceMap.entrySet()) {
+            if (entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())) {
                 return entry.getKey();
             }
         }
-        
+
         return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
-    }    
+    }
+
+    boolean fileCategoriesButtonIsSelected() {
+        return selectedFileCategoriesButton.isSelected();
+    }
+
+    boolean pictureVideoCheckboxIsSelected() {
+        return pictureVideoCheckbox.isEnabled() && pictureVideoCheckbox.isSelected();
+    }
+
+    boolean documentsCheckboxIsSelected() {
+        return documentsCheckbox.isEnabled() && documentsCheckbox.isSelected();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -76,31 +105,63 @@ public class IntraCasePanel extends javax.swing.JPanel {
     private void initComponents() {
 
         buttonGroup = new javax.swing.ButtonGroup();
-        allDataSourcesRadioButton = new javax.swing.JRadioButton();
-        withinDataSourceRadioButton = new javax.swing.JRadioButton();
         selectDataSourceComboBox = new javax.swing.JComboBox<>();
-
-        buttonGroup.add(allDataSourcesRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(allDataSourcesRadioButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allDataSourcesRadioButton.text")); // NOI18N
-        allDataSourcesRadioButton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        allDataSourcesRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                allDataSourcesRadioButtonActionPerformed(evt);
-            }
-        });
-
-        buttonGroup.add(withinDataSourceRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(withinDataSourceRadioButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.withinDataSourceRadioButton.text")); // NOI18N
-        withinDataSourceRadioButton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        withinDataSourceRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                withinDataSourceRadioButtonActionPerformed(evt);
-            }
-        });
+        categoriesLabel = new javax.swing.JLabel();
+        selectedFileCategoriesButton = new javax.swing.JRadioButton();
+        pictureVideoCheckbox = new javax.swing.JCheckBox();
+        documentsCheckbox = new javax.swing.JCheckBox();
+        allFileCategoriesRadioButton = new javax.swing.JRadioButton();
+        onlySpecificDataSourceCheckbox = new javax.swing.JCheckBox();
 
         selectDataSourceComboBox.setModel(dataSourcesList);
-        selectDataSourceComboBox.setActionCommand(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectDataSourceComboBox.actionCommand")); // NOI18N
         selectDataSourceComboBox.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(categoriesLabel, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.categoriesLabel.text")); // NOI18N
+        categoriesLabel.setName(""); // NOI18N
+
+        buttonGroup.add(selectedFileCategoriesButton);
+        org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectedFileCategoriesButton.text")); // NOI18N
+        selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
+        selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectedFileCategoriesButtonActionPerformed(evt);
+            }
+        });
+
+        pictureVideoCheckbox.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.pictureVideoCheckbox.text")); // NOI18N
+        pictureVideoCheckbox.setEnabled(false);
+        pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pictureVideoCheckboxActionPerformed(evt);
+            }
+        });
+
+        documentsCheckbox.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.documentsCheckbox.text")); // NOI18N
+        documentsCheckbox.setEnabled(false);
+        documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                documentsCheckboxActionPerformed(evt);
+            }
+        });
+
+        buttonGroup.add(allFileCategoriesRadioButton);
+        allFileCategoriesRadioButton.setSelected(true);
+        org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allFileCategoriesRadioButton.text")); // NOI18N
+        allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
+        allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                allFileCategoriesRadioButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(onlySpecificDataSourceCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.onlySpecificDataSourceCheckbox.text")); // NOI18N
+        onlySpecificDataSourceCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                onlySpecificDataSourceCheckboxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -109,34 +170,69 @@ public class IntraCasePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(allDataSourcesRadioButton)
-                            .addComponent(withinDataSourceRadioButton)))
+                        .addGap(21, 21, 21)
+                        .addComponent(selectDataSourceComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(categoriesLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(19, 19, 19)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(allFileCategoriesRadioButton)
+                                    .addComponent(selectedFileCategoriesButton)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(21, 21, 21)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(documentsCheckbox)
+                                            .addComponent(pictureVideoCheckbox))))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+            .addComponent(onlySpecificDataSourceCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(allDataSourcesRadioButton)
+                .addContainerGap()
+                .addComponent(onlySpecificDataSourceCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(withinDataSourceRadioButton)
+                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(categoriesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(allFileCategoriesRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(selectedFileCategoriesButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pictureVideoCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(documentsCheckbox)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void allDataSourcesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allDataSourcesRadioButtonActionPerformed
-        selectDataSourceComboBox.setEnabled(!allDataSourcesRadioButton.isSelected());
-        singleDataSource = false;
-    }//GEN-LAST:event_allDataSourcesRadioButtonActionPerformed
+    private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
+        pictureVideoCheckbox.setEnabled(true);
+        documentsCheckbox.setEnabled(true);
+        fileTypeFilterObservable.notifyObservers();
+    }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
 
-    private void withinDataSourceRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_withinDataSourceRadioButtonActionPerformed
-        withinDataSourceSelected(withinDataSourceRadioButton.isSelected());
-    }//GEN-LAST:event_withinDataSourceRadioButtonActionPerformed
+    private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
+        pictureVideoCheckbox.setEnabled(false);
+        documentsCheckbox.setEnabled(false);
+        fileTypeFilterObservable.notifyObservers();
+    }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
+
+    private void onlySpecificDataSourceCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onlySpecificDataSourceCheckboxActionPerformed
+        this.withinDataSourceSelected(onlySpecificDataSourceCheckbox.isSelected());
+    }//GEN-LAST:event_onlySpecificDataSourceCheckboxActionPerformed
+
+    private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
+        fileTypeFilterObservable.notifyObservers();
+    }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
+
+    private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
+        fileTypeFilterObservable.notifyObservers();
+    }//GEN-LAST:event_documentsCheckboxActionPerformed
 
     private void withinDataSourceSelected(boolean selected) {
         selectDataSourceComboBox.setEnabled(selected);
@@ -147,23 +243,19 @@ public class IntraCasePanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JRadioButton allDataSourcesRadioButton;
+    private javax.swing.JRadioButton allFileCategoriesRadioButton;
     private javax.swing.ButtonGroup buttonGroup;
+    private javax.swing.JLabel categoriesLabel;
+    private javax.swing.JCheckBox documentsCheckbox;
+    private javax.swing.JCheckBox onlySpecificDataSourceCheckbox;
+    private javax.swing.JCheckBox pictureVideoCheckbox;
     private javax.swing.JComboBox<String> selectDataSourceComboBox;
-    private javax.swing.JRadioButton withinDataSourceRadioButton;
+    private javax.swing.JRadioButton selectedFileCategoriesButton;
     // End of variables declaration//GEN-END:variables
 
     void setDataModel(DataSourceComboBoxModel dataSourceComboBoxModel) {
         this.dataSourcesList = dataSourceComboBoxModel;
         this.selectDataSourceComboBox.setModel(dataSourcesList);
-    }
-
-    void rigForMultipleDataSources(boolean multipleDataSources) {
-        this.withinDataSourceRadioButton.setEnabled(multipleDataSources);
-        this.allDataSourcesRadioButton.setSelected(!multipleDataSources);
-        this.withinDataSourceRadioButton.setSelected(multipleDataSources);
-        this.withinDataSourceSelected(multipleDataSources);
-        
     }
 
     void setDataSourceMap(Map<Long, String> dataSourceMap) {
