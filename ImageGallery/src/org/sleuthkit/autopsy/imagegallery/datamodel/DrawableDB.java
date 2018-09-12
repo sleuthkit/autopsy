@@ -89,6 +89,7 @@ public final class DrawableDB {
     private static final String HASH_SET_NAME = "hash_set_name"; //NON-NLS
     
     private static final String GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
+    private static final String GROUPS_SEEN_TABLENAME = "image_gallery_groups_seen"; //NON-NLS
 
     private final PreparedStatement insertHashSetStmt;
 
@@ -124,7 +125,7 @@ public final class DrawableDB {
     private final PreparedStatement hashSetGroupStmt;
 
     /**
-     * map from {@link DrawableAttribute} to the {@link PreparedStatement} thet
+     * map from {@link DrawableAttribute} to the {@link PreparedStatement} that
      * is used to select groups for that attribute
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
@@ -407,9 +408,11 @@ public final class DrawableDB {
             return false;
         }
 
-        // The ig_groups table is created in the Case Database
+        String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER" ;
+        
+        // The image_gallery_groups table is created in the Case Database
         try {
-            String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "SERIAL" : "INTEGER" ;
+            
             String tableSchema = 
                     "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
                     + " value VARCHAR(255) not null, " //NON-NLS
@@ -423,7 +426,27 @@ public final class DrawableDB {
              LOGGER.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
             return false;
         }
-
+        
+        // The image_gallery_groups_seen table is created in the Case Database
+        try {
+            
+            String tableSchema = 
+                    "( id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
+                    + " group_id integer not null, " //NON-NLS
+                    + " examiner_id integer not null, " //NON-NLS
+                    + " seen integer DEFAULT 0, " //NON-NLS
+                    + " UNIQUE(group_id, examiner_id),"
+                    + " FOREIGN KEY(group_id) REFERENCES " + GROUPS_TABLENAME +"(group_id),"
+                    + " FOREIGN KEY(examiner_id) REFERENCES  tsk_examiners(examiner_id)"
+                    + " )"; //NON-NLS
+            
+            tskCase.getCaseDbAccessManager().createTable(GROUPS_SEEN_TABLENAME, tableSchema);
+        }
+        catch (TskCoreException ex) {
+             LOGGER.log(Level.SEVERE, "problem creating groups_seen table", ex); //NON-NLS
+            return false;
+        }
+        
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists hash_sets " //NON-NLS
                     + "( hash_set_id INTEGER primary key," //NON-NLS
@@ -568,8 +591,16 @@ public final class DrawableDB {
         return names;
     }
 
-    public boolean isGroupSeen(GroupKey<?> groupKey) {
-
+    /**
+     * Returns true if the specified group has been seen by the specified examiner
+     * 
+     * @param groupKey - key to identify the group
+     * @param examinerId
+     * 
+     * @return true if the examine has this group, false otherwise
+     */
+    public boolean isGroupSeenByExaminer(GroupKey<?> groupKey, long examinerId) {
+        
         // Callback to process result of seen query
         class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
             private boolean seen = false;
@@ -592,9 +623,64 @@ public final class DrawableDB {
                 }
             }
         }
+        try {
+            
+             // query to find the group id from attribute/value
+            String groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                                    " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName() );
+            
+            String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_SEEN_TABLENAME + " WHERE examiner_id = %d AND group_id in ( %s )",  examinerId, groupIdQuery);
+            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
+           
+            tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
+            return queryResultProcessor.getGroupSeen();
+        }
+        catch (TskCoreException ex) {
+            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
+            LOGGER.log(Level.WARNING, msg, ex);
+        }
+
+        return false;
+    }
+    
+    /**
+     * Returns true if the specified group has been any examiner
+     * 
+     * @param groupKey
+     * @return 
+     */
+    public boolean isGroupSeen(GroupKey<?> groupKey) {
+
+        // Callback to process result of seen query
+        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
+            private boolean seen = false;
+            
+            boolean getGroupSeen() { 
+                return seen;
+            }
+            
+            @Override
+            public void process(ResultSet resultSet) {
+                try {
+                    if (resultSet != null) {
+                        while (resultSet.next()) {
+                            int count = resultSet.getInt("count");
+                            seen = count > 0;
+                            return;
+                        }
+                    }
+                } catch (SQLException ex) {
+                    LOGGER.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
+                }
+            }
+        }
         
         try {
-            String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\'",  groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString() );
+             // query to find the group id from attribute/value
+            String groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                                    " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName() );
+            
+            String groupSeenQueryStmt = String.format("COUNT((*) as count FROM " + GROUPS_SEEN_TABLENAME + " WHERE seen = 1 AND group_id in ( %s )", groupIdQuery);
             GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
            
             tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
@@ -608,11 +694,19 @@ public final class DrawableDB {
         return false;
     }
 
-    public void markGroupSeen(GroupKey<?> gk, boolean seen) {
+    public void markGroupSeen(GroupKey<?> gk, boolean seen, long examiner_id) {
         try {
-            String updateSQL = String.format("set seen = %d where value = \'%s\' and attribute = \'%s\'", seen ? 1 : 0, 
-                                                            gk.getValueDisplayName(), gk.getAttribute().attrName.toString() );
-            tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
+            // query to find the group id from attribute/value
+            String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                                    " WHERE attribute = \'%s\' AND value = \'%s\' )", gk.getAttribute().attrName.toString(), gk.getValueDisplayName() );
+            
+            String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examiner_id, seen ? 1: 0);
+            
+            if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+                insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", seen ? 1: 0);
+            }
+
+            tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
         }
@@ -1088,18 +1182,16 @@ public final class DrawableDB {
     private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
         String insertSQL = "";
         try {
-            insertSQL = String.format(" (value, attribute) VALUES (\'%s\', \'%s\')", value, groupBy.attrName.toString());;
-
+            insertSQL = String.format(" (value, attribute) VALUES (\'%s\', \'%s\')", value, groupBy.attrName.toString());
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-                insertSQL += String.format(" ON CONFLICT (value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'", value, groupBy.attrName.toString());
+                insertSQL += String.format(" ON CONFLICT DO NOTHING ");
             }
 
-            tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+            tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction );
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
                 LOGGER.log(Level.SEVERE, "Unable to insert group", ex); //NON-NLS
-
             }
         }
     }
