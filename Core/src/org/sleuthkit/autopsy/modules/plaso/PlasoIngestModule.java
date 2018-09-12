@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.plaso;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -270,64 +272,62 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         String connectionString = "jdbc:sqlite:" + plasoDb; //NON-NLS
         String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'epoch_date', description, source, type, sourcetype \n"
                               + "  from log2timeline where source not in ('FILE') and sourcetype not in ('UNKNOWN');";
-        try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
-            try (ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
-                while (resultSet.next()) {
-                    if (context.dataSourceIngestIsCancelled()) {
-                        logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
-                        MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
-                        return;
-                    }
 
-                    // lots of bad dates
-                    if (resultSet.getString("sourcetype").equals("PE Import Time")) {
-                        continue;
-                    } // bad dates and duplicates with what we have.
-                    // TODO: merge results somehow
-                    else if (resultSet.getString("source").equals("WEBHIST")) {
-                        continue;
-                    }
+        try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
+                ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
+            while (resultSet.next()) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
+                    MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
+                    return;
+                }
 
-                    statusHelper.progress(resultSet.getString("filename"));
+                // lots of bad dates
+                if (resultSet.getString("sourcetype").equals("PE Import Time")) {
+                    continue;
+                } // bad dates and duplicates with what we have.
+                // TODO: merge results somehow
+                else if (resultSet.getString("source").equals("WEBHIST")) {
+                    continue;
+                }
 
-                    Content resolvedFile = getAbstractFile(resultSet.getString("filename"));
-                    if (resolvedFile == null) {
-                        logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
-                        resolvedFile = image;
-                    }
-                    long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
-                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                            new BlackboardAttribute(
-                                    ATTRIBUTE_TYPE.TSK_DATETIME, MODULE_NAME,
-                                    resultSet.getLong("epoch_date")),
-                            new BlackboardAttribute(
-                                    ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME,
-                                    resultSet.getString("description")),
-                            new BlackboardAttribute(
-                                    ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, MODULE_NAME,
-                                    eventType));
+                statusHelper.progress(resultSet.getString("filename"));
 
+                Content resolvedFile = getAbstractFile(resultSet.getString("filename"));
+                if (resolvedFile == null) {
+                    logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
+                    resolvedFile = image;
+                }
+                long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
+                Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                        new BlackboardAttribute(
+                                ATTRIBUTE_TYPE.TSK_DATETIME, MODULE_NAME,
+                                resultSet.getLong("epoch_date")),
+                        new BlackboardAttribute(
+                                ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME,
+                                resultSet.getString("description")),
+                        new BlackboardAttribute(
+                                ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, MODULE_NAME,
+                                eventType));
+
+                try {
+                    BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
+                    bbart.addAttributes(bbattributes);
                     try {
-                        BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
-                        bbart.addAttributes(bbattributes);
-                        try {
-                            /*
-                             * post the artifact which will index the artifact
-                             * for keyword search, and fire an event to notify
-                             * UI of this new artifact
-                             */
-                            blackboard.postArtifact(bbart, MODULE_NAME);
-                        } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
-                            logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
-                        }
-
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */
+                        blackboard.postArtifact(bbart, MODULE_NAME);
+                    } catch (BlackboardException ex) {
+                        logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
                     }
+
+                } catch (TskCoreException ex) {
+                    logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                 }
             }
-            tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_database_error(), ex); //NON-NLS
         }
@@ -336,12 +336,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     @NbBundle.Messages({"PlasoIngestModule_exception_find_file=Exception finding file."})
     private AbstractFile getAbstractFile(String file) {
 
-        List<AbstractFile> abstractFiles;
-        File eventFile = new File(file.replaceAll("\\\\", "/"));
-        String fileName = eventFile.getName().toLowerCase();
-        String filePath = eventFile.getParent();
-        filePath = filePath.replaceAll("\\\\", "/");
-        filePath = filePath.toLowerCase() + "/";
+        Path path = Paths.get(file);
+        String fileName = path.getFileName().toString();
+        String filePath = path.getParent().toString().replaceAll("\\\\", "/");
+        if (filePath.endsWith("/") == false) {
+            filePath += "/";
+        }
 
         // check the cached file
         if (previousFile != null
@@ -351,7 +351,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         }
         try {
-            abstractFiles = fileManager.findFiles(fileName, filePath);
+            List<AbstractFile> abstractFiles = fileManager.findFiles(fileName, filePath);
             if (abstractFiles.size() == 1) {
                 return abstractFiles.get(0);
             }
