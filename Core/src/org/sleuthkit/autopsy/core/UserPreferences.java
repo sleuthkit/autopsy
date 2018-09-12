@@ -189,11 +189,11 @@ public final class UserPreferences {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
     }
 
-    public static boolean groupItemsInTreeByDatasource() {
+    public static boolean groupItemsInTreeByDatasource() { //DLG: Replace use of this with the equivallent method in CasePreferences
         return preferences.getBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, false);
     }
 
-    public static void setGroupItemsInTreeByDatasource(boolean value) {
+    public static void setGroupItemsInTreeByDatasource(boolean value) { //DLG: Replace use of this with the equivallent method in CasePreferences
         preferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
     }
 

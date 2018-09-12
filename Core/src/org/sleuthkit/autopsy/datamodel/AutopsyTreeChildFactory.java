@@ -24,10 +24,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -52,11 +54,17 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
-                UserPreferences.groupItemsInTreeByDatasource()) {
-                    refreshChildren();
+            try {
+                Case currentCase = Case.getCurrentCaseThrows();
+                CasePreferences casePreferences = new CasePreferences(currentCase);
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
+                    Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                        refreshChildren();
                 }
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             }
+        }
     };
     
     @Override
@@ -81,9 +89,11 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected boolean createKeys(List<Object> list) {
 
         try {
+            Case currentCase = Case.getCurrentCaseThrows();
+            CasePreferences casePreferences = new CasePreferences(currentCase);
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
            
-            if (UserPreferences.groupItemsInTreeByDatasource()) {
+            if (Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 List<DataSource> dataSources = tskCase.getDataSources();
                 List<DataSourceGrouping> keys = new ArrayList<>();
                 dataSources.forEach((datasource) -> {

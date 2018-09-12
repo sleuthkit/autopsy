@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -34,6 +35,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -288,10 +290,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.Type> list) {
-            //TEST COMMENT
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact.Type> types = (UserPreferences.groupItemsInTreeByDatasource()) ? 
+                    Case currentCase = Case.getCurrentCaseThrows();
+                    CasePreferences casePreferences = new CasePreferences(currentCase);
+                    List<BlackboardArtifact.Type> types = Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true) ? 
                             blackboard.getArtifactTypesInUse(datasourceObjId) :
                             skCase.getArtifactTypesInUse() ;
                     
@@ -313,6 +316,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
                             node.updateDisplayName();
                         }
                     }
+                } catch (NoCurrentCaseException ex) {
+                    Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "No current case open: " + ex.getLocalizedMessage()); //NON-NLS
                 } catch (TskCoreException ex) {
                     Logger.getLogger(TypeFactory.class.getName()).log(Level.SEVERE, "Error getting list of artifacts in use: " + ex.getLocalizedMessage()); //NON-NLS
                 }
@@ -356,9 +361,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
             try {
-                this.childCount = UserPreferences.groupItemsInTreeByDatasource() ? 
+                Case currentCase = Case.getCurrentCaseThrows();
+                CasePreferences casePreferences = new CasePreferences(currentCase);
+                this.childCount = Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true) ? 
                         blackboard.getArtifactsCount(type.getTypeID(), datasourceObjId) :
                         skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
+            } catch (NoCurrentCaseException ex) {
+                Logger.getLogger(TypeNode.class.getName())
+                        .log(Level.WARNING, "No current case open.", ex); //NON-NLS
             } catch (TskException ex) {
                 Logger.getLogger(TypeNode.class.getName())
                         .log(Level.WARNING, "Error getting child count", ex); //NON-NLS
@@ -480,11 +490,15 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected boolean createKeys(List<BlackboardArtifact> list) {
             if (skCase != null) {
                 try {
+                    Case currentCase = Case.getCurrentCaseThrows();
+                    CasePreferences casePreferences = new CasePreferences(currentCase);
                     List<BlackboardArtifact> arts = 
-                            UserPreferences.groupItemsInTreeByDatasource() ?
+                            Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true) ?
                             blackboard.getArtifacts(type.getTypeID(), datasourceObjId) :
                             skCase.getBlackboardArtifacts(type.getTypeID());
                     list.addAll(arts);
+                } catch (NoCurrentCaseException ex) {
+                    Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "No current case open.", ex); //NON-NLS
                 } catch (TskException ex) {
                     Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
                 }

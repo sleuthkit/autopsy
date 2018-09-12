@@ -57,6 +57,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -152,9 +153,17 @@ final public class Accounts implements AutopsyVisitableItem {
      *         based on the UserPreferences groupItemsInTreeByDatasource setting 
      */
     private String getFilterByDataSourceClause() {
-        return  (UserPreferences.groupItemsInTreeByDatasource()) ? 
-                "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " " 
-                : " ";
+        try {
+            Case currentCase = Case.getCurrentCaseThrows();
+            CasePreferences casePreferences = new CasePreferences(currentCase);
+            if (Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                return "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " ";
+            }
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.SEVERE, "No current case open.", ex); //DLG: Review this change. How should we return out of this???
+        }
+        
+        return " ";
     }
 
     /**
@@ -164,6 +173,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * @return An Action that will toggle whether rejected artifacts are shown
      *         in the tree rooted by this Accounts instance.
      */
+    //DLG: Remove this!
     public Action newToggleShowRejectedAction() {
         return new ToggleShowRejected();
     }
@@ -1686,6 +1696,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     }
 
+    //DLG: Remove this!
     private final class ToggleShowRejected extends AbstractAction {
 
         @NbBundle.Messages("ToggleShowRejected.name=Show Rejected Results")
@@ -1698,6 +1709,16 @@ final public class Accounts implements AutopsyVisitableItem {
             showRejected = !showRejected;
             reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
         }
+    }
+    
+    /**
+     * Update the user interface to show or hide rejected artifacts.
+     * 
+     * @param showRejected Show rejected artifacts? Yes if true; otherwise no.
+     */
+    public void setShowRejected(boolean showRejected) {
+        this.showRejected = showRejected;
+        reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
     }
 
     private abstract class ReviewStatusAction extends AbstractAction {

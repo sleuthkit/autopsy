@@ -102,7 +102,6 @@ public class SharedConfiguration {
     private boolean hideKnownFilesInViews;
     private boolean hideSlackFilesInDataSource;
     private boolean hideSlackFilesInViews;
-    private boolean groupDatasources;
     private boolean keepPreferredViewer;
 
     /**
@@ -353,7 +352,6 @@ public class SharedConfiguration {
         fileIngestThreads = UserPreferences.numberOfFileIngestThreads();
         hideSlackFilesInDataSource = UserPreferences.hideSlackFilesInDataSourcesTree();
         hideSlackFilesInViews = UserPreferences.hideSlackFilesInViewsTree();
-        groupDatasources = UserPreferences.groupItemsInTreeByDatasource();
     }
 
     /**
@@ -369,8 +367,7 @@ public class SharedConfiguration {
         UserPreferences.setKeepPreferredContentViewer(keepPreferredViewer);
         UserPreferences.setNumberOfFileIngestThreads(fileIngestThreads);
         UserPreferences.setHideSlackFilesInDataSourcesTree(hideSlackFilesInDataSource);
-        UserPreferences.setHideSlackFilesInViewsTree(hideSlackFilesInViews); 
-        UserPreferences.setGroupItemsInTreeByDatasource(groupDatasources);
+        UserPreferences.setHideSlackFilesInViewsTree(hideSlackFilesInViews);
     }
 
     /**

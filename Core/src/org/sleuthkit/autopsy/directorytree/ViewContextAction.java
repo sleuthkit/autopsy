@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -138,15 +139,24 @@ public class ViewContextAction extends AbstractAction {
              */
             DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
             ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+            Case currentCase;
+            try {
+                currentCase = Case.getCurrentCaseThrows();
+            } catch (NoCurrentCaseException ex) {
+                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
+                logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
+                return;
+            }
 
             Node parentTreeViewNode;
-            if (UserPreferences.groupItemsInTreeByDatasource()) { // 'Group by Data Source' view
+            CasePreferences casePreferences = new CasePreferences(currentCase);
+            if (Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) { // 'Group by Data Source' view
 
                 SleuthkitCase skCase;
                 String dsname;
                 try {
                     // get the objid/name of the datasource of the selected content.
-                    skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                    skCase = currentCase.getSleuthkitCase();
                     long contentDSObjid = content.getDataSource().getId();
                     DataSource datasource = skCase.getDataSource(contentDSObjid);
                     dsname = datasource.getName();
@@ -162,7 +172,7 @@ public class ViewContextAction extends AbstractAction {
                         logger.log(Level.SEVERE, "Failed to locate data source node in tree."); //NON-NLS
                         return;
                     }
-                }  catch (NoCurrentCaseException| TskDataException | TskCoreException ex) {
+                }  catch (TskDataException | TskCoreException ex) {
                     MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
                     logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
                     return;

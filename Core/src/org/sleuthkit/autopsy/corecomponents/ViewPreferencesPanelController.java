@@ -1,7 +1,7 @@
 /*
- * Central Repository
+ * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.centralrepository.optionspanel;
+package org.sleuthkit.autopsy.corecomponents;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -33,17 +33,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Controller for the main settings panel
  */
-@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Central_Repository_Options",
-        iconBase = "org/sleuthkit/autopsy/centralrepository/images/options-icon.png",
-        position = 15,
-        keywords = "#OptionsCategory_Keywords_Central_Repository_Options",
-        keywordsCategory = "CentralRepository")
-public final class EamOptionsPanelController extends OptionsPanelController {
+@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_View",
+        iconBase = "org/sleuthkit/autopsy/images/view-preferences-32.png",
+        position = 2,
+        keywords = "#OptionsCategory_Keywords_View",
+        keywordsCategory = "View")
+public final class ViewPreferencesPanelController extends OptionsPanelController {
 
-    private GlobalSettingsPanel panel;
+    private ViewPreferencesPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private static final Logger LOGGER = Logger.getLogger(EamOptionsPanelController.class.getName());
+    private static final Logger logger = Logger.getLogger(ViewPreferencesPanelController.class.getName());
 
     @Override
     public void update() {
@@ -63,7 +63,7 @@ public final class EamOptionsPanelController extends OptionsPanelController {
 
     @Override
     public boolean isValid() {
-        return getPanel().valid();
+        return true;
     }
 
     @Override
@@ -99,9 +99,14 @@ public final class EamOptionsPanelController extends OptionsPanelController {
          */
     }
 
-    private GlobalSettingsPanel getPanel() {
+    /**
+     * Retrieve an instance of the ViewPreferencesPanel.
+     * 
+     * @return A ViewPreferencesPanel instance.
+     */
+    private ViewPreferencesPanel getPanel() {
         if (panel == null) {
-            panel = new GlobalSettingsPanel();
+            panel = new ViewPreferencesPanel();
             panel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                 if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
                     changed();
@@ -111,8 +116,11 @@ public final class EamOptionsPanelController extends OptionsPanelController {
         return panel;
     }
 
-    @Messages({"EamOptionsController.moduleErr=Error processing value changes.",
-                "EamOptionsController.moduleErr.msg=Value change processing failed."})
+    /**
+     * Executed whenever a property change occurs.
+     */
+    @Messages({"ViewOptionsController.moduleErr=Error processing value changes.",
+                "ViewOptionsController.moduleErr.msg=Value change processing failed."})
     void changed() {
         if (!changed) {
             changed = true;
@@ -120,10 +128,10 @@ public final class EamOptionsPanelController extends OptionsPanelController {
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
             } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Error processing property change", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error processing property change", ex); //NON-NLS
                 MessageNotifyUtil.Notify.show(
-                        Bundle.EamOptionsController_moduleErr(),
-                        Bundle.EamOptionsController_moduleErr_msg(),
+                        Bundle.ViewOptionsController_moduleErr(),
+                        Bundle.ViewOptionsController_moduleErr_msg(),
                         MessageNotifyUtil.MessageType.ERROR);
             }
         }
@@ -131,10 +139,10 @@ public final class EamOptionsPanelController extends OptionsPanelController {
         try {
             pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error processing property change validation.", e); //NON-NLS
+            logger.log(Level.SEVERE, "Error processing property change validation.", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
-                    Bundle.EamOptionsController_moduleErr(),
-                    Bundle.EamOptionsController_moduleErr_msg(),
+                    Bundle.ViewOptionsController_moduleErr(),
+                    Bundle.ViewOptionsController_moduleErr_msg(),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }
