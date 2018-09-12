@@ -207,7 +207,7 @@ public class GroupManager {
     }
 
     synchronized public void reset() {
-        regrouper.cancel();
+        Platform.runLater(regrouper::cancel);
 
         setSortBy(GroupSortBy.GROUP_BY_VALUE);
         setGroupBy(DrawableAttribute.PATH);
@@ -669,71 +669,69 @@ public class GroupManager {
                 }
                 groupProgress.start();
 
-                synchronized (GroupManager.this) {
-                    analyzedGroups.clear();
-                    unSeenGroups.clear();
+                analyzedGroups.clear();
+                unSeenGroups.clear();
 
-                    // Get the list of group keys
-                    Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
+                // Get the list of group keys
+                Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
 
-                    groupProgress.switchToDeterminate(valsByDataSource.entries().size());
-                    int p = 0;
-                    // For each key value, partially create the group and add it to the list.
-                    for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
-                        if (isCancelled()) {
-                            return null;
-                        }
-                        p++;
-                        updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
-                        updateProgress(p, valsByDataSource.size());
-                        groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-                        popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
+                groupProgress.switchToDeterminate(valsByDataSource.entries().size());
+                int p = 0;
+                // For each key value, partially create the group and add it to the list.
+                for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
+                    if (isCancelled()) {
+                        return null;
                     }
+                    p++;
+                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
+                    updateProgress(p, valsByDataSource.size());
+                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
+                    popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
+                }
 
-                    Optional<DrawableGroup> viewedGroup
-                            = Optional.ofNullable(controller.getViewState())
-                                    .flatMap(GroupViewState::getGroup);
-                    Optional<GroupKey<?>> viewedKey = viewedGroup.map(DrawableGroup::getGroupKey);
-                    DataSource dataSourceOfCurrentGroup
-                            = viewedKey.flatMap(GroupKey::getDataSource)
-                                    .orElse(null);
-                    DrawableAttribute attributeOfCurrentGroup
-                            = viewedKey.map(GroupKey::getAttribute)
-                                    .orElse(null);
+                Optional<DrawableGroup> viewedGroup
+                        = Optional.ofNullable(controller.getViewState())
+                                .flatMap(GroupViewState::getGroup);
+                Optional<GroupKey<?>> viewedKey = viewedGroup.map(DrawableGroup::getGroupKey);
+                DataSource dataSourceOfCurrentGroup
+                        = viewedKey.flatMap(GroupKey::getDataSource)
+                                .orElse(null);
+                DrawableAttribute attributeOfCurrentGroup
+                        = viewedKey.map(GroupKey::getAttribute)
+                                .orElse(null);
                     /* if no group or if groupbies are different or if data
                      * source != null and does not equal group */
-                    if (viewedGroup.isPresent() == false) {
+                if (viewedGroup.isPresent() == false) {
 
-                        //the current group should not be visible so ...
-                        if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
-                            controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                        } else if (isNotEmpty(analyzedGroups)) {
-                            //show the first analyzed group.
-                            controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                        } else { //there are no groups,  clear the group area.
-                            controller.advance(GroupViewState.tile(null));
-                        }
-                    } else if ((getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))) {
+                    //the current group should not be visible so ...
+                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
+                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                    } else if (isNotEmpty(analyzedGroups)) {
+                        //show the first analyzed group.
+                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                    } else { //there are no groups,  clear the group area.
+                        controller.advance(GroupViewState.tile(null));
+                    }
+                } else if ((getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))) {
 
-                        //the current group should not be visible so ...
-                        if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
-                            controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                        } else if (isNotEmpty(analyzedGroups)) {
-                            //show the first analyzed group.
-                            controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                        } else { //there are no groups,  clear the group area.
-                            controller.advance(GroupViewState.tile(null));
-                        }
-                    } else if (getGroupBy() != attributeOfCurrentGroup) {
-                        //the current group should not be visible so ...
-                        if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
-                            controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                        } else if (isNotEmpty(analyzedGroups)) {
-                            //show the first analyzed group.
-                            controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                        } else { //there are no groups,  clear the group area.
-                            controller.advance(GroupViewState.tile(null));
-                        }
+                    //the current group should not be visible so ...
+                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
+                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                    } else if (isNotEmpty(analyzedGroups)) {
+                        //show the first analyzed group.
+                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                    } else { //there are no groups,  clear the group area.
+                        controller.advance(GroupViewState.tile(null));
+                    }
+                } else if (getGroupBy() != attributeOfCurrentGroup) {
+                    //the current group should not be visible so ...
+                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
+                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                    } else if (isNotEmpty(analyzedGroups)) {
+                        //show the first analyzed group.
+                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                    } else { //there are no groups,  clear the group area.
+                        controller.advance(GroupViewState.tile(null));
                     }
                 }
             } finally {
@@ -765,68 +763,67 @@ public class GroupManager {
          * @return
          */
         public Multimap<DataSource, AttrValType> findValuesForAttribute() {
-            synchronized (GroupManager.this) {
 
-                Multimap results = HashMultimap.create();
-                try {
-                    switch (groupBy.attrName) {
-                        //these cases get special treatment
-                        case CATEGORY:
-                            results.putAll(null, Arrays.asList(DhsImageCategory.values()));
-                            break;
-                        case TAGS:
-                            results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
-                                    .filter(CategoryManager::isNotCategoryTagName)
-                                    .collect(Collectors.toList()));
-                            break;
+            Multimap results = HashMultimap.create();
+            try {
+                switch (groupBy.attrName) {
+                    //these cases get special treatment
+                    case CATEGORY:
+                        results.putAll(null, Arrays.asList(DhsImageCategory.values()));
+                        break;
+                    case TAGS:
+                        results.putAll(null, controller.getTagsManager().getTagNamesInUse().stream()
+                                .filter(CategoryManager::isNotCategoryTagName)
+                                .collect(Collectors.toList()));
+                        break;
 
-                        case ANALYZED:
-                            results.putAll(null, Arrays.asList(false, true));
-                            break;
-                        case HASHSET:
+                    case ANALYZED:
+                        results.putAll(null, Arrays.asList(false, true));
+                        break;
+                    case HASHSET:
 
-                            results.putAll(null, new TreeSet<>(getDrawableDB().getHashSetNames()));
+                        results.putAll(null, new TreeSet<>(getDrawableDB().getHashSetNames()));
 
-                            break;
-                        case MIME_TYPE:
+                        break;
+                    case MIME_TYPE:
 
-                            HashSet<String> types = new HashSet<>();
+                        HashSet<String> types = new HashSet<>();
 
-                            // Use the group_concat function to get a list of files for each mime type.  
-                            // This has different syntax on Postgres vs SQLite
-                            String groupConcatClause;
-                            if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
-                                groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
-                            } else {
-                                groupConcatClause = " group_concat(obj_id) as object_ids";
+                        // Use the group_concat function to get a list of files for each mime type.  
+                        // This has different syntax on Postgres vs SQLite
+                        String groupConcatClause;
+                        if (DbType.POSTGRESQL == controller.getSleuthKitCase().getDatabaseType()) {
+                            groupConcatClause = " array_to_string(array_agg(obj_id), ',') as object_ids";
+                        } else {
+                            groupConcatClause = " group_concat(obj_id) as object_ids";
+                        }
+                        String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
+                        try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
+                                ResultSet resultSet = executeQuery.getResultSet();) {
+                            while (resultSet.next()) {
+                                final String mimeType = resultSet.getString("mime_type"); //NON-NLS
+                                String objIds = resultSet.getString("object_ids"); //NON-NLS
+
+                                Pattern.compile(",").splitAsStream(objIds)
+                                        .map(Long::valueOf)
+                                        .filter(getDrawableDB()::isInDB)
+                                        .findAny().ifPresent(obj_id -> types.add(mimeType));
                             }
-                            String query = "select " + groupConcatClause + " , mime_type from tsk_files group by mime_type ";
-                            try (SleuthkitCase.CaseDbQuery executeQuery = controller.getSleuthKitCase().executeQuery(query); //NON-NLS
-                                    ResultSet resultSet = executeQuery.getResultSet();) {
-                                while (resultSet.next()) {
-                                    final String mimeType = resultSet.getString("mime_type"); //NON-NLS
-                                    String objIds = resultSet.getString("object_ids"); //NON-NLS
+                        } catch (SQLException | TskCoreException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
+                        results.putAll(null, types);
 
-                                    Pattern.compile(",").splitAsStream(objIds)
-                                            .map(Long::valueOf)
-                                            .filter(getDrawableDB()::isInDB)
-                                            .findAny().ifPresent(obj_id -> types.add(mimeType));
-                                }
-                            } catch (SQLException | TskCoreException ex) {
-                                Exceptions.printStackTrace(ex);
-                            }
-                            results.putAll(null, types);
-
-                            break;
-                        default:
-                            //otherwise do straight db query 
-                            results.putAll(getDrawableDB().findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
+                        break;
+                    default:
+                        //otherwise do straight db query 
+                        results.putAll(getDrawableDB().findValuesForAttribute(groupBy, sortBy, sortOrder, dataSource));
                 }
-                return results;
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "TSK error getting list of type {0}", groupBy.getDisplayName()); //NON-NLS
             }
+            return results;
+
         }
     }
 

@@ -78,14 +78,15 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+            GroupViewState oldState = getController().getViewState();
 
             while (change.next()) {
                 change.getAddedSubList().stream().forEach(this::insertGroup);
                 change.getRemoved().stream().forEach(this::removeFromTree);
             }
             Platform.runLater(() -> {
-                GroupTree.this.sortGroups();
-                Optional.ofNullable(getController().getViewState())
+                GroupTree.this.sortGroups(false);
+                Optional.ofNullable(oldState)
                         .flatMap(GroupViewState::getGroup)
                         .ifPresent(this::setFocusedGroup);
             });

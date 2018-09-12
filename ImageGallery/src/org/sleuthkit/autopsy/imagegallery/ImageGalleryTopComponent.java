@@ -262,13 +262,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                 splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
                 splitPane.setDividerPositions(0.1, 1.0);
 
-                InvalidationListener checkGroupsListener = (Observable observable) -> checkForGroups();
-                controller.getGroupManager().reGroupingState().addListener(checkGroupsListener);
-                controller.regroupDisabledProperty().addListener(checkGroupsListener);
-
-                InvalidationListener checkGroupsListenerFX = (Observable observable) -> Platform.runLater(() -> checkForGroups());
-                controller.getGroupManager().getAnalyzedGroups().addListener(checkGroupsListenerFX);
-                controller.getGroupManager().getUnSeenGroups().addListener(checkGroupsListenerFX);
+                controller.regroupDisabledProperty().addListener((Observable observable) -> checkForGroups());
+                controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> Platform.runLater(() -> checkForGroups()));
 
                 Platform.runLater(() -> checkForGroups());
             }

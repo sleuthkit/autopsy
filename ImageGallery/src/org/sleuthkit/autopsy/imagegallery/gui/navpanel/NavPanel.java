@@ -75,9 +75,9 @@ abstract class NavPanel<X> extends Tab {
 
         sortChooser = new SortChooser<>(GroupComparators.getValues());
         sortChooser.setComparator(getDefaultComparator());
-        sortChooser.sortOrderProperty().addListener(order -> sortGroups());
+        sortChooser.sortOrderProperty().addListener(order -> NavPanel.this.sortGroups());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-            sortGroups();
+            NavPanel.this.sortGroups();
             //only need to listen to changes in category if we are sorting by/ showing the uncategorized count
             if (newComparator == GroupComparators.UNCATEGORIZED_COUNT) {
                 categoryManager.registerListener(NavPanel.this);
@@ -135,11 +135,18 @@ abstract class NavPanel<X> extends Tab {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void sortGroups() {
+        sortGroups(true);
+    }
+
+    public void sortGroups(boolean preserveSelection) {
+
         X selectedItem = getSelectionModel().getSelectedItem();
         applyGroupComparator();
-        Optional.ofNullable(selectedItem)
-                .map(getDataItemMapper())
-                .ifPresent(this::setFocusedGroup);
+        if (preserveSelection) {
+            Optional.ofNullable(selectedItem)
+                    .map(getDataItemMapper())
+                    .ifPresent(this::setFocusedGroup);
+        }
     }
 
     /**
