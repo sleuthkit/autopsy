@@ -157,6 +157,43 @@ public final class ExcelReader extends AbstractReader {
 
         return rowList;
     }
+    
+    /**
+     * 
+     * @param tableName
+     * @return
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
+    @Override
+    public Map<String, List<Object>> getColumnsFromTable(String tableName) throws FileReaderException {
+        Map<String, List<Object>> columnViewOfSheet = new HashMap<>();
+        
+        Iterator<Row> sheetIter = workbook.getSheet(tableName).rowIterator();
+        if (headerCache.containsKey(tableName)) {
+            Row header = headerCache.get(tableName);
+            for(Cell cell : header) {
+                String index = String.valueOf(cell.getColumnIndex());
+                columnViewOfSheet.put(index, new ArrayList<Object>(){{
+                    add(getCellValue(cell));
+                }});
+            }
+        }
+        
+        while(sheetIter.hasNext()) {
+            Row r = sheetIter.next();
+            for(Cell cell : r) {
+                String index = String.valueOf(cell.getColumnIndex());
+                if(columnViewOfSheet.containsKey(index)) {
+                    columnViewOfSheet.get(index).add(getCellValue(cell));
+                } else {
+                    columnViewOfSheet.put(index, new ArrayList<Object>(){{
+                        add(getCellValue(cell));
+                    }});
+                }
+            }
+        }
+        return columnViewOfSheet;
+    }
 
     /**
      * Currently not supported. Returns a window of rows starting at the offset

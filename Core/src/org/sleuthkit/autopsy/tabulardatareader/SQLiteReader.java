@@ -27,11 +27,14 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -272,8 +275,50 @@ public final class SQLiteReader extends AbstractReader {
 
         return rowMap;
     }
-
     
+    /**
+     * 
+     * @param tableName
+     * @return
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
+    public Map<String, List<Object>> getColumnsFromTable(String tableName) 
+            throws FileReaderException {
+        
+        String quotedTableName = wrapTableNameStringWithQuotes(tableName);
+        try(Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(
+                        "SELECT * FROM " + quotedTableName)) {    //NON-NLS
+            
+            Map<String, List<Object>> columnView = new HashMap<>();
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columns = metaData.getColumnCount();
+            for(int i = 1; i <= columns; i++) {
+                columnView.put(metaData.getColumnName(i), new LinkedList<>());
+            }
+            
+            while (resultSet.next()) {
+                for(int i = 1; i <= columns; i++) {
+                    if (resultSet.getObject(i) == null) {
+                        columnView.get(metaData.getColumnName(i)).add("");
+                    } else {
+                        if (metaData.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
+                            columnView.get(metaData.getColumnName(i)).add(
+                                    Bundle.SQLiteReader_BlobNotShown_message());
+                        } else {
+                            columnView.get(metaData.getColumnName(i)).add(
+                                    resultSet.getObject(i));
+                        }
+                    }
+                }
+            }
+            
+            return columnView;
+        } catch (SQLException ex) {
+            throw new FileReaderException(ex);
+        }
+    }
+
     /**
      * Closes underlying JDBC connection. 
      */
