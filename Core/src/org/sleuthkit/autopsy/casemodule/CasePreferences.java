@@ -37,12 +37,14 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 public final class CasePreferences {
     
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
-    public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
     
     private static final Logger logger = Logger.getLogger(CasePreferences.class.getName());
     
     private static Boolean groupItemsInTreeByDataSource = null;
     
+    /**
+     * Prevent instantiation.
+     */
     private CasePreferences() {
     }
     
@@ -62,10 +64,21 @@ public final class CasePreferences {
         }
     }
     
+    /**
+     * Get the 'groupItemsInTreeByDataSource' value. This can be true, false, or
+     * null.
+     * 
+     * @return The value.
+     */
     public static Boolean getGroupItemsInTreeByDataSource() {
         return groupItemsInTreeByDataSource;
     }
     
+    /**
+     * Set the 'groupItemsInTreeByDataSource' value to true or false.
+     * 
+     * @param value The value to use for the value change.
+     */
     public static void setGroupItemsInTreeByDataSource(boolean value) {
         groupItemsInTreeByDataSource = value;
         DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
@@ -92,6 +105,9 @@ public final class CasePreferences {
         }
     }
     
+    /**
+     * Reset all values to their default states.
+     */
     private static void clear() {
         groupItemsInTreeByDataSource = null;
     }

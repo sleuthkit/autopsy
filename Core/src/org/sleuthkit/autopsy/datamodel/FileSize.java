@@ -447,7 +447,7 @@ public class FileSize implements AutopsyVisitableItem {
                     query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + ")"; //NON-NLS
                 }
 
-                // filter by datasource if indicated in user preferences
+                // filter by datasource if indicated in case preferences
                 if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     query +=  " AND data_source_obj_id = " + filteringDSObjId;
                 }

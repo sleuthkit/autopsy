@@ -150,7 +150,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * Returns the clause to filter artifacts by data source.
      *
      * @return A clause that will or will not filter artifacts by datasource 
-     *         based on the UserPreferences groupItemsInTreeByDatasource setting 
+     *         based on the CasePreferences groupItemsInTreeByDataSource setting 
      */
     private String getFilterByDataSourceClause() {
         if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {

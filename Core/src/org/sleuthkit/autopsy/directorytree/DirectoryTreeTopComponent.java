@@ -206,10 +206,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return this.dataResult;
     }
     
+    /**
+     * Show rejected results?
+     * 
+     * @return True if showing rejected results; otherwise false.
+     */
     public boolean getShowRejectedResults() {
         return showRejectedResults;
     }
     
+    /**
+     * Setter to determine if rejected results should be shown or not.
+     * 
+     * @param showRejectedResults True if showing rejected results; otherwise
+     *                            false.
+     */
     public void setShowRejectedResults(boolean showRejectedResults) {
         this.showRejectedResults = showRejectedResults;
         if (accounts != null) {

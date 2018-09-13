@@ -139,15 +139,6 @@ public class ViewContextAction extends AbstractAction {
              */
             DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
             ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
-            Case currentCase;
-            try {
-                currentCase = Case.getCurrentCaseThrows();
-            } catch (NoCurrentCaseException ex) {
-                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
-                logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
-                return;
-            }
-
             Node parentTreeViewNode;
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) { // 'Group by Data Source' view
 
@@ -155,7 +146,7 @@ public class ViewContextAction extends AbstractAction {
                 String dsname;
                 try {
                     // get the objid/name of the datasource of the selected content.
-                    skCase = currentCase.getSleuthkitCase();
+                    skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                     long contentDSObjid = content.getDataSource().getId();
                     DataSource datasource = skCase.getDataSource(contentDSObjid);
                     dsname = datasource.getName();
@@ -171,7 +162,7 @@ public class ViewContextAction extends AbstractAction {
                         logger.log(Level.SEVERE, "Failed to locate data source node in tree."); //NON-NLS
                         return;
                     }
-                }  catch (TskDataException | TskCoreException ex) {
+                }  catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
                     MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
                     logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
                     return;
