@@ -44,12 +44,19 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttribute;
+    private final CorrelationAttributeInstance.Type correlationType;
     private final Map<String, Long> dataSourceNameToIdMap;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap, CorrelationAttributeInstance.Type correlationType) {
         super();
         this.crFileId = attrInstId;
         this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
+        this.correlationType = correlationType;
+    }
+    
+    @Override
+    public CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType(){
+        return this.correlationType;
     }
 
     void setCurrentAttributeInst(CorrelationAttributeInstance attribute) {
@@ -61,16 +68,15 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         Case currentCase;
         if (this.currentAttribute != null) {
-            
+
             final CorrelationAttributeInstance currentAttributeInstance = this.currentAttribute;
-            
+
             String currentFullPath = currentAttributeInstance.getFilePath();
             String currentDataSource = currentAttributeInstance.getCorrelationDataSource().getName();
-            
-            
-            if(this.dataSourceNameToIdMap.containsKey(currentDataSource)){
+
+            if (this.dataSourceNameToIdMap.containsKey(currentDataSource)) {
                 Long dataSourceObjectId = this.dataSourceNameToIdMap.get(currentDataSource);
-            
+
                 try {
                     currentCase = Case.getCurrentCaseThrows();
 
@@ -83,9 +89,9 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                     final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSourceObjectId);
                     List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
 
-                    if(potentialAbstractFiles.isEmpty()){
+                    if (potentialAbstractFiles.isEmpty()) {
                         return null;
-                    } else if(potentialAbstractFiles.size() > 1){
+                    } else if (potentialAbstractFiles.size() > 1) {
                         LOGGER.log(Level.WARNING, String.format("Unable to find an exact match for AbstractFile for record with filePath: %s.  May have returned the wrong file.", new Object[]{currentFullPath}));
                         return potentialAbstractFiles.get(0);
                     } else {
@@ -98,7 +104,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                 }
             } else {
                 return null;
-            }            
+            }
         }
         return null;
     }
@@ -107,7 +113,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     public DisplayableItemNode[] generateNodes() {
 
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(correlationType);
         CorrelationAttributeInstance corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
@@ -128,7 +134,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
     private Map<String, Long> invertMap(Map<Long, String> dataSourceIdToNameMap) {
         HashMap<String, Long> invertedMap = new HashMap<>();
-        for (Map.Entry<Long, String> entry : dataSourceIdToNameMap.entrySet()){
+        for (Map.Entry<Long, String> entry : dataSourceIdToNameMap.entrySet()) {
             invertedMap.put(entry.getValue(), entry.getKey());
         }
         return invertedMap;

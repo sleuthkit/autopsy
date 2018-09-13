@@ -36,8 +36,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findFiles()</code> is called, which organizes files by md5 to
- * prepare to display in viewer.
+ * <code>findMatches()</code> is called, which organizes files by md5 to prepare
+ * to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
@@ -93,14 +93,14 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @throws SQLException
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException {
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
-        
+
         final Case currentCase = Case.getCurrentCaseThrows();
         final String caseName = currentCase.getDisplayName();
 
         SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
-        
+
         String selectStatement = this.buildSqlSelectStatement();
 
         try (
@@ -127,21 +127,21 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
                 }
             }
         }
-        
+
         Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
-        
+
         return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }
 
     /**
-     * Should be used by subclasses, in their 
-     * <code>buildSqlSelectStatement()</code> function to create an SQL boolean 
-     * expression which will filter our matches based on mime type.  The 
+     * Should be used by subclasses, in their
+     * <code>buildSqlSelectStatement()</code> function to create an SQL boolean
+     * expression which will filter our matches based on mime type. The
      * expression will be conjoined to base query with an AND operator.
-     * 
-     * @return sql fragment of the form:
-     *      'and "mime_type" in ( [comma delimited list of mime types] )'
-     *      or empty string in the event that no types to filter on were given.
+     *
+     * @return sql fragment of the form: 'and "mime_type" in ( [comma delimited
+     * list of mime types] )' or empty string in the event that no types to
+     * filter on were given.
      */
     String determineMimeTypeFilter() {
 
