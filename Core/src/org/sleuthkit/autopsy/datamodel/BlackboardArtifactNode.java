@@ -51,6 +51,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -347,8 +349,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
+        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
         addScoreProperty(sheetSet, tags);
-        addCommentProperty(sheetSet, tags);
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        addCountProperty(sheetSet, correlationAttribute);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -508,7 +512,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @return a list of tags which on the artifact or the file it is associated
      *         with
      */
-    protected List<Tag> getAllTagsFromDatabase() {
+    protected final List<Tag> getAllTagsFromDatabase() {
         List<Tag> tags = new ArrayList<>();
         try {
             tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
@@ -551,22 +555,33 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param tags     the list of tags which should appear as the value for the
      *                 property
      */
-    protected void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
+    protected final void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+    }
+
+    protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo()) {
+            correlationAttribute = EamArtifactUtil.getInstanceFromContent(associated);
+        }
+        return correlationAttribute;
     }
 
     /**
      * Used by (subclasses of) BlackboardArtifactNode to add the comment
      * property to their sheets.
      *
-     * @param sheetSet the modifiable Sheet.Set returned by
-     *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags     the list of tags associated with the file
+     * @param sheetSet  the modifiable Sheet.Set returned by
+     *                  Sheet.get(Sheet.PROPERTIES)
+     * @param tags      the list of tags associated with the file
+     * @param attribute the correlation attribute associated with this
+     *                  artifact's associated file, null if central repo is not
+     *                  enabled
      */
     @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
         "BlackboardArtifactNode.createSheet.comment.displayName=C"})
-    protected void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags) {
+    protected final void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags, CorrelationAttributeInstance attribute) {
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
         for (Tag tag : tags) {
             if (!StringUtils.isBlank(tag.getComment())) {
@@ -578,14 +593,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         //currently checks for a comment on the associated file in the central repo not the artifact itself 
         //what we want the column property to reflect should be revisted when we have added a way to comment
         //on the artifact itself
-        if (EamDbUtil.useCentralRepo()) {
-            CorrelationAttributeInstance attribute = EamArtifactUtil.getInstanceFromContent(associated);
-            if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-                if (status == HasCommentStatus.TAG_COMMENT) {
-                    status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-                } else {
-                    status = HasCommentStatus.CR_COMMENT;
-                }
+        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+            if (status == HasCommentStatus.TAG_COMMENT) {
+                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+            } else {
+                status = HasCommentStatus.CR_COMMENT;
             }
         }
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
@@ -606,7 +618,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
         "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
         "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
-    protected void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
+    protected final void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
         Score score = Score.NO_SCORE;
         String description = "";
         if (associated instanceof AbstractFile) {
@@ -635,6 +647,31 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), description, score));
+    }
+
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.count.name=O",
+        "BlackboardArtifactNode.createSheet.count.displayName=O",
+        "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
+        "BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated",
+        "# {0} - occuranceCount",
+        "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
+
+    protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
+        Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+        String description = Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description();
+        try {
+            //don't perform the query if there is no correlation value
+            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
+                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
+                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count);
+            } else if (attribute != null) {
+                description = Bundle.BlackboardArtifactNode_createSheet_count_hashLookupNotRun_description();
+            }
+        } catch (EamDbException ex) {
+            logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+        }
+        sheetSet.put(
+                new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), description, count));
     }
 
     private void updateSheet() {

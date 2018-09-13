@@ -39,6 +39,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -271,7 +273,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @return a list of tags that are associated with the file
      */
-    protected List<ContentTag> getContentTagsFromDatabase() {
+    protected final List<ContentTag> getContentTagsFromDatabase() {
         List<ContentTag> tags = new ArrayList<>();
         try {
             tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
@@ -281,17 +283,27 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return tags;
     }
 
+    protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo()) {
+            correlationAttribute = EamArtifactUtil.getInstanceFromContent(content);
+        }
+        return correlationAttribute;
+    }
+
     /**
      * Used by subclasses of AbstractAbstractFileNode to add the comment
      * property to their sheets.
      *
-     * @param sheetSet the modifiable Sheet.Set returned by
-     *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags     the list of tags associated with the file
+     * @param sheetSet  the modifiable Sheet.Set returned by
+     *                  Sheet.get(Sheet.PROPERTIES)
+     * @param tags      the list of tags associated with the file
+     * @param attribute the correlation attribute associated with this file,
+     *                  null if central repo is not enabled
      */
     @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.comment.name=C",
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
-    protected void addCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+    protected final void addCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags, CorrelationAttributeInstance attribute) {
 
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
 
@@ -302,14 +314,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 break;
             }
         }
-        if (EamDbUtil.useCentralRepo()) {
-            CorrelationAttributeInstance attribute = EamArtifactUtil.getInstanceFromContent(getContent());
-            if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-                if (status == HasCommentStatus.TAG_COMMENT) {
-                    status = HasCommentStatus.CR_AND_TAG_COMMENTS;
-                } else {
-                    status = HasCommentStatus.CR_COMMENT;
-                }
+        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+            if (status == HasCommentStatus.TAG_COMMENT) {
+                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+            } else {
+                status = HasCommentStatus.CR_COMMENT;
             }
         }
         sheetSet.put(new NodeProperty<>(AbstractAbstractFileNode_createSheet_comment_name(), AbstractAbstractFileNode_createSheet_comment_displayName(), NO_DESCR,
@@ -330,7 +339,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
         "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
         "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag."})
-    protected void addScoreProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+    protected final void addScoreProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         Score score = Score.NO_SCORE;
         String description = NO_DESCR;
         if (content.getKnown() == TskData.FileKnown.BAD) {
@@ -357,6 +366,30 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         }
         sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_score_name(), Bundle.AbstractAbstractFileNode_createSheet_score_displayName(), description, score));
+    }
+
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.count.name=O",
+        "AbstractAbstractFileNode.createSheet.count.displayName=O",
+        "AbstractAbstractFileNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
+        "AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
+        "# {0} - occuranceCount",
+        "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
+    protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
+        Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+        String description = Bundle.AbstractAbstractFileNode_createSheet_count_noCentralRepo_description();
+        try {
+            //don't perform the query if there is no correlation value
+            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
+                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
+                description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
+            } else if (attribute != null) {
+                description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
+            }
+        } catch (EamDbException ex) {
+            logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+        }
+        sheetSet.put(
+                new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_count_name(), Bundle.AbstractAbstractFileNode_createSheet_count_displayName(), description, count));
     }
 
     /**
@@ -389,7 +422,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
      */
-    protected void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+    protected final void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
                         .distinct()

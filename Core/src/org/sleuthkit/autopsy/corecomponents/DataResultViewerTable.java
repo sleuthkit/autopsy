@@ -664,7 +664,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private class IconRendererTableListener implements TableColumnModelListener {
 
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
-            "DataResultViewerTable.scoreRender.name=S"})
+            "DataResultViewerTable.scoreRender.name=S",
+            "DataResultViewerTable.countRender.name=O"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
             if (e.getSource() instanceof ETableColumnModel) {
@@ -675,6 +676,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_scoreRender_name())) {
                     //if the current column is a score column set the cell renderer to be the ScoreCellRenderer
                     column.setCellRenderer(new ScoreCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_countRender_name())) {
+                    column.setCellRenderer(new CountCellRenderer());
                 }
             }
         }
@@ -985,6 +988,44 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
             } else {
                 setIcon(null);
+            }
+            return this;
+        }
+
+    }
+
+    /*
+     * A renderer which based on the contents of the cell will display an empty
+     * cell if no count was available.
+     */
+    private final class CountCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(LEFT);
+            Object countValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    countValue = ((Node.Property) value).getValue();
+                    setToolTipText(((FeatureDescriptor) value).getShortDescription());
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+            } else {
+                //JTables contain the value we want directly in the cell
+                countValue = value;
+            }
+            setText("");
+            if ((countValue instanceof Long)) {
+                //Don't display value if value is negative used so that sorting will behave as desired
+                if ((Long) countValue >= 0) {
+                    setText(countValue.toString());
+                }
             }
             return this;
         }
