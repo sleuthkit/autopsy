@@ -103,10 +103,10 @@
         <get src="https://drive.google.com/uc?id=1xv3Lz9m2QLq35ofDfHQNe9aHVtVzHUsj" dest="${test-input}/c2ds2_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1sg-znklB9yJAWq8i1cF2W-QLOM4FjZyv" dest="${test-input}/c3ds1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1qXyaSlm3hMhv0jl6JkZEficknKjYNOlt" dest="${test-input}/c3ds2_v1.vhd" skipexisting="true"/>
-<!--        <get src="TODO" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
-        <get src="TODO" dest="${test-input}/CommonFilesAttrs_img2_v1.vhd" skipexisting="true"/>
-        <get src="TODO" dest="${test-input}/CommonFilesAttrs_img2_v1.vhd" skipexisting="true"/>
-        <get src="TODO" dest="${test-input}/CommonFilesAttrs_img2_v1.vhd" skipexisting="true"/>-->
+        <get src="https://drive.google.com/uc?id=1gW-SvduRwwoHmOheQypaRZ3ig-bezRre" dest="${test-input}/CommonFilesAttrs_img4_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=14vx83MZcd5PJadOesQz7tja-4a-Hz7eD" dest="${test-input}/CommonFilesAttrs_img3_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1ZIYca4CWxyDcfF5Vf2uWkXeI83mR8L9B" dest="${test-input}/CommonFilesAttrs_img2_v1.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1RvLNhuKzqHURqeVml_o4lpv6jPCJJ9sv" dest="${test-input}/CommonFilesAttrs_img1_v1.vhd" skipexisting="true"/>
 
     </target>
 
