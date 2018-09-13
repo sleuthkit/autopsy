@@ -18,15 +18,18 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.beans.PropertyChangeEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.Properties;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * Read and update case preference file values.
@@ -38,25 +41,40 @@ public final class CasePreferences {
     
     private static final Logger logger = Logger.getLogger(CasePreferences.class.getName());
     
-    private Boolean groupItemsInTreeByDataSource = null;
+    private static Boolean groupItemsInTreeByDataSource = null;
     
-    //DLG:
-    public CasePreferences(Case currentCase) {
-        loadFromStorage(currentCase);
+    private CasePreferences() {
     }
     
-    public Boolean getGroupItemsInTreeByDataSource() {
+    static {
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            if (evt.getNewValue() != null) {
+                loadFromStorage((Case) evt.getNewValue());
+            } else {
+                saveToStorage((Case) evt.getOldValue());
+                clear();
+            }
+        });
+        try {
+            loadFromStorage(Case.getCurrentCaseThrows());
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "No current case open.", ex);
+        }
+    }
+    
+    public static Boolean getGroupItemsInTreeByDataSource() {
         return groupItemsInTreeByDataSource;
     }
     
-    public void setGroupItemsInTreeByDataSource(boolean value) {
+    public static void setGroupItemsInTreeByDataSource(boolean value) {
         groupItemsInTreeByDataSource = value;
+        DirectoryTreeTopComponent.getDefault().refreshContentTreeSafe();
     }
 
     /**
      * Load case preferences from the settings file.
      */
-    private void loadFromStorage(Case currentCase) {
+    private static void loadFromStorage(Case currentCase) {
         Path settingsFile = Paths.get(currentCase.getConfigDirectory(), SETTINGS_FILE); //NON-NLS
         if (settingsFile.toFile().exists()) {
             // Read the settings
@@ -73,11 +91,15 @@ public final class CasePreferences {
             }
         }
     }
+    
+    private static void clear() {
+        groupItemsInTreeByDataSource = null;
+    }
 
     /**
      * Store case preferences in the settings file.
      */
-    public void saveToStorage(Case currentCase) {
+    private static void saveToStorage(Case currentCase) {
         Path settingsFile = Paths.get(currentCase.getConfigDirectory(), SETTINGS_FILE); //NON-NLS
         Properties props = new Properties();
         if (groupItemsInTreeByDataSource != null) {

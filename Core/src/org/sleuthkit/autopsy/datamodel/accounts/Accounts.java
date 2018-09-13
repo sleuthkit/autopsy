@@ -153,14 +153,8 @@ final public class Accounts implements AutopsyVisitableItem {
      *         based on the UserPreferences groupItemsInTreeByDatasource setting 
      */
     private String getFilterByDataSourceClause() {
-        try {
-            Case currentCase = Case.getCurrentCaseThrows();
-            CasePreferences casePreferences = new CasePreferences(currentCase);
-            if (Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                return "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " ";
-            }
-        } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "No current case open.", ex); //DLG: Review this change. How should we return out of this???
+        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            return "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " ";
         }
         
         return " ";

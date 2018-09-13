@@ -42,8 +42,11 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.Properties;
 import javax.swing.Action;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
@@ -69,6 +72,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.corecomponents.ViewPreferencesPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
@@ -107,6 +111,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
     private final DataResultTopComponent dataResult = new DataResultTopComponent(Bundle.DirectoryTreeTopComponent_resultsView_title());
+    private final ViewPreferencesPanel viewPreferencesPanel = new ViewPreferencesPanel(true);
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
@@ -114,6 +119,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private AutopsyTreeChildFactory autopsyTreeChildFactory;
     private Children autopsyTreeChildren;
     private Accounts accounts;
+    private boolean showRejectedResults;
     private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
@@ -140,8 +146,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
 
-        groupByDatasourceCheckBox.setSelected(UserPreferences.groupItemsInTreeByDatasource());
+        groupByDatasourceCheckBox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
         showOnlyCurrentUserTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
+        
+        viewPreferencesPopupMenu.add(viewPreferencesPanel);
+        viewPreferencesPopupMenu.setSize(viewPreferencesPanel.getPreferredSize().width + 6, viewPreferencesPanel.getPreferredSize().height + 6);
+        viewPreferencesPopupMenu.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                openViewPreferencesButton.setSelected(true);
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                openViewPreferencesButton.setSelected(false);
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+                openViewPreferencesButton.setSelected(false);
+            }
+        });
     }
 
     /**
@@ -185,6 +210,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public DataResultTopComponent getDirectoryListing() {
         return this.dataResult;
     }
+    
+    public boolean getShowRejectedResults() {
+        return showRejectedResults;
+    }
+    
+    public void setShowRejectedResults(boolean showRejectedResults) {
+        this.showRejectedResults = showRejectedResults;
+        if (accounts != null) {
+            accounts.setShowRejected(showRejectedResults);
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -194,6 +230,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        viewPreferencesPopupMenu = new javax.swing.JPopupMenu();
         treeView = new BeanTreeView();
         backButton = new javax.swing.JButton();
         forwardButton = new javax.swing.JButton();
@@ -369,8 +406,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }//GEN-LAST:event_showRejectedCheckBoxActionPerformed
 
     private void openViewPreferencesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openViewPreferencesButtonActionPerformed
-        ViewPreferencesDialog dialog = new ViewPreferencesDialog();
-        dialog.display();
+        //DLG: ViewPreferencesDialog dialog = new ViewPreferencesDialog();
+        //DLG: dialog.display();
+        
+        /*ViewPreferencesPanel panel = new ViewPreferencesPanel();
+        panel.load();
+        
+        JPopupMenu menu = new JPopupMenu();
+        menu.add(panel);
+        menu.show(openViewPreferencesButton, panel.getWidth(), panel.getHeight());*/
+        
+        viewPreferencesPanel.load();
+        viewPreferencesPopupMenu.show(openViewPreferencesButton, 0, openViewPreferencesButton.getHeight() - 1);
     }//GEN-LAST:event_openViewPreferencesButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -381,6 +428,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private javax.swing.JCheckBox showOnlyCurrentUserTagsCheckbox;
     private javax.swing.JCheckBox showRejectedCheckBox;
     private javax.swing.JScrollPane treeView;
+    private javax.swing.JPopupMenu viewPreferencesPopupMenu;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -440,20 +488,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @param dataSourceCount
      */
     private void promptForDataSourceGrouping(Case currentCase, int dataSourceCount) {
-        CasePreferences casePreferences = new CasePreferences(currentCase);
-        
-        if (casePreferences.getGroupItemsInTreeByDataSource() == null) {
+        if (CasePreferences.getGroupItemsInTreeByDataSource() == null) {
             GroupDataSourcesDialog dialog = new GroupDataSourcesDialog(dataSourceCount);
             dialog.display();
             if (dialog.groupByDataSourceSelected()) {
-                casePreferences.setGroupItemsInTreeByDataSource(true);
+                CasePreferences.setGroupItemsInTreeByDataSource(true);
                 refreshContentTreeSafe(); //DLG: Consider an event.
             } else {
-                casePreferences.setGroupItemsInTreeByDataSource(false);
+                CasePreferences.setGroupItemsInTreeByDataSource(false);
             }
-
-            // Save the response
-            casePreferences.saveToStorage(currentCase);
         }
     }
 
@@ -498,7 +541,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                 try {
                     int dataSourceCount = currentCase.getDataSources().size();
-                    if (!UserPreferences.groupItemsInTreeByDatasource()
+                    if (!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
                             && dataSourceCount > threshold) {
                         promptForDataSourceGrouping(currentCase, dataSourceCount);
                     }
@@ -928,7 +971,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void refreshTagsTree() {
         SwingUtilities.invokeLater(() -> {
             // if no open case or has no data then there is no tree to rebuild
-            if (UserPreferences.groupItemsInTreeByDatasource()) {
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 for (Node dataSource : autopsyTreeChildren.getNodes()) {
                     Node tagsNode = dataSource.getChildren().findChild(Tags.getTagsDisplayName());
                     if (tagsNode != null) {

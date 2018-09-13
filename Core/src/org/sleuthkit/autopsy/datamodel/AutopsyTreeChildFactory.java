@@ -54,15 +54,9 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
-            try {
-                Case currentCase = Case.getCurrentCaseThrows();
-                CasePreferences casePreferences = new CasePreferences(currentCase);
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
-                    Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                        refreshChildren();
-                }
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
+                Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+                    refreshChildren();
             }
         }
     };
@@ -89,11 +83,9 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     protected boolean createKeys(List<Object> list) {
 
         try {
-            Case currentCase = Case.getCurrentCaseThrows();
-            CasePreferences casePreferences = new CasePreferences(currentCase);
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
            
-            if (Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 List<DataSource> dataSources = tskCase.getDataSources();
                 List<DataSourceGrouping> keys = new ArrayList<>();
                 dataSources.forEach((datasource) -> {

@@ -149,8 +149,7 @@ public class ViewContextAction extends AbstractAction {
             }
 
             Node parentTreeViewNode;
-            CasePreferences casePreferences = new CasePreferences(currentCase);
-            if (Objects.equals(casePreferences.getGroupItemsInTreeByDataSource(), true)) { // 'Group by Data Source' view
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) { // 'Group by Data Source' view
 
                 SleuthkitCase skCase;
                 String dsname;

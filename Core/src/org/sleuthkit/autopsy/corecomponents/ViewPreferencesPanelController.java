@@ -106,7 +106,7 @@ public final class ViewPreferencesPanelController extends OptionsPanelController
      */
     private ViewPreferencesPanel getPanel() {
         if (panel == null) {
-            panel = new ViewPreferencesPanel();
+            panel = new ViewPreferencesPanel(false);
             panel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                 if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
                     changed();
