@@ -38,7 +38,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 @Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
-    private static final Logger logger = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
+    private static final long serialVersionUID = 1L;
 
     private boolean addToDatabase;
     private CorrelationAttributeInstance correlationAttributeInstance;
@@ -101,7 +102,7 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
                 comment = centralRepoCommentDialog.getComment();
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error adding comment", ex);
+                LOGGER.log(Level.SEVERE, "Error adding comment", ex);
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
                         "An error occurred while trying to save the comment to the central repository.",
                         NotifyDescriptor.ERROR_MESSAGE);

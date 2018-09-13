@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -143,6 +144,9 @@ final class IngestModule implements FileIngestModule {
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
+            } catch (CorrelationAttributeNormalizationException ex){
+                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+                return ProcessResult.ERROR;
             }
         }
 
@@ -160,6 +164,9 @@ final class IngestModule implements FileIngestModule {
             dbManager.addAttributeInstanceBulk(cefi);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+            return ProcessResult.ERROR;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
             return ProcessResult.ERROR;
         }
 

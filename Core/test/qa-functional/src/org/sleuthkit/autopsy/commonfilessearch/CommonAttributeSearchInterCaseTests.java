@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,12 +43,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Search for commonality in different sorts of attributes (files, usb devices,
  * emails, domains). Observe that frequency filtering works for various types.
- * 
- * ***NOTE*** These tests are presently disabled because we have not figured out
- * the best way to load all the necessary modules and run them during an ingest
- * from within the test packages.  See InterCaseTestUtils constructor for more 
- * notes in this situation.
- * 
+ *
+ * TODO (JIRA-4166): The following tests are commented out because the
+ * functional test framework needs to be able to configure the keyword search
+ * ingest module to produce instances of the correlation attributes for the
+ * tests. This cannot be easily done at present because the keyword search
+ * module resides in an NBM with a dependency on the Autopsy-Core NBM; the
+ * otherwise obvious solution of publicly exposing the keyword search module
+ * settings fails due to a circular dependency.
+ *
  */
 public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
@@ -61,7 +64,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
         return conf.suite();
     }
 
-   public  CommonAttributeSearchInterCaseTests(String name) {
+    public CommonAttributeSearchInterCaseTests(String name) {
         super(name);
         this.utils = new InterCaseTestUtils(this);
     }
@@ -100,10 +103,10 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
     /**
      * Run a search on the given type and ensure that all results are off that
      * type.
-     * 
+     *
      * No frequency filtering applied.
-     * 
-     * @param type 
+     *
+     * @param type
      */
     private void assertResultsAreOfType(CorrelationAttributeInstance.Type type) {
 
@@ -115,7 +118,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
             CommonAttributeSearchResults metadata = builder.findMatches();
 
             metadata.size();
-            
+
             assertFalse(verifyInstanceCount(metadata, 0));
 
             assertTrue(this.utils.areAllResultsOfType(metadata, type));
@@ -136,33 +139,33 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 //        assertResultsAreOfType(this.utils.EMAIL_TYPE);
 //        assertResultsAreOfType(this.utils.PHONE_TYPE);   
     }
-    
+
     /**
      * Test that the frequency filter behaves reasonably for attributes other
      * than the file type.
      */
-    public void testTwo(){
+    public void testTwo() {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
-            
+
             AbstractCommonAttributeSearcher builder;
             CommonAttributeSearchResults metadata;
-            
+
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 100);
             metadata = builder.findMatches();
             metadata.size();
             //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
-            
+
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
             metadata = builder.findMatches();
             metadata.size();
             //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
-            
+
             builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 90);
             metadata = builder.findMatches();
             metadata.size();
             //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
-            
+
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
