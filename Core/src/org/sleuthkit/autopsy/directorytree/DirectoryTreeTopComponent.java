@@ -908,19 +908,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refresh only the tags subtree(s) of the tree view.
      */
     private void refreshTagsTree() {
-        // if no open case or has no data then there is no tree to rebuild
-        Case currentCase;
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            return;
-        }
-        if (null == currentCase || currentCase.hasData() == false) {
-            return;
-        }
-        
         SwingUtilities.invokeLater(() -> {
-            // if no open case or has no data then there is no tree to rebuild
+            // Ensure the component children have been created first.
+            if (autopsyTreeChildren == null) {
+                return;
+            }
+            
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 for (Node dataSource : autopsyTreeChildren.getNodes()) {
                     Node tagsNode = dataSource.getChildren().findChild(Tags.getTagsDisplayName());
