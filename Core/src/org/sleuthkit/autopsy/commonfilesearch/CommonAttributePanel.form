@@ -66,7 +66,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="percentageThresholdCheck" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="percentageThresholdTextOne" min="-2" pref="40" max="-2" attributes="0"/>
+                          <Component id="percentageThresholdInputBox" min="-2" pref="40" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="percentageThresholdTextTwo" max="32767" attributes="0"/>
                       </Group>
@@ -115,7 +115,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="percentageThresholdCheck" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="percentageThresholdTextOne" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="percentageThresholdInputBox" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="percentageThresholdTextTwo" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace pref="50" max="32767" attributes="0"/>
@@ -205,11 +205,11 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="percentageThresholdCheckActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JTextField" name="percentageThresholdTextOne">
+        <Component class="javax.swing.JTextField" name="percentageThresholdInputBox">
           <Properties>
             <Property name="horizontalAlignment" type="int" value="11"/>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonAttributePanel.percentageThresholdTextOne.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/commonfilesearch/Bundle.properties" key="CommonAttributePanel.percentageThresholdInputBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[40, 24]"/>

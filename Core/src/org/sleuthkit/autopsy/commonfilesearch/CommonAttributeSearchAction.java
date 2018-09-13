@@ -37,7 +37,23 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
     private static CommonAttributeSearchAction instance = null;
     private static final long serialVersionUID = 1L;
 
-    CommonAttributeSearchAction() {
+    /**
+     * Get the default CommonAttributeSearchAction.
+     *
+     * @return the default instance of this action
+     */
+    public static synchronized CommonAttributeSearchAction getDefault() {
+        if (instance == null) {
+            instance = new CommonAttributeSearchAction();
+        }
+        return instance;
+    }
+
+    /**
+     * Create a CommonAttributeSearchAction for opening the common attribute
+     * search dialog
+     */
+    private CommonAttributeSearchAction() {
         super();
         this.setEnabled(false);
     }
@@ -54,15 +70,8 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
 
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
-        } 
-        return super.isEnabled() && shouldBeEnabled;
-    }
-
-    public static synchronized CommonAttributeSearchAction getDefault() {
-        if (instance == null) {
-            instance = new CommonAttributeSearchAction();
         }
-        return instance;
+        return super.isEnabled() && shouldBeEnabled;
     }
 
     @Override
@@ -75,8 +84,12 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
         createAndShowPanel();
     }
 
+    /**
+     * Create the commonAttributePanel and diplay it.
+     */
     private void createAndShowPanel() {
         CommonAttributePanel commonAttributePanel = new CommonAttributePanel();
+        //In order to update errors the CommonAttributePanel needs to observe its sub panels
         commonAttributePanel.observeSubPanels();
         commonAttributePanel.setVisible(true);
     }

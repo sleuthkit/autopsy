@@ -97,12 +97,12 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         this.errorManager = new UserInputErrorManager();
 
-        this.percentageThresholdTextOne.getDocument().addDocumentListener(new DocumentListener() {
+        this.percentageThresholdInputBox.getDocument().addDocumentListener(new DocumentListener() {
 
-            private Dimension preferredSize = CommonAttributePanel.this.percentageThresholdTextOne.getPreferredSize();
+            private Dimension preferredSize = CommonAttributePanel.this.percentageThresholdInputBox.getPreferredSize();
 
             private void maintainSize() {
-                CommonAttributePanel.this.percentageThresholdTextOne.setSize(preferredSize);
+                CommonAttributePanel.this.percentageThresholdInputBox.setSize(preferredSize);
             }
 
             @Override
@@ -125,6 +125,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         });
     }
 
+    /**
+     * Get whether or not the central repository will be enabled as a search
+     * option.
+     *
+     * @return true if the central repository exists and has at least 2 cases in
+     *         and includes the current case, false otherwise.
+     */
     static boolean isEamDbAvailableForIntercaseSearch() {
         try {
             return EamDb.isEnabled()
@@ -144,7 +151,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         checkFileTypeCheckBoxState();
     }
 
-    static boolean isEamDbAvailableForPercentageFrequencyCalculations() {
+    /**
+     * Get whether or not the central repository will be available for filtering
+     * results.
+     *
+     * @return true if the central repository exists and has at least 1 case in
+     *         it, false otherwise.
+     */
+    private static boolean isEamDbAvailableForPercentageFrequencyCalculations() {
         try {
             return EamDb.isEnabled()
                     && EamDb.getInstance() != null
@@ -155,11 +169,18 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         return false;
     }
 
+    /**
+     * Disable the option to search for common attributes in the central
+     * repository.
+     */
     private void disableIntercaseSearch() {
         this.intraCaseRadio.setSelected(true);
         this.interCaseRadio.setEnabled(false);
     }
 
+    /**
+     * Perform the common attribute search.
+     */
     @NbBundle.Messages({
         "CommonAttributePanel.search.results.titleAll=Common Attributes (All Data Sources)",
         "CommonAttributePanel.search.results.titleSingle=Common Attributes (Match Within Data Source: %s)",
@@ -179,10 +200,21 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             private String tabTitle;
             private ProgressHandle progress;
 
+            /**
+             * Set the title of the search results for searches using all data
+             * sources.
+             */
             private void setTitleForAllDataSources() {
                 this.tabTitle = Bundle.CommonAttributePanel_search_results_titleAll();
             }
 
+            /**
+             * Set the title of the search results for searches using a single
+             * source.
+             *
+             * @param dataSourceId the datasource ID of the the source being
+             *                     used
+             */
             private void setTitleForSingleSource(Long dataSourceId) {
                 final String CommonAttributePanel_search_results_titleSingle = Bundle.CommonAttributePanel_search_results_titleSingle();
                 final Object[] dataSourceName = new Object[]{intraCasePanel.getDataSourceMap().get(dataSourceId)};
@@ -316,6 +348,10 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         new SwingWorker<Map<Long, String>, Void>() {
 
+            /**
+             * Update the user interface of the panel to reflect the datasources
+             * available.
+             */
             private void updateUi() {
 
                 final Map<Long, String> dataSourceMap = CommonAttributePanel.this.intraCasePanel.getDataSourceMap();
@@ -333,12 +369,18 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         intraCasePanel.setVisible(false);
                         interCasePanel.setVisible(true);
                     }
-                    CommonAttributePanel.this.updateErrorTextAndSearchBox();
+                    CommonAttributePanel.this.updateErrorTextAndSearchButton();
                 }
             }
 
+            /**
+             * Check if the case has multiple data sources
+             *
+             * @return true if the case has multiple data sources, false
+             *         otherwise
+             */
             private boolean caseHasMultipleSources() {
-                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 2;
+                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 2;  //WJS-TODO should be > than 1?
             }
 
             @Override
@@ -386,6 +428,10 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         new SwingWorker<Map<Integer, String>, Void>() {
 
+            /**
+             * Update the user interface of the panel to reflect the cases
+             * available.
+             */
             private void updateUi() {
 
                 final Map<Integer, String> caseMap = CommonAttributePanel.this.interCasePanel.getCaseMap();
@@ -400,7 +446,16 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 }
             }
 
-            private Map<Integer, String> mapDataSources(List<CorrelationCase> cases) throws EamDbException {
+            /**
+             * Create a map of cases from a list of cases.
+             *
+             * @param cases
+             *
+             * @return a map of Cases
+             *
+             * @throws EamDbException
+             */
+            private Map<Integer, String> mapCases(List<CorrelationCase> cases) throws EamDbException {
                 Map<Integer, String> casemap = new HashMap<>();
                 CorrelationCase currentCorCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                 for (CorrelationCase correlationCase : cases) {
@@ -408,7 +463,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         casemap.put(correlationCase.getID(), correlationCase.getDisplayName());
                     }
                 }
-
                 return casemap;
             }
 
@@ -416,7 +470,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             protected Map<Integer, String> doInBackground() throws EamDbException {
 
                 List<CorrelationCase> dataSources = EamDb.getInstance().getCases();
-                Map<Integer, String> caseMap = mapDataSources(dataSources);
+                Map<Integer, String> caseMap = mapCases(dataSources);
 
                 return caseMap;
             }
@@ -457,7 +511,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         intraCaseRadio = new javax.swing.JRadioButton();
         interCaseRadio = new javax.swing.JRadioButton();
         percentageThresholdCheck = new javax.swing.JCheckBox();
-        percentageThresholdTextOne = new javax.swing.JTextField();
+        percentageThresholdInputBox = new javax.swing.JTextField();
         percentageThresholdTextTwo = new javax.swing.JLabel();
         intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
         interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
@@ -518,11 +572,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
-        percentageThresholdTextOne.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        percentageThresholdTextOne.setText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextOne.text")); // NOI18N
-        percentageThresholdTextOne.setMaximumSize(new java.awt.Dimension(40, 24));
-        percentageThresholdTextOne.setMinimumSize(new java.awt.Dimension(40, 24));
-        percentageThresholdTextOne.setPreferredSize(new java.awt.Dimension(40, 24));
+        percentageThresholdInputBox.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
+        percentageThresholdInputBox.setText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdInputBox.text")); // NOI18N
+        percentageThresholdInputBox.setMaximumSize(new java.awt.Dimension(40, 24));
+        percentageThresholdInputBox.setMinimumSize(new java.awt.Dimension(40, 24));
+        percentageThresholdInputBox.setPreferredSize(new java.awt.Dimension(40, 24));
 
         org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdTextTwo, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextTwo.text_1")); // NOI18N
 
@@ -541,37 +595,33 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(errorText, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                                .addGap(65, 65, 65)
-                                .addComponent(searchButton)
-                                .addContainerGap())
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                        .addGap(20, 20, 20)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(intraCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(interCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))))
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(errorText, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                        .addGap(65, 65, 65)
+                        .addComponent(searchButton)
+                        .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(percentageThresholdCheck)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(percentageThresholdTextOne, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(scopeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(37, 37, 37))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(interCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(intraCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 0, 0))))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                                    .addGap(20, 20, 20)
+                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(intraCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(interCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))))
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(interCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(intraCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -591,7 +641,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(percentageThresholdCheck)
-                    .addComponent(percentageThresholdTextOne, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(percentageThresholdTextTwo))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -609,9 +659,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
     private void percentageThresholdCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdCheckActionPerformed
         if (this.percentageThresholdCheck.isSelected()) {
-            this.percentageThresholdTextOne.setEnabled(true);
+            this.percentageThresholdInputBox.setEnabled(true);
         } else {
-            this.percentageThresholdTextOne.setEnabled(false);
+            this.percentageThresholdInputBox.setEnabled(false);
         }
 
         this.handleFrequencyPercentageState();
@@ -632,8 +682,12 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    /**
+     * Convert the text in the percentage threshold input box into an integer,
+     * -1 is used when the string can not be converted to an integer.
+     */
     private void percentageThresholdChanged() {
-        String percentageString = this.percentageThresholdTextOne.getText();
+        String percentageString = this.percentageThresholdInputBox.getText();
 
         try {
             this.percentageThresholdValue = Integer.parseInt(percentageString);
@@ -645,7 +699,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         this.handleFrequencyPercentageState();
     }
 
-    private void updateErrorTextAndSearchBox() {
+    /**
+     * Update the error text and the enabled status of the search button to
+     * reflect the current validity of the search settings.
+     */
+    private void updateErrorTextAndSearchButton() {
         if (this.errorManager.anyErrors()) {
             this.searchButton.setEnabled(false);
             //grab the first error error and show it
@@ -657,20 +715,32 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         }
     }
 
+    /**
+     * Set the enabled status of the percentage threshold options
+     *
+     * @param enabled true to enable percentage threshold options, false to
+     *                disable them
+     */
     private void enablePercentageOptions(boolean enabled) {
-        this.percentageThresholdTextOne.setEnabled(enabled);
+        this.percentageThresholdInputBox.setEnabled(enabled);
         this.percentageThresholdCheck.setEnabled(enabled);
         this.percentageThresholdCheck.setSelected(enabled);
         this.percentageThresholdTextTwo.setEnabled(enabled);
     }
 
+    /**
+     * Check that the integer value of what is entered in the percentage
+     * threshold text box is a valid percentage and update the errorManager to
+     * reflect the validity.
+     */
     private void handleFrequencyPercentageState() {
         if (this.percentageThresholdValue > 0 && this.percentageThresholdValue <= 100) {
             this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, false);
         } else {
+
             this.errorManager.setError(UserInputErrorManager.FREQUENCY_PERCENTAGE_OUT_OF_RANGE_KEY, true);
         }
-        this.updateErrorTextAndSearchBox();
+        this.updateErrorTextAndSearchButton();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -683,17 +753,26 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     private javax.swing.JRadioButton intraCaseRadio;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JCheckBox percentageThresholdCheck;
-    private javax.swing.JTextField percentageThresholdTextOne;
+    private javax.swing.JTextField percentageThresholdInputBox;
     private javax.swing.JLabel percentageThresholdTextTwo;
     private javax.swing.JLabel scopeLabel;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Add this panel as an observer of it's sub panels so that errors can be
+     * indicated accurately.
+     */
     void observeSubPanels() {
         intraCasePanel.addObserver(this);
         interCasePanel.addObserver(this);
     }
 
+    /**
+     * Check that the sub panels have valid options selected regarding their
+     * file type filtering options, and update the errorManager with the
+     * validity.
+     */
     private void checkFileTypeCheckBoxState() {
         boolean validCheckBoxState = true;
         if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
@@ -710,7 +789,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         } else {
             this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, true);
         }
-        this.updateErrorTextAndSearchBox();
+        this.updateErrorTextAndSearchButton();
     }
 
 }
