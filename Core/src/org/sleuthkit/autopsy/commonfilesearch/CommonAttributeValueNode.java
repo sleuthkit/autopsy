@@ -41,7 +41,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
     private final String dataSources;
 
     @NbBundle.Messages({
-        "Md5Node.Md5Node.format=MD5: %s"
+        "CommonAttributeValueNode.CommonAttributeValueNode.format=Value: %s"
     })
     /**
      * Create a Match node whose children will all have this object in common.
@@ -57,7 +57,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
         this.dataSources = String.join(", ", data.getDataSources());
         this.value = data.getValue();
         
-        this.setDisplayName(String.format(Bundle.Md5Node_Md5Node_format(), this.value));
+        this.setDisplayName(String.format(Bundle.CommonAttributeValueNode_CommonAttributeValueNode_format(), this.value));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 

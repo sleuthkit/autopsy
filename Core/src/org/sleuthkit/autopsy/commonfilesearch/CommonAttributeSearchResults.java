@@ -44,8 +44,22 @@ final public class CommonAttributeSearchResults {
     private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
 
     private final int percentageThreshold;
+    private final int resultTypeId;
     
     /**
+     * Create a values object which can be handed off to the node factories.
+     *
+     * @param values list of CommonAttributeValue indexed by size of
+     * CommonAttributeValue
+     */
+    CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType) {
+        //wrap in a new object in case any client code has used an unmodifiable collection
+        this.instanceCountToAttributeValues = new HashMap<>(metadata);
+        this.percentageThreshold = percentageThreshold;
+        this.resultTypeId = resultType.getId();
+    }
+    
+        /**
      * Create a values object which can be handed off to the node factories.
      *
      * @param values list of CommonAttributeValue indexed by size of
@@ -55,6 +69,7 @@ final public class CommonAttributeSearchResults {
         //wrap in a new object in case any client code has used an unmodifiable collection
         this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
+        this.resultTypeId = CorrelationAttributeInstance.FILES_TYPE_ID;
     }
 
     /**
@@ -104,7 +119,7 @@ final public class CommonAttributeSearchResults {
         CorrelationAttributeInstance.Type fileAttributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()
-                .filter(filterType -> filterType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
+                .filter(filterType -> filterType.getId() == this.resultTypeId)
                 .findFirst().get();
         
         EamDb eamDb = EamDb.getInstance();
@@ -163,7 +178,7 @@ final public class CommonAttributeSearchResults {
 
         int count = 0;
         for (CommonAttributeValueList data : this.instanceCountToAttributeValues.values()) {
-            for(CommonAttributeValue md5 : data.getMetadataList()){
+            for(CommonAttributeValue md5 : data.getDelayedMetadataList()){
                 count += md5.getInstanceCount();
             }
         }

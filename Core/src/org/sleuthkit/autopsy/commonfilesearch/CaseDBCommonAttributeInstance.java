@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -69,5 +70,11 @@ final public class CaseDBCommonAttributeInstance extends AbstractCommonAttribute
             LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with obj_id: %s.  Node not created.", new Object[]{this.getAbstractFileObjectId()}), ex);
             return null;
         }
+    }
+
+    @Override
+    public CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType() {
+        //may be required at a later date
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
