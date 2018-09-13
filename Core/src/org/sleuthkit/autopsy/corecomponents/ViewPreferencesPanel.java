@@ -441,7 +441,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     private void hideOtherUsersTagsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideOtherUsersTagsCheckboxActionPerformed
         if (immediateUpdates) {
-            UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected() == false);
+            UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         } else {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
