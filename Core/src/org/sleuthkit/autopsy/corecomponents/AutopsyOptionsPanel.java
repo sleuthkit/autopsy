@@ -285,16 +285,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * Load the saved user preferences.
      */
     void load() {
-        boolean keepPreferredViewer = UserPreferences.keepPreferredContentViewer();
-        oldKeepCurrentViewerRB.setSelected(keepPreferredViewer);
-        oldUseBestViewerRB.setSelected(!keepPreferredViewer);
-        oldDataSourcesHideKnownCB.setSelected(UserPreferences.hideKnownFilesInDataSourcesTree());
-        oldViewsHideKnownCB.setSelected(UserPreferences.hideKnownFilesInViewsTree());
-        oldDataSourcesHideSlackCB.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
-        oldViewsHideSlackCB.setSelected(UserPreferences.hideSlackFilesInViewsTree());
-        boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
-        oldUseLocalTimeRB.setSelected(useLocalTime);
-        oldUseGMTTimeRB.setSelected(!useLocalTime);
         String path = ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP);
         boolean useDefault = (path == null || path.isEmpty());
         defaultLogoRB.setSelected(useDefault);
@@ -350,12 +340,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
      * Store the current user preferences.
      */
     void store() {
-        UserPreferences.setKeepPreferredContentViewer(oldKeepCurrentViewerRB.isSelected());
-        UserPreferences.setHideKnownFilesInDataSourcesTree(oldDataSourcesHideKnownCB.isSelected());
-        UserPreferences.setHideKnownFilesInViewsTree(oldViewsHideKnownCB.isSelected());
-        UserPreferences.setHideSlackFilesInDataSourcesTree(oldDataSourcesHideSlackCB.isSelected());
-        UserPreferences.setHideSlackFilesInViewsTree(oldViewsHideSlackCB.isSelected());
-        UserPreferences.setDisplayTimesInLocalTime(oldUseLocalTimeRB.isSelected());
         UserPreferences.setLogFileCount(Integer.parseInt(logFileCount.getText()));
         if (!agencyLogoPathField.getText().isEmpty()) {
             File file = new File(agencyLogoPathField.getText());
@@ -535,19 +519,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         defaultLogoRB = new javax.swing.JRadioButton();
         specifyLogoRB = new javax.swing.JRadioButton();
         agencyLogoPathFieldValidationLabel = new javax.swing.JLabel();
-        oldViewPanel = new javax.swing.JPanel();
-        jLabelSelectFile = new javax.swing.JLabel();
-        oldUseBestViewerRB = new javax.swing.JRadioButton();
-        oldKeepCurrentViewerRB = new javax.swing.JRadioButton();
-        jLabelHideKnownFiles = new javax.swing.JLabel();
-        oldDataSourcesHideKnownCB = new javax.swing.JCheckBox();
-        oldViewsHideKnownCB = new javax.swing.JCheckBox();
-        jLabelHideSlackFiles = new javax.swing.JLabel();
-        oldDataSourcesHideSlackCB = new javax.swing.JCheckBox();
-        oldViewsHideSlackCB = new javax.swing.JCheckBox();
-        jLabelTimeDisplay = new javax.swing.JLabel();
-        oldUseLocalTimeRB = new javax.swing.JRadioButton();
-        oldUseGMTTimeRB = new javax.swing.JRadioButton();
         runtimePanel = new javax.swing.JPanel();
         maxMemoryLabel = new javax.swing.JLabel();
         maxMemoryUnitsLabel = new javax.swing.JLabel();
@@ -624,7 +595,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(agencyLogoPathFieldValidationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(479, Short.MAX_VALUE))
         );
         logoPanelLayout.setVerticalGroup(
             logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -641,139 +612,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, logoPanelLayout.createSequentialGroup()
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
-        );
-
-        oldViewPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldViewPanel.border.title"))); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelSelectFile, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelSelectFile.text")); // NOI18N
-
-        fileSelectionButtonGroup.add(oldUseBestViewerRB);
-        org.openide.awt.Mnemonics.setLocalizedText(oldUseBestViewerRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldUseBestViewerRB.text")); // NOI18N
-        oldUseBestViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldUseBestViewerRB.toolTipText")); // NOI18N
-        oldUseBestViewerRB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldUseBestViewerRBActionPerformed(evt);
-            }
-        });
-
-        fileSelectionButtonGroup.add(oldKeepCurrentViewerRB);
-        org.openide.awt.Mnemonics.setLocalizedText(oldKeepCurrentViewerRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldKeepCurrentViewerRB.text")); // NOI18N
-        oldKeepCurrentViewerRB.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldKeepCurrentViewerRB.toolTipText")); // NOI18N
-        oldKeepCurrentViewerRB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldKeepCurrentViewerRBActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelHideKnownFiles, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelHideKnownFiles.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(oldDataSourcesHideKnownCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldDataSourcesHideKnownCB.text")); // NOI18N
-        oldDataSourcesHideKnownCB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldDataSourcesHideKnownCBActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(oldViewsHideKnownCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldViewsHideKnownCB.text")); // NOI18N
-        oldViewsHideKnownCB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldViewsHideKnownCBActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelHideSlackFiles, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelHideSlackFiles.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(oldDataSourcesHideSlackCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldDataSourcesHideSlackCB.text")); // NOI18N
-        oldDataSourcesHideSlackCB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldDataSourcesHideSlackCBActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(oldViewsHideSlackCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldViewsHideSlackCB.text")); // NOI18N
-        oldViewsHideSlackCB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldViewsHideSlackCBActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelTimeDisplay, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelTimeDisplay.text")); // NOI18N
-
-        displayTimesButtonGroup.add(oldUseLocalTimeRB);
-        org.openide.awt.Mnemonics.setLocalizedText(oldUseLocalTimeRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldUseLocalTimeRB.text")); // NOI18N
-        oldUseLocalTimeRB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldUseLocalTimeRBActionPerformed(evt);
-            }
-        });
-
-        displayTimesButtonGroup.add(oldUseGMTTimeRB);
-        org.openide.awt.Mnemonics.setLocalizedText(oldUseGMTTimeRB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.oldUseGMTTimeRB.text")); // NOI18N
-        oldUseGMTTimeRB.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                oldUseGMTTimeRBActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout oldViewPanelLayout = new javax.swing.GroupLayout(oldViewPanel);
-        oldViewPanel.setLayout(oldViewPanelLayout);
-        oldViewPanelLayout.setHorizontalGroup(
-            oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, oldViewPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(oldViewPanelLayout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addGroup(oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(oldViewPanelLayout.createSequentialGroup()
-                                .addGroup(oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(oldUseGMTTimeRB)
-                                    .addComponent(oldKeepCurrentViewerRB)
-                                    .addComponent(oldUseBestViewerRB)
-                                    .addComponent(oldDataSourcesHideKnownCB)
-                                    .addComponent(oldViewsHideKnownCB))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(oldViewPanelLayout.createSequentialGroup()
-                                .addGroup(oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(oldDataSourcesHideSlackCB)
-                                    .addComponent(oldViewsHideSlackCB)
-                                    .addComponent(oldUseLocalTimeRB))
-                                .addContainerGap(158, Short.MAX_VALUE))))
-                    .addGroup(oldViewPanelLayout.createSequentialGroup()
-                        .addGroup(oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabelHideSlackFiles)
-                            .addComponent(jLabelTimeDisplay)
-                            .addComponent(jLabelHideKnownFiles)
-                            .addComponent(jLabelSelectFile))
-                        .addGap(30, 30, 30))))
-        );
-        oldViewPanelLayout.setVerticalGroup(
-            oldViewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, oldViewPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabelSelectFile)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldUseBestViewerRB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldKeepCurrentViewerRB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabelHideKnownFiles)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldDataSourcesHideKnownCB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldViewsHideKnownCB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabelHideSlackFiles)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldDataSourcesHideSlackCB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldViewsHideSlackCB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabelTimeDisplay)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldUseLocalTimeRB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oldUseGMTTimeRB))
         );
 
         runtimePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.runtimePanel.border.title"))); // NOI18N
@@ -831,7 +669,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addComponent(maxMemoryUnitsLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE))
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addComponent(maxMemoryUnitsLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -884,26 +722,21 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(oldViewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1002, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(oldViewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(runtimePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(185, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -917,7 +750,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 479, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -939,38 +772,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_memFieldKeyReleased
-
-    private void oldUseGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldUseGMTTimeRBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldUseGMTTimeRBActionPerformed
-
-    private void oldUseLocalTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldUseLocalTimeRBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldUseLocalTimeRBActionPerformed
-
-    private void oldViewsHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldViewsHideSlackCBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldViewsHideSlackCBActionPerformed
-
-    private void oldDataSourcesHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldDataSourcesHideSlackCBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldDataSourcesHideSlackCBActionPerformed
-
-    private void oldViewsHideKnownCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldViewsHideKnownCBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldViewsHideKnownCBActionPerformed
-
-    private void oldDataSourcesHideKnownCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldDataSourcesHideKnownCBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldDataSourcesHideKnownCBActionPerformed
-
-    private void oldKeepCurrentViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldKeepCurrentViewerRBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldKeepCurrentViewerRBActionPerformed
-
-    private void oldUseBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oldUseBestViewerRBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_oldUseBestViewerRBActionPerformed
 
     private void specifyLogoRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specifyLogoRBActionPerformed
         agencyLogoPathField.setEnabled(true);
@@ -1031,10 +832,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton defaultLogoRB;
     private javax.swing.ButtonGroup displayTimesButtonGroup;
     private javax.swing.ButtonGroup fileSelectionButtonGroup;
-    private javax.swing.JLabel jLabelHideKnownFiles;
-    private javax.swing.JLabel jLabelHideSlackFiles;
-    private javax.swing.JLabel jLabelSelectFile;
-    private javax.swing.JLabel jLabelTimeDisplay;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField logFileCount;
@@ -1047,15 +844,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel maxMemoryUnitsLabel1;
     private javax.swing.JTextField memField;
     private javax.swing.JLabel memFieldValidationLabel;
-    private javax.swing.JCheckBox oldDataSourcesHideKnownCB;
-    private javax.swing.JCheckBox oldDataSourcesHideSlackCB;
-    private javax.swing.JRadioButton oldKeepCurrentViewerRB;
-    private javax.swing.JRadioButton oldUseBestViewerRB;
-    private javax.swing.JRadioButton oldUseGMTTimeRB;
-    private javax.swing.JRadioButton oldUseLocalTimeRB;
-    private javax.swing.JPanel oldViewPanel;
-    private javax.swing.JCheckBox oldViewsHideKnownCB;
-    private javax.swing.JCheckBox oldViewsHideSlackCB;
     private javax.swing.JLabel restartNecessaryWarning;
     private javax.swing.JPanel runtimePanel;
     private javax.swing.JRadioButton specifyLogoRB;

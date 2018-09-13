@@ -65,7 +65,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponents.ViewPreferencesDialog;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
@@ -145,9 +144,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
-
-        groupByDatasourceCheckBox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
-        showOnlyCurrentUserTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         
         viewPreferencesPopupMenu.add(viewPreferencesPanel);
         viewPreferencesPopupMenu.setSize(viewPreferencesPanel.getPreferredSize().width + 6, viewPreferencesPanel.getPreferredSize().height + 6);
@@ -179,7 +175,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 switch (evt.getKey()) {
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
-                    //DLG: case UserPreferences.GROUP_ITEMS_IN_TREE_BY_DATASOURCE:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.SHOW_ONLY_CURRENT_USER_TAGS:
@@ -235,9 +230,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         backButton = new javax.swing.JButton();
         forwardButton = new javax.swing.JButton();
         openViewPreferencesButton = new javax.swing.JButton();
-        showRejectedCheckBox = new javax.swing.JCheckBox();
-        groupByDatasourceCheckBox = new javax.swing.JCheckBox();
-        showOnlyCurrentUserTagsCheckbox = new javax.swing.JCheckBox();
 
         treeView.setBorder(null);
 
@@ -283,46 +275,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(showRejectedCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showRejectedCheckBox.text")); // NOI18N
-        showRejectedCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showRejectedCheckBoxActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(groupByDatasourceCheckBox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.groupByDatasourceCheckBox.text")); // NOI18N
-        groupByDatasourceCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                groupByDatasourceCheckBoxActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(showOnlyCurrentUserTagsCheckbox, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.showOnlyCurrentUserTagsCheckbox.text")); // NOI18N
-        showOnlyCurrentUserTagsCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showOnlyCurrentUserTagsCheckboxActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(treeView)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(openViewPreferencesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(showOnlyCurrentUserTagsCheckbox)
-                            .addComponent(showRejectedCheckBox)
-                            .addComponent(groupByDatasourceCheckBox))
-                        .addGap(0, 247, Short.MAX_VALUE)))
+                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 264, Short.MAX_VALUE)
+                .addComponent(openViewPreferencesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -333,14 +296,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(openViewPreferencesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(showOnlyCurrentUserTagsCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(showRejectedCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(groupByDatasourceCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE))
+                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -393,29 +350,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setCursor(null);
     }//GEN-LAST:event_forwardButtonActionPerformed
 
-    private void groupByDatasourceCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupByDatasourceCheckBoxActionPerformed
-        UserPreferences.setGroupItemsInTreeByDatasource(this.groupByDatasourceCheckBox.isSelected()); //DLG: Remove this checkbox
-    }//GEN-LAST:event_groupByDatasourceCheckBoxActionPerformed
-
-    private void showOnlyCurrentUserTagsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showOnlyCurrentUserTagsCheckboxActionPerformed
-        UserPreferences.setShowOnlyCurrentUserTags(this.showOnlyCurrentUserTagsCheckbox.isSelected()); //DLG: Remove this checkbox
-    }//GEN-LAST:event_showOnlyCurrentUserTagsCheckboxActionPerformed
-
-    private void showRejectedCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showRejectedCheckBoxActionPerformed
-        //DLG: Remove this checkbox
-    }//GEN-LAST:event_showRejectedCheckBoxActionPerformed
-
     private void openViewPreferencesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openViewPreferencesButtonActionPerformed
-        //DLG: ViewPreferencesDialog dialog = new ViewPreferencesDialog();
-        //DLG: dialog.display();
-        
-        /*ViewPreferencesPanel panel = new ViewPreferencesPanel();
-        panel.load();
-        
-        JPopupMenu menu = new JPopupMenu();
-        menu.add(panel);
-        menu.show(openViewPreferencesButton, panel.getWidth(), panel.getHeight());*/
-        
         viewPreferencesPanel.load();
         viewPreferencesPopupMenu.show(openViewPreferencesButton, 0, openViewPreferencesButton.getHeight() - 1);
     }//GEN-LAST:event_openViewPreferencesButtonActionPerformed
@@ -423,10 +358,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
-    private javax.swing.JCheckBox groupByDatasourceCheckBox;
     private javax.swing.JButton openViewPreferencesButton;
-    private javax.swing.JCheckBox showOnlyCurrentUserTagsCheckbox;
-    private javax.swing.JCheckBox showRejectedCheckBox;
     private javax.swing.JScrollPane treeView;
     private javax.swing.JPopupMenu viewPreferencesPopupMenu;
     // End of variables declaration//GEN-END:variables
@@ -493,7 +425,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             dialog.display();
             if (dialog.groupByDataSourceSelected()) {
                 CasePreferences.setGroupItemsInTreeByDataSource(true);
-                refreshContentTreeSafe(); //DLG: Consider an event.
+                refreshContentTreeSafe();
             } else {
                 CasePreferences.setGroupItemsInTreeByDataSource(false);
             }
@@ -599,10 +531,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
 
                         accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
-                        if (!Objects.isNull(accounts)) {
-                            showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
-                            showRejectedCheckBox.setSelected(false);
-                        }
                     }
 
                     Node views = rootChildren.findChild(ViewsNode.NAME);

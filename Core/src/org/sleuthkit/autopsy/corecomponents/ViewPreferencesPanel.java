@@ -18,82 +18,62 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.Properties;
-import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * Panel for configuring view preferences.
  */
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
-    
-    private static final Logger logger = Logger.getLogger(ViewPreferencesPanel.class.getName());
-    
-    private boolean immediateUpdates;
-    
+
+    private final boolean immediateUpdates;
+
     /**
      * Creates new form ViewPreferencesPanel
-     * 
-     * //DLG: Might not need this constructor anymore.
-     */
-    public ViewPreferencesPanel() {
-        initComponents();
-    }
-    
-    /**
-     * Creates new form ViewPreferencesPanel
-     * 
-     * //DLG:
+     *
+     * @param immediateUpdates If true, value changes will be persisted at the
+     *                         moment they occur.
      */
     public ViewPreferencesPanel(boolean immediateUpdates) {
         initComponents();
         this.immediateUpdates = immediateUpdates;
     }
-    
+
     @Override
     public void load() {
         // Global Settings
         boolean keepPreferredViewer = UserPreferences.keepPreferredContentViewer();
         keepCurrentViewerRadioButton.setSelected(keepPreferredViewer);
         useBestViewerRadioButton.setSelected(!keepPreferredViewer);
-        
+
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRadioButton.setSelected(useLocalTime);
         useGMTTimeRadioButton.setSelected(!useLocalTime);
-        
+
         dataSourcesHideKnownCheckbox.setSelected(UserPreferences.hideKnownFilesInDataSourcesTree());
         viewsHideKnownCheckbox.setSelected(UserPreferences.hideKnownFilesInViewsTree());
-        
+
         dataSourcesHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
-        
+
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
         currentCaseSettingsPanel.setEnabled(caseIsOpen);
         hideOtherUsersTagsCheckbox.setEnabled(caseIsOpen);
         groupByDataSourceCheckbox.setEnabled(caseIsOpen);
-            
-        hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags() == false);
+
+        hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         groupByDataSourceCheckbox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
-        
+
         // Current Session Settings
         hideRejectedResultsCheckbox.setSelected(DirectoryTreeTopComponent.getDefault().getShowRejectedResults() == false);
     }
-    
+
     @Override
     public void store() {
         UserPreferences.setKeepPreferredContentViewer(keepCurrentViewerRadioButton.isSelected());
@@ -102,23 +82,24 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCheckbox.isSelected());
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCheckbox.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
-        UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected() == false);
-        
+        UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
+
         storeGroupItemsInTreeByDataSource();
-        
+
         DirectoryTreeTopComponent.getDefault().setShowRejectedResults(hideRejectedResultsCheckbox.isSelected() == false);
     }
-    
+
+    /**
+     * Store the 'groupByDataSourceCheckbox' value.
+     *
+     * Note: The value will not be stored if the value hasn't previously been
+     * stored and the checkbox isn't selected. This is so GroupDataSourcesDialog
+     * can prompt the user for this in the event the value hasn't been
+     * initialized.
+     */
     private void storeGroupItemsInTreeByDataSource() {
-        if (Case.isCaseOpen()) {
-            /*
-             * Only write the value if it has already been previously stored, or
-             * if the checkbox is selected. This allows GroupDataSourcesDialog
-             * to work.
-             */
-            if (CasePreferences.getGroupItemsInTreeByDataSource() != null || groupByDataSourceCheckbox.isSelected()) {
-                CasePreferences.setGroupItemsInTreeByDataSource(groupByDataSourceCheckbox.isSelected());
-            }
+        if (Case.isCaseOpen() && (CasePreferences.getGroupItemsInTreeByDataSource() != null || groupByDataSourceCheckbox.isSelected())) {
+            CasePreferences.setGroupItemsInTreeByDataSource(groupByDataSourceCheckbox.isSelected());
         }
     }
 

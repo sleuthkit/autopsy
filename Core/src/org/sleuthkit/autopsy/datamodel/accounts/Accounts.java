@@ -167,7 +167,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * @return An Action that will toggle whether rejected artifacts are shown
      *         in the tree rooted by this Accounts instance.
      */
-    //DLG: Remove this!
+    @Deprecated
     public Action newToggleShowRejectedAction() {
         return new ToggleShowRejected();
     }
@@ -1690,7 +1690,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     }
 
-    //DLG: Remove this!
+    @Deprecated
     private final class ToggleShowRejected extends AbstractAction {
 
         @NbBundle.Messages("ToggleShowRejected.name=Show Rejected Results")
