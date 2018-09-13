@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
@@ -28,6 +29,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -79,14 +81,15 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
+        List<ContentTag> tags = getContentTagsFromDatabase();
+        
         sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
-
         if (!this.content.isDataSource()) {
+            addCommentProperty(sheetSet, tags);
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, getContent());
 
@@ -94,7 +97,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
-            addTagProperty(sheetSet);
+            addTagProperty(sheetSet, tags);
         } else {
             sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),

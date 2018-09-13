@@ -46,11 +46,16 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -73,7 +78,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
             Case.Events.CONTENT_TAG_ADDED,
             Case.Events.CONTENT_TAG_DELETED,
-            Case.Events.CURRENT_CASE);
+            Case.Events.CURRENT_CASE,
+            Case.Events.CR_COMMENT_CHANGED);
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
@@ -125,6 +131,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
                 ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
                 if (event.getDeletedTagInfo().getContentID() == associated.getId()) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
+                CommentChangedEvent event = (CommentChangedEvent) evt;
+                if (event.getContentID() == associated.getId()) {
                     updateSheet();
                 }
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -319,6 +330,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
+        List<Tag> tags = getAllTagsFromDatabase();
+
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
@@ -332,6 +345,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
+        addCommentProperty(sheetSet, tags);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -479,10 +493,27 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     path));
         }
-
-        addTagProperty(sheetSet);
+        addTagProperty(sheetSet, tags);
 
         return sheet;
+    }
+
+    /**
+     * Get all tags from the case database relating to the artifact and the file
+     * it is associated with.
+     *
+     * @return a list of tags which on the artifact or the file it is associated
+     *         with
+     */
+    protected List<Tag> getAllTagsFromDatabase() {
+        List<Tag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(associated));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+        }
+        return tags;
     }
 
     /**
@@ -494,6 +525,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
+    @Deprecated
     protected void addTagProperty(Sheet.Set sheetSet) throws MissingResourceException {
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
@@ -505,6 +537,56 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the tags property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags which should appear as the value for the
+     *                 property
+     */
+    protected void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the comment
+     * property to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
+        "BlackboardArtifactNode.createSheet.comment.displayName=C"})
+    protected void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
+        for (Tag tag : tags) {
+            if (!StringUtils.isBlank(tag.getComment())) {
+                //if the tag is null or empty or contains just white space it will indicate there is not a comment
+                status = HasCommentStatus.TAG_COMMENT;
+                break;
+            }
+        }
+        //currently checks for a comment on the associated file in the central repo not the artifact itself 
+        //what we want the column property to reflect should be revisted when we have added a way to comment
+        //on the artifact itself
+        if (EamDbUtil.useCentralRepo()) {
+            CorrelationAttributeInstance attribute = EamArtifactUtil.getInstanceFromContent(associated);
+            if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                if (status == HasCommentStatus.TAG_COMMENT) {
+                    status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = HasCommentStatus.CR_COMMENT;
+                }
+            }
+        }
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
+                status));
     }
 
     private void updateSheet() {

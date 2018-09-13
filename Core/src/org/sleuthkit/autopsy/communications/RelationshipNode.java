@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -57,6 +59,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
+        List<Tag> tags = getAllTagsFromDatabase();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
@@ -64,6 +67,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
+        addCommentProperty(sheetSet, tags);
 
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
@@ -113,8 +117,7 @@ final class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
-
-        addTagProperty(sheetSet);
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

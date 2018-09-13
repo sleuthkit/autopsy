@@ -34,11 +34,16 @@ import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -58,7 +63,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
-            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED);
+            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
 
     /**
      * @param abstractFile file to wrap
@@ -143,6 +148,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
             ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
             if (event.getDeletedTagInfo().getContentID() == content.getId()) {
+                updateSheet();
+            }
+        } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
+            CommentChangedEvent event = (CommentChangedEvent) evt;
+            if (event.getContentID() == content.getId()) {
                 updateSheet();
             }
         }
@@ -254,6 +264,56 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /**
+     * Get all tags from the case database that are associated with the file
+     *
+     * @return a list of tags that are associated with the file
+     */
+    protected List<ContentTag> getContentTagsFromDatabase() {
+        List<ContentTag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+        }
+        return tags;
+    }
+
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the comment
+     * property to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.comment.name=C",
+        "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
+    protected void addCommentProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+
+        HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
+
+        for (ContentTag tag : tags) {
+            if (!StringUtils.isBlank(tag.getComment())) {
+                //if the tag is null or empty or contains just white space it will indicate there is not a comment
+                status = HasCommentStatus.TAG_COMMENT;
+                break;
+            }
+        }
+        if (EamDbUtil.useCentralRepo()) {
+            CorrelationAttributeInstance attribute = EamArtifactUtil.getInstanceFromContent(getContent());
+            if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+                if (status == HasCommentStatus.TAG_COMMENT) {
+                    status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = HasCommentStatus.CR_COMMENT;
+                }
+            }
+        }
+        sheetSet.put(new NodeProperty<>(AbstractAbstractFileNode_createSheet_comment_name(), AbstractAbstractFileNode_createSheet_comment_displayName(), NO_DESCR,
+                status));
+    }
+
+    /**
      * Used by subclasses of AbstractAbstractFileNode to add the tags property
      * to their sheets.
      *
@@ -261,6 +321,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *                 Sheet.get(Sheet.PROPERTIES)
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
+    @Deprecated
     protected void addTagProperty(Sheet.Set sheetSet) {
         List<ContentTag> tags = new ArrayList<>();
         try {
@@ -268,6 +329,21 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
+        sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
+                        .distinct()
+                        .collect(Collectors.joining(", "))));
+    }
+
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the tags property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    protected void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
                         .distinct()

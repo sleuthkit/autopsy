@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -79,6 +80,8 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             sheet.put(sheetSet);
         }
 
+        List<ContentTag> tags = getContentTagsFromDatabase();
+
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map);
 
@@ -86,14 +89,14 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));
-
+        addCommentProperty(sheetSet, tags);
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
 
         // add tags property to the sheet
-        addTagProperty(sheetSet);
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

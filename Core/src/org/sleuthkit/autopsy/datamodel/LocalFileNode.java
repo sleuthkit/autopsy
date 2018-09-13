@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -72,7 +73,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
+        List<ContentTag> tags = getContentTagsFromDatabase();
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
 
@@ -80,6 +81,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
+        addCommentProperty(sheetSet, tags);
 
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
@@ -87,7 +89,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         }
 
         // add tags property to the sheet
-        addTagProperty(sheetSet);
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }
