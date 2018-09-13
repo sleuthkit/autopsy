@@ -20,42 +20,44 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
- * 
- * 
+ *
+ *
  */
 public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
-    
+
     private final int corrleationCaseId;
     private String correlationCaseName;
-    
+
     /**
-     * 
+     *
      * @param correlationCaseId
      * @param filterByMediaMimeType
      * @param filterByDocMimeType
-     * @throws EamDbException 
+     * @throws EamDbException
      */
-    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) throws EamDbException {
-        super(dataSourceIdMap,filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
-        
+    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType,
+            boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
+
         this.corrleationCaseId = correlationCaseId;
         this.correlationCaseName = "";
     }
-    
+
     /**
-     * Collect metadata required to render the tree table where matches must 
+     * Collect metadata required to render the tree table where matches must
      * occur in the case with the given ID.
-     * 
-     * @param correlationCaseId id of case where matches must occur (no other matches will be shown)
+     *
+     * @param correlationCaseId id of case where matches must occur (no other
+     * matches will be shown)
      * @return business object needed to populate tree table with results
      * @throws TskCoreException
      * @throws NoCurrentCaseException
@@ -63,24 +65,23 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws EamDbException
      */
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException { 
-        
+    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
-        correlationCaseName = cCase.getDisplayName();
+        this.correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
 
     CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap(), this.corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
 
-        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
-    
+
     @Override
     String buildTabTitle() {
-        final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterSingle();
-        return String.format(titleTemplate, new Object[]{correlationCaseName, buildCategorySelectionString});
+        return String.format(titleTemplate, new Object[]{this.correlationCaseName, this.corAttrType.getDisplayName()});
     }
 }

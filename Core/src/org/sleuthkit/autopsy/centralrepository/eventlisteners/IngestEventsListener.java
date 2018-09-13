@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -123,19 +124,19 @@ public class IngestEventsListener {
     public synchronized static int getCeModuleInstanceCount() {
         return correlationModuleInstanceCount;
     }
-    
+
     /**
      * Are notable items being flagged?
-     * 
+     *
      * @return True if flagging notable items; otherwise false.
      */
     public synchronized static boolean isFlagNotableItems() {
         return flagNotableItems;
     }
-    
+
     /**
      * Configure the listener to flag notable items or not.
-     * 
+     *
      * @param value True to flag notable items; otherwise false.
      */
     public synchronized static void setFlagNotableItems(boolean value) {
@@ -259,13 +260,18 @@ public class IngestEventsListener {
                         if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
                             // Was it previously marked as bad?
                             // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
-                            // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
+                            // if getKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
                             // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
                             if (flagNotableItemsEnabled) {
-                                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                                if (!caseDisplayNames.isEmpty()) {
-                                    postCorrelatedBadArtifactToBlackboard(bbArtifact,
-                                            caseDisplayNames);
+                                List<String> caseDisplayNames;
+                                try {
+                                    caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    if (!caseDisplayNames.isEmpty()) {
+                                        postCorrelatedBadArtifactToBlackboard(bbArtifact,
+                                                caseDisplayNames);
+                                    }
+                                } catch (CorrelationAttributeNormalizationException ex) {
+                                    LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }
                             eamArtifacts.add(eamArtifact);

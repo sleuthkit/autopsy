@@ -21,9 +21,13 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
 /**
  * UI controls for Common Files Search scenario where the user intends to find
@@ -43,6 +47,8 @@ public class InterCasePanel extends javax.swing.JPanel {
     //  false if we must find matches in a given case plus the current case
     private boolean anyCase;
     
+    private Map<String, CorrelationAttributeInstance.Type> correlationTypeFilters;
+    
     /**
      * Creates new form InterCasePanel
      */
@@ -50,6 +56,8 @@ public class InterCasePanel extends javax.swing.JPanel {
         initComponents();
         this.caseMap = new HashMap<>();
         this.anyCase = true;
+
+        
     }
 
     private void specificCaseSelected(boolean selected) {
@@ -60,6 +68,25 @@ public class InterCasePanel extends javax.swing.JPanel {
         }
     }
     
+    /**
+     * If the EamDB is enabled, the UI will populate the correlation type ComboBox with 
+     * available types in the CR.
+     */
+    void setupCorrelationTypeFilter() {
+        this.correlationTypeFilters = new HashMap<>();
+        try {
+            List<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+            for (CorrelationAttributeInstance.Type type : types) {
+                correlationTypeFilters.put(type.getDisplayName(), type);
+                this.correlationTypeComboBox.addItem(type.getDisplayName());
+            }
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        this.correlationTypeComboBox.setSelectedIndex(0);
+
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -73,6 +100,8 @@ public class InterCasePanel extends javax.swing.JPanel {
         anyCentralRepoCaseRadio = new javax.swing.JRadioButton();
         specificCentralRepoCaseRadio = new javax.swing.JRadioButton();
         caseComboBox = new javax.swing.JComboBox<>();
+        comboBoxLabel = new javax.swing.JLabel();
+        correlationTypeComboBox = new javax.swing.JComboBox<>();
 
         buttonGroup.add(anyCentralRepoCaseRadio);
         anyCentralRepoCaseRadio.setSelected(true);
@@ -94,6 +123,11 @@ public class InterCasePanel extends javax.swing.JPanel {
         caseComboBox.setModel(casesList);
         caseComboBox.setEnabled(false);
 
+        org.openide.awt.Mnemonics.setLocalizedText(comboBoxLabel, org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.comboBoxLabel.text")); // NOI18N
+
+        correlationTypeComboBox.setSelectedItem(null);
+        correlationTypeComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(InterCasePanel.class, "InterCasePanel.correlationTypeComboBox.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -102,10 +136,14 @@ public class InterCasePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(anyCentralRepoCaseRadio)
+                    .addComponent(specificCentralRepoCaseRadio)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
-                        .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(specificCentralRepoCaseRadio))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(comboBoxLabel)
+                                .addComponent(correlationTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 260, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -115,7 +153,12 @@ public class InterCasePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(specificCentralRepoCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(caseComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(comboBoxLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(correlationTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -137,6 +180,8 @@ public class InterCasePanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton anyCentralRepoCaseRadio;
     private javax.swing.ButtonGroup buttonGroup;
     private javax.swing.JComboBox<String> caseComboBox;
+    private javax.swing.JLabel comboBoxLabel;
+    private javax.swing.JComboBox<String> correlationTypeComboBox;
     private javax.swing.JRadioButton specificCentralRepoCaseRadio;
     // End of variables declaration//GEN-END:variables
 
@@ -180,5 +225,13 @@ public class InterCasePanel extends javax.swing.JPanel {
         }
         
         return InterCasePanel.NO_CASE_SELECTED;
+    }
+    
+    /**
+     * Returns the selected Correlation Type by getting the Type from the stored HashMap.
+     * @return Type the selected Correlation Type to query for.
+     */
+    CorrelationAttributeInstance.Type getSelectedCorrelationType() {
+        return correlationTypeFilters.get(this.correlationTypeComboBox.getSelectedItem().toString());
     }
 }
