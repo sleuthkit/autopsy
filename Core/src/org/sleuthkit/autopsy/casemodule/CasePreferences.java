@@ -37,6 +37,9 @@ import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 public final class CasePreferences {
     
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
+    private static final String KEY_GROUP_BY_DATA_SOURCE = "groupByDataSource"; //NON-NLS
+    private static final String VALUE_TRUE = "true"; //NON-NLS
+    private static final String VALUE_FALSE = "false"; //NON-NLS
     
     private static final Logger logger = Logger.getLogger(CasePreferences.class.getName());
     
@@ -94,10 +97,17 @@ public final class CasePreferences {
             try (InputStream inputStream = Files.newInputStream(settingsFile)) {
                 Properties props = new Properties();
                 props.load(inputStream);
-                if (props.getProperty("groupByDataSource", "false").equals("true")) {
-                    groupItemsInTreeByDataSource = true;
-                } else {
-                    groupItemsInTreeByDataSource = false;
+                String groupByDataSourceValue = props.getProperty(KEY_GROUP_BY_DATA_SOURCE);
+                switch (groupByDataSourceValue) {
+                    case VALUE_TRUE:
+                        groupItemsInTreeByDataSource = true;
+                        break;
+                    case VALUE_FALSE:
+                        groupItemsInTreeByDataSource = false;
+                        break;
+                    default:
+                        groupItemsInTreeByDataSource = null;
+                        break;
                 }
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error reading settings file", ex);
@@ -119,7 +129,7 @@ public final class CasePreferences {
         Path settingsFile = Paths.get(currentCase.getConfigDirectory(), SETTINGS_FILE); //NON-NLS
         Properties props = new Properties();
         if (groupItemsInTreeByDataSource != null) {
-            props.setProperty("groupByDataSource", (groupItemsInTreeByDataSource ? "true" : "false"));
+            props.setProperty(KEY_GROUP_BY_DATA_SOURCE, (groupItemsInTreeByDataSource ? VALUE_TRUE : VALUE_FALSE));
         }
 
         try (OutputStream fos = Files.newOutputStream(settingsFile)) {

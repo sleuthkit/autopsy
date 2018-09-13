@@ -427,10 +427,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Ask the user if they want to group by data source when opening a large
      * case.
      *
-     * @param currentCase
-     * @param dataSourceCount
+     * @param dataSourceCount The number of data sources in the case.
      */
-    private void promptForDataSourceGrouping(Case currentCase, int dataSourceCount) {
+    private void promptForDataSourceGrouping(int dataSourceCount) {
         if (CasePreferences.getGroupItemsInTreeByDataSource() == null) {
             GroupDataSourcesDialog dialog = new GroupDataSourcesDialog(dataSourceCount);
             dialog.display();
@@ -486,7 +485,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     int dataSourceCount = currentCase.getDataSources().size();
                     if (!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
                             && dataSourceCount > threshold) {
-                        promptForDataSourceGrouping(currentCase, dataSourceCount);
+                        promptForDataSourceGrouping(dataSourceCount);
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading data sources", ex);
