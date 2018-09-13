@@ -125,6 +125,8 @@ final public class CommonAttributeSearchResults {
         EamDb eamDb = EamDb.getInstance();
         
         Map<Integer, List<CommonAttributeValue>> itemsToRemove = new HashMap<>();
+        //Call countUniqueDataSources once to reduce the number of DB queries needed to get
+        //the frequencyPercentage
         Double uniqueCaseDataSourceTuples = eamDb.getCountUniqueDataSources().doubleValue();
         
         for(Entry<Integer, CommonAttributeValueList> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
