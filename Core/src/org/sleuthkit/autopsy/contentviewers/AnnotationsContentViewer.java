@@ -236,8 +236,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 if (commentDataFound == false) {
                     addMessage(html, "There is no comment data for the selected content in the central repository.");
                 }
-            } catch (EamDbException | TskCoreException | CorrelationAttributeNormalizationException ex) {
+            } catch (EamDbException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error connecting to the central repository database.", ex); // NON-NLS
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.SEVERE, "Error normalizing instance from repository database.", ex); // NON-NLS
             }
             endSection(html);
         }
