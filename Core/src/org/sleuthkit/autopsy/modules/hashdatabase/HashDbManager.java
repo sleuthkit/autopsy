@@ -645,7 +645,7 @@ public class HashDbManager implements PropertyChangeListener {
         return true;
     }
 
-    private String getValidFilePath(String hashSetName, String configuredPath) {
+    private String getValidFilePath(String hashSetName, String configuredPath) {        
         // Check the configured path.
         File database = new File(configuredPath);
         if (database.exists()) {

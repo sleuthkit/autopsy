@@ -62,6 +62,9 @@ final class HashLookupSettings implements Serializable {
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String configFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + CONFIG_FILE_NAME;
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
+    
+    private static final String USER_DIR_PLACEHOLDER = "[UserConfigFolder]";
+    private static final String CURRENT_USER_DIR = PlatformUtil.getUserConfigDirectory();
 
     private static final long serialVersionUID = 1L;
     private final List<HashDbInfo> hashDbInfoList;
@@ -122,10 +125,17 @@ final class HashLookupSettings implements Serializable {
      * @throws HashLookupSettingsException If there's a problem importing the
      *                                     settings
      */
-    private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {
+    private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {        
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(SERIALIZATION_FILE_PATH))) {
                 HashLookupSettings filesSetsSettings = (HashLookupSettings) in.readObject();
+
+                /* NOTE: to support JIRA-4177, we need to check if any of the hash 
+                database paths are in Windows user directory. If so, we replace the path 
+                with USER_DIR_PLACEHOLDER before saving to disk. When reading from disk, 
+                USER_DIR_PLACEHOLDER needs to be replaced with current user directory path.
+                 */
+                convertPlaceholderToPath(filesSetsSettings);
                 return filesSetsSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
@@ -282,8 +292,16 @@ final class HashLookupSettings implements Serializable {
      */
     static boolean writeSettings(HashLookupSettings settings) {
         
+        /* NOTE: to support JIRA-4177, we need to check if any of the hash 
+        database paths are in Windows user directory. If so, replace the path 
+        with USER_DIR_PLACEHOLDER so that when it is read, it gets updated to be 
+        the current user directory path. 
+         */
+        convertPathToPlaceholder(settings);
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
             out.writeObject(settings);
+            // restore the paths, in case they are going to be used somewhere
+            convertPlaceholderToPath(settings);
             return true;
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Could not write hash set settings.");
@@ -292,12 +310,53 @@ final class HashLookupSettings implements Serializable {
     }
 
     /**
+     * For file type hash sets, check if hash set paths needs to be modified 
+     * per JIRA-4177. If the file path is in current Windows user directory,
+     * replace the path with USER_DIR_PLACEHOLDER.
+     * 
+     * @param settings HashLookupSettings settings object to examiner and modify
+     */
+    static void convertPathToPlaceholder(HashLookupSettings settings) {
+        for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
+            if (hashDbInfo.isFileDatabaseType()) {
+                String dbPath = hashDbInfo.getPath();
+                if (dbPath.startsWith(CURRENT_USER_DIR)) {
+                    // replace the current user directory with place holder
+                    String remainingPath = dbPath.substring(CURRENT_USER_DIR.length());
+                    hashDbInfo.setPath(USER_DIR_PLACEHOLDER + remainingPath);
+                }
+            }
+        }
+    }
+    
+    /**
+     * For file type hash sets, check if hash set paths needs to be modified per
+     * JIRA-4177. Replace USER_DIR_PLACEHOLDER with path to current Windows user
+     * directory.
+     *
+     * @param settings HashLookupSettings settings object to examiner and modify
+     */
+    static void convertPlaceholderToPath(HashLookupSettings settings) {
+        for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
+            if (hashDbInfo.isFileDatabaseType()) {
+                String dbPath = hashDbInfo.getPath();
+                if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
+                    // replace the place holder with current user directory
+                    String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
+                    hashDbInfo.setPath(CURRENT_USER_DIR + remainingPath);
+                }
+            }
+        }
+    }
+
+
+    /**
      * Represents the serializable information within a hash lookup in order to
      * be written to disk. Used to hand off information when loading and saving
      * hash lookups.
      */
     static final class HashDbInfo implements Serializable {
-        
+
         enum DatabaseType{
             FILE,
             CENTRAL_REPOSITORY
@@ -308,7 +367,7 @@ final class HashLookupSettings implements Serializable {
         private final HashDbManager.HashDb.KnownFilesType knownFilesType;
         private boolean searchDuringIngest;
         private final boolean sendIngestMessages;
-        private final String path;
+        private String path;
         private final String version;
         private final boolean readOnly;
         private final int referenceSetID;
@@ -345,7 +404,7 @@ final class HashLookupSettings implements Serializable {
             this.searchDuringIngest = searchDuringIngest;
             this.sendIngestMessages = sendIngestMessages;
             this.path = "";
-            dbType = DatabaseType.CENTRAL_REPOSITORY;            
+            dbType = DatabaseType.CENTRAL_REPOSITORY;     
         }
         
         HashDbInfo(HashDbManager.HashDb db) throws TskCoreException{
@@ -445,6 +504,14 @@ final class HashLookupSettings implements Serializable {
          */
         String getPath() {
             return path;
+        }       
+
+        /**
+         * Sets the path.
+         * @param path the path to set
+         */
+        public void setPath(String path) {
+            this.path = path;
         }
         
         int getReferenceSetID(){
