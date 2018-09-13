@@ -116,7 +116,7 @@ final public class CommonAttributeSearchResults {
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
         }
         
-        CorrelationAttributeInstance.Type fileAttributeType = CorrelationAttributeInstance
+        CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()
                 .filter(filterType -> filterType.getId() == this.resultTypeId)
@@ -138,7 +138,7 @@ final public class CommonAttributeSearchResults {
                 
                 try {
                     Double uniqueTypeValueTuples = eamDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(
-                            fileAttributeType, value.getValue()).doubleValue();
+                            attributeType, value.getValue()).doubleValue();
                     Double commonalityPercentage = uniqueTypeValueTuples / uniqueCaseDataSourceTuples * 100;
                     int frequencyPercentage = commonalityPercentage.intValue();
                 
