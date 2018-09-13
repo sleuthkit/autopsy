@@ -27,6 +27,7 @@ import javafx.application.Platform;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -128,14 +129,8 @@ public class ImageGalleryModule {
      * @return true if the drawable db is out of date for the given case, false
      *         otherwise
      */
-    public static boolean isDrawableDBStale(Case c) {
-        synchronized (controllerLock) {
-            if (controller != null) {
-                return controller.isDataSourcesTableStale();
-            } else {
-                return false;
-            }
-        }
+    public static boolean isDrawableDBStale(Case c) throws TskCoreException {
+        return new ImageGalleryController(c).isDataSourcesTableStale();
     }
 
     /**
@@ -147,7 +142,7 @@ public class ImageGalleryModule {
      * @return true if the given {@link AbstractFile} is "drawable" and not
      *         'known', else false
      */
-    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws TskCoreException, FileTypeDetector.FileTypeDetectorInitException {
+    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
     }
 
@@ -183,26 +178,29 @@ public class ImageGalleryModule {
                 return;
             }
 
-            synchronized (controllerLock) {
-                if (controller != null && controller.isListeningEnabled()) {
+            try {
+                ImageGalleryController con = getController();
+                if (con.isListeningEnabled()) {
                     try {
                         if (isDrawableAndNotKnown(file)) {
                             //this file should be included and we don't already know about it from hash sets (NSRL)
-                            controller.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
+                            con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
                         } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
                             /* Doing this check results in fewer tasks queued
                              * up, and faster completion of db update. This file
                              * would have gotten scooped up in initial grab, but
                              * actually we don't need it */
-                            controller.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
+                            con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
                         }
 
-                    } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
+                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                         logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
                         MessageNotifyUtil.Notify.error("Image Gallery Error",
                                 "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
                     }
                 }
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
             }
         }
     }
@@ -223,15 +221,22 @@ public class ImageGalleryModule {
                 Case.removePropertyChangeListener(this);
                 return;
             }
-            synchronized (controllerLock) {
-                switch (Case.Events.valueOf(evt.getPropertyName())) {
-                    case CURRENT_CASE:
+            ImageGalleryController con;
+            try {
+                con = getController();
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                return;
+            }
+            switch (Case.Events.valueOf(evt.getPropertyName())) {
+                case CURRENT_CASE:
+                    synchronized (controllerLock) {
                         // case has changes: close window, reset everything 
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         if (controller != null) {
-                            controller.shutDown();
-                            controller = null;
+                            controller.reset();
                         }
+                        controller = null;
 
                         Case newCase = (Case) evt.getNewValue();
                         if (newCase != null) {
@@ -242,32 +247,32 @@ public class ImageGalleryModule {
                                 logger.log(Level.SEVERE, "Error changing case in ImageGallery.", ex);
                             }
                         }
-                        break;
-                    case DATA_SOURCE_ADDED:
-                        //For a data source added on the local node, prepopulate all file data to drawable database
-                        if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                            Content newDataSource = (Content) evt.getNewValue();
-                            if (controller.isListeningEnabled()) {
-                                controller.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
-                            }
+                    }
+                    break;
+                case DATA_SOURCE_ADDED:
+                    //For a data source added on the local node, prepopulate all file data to drawable database
+                    if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                        Content newDataSource = (Content) evt.getNewValue();
+                        if (con.isListeningEnabled()) {
+                            con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
                         }
-                        break;
-                    case CONTENT_TAG_ADDED:
-                        final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                        if (controller.getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
-                            controller.getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                        }
-                        break;
-                    case CONTENT_TAG_DELETED:
-                        final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                        if (controller.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                            controller.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                        }
-                        break;
-                    default:
-                        //we don't need to do anything for other events.
-                        break;
-                }
+                    }
+                    break;
+                case CONTENT_TAG_ADDED:
+                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+                    if (con.getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
+                        con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                    }
+                    break;
+                case CONTENT_TAG_DELETED:
+                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                    if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                        con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                    }
+                    break;
+                default:
+                    //we don't need to do anything for other events.
+                    break;
             }
         }
     }
@@ -292,29 +297,31 @@ public class ImageGalleryModule {
             }
             // A remote node added a new data source and just finished ingest on it.
             //drawable db is stale, and if ImageGallery is open, ask user what to do
-            synchronized (controllerLock) {
-                if (controller != null) {
-                    controller.setStale(true);
-                    if (controller.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-                        ImageGalleryController con = controller;
-                        SwingUtilities.invokeLater(() -> {
-                            int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+            ImageGalleryController con;
+            try {
+                con = getController();
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                return;
+            }
+            con.setStale(true);
+            if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                SwingUtilities.invokeLater(() -> {
+                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
-                            switch (showAnswer) {
-                                case JOptionPane.YES_OPTION:
-                                    con.rebuildDB();
-                                    break;
-                                case JOptionPane.NO_OPTION:
-                                case JOptionPane.CANCEL_OPTION:
-                                default:
-                                    break; //do nothing
-                            }
-                        });
+                    switch (showAnswer) {
+                        case JOptionPane.YES_OPTION:
+                            con.rebuildDB();
+                            break;
+                        case JOptionPane.NO_OPTION:
+                        case JOptionPane.CANCEL_OPTION:
+                        default:
+                            break; //do nothing
                     }
-                }
+                });
             }
         }
     }

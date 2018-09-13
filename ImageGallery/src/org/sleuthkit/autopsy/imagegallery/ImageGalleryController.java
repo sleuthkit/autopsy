@@ -187,7 +187,6 @@ public final class ImageGalleryController {
         this.sleuthKitCase = newCase.getSleuthkitCase();
 
         setListeningEnabled(ImageGalleryModule.isEnabledforCase(newCase));
-        setStale(ImageGalleryModule.isDrawableDBStale(newCase));
 
         groupManager = new GroupManager(this);
         this.drawableDB = DrawableDB.getDrawableDB(this);
@@ -197,8 +196,8 @@ public final class ImageGalleryController {
         tagsManager.registerListener(categoryManager);
 
         hashSetManager = new HashSetManager(drawableDB);
+        setStale(isDataSourcesTableStale());
 
-        shutDownDBExecutor();
         dbExecutor = getNewDBExecutor();
 
         // listener for the boolean property about when IG is listening / enabled
@@ -207,7 +206,7 @@ public final class ImageGalleryController {
                 // if we just turned on listening and a single-user case is open and that case is not up to date, then rebuild it
                 // For multiuser cases, we defer DB rebuild till the user actually opens Image Gallery
                 if (isEnabled && !wasPreviouslyEnabled
-                    && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCaseThrows())
+                    && isDataSourcesTableStale()
                     && (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE)) {
                     //populate the db
                     this.rebuildDB();
@@ -232,6 +231,7 @@ public final class ImageGalleryController {
         ingestManager.addIngestJobEventListener(ingestEventHandler);
 
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
+
     }
 
     public ReadOnlyBooleanProperty getCanAdvance() {
@@ -273,24 +273,22 @@ public final class ImageGalleryController {
      */
     public void rebuildDB() {
         // queue a rebuild task for each stale data source
-        getStaleDataSourceIds().forEach((dataSourceObjId)
-                -> queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, this))
-        );
+        getStaleDataSourceIds().forEach((dataSourceObjId) -> queueDBTask(new CopyAnalyzedFiles(dataSourceObjId, this)));
     }
 
     /**
      * reset the state of the controller (eg if the case is closed)
      */
-    public synchronized void shutDown() {
+    public synchronized void reset() {
         logger.info("Closing ImageGalleryControler for case."); //NON-NLS
 
         selectionModel.clearSelection();
-        setListeningEnabled(false);
         thumbnailCache.clearCache();
         historyManager.clear();
         groupManager.reset();
 
         shutDownDBExecutor();
+        dbExecutor = getNewDBExecutor();
     }
 
     /**
@@ -298,7 +296,7 @@ public final class ImageGalleryController {
      *
      * @return true if datasources table is stale
      */
-    boolean isDataSourcesTableStale() {
+    public boolean isDataSourcesTableStale() {
         return isNotEmpty(getStaleDataSourceIds());
     }
 
@@ -325,9 +323,7 @@ public final class ImageGalleryController {
 
             List<DataSource> dataSources = getSleuthKitCase().getDataSources();
             Set<Long> caseDataSourceIds = new HashSet<>();
-            dataSources.forEach((dataSource) -> {
-                caseDataSourceIds.add(dataSource.getId());
-            });
+            dataSources.stream().map(DataSource::getId).forEach(caseDataSourceIds::add);
 
             // collect all data sources already in the table, that are not yet COMPLETE
             knownDataSourceIds.entrySet().stream().forEach((Map.Entry<Long, DrawableDbBuildStatusEnum> t) -> {
