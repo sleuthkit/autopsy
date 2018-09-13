@@ -31,6 +31,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
@@ -92,7 +93,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                  * present in the node. In this case, the selected item IS the
                  * source file.
                  */
-                sourceFile = (AbstractFile) node.getLookup().lookup(AbstractFile.class);
+                sourceFile = node.getLookup().lookup(AbstractFile.class);
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format(
@@ -237,6 +238,8 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 }
             } catch (EamDbException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error connecting to the central repository database.", ex); // NON-NLS
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.SEVERE, "Error normalizing instance from repository database.", ex); // NON-NLS
             }
             endSection(html);
         }
