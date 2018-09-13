@@ -71,6 +71,12 @@ public abstract class AbstractCommonAttributeInstance {
         this.caseName = "";
         this.dataSource = "";
     }
+    
+    /**
+     * Get the type of common attribute.
+     * @return 
+     */
+    public abstract CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType();
 
     /**
      * Get an AbstractFile for this instance if it can be retrieved from the

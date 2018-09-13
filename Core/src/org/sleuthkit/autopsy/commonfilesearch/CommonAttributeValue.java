@@ -86,7 +86,4 @@ final public class CommonAttributeValue {
     public int getInstanceCount() {
         return this.fileInstances.size();
     }
-    
-    
-
 }

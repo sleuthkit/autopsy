@@ -32,14 +32,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
  */
-final public class CommonFilesSearchAction extends CallableSystemAction {
+final public class CommonAttributeSearchAction extends CallableSystemAction {
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeSearchAction.class.getName());
     
-    private static CommonFilesSearchAction instance = null;
+    private static CommonAttributeSearchAction instance = null;
     private static final long serialVersionUID = 1L;
     
-    CommonFilesSearchAction() {
+    CommonAttributeSearchAction() {
         super();
         this.setEnabled(false);
     }
@@ -68,9 +68,9 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
         return super.isEnabled() && shouldBeEnabled;
     }
 
-    public static synchronized CommonFilesSearchAction getDefault() {
+    public static synchronized CommonAttributeSearchAction getDefault() {
         if (instance == null) {
-            instance = new CommonFilesSearchAction();
+            instance = new CommonAttributeSearchAction();
         }
         return instance;
     }
@@ -86,10 +86,10 @@ final public class CommonFilesSearchAction extends CallableSystemAction {
     }
 
     @NbBundle.Messages({
-        "CommonFilesAction.getName.text=Common Files Search"})
+        "CommonAttributeSearchAction.getName.text=Common Attribute Search"})
     @Override
     public String getName() {
-        return Bundle.CommonFilesAction_getName_text();
+        return Bundle.CommonAttributeSearchAction_getName_text();
     }
 
     @Override
