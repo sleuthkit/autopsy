@@ -137,9 +137,8 @@ final public class CommonAttributeSearchResults {
             for(CommonAttributeValue value : values.getDelayedMetadataList()){ // Need the real metadata
                 
                 try {
-                    CorrelationAttributeInstance corAttr = new CorrelationAttributeInstance(fileAttributeType, value.getValue());
                     Double uniqueTypeValueTuples = eamDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(
-                            corAttr.getCorrelationType(), corAttr.getCorrelationValue()).doubleValue();
+                            fileAttributeType, value.getValue()).doubleValue();
                     Double commonalityPercentage = uniqueTypeValueTuples / uniqueCaseDataSourceTuples * 100;
                     int frequencyPercentage = commonalityPercentage.intValue();
                 
