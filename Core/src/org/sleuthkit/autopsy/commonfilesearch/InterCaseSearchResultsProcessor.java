@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -220,11 +221,15 @@ final class InterCaseSearchResultsProcessor {
                 while (resultSet.next()) {
                     CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    correlationAttributeInstance = DbManager.getCorrelationAttributeInstance(fileType,
-                            correlationCase,
-                            dataSource,
-                            InstanceTableCallback.getValue(resultSet),
-                            InstanceTableCallback.getFilePath(resultSet));
+                    try {
+                        correlationAttributeInstance = DbManager.getCorrelationAttributeInstance(fileType,
+                                correlationCase,
+                                dataSource,
+                                InstanceTableCallback.getValue(resultSet),
+                                InstanceTableCallback.getFilePath(resultSet));
+                    } catch (CorrelationAttributeNormalizationException ex) {
+                        LOGGER.log(Level.INFO, "Unable to get CorrelationAttributeInstance.", ex); // NON-NLS
+                    }
 
                 }
             } catch (SQLException | EamDbException ex) {

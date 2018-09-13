@@ -7,11 +7,7 @@
     </configurations>
     <dependencies >
         
-        
         <dependency conf="core->default" org="com.github.jgraph" name="jgraphx" rev="v3.8.0"/>
-        
-        
-        
         
         <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="5.11.1"/>
         <dependency conf="core->default" org="org.apache.curator" name="curator-client" rev="2.8.0"/>
@@ -27,6 +23,7 @@
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
 
+        
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
         <dependency conf="core->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
         <dependency org="com.monitorjbl" name="xlsx-streamer" rev="1.2.1"/>
@@ -34,5 +31,7 @@
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
         <dependency conf="core->default" org="com.googlecode.plist" name="dd-plist" rev="1.20"/>
          
+        <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
+        
     </dependencies>
 </ivy-module>
