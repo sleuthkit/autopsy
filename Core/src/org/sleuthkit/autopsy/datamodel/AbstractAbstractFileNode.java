@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
@@ -47,9 +48,11 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStat
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -311,6 +314,49 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         sheetSet.put(new NodeProperty<>(AbstractAbstractFileNode_createSheet_comment_name(), AbstractAbstractFileNode_createSheet_comment_displayName(), NO_DESCR,
                 status));
+    }
+
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the Score property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.score.name=S",
+        "AbstractAbstractFileNode.createSheet.score.displayName=S",
+        "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
+        "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
+        "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
+        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag."})
+    protected void addScoreProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
+        Score score = Score.NO_SCORE;
+        String description = NO_DESCR;
+        if (content.getKnown() == TskData.FileKnown.BAD) {
+            score = Score.NOTABLE_SCORE;
+            description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
+        }
+        try {
+            if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
+                score = Score.INTERESTING_SCORE;
+                description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
+        }
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
+            score = Score.INTERESTING_SCORE;
+            description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
+            for (ContentTag tag : tags) {
+                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
+                    score = Score.NOTABLE_SCORE;
+                    description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
+                    break;
+                }
+            }
+        }
+        sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_score_name(), Bundle.AbstractAbstractFileNode_createSheet_score_displayName(), description, score));
     }
 
     /**

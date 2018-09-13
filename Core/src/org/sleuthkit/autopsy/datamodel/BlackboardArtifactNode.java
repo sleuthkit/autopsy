@@ -52,6 +52,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
@@ -66,6 +67,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Node wrapping a blackboard artifact object. This is generated from several
@@ -345,6 +347,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
+        addScoreProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
@@ -587,6 +590,51 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
                 status));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the Score property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.score.name=S",
+        "BlackboardArtifactNode.createSheet.score.displayName=S",
+        "BlackboardArtifactNode.createSheet.notableFile.description=Associated file recognized as notable.",
+        "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
+        "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
+        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
+    protected void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        Score score = Score.NO_SCORE;
+        String description = "";
+        if (associated instanceof AbstractFile) {
+            if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
+                score = Score.NOTABLE_SCORE;
+                description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
+            }
+        }
+        try {
+            if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
+                score = Score.INTERESTING_SCORE;
+                description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting artifacts for artifact: " + content.getName(), ex);
+        }
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
+            score = Score.INTERESTING_SCORE;
+            description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
+            for (Tag tag : tags) {
+                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
+                    score = Score.NOTABLE_SCORE;
+                    description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
+                    break;
+                }
+            }
+        }
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), description, score));
     }
 
     private void updateSheet() {

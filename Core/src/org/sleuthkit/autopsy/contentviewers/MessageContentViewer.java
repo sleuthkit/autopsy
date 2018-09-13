@@ -728,6 +728,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
             AbstractFile file = getContent();
             sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
+            addScoreProperty(sheetSet, tags);
             addCommentProperty(sheetSet, tags);
             sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));

@@ -26,6 +26,7 @@ import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.FeatureDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -86,8 +87,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
+
     private static final String NOTEPAD_ICON_PATH = "org/sleuthkit/autopsy/images/notepad16.png";
+    private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
+    private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
     private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage(NOTEPAD_ICON_PATH, false));
+    private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon NOTABLE_ICON_SCORE = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
@@ -109,7 +115,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     public DataResultViewerTable() {
         this(null, Bundle.DataResultViewerTable_title());
     }
-    
 
     /**
      * Constructs a tabular result viewer that displays the children of a given
@@ -658,35 +663,43 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     private class IconRendererTableListener implements TableColumnModelListener {
 
-        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C"})
+        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
+            "DataResultViewerTable.scoreRender.name=S"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
-                if (e.getSource() instanceof ETableColumnModel) {
-                    TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
+            if (e.getSource() instanceof ETableColumnModel) {
+                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
+                if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
                     //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
-                    if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
-                        column.setCellRenderer(new HasCommentCellRenderer());
-                    }
+                    column.setCellRenderer(new HasCommentCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_scoreRender_name())) {
+                    //if the current column is a score column set the cell renderer to be the ScoreCellRenderer
+                    column.setCellRenderer(new ScoreCellRenderer());
                 }
+            }
         }
 
         @Override
-        public void columnRemoved(TableColumnModelEvent e) {
+        public void columnRemoved(TableColumnModelEvent e
+        ) {
             //Don't do anything when column removed
         }
 
         @Override
-        public void columnMoved(TableColumnModelEvent e) {
+        public void columnMoved(TableColumnModelEvent e
+        ) {
             //Don't do anything when column moved
         }
 
         @Override
-        public void columnMarginChanged(ChangeEvent e) {
+        public void columnMarginChanged(ChangeEvent e
+        ) {
             //Don't do anything when column margin changed
         }
 
         @Override
-        public void columnSelectionChanged(ListSelectionEvent e) {
+        public void columnSelectionChanged(ListSelectionEvent e
+        ) {
             //Don't do anything when column selection changed
         }
 
@@ -929,16 +942,74 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     }
 
+    /*
+     * A renderer which based on the contents of the cell will display an icon
+     * to indicate the score associated with the item.
+     */
+    private final class ScoreCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(CENTER);
+            Object switchValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    switchValue = ((Node.Property) value).getValue();
+                    setToolTipText(((FeatureDescriptor) value).getShortDescription());
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+
+            } else {
+                //JTables contain the value we want directly in the cell
+                switchValue = value;
+            }
+            setText("");
+            if ((switchValue instanceof Score)) {
+
+                switch ((Score) switchValue) {
+                    case INTERESTING_SCORE:
+                        setIcon(INTERESTING_SCORE_ICON);
+                        break;
+                    case NOTABLE_SCORE:
+                        setIcon(NOTABLE_ICON_SCORE);
+                        break;
+                    case NO_SCORE:
+                    default:
+                        setIcon(null);
+                }
+            } else {
+                setIcon(null);
+            }
+            return this;
+        }
+
+    }
+
     /**
      * Enum to denote the presence of a comment associated with the content or
      * artifacts generated from it.
      */
     public enum HasCommentStatus {
         NO_COMMENT,
-        TAG_NO_COMMENT, 
+        TAG_NO_COMMENT,
         CR_COMMENT,
         TAG_COMMENT,
         CR_AND_TAG_COMMENTS
+    }
+
+    /**
+     * Enum to denote the score given to an item to draw the users attention
+     */
+    public enum Score {
+        NO_SCORE,
+        INTERESTING_SCORE,
+        NOTABLE_SCORE
     }
 
     /**

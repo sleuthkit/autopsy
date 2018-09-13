@@ -62,6 +62,7 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
                 Bundle.LocalDirectoryNode_createSheet_name_displayName(),
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
+        addScoreProperty(sheetSet, tags);
         addCommentProperty(sheetSet, tags);
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
         // file set is a VirtualDirectory
