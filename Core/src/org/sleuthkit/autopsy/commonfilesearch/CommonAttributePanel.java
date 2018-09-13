@@ -325,7 +325,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 //only enable all this stuff if we actually have datasources
                 if (dataSourcesNames.length > 0) {
                     dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
-                    CommonAttributePanel.this.intraCasePanel.setDataModel(new DataSourceComboBoxModel(dataSourcesNames));
+                    CommonAttributePanel.this.intraCasePanel.setDatasourceComboboxModel(new DataSourceComboBoxModel(dataSourcesNames));
 
                     if (!this.caseHasMultipleSources()) { //disable intra case search when only 1 data source in current case
                         intraCaseRadio.setEnabled(false);
@@ -394,7 +394,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
                 if (caseNames.length > 0) {
                     caseNames = caseMap.values().toArray(caseNames);
-                    CommonAttributePanel.this.interCasePanel.setCaseList(new DataSourceComboBoxModel(caseNames));
+                    CommonAttributePanel.this.interCasePanel.setCaseComboboxModel(new DataSourceComboBoxModel(caseNames));
                 } else {
                     CommonAttributePanel.this.disableIntercaseSearch();
                 }

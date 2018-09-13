@@ -64,25 +64,45 @@ public final class InterCasePanel extends javax.swing.JPanel {
         };
     }
 
+    /**
+     * Add an Observer to the Observable portion of this panel so that it can be
+     * notified of changes to this panel.
+     *
+     * @param observer the object which is observing this panel
+     */
     void addObserver(Observer observer) {
         fileTypeFilterObservable.addObserver(observer);
     }
 
-    void specificCaseSelected(boolean selected) {
-        this.caseComboBox.setEnabled(selected);
-        if (selected) {
-            this.caseComboBox.setSelectedIndex(0);
-        }
-    }
-
+    /**
+     * If the user has selected to show only results of specific file types.
+     *
+     * @return if the selected file categories button is enabled AND selected,
+     *         true for enabled AND selected false for not selected OR not
+     *         enabled
+     */
     boolean fileCategoriesButtonIsSelected() {
         return selectedFileCategoriesButton.isEnabled() && selectedFileCategoriesButton.isSelected();
     }
 
+    /**
+     * If the user has selected selected to show Picture and Video files as part
+     * of the filtered results.
+     *
+     * @return if the pictures and video checkbox is enabled AND selected, true
+     *         for enabled AND selected false for not selected OR not enabled
+     */
     boolean pictureVideoCheckboxIsSelected() {
         return pictureVideoCheckbox.isEnabled() && pictureVideoCheckbox.isSelected();
     }
 
+    /**
+     * If the user has selected selected to show Document files as part of the
+     * filtered results.
+     *
+     * @return if the documents checkbox is enabled AND selected, true for
+     *         enabled AND selected false for not selected OR not enabled
+     */
     boolean documentsCheckboxIsSelected() {
         return documentsCheckbox.isEnabled() && documentsCheckbox.isSelected();
     }
@@ -245,20 +265,30 @@ public final class InterCasePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
+        //When the allFileCategoriesRadioButton is selected disable the options 
+        //related to selected file categories and notify observers that the panel has changed
+        //incase the current settings are invalid
         pictureVideoCheckbox.setEnabled(false);
         documentsCheckbox.setEnabled(false);
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
 
     private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
+        //When the selectedFileCategoriesButton is selected enable its related options
+        //and notify observers that the panel has changed incase the current settings are invalid
         pictureVideoCheckbox.setEnabled(true);
         documentsCheckbox.setEnabled(true);
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
 
     private void specificCentralRepoCaseCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_specificCentralRepoCaseCheckboxActionPerformed
-        this.specificCaseSelected(specificCentralRepoCaseCheckbox.isSelected());
+        //When the specificCentralRepoCaseCheckbox is clicked update its related options
+        this.caseComboBox.setEnabled(specificCentralRepoCaseCheckbox.isSelected());
+        if (specificCentralRepoCaseCheckbox.isSelected()) {
+            this.caseComboBox.setSelectedIndex(0);
+        }
     }//GEN-LAST:event_specificCentralRepoCaseCheckboxActionPerformed
+
 
     private void correlationTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_correlationTypeComboBoxActionPerformed
         boolean enableFileTypesFilter = this.correlationTypeComboBox.getSelectedItem().equals("Files");
@@ -271,11 +301,12 @@ public final class InterCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_correlationTypeComboBoxActionPerformed
 
     private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
+        //notify observers that the panel has changed incase the current settings are invalid
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
 
     private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
-
+        //notify observers that the panel has changed incase the current settings are invalid
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_documentsCheckboxActionPerformed
 
@@ -293,20 +324,43 @@ public final class InterCasePanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox specificCentralRepoCaseCheckbox;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Get the map of cases which was used to populate the combo box on
+     * this panel.
+     *
+     * @return an unmodifiable copy of the map of cases
+     */
     Map<Integer, String> getCaseMap() {
         return Collections.unmodifiableMap(this.caseMap);
     }
 
-    void setCaseList(DataSourceComboBoxModel dataSourceComboBoxModel) {
+    /**
+     * Set the datamodel for the combo box which displays the cases in
+     * the central repository
+     *
+     * @param dataSourceComboBoxModel the DataSourceComboBoxModel to use
+     */
+    void setCaseComboboxModel(DataSourceComboBoxModel dataSourceComboBoxModel) {
         this.casesList = dataSourceComboBoxModel;
         this.caseComboBox.setModel(dataSourceComboBoxModel);
     }
 
+    /**
+     * Update the map of cases that this panel allows the user to select from
+     *
+     * @param caseMap A map of cases
+     */
     void setCaseMap(Map<Integer, String> caseMap) {
         this.caseMap.clear();
         this.caseMap.putAll(caseMap);
     }
 
+    /**
+     * Whether or not the central repository has multiple cases in it.
+     *
+     * @return true when the central repository has 2 or more case, false if it
+     *         has 0 or 1 case in it.
+     */
     boolean centralRepoHasMultipleCases() {
         return this.caseMap.size() >= 2;
     }
@@ -314,7 +368,8 @@ public final class InterCasePanel extends javax.swing.JPanel {
     /**
      * Get the ID for the selected case
      *
-     * @return
+     * @return the ID of the selected case or InterCasePanel.NO_CASE_SELECTED
+     *         when none selected
      */
     Integer getSelectedCaseId() {
         if (specificCentralRepoCaseCheckbox.isSelected()) {

@@ -38,7 +38,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     static final long NO_DATA_SOURCE_SELECTED = -1;
     private final Observable fileTypeFilterObservable;
-    private boolean singleDataSource;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
     private final Map<Long, String> dataSourceMap;
 
@@ -48,11 +47,10 @@ public final class IntraCasePanel extends javax.swing.JPanel {
     public IntraCasePanel() {
         initComponents();
         this.dataSourceMap = new HashMap<>();
-        this.singleDataSource = true;
         this.onlySpecificDataSourceCheckbox.setEnabled(true);
         fileTypeFilterObservable = new Observable() {
-            @Override 
-            public void notifyObservers(){
+            @Override
+            public void notifyObservers() {
                 //set changed before notify observers
                 //we want this observerable to always cause the observer to update when notified
                 this.setChanged();
@@ -61,36 +59,71 @@ public final class IntraCasePanel extends javax.swing.JPanel {
         };
     }
 
+    /**
+     * Add an Observer to the Observable portion of this panel so that it can be
+     * notified of changes to this panel.
+     *
+     * @param observer the object which is observing this panel
+     */
     void addObserver(Observer observer) {
         fileTypeFilterObservable.addObserver(observer);
     }
 
+    /**
+     * Get the map of datasources which was used to populate the combo box on
+     * this panel.
+     *
+     * @return an unmodifiable copy of the map of datasources
+     */
     Map<Long, String> getDataSourceMap() {
         return Collections.unmodifiableMap(this.dataSourceMap);
     }
 
+    /**
+     * Get the ID for the datasource selected in the combo box.
+     *
+     * @return the selected datasource ID or
+     *         IntraCasePanel.NO_DATA_SOURCE_SELECTED if none is selected
+     */
     Long getSelectedDataSourceId() {
-        if (!this.singleDataSource) {
-            return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
-        }
-
-        for (Entry<Long, String> entry : this.dataSourceMap.entrySet()) {
-            if (entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())) {
-                return entry.getKey();
+        if (onlySpecificDataSourceCheckbox.isSelected()) {
+            for (Entry<Long, String> entry : this.dataSourceMap.entrySet()) {
+                if (entry.getValue().equals(this.selectDataSourceComboBox.getSelectedItem())) {
+                    return entry.getKey();
+                }
             }
         }
-
         return IntraCasePanel.NO_DATA_SOURCE_SELECTED;
     }
 
+    /**
+     * If the user has selected to show only results of specific file types.
+     *
+     * @return if the selected file categories button is selected, true for
+     *         selected false for not selected
+     */
     boolean fileCategoriesButtonIsSelected() {
         return selectedFileCategoriesButton.isSelected();
     }
 
+    /**
+     * If the user has selected selected to show Picture and Video files as part
+     * of the filtered results.
+     *
+     * @return if the pictures and video checkbox is enabled AND selected, true
+     *         for enabled AND selected false for not selected OR not enabled
+     */
     boolean pictureVideoCheckboxIsSelected() {
         return pictureVideoCheckbox.isEnabled() && pictureVideoCheckbox.isSelected();
     }
 
+    /**
+     * If the user has selected selected to show Document files as part of the
+     * filtered results.
+     *
+     * @return if the documents checkbox is enabled AND selected, true for
+     *         enabled AND selected false for not selected OR not enabled
+     */
     boolean documentsCheckboxIsSelected() {
         return documentsCheckbox.isEnabled() && documentsCheckbox.isSelected();
     }
@@ -211,36 +244,39 @@ public final class IntraCasePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void selectedFileCategoriesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectedFileCategoriesButtonActionPerformed
+        //When the selectedFileCategoriesButton is selected enable its related options
+        //and notify observers that the panel has changed incase the current settings are invalid
         pictureVideoCheckbox.setEnabled(true);
         documentsCheckbox.setEnabled(true);
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_selectedFileCategoriesButtonActionPerformed
 
     private void allFileCategoriesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allFileCategoriesRadioButtonActionPerformed
+        //When the allFileCategoriesRadioButton is selected disable the options 
+        //related to selected file categories and notify observers that the panel has changed
+        //incase the current settings are invalid
         pictureVideoCheckbox.setEnabled(false);
         documentsCheckbox.setEnabled(false);
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_allFileCategoriesRadioButtonActionPerformed
 
     private void onlySpecificDataSourceCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onlySpecificDataSourceCheckboxActionPerformed
-        this.withinDataSourceSelected(onlySpecificDataSourceCheckbox.isSelected());
+        //When the onlySpecificDataSourceCheckbox is clicked update its related options
+        selectDataSourceComboBox.setEnabled(onlySpecificDataSourceCheckbox.isSelected());
+        if (selectDataSourceComboBox.isEnabled()) {
+            selectDataSourceComboBox.setSelectedIndex(0);
+        }
     }//GEN-LAST:event_onlySpecificDataSourceCheckboxActionPerformed
 
     private void pictureVideoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pictureVideoCheckboxActionPerformed
+        //notify observers that the panel has changed incase the current settings are invalid
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_pictureVideoCheckboxActionPerformed
 
     private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
+        //notify observers that the panel has changed incase the current settings are invalid
         fileTypeFilterObservable.notifyObservers();
     }//GEN-LAST:event_documentsCheckboxActionPerformed
-
-    private void withinDataSourceSelected(boolean selected) {
-        selectDataSourceComboBox.setEnabled(selected);
-        if (selectDataSourceComboBox.isEnabled()) {
-            selectDataSourceComboBox.setSelectedIndex(0);
-            singleDataSource = true;
-        }
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allFileCategoriesRadioButton;
@@ -253,11 +289,23 @@ public final class IntraCasePanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton selectedFileCategoriesButton;
     // End of variables declaration//GEN-END:variables
 
-    void setDataModel(DataSourceComboBoxModel dataSourceComboBoxModel) {
+    /**
+     * Set the datamodel for the combo box which displays the data sources in
+     * the current case
+     *
+     * @param dataSourceComboBoxModel the DataSourceComboBoxModel to use
+     */
+    void setDatasourceComboboxModel(DataSourceComboBoxModel dataSourceComboBoxModel) {
         this.dataSourcesList = dataSourceComboBoxModel;
         this.selectDataSourceComboBox.setModel(dataSourcesList);
     }
 
+    /**
+     * Update the map of datasources that this panel allows the user to select
+     * from
+     *
+     * @param dataSourceMap A map of datasources
+     */
     void setDataSourceMap(Map<Long, String> dataSourceMap) {
         this.dataSourceMap.clear();
         this.dataSourceMap.putAll(dataSourceMap);
