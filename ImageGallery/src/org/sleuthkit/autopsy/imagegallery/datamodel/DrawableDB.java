@@ -417,7 +417,6 @@ public final class DrawableDB {
                     "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
                     + " value VARCHAR(255) not null, " //NON-NLS
                     + " attribute VARCHAR(255) not null, " //NON-NLS
-                    + " seen integer DEFAULT 0, " //NON-NLS
                     + " UNIQUE(value, attribute) )"; //NON-NLS
             
             tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
