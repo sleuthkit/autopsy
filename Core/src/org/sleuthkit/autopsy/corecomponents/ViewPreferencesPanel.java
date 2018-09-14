@@ -60,13 +60,16 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         dataSourcesHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
+        
+        hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
+        hideExaminerNotificationsCheckbox.setSelected(UserPreferences.hideExaminerNotifications());
+        
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
         currentCaseSettingsPanel.setEnabled(caseIsOpen);
         groupByDataSourceCheckbox.setEnabled(caseIsOpen);
 
-        hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         groupByDataSourceCheckbox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
 
         // Current Session Settings
@@ -82,6 +85,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCheckbox.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
+        UserPreferences.setHideExaminerNotifications(hideExaminerNotificationsCheckbox.isSelected());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -127,6 +131,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         useLocalTimeRadioButton = new javax.swing.JRadioButton();
         useGMTTimeRadioButton = new javax.swing.JRadioButton();
         hideOtherUsersTagsCheckbox = new javax.swing.JCheckBox();
+        hideExaminerNotificationsCheckbox = new javax.swing.JCheckBox();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -209,6 +214,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(hideExaminerNotificationsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideExaminerNotificationsCheckbox.text")); // NOI18N
+        hideExaminerNotificationsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                hideExaminerNotificationsCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout globalSettingsPanelLayout = new javax.swing.GroupLayout(globalSettingsPanel);
         globalSettingsPanel.setLayout(globalSettingsPanelLayout);
         globalSettingsPanelLayout.setHorizontalGroup(
@@ -216,38 +228,45 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(displayTimeLabel)
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addGap(10, 10, 10)
+                        .addComponent(hideExaminerNotificationsCheckbox)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                        .addComponent(hideOtherUsersTagsCheckbox)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(keepCurrentViewerRadioButton)
-                            .addComponent(useBestViewerRadioButton)
-                            .addComponent(useGMTTimeRadioButton)
-                            .addComponent(useLocalTimeRadioButton)))
-                    .addComponent(selectFileLabel))
-                .addGap(18, 18, 18)
-                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(hideOtherUsersTagsCheckbox)
-                    .addComponent(hideKnownFilesLabel)
-                    .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(hideKnownFilesLabel)
+                            .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(dataSourcesHideSlackCheckbox)
+                                            .addComponent(viewsHideSlackCheckbox)))
+                                    .addComponent(hideSlackFilesLabel))
+                                .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                                    .addGap(10, 10, 10)
+                                    .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(dataSourcesHideKnownCheckbox)
+                                        .addComponent(viewsHideKnownCheckbox)))))
+                        .addGap(27, 27, 27)
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(displayTimeLabel)
+                            .addComponent(selectFileLabel)
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(dataSourcesHideSlackCheckbox)
-                                    .addComponent(viewsHideSlackCheckbox)))
-                            .addComponent(hideSlackFilesLabel))
-                        .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                            .addGap(10, 10, 10)
-                            .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(dataSourcesHideKnownCheckbox)
-                                .addComponent(viewsHideKnownCheckbox)))))
-                .addContainerGap(29, Short.MAX_VALUE))
+                                    .addComponent(keepCurrentViewerRadioButton)
+                                    .addComponent(useBestViewerRadioButton)
+                                    .addComponent(useGMTTimeRadioButton)
+                                    .addComponent(useLocalTimeRadioButton))))
+                        .addGap(20, 20, 20))))
         );
         globalSettingsPanelLayout.setVerticalGroup(
             globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addComponent(hideKnownFilesLabel)
@@ -275,7 +294,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addComponent(useGMTTimeRadioButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(hideOtherUsersTagsCheckbox)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(hideExaminerNotificationsCheckbox))
         );
 
         currentCaseSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentCaseSettingsPanel.border.title"))); // NOI18N
@@ -343,12 +363,12 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         viewPreferencesPanelLayout.setVerticalGroup(
             viewPreferencesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(viewPreferencesPanelLayout.createSequentialGroup()
-                .addComponent(globalSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(globalSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(currentCaseSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(currentSessionSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
 
         viewPreferencesScrollPane.setViewportView(viewPreferencesPanel);
@@ -461,6 +481,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
 
+    private void hideExaminerNotificationsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideExaminerNotificationsCheckboxActionPerformed
+        if (immediateUpdates) {
+            UserPreferences.setHideExaminerNotifications(hideExaminerNotificationsCheckbox.isSelected());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_hideExaminerNotificationsCheckboxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel currentCaseSettingsPanel;
@@ -470,6 +498,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel displayTimeLabel;
     private javax.swing.JPanel globalSettingsPanel;
     private javax.swing.JCheckBox groupByDataSourceCheckbox;
+    private javax.swing.JCheckBox hideExaminerNotificationsCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
     private javax.swing.JCheckBox hideOtherUsersTagsCheckbox;
     private javax.swing.JCheckBox hideRejectedResultsCheckbox;

@@ -33,6 +33,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -82,10 +83,12 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
-        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
         addScoreProperty(sheetSet, tags);
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        addCountProperty(sheetSet, correlationAttribute);
+        if (UserPreferences.hideExaminerNotifications() == false) {
+            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+            addCommentProperty(sheetSet, tags, correlationAttribute);
+            addCountProperty(sheetSet, correlationAttribute);
+        }
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));

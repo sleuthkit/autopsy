@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -350,10 +351,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
-        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
         addScoreProperty(sheetSet, tags);
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        addCountProperty(sheetSet, correlationAttribute);
+        if (UserPreferences.hideExaminerNotifications() == false) {
+            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+            addCommentProperty(sheetSet, tags, correlationAttribute);
+            addCountProperty(sheetSet, correlationAttribute);
+        }
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));

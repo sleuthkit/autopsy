@@ -37,6 +37,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -729,10 +730,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
             AbstractFile file = getContent();
             sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
-            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
             addScoreProperty(sheetSet, tags);
-            addCommentProperty(sheetSet, tags, correlationAttribute);
-            addCountProperty(sheetSet, correlationAttribute);
+            if (UserPreferences.hideExaminerNotifications() == false) {
+                CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+                addCommentProperty(sheetSet, tags, correlationAttribute);
+                addCountProperty(sheetSet, correlationAttribute);
+            }
             sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
             sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
