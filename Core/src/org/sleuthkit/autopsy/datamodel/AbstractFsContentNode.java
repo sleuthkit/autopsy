@@ -96,9 +96,6 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
             sheetSet.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
 
-        // add tags property to the sheet
-        addTagProperty(sheetSet, tags);
-
         return sheet;
     }
 

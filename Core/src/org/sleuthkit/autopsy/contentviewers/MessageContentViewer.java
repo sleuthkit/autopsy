@@ -737,7 +737,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
             sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
 
-            addTagProperty(sheetSet, tags);
             return sheet;
         }
     }

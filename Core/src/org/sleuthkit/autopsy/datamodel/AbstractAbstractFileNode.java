@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -38,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -194,7 +196,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.typeDirColLbl=Type(Dir)",
         "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
         "AbstractAbstractFileNode.knownColLbl=Known",
-        "AbstractAbstractFileNode.inHashsetsColLbl=In Hashsets",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
         "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
@@ -218,7 +219,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
         TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
         KNOWN(AbstractAbstractFileNode_knownColLbl()),
-        HASHSETS(AbstractAbstractFileNode_inHashsetsColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
         ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
@@ -261,7 +261,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(TYPE_META.toString(), content.getMetaType().toString());
         map.put(KNOWN.toString(), content.getKnown().getName());
-        map.put(HASHSETS.toString(), getHashSetHitsCsvList(content));
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
         map.put(ObjectID.toString(), content.getId());
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
@@ -385,7 +384,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             } else if (attribute != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
-        } catch (EamDbException ex) {
+        } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         }
         sheetSet.put(
@@ -422,6 +421,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
      */
+    @Deprecated
     protected final void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())

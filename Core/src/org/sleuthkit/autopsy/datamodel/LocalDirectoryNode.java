@@ -76,7 +76,6 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

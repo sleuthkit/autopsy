@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -50,6 +51,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -500,7 +502,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     path));
         }
-        addTagProperty(sheetSet, tags);
 
         return sheet;
     }
@@ -555,6 +556,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param tags     the list of tags which should appear as the value for the
      *                 property
      */
+    @Deprecated
     protected final void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
@@ -667,7 +669,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             } else if (attribute != null) {
                 description = Bundle.BlackboardArtifactNode_createSheet_count_hashLookupNotRun_description();
             }
-        } catch (EamDbException ex) {
+        } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         }
         sheetSet.put(
