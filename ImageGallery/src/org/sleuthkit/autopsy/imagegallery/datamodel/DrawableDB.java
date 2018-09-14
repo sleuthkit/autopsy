@@ -123,12 +123,15 @@ public final class DrawableDB {
     private final PreparedStatement analyzedGroupStmt;
 
     private final PreparedStatement hashSetGroupStmt;
+    
+    private final PreparedStatement pathGroupFilterByDataSrcStmt;
 
     /**
      * map from {@link DrawableAttribute} to the {@link PreparedStatement} that
      * is used to select groups for that attribute
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
+    private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementFilterByDataSrcMap = new HashMap<>();
 
     private final GroupManager groupManager;
 
@@ -214,11 +217,11 @@ public final class DrawableDB {
         Files.createDirectories(dbPath.getParent());
         if (initializeDBSchema()) {
             updateFileStmt = prepareStatement(
-                    "INSERT OR REPLACE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
-                    + "VALUES (?,?,?,?,?,?,?,?)"); //NON-NLS
+                    "INSERT OR REPLACE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
+                    + "VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
             insertFileStmt = prepareStatement(
-                    "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
-                    + "VALUES (?,?,?,?,?,?,?,?)"); //NON-NLS
+                    "INSERT OR IGNORE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
+                    + "VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
 
             updateDataSourceStmt = prepareStatement(
                     "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
@@ -235,6 +238,9 @@ public final class DrawableDB {
             analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED); //NON-NLS
             hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET); //NON-NLS
 
+            //add other xyzFilterByDataSrc prepared statments as we add support for filtering by DS to other groups
+            pathGroupFilterByDataSrcStmt = prepareFilterByDataSrcStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? AND data_source_obj_id = ?", DrawableAttribute.PATH);
+             
             selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets"); //NON-NLS
             insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
             selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
@@ -306,6 +312,36 @@ public final class DrawableDB {
         return prepareStatement;
     }
 
+     /**
+     * calls {@link DrawableDB#prepareStatement(java.lang.String) ,
+     *  and then add the statement to the groupStatementFilterByDataSrcMap map used to lookup
+     * statements by the attribute/column they group on
+     *
+     * @param stmtString the string representation of the sqlite statement to
+     *                   prepare
+     * @param attr       the {@link DrawableAttribute} this query groups by
+     *      *
+     * @return the prepared statement
+     *
+     * @throws SQLExceptionif unable to prepare the statement
+     */
+    private PreparedStatement prepareFilterByDataSrcStatement(String stmtString, DrawableAttribute<?> attr) throws SQLException {
+        PreparedStatement prepareStatement = prepareStatement(stmtString);
+        if (attr != null) {
+            groupStatementFilterByDataSrcMap.put(attr, prepareStatement);
+        }
+
+        return prepareStatement;
+    }
+    
+    private void setQueryParams(PreparedStatement statement, GroupKey<?> groupKey) throws SQLException {
+        
+        statement.setObject(1, groupKey.getValue());
+
+        if (controller.isFilteringByDataSource() && (groupKey.getAttribute() == DrawableAttribute.PATH)) {
+            statement.setObject(2, groupKey.getDataSourceObjId());
+        }
+    }
     /**
      * public factory method. Creates and opens a connection to a new database *
      * at the given path.
@@ -395,6 +431,7 @@ public final class DrawableDB {
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
                     + "( obj_id INTEGER PRIMARY KEY, " //NON-NLS
+                    + " data_source_obj_id integer not null, "
                     + " path VARCHAR(255), " //NON-NLS
                     + " name VARCHAR(255), " //NON-NLS
                     + " created_time integer, " //NON-NLS
@@ -415,9 +452,10 @@ public final class DrawableDB {
             
             String tableSchema = 
                     "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
+                    + " data_source_obj_id integer DEFAULT 0, "
                     + " value VARCHAR(255) not null, " //NON-NLS
                     + " attribute VARCHAR(255) not null, " //NON-NLS
-                    + " UNIQUE(value, attribute) )"; //NON-NLS
+                    + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
             
             tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
         }
@@ -675,9 +713,17 @@ public final class DrawableDB {
         }
         
         try {
+
              // query to find the group id from attribute/value
-            String groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
-                                    " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName() );
+            String groupIdQuery = "";
+            if (groupKey.getDataSourceObjId() != 0) {
+                    groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                        " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d)", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName(), groupKey.getDataSourceObjId() );
+            }
+            else {
+                    groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                        " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName() );
+            }
             
             String groupSeenQueryStmt = String.format("COUNT((*) as count FROM " + GROUPS_SEEN_TABLENAME + " WHERE seen = 1 AND group_id in ( %s )", groupIdQuery);
             GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
@@ -696,8 +742,16 @@ public final class DrawableDB {
     public void markGroupSeen(GroupKey<?> gk, boolean seen, long examiner_id) {
         try {
             // query to find the group id from attribute/value
-            String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
-                                    " WHERE attribute = \'%s\' AND value = \'%s\' )", gk.getAttribute().attrName.toString(), gk.getValueDisplayName() );
+            String innerQuery = "";
+
+            if (gk.getDataSourceObjId() != 0) {
+                    innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                        " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )", gk.getAttribute().attrName.toString(), gk.getValueDisplayName(), gk.getDataSourceObjId() );
+            }
+            else {
+                    innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME + 
+                        " WHERE attribute = \'%s\' AND value = \'%s\' )", gk.getAttribute().attrName.toString(), gk.getValueDisplayName() );
+            }
             
             String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examiner_id, seen ? 1: 0);
             
@@ -799,15 +853,16 @@ public final class DrawableDB {
 
         dbWriteLock();
         try {
-            // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
+            // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
-            stmt.setString(2, f.getDrawablePath());
-            stmt.setString(3, f.getName());
-            stmt.setLong(4, f.getCrtime());
-            stmt.setLong(5, f.getMtime());
-            stmt.setString(6, f.getMake());
-            stmt.setString(7, f.getModel());
-            stmt.setBoolean(8, f.isAnalyzed());
+            stmt.setLong(2, f.getAbstractFile().getDataSource().getId());
+            stmt.setString(3, f.getDrawablePath());
+            stmt.setString(4, f.getName());
+            stmt.setLong(5, f.getCrtime());
+            stmt.setLong(6, f.getMtime());
+            stmt.setString(7, f.getMake());
+            stmt.setString(8, f.getModel());
+            stmt.setBoolean(9, f.isAnalyzed());
             stmt.executeUpdate();
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
@@ -843,14 +898,19 @@ public final class DrawableDB {
                 for (Comparable<?> val : vals) {
                     //use empty string for null values (mime_type), this shouldn't happen!
                     if (null != val) {
-                        insertGroup(val.toString(), attr, caseDbTransaction);
+                        if (attr == DrawableAttribute.PATH) {
+                            insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
+                        }
+                        else {
+                            insertGroup(val.toString(), attr, caseDbTransaction);
+                        }
                     }
                 }
             }
 
             tr.addUpdatedFile(f.getId());
 
-        } catch (SQLException | NullPointerException ex) {
+        } catch (SQLException | NullPointerException | TskCoreException ex) {
             /*
              * This is one of the places where we get an error if the case is
              * closed during processing, which doesn't need to be reported here.
@@ -1121,8 +1181,15 @@ public final class DrawableDB {
             default:
                 dbReadLock();
                 //TODO: convert this to prepared statement 
-                StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files GROUP BY " + groupBy.attrName.toString()); //NON-NLS
+               
+                StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
 
+                if (controller.isFilteringByDataSource()) {
+                     query.append(" WHERE data_source_obj_id = ").append(controller.getFilteringDataSourceId()); 
+                }
+                
+                query.append(" GROUP BY ").append(groupBy.attrName.toString());
+                        
                 String orderByClause = "";
 
                 if (sortBy == GROUP_BY_VALUE) {
@@ -1179,9 +1246,21 @@ public final class DrawableDB {
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
     private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+        insertGroup(0, value, groupBy, caseDbTransaction);
+    }
+
+    /**
+     * Insert new group into DB
+     * @param ds_obj_id data source object id
+     * @param value Value of the group (unique to the type)
+     * @param groupBy Type of the grouping (CATEGORY, MAKE, etc.)
+     * @param caseDbTransaction transaction to use for CaseDB insert/updates
+     */
+    private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
         String insertSQL = "";
         try {
-            insertSQL = String.format(" (value, attribute) VALUES (\'%s\', \'%s\')", value, groupBy.attrName.toString());
+            insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')", ds_obj_id, value, groupBy.attrName.toString());
+
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
                 insertSQL += String.format(" ON CONFLICT DO NOTHING ");
             }
@@ -1194,7 +1273,7 @@ public final class DrawableDB {
             }
         }
     }
-
+    
     /**
      * @param id the obj_id of the file to return
      *
@@ -1230,7 +1309,7 @@ public final class DrawableDB {
         dbReadLock();
         try {
             PreparedStatement statement = getGroupStatment(groupKey.getAttribute());
-            statement.setObject(1, groupKey.getValue());
+            setQueryParams(statement, groupKey);
 
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
@@ -1253,14 +1332,24 @@ public final class DrawableDB {
     }
 
     private PreparedStatement getGroupStatment(DrawableAttribute<?> groupBy) {
+     
+        if ((groupBy == DrawableAttribute.PATH) && (controller.isFilteringByDataSource()) ) {
+            return this.groupStatementFilterByDataSrcMap.get(groupBy);
+        }
+        
         return groupStatementMap.get(groupBy);
-
     }
 
     public int countAllFiles() {
         int result = -1;
+      
+        StringBuilder query = new StringBuilder("SELECT COUNT(*) AS COUNT FROM drawable_files"); //NON-NLS
+        if (controller.isFilteringByDataSource()) {
+            query.append(" WHERE data_source_obj_id = ").append(controller.getFilteringDataSourceId()); 
+        }
+        
         dbReadLock();
-        try (ResultSet rs = con.createStatement().executeQuery("SELECT COUNT(*) AS COUNT FROM drawable_files")) { //NON-NLS
+        try (ResultSet rs = con.createStatement().executeQuery(query.toString())) { //NON-NLS
             while (rs.next()) {
 
                 result = rs.getInt("COUNT");

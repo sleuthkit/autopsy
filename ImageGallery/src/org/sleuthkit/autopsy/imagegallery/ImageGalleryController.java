@@ -39,6 +39,7 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -124,6 +125,8 @@ public final class ImageGalleryController {
     private final HashSetManager hashSetManager = new HashSetManager();
     private final CategoryManager categoryManager = new CategoryManager(this);
     private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
+    
+    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(0);
 
     private Runnable showTree;
     private Toolbar toolbar;
@@ -213,6 +216,21 @@ public final class ImageGalleryController {
         return stale.get();
     }
 
+    @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
+    void setFilteringDataSourceId(long dataSourceObjId) {
+        Platform.runLater(() -> {
+            filterByDataSourceId.set(dataSourceObjId);
+        });
+    }
+
+    public long getFilteringDataSourceId() {
+        return filterByDataSourceId.get();
+    }
+    
+    public boolean isFilteringByDataSource() {
+        return (filterByDataSourceId.get() != 0);
+    }
+    
     private ImageGalleryController() {
 
         // listener for the boolean property about when IG is listening / enabled
@@ -549,6 +567,7 @@ public final class ImageGalleryController {
         }
         this.toolbar = toolbar;
         thumbnailSize.bind(toolbar.thumbnailSizeProperty());
+        
     }
 
     public ReadOnlyDoubleProperty regroupProgress() {
