@@ -39,13 +39,6 @@
             </Property>
           </Properties>
         </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="addCommentMenuItem">
-          <Properties>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/contentviewer/Bundle.properties" key="DataContentViewerOtherCases.addCommentMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
-        </MenuItem>
       </SubComponents>
     </Container>
     <Component class="javax.swing.JFileChooser" name="CSVFileChooser">

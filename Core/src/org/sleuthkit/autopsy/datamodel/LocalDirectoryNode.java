@@ -19,9 +19,12 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LocalDirectory;
 
 /**
@@ -55,11 +58,15 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
             sheet.put(sheetSet);
         }
 
+        List<ContentTag> tags = getContentTagsFromDatabase();
         sheetSet.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
                 Bundle.LocalDirectoryNode_createSheet_name_displayName(),
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
-
+        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        addScoreProperty(sheetSet, tags);
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        addCountProperty(sheetSet, correlationAttribute);
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
         // file set is a VirtualDirectory
         Map<String, Object> map = new LinkedHashMap<>();
@@ -69,7 +76,7 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        addTagProperty(sheetSet);
+        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

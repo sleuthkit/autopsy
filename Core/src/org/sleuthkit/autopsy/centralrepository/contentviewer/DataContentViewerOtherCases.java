@@ -52,12 +52,10 @@ import javax.swing.table.TableColumn;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.AddEditCentralRepoCommentAction;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -129,20 +127,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     }
                 } else if (jmi.equals(showCommonalityMenuItem)) {
                     showCommonalityDetails();
-                } else if (jmi.equals(addCommentMenuItem)) {
-                    try {
-                        OtherOccurrenceNodeInstanceData selectedNode = (OtherOccurrenceNodeInstanceData) tableModel.getRow(otherCasesTable.getSelectedRow());
-                        AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(selectedNode.getCorrelationAttribute());
-                        action.actionPerformed(null);
-                        String currentComment = action.getComment();
-                        if (currentComment != null) {
-                            selectedNode.updateComment(action.getComment());
-                            otherCasesTable.repaint();
-                        }
-                    } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error performing Add/Edit Comment action", ex);	//NON-NLS
-                    }
-                }
+                } 
             }
         };
 
@@ -150,7 +135,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         selectAllMenuItem.addActionListener(actList);
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
-        addCommentMenuItem.addActionListener(actList);
 
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
@@ -787,7 +771,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         exportToCSVMenuItem = new javax.swing.JMenuItem();
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
-        addCommentMenuItem = new javax.swing.JMenuItem();
         CSVFileChooser = new javax.swing.JFileChooser();
         otherCasesPanel = new javax.swing.JPanel();
         tableContainerPanel = new javax.swing.JPanel();
@@ -818,9 +801,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
-
-        org.openide.awt.Mnemonics.setLocalizedText(addCommentMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.addCommentMenuItem.text")); // NOI18N
-        rightClickPopupMenu.add(addCommentMenuItem);
 
         setMinimumSize(new java.awt.Dimension(1500, 10));
         setOpaque(false);
@@ -924,15 +904,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 enableCentralRepoActions = instanceData.isCentralRepoNode();
             }
         }
-
-        addCommentMenuItem.setVisible(enableCentralRepoActions);
         showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);
         showCommonalityMenuItem.setVisible(enableCentralRepoActions);
     }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser CSVFileChooser;
-    private javax.swing.JMenuItem addCommentMenuItem;
     private javax.swing.JLabel earliestCaseDate;
     private javax.swing.JLabel earliestCaseLabel;
     private javax.swing.JMenuItem exportToCSVMenuItem;
