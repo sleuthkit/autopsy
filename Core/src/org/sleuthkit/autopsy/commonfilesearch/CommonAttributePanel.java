@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ExecutionException;
@@ -99,7 +100,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         this.percentageThresholdInputBox.getDocument().addDocumentListener(new DocumentListener() {
 
-            private Dimension preferredSize = CommonAttributePanel.this.percentageThresholdInputBox.getPreferredSize();
+            private final Dimension preferredSize = CommonAttributePanel.this.percentageThresholdInputBox.getPreferredSize();
 
             private void maintainSize() {
                 CommonAttributePanel.this.percentageThresholdInputBox.setSize(preferredSize);
@@ -265,7 +266,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         filterByMedia = intraCasePanel.pictureVideoCheckboxIsSelected();
                         filterByDocuments = intraCasePanel.documentsCheckboxIsSelected();
                     }
-                    if (dataSourceId == CommonAttributePanel.NO_DATA_SOURCE_SELECTED) {
+                    if (Objects.equals(dataSourceId, CommonAttributePanel.NO_DATA_SOURCE_SELECTED)) {
                         builder = new AllIntraCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
 
                         setTitleForAllDataSources();
@@ -380,7 +381,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
              *         otherwise
              */
             private boolean caseHasMultipleSources() {
-                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 2;  //WJS-TODO should be > than 1?
+                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 1; 
             }
 
             @Override

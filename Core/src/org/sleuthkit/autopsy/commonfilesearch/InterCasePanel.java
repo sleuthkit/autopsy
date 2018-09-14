@@ -291,7 +291,8 @@ public final class InterCasePanel extends javax.swing.JPanel {
 
 
     private void correlationTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_correlationTypeComboBoxActionPerformed
-        boolean enableFileTypesFilter = this.correlationTypeComboBox.getSelectedItem().equals("Files");
+        //we do not currenlty have mime type in the central repository so this section will always be disabled
+        boolean enableFileTypesFilter = false; //this.correlationTypeComboBox.getSelectedItem().equals("Files"); 
         categoriesLabel.setEnabled(enableFileTypesFilter);
         allFileCategoriesRadioButton.setEnabled(enableFileTypesFilter);
         selectedFileCategoriesButton.setEnabled(enableFileTypesFilter);
