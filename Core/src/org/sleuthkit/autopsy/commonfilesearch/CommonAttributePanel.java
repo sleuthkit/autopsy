@@ -38,6 +38,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -74,25 +75,26 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
      * Creates new form CommonFilesPanel
      */
     @NbBundle.Messages({
-        "CommonFilesPanel.title=Common Files Panel",
-        "CommonFilesPanel.exception=Unexpected Exception loading DataSources.",
-        "CommonFilesPanel.frame.title=Find Common Files",
-        "CommonFilesPanel.frame.msg=Find Common Files"})
+        "CommonAttributePanel.title=Common Attribute Panel",
+        "CommonAttributePanel.exception=Unexpected Exception loading DataSources.",
+        "CommonAttributePanel.frame.title=Find Common Attributes",
+        "CommonAttributePanel.frame.msg=Find Common Attributes"})
     public CommonAttributePanel() {
-        super(new JFrame(Bundle.CommonFilesPanel_frame_title()),
-                Bundle.CommonFilesPanel_frame_msg(), true);
+        super(new JFrame(Bundle.CommonAttributePanel_frame_title()),
+                Bundle.CommonAttributePanel_frame_msg(), true);
         initComponents();
-        
+
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         this.setupDataSources();
 
         if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
             this.setupCases();
+            this.interCasePanel.setupCorrelationTypeFilter();
         } else {
             this.disableIntercaseSearch();
         }
-        
-        if(CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations()){
+
+        if (CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations()) {
             this.enablePercentageOptions();
         } else {
             this.disablePercentageOptions();
@@ -103,11 +105,11 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         this.percentageThresholdTextOne.getDocument().addDocumentListener(new DocumentListener(){
             
             private Dimension preferredSize = CommonAttributePanel.this.percentageThresholdTextOne.getPreferredSize();
-            
-            private void maintainSize(){
+
+            private void maintainSize() {
                 CommonAttributePanel.this.percentageThresholdTextOne.setSize(preferredSize);
             }
-            
+
             @Override
             public void insertUpdate(DocumentEvent event) {
                 this.maintainSize();
@@ -141,9 +143,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         }
         return false;
     }
-    
-    private static boolean isEamDbAvailableForPercentageFrequencyCalculations(){
-                try {
+
+    private static boolean isEamDbAvailableForPercentageFrequencyCalculations() {
+        try {
             return EamDb.isEnabled()
                     && EamDb.getInstance() != null
                     && EamDb.getInstance().getCases().size() > 0;
@@ -159,18 +161,18 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     }
 
     @NbBundle.Messages({
-        "CommonFilesPanel.search.results.titleAll=Common Files (All Data Sources)",
-        "CommonFilesPanel.search.results.titleSingle=Common Files (Match Within Data Source: %s)",
-        "CommonFilesPanel.search.results.pathText=Common Files Search Results",
-        "CommonFilesPanel.search.done.searchProgressGathering=Gathering Common Files Search Results.",
-        "CommonFilesPanel.search.done.searchProgressDisplay=Displaying Common Files Search Results.",
-        "CommonFilesPanel.search.done.tskCoreException=Unable to run query against DB.",
-        "CommonFilesPanel.search.done.noCurrentCaseException=Unable to open case file.",
-        "CommonFilesPanel.search.done.exception=Unexpected exception running Common Files Search.",
-        "CommonFilesPanel.search.done.interupted=Something went wrong finding common files.",
-        "CommonFilesPanel.search.done.sqlException=Unable to query db for files or data sources."})
+        "CommonAttributePanel.search.results.titleAll=Common Attributes (All Data Sources)",
+        "CommonAttributePanel.search.results.titleSingle=Common Attributes (Match Within Data Source: %s)",
+        "CommonAttributePanel.search.results.pathText=Common Attribute Search Results",
+        "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Attribute Search Results.",
+        "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Attribute Search Results.",
+        "CommonAttributePanel.search.done.tskCoreException=Unable to run query against DB.",
+        "CommonAttributePanel.search.done.noCurrentCaseException=Unable to open case file.",
+        "CommonAttributePanel.search.done.exception=Unexpected exception running Common Attribute Search.",
+        "CommonAttributePanel.search.done.interupted=Something went wrong finding common attributes.",
+        "CommonAttributePanel.search.done.sqlException=Unable to query db for attributes or data sources."})
     private void search() {
-        String pathText = Bundle.CommonFilesPanel_search_results_pathText();
+        String pathText = Bundle.CommonAttributePanel_search_results_pathText();
 
         new SwingWorker<CommonAttributeSearchResults, Void>() {
 
@@ -178,20 +180,20 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             private ProgressHandle progress;
 
             private void setTitleForAllDataSources() {
-                this.tabTitle = Bundle.CommonFilesPanel_search_results_titleAll();
+                this.tabTitle = Bundle.CommonAttributePanel_search_results_titleAll();
             }
 
             private void setTitleForSingleSource(Long dataSourceId) {
-                final String CommonFilesPanel_search_results_titleSingle = Bundle.CommonFilesPanel_search_results_titleSingle();
+                final String CommonAttributePanel_search_results_titleSingle = Bundle.CommonAttributePanel_search_results_titleSingle();
                 final Object[] dataSourceName = new Object[]{intraCasePanel.getDataSourceMap().get(dataSourceId)};
 
-                this.tabTitle = String.format(CommonFilesPanel_search_results_titleSingle, dataSourceName);
+                this.tabTitle = String.format(CommonAttributePanel_search_results_titleSingle, dataSourceName);
             }
 
             @Override
             @SuppressWarnings({"BoxedValueEquality", "NumberEquality"})
             protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-                progress = ProgressHandle.createHandle(Bundle.CommonFilesPanel_search_done_searchProgressGathering());
+                progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
 
@@ -213,18 +215,22 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                 }
 
                 int percentageThreshold = CommonAttributePanel.this.percentageThresholdValue;
-                
+
                 if (!CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
                     //0 has the effect of disabling the feature
                     percentageThreshold = 0;
                 }
 
                 if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
-
+                    CorrelationAttributeInstance.Type corType = interCasePanel.getSelectedCorrelationType();
+                    if (corType == null) {
+                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                    }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
+                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, corType, percentageThreshold);
                     } else {
-                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
+
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, corType, percentageThreshold);
                     }
                 } else {
                     if (dataSourceId == CommonAttributePanel.NO_DATA_SOURCE_SELECTED) {
@@ -237,7 +243,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                         setTitleForSingleSource(dataSourceId);
                     }
                 }
-                metadata = builder.findFiles();
+                metadata = builder.findMatches();
                 this.tabTitle = builder.buildTabTitle();
 
                 return metadata;
@@ -262,28 +268,28 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
 
-                    progress.setDisplayName(Bundle.CommonFilesPanel_search_done_searchProgressDisplay());
+                    progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
                     DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
                     progress.finish();
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_search_done_interupted());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_search_done_interupted());
                 } catch (ExecutionException ex) {
                     String errorMessage;
                     Throwable inner = ex.getCause();
                     if (inner instanceof TskCoreException) {
                         LOGGER.log(Level.SEVERE, "Failed to load files from database.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_tskCoreException();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
                         LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_noCurrentCaseException();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_noCurrentCaseException();
                     } else if (inner instanceof SQLException) {
                         LOGGER.log(Level.SEVERE, "Unable to query db for files.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_sqlException();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_sqlException();
                     } else {
                         LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_search_done_exception();
+                        errorMessage = Bundle.CommonAttributePanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
                 }
@@ -299,12 +305,12 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
      * names
      */
     @NbBundle.Messages({
-        "CommonFilesPanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
-        "CommonFilesPanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
-        "CommonFilesPanel.setupDataSources.done.exception=Unexpected exception loading data sources.",
-        "CommonFilesPanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
-        "CommonFilesPanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
+        "CommonAttributePanel.setupDataSources.done.tskCoreException=Unable to run query against DB.",
+        "CommonAttributePanel.setupDataSources.done.noCurrentCaseException=Unable to open case file.",
+        "CommonAttributePanel.setupDataSources.done.exception=Unexpected exception loading data sources.",
+        "CommonAttributePanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
+        "CommonAttributePanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
+        "CommonAttributePanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
     private void setupDataSources() {
 
         new SwingWorker<Map<Long, String>, Void>() {
@@ -346,22 +352,22 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupDataSources_done_interupted());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_setupDataSources_done_interupted());
                 } catch (ExecutionException ex) {
                     String errorMessage;
                     Throwable inner = ex.getCause();
                     if (inner instanceof TskCoreException) {
                         LOGGER.log(Level.SEVERE, "Failed to load data sources from database.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_tskCoreException();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_tskCoreException();
                     } else if (inner instanceof NoCurrentCaseException) {
                         LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_noCurrentCaseException();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_noCurrentCaseException();
                     } else if (inner instanceof SQLException) {
                         LOGGER.log(Level.SEVERE, "Unable to query db for data sources.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_sqlException();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_sqlException();
                     } else {
                         LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog panel.", ex);
-                        errorMessage = Bundle.CommonFilesPanel_setupDataSources_done_exception();
+                        errorMessage = Bundle.CommonAttributePanel_setupDataSources_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
                 }
@@ -370,8 +376,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
     }
 
     @NbBundle.Messages({
-        "CommonFilesPanel.setupCases.done.interruptedException=Something went wrong building the Common Files Search dialog box.",
-        "CommonFilesPanel.setupCases.done.exeutionException=Unexpected exception loading cases."})
+        "CommonAttributePanel.setupCases.done.interruptedException=Something went wrong building the Common Files Search dialog box.",
+        "CommonAttributePanel.setupCases.done.exeutionException=Unexpected exception loading cases."})
     private void setupCases() {
 
         new SwingWorker<Map<Integer, String>, Void>() {
@@ -423,10 +429,10 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                     this.updateUi();
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupCases_done_interruptedException());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_setupCases_done_interruptedException());
                 } catch (ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while building Common Files Search dialog.", ex);
-                    MessageNotifyUtil.Message.error(Bundle.CommonFilesPanel_setupCases_done_exeutionException());
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_setupCases_done_exeutionException());
                 }
             }
 
@@ -470,8 +476,8 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
 
-        setMaximumSize(new java.awt.Dimension(450, 375));
-        setMinimumSize(new java.awt.Dimension(450, 375));
+        setMaximumSize(new java.awt.Dimension(450, 440));
+        setMinimumSize(new java.awt.Dimension(450, 440));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -479,9 +485,9 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
             }
         });
 
-        jPanel1.setMaximumSize(new java.awt.Dimension(450, 375));
-        jPanel1.setMinimumSize(new java.awt.Dimension(450, 375));
-        jPanel1.setPreferredSize(new java.awt.Dimension(450, 375));
+        jPanel1.setMaximumSize(new java.awt.Dimension(450, 440));
+        jPanel1.setMinimumSize(new java.awt.Dimension(450, 440));
+        jPanel1.setPreferredSize(new java.awt.Dimension(450, 440));
         jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonFilesSearchLabel2, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonFilesSearchLabel2.text")); // NOI18N
@@ -506,6 +512,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         fileTypeFilterButtonGroup.add(allFileCategoriesRadioButton);
+        allFileCategoriesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.text")); // NOI18N
         allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
         allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
@@ -515,7 +522,6 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         });
 
         fileTypeFilterButtonGroup.add(selectedFileCategoriesButton);
-        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -526,6 +532,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         pictureVideoCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.pictureVideoCheckbox.text")); // NOI18N
+        pictureVideoCheckbox.setEnabled(false);
         pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pictureVideoCheckboxActionPerformed(evt);
@@ -534,6 +541,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
         documentsCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.documentsCheckbox.text")); // NOI18N
+        documentsCheckbox.setEnabled(false);
         documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 documentsCheckboxActionPerformed(evt);
@@ -628,7 +636,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                                 .addComponent(percentageThresholdTextOne, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(percentageThresholdTextTwo)))
-                        .addContainerGap(9, Short.MAX_VALUE))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -689,10 +697,19 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).last(this.layoutPanel);
+        this.categoriesLabel.setEnabled(false);
+        this.selectedFileCategoriesButton.setEnabled(false);
+        this.allFileCategoriesRadioButton.setEnabled(false);
+        this.allFileCategoriesRadioButton.setSelected(true);
+        this.documentsCheckbox.setEnabled(false);
+        this.pictureVideoCheckbox.setEnabled(false);
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
         ((java.awt.CardLayout) this.layoutPanel.getLayout()).first(this.layoutPanel);
+        this.categoriesLabel.setEnabled(true);
+        this.selectedFileCategoriesButton.setEnabled(true);
+        this.allFileCategoriesRadioButton.setEnabled(true);
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
     private void documentsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_documentsCheckboxActionPerformed
@@ -720,19 +737,19 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         SwingUtilities.windowForComponent(this).dispose();
     }//GEN-LAST:event_searchButtonActionPerformed
 
-    private void percentageThresholdChanged(){
+    private void percentageThresholdChanged() {
         String percentageString = this.percentageThresholdTextOne.getText();
 
         try {
             this.percentageThresholdValue = Integer.parseInt(percentageString);
-            
+
         } catch (NumberFormatException exception) {
             this.percentageThresholdValue = -1;
         }
 
-        this.handleFrequencyPercentageState();        
+        this.handleFrequencyPercentageState();
     }
-    
+
     private void updateErrorTextAndSearchBox() {
 
         if (this.errorManager.anyErrors()) {
@@ -768,7 +785,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
         if (this.allFileCategoriesRadioButton.isSelected()) {
             this.pictureVideoCheckbox.setEnabled(false);
             this.documentsCheckbox.setEnabled(false);
-            
+
             this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
         }
 
@@ -786,7 +803,7 @@ public final class CommonAttributePanel extends javax.swing.JDialog {
                 this.errorManager.setError(UserInputErrorManager.NO_FILE_CATEGORIES_SELECTED_KEY, false);
             }
         }
-        
+
         this.updateErrorTextAndSearchBox();
     }
 

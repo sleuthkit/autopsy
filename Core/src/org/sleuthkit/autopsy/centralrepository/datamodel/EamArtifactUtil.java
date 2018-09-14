@@ -213,7 +213,7 @@ public class EamArtifactUtil {
                     TskData.FileKnown.UNKNOWN
             );
 
-        } catch (TskCoreException | EamDbException ex) {
+        } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
@@ -251,7 +251,8 @@ public class EamArtifactUtil {
             type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
             correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
             if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
+                //if the correlationCase is not in the Central repo then attributes generated in relation to it will not be
+                return null;
             }
             correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
             value = file.getMd5Hash();
@@ -267,7 +268,7 @@ public class EamArtifactUtil {
         CorrelationAttributeInstance correlationAttributeInstance;
         try {
             correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
-        } catch (EamDbException ex) {
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format(
                     "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
                     content.getName(), content.getId(), ex.getMessage()));
@@ -322,7 +323,7 @@ public class EamArtifactUtil {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName());
 
-        } catch (TskCoreException | EamDbException ex) {
+        } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
             return null;
         } catch (NoCurrentCaseException ex) {

@@ -20,12 +20,12 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
  * Algorithm which finds files anywhere in the Central Repo which also occur in
@@ -34,28 +34,27 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttributeSearcher {
 
     /**
-     * 
+     *
      * @param filterByMediaMimeType match only on files whose mime types can be
      * broadly categorized as media types
      * @param filterByDocMimeType match only on files whose mime types can be
      * broadly categorized as document types
-     * @throws EamDbException 
+     * @throws EamDbException
      */
-    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
+    public AllInterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
+        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
     }
 
     @Override
-    public CommonAttributeSearchResults findFiles() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap());
+    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap(), corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
-        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
 
     @Override
     String buildTabTitle() {
-        final String buildCategorySelectionString = this.buildCategorySelectionString();
         final String titleTemplate = Bundle.AbstractCommonFilesMetadataBuilder_buildTabTitle_titleInterAll();
-        return String.format(titleTemplate, new Object[]{buildCategorySelectionString});
+        return String.format(titleTemplate, new Object[]{this.corAttrType.getDisplayName()});
     }
 }
