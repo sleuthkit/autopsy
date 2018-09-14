@@ -45,7 +45,7 @@ public class LocalDisk {
         this.size = size;
         mountPoint = "";
         if (PlatformUtil.isLinuxOS() ) {
-            findMointPoint(this.path);
+            findLinuxMointPoint(this.path);
         }
     }
 
