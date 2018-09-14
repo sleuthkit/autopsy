@@ -36,14 +36,15 @@ public class LocalDisk {
     private String name;
     private String path;
     private long size;
-    private String mountPoint = null;
+    private String mountPoint;
     private static final Logger logger = Logger.getLogger(LocalDisk.class.getName());
 
     public LocalDisk(String name, String path, long size) {
         this.name = name;
         this.path = path;
         this.size = size;
-        if (PlatformUtil.isLinuxOS()) {
+        mountPoint = "";
+        if (PlatformUtil.isLinuxOS() ) {
             findMointPoint(this.path);
         }
     }
@@ -60,6 +61,10 @@ public class LocalDisk {
         return size;
     }
 
+    /**
+     * NOTE: Currently works only under Linux
+     * @returns empty string if unknown 
+     */
     public String getMountPoint() {
         return mountPoint;
     }
@@ -88,7 +93,7 @@ public class LocalDisk {
         return name + ": " + getReadableSize();
     }
 
-    private void findMointPoint(String path) {
+    private void findLinuxMointPoint(String path) {
         try {
             List<String> commandLine = new ArrayList<>();
             commandLine.add("/bin/bash");
@@ -111,15 +116,22 @@ public class LocalDisk {
         }
     }
     
+    /**
+     * Does this drive contain an AutopsyConfig folder?
+     * requires the mount point to be known
+     */
     public boolean isConfigDrive() {        
         Path path = Paths.get(this.mountPoint, "AutopsyConfig");
         File configFile = new File(path.toString());
         return configFile.exists();
     }
     
+    /**
+     * Need to better define what this method does..
+     * I (BC) am not sure it should be public API. 
+     */
     public boolean isAutopsyISO() {
         Path path = Paths.get(this.mountPoint);
         return path.toString().equals("/cdrom");
     }
-    
 }
