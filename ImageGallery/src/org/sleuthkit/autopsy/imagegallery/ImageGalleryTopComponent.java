@@ -26,7 +26,6 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
@@ -48,6 +47,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
@@ -229,7 +229,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     synchronized private void setController(ImageGalleryController controller) {
-        if (this.controller != null) {
+        if (this.controller != null && notEqual(this.controller, controller)) {
             this.controller.reset();
         }
         this.controller = controller;
