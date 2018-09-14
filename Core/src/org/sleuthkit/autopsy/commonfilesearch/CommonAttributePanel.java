@@ -74,10 +74,10 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Creates new form CommonFilesPanel
      */
     @NbBundle.Messages({
-        "CommonAttributePanel.title=Common Attribute Panel",
+        "CommonAttributePanel.title=Common Property Panel",
         "CommonAttributePanel.exception=Unexpected Exception loading DataSources.",
-        "CommonAttributePanel.frame.title=Find Common Attributes",
-        "CommonAttributePanel.frame.msg=Find Common Attributes",
+        "CommonAttributePanel.frame.title=Find Common Properties",
+        "CommonAttributePanel.frame.msg=Find Common Properties",
         "CommonAttributePanel.intraCasePanel.title=Curren Case Options"})
     CommonAttributePanel() {
         super(new JFrame(Bundle.CommonAttributePanel_frame_title()),
@@ -183,16 +183,16 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Perform the common attribute search.
      */
     @NbBundle.Messages({
-        "CommonAttributePanel.search.results.titleAll=Common Attributes (All Data Sources)",
-        "CommonAttributePanel.search.results.titleSingle=Common Attributes (Match Within Data Source: %s)",
-        "CommonAttributePanel.search.results.pathText=Common Attribute Search Results",
-        "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Attribute Search Results.",
-        "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Attribute Search Results.",
+        "CommonAttributePanel.search.results.titleAll=Common Properties (All Data Sources)",
+        "CommonAttributePanel.search.results.titleSingle=Common Properties (Match Within Data Source: %s)",
+        "CommonAttributePanel.search.results.pathText=Common Property Search Results",
+        "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Property Search Results.",
+        "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Property Search Results.",
         "CommonAttributePanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonAttributePanel.search.done.noCurrentCaseException=Unable to open case file.",
-        "CommonAttributePanel.search.done.exception=Unexpected exception running Common Attribute Search.",
-        "CommonAttributePanel.search.done.interupted=Something went wrong finding common attributes.",
-        "CommonAttributePanel.search.done.sqlException=Unable to query db for attributes or data sources."})
+        "CommonAttributePanel.search.done.exception=Unexpected exception running Common Property Search.",
+        "CommonAttributePanel.search.done.interupted=Something went wrong finding common properties.",
+        "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources."})
     private void search() {
         String pathText = Bundle.CommonAttributePanel_search_results_pathText();
 

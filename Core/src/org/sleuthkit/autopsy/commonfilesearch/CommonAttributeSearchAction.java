@@ -95,7 +95,7 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
     }
 
     @NbBundle.Messages({
-        "CommonAttributeSearchAction.getName.text=Common Attribute Search"})
+        "CommonAttributeSearchAction.getName.text=Common Property Search"})
     @Override
     public String getName() {
         return Bundle.CommonAttributeSearchAction_getName_text();
