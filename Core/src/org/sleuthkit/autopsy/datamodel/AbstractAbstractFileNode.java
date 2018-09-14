@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
