@@ -671,6 +671,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         }
+        catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+        }
         sheetSet.put(
                 new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), description, count));
     }

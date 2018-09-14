@@ -385,7 +385,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
+        
         sheetSet.put(
                 new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_count_name(), Bundle.AbstractAbstractFileNode_createSheet_count_displayName(), description, count));
     }
