@@ -668,7 +668,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             } else if (attribute != null) {
                 description = Bundle.BlackboardArtifactNode_createSheet_count_hashLookupNotRun_description();
             }
-        } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
+        } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         }
         catch (CorrelationAttributeNormalizationException ex) {

@@ -383,7 +383,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             } else if (attribute != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
-        } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
+        } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
