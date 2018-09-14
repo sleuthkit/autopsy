@@ -79,6 +79,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -267,14 +268,20 @@ public class GroupManager {
     @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group, boolean seen) {
         if (nonNull(db)) {
-            db.markGroupSeen(group.getGroupKey(), seen);
-            group.setSeen(seen);
-            if (seen) {
-                unSeenGroups.removeAll(group);
-            } else if (unSeenGroups.contains(group) == false) {
-                unSeenGroups.add(group);
+            try {
+                Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
+                
+                db.markGroupSeen(group.getGroupKey(), seen, examiner.getId());
+                group.setSeen(seen);
+                if (seen) {
+                    unSeenGroups.removeAll(group);
+                } else if (unSeenGroups.contains(group) == false) {
+                    unSeenGroups.add(group);
+                }
+                FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to set seen status for group", ex); //NON-NLS
             }
-            FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
         }
     }
 
@@ -679,7 +686,9 @@ public class GroupManager {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
                         DrawableGroup group;
-                        final boolean groupSeen = db.isGroupSeen(groupKey);
+                        Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
+                        
+                        final boolean groupSeen = db.isGroupSeenByExaminer(groupKey, examiner.getId());
                         synchronized (groupMap) {
                             if (groupMap.containsKey(groupKey)) {
                                 group = groupMap.get(groupKey);

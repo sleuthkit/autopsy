@@ -126,8 +126,7 @@ public final class ImageGalleryController {
     private final CategoryManager categoryManager = new CategoryManager(this);
     private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
     
-    // RAMAN TBD: initialize this to 0
-    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(1);
+    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(0);
 
     private Runnable showTree;
     private Toolbar toolbar;
@@ -568,8 +567,6 @@ public final class ImageGalleryController {
         }
         this.toolbar = toolbar;
         thumbnailSize.bind(toolbar.thumbnailSizeProperty());
-        
-        // RAMAN TBD: bind filterByDataSourceId to the data source dropdown in the toolbar.
         
     }
 
