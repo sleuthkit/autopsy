@@ -47,7 +47,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -60,7 +59,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import org.apache.commons.lang3.ObjectUtils;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -100,7 +98,7 @@ public class GroupManager {
 
     /** An executor to submit async UI related background tasks to. */
     private final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
-            new BasicThreadFactory.Builder().namingPattern("GUI Task -%d").build())); //NON-NLS
+            new BasicThreadFactory.Builder().namingPattern("GroupManager BG Thread-%d").build())); //NON-NLS
 
     private final ImageGalleryController controller;
 

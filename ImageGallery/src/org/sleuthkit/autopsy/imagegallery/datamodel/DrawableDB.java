@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -629,6 +630,41 @@ public final class DrawableDB {
         return names;
     }
 
+    // Callback to process result of seen query
+    private static class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
+
+        private interface SQLFunction<T1, T2> {
+
+            T2 apply(T1 rs) throws SQLException;
+        }
+
+        private final SQLFunction<ResultSet, Boolean> resultExtractor;
+
+        GroupSeenQueryResultProcessor(SQLFunction<ResultSet, Boolean> resultExtractor) {
+            this.resultExtractor = resultExtractor;
+        }
+
+        private boolean seen = false;
+
+        boolean getGroupSeen() {
+            return seen;
+        }
+
+        @Override
+        public void process(ResultSet resultSet) {
+            try {
+                if (resultSet != null) {
+                    while (resultSet.next()) {
+                        seen = resultExtractor.apply(resultSet); //NON-NLS;
+                        return;
+                    }
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
+            }
+        }
+    }
+
     /**
      * Returns true if the specified group has been any examiner
      *
@@ -637,30 +673,9 @@ public final class DrawableDB {
      * @return
      */
     public boolean isGroupSeen(GroupKey<?> groupKey) {
-
         // Callback to process result of seen query
-        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
-
-            private boolean seen = false;
-
-            boolean getGroupSeen() {
-                return seen;
-            }
-
-            @Override
-            public void process(ResultSet resultSet) {
-                try {
-                    if (resultSet != null) {
-                        while (resultSet.next()) {
-                            seen = resultSet.getInt("count") > 0;
-                            return;
-                        }
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
-                }
-            }
-        }
+        GroupSeenQueryResultProcessor queryResultProcessor
+                = new GroupSeenQueryResultProcessor(rs -> rs.getInt("count") > 0);
 
         try {
 
@@ -673,8 +688,6 @@ public final class DrawableDB {
 
             String groupSeenQueryStmt = "COUNT((*) as count FROM " + GROUPS_SEEN_TABLENAME
                                         + " WHERE seen = 1 AND group_id in ( " + groupIdQuery + ")";
-
-            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
             tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
             return queryResultProcessor.getGroupSeen();
@@ -696,38 +709,16 @@ public final class DrawableDB {
      * @return true if the examine has this group, false otherwise
      */
     public boolean isGroupSeenByExaminer(GroupKey<?> groupKey, long examinerId) {
-
         // Callback to process result of seen query
-        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
+        GroupSeenQueryResultProcessor queryResultProcessor
+                = new GroupSeenQueryResultProcessor(rs -> rs.getBoolean("seen"));
 
-            private boolean seen = false;
-
-            boolean getGroupSeen() {
-                return seen;
-            }
-
-            @Override
-            public void process(ResultSet resultSet) {
-                try {
-                    if (resultSet != null) {
-                        while (resultSet.next()) {
-                            seen = resultSet.getBoolean("seen"); //NON-NLS;
-                            return;
-                        }
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
-                }
-            }
-        }
         try {
-
             // query to find the group id from attribute/value
             String groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
                                                 + " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName());
 
             String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_SEEN_TABLENAME + " WHERE examiner_id = %d AND group_id in ( %s )", examinerId, groupIdQuery);
-            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
             tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
             return queryResultProcessor.getGroupSeen();
