@@ -26,7 +26,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
@@ -54,7 +54,7 @@ public final class CaseUtils {
             deleteCaseDir(caseDir);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         assertFalse("Unable to delete existing test directory", caseDir.exists());
         // Create the test directory
@@ -66,7 +66,7 @@ public final class CaseUtils {
             currentCase = Case.getCurrentCaseThrows();
         } catch (CaseActionException | NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
 
         assertTrue(caseDir.exists());
@@ -100,7 +100,7 @@ public final class CaseUtils {
             }
         } catch (CaseActionException | IOException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 

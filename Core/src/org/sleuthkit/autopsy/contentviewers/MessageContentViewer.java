@@ -36,6 +36,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -65,6 +66,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -117,8 +119,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         drp.open();
         drpExplorerManager = drp.getExplorerManager();
-        drpExplorerManager.addPropertyChangeListener(evt ->
-                viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
+        drpExplorerManager.addPropertyChangeListener(evt
+                -> viewInNewWindowButton.setEnabled(drpExplorerManager.getSelectedNodes().length == 1));
     }
 
     /**
@@ -723,13 +725,19 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
                 sheetSet = Sheet.createPropertiesSet();
                 sheet.put(sheetSet);
             }
+            List<ContentTag> tags = getContentTagsFromDatabase();
+
             AbstractFile file = getContent();
             sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
+            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+            addScoreProperty(sheetSet, tags);
+            addCommentProperty(sheetSet, tags, correlationAttribute);
+            addCountProperty(sheetSet, correlationAttribute);
             sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
             sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
             sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
 
-            addTagProperty(sheetSet);
+            addTagProperty(sheetSet, tags);
             return sheet;
         }
     }

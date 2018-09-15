@@ -326,7 +326,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
                             jobWrapper.getManifest().getDateFileCreated()));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text(),
-                            jobWrapper.getPriority() > 0 ? Bundle.AutoIngestJobsNode_prioritized_true() : Bundle.AutoIngestJobsNode_prioritized_false()));
+                            jobWrapper.getPriority()));
                     break;
                 case RUNNING_JOB:
                     AutoIngestJob.StageDetails status = jobWrapper.getProcessingStageDetails();

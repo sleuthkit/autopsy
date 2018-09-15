@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
@@ -58,7 +59,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-class TableReportGenerator {
+class TableReportGenerator { 
 
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final HashSet<String> tagNamesFilter = new HashSet<>();
@@ -264,6 +265,7 @@ class TableReportGenerator {
     /**
      * Make table for tagged files
      */
+    @Messages({"ReportGenerator.tagTable.header.userName=User Name"})
     @SuppressWarnings("deprecation")
     private void makeContentTagsTables() {
 
@@ -286,7 +288,8 @@ class TableReportGenerator {
         ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
-                NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
+                NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"), 
+                NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.userName"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeChanged"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeAccessed"),
@@ -324,7 +327,7 @@ class TableReportGenerator {
                 fileName = tag.getContent().getName();
             }
 
-            ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName() + notableString, fileName, tag.getComment()));
+            ArrayList<String> rowData = new ArrayList<>(Arrays.asList(tag.getName().getDisplayName() + notableString, fileName, tag.getComment(), tag.getUserName()));
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) content;
@@ -386,7 +389,8 @@ class TableReportGenerator {
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.resultType"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.tag"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.comment"),
-                NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"))));
+                NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"), 
+                NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.userName"))));
 
         // Give the modules the rows for the content tags. 
         for (BlackboardArtifactTag tag : tags) {
@@ -396,7 +400,8 @@ class TableReportGenerator {
             }
 
             List<String> row;
-            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName() + notableString, tag.getComment(), tag.getContent().getName()));
+            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName() + notableString, 
+                    tag.getComment(), tag.getContent().getName(), tag.getUserName()));
             tableReport.addRow(row);
 
             // check if the tag is an image that we should later make a thumbnail for
@@ -1063,13 +1068,17 @@ class TableReportGenerator {
                 orderedRowData.add(makeCommaSeparatedList(getTags()));
 
             } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == getArtifact().getArtifactTypeID()) {
-                String[] attributeDataArray = new String[3];
+                String[] attributeDataArray = new String[5];
                 // Array is used so that order of the attributes is maintained.
                 for (BlackboardAttribute attr : attributes) {
                     if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME))) {
                         attributeDataArray[0] = attr.getDisplayString();
                     } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY))) {
                         attributeDataArray[1] = attr.getDisplayString();
+                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT))) {
+                        attributeDataArray[3] = attr.getDisplayString();
+                    } else if (attr.getAttributeType().equals(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION))) {
+                        attributeDataArray[4] = attr.getDisplayString();
                     }
                 }
 
@@ -1158,6 +1167,7 @@ class TableReportGenerator {
      *
      * @return List<String> row titles
      */
+    @Messages({"ReportGenerator.artTableColHdr.comment=Comment"})
     private List<Column> getArtifactTableColumns(int artifactTypeId, Set<BlackboardAttribute.Type> attributeTypeSet) {
         ArrayList<Column> columns = new ArrayList<>();
 
@@ -1552,6 +1562,12 @@ class TableReportGenerator {
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
+            
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.comment"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT)));
+
+            columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.description"),
+                    new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)));
 
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_ROUTE.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskGpsRouteCategory"),
