@@ -56,9 +56,7 @@ public final class PromptDialogManager {
     @NbBundle.Messages("PrompDialogManager.buttonType.update=Update DB")
     private static final ButtonType UPDATE = new ButtonType(Bundle.PrompDialogManager_buttonType_update(), ButtonBar.ButtonData.OK_DONE);
 
-    /**
-     * Image to use as title bar icon in dialogs
-     */
+    /** Image to use as title bar icon in dialogs */
     private static final Image AUTOPSY_ICON;
 
     static {

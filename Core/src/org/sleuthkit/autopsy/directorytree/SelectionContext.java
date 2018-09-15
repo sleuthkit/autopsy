@@ -23,11 +23,13 @@ import org.openide.util.NbBundle;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 
 @NbBundle.Messages({"SelectionContext.dataSources=Data Sources",
+    "SelectionContext.dataSourceFiles=Data Source Files",
     "SelectionContext.views=Views"})
 enum SelectionContext {
     DATA_SOURCES(SelectionContext_dataSources()),
     VIEWS(SelectionContext_views()),
-    OTHER("");  // Subnode of another node.
+    OTHER(""),  // Subnode of another node.
+    DATA_SOURCE_FILES(SelectionContext_dataSourceFiles()); 
 
     private final String displayName;
 
@@ -36,7 +38,7 @@ enum SelectionContext {
     }
 
     public static SelectionContext getContextFromName(String name) {
-        if (name.equals(DATA_SOURCES.getName())) {
+        if (name.equals(DATA_SOURCES.getName()) || name.equals(DATA_SOURCE_FILES.getName())) {
             return DATA_SOURCES;
         } else if (name.equals(VIEWS.getName())) {
             return VIEWS;
@@ -64,6 +66,16 @@ enum SelectionContext {
             // One level below root node. Should be one of DataSources, Views, or Results
             return SelectionContext.getContextFromName(n.getDisplayName());
         } else {
+            // In Group by Data Source mode, the node under root is the data source name, and
+            // under that is Data Source Files, Views, or Results. Before moving up the tree, check
+            // if one of those applies.
+            if (n.getParentNode().getParentNode().getParentNode() == null) {
+                SelectionContext context = SelectionContext.getContextFromName(n.getDisplayName());
+                if (context != SelectionContext.OTHER) {
+                    return context;
+                }
+            }
+            
             return getSelectionContext(n.getParentNode());
         }
     }

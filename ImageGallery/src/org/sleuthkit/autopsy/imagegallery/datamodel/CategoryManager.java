@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,20 +34,19 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
  * Provides a cached view of the number of files per category, and fires
- * {@link CategoryChangeEvent}s when files are categorized.
+ * CategoryChangeEvents when files are categorized.
  *
  * To receive CategoryChangeEvents, a listener must register itself, and
- * implement a public method annotated with {@link Subscribe} that accepts one
- * argument of type CategoryChangeEvent
+ * implement a public method annotated with Subscribe that accepts one argument
+ * of type CategoryChangeEvent
  *
  * TODO: currently these two functions (cached counts and events) are separate
  * although they are related. Can they be integrated more?
@@ -64,14 +63,23 @@ public class CategoryManager {
      * initialized from this, and the counting of CAT-0 is always delegated to
      * this db.
      */
-    private DrawableDB db;
+    private final DrawableDB drawableDb;
+
+    public CategoryManager(ImageGalleryController controller) {
+        this.controller = controller;
+        this.drawableDb = controller.getDatabase();
+    }
+
+    private ImageGalleryController getController() {
+        return controller;
+    }
 
     /**
-     * Used to distribute {@link CategoryChangeEvent}s
+     * Used to distribute CategoryChangeEvents
      */
     private final EventBus categoryEventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(
-            new BasicThreadFactory.Builder().namingPattern("Category Event Bus").uncaughtExceptionHandler((Thread t, Throwable e) -> { //NON-NLS
-                LOGGER.log(Level.SEVERE, "Uncaught exception in category event bus handler", e); //NON-NLS
+            new BasicThreadFactory.Builder().namingPattern("Category Event Bus").uncaughtExceptionHandler((Thread thread, Throwable throwable) -> { //NON-NLS
+                LOGGER.log(Level.SEVERE, "Uncaught exception in category event bus handler", throwable); //NON-NLS
             }).build()
     ));
 
@@ -80,37 +88,19 @@ public class CategoryManager {
      * the count related methods go through this cache, which loads initial
      * values from the database if needed.
      */
-    private final LoadingCache<DhsImageCategory, LongAdder> categoryCounts =
-            CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
+    private final LoadingCache<DhsImageCategory, LongAdder> categoryCounts
+            = CacheBuilder.newBuilder().build(CacheLoader.from(this::getCategoryCountHelper));
     /**
      * cached TagNames corresponding to Categories, looked up from
      * autopsyTagManager at initial request or if invalidated by case change.
      */
-    private final LoadingCache<DhsImageCategory, TagName> catTagNameMap =
-            CacheBuilder.newBuilder().build(CacheLoader.from(
-                            cat -> getController().getTagsManager().getTagName(cat)
-                    ));
-
-    public CategoryManager(ImageGalleryController controller) {
-        this.controller = controller;
-    }
-
-    private ImageGalleryController getController() {
-        return controller;
-    }
-
-    /**
-     * assign a new db. the counts cache is invalidated and all subsequent db
-     * lookups go to the new db.
-     *
-     * Also clears the Category TagNames
-     *
-     * @param db
-     */
-    synchronized public void setDb(DrawableDB db) {
-        this.db = db;
-        invalidateCaches();
-    }
+    private final LoadingCache<DhsImageCategory, TagName> catTagNameMap
+            = CacheBuilder.newBuilder().build(new CacheLoader<DhsImageCategory, TagName>() {
+                @Override
+                public TagName load(DhsImageCategory cat) throws TskCoreException {
+                    return getController().getTagsManager().getTagName(cat);
+                }
+            });
 
     synchronized public void invalidateCaches() {
         categoryCounts.invalidateAll();
@@ -131,7 +121,7 @@ public class CategoryManager {
             // is going on, so always use the list of file IDs we already have along with the
             // other category counts instead of trying to track it separately.
             long allOtherCatCount = getCategoryCount(DhsImageCategory.ONE) + getCategoryCount(DhsImageCategory.TWO) + getCategoryCount(DhsImageCategory.THREE) + getCategoryCount(DhsImageCategory.FOUR) + getCategoryCount(DhsImageCategory.FIVE);
-            return db.getNumberOfImageFilesInList() - allOtherCatCount;
+            return drawableDb.getNumberOfImageFilesInList() - allOtherCatCount;
         } else {
             return categoryCounts.getUnchecked(cat).sum();
         }
@@ -151,7 +141,7 @@ public class CategoryManager {
 
     /**
      * decrement the cached value for the number of files with the given
-     * {@link DhsImageCategory}
+     * DhsImageCategory
      *
      * @param cat the Category to decrement
      */
@@ -175,7 +165,7 @@ public class CategoryManager {
         LongAdder longAdder = new LongAdder();
         longAdder.decrement();
         try {
-            longAdder.add(db.getCategoryCount(cat));
+            longAdder.add(drawableDb.getCategoryCount(cat));
             longAdder.increment();
         } catch (IllegalStateException ex) {
             LOGGER.log(Level.WARNING, "Case closed while getting files"); //NON-NLS
@@ -212,15 +202,14 @@ public class CategoryManager {
         try {
             categoryEventBus.unregister(listener);
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("missing event subscriber for an annotated method. Is " + listener + " registered?")) { //NON-NLS
-                /*
-                 * We don't fully understand why we are getting this exception
-                 * when the groups should all be registered. To avoid cluttering
-                 * the logs we have disabled recording this exception. This
-                 * documented in issues 738 and 802.
-                 */
-                //LOGGER.log(Level.WARNING, "Attempted to unregister {0} for category change events, but it was not registered.", listener.toString()); //NON-NLS
-            } else {
+            /*
+             * We don't fully understand why we are getting this exception when
+             * the groups should all be registered. To avoid cluttering the logs
+             * we have disabled recording this exception. This documented in
+             * issues 738 and 802.
+             */
+
+            if (!e.getMessage().contains("missing event subscriber for an annotated method. Is " + listener + " registered?")) { //NON-NLS
                 throw e;
             }
         }
@@ -258,7 +247,7 @@ public class CategoryManager {
                 //remove old category tag(s) if necessary
                 for (ContentTag ct : tagsManager.getContentTags(addedTag.getContent())) {
                     if (ct.getId() != addedTag.getId()
-                            && CategoryManager.isCategoryTagName(ct.getName())) {
+                        && CategoryManager.isCategoryTagName(ct.getName())) {
                         try {
                             tagsManager.deleteContentTag(ct);
                         } catch (TskCoreException tskException) {

@@ -107,7 +107,7 @@ public class ImageUtils {
      * NOTE: Must be cleared when the case is changed.
      */
     @Messages({"ImageUtils.ffmpegLoadedError.title=OpenCV FFMpeg",
-               "ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details"})
+        "ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details"})
     private static final ConcurrentHashMap<Long, File> cacheFileMap = new ConcurrentHashMap<>();
 
     static {
@@ -205,8 +205,20 @@ public class ImageUtils {
         }
         AbstractFile file = (AbstractFile) content;
 
+        /**
+         * Before taking on the potentially costly task of calculating the MIME
+         * type that can happen in isMediaThumbnailSupported() below, let's
+         * first see if the file extension is in the set of supported media file
+         * extensions.
+         */
+        List<String> supportedExtensions = new ArrayList<>(SUPPORTED_IMAGE_EXTENSIONS);
+        supportedExtensions.addAll(VideoUtils.getSupportedVideoExtensions());
+        if (isSupportedMediaExtension(file, supportedExtensions)) {
+            return true;
+        }
+
         return VideoUtils.isVideoThumbnailSupported(file)
-                || isImageThumbnailSupported(file);
+               || isImageThumbnailSupported(file);
     }
 
     /**
@@ -258,9 +270,7 @@ public class ImageUtils {
             return false;
         }
 
-        String extension = file.getNameExtension();
-
-        if (StringUtils.isNotBlank(extension) && supportedExtension.contains(extension)) {
+        if (isSupportedMediaExtension(file, supportedExtension)) {
             return true;
         } else {
             try {
@@ -274,6 +284,21 @@ public class ImageUtils {
                 return false;
             }
         }
+    }
+
+    /**
+     * Does the given file have an extension in the given list of supported
+     * extensions.
+     *
+     * @param file
+     * @param supportedExtensions
+     *
+     * @return
+     */
+    static boolean isSupportedMediaExtension(final AbstractFile file, final List<String> supportedExtensions) {
+        String extension = file.getNameExtension();
+
+        return (StringUtils.isNotBlank(extension) && supportedExtensions.contains(extension));
     }
 
     /**
@@ -388,7 +413,7 @@ public class ImageUtils {
                 String cacheDirectory = Case.getCurrentCaseThrows().getCacheDirectory();
                 return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NON-NLS
             } catch (NoCurrentCaseException e) {
-                LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
+                LOGGER.log(Level.INFO, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
                 return null;
             }
         });

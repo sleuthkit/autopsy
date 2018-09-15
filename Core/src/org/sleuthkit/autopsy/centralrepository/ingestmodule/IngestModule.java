@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
@@ -36,6 +36,8 @@ import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListen
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
+import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -48,8 +50,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
-import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -69,7 +69,7 @@ final class IngestModule implements FileIngestModule {
     private CorrelationCase eamCase;
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
-    private CorrelationAttribute.Type filesType;
+    private CorrelationAttributeInstance.Type filesType;
 
     private final boolean flagTaggedNotableItems;
 
@@ -143,23 +143,29 @@ final class IngestModule implements FileIngestModule {
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
+            } catch (CorrelationAttributeNormalizationException ex){
+                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+                return ProcessResult.ERROR;
             }
         }
 
         // insert this file into the central repository
         try {
-            CorrelationAttribute eamArtifact = new CorrelationAttribute(filesType, md5);
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
+                    md5,
+                    filesType,
                     eamCase,
                     eamDataSource,
                     abstractFile.getParentPath() + abstractFile.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
             );
-            eamArtifact.addInstance(cefi);
-            dbManager.prepareBulkArtifact(eamArtifact);
+            dbManager.addAttributeInstanceBulk(cefi);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+            return ProcessResult.ERROR;
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
             return ProcessResult.ERROR;
         }
 
@@ -181,7 +187,7 @@ final class IngestModule implements FileIngestModule {
             return;
         }
         try {
-            dbManager.bulkInsertArtifacts();
+            dbManager.commitAttributeInstancesBulk();
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
@@ -263,7 +269,7 @@ final class IngestModule implements FileIngestModule {
         }
 
         try {
-            filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS

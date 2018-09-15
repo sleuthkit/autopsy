@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import junit.framework.Test;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -151,7 +151,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             assertEquals(errorMessage, true, vol2Found);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -238,7 +238,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -293,7 +293,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             assertEquals("Encrypted Container file should have one encyption suspected artifact", 1, numberOfEncryptedContainers);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -358,7 +358,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             }
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }    
     

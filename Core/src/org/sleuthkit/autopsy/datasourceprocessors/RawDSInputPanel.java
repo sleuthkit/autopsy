@@ -305,7 +305,7 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
         "RawDSInputPanel.noOpenCase.errMsg=Exception while getting open case."})
     private void warnIfPathIsInvalid(String path) {
         try {
-        if (!PathValidator.isValid(path, Case.getCurrentCaseThrows().getCaseType())) {
+        if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCaseThrows().getCaseType())) {
             errorLabel.setVisible(true);
             errorLabel.setText(Bundle.RawDSInputPanel_error_text());
         }

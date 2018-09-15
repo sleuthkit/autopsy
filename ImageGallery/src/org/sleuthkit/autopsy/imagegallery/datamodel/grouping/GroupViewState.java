@@ -22,9 +22,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- *
+ * Encapsulate information about the state of the group section of the UI.
  */
-public class GroupViewState {
+public final class GroupViewState {
 
     private final DrawableGroup group;
 
@@ -32,8 +32,8 @@ public class GroupViewState {
 
     private final Optional<Long> slideShowfileID;
 
-    public DrawableGroup getGroup() {
-        return group;
+    public Optional<DrawableGroup> getGroup() {
+        return Optional.ofNullable(group);
     }
 
     public GroupViewMode getMode() {
@@ -44,18 +44,18 @@ public class GroupViewState {
         return slideShowfileID;
     }
 
-    private GroupViewState(DrawableGroup g, GroupViewMode mode, Long slideShowfileID) {
-        this.group = g;
+    private GroupViewState(DrawableGroup group, GroupViewMode mode, Long slideShowfileID) {
+        this.group = group;
         this.mode = mode;
         this.slideShowfileID = Optional.ofNullable(slideShowfileID);
     }
 
-    public static GroupViewState tile(DrawableGroup g) {
-        return new GroupViewState(g, GroupViewMode.TILE, null);
+    public static GroupViewState tile(DrawableGroup group) {
+        return new GroupViewState(group, GroupViewMode.TILE, null);
     }
 
-    public static GroupViewState slideShow(DrawableGroup g, Long fileID) {
-        return new GroupViewState(g, GroupViewMode.SLIDE_SHOW, fileID);
+    public static GroupViewState slideShow(DrawableGroup group, Long fileID) {
+        return new GroupViewState(group, GroupViewMode.SLIDE_SHOW, fileID);
     }
 
     @Override
@@ -82,10 +82,7 @@ public class GroupViewState {
         if (this.mode != other.mode) {
             return false;
         }
-        if (!Objects.equals(this.slideShowfileID, other.slideShowfileID)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.slideShowfileID, other.slideShowfileID);
     }
 
 }

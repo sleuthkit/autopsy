@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.Content;
  * Event published when analysis (ingest) of a data source included in an ingest
  * job is started.
  */
-public class DataSourceAnalysisStartedEvent extends DataSourceAnalysisEvent implements Serializable {
+public final class DataSourceAnalysisStartedEvent extends DataSourceAnalysisEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

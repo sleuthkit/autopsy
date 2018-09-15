@@ -18,13 +18,20 @@
  */
 package org.sleuthkit.autopsy.imagegallery.utils;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import javafx.concurrent.Task;
 
 /**
  *
  */
-public class TaskUtils {
+public final class TaskUtils {
+
+    private TaskUtils() {
+    }
 
     public static <T> Task<T> taskFrom(Callable<T> callable) {
         return new Task<T>() {
@@ -35,6 +42,8 @@ public class TaskUtils {
         };
     }
 
-    private TaskUtils() {
+   public  static ListeningExecutorService getExecutorForClass(Class<?> clazz) {
+        return MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
+                new ThreadFactoryBuilder().setNameFormat("Image Gallery " + clazz.getSimpleName() + " BG Thread").build()));
     }
 }

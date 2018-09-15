@@ -329,6 +329,7 @@
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
+                <package>org.sleuthkit.autopsy.ingest.events</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>
@@ -337,6 +338,7 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
+                <package>org.sleuthkit.autopsy.tabulardatareader</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
@@ -354,6 +356,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
@@ -388,6 +394,10 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
@@ -410,10 +420,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.10.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.10.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.17.jar</runtime-relative-path>
@@ -441,7 +447,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.8.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.8.11.jar</binary-origin>
+                <binary-origin>release\modules\ext\sqlite-jdbc-3.8.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
@@ -488,6 +494,14 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xlsx-streamer-1.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xlsx-streamer-1.2.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/pdfbox-2.0.8.jar</binary-origin>
             </class-path-extension>
@@ -498,10 +512,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/xmpcore-5.1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmpcore-5.1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

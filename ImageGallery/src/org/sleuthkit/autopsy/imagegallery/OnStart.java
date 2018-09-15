@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,26 +18,19 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import org.sleuthkit.autopsy.coreutils.Logger;
-
 /**
- *
- * The {@link org.openide.modules.OnStart} annotation tells NetBeans to invoke
- * this class's {@link OnStart#run()} method
+ * The org.openide.modules.OnStart annotation tells NetBeans to invoke this
+ * class's run method.
  */
 @org.openide.modules.OnStart
 public class OnStart implements Runnable {
 
-    static private final Logger LOGGER = Logger.getLogger(OnStart.class.getName());
-
     /**
-     *
-     *
-     * This method is invoked by virtue of the {@link OnStart} annotation on the
-     * {@link ImageGalleryModule} class
+     * This method is invoked by virtue of the OnStart annotation on the this
+     * class
      */
     @Override
     public void run() {
-        ImageGalleryController.getDefault().onStart();
+        ImageGalleryModule.onStart();
     }
 }

@@ -106,7 +106,7 @@ public class DrawableTile extends DrawableTileBase {
 
     @Override
     Task<Image> newReadImageTask(DrawableFile file) {
-        return file.getThumbnailTask();
+        return getController().getThumbsCache().getThumbnailTask(file);
     }
 
     @Override
