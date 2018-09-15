@@ -23,11 +23,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
-import org.python.icu.impl.Assert;
+import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -37,6 +38,7 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -45,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class EmbeddedFileTest extends NbTestCase {
 
     private static final String CASE_NAME = "EmbeddedFileTest";
-    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "EmbeddedIM_img1_v1.vhd");
+    private final Path IMAGE_PATH = Paths.get(this.getDataDir().toString(), "EmbeddedIM_img1_v2.vhd");
     public static final String HASH_VALUE = "098f6bcd4621d373cade4e832627b4f6";
     private static final int DEEP_FOLDER_COUNT = 25;
     private Case openCase;
@@ -83,7 +85,7 @@ public class EmbeddedFileTest extends NbTestCase {
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
     }
 
@@ -92,34 +94,50 @@ public class EmbeddedFileTest extends NbTestCase {
         CaseUtils.closeCurrentCase(testSucceeded);
     }
     
-    public void testEncryption() {
+    public void testEncryptionAndZipBomb() {
         try {
-            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");            
-            String protectedName1 = "password_protected.zip";
-            String protectedName2 = "level1_protected.zip";
-            String protectedName3 =  "42.zip";
-            assertEquals(2207, results.size());
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");
+            final String zipBombSetName = "Possible Zip Bomb";
+            final String protectedName1 = "password_protected.zip";
+            final String protectedName2 = "level1_protected.zip";
+            final String protectedName3 =  "42.zip"; 
+            final String depthZipBomb = "DepthTriggerZipBomb.zip";
+            final String ratioZipBomb = "RatioTriggerZipBomb.zip";
+            int zipBombs = 0;
+            assertEquals("The number of files in the test image has changed", 2221, results.size());
             int passwdProtectedZips = 0;
             for (AbstractFile file : results) {
                 //.zip file has artifact TSK_ENCRYPTION_DETECTED
                 if (file.getName().equalsIgnoreCase(protectedName1) || file.getName().equalsIgnoreCase(protectedName2) || file.getName().equalsIgnoreCase(protectedName3)){
                     ArrayList<BlackboardArtifact> artifacts = file.getAllArtifacts();
-                    assertEquals(1, artifacts.size());
+                    assertEquals("Password protected zip file " + file.getName() + " has incorrect number of artifacts", 1, artifacts.size());
                     for (BlackboardArtifact artifact : artifacts) {
-                        assertEquals(artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID());
+                        assertEquals("Artifact for password protected zip file " + file.getName() + " has incorrect type ID", artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID());
                         passwdProtectedZips++;
                     }
+                } else if (file.getName().equalsIgnoreCase(depthZipBomb) || file.getName().equalsIgnoreCase(ratioZipBomb)){
+                    ArrayList<BlackboardArtifact> artifacts = file.getAllArtifacts();
+                    assertEquals("Zip bomb " + file.getName() + " has incorrect number of artifacts", 1, artifacts.size());
+                    for (BlackboardArtifact artifact : artifacts) {
+                        assertEquals("Artifact for Zip bomb " + file.getName() + " has incorrect type ID", artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID());
+                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                        assertNotNull("No attribute found for artifact on zip bomb " + file.getName(), attribute);
+                        assertEquals("Interesting artifact on file, " + file.getName() + ", does not reflect it being a zip bomb", zipBombSetName, attribute.getDisplayString());
+                        zipBombs++;
+                    }
                 } else {//No other files have artifact defined
-                    assertEquals(0, file.getAllArtifacts().size());
+                    assertEquals("Unexpected file, " + file.getName() + ", has artifacts", 0, file.getAllArtifacts().size());
                 }
                 
                 
             }
             //Make sure 3 password protected zip files have been tested: password_protected.zip, level1_protected.zip and 42.zip that we download for bomb testing.
-            assertEquals(3, passwdProtectedZips);
+            assertEquals("Unexpected number of artifacts reflecting password protected zip files found", 3, passwdProtectedZips);
+            //Make sure 2 zip bomb files have been tested: DepthTriggerZipBomb.zip and RatioTriggerZipBomb.zip.
+            assertEquals("Unexpected number of artifacts reflecting zip bombs found", 2, zipBombs);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -146,7 +164,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertEquals(numOfFilesToTest, numOfFilesTested);
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -169,7 +187,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertTrue(fileReached.get(0).endsWith(dirReached.toString() + "file.txt"));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -195,7 +213,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertTrue(checkFileInEmbeddedFolder(results.get(0)));
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -221,7 +239,7 @@ public class EmbeddedFileTest extends NbTestCase {
             
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -235,7 +253,7 @@ public class EmbeddedFileTest extends NbTestCase {
             assertEquals("file.txt wasn't extracted from the file: zipFileWithTxtExtension.txt", "file.txt", results.get(0).getName());
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex);
+            Assert.fail(ex.getMessage());
         }
         
         testSucceeded = true;
@@ -254,7 +272,7 @@ public class EmbeddedFileTest extends NbTestCase {
                 }
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         } else if (file.isFile() && !file.getName().endsWith("slack")) {
             assertEquals(errMsg, "file.txt", file.getName());
@@ -273,7 +291,7 @@ public class EmbeddedFileTest extends NbTestCase {
                 }
             } catch (TskCoreException ex) {
                 Exceptions.printStackTrace(ex);
-                Assert.fail(ex);
+                Assert.fail(ex.getMessage());
             }
         } else {
             assertTrue(file.getNameExtension().equalsIgnoreCase("txt"));

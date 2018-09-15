@@ -205,6 +205,18 @@ public class ImageUtils {
         }
         AbstractFile file = (AbstractFile) content;
 
+        /**
+         * Before taking on the potentially costly task of calculating the MIME
+         * type that can happen in isMediaThumbnailSupported() below, let's
+         * first see if the file extension is in the set of supported media file
+         * extensions.
+         */
+        List<String> supportedExtensions = new ArrayList<>(SUPPORTED_IMAGE_EXTENSIONS);
+        supportedExtensions.addAll(VideoUtils.getSupportedVideoExtensions());
+        if (isSupportedMediaExtension(file, supportedExtensions)) {
+            return true;
+        }
+
         return VideoUtils.isVideoThumbnailSupported(file)
                || isImageThumbnailSupported(file);
     }
@@ -258,9 +270,7 @@ public class ImageUtils {
             return false;
         }
 
-        String extension = file.getNameExtension();
-
-        if (StringUtils.isNotBlank(extension) && supportedExtension.contains(extension)) {
+        if (isSupportedMediaExtension(file, supportedExtension)) {
             return true;
         } else {
             try {
@@ -274,6 +284,21 @@ public class ImageUtils {
                 return false;
             }
         }
+    }
+
+    /**
+     * Does the given file have an extension in the given list of supported
+     * extensions.
+     *
+     * @param file
+     * @param supportedExtensions
+     *
+     * @return
+     */
+    static boolean isSupportedMediaExtension(final AbstractFile file, final List<String> supportedExtensions) {
+        String extension = file.getNameExtension();
+
+        return (StringUtils.isNotBlank(extension) && supportedExtensions.contains(extension));
     }
 
     /**

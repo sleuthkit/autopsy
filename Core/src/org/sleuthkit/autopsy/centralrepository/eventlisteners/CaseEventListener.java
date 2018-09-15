@@ -36,13 +36,12 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -192,12 +191,12 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             }
 
-            final CorrelationAttribute eamArtifact = EamArtifactUtil.makeCorrelationAttributeFromContent(af);
+            final CorrelationAttributeInstance eamArtifact = EamArtifactUtil.makeInstanceFromContent(af);
 
             if (eamArtifact != null) {
                 // send update to Central Repository db
                 try {
-                    dbManager.setArtifactInstanceKnownStatus(eamArtifact, knownStatus);
+                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
@@ -292,11 +291,11 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
-            for (CorrelationAttribute eamArtifact : convertedArtifacts) {
-                eamArtifact.getInstances().get(0).setComment(comment);
+            List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+            for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
+                eamArtifact.setComment(comment);
                 try {
-                    dbManager.setArtifactInstanceKnownStatus(eamArtifact, knownStatus);
+                    dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
                 }
@@ -365,9 +364,9 @@ final class CaseEventListener implements PropertyChangeListener {
                     if (!hasTagWithConflictingKnownStatus) {
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
-                        for (CorrelationAttribute eamArtifact : convertedArtifacts) {
-                            EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                        List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbTag.getArtifact(), true);
+                        for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
+                            EamDb.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
                     }
                 }
@@ -401,9 +400,9 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the file will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
-                        final CorrelationAttribute eamArtifact = EamArtifactUtil.makeCorrelationAttributeFromContent(contentTag.getContent());
+                        final CorrelationAttributeInstance eamArtifact = EamArtifactUtil.makeInstanceFromContent(contentTag.getContent());
                         if (eamArtifact != null) {
-                            EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
+                            EamDb.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
                     }
                 }

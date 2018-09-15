@@ -80,7 +80,6 @@ class ReportHTML implements TableReportModule {
     private static final int MAX_THUMBS_PER_PAGE = 1000;
     private static final String HTML_SUBDIR = "content";
     private Case currentCase;
-    private SleuthkitCase skCase;
     static Integer THUMBNAIL_COLUMNS = 5;
 
     private Map<String, Integer> dataTypes;
@@ -109,7 +108,6 @@ class ReportHTML implements TableReportModule {
     // Refesh the member variables
     private void refresh() throws NoCurrentCaseException {
         currentCase = Case.getCurrentCaseThrows();
-        skCase = currentCase.getSleuthkitCase();
 
         dataTypes = new TreeMap<>();
 
@@ -274,7 +272,7 @@ class ReportHTML implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
                     break;
                 default:
-                    logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
+                    logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
                     iconFileName = "star.png"; //NON-NLS
                     iconFilePath = subPath + File.separator + iconFileName;
@@ -627,12 +625,19 @@ class ReportHTML implements TableReportModule {
         int positionCounter = 0;
         for (String cell : row) {
             // position-dependent code used to format this report. Not great, but understandable for formatting.
-            if (positionCounter == 1) { // Convert the file name to a hyperlink and left-align it
-                builder.append("\t\t<td class=\"left_align_cell\">").append(localFileLink.toString()).append(cell).append("</a></td>\n"); //NON-NLS
-            } else if (positionCounter == 7) { // Right-align the bytes column.
-                builder.append("\t\t<td class=\"right_align_cell\">").append(cell).append("</td>\n"); //NON-NLS
-            } else { // Regular case, not a file name nor a byte count
-                builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
+            switch (positionCounter) {
+                case 1:
+                    // Convert the file name to a hyperlink and left-align it
+                    builder.append("\t\t<td class=\"left_align_cell\">").append(localFileLink.toString()).append(cell).append("</a></td>\n"); //NON-NLS
+                    break;
+                case 7:
+                    // Right-align the bytes column.
+                    builder.append("\t\t<td class=\"right_align_cell\">").append(cell).append("</td>\n"); //NON-NLS
+                    break;
+                default:
+                    // Regular case, not a file name nor a byte count
+                    builder.append("\t\t<td>").append(cell).append("</td>\n"); //NON-NLS
+                    break;
             }
             ++positionCounter;
         }
@@ -719,7 +724,7 @@ class ReportHTML implements TableReportModule {
                 for (int i = 0; i < tags.size(); i++) {
                     ContentTag tag = tags.get(i);
                     String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
-                    linkToThumbnail.append(tag.getName().getDisplayName() + notableString);
+                    linkToThumbnail.append(tag.getName().getDisplayName()).append(notableString);
                     if (i != tags.size() - 1) {
                         linkToThumbnail.append(", ");
                     }
@@ -751,12 +756,9 @@ class ReportHTML implements TableReportModule {
             return true;
         }
         AbstractFile file = (AbstractFile) c;
-        if (file.isDir()
+        return file.isDir()
                 || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
-                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) {
-            return true;
-        }
-        return false;
+                || file.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS;
     }
 
     /**
@@ -782,8 +784,14 @@ class ReportHTML implements TableReportModule {
             localFileFolder.mkdirs();
         }
 
-        // Construct a file tagName for the local file that incorporates the file id to ensure uniqueness.
-        String fileName = file.getName();
+        /*
+         * Construct a file tagName for the local file that incorporates the
+         * file ID to ensure uniqueness.
+         *
+         * Note: File name is normalized to account for possible attribute name
+         * which will be separated by a ':' character.
+         */
+        String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
         String objectIdSuffix = "_" + file.getId();
         int lastDotIndex = fileName.lastIndexOf(".");
         if (lastDotIndex != -1 && lastDotIndex != 0) {
@@ -1052,9 +1060,9 @@ class ReportHTML implements TableReportModule {
      * Write the summary of the current case for this report.
      */
     private void writeSummary() {
-        Writer out = null;
+        Writer output = null;
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(subPath + "summary.html"), "UTF-8")); //NON-NLS
+            output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(subPath + "summary.html"), "UTF-8")); //NON-NLS
             StringBuilder head = new StringBuilder();
             head.append("<html>\n<head>\n<title>").append( //NON-NLS
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
@@ -1080,7 +1088,7 @@ class ReportHTML implements TableReportModule {
             head.append("li {padding-bottom: 5px;}");
             head.append("</style>\n"); //NON-NLS
             head.append("</head>\n<body>\n"); //NON-NLS
-            out.write(head.toString());
+            output.write(head.toString());
 
             DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
             Date date = new Date();
@@ -1119,7 +1127,7 @@ class ReportHTML implements TableReportModule {
             }
             summary.append("</div>\n"); //NON-NLS
             summary.append("</body></html>"); //NON-NLS
-            out.write(summary.toString());
+            output.write(summary.toString());
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find summary.html file to write to."); //NON-NLS
         } catch (UnsupportedEncodingException ex) {
@@ -1130,9 +1138,9 @@ class ReportHTML implements TableReportModule {
             logger.log(Level.WARNING, "Unable to get current sleuthkit Case for the HTML report.");
         } finally {
             try {
-                if (out != null) {
-                    out.flush();
-                    out.close();
+                if (output != null) {
+                    output.flush();
+                    output.close();
                 }
             } catch (IOException ex) {
             }
@@ -1292,9 +1300,24 @@ class ReportHTML implements TableReportModule {
         return summary;
     }
 
+    /**
+     * Create a thumbnail of a given file.
+     *
+     * @param file The file from which to create the thumbnail.
+     *
+     * @return The path to the thumbnail file, or null if a thumbnail couldn't
+     *         be created.
+     */
     private String prepareThumbnail(AbstractFile file) {
         BufferedImage bufferedThumb = ImageUtils.getThumbnail(file, ImageUtils.ICON_SIZE_MEDIUM);
-        File thumbFile = Paths.get(thumbsPath, file.getName() + ".png").toFile();
+
+        /*
+         * File name is normalized to account for possible attribute name which
+         * will be separated by a ':' character.
+         */
+        String fileName = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(file.getName());
+
+        File thumbFile = Paths.get(thumbsPath, fileName + ".png").toFile();
         if (bufferedThumb == null) {
             return null;
         }

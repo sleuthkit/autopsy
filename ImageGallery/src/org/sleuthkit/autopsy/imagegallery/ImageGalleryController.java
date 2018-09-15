@@ -38,6 +38,7 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
+import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -106,6 +107,7 @@ public final class ImageGalleryController {
     private final HashSetManager hashSetManager;
     private final CategoryManager categoryManager;
     private final DrawableTagsManager tagsManager;
+    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(0);
 
     private ListeningExecutorService dbExecutor;
 

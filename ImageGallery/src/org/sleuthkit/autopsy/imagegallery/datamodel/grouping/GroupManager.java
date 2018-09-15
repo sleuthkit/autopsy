@@ -583,6 +583,7 @@ public class GroupManager {
                         Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
                         final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examiner.getId());
                         DrawableGroup group;
+
                         if (groupMap.containsKey(groupKey)) {
                             group = groupMap.get(groupKey);
                             group.setFiles(fileIDs);
@@ -636,6 +637,8 @@ public class GroupManager {
     /**
      * Task to query database for files in sorted groups and build
      * DrawableGroups for them.
+     *
+     * @param <AttrValType> The type of the values that this task will group by.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @NbBundle.Messages({"# {0} - groupBy attribute Name",

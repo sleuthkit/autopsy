@@ -71,12 +71,13 @@ import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesSearchAction;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -372,7 +373,12 @@ public class Case {
          * old value of the PropertyChangeEvent is the display name of the tag
          * definition that has changed.
          */
-        TAG_DEFINITION_CHANGED;
+        TAG_DEFINITION_CHANGED,
+        /**
+         * An item in the central repository has had its comment modified. The
+         * old value is null, the new value is string for current comment.
+         */
+        CR_COMMENT_CHANGED;
 
     };
 
@@ -1087,7 +1093,7 @@ public class Case {
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
-                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(true);
+                CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
@@ -1100,7 +1106,7 @@ public class Case {
                 /*
                  * Open the top components (windows within the main application
                  * window).
-                 * 
+                 *
                  * Note: If the core windows are not opened here, they will be
                  * opened via the DirectoryTreeTopComponent 'propertyChange()'
                  * method on a DATA_SOURCE_ADDED event.
@@ -1141,7 +1147,7 @@ public class Case {
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
-                CallableSystemAction.get(CommonFilesSearchAction.class).setEnabled(false);
+                CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
@@ -1531,6 +1537,22 @@ public class Case {
     public void notifyTagDefinitionChanged(String changedTagName) {
         //leaving new value of changedTagName as null, because we do not currently support changing the display name of a tag. 
         eventPublisher.publish(new AutopsyEvent(Events.TAG_DEFINITION_CHANGED.toString(), changedTagName, null));
+    }
+
+    /**
+     * Notifies case event subscribers that a central repository comment has been changed.
+     * 
+     * This should not be called from the event dispatch thread (EDT)
+     * 
+     * @param contentId the objectId for the Content which has had its central repo comment changed
+     * @param newComment the new value of the comment
+     */
+    public void notifyCentralRepoCommentChanged(long contentId, String newComment) {
+        try {
+            eventPublisher.publish(new CommentChangedEvent(contentId, newComment));
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to send notifcation regarding comment change due to no current case being open", ex);
+        }
     }
 
     /**
