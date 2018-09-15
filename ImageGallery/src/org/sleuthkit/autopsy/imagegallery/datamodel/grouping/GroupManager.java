@@ -47,7 +47,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -83,6 +82,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Examiner;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -242,10 +242,12 @@ public class GroupManager {
      * @return A ListenableFuture that encapsulates saving the seen state to the
      *         DB.
      */
-    public ListenableFuture<?> setGroupSeen(DrawableGroup group, boolean seen) {
+    public ListenableFuture<?> markGroupSeen(DrawableGroup group, boolean seen) {
         return exec.submit(() -> {
             try {
-                getDrawableDB().setGroupSeen(group.getGroupKey(), seen);
+                Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
+
+                getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
                 group.setSeen(seen);
                 updateUnSeenGroups(group, seen);
             } catch (TskCoreException ex) {
@@ -578,7 +580,10 @@ public class GroupManager {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
                         DrawableGroup group;
-                        final boolean groupSeen = getDrawableDB().isGroupSeen(groupKey);
+
+                        Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
+
+                        final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examiner.getId());
                         if (groupMap.containsKey(groupKey)) {
                             group = groupMap.get(groupKey);
                             group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
@@ -698,8 +703,8 @@ public class GroupManager {
                 DrawableAttribute attributeOfCurrentGroup
                         = viewedKey.map(GroupKey::getAttribute)
                                 .orElse(null);
-                    /* if no group or if groupbies are different or if data
-                     * source != null and does not equal group */
+                /* if no group or if groupbies are different or if data source
+                 * != null and does not equal group */
                 if (viewedGroup.isPresent() == false) {
 
                     //the current group should not be visible so ...

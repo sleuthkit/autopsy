@@ -91,6 +91,7 @@ public final class DrawableDB {
     private static final String HASH_SET_NAME = "hash_set_name"; //NON-NLS
 
     private static final String GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
+    private static final String GROUPS_SEEN_TABLENAME = "image_gallery_groups_seen"; //NON-NLS
 
     private final PreparedStatement insertHashSetStmt;
 
@@ -446,20 +447,38 @@ public final class DrawableDB {
             return false;
         }
 
-        // The ig_groups table is created in the Case Database
+        String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
+
+        // The image_gallery_groups table is created in the Case Database
         try {
-            String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "SERIAL" : "INTEGER";
             String tableSchema
                     = "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
                       + " data_source_obj_id integer DEFAULT 0, "
                       + " value VARCHAR(255) not null, " //NON-NLS
                       + " attribute VARCHAR(255) not null, " //NON-NLS
-                      + " seen integer DEFAULT 0, " //NON-NLS
                       + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
-
             tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
+            return false;
+        }
+
+        // The image_gallery_groups_seen table is created in the Case Database
+        try {
+
+            String tableSchema
+                    = "( id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
+                      + " group_id integer not null, " //NON-NLS
+                      + " examiner_id integer not null, " //NON-NLS
+                      + " seen integer DEFAULT 0, " //NON-NLS
+                      + " UNIQUE(group_id, examiner_id),"
+                      + " FOREIGN KEY(group_id) REFERENCES " + GROUPS_TABLENAME + "(group_id),"
+                      + " FOREIGN KEY(examiner_id) REFERENCES  tsk_examiners(examiner_id)"
+                      + " )"; //NON-NLS
+
+            tskCase.getCaseDbAccessManager().createTable(GROUPS_SEEN_TABLENAME, tableSchema);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "problem creating groups_seen table", ex); //NON-NLS
             return false;
         }
 
@@ -607,7 +626,16 @@ public final class DrawableDB {
         return names;
     }
 
-    public boolean isGroupSeen(GroupKey<?> groupKey) {
+    /**
+     * Returns true if the specified group has been seen by the specified
+     * examiner
+     *
+     * @param groupKey   - key to identify the group
+     * @param examinerId
+     *
+     * @return true if the examine has this group, false otherwise
+     */
+    public boolean isGroupSeenByExaminer(GroupKey<?> groupKey, long examinerId) {
 
         // Callback to process result of seen query
         class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
@@ -632,17 +660,68 @@ public final class DrawableDB {
                 }
             }
         }
+        try {
+
+            // query to find the group id from attribute/value
+            String groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
+                                                + " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName());
+
+            String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_SEEN_TABLENAME + " WHERE examiner_id = %d AND group_id in ( %s )", examinerId, groupIdQuery);
+            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
+
+            tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
+            return queryResultProcessor.getGroupSeen();
+        } catch (TskCoreException ex) {
+            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
+            logger.log(Level.WARNING, msg, ex);
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if the specified group has been any examiner
+     *
+     * @param groupKey
+     *
+     * @return
+     */
+    public boolean isGroupSeen(GroupKey<?> groupKey) {
+
+        // Callback to process result of seen query
+        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
+
+            private boolean seen = false;
+
+            boolean getGroupSeen() {
+                return seen;
+            }
+
+            @Override
+            public void process(ResultSet resultSet) {
+                try {
+                    if (resultSet != null) {
+                        while (resultSet.next()) {
+                            int count = resultSet.getInt("count");
+                            seen = count > 0;
+                            return;
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
+                }
+            }
+        }
 
         try {
-            String groupSeenQueryStmt;
 
-            if (groupKey.getAttribute() == DrawableAttribute.PATH) {
-                groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d",
-                        groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString(), groupKey.getDataSourceObjId());
-            } else {
-                groupSeenQueryStmt = String.format("seen FROM " + GROUPS_TABLENAME + " WHERE value = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = 0",
-                        groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString());
-            }
+            // query to find the group id from attribute/value
+            String groupIdQuery = "";
+
+            groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
+                                         + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d)", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName(), (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
+
+            String groupSeenQueryStmt = String.format("COUNT((*) as count FROM " + GROUPS_SEEN_TABLENAME + " WHERE seen = 1 AND group_id in ( %s )", groupIdQuery);
 
             GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
@@ -658,23 +737,29 @@ public final class DrawableDB {
 
     /**
      * Record in the DB that the group with the given key has the given seen
-     * state.
+     * state for the given examiner id.
      *
      * @param groupKey
      * @param seen
+     * @param examinerID
      *
      * @throws TskCoreException
      */
-    public void setGroupSeen(GroupKey<?> groupKey, boolean seen) throws TskCoreException {
-        String updateSQL;
-        if (groupKey.getAttribute() == DrawableAttribute.PATH) {
-            updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = %d",
-                    seen ? 1 : 0, groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString(), groupKey.getDataSourceObjId());
-        } else {
-            updateSQL = String.format("SET seen = %d WHERE VALUE = \'%s\' AND attribute = \'%s\' AND data_source_obj_id = 0",
-                    seen ? 1 : 0, groupKey.getValueDisplayName(), groupKey.getAttribute().attrName.toString());
+    public void markGroupSeen(GroupKey<?> groupKey, boolean seen, long examinerID) throws TskCoreException {
+        // query to find the group id from attribute/value
+        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
+                                          + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
+                groupKey.getAttribute().attrName.toString(),
+                groupKey.getValueDisplayName(),
+                groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
+
+        String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
+
+        if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+            insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", seen ? 1 : 0);
         }
-        tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
+
+        tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
     }
 
     public boolean removeFile(long id) {
@@ -814,6 +899,8 @@ public final class DrawableDB {
      * DrawableDbBuildStatusEnum
      *
      * @return map of known data source object ids, and their db status
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Map<Long, DrawableDbBuildStatusEnum> getDataSourceDbBuildStatus() throws TskCoreException {
         Statement statement = null;
@@ -855,6 +942,7 @@ public final class DrawableDB {
      * If the object id exists in the table already, it updates the status
      *
      * @param dsObjectId data source object id to insert
+     * @param status     The db build statsus for datasource.
      */
     public void insertOrUpdateDataSource(long dsObjectId, DrawableDbBuildStatusEnum status) {
         dbWriteLock();
@@ -969,33 +1057,18 @@ public final class DrawableDB {
      * @throws TskCoreException
      */
     public Set<Long> findAllFileIdsWhere(String sqlWhereClause) throws TskCoreException {
-        Statement statement = null;
-        ResultSet rs = null;
+
         Set<Long> ret = new HashSet<>();
         dbReadLock();
-        try {
-            statement = con.createStatement();
-            rs = statement.executeQuery("SELECT obj_id FROM drawable_files WHERE " + sqlWhereClause); //NON-NLS
+        try (Statement statement = con.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT obj_id FROM drawable_files WHERE " + sqlWhereClause);) {
             while (rs.next()) {
                 ret.add(rs.getLong(1));
             }
         } catch (SQLException e) {
             throw new TskCoreException("SQLException thrown when calling 'DrawableDB.findAllFileIdsWhere(): " + sqlWhereClause, e);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error closing result set after executing  findAllFileIdsWhere", ex); //NON-NLS
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error closing statement after executing  findAllFileIdsWhere", ex); //NON-NLS
-                }
-            }
+
             dbReadUnlock();
         }
         return ret;
@@ -1013,30 +1086,13 @@ public final class DrawableDB {
      * @throws TskCoreException
      */
     public long countFilesWhere(String sqlWhereClause) throws TskCoreException {
-        Statement statement = null;
-        ResultSet rs = null;
         dbReadLock();
-        try {
-            statement = con.createStatement();
-            rs = statement.executeQuery("SELECT COUNT(*) AS COUNT FROM drawable_files WHERE " + sqlWhereClause); //NON-NLS
+        try (Statement statement = con.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT COUNT(*) AS COUNT FROM drawable_files WHERE " + sqlWhereClause);) {
             return rs.getLong("COUNT");
         } catch (SQLException e) {
             throw new TskCoreException("SQLException thrown when calling 'DrawableDB.countFilesWhere(): " + sqlWhereClause, e);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error closing result set after executing countFilesWhere", ex); //NON-NLS
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Error closing statement after executing countFilesWhere", ex); //NON-NLS
-                }
-            }
             dbReadUnlock();
         }
     }
@@ -1162,17 +1218,15 @@ public final class DrawableDB {
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
     private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
-        String insertSQL;
         try {
-            insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (\'%d\', \'%s\', \'%s\')",
+            String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
                     ds_obj_id, value, groupBy.attrName.toString());
 
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-                insertSQL += String.format(" ON CONFLICT (data_source_obj_id, value, attribute) DO UPDATE SET value = \'%s\', attribute=\'%s\'",
-                        value, groupBy.attrName.toString());
+                insertSQL += "ON CONFLICT DO NOTHING";
             }
 
-            tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+            tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
@@ -1241,10 +1295,11 @@ public final class DrawableDB {
     private PreparedStatement getGroupStatment(GroupKey<?> groupKey) {
         DrawableAttribute<?> groupBy = groupKey.getAttribute();
         if ((groupBy == DrawableAttribute.PATH) && groupKey.getDataSource().isPresent()) {
+
             return this.groupStatementFilterByDataSrcMap.get(groupBy);
         }
-        return groupStatementMap.get(groupBy);
 
+        return groupStatementMap.get(groupBy);
     }
 
     public long countAllFiles() throws TskCoreException {
@@ -1296,10 +1351,8 @@ public final class DrawableDB {
 
     public class MultipleTransactionException extends IllegalStateException {
 
-        private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO = "cannot have more than one open transaction"; //NON-NLS
-
         public MultipleTransactionException() {
-            super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO);
+            super("cannot have more than one open transaction");//NON-NLS
         }
     }
 
@@ -1338,9 +1391,8 @@ public final class DrawableDB {
     private void initializeImageList() {
         synchronized (fileIDsInDB) {
             dbReadLock();
-            try {
-                Statement stmt = con.createStatement();
-                ResultSet analyzedQuery = stmt.executeQuery("select obj_id from drawable_files"); //NON-NLS
+            try (Statement stmt = con.createStatement();
+                    ResultSet analyzedQuery = stmt.executeQuery("select obj_id from drawable_files");) {
                 while (analyzedQuery.next()) {
                     addImageFileToList(analyzedQuery.getLong(OBJ_ID));
                 }
