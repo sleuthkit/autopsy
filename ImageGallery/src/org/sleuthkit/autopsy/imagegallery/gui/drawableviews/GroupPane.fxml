@@ -64,7 +64,7 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </BorderPane.margin>
                      <children>
-                              <Button fx:id="nextButton" contentDisplay="RIGHT" mnemonicParsing="false" text="Next Unseen Group">
+                              <Button fx:id="nextButton" contentDisplay="RIGHT" minWidth="175.0" mnemonicParsing="false" text="All Groups Gave Been Seen">
                                   <graphic>
                                       <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                           <image>
