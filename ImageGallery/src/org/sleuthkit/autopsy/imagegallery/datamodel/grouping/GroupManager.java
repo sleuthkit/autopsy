@@ -42,10 +42,12 @@ import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -126,6 +128,7 @@ public class GroupManager {
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(DrawableAttribute.PATH);
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
+    private final ReadOnlyBooleanWrapper collaborativeModeProp = new ReadOnlyBooleanWrapper(false);
 
     private final GroupingService regrouper;
 
@@ -249,15 +252,15 @@ public class GroupManager {
                 Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
                 getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
                 group.setSeen(seen);
-                updateUnSeenGroups(group, seen);
+                updateUnSeenGroups(group);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
             }
         });
     }
 
-    synchronized private void updateUnSeenGroups(DrawableGroup group, boolean seen) {
-        if (seen) {
+    synchronized private void updateUnSeenGroups(DrawableGroup group) {
+        if (group.isSeen()) {
             unSeenGroups.removeAll(group);
         } else if (unSeenGroups.contains(group) == false) {
             unSeenGroups.add(group);
@@ -580,8 +583,8 @@ public class GroupManager {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
 
-                        Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
-                        final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examiner.getId());
+                        long examinerID = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
+                        final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
                         DrawableGroup group;
 
                         if (groupMap.containsKey(groupKey)) {
@@ -598,10 +601,9 @@ public class GroupManager {
                             analyzedGroups.add(group);
                             sortAnalyzedGroups();
                         }
-                        updateUnSeenGroups(group, groupSeen);
+                        updateUnSeenGroups(group);
 
                         return group;
-
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
@@ -632,6 +634,29 @@ public class GroupManager {
         } catch (Exception ex) {
             throw new TskCoreException("Failed to get file ids with mime type " + mimeType, ex);
         }
+    }
+
+    synchronized public void setCollaborativeMode(Boolean newValue) {
+        collaborativeModeProp.set(newValue);
+        analyzedGroups.forEach(group -> {
+            try {
+                boolean groupSeenByExaminer = getDrawableDB().isGroupSeenByExaminer(
+                        group.getGroupKey(),
+                        newValue ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId()
+                );
+                group.setSeen(groupSeenByExaminer);
+                updateUnSeenGroups(group);
+                if (group.isSeen()) {
+                    unSeenGroups.removeAll(group);
+                } else if (unSeenGroups.contains(group) == false) {
+                    unSeenGroups.add(group);
+                }
+
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking seen state of group.", ex);
+            }
+        });
+        sortUnseenGroups();
     }
 
     /**

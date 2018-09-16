@@ -634,8 +634,8 @@ public final class DrawableDB {
 
     static private String getGroupIdQuery(GroupKey<?> groupKey) {
         // query to find the group id from attribute/value
-        return String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
-                             + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d)",
+        return String.format(" SELECT group_id FROM " + GROUPS_TABLENAME
+                             + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d",
                 groupKey.getAttribute().attrName.toString(),
                 groupKey.getValueDisplayName(),
                 (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
@@ -685,7 +685,8 @@ public final class DrawableDB {
 
         try {
             String groupSeenQueryStmt = "COUNT(*) as count FROM " + GROUPS_SEEN_TABLENAME
-                                        + " WHERE group_id in ( " + getGroupIdQuery(groupKey) + ")"
+                                        + " WHERE seen = 1 "
+                                        + " AND group_id in ( " + getGroupIdQuery(groupKey) + ")"
                                         + (examinerId > 0 ? " AND examiner_id = " + examinerId : "");// query to find the group id from attribute/value 
 
             tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);

@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.IntegerBinding;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyLongWrapper;
@@ -165,8 +166,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return seen.get();
     }
 
-    public ReadOnlyBooleanWrapper seenProperty() {
-        return seen;
+    public ReadOnlyBooleanProperty seenProperty() {
+        return seen.getReadOnlyProperty();
     }
 
     @Subscribe

@@ -57,7 +57,9 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
+import javafx.scene.Cursor;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -85,6 +87,7 @@ import static javafx.scene.input.KeyCode.RIGHT;
 import static javafx.scene.input.KeyCode.UP;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.BorderStroke;
@@ -95,6 +98,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import javax.swing.SwingUtilities;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
@@ -135,9 +139,8 @@ import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A GroupPane displays the contents of a {@link DrawableGroup}. It supports
- * both a {@link  GridView} based view and a {@link  SlideShowView} view by
- * swapping out its internal components.
+ * A GroupPane displays the contents of a DrawableGroup. It supports both
+ * GridView and SlideShowView modes by swapping out its internal components.
  *
  *
  * TODO: Extract the The GridView instance to a separate class analogous to the
@@ -150,26 +153,20 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class GroupPane extends BorderPane {
 
     private static final Logger logger = Logger.getLogger(GroupPane.class.getName());
-    private final ListeningExecutorService exec = TaskUtils.getExecutorForClass(GroupPane.class);
 
     private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
     private static final CornerRadii CORNER_RADII_2 = new CornerRadii(2);
 
     private static final DropShadow DROP_SHADOW = new DropShadow(10, Color.BLUE);
 
-    private static final Timeline flashAnimation = new Timeline(new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 1, Interpolator.LINEAR)),
+    private static final Timeline flashAnimation = new Timeline(
+            new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 1, Interpolator.LINEAR)),
             new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 15, Interpolator.LINEAR))
     );
-
-    private final FileIDSelectionModel selectionModel;
 
     private static final List<KeyCode> categoryKeyCodes
             = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
                     KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
-
-    private final Back backAction;
-
-    private final Forward forwardAction;
 
     @FXML
     private Button undoButton;
@@ -178,13 +175,10 @@ public class GroupPane extends BorderPane {
 
     @FXML
     private SplitMenuButton catSelectedSplitMenu;
-
     @FXML
     private SplitMenuButton tagSelectedSplitMenu;
-
     @FXML
     private ToolBar headerToolBar;
-
     @FXML
     private ToggleButton cat0Toggle;
     @FXML
@@ -201,26 +195,25 @@ public class GroupPane extends BorderPane {
     @FXML
     private SegmentedButton segButton;
 
-    private SlideShowView slideShowPane;
-
     @FXML
     private ToggleButton slideShowToggle;
-
-    @FXML
-    private GridView<Long> gridView;
-
     @FXML
     private ToggleButton tileToggle;
 
+    private SlideShowView slideShowPane;
+
+    @FXML
+    private GridView<Long> gridView;
     @FXML
     private Button nextButton;
-
+    @FXML
+    private AnchorPane nextButtonPane;
+    @FXML
+    private CheckBox seenByOtherExaminersCheckBox;
     @FXML
     private Button backButton;
-
     @FXML
     private Button forwardButton;
-
     @FXML
     private Label groupLabel;
     @FXML
@@ -237,30 +230,27 @@ public class GroupPane extends BorderPane {
     @FXML
     private HBox catSplitMenuContainer;
 
-    private final KeyboardHandler tileKeyboardNavigationHandler = new KeyboardHandler();
-
-    private final NextUnseenGroup nextGroupAction;
+    private final ListeningExecutorService exec = TaskUtils.getExecutorForClass(GroupPane.class);
 
     private final ImageGalleryController controller;
 
-    private ContextMenu contextMenu;
-
+    private final FileIDSelectionModel selectionModel;
     private Integer selectionAnchorIndex;
+
     private final UndoAction undoAction;
     private final RedoAction redoAction;
+    private final Back backAction;
+    private final Forward forwardAction;
+    private final NextUnseenGroup nextGroupAction;
 
-    GroupViewMode getGroupViewMode() {
-        return groupViewMode.get();
-    }
+    private final KeyboardHandler tileKeyboardNavigationHandler = new KeyboardHandler();
 
-    /**
-     * the current GroupViewMode of this GroupPane
-     */
+    private ContextMenu contextMenu;
+
+    /** the current GroupViewMode of this GroupPane */
     private final SimpleObjectProperty<GroupViewMode> groupViewMode = new SimpleObjectProperty<>(GroupViewMode.TILE);
 
-    /**
-     * the grouping this pane is currently the view for
-     */
+    /** the grouping this pane is currently the view for */
     private final ReadOnlyObjectWrapper<DrawableGroup> grouping = new ReadOnlyObjectWrapper<>();
 
     /**
@@ -292,6 +282,10 @@ public class GroupPane extends BorderPane {
         redoAction = new RedoAction(controller);
 
         FXMLConstructor.construct(this, "GroupPane.fxml"); //NON-NLS
+    }
+
+    GroupViewMode getGroupViewMode() {
+        return groupViewMode.get();
     }
 
     @ThreadConfined(type = ThreadType.JFX)
@@ -340,7 +334,9 @@ public class GroupPane extends BorderPane {
     }
 
     /**
-     * create the string to display in the group header
+     * Create the string to display in the group header.
+     *
+     * @return The string to display in the group header.
      */
     @NbBundle.Messages({"# {0} - default group name",
         "# {1} - hashset hits count",
@@ -391,19 +387,20 @@ public class GroupPane extends BorderPane {
         "GroupPane.catContainerLabel.displayText=Categorize Selected File:",
         "GroupPane.catHeadingLabel.displayText=Category:"})
     void initialize() {
-        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
-        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'SlideShowView.fxml'.";
+        assert cat0Toggle != null : "fx:id=\"cat0Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert cat1Toggle != null : "fx:id=\"cat1Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert cat2Toggle != null : "fx:id=\"cat2Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert cat3Toggle != null : "fx:id=\"cat3Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert cat4Toggle != null : "fx:id=\"cat4Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert cat5Toggle != null : "fx:id=\"cat5Toggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
         assert gridView != null : "fx:id=\"tilePane\" was not injected: check your FXML file 'GroupPane.fxml'.";
-        assert catSelectedSplitMenu != null : "fx:id=\"grpCatSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-        assert tagSelectedSplitMenu != null : "fx:id=\"grpTagSplitMenu\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-        assert headerToolBar != null : "fx:id=\"headerToolBar\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-        assert segButton != null : "fx:id=\"previewList\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-        assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupHeader.fxml'.";
-        assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupHeader.fxml'.";
+        assert catSelectedSplitMenu != null : "fx:id=\"grpCatSplitMenu\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert tagSelectedSplitMenu != null : "fx:id=\"grpTagSplitMenu\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert headerToolBar != null : "fx:id=\"headerToolBar\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert segButton != null : "fx:id=\"previewList\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert slideShowToggle != null : "fx:id=\"segButton\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert tileToggle != null : "fx:id=\"tileToggle\" was not injected: check your FXML file 'GroupPane.fxml'.";
+        assert seenByOtherExaminersCheckBox != null : "fx:id=\"seenByOtherExaminersCheckBox\" was not injected: check your FXML file 'GroupPane.fxml'.";
 
         for (DhsImageCategory cat : DhsImageCategory.values()) {
             ToggleButton toggleForCategory = getToggleForCategory(cat);
@@ -530,6 +527,16 @@ public class GroupPane extends BorderPane {
             }
         });
 
+        seenByOtherExaminersCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            nextButtonPane.setDisable(true);
+            nextButtonPane.setCursor(Cursor.WAIT);
+            exec.submit(() -> controller.getGroupManager().setCollaborativeMode(newValue))
+                    .addListener(() -> {
+                        nextButtonPane.setDisable(false);
+                        nextButtonPane.setCursor(Cursor.DEFAULT);
+                    }, Platform::runLater);
+        });
+
         //listen to tile selection and make sure it is visible in scroll area
         selectionModel.lastSelectedProperty().addListener((observable, oldFileID, newFileId) -> {
             if (groupViewMode.get() == GroupViewMode.SLIDE_SHOW
@@ -607,7 +614,7 @@ public class GroupPane extends BorderPane {
      * assigns a grouping for this pane to represent and initializes grouping
      * specific properties and listeners
      *
-     * @param grouping the new grouping assigned to this group
+     * @param newViewState
      */
     void setViewState(GroupViewState newViewState) {
 
@@ -894,7 +901,7 @@ public class GroupPane extends BorderPane {
                     if (t.getClickCount() == 1) {
                         selectAllFiles();
                     }
-                    if (selectionModel.getSelected().isEmpty() == false) {
+                    if (isNotEmpty(selectionModel.getSelected())) {
                         if (contextMenu == null) {
                             contextMenu = buildContextMenu();
                         }
