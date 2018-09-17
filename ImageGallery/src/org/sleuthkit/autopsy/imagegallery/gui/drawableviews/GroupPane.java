@@ -164,9 +164,9 @@ public class GroupPane extends BorderPane {
             new KeyFrame(Duration.millis(400), new KeyValue(DROP_SHADOW.radiusProperty(), 15, Interpolator.LINEAR))
     );
 
-    private static final List<KeyCode> categoryKeyCodes
-            = Arrays.asList(KeyCode.NUMPAD0, KeyCode.NUMPAD1, KeyCode.NUMPAD2, KeyCode.NUMPAD3, KeyCode.NUMPAD4, KeyCode.NUMPAD5,
-                    KeyCode.DIGIT0, KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5);
+    private static final List<KeyCode> categoryKeyCodes = Arrays.asList(
+            NUMPAD0, NUMPAD1, NUMPAD2, NUMPAD3, NUMPAD4, NUMPAD5,
+            DIGIT0, DIGIT1, DIGIT2, DIGIT3, DIGIT4, DIGIT5);
 
     @FXML
     private Button undoButton;

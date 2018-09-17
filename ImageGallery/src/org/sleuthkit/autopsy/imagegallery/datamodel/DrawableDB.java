@@ -44,7 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -52,14 +51,12 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
-import static org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute.PATH;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupKey;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
@@ -1141,7 +1138,7 @@ public final class DrawableDB {
                                 (A) results.getObject(groupBy.attrName.toString()));
                     }
                 } catch (SQLException ex) {
-                    if (ex.getCause() instanceof java.lang.InterruptedException) {
+                    if (!(ex.getCause() instanceof java.lang.InterruptedException)) {
 
                         /* It seems like this originaly comes out of c3p0 when
                          * its thread is intereupted (cancelled because of
@@ -1151,7 +1148,6 @@ public final class DrawableDB {
                          * see
                          * https://sourceforge.net/p/c3p0/mailman/c3p0-users/thread/EBB32BB8-6487-43AF-B291-9464C9051869@mchange.com/
                          */
-                    } else {
                         throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS
                     }
                 } catch (TskDataException ex) {

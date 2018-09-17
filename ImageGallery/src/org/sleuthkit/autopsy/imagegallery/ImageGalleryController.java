@@ -107,17 +107,16 @@ public final class ImageGalleryController {
     private final HashSetManager hashSetManager;
     private final CategoryManager categoryManager;
     private final DrawableTagsManager tagsManager;
-    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(0);
 
     private ListeningExecutorService dbExecutor;
 
     private final Case autopsyCase;
+    private final SleuthkitCase sleuthKitCase;
+    private final DrawableDB drawableDB;
 
     public Case getAutopsyCase() {
         return autopsyCase;
     }
-    private final SleuthkitCase sleuthKitCase;
-    private final DrawableDB drawableDB;
 
     public ReadOnlyBooleanProperty metaDataCollapsedProperty() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -502,7 +501,7 @@ public final class ImageGalleryController {
             return file;
         }
 
-        public FileTask(AbstractFile f, DrawableDB taskDB) {
+        FileTask(AbstractFile f, DrawableDB taskDB) {
             super();
             this.file = f;
             this.taskDB = taskDB;
@@ -562,13 +561,13 @@ public final class ImageGalleryController {
         }
     }
 
-    @NbBundle.Messages({"BulkTask.committingDb.status=committing image/video database",
-        "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
-        "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
     /**
      * Base abstract class for various methods of copying image files data, for
      * a given data source, into the Image gallery DB.
      */
+    @NbBundle.Messages({"BulkTask.committingDb.status=committing image/video database",
+        "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
+        "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
     abstract static class BulkTransferTask extends BackgroundTask {
 
         static private final String FILE_EXTENSION_CLAUSE
@@ -581,15 +580,15 @@ public final class ImageGalleryController {
                   + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
                   + "') ";
 
-        final String DRAWABLE_QUERY;
-        final String DATASOURCE_CLAUSE;
+        private final String DRAWABLE_QUERY;
+        private final String DATASOURCE_CLAUSE;
 
-        final ImageGalleryController controller;
-        final DrawableDB taskDB;
-        final SleuthkitCase tskCase;
-        final long dataSourceObjId;
+        protected final ImageGalleryController controller;
+        protected final DrawableDB taskDB;
+        protected final SleuthkitCase tskCase;
+        protected final long dataSourceObjId;
 
-        ProgressHandle progressHandle;
+        private ProgressHandle progressHandle;
         private boolean taskCompletionStatus;
 
         BulkTransferTask(long dataSourceObjId, ImageGalleryController controller) {
@@ -612,10 +611,13 @@ public final class ImageGalleryController {
         }
 
         /**
+         * Do any cleanup for this task.
          *
          * @param success true if the transfer was successful
          */
         abstract void cleanup(boolean success);
+
+        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
 
         /**
          * Gets a list of files to process.
@@ -627,8 +629,6 @@ public final class ImageGalleryController {
         List<AbstractFile> getFiles() throws TskCoreException {
             return tskCase.findAllFilesWhere(DRAWABLE_QUERY);
         }
-
-        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
 
         @Override
         public void run() {
@@ -775,16 +775,14 @@ public final class ImageGalleryController {
      * Copy files from a newly added data source into the DB. Get all "drawable"
      * files, based on extension and mime-type. After ingest we use file type id
      * module and if necessary jpeg/png signature matching to add/remove files
-     *
-     * TODO: create methods to simplify progress value/text updates to both
-     * netbeans and ImageGallery progress/status
      */
     @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=committing image/video database"})
     static class PrePopulateDataSourceFiles extends BulkTransferTask {
 
         /**
-         *
-         * @param dataSourceId Data source object ID
+         * @param dataSourceObjId The object ID of the DataSource that is being
+         *                        pre-populated into the DrawableDB.
+         * @param controller      The controller for this task.
          */
         PrePopulateDataSourceFiles(long dataSourceObjId, ImageGalleryController controller) {
             super(dataSourceObjId, controller);
@@ -805,5 +803,4 @@ public final class ImageGalleryController {
             return ProgressHandle.createHandle(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status(), this);
         }
     }
-
 }
