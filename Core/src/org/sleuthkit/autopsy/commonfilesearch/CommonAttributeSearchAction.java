@@ -24,8 +24,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -35,39 +33,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final public class CommonAttributeSearchAction extends CallableSystemAction {
 
     private static final Logger LOGGER = Logger.getLogger(CommonAttributeSearchAction.class.getName());
-    
+
     private static CommonAttributeSearchAction instance = null;
     private static final long serialVersionUID = 1L;
-    
-    CommonAttributeSearchAction() {
-        super();
-        this.setEnabled(false);
-    }
 
-    @Override
-    public boolean isEnabled(){
-        boolean shouldBeEnabled = false;
-        try {
-            //dont refactor any of this to pull out common expressions - order of evaluation of each expression is significant
-            shouldBeEnabled = 
-                    (Case.isCaseOpen() && 
-                    Case.getCurrentCase().getDataSources().size() > 1) 
-                    || 
-                    (EamDb.isEnabled() && 
-                    EamDb.getInstance() != null && 
-                    EamDb.getInstance().getCases().size() > 1 && 
-                    Case.isCaseOpen() &&
-                    Case.getCurrentCase() != null && 
-                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null);
-                    
-        } catch(TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting CR cases for action enabled check", ex);
-        }
-        return super.isEnabled() && shouldBeEnabled;
-    }
-
+    /**
+     * Get the default CommonAttributeSearchAction.
+     *
+     * @return the default instance of this action
+     */
     public static synchronized CommonAttributeSearchAction getDefault() {
         if (instance == null) {
             instance = new CommonAttributeSearchAction();
@@ -75,18 +49,53 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
         return instance;
     }
 
+    /**
+     * Create a CommonAttributeSearchAction for opening the common attribute
+     * search dialog
+     */
+    private CommonAttributeSearchAction() {
+        super();
+        this.setEnabled(false);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        boolean shouldBeEnabled = false;
+        try {
+            //dont refactor any of this to pull out common expressions - order of evaluation of each expression is significant
+            shouldBeEnabled
+                    = (Case.isCaseOpen()
+                    && Case.getCurrentCase().getDataSources().size() > 1)
+                    || CommonAttributePanel.isEamDbAvailableForIntercaseSearch();
+
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
+        }
+        return super.isEnabled() && shouldBeEnabled;
+    }
+
     @Override
     public void actionPerformed(ActionEvent event) {
-        new CommonAttributePanel().setVisible(true);
+        createAndShowPanel();
     }
 
     @Override
     public void performAction() {
-        new CommonAttributePanel().setVisible(true);
+        createAndShowPanel();
+    }
+
+    /**
+     * Create the commonAttributePanel and diplay it.
+     */
+    private void createAndShowPanel() {
+        CommonAttributePanel commonAttributePanel = new CommonAttributePanel();
+        //In order to update errors the CommonAttributePanel needs to observe its sub panels
+        commonAttributePanel.observeSubPanels();
+        commonAttributePanel.setVisible(true);
     }
 
     @NbBundle.Messages({
-        "CommonAttributeSearchAction.getName.text=Common Attribute Search"})
+        "CommonAttributeSearchAction.getName.text=Common Property Search"})
     @Override
     public String getName() {
         return Bundle.CommonAttributeSearchAction_getName_text();
