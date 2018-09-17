@@ -65,15 +65,6 @@ public class CategoryManager {
      */
     private final DrawableDB drawableDb;
 
-    public CategoryManager(ImageGalleryController controller) {
-        this.controller = controller;
-        this.drawableDb = controller.getDatabase();
-    }
-
-    private ImageGalleryController getController() {
-        return controller;
-    }
-
     /**
      * Used to distribute CategoryChangeEvents
      */
@@ -101,6 +92,15 @@ public class CategoryManager {
                     return getController().getTagsManager().getTagName(cat);
                 }
             });
+
+    public CategoryManager(ImageGalleryController controller) {
+        this.controller = controller;
+        this.drawableDb = controller.getDatabase();
+    }
+
+    private ImageGalleryController getController() {
+        return controller;
+    }
 
     synchronized public void invalidateCaches() {
         categoryCounts.invalidateAll();

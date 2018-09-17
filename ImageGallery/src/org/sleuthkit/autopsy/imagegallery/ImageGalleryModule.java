@@ -27,7 +27,6 @@ import javafx.application.Platform;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;

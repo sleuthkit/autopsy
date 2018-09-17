@@ -107,17 +107,16 @@ public final class ImageGalleryController {
     private final HashSetManager hashSetManager;
     private final CategoryManager categoryManager;
     private final DrawableTagsManager tagsManager;
-    private final ReadOnlyLongWrapper filterByDataSourceId = new ReadOnlyLongWrapper(0);
 
     private ListeningExecutorService dbExecutor;
 
     private final Case autopsyCase;
+    private final SleuthkitCase sleuthKitCase;
+    private final DrawableDB drawableDB;
 
     public Case getAutopsyCase() {
         return autopsyCase;
     }
-    private final SleuthkitCase sleuthKitCase;
-    private final DrawableDB drawableDB;
 
     public ReadOnlyBooleanProperty metaDataCollapsedProperty() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -423,6 +422,7 @@ public final class ImageGalleryController {
 
     public ThumbnailCache getThumbsCache() {
         return thumbnailCache;
+
     }
 
     /**
