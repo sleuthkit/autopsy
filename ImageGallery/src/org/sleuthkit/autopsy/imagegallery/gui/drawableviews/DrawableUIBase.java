@@ -40,7 +40,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.actions.OpenExternalViewerAction;
@@ -54,9 +53,9 @@ import org.sleuthkit.datamodel.TskCoreException;
     "DrawableUIBase.errorLabel.OOMText=Insufficent memory"})
 abstract public class DrawableUIBase extends AnchorPane implements DrawableView {
 
+    /** The use of SingleThreadExecutor means we can only load a single image at
+     * a time */
     static final Executor exec = Executors.newSingleThreadExecutor();
-
-    private static final Logger logger = Logger.getLogger(DrawableUIBase.class.getName());
 
     @FXML
     BorderPane imageBorder;
@@ -132,13 +131,13 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
         Platform.runLater(() -> imageBorder.setCenter(progressNode));
 
         //called on fx thread
-        myTask.setOnSucceeded(succeeded -> {
+        myTask.setOnSucceeded(succeeded -> {            //on fx thread
             showImage(file, myTask);
             synchronized (DrawableUIBase.this) {
                 imageTask = null;
             }
         });
-        myTask.setOnFailed(failed -> {
+        myTask.setOnFailed(failed -> {            //on fx thread
             Throwable exception = myTask.getException();
             if (exception instanceof OutOfMemoryError
                 && exception.getMessage().contains("Java heap space")) { //NON-NLS
@@ -150,7 +149,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
                 imageTask = null;
             }
         });
-        myTask.setOnCancelled(cancelled -> {
+        myTask.setOnCancelled(cancelled -> {            //on fx thread
             synchronized (DrawableUIBase.this) {
                 imageTask = null;
             }
@@ -174,9 +173,12 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
     }
 
     /**
+     * Get a new progress indicator to use as a place holder for the image in
+     * this view.
      *
-     * @param file      the value of file
-     * @param imageTask the value of imageTask
+     * @param imageTask The imageTask to get a progress indicator for.
+     *
+     * @return The new Node to use as a progress indicator.
      */
     Node newProgressIndicator(final Task<?> imageTask) {
         ProgressIndicator loadingProgressIndicator = new ProgressIndicator(-1);

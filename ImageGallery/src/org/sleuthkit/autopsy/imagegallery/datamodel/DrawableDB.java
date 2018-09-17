@@ -39,7 +39,9 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -457,6 +459,7 @@ public final class DrawableDB {
                       + " value VARCHAR(255) not null, " //NON-NLS
                       + " attribute VARCHAR(255) not null, " //NON-NLS
                       + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
+
             tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
@@ -478,7 +481,7 @@ public final class DrawableDB {
 
             tskCase.getCaseDbAccessManager().createTable(GROUPS_SEEN_TABLENAME, tableSchema);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "problem creating groups_seen table", ex); //NON-NLS
+            logger.log(Level.SEVERE, "problem creating image_gallery_groups_seen table", ex); //NON-NLS
             return false;
         }
 
@@ -626,6 +629,26 @@ public final class DrawableDB {
         return names;
     }
 
+    static private String getGroupIdQuery(GroupKey<?> groupKey) {
+        // query to find the group id from attribute/value
+        return String.format(" SELECT group_id FROM " + GROUPS_TABLENAME
+                             + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d",
+                groupKey.getAttribute().attrName.toString(),
+                groupKey.getValueDisplayName(),
+                (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
+    }
+
+    /**
+     * Returns true if the specified group has been any examiner
+     *
+     * @param groupKey
+     *
+     * @return
+     */
+    public boolean isGroupSeen(GroupKey<?> groupKey) {
+        return isGroupSeenByExaminer(groupKey, -1);
+    }
+
     /**
      * Returns true if the specified group has been seen by the specified
      * examiner
@@ -638,96 +661,34 @@ public final class DrawableDB {
     public boolean isGroupSeenByExaminer(GroupKey<?> groupKey, long examinerId) {
 
         // Callback to process result of seen query
-        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
-
-            private boolean seen = false;
-
-            boolean getGroupSeen() {
-                return seen;
-            }
+        class GroupSeenQueryResultProcessor extends CompletableFuture<Boolean> implements CaseDbAccessQueryCallback {
 
             @Override
             public void process(ResultSet resultSet) {
                 try {
                     if (resultSet != null) {
                         while (resultSet.next()) {
-                            seen = resultSet.getBoolean("seen"); //NON-NLS;
+                            complete(resultSet.getInt("count") > 0); //NON-NLS;
                             return;
                         }
                     }
                 } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get group seen", ex); //NON-NLS
                 }
             }
         }
-        try {
-
-            // query to find the group id from attribute/value
-            String groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
-                                                + " WHERE attribute = \'%s\' AND value = \'%s\' )", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName());
-
-            String groupSeenQueryStmt = String.format("seen FROM " + GROUPS_SEEN_TABLENAME + " WHERE examiner_id = %d AND group_id in ( %s )", examinerId, groupIdQuery);
-            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
-
-            tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
-            return queryResultProcessor.getGroupSeen();
-        } catch (TskCoreException ex) {
-            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
-            logger.log(Level.WARNING, msg, ex);
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns true if the specified group has been any examiner
-     *
-     * @param groupKey
-     *
-     * @return
-     */
-    public boolean isGroupSeen(GroupKey<?> groupKey) {
-
         // Callback to process result of seen query
-        class GroupSeenQueryResultProcessor implements CaseDbAccessQueryCallback {
-
-            private boolean seen = false;
-
-            boolean getGroupSeen() {
-                return seen;
-            }
-
-            @Override
-            public void process(ResultSet resultSet) {
-                try {
-                    if (resultSet != null) {
-                        while (resultSet.next()) {
-                            int count = resultSet.getInt("count");
-                            seen = count > 0;
-                            return;
-                        }
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "failed to get group seen", ex); //NON-NLS
-                }
-            }
-        }
+        GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
         try {
-
-            // query to find the group id from attribute/value
-            String groupIdQuery = "";
-
-            groupIdQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
-                                         + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d)", groupKey.getAttribute().attrName.toString(), groupKey.getValueDisplayName(), (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
-
-            String groupSeenQueryStmt = String.format("COUNT((*) as count FROM " + GROUPS_SEEN_TABLENAME + " WHERE seen = 1 AND group_id in ( %s )", groupIdQuery);
-
-            GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
+            String groupSeenQueryStmt = "COUNT(*) as count FROM " + GROUPS_SEEN_TABLENAME
+                                        + " WHERE seen = 1 "
+                                        + " AND group_id in ( " + getGroupIdQuery(groupKey) + ")"
+                                        + (examinerId > 0 ? " AND examiner_id = " + examinerId : "");// query to find the group id from attribute/value 
 
             tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
-            return queryResultProcessor.getGroupSeen();
-        } catch (TskCoreException ex) {
+            return queryResultProcessor.get();
+        } catch (ExecutionException | InterruptedException | TskCoreException ex) {
             String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
             logger.log(Level.WARNING, msg, ex);
         }
@@ -746,6 +707,7 @@ public final class DrawableDB {
      * @throws TskCoreException
      */
     public void markGroupSeen(GroupKey<?> groupKey, boolean seen, long examinerID) throws TskCoreException {
+
         // query to find the group id from attribute/value
         String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
                                           + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
@@ -760,6 +722,7 @@ public final class DrawableDB {
         }
 
         tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
+
     }
 
     public boolean removeFile(long id) {
@@ -1175,7 +1138,7 @@ public final class DrawableDB {
                                 (A) results.getObject(groupBy.attrName.toString()));
                     }
                 } catch (SQLException ex) {
-                    if (ex.getCause() instanceof java.lang.InterruptedException) {
+                    if (!(ex.getCause() instanceof java.lang.InterruptedException)) {
 
                         /* It seems like this originaly comes out of c3p0 when
                          * its thread is intereupted (cancelled because of
@@ -1185,7 +1148,6 @@ public final class DrawableDB {
                          * see
                          * https://sourceforge.net/p/c3p0/mailman/c3p0-users/thread/EBB32BB8-6487-43AF-B291-9464C9051869@mchange.com/
                          */
-                    } else {
                         throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS
                     }
                 } catch (TskDataException ex) {
@@ -1225,7 +1187,6 @@ public final class DrawableDB {
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
                 insertSQL += "ON CONFLICT DO NOTHING";
             }
-
             tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed

@@ -39,7 +39,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
  */
 @NbBundle.Messages({
     "NextUnseenGroup.markGroupSeen=Mark Group Seen",
-    "NextUnseenGroup.nextUnseenGroup=Next Unseen group"})
+    "NextUnseenGroup.nextUnseenGroup=Next Unseen group",
+    "NextUnseenGroup.allGroupsSeen=All Groups Have Been Seen"})
 public class NextUnseenGroup extends Action {
 
     private static final String IMAGE_PATH = "/org/sleuthkit/autopsy/imagegallery/images/"; //NON-NLS
@@ -50,6 +51,7 @@ public class NextUnseenGroup extends Action {
 
     private static final String MARK_GROUP_SEEN = Bundle.NextUnseenGroup_markGroupSeen();
     private static final String NEXT_UNSEEN_GROUP = Bundle.NextUnseenGroup_nextUnseenGroup();
+    private static final String ALL_GROUPS_SEEN = Bundle.NextUnseenGroup_allGroupsSeen();
 
     private final ImageGalleryController controller;
     private final ObservableList<DrawableGroup> unSeenGroups;
@@ -63,6 +65,7 @@ public class NextUnseenGroup extends Action {
         groupManager = controller.getGroupManager();
         unSeenGroups = groupManager.getUnSeenGroups();
         unSeenGroups.addListener((Observable observable) -> updateButton());
+        controller.viewStateProperty().addListener((Observable observable) -> updateButton());
 
         setEventHandler(event -> {    //on fx-thread
             //if there is a group assigned to the view, mark it as seen
@@ -88,16 +91,33 @@ public class NextUnseenGroup extends Action {
 
     private void updateButton() {
         int size = unSeenGroups.size();
-        Platform.runLater(() -> {
 
-            setDisabled(size == 0);
-            if (size <= 1) {
-                setText(MARK_GROUP_SEEN);
-                setGraphic(new ImageView(END_IMAGE));
+        if (size < 1) {
+            //there are no unseen groups.
+            Platform.runLater(() -> {
+                setDisabled(true);
+                setText(ALL_GROUPS_SEEN);
+                setGraphic(null);
+            });
+        } else {
+            DrawableGroup get = unSeenGroups.get(0);
+            DrawableGroup orElse = Optional.ofNullable(controller.getViewState()).flatMap(GroupViewState::getGroup).orElse(null);
+            boolean equals = get.equals(orElse);
+            if (size == 1 & equals) {
+                //The only unseen group is the one that is being viewed.
+                Platform.runLater(() -> {
+                    setDisabled(false);
+                    setText(MARK_GROUP_SEEN);
+                    setGraphic(new ImageView(END_IMAGE));
+                });
             } else {
-                setText(NEXT_UNSEEN_GROUP);
-                setGraphic(new ImageView(ADVANCE_IMAGE));
+                //there are more unseen groups.
+                Platform.runLater(() -> {
+                    setDisabled(false);
+                    setText(NEXT_UNSEEN_GROUP);
+                    setGraphic(new ImageView(ADVANCE_IMAGE));
+                });
             }
-        });
+        }
     }
 }
