@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,9 +55,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
@@ -67,13 +67,13 @@ import org.sleuthkit.datamodel.TagName;
  * Shows details of the selected file.
  */
 @NbBundle.Messages({"MetaDataPane.tableView.placeholder=Select a file to show its details here.",
-        "MetaDataPane.copyMenuItem.text=Copy",
-        "MetaDataPane.titledPane.displayName=Details",
-        "MetaDataPane.attributeColumn.headingName=Attribute",
-        "MetaDataPane.valueColumn.headingName=Value"})
+    "MetaDataPane.copyMenuItem.text=Copy",
+    "MetaDataPane.titledPane.displayName=Details",
+    "MetaDataPane.attributeColumn.headingName=Attribute",
+    "MetaDataPane.valueColumn.headingName=Value"})
 public class MetaDataPane extends DrawableUIBase {
 
-    private static final Logger LOGGER = Logger.getLogger(MetaDataPane.class.getName());
+    private static final Logger logger = Logger.getLogger(MetaDataPane.class.getName());
 
     private static final KeyCodeCombination COPY_KEY_COMBINATION = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_DOWN);
 
@@ -202,7 +202,7 @@ public class MetaDataPane extends DrawableUIBase {
 
     @Override
     Task<Image> newReadImageTask(DrawableFile file) {
-        return file.getThumbnailTask();
+        return getController().getThumbsCache().getThumbnailTask(file);
     }
 
     public void updateAttributesTable() {

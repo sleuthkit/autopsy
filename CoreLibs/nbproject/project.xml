@@ -230,6 +230,7 @@
                 <package>org.apache.commons.codec.digest</package>
                 <package>org.apache.commons.codec.language</package>
                 <package>org.apache.commons.codec.net</package>
+                <package>org.apache.commons.collections4</package>
                 <package>org.apache.commons.csv</package>
                 <package>org.apache.commons.io</package>
                 <package>org.apache.commons.io.comparator</package>

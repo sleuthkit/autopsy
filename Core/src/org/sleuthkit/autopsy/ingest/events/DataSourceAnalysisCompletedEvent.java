@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.Content;
  * Event published when analysis (ingest) of a data source included in an ingest
  * job is completed.
  */
-public class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEvent implements Serializable {
+public final class DataSourceAnalysisCompletedEvent extends DataSourceAnalysisEvent implements Serializable {
 
     /**
      * The reason why the analysis of the data source completed.
