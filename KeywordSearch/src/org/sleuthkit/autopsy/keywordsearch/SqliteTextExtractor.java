@@ -116,9 +116,9 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     private CharSequence getDatabaseContents(Content source, AbstractReader reader) {
         try {
             Map<String, String> tables = reader.getTableSchemas();
-            LinkedList<String> databaseStorage = new LinkedList<>();
+            Collection<String> databaseStorage = new LinkedList<>();
 
-            Integer charactersCopied = loadDatabaseIntoList(databaseStorage,
+            Integer charactersCopied = loadDatabaseIntoCollection(databaseStorage,
                     tables, reader, source);
 
             return toCharSequence(databaseStorage, charactersCopied);
@@ -138,12 +138,12 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      * rows from the table. The table string will be added to the list of
      * contents.
      *
-     * @param databaseStorage List containing all of the database content
+     * @param databaseStorage Collection containing all of the database content
      * @param tables          A map of table names to table schemas
      * @param reader          SqliteReader for interfacing with the database
      * @param source          Source database file for logging
      */
-    private int loadDatabaseIntoList(LinkedList<String> databaseStorage,
+    private int loadDatabaseIntoCollection(Collection<String> databaseStorage,
             Map<String, String> tables, AbstractReader reader, Content source) {
 
         int charactersCopied = 0;
@@ -178,7 +178,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      *
      * @return A character seqeunces of the database contents
      */
-    private CharSequence toCharSequence(LinkedList<String> databaseStorage,
+    private CharSequence toCharSequence(Collection<String> databaseStorage,
             int characterCount) {
 
         final char[] databaseCharArray = new char[characterCount];
