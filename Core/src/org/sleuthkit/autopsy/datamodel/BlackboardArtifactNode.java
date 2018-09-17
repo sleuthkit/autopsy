@@ -351,10 +351,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
+        
         addScoreProperty(sheetSet, tags);
-        if (UserPreferences.hideExaminerNotifications() == false) {
-            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
-            addCommentProperty(sheetSet, tags, correlationAttribute);
+        
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {

@@ -29,6 +29,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
@@ -92,9 +93,14 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                 getName()));
         if (!this.content.isDataSource()) {
             addScoreProperty(sheetSet, tags);
-            if (UserPreferences.hideExaminerNotifications() == false) {
-                CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
-                addCommentProperty(sheetSet, tags, correlationAttribute);
+
+            CorrelationAttributeInstance correlationAttribute = null;
+            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+                correlationAttribute = getCorrelationAttributeInstance();
+            }
+            addCommentProperty(sheetSet, tags, correlationAttribute);
+
+            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
                 addCountProperty(sheetSet, correlationAttribute);
             }
             Map<String, Object> map = new LinkedHashMap<>();

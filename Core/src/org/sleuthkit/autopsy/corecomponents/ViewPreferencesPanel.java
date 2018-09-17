@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
@@ -62,14 +63,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
         
         hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
-        hideExaminerNotificationsCheckbox.setSelected(UserPreferences.hideExaminerNotifications());
+        doNotUseCentralRepoCheckbox.setEnabled(EamDbUtil.useCentralRepo());
+        doNotUseCentralRepoCheckbox.setSelected(UserPreferences.hideCentralRepoNotifications());
         
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
         currentCaseSettingsPanel.setEnabled(caseIsOpen);
         groupByDataSourceCheckbox.setEnabled(caseIsOpen);
-
         groupByDataSourceCheckbox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
 
         // Current Session Settings
@@ -85,7 +86,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCheckbox.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
-        UserPreferences.setHideExaminerNotifications(hideExaminerNotificationsCheckbox.isSelected());
+        UserPreferences.setHideCentralRepoNotifications(doNotUseCentralRepoCheckbox.isSelected());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -131,7 +132,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         useLocalTimeRadioButton = new javax.swing.JRadioButton();
         useGMTTimeRadioButton = new javax.swing.JRadioButton();
         hideOtherUsersTagsCheckbox = new javax.swing.JCheckBox();
-        hideExaminerNotificationsCheckbox = new javax.swing.JCheckBox();
+        doNotUseCentralRepoCheckbox = new javax.swing.JCheckBox();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -214,10 +215,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(hideExaminerNotificationsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideExaminerNotificationsCheckbox.text")); // NOI18N
-        hideExaminerNotificationsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(doNotUseCentralRepoCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.doNotUseCentralRepoCheckbox.text")); // NOI18N
+        doNotUseCentralRepoCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                hideExaminerNotificationsCheckboxActionPerformed(evt);
+                doNotUseCentralRepoCheckboxActionPerformed(evt);
             }
         });
 
@@ -229,39 +230,39 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addContainerGap()
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addComponent(hideExaminerNotificationsCheckbox)
+                        .addComponent(doNotUseCentralRepoCheckbox)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addComponent(hideOtherUsersTagsCheckbox)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(hideKnownFilesLabel)
-                            .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(hideOtherUsersTagsCheckbox)
+                            .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(hideKnownFilesLabel)
+                                    .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                                                .addGap(10, 10, 10)
+                                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(dataSourcesHideSlackCheckbox)
+                                                    .addComponent(viewsHideSlackCheckbox)))
+                                            .addComponent(hideSlackFilesLabel))
+                                        .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                                            .addGap(10, 10, 10)
+                                            .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                .addComponent(dataSourcesHideKnownCheckbox)
+                                                .addComponent(viewsHideKnownCheckbox)))))
+                                .addGap(27, 27, 27)
+                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(displayTimeLabel)
+                                    .addComponent(selectFileLabel)
                                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                         .addGap(10, 10, 10)
                                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(dataSourcesHideSlackCheckbox)
-                                            .addComponent(viewsHideSlackCheckbox)))
-                                    .addComponent(hideSlackFilesLabel))
-                                .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                    .addGap(10, 10, 10)
-                                    .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(dataSourcesHideKnownCheckbox)
-                                        .addComponent(viewsHideKnownCheckbox)))))
-                        .addGap(27, 27, 27)
-                        .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(displayTimeLabel)
-                            .addComponent(selectFileLabel)
-                            .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(keepCurrentViewerRadioButton)
-                                    .addComponent(useBestViewerRadioButton)
-                                    .addComponent(useGMTTimeRadioButton)
-                                    .addComponent(useLocalTimeRadioButton))))
-                        .addGap(20, 20, 20))))
+                                            .addComponent(keepCurrentViewerRadioButton)
+                                            .addComponent(useBestViewerRadioButton)
+                                            .addComponent(useGMTTimeRadioButton)
+                                            .addComponent(useLocalTimeRadioButton))))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         globalSettingsPanelLayout.setVerticalGroup(
             globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -295,7 +296,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(hideOtherUsersTagsCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(hideExaminerNotificationsCheckbox))
+                .addComponent(doNotUseCentralRepoCheckbox))
         );
 
         currentCaseSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentCaseSettingsPanel.border.title"))); // NOI18N
@@ -481,13 +482,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
 
-    private void hideExaminerNotificationsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideExaminerNotificationsCheckboxActionPerformed
+    private void doNotUseCentralRepoCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_doNotUseCentralRepoCheckboxActionPerformed
         if (immediateUpdates) {
-            UserPreferences.setHideExaminerNotifications(hideExaminerNotificationsCheckbox.isSelected());
+            UserPreferences.setHideCentralRepoNotifications(doNotUseCentralRepoCheckbox.isSelected());
         } else {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-    }//GEN-LAST:event_hideExaminerNotificationsCheckboxActionPerformed
+    }//GEN-LAST:event_doNotUseCentralRepoCheckboxActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -496,9 +497,9 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JCheckBox dataSourcesHideKnownCheckbox;
     private javax.swing.JCheckBox dataSourcesHideSlackCheckbox;
     private javax.swing.JLabel displayTimeLabel;
+    private javax.swing.JCheckBox doNotUseCentralRepoCheckbox;
     private javax.swing.JPanel globalSettingsPanel;
     private javax.swing.JCheckBox groupByDataSourceCheckbox;
-    private javax.swing.JCheckBox hideExaminerNotificationsCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
     private javax.swing.JCheckBox hideOtherUsersTagsCheckbox;
     private javax.swing.JCheckBox hideRejectedResultsCheckbox;

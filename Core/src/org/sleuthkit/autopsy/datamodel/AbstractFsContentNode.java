@@ -24,6 +24,7 @@ import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -83,14 +84,20 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 AbstractFilePropertyType.NAME.toString(),
                 NO_DESCR,
                 getName()));
-        //add the status property before the propertyMap to ensure it is early in column order
+        
         addScoreProperty(sheetSet, tags);
-        if (UserPreferences.hideExaminerNotifications() == false) {
-            //add the comment property before the propertyMap to ensure it is early in column order
-            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
-            addCommentProperty(sheetSet, tags, correlationAttribute);
+        
+        //add the comment property before the propertyMap to ensure it is early in column order
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
+        
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));

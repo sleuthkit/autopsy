@@ -22,6 +22,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -85,11 +86,17 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
 
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
-        this.addScoreProperty(sheetSet, tags);
-        if (UserPreferences.hideExaminerNotifications() == false) {
-            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
-            this.addCommentProperty(sheetSet, tags, correlationAttribute);
-            this.addCountProperty(sheetSet, correlationAttribute);
+        
+        addScoreProperty(sheetSet, tags);
+        
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+            addCountProperty(sheetSet, correlationAttribute);
         }
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), NO_DESCR, getHashSetHitsCsvList(this.getContent())));

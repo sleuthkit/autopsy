@@ -71,7 +71,7 @@ public final class UserPreferences {
     private static final int LOG_FILE_NUM_INT = 10;
     public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
-    public static final String HIDE_EXAMINER_NOTIFICATIONS = "HideExaminerNotifications";
+    public static final String HIDE_CENTRAL_REPO_NOTIFICATIONS = "HideCentralRepoNotifications";
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -224,16 +224,16 @@ public final class UserPreferences {
     /**
      * //DLG:
      */
-    public static boolean hideExaminerNotifications() {
-        return preferences.getBoolean(HIDE_EXAMINER_NOTIFICATIONS, false);
+    public static boolean hideCentralRepoNotifications() {
+        return preferences.getBoolean(HIDE_CENTRAL_REPO_NOTIFICATIONS, false);
     }
 
 
     /**
      * //DLG:
      */
-    public static void setHideExaminerNotifications(boolean value) {
-        preferences.putBoolean(HIDE_EXAMINER_NOTIFICATIONS, value);
+    public static void setHideCentralRepoNotifications(boolean value) {
+        preferences.putBoolean(HIDE_CENTRAL_REPO_NOTIFICATIONS, value);
     }
 
     /**
