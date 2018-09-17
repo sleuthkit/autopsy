@@ -107,7 +107,7 @@ public class ImageUtils {
      * NOTE: Must be cleared when the case is changed.
      */
     @Messages({"ImageUtils.ffmpegLoadedError.title=OpenCV FFMpeg",
-               "ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details"})
+        "ImageUtils.ffmpegLoadedError.msg=OpenCV FFMpeg library failed to load, see log for more details"})
     private static final ConcurrentHashMap<Long, File> cacheFileMap = new ConcurrentHashMap<>();
 
     static {
@@ -218,7 +218,7 @@ public class ImageUtils {
         }
 
         return VideoUtils.isVideoThumbnailSupported(file)
-                || isImageThumbnailSupported(file);
+               || isImageThumbnailSupported(file);
     }
 
     /**
@@ -413,7 +413,7 @@ public class ImageUtils {
                 String cacheDirectory = Case.getCurrentCaseThrows().getCacheDirectory();
                 return Paths.get(cacheDirectory, "thumbnails", fileID + ".png").toFile(); //NON-NLS
             } catch (NoCurrentCaseException e) {
-                LOGGER.log(Level.WARNING, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
+                LOGGER.log(Level.INFO, "Could not get cached thumbnail location.  No case is open."); //NON-NLS
                 return null;
             }
         });

@@ -329,6 +329,7 @@
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
+                <package>org.sleuthkit.autopsy.ingest.events</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>

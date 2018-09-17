@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,9 +34,10 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent;
 
 /**
  * Displays summary statistics (counts) for each group
@@ -51,11 +52,13 @@ public class SummaryTablePane extends AnchorPane {
 
     @FXML
     private TableView<Pair<DhsImageCategory, Long>> tableView;
+
     private final ImageGalleryController controller;
 
     @FXML
-    @NbBundle.Messages({"SummaryTablePane.catColumn=Category",
-            "SummaryTablePane.countColumn=# Files"})
+    @NbBundle.Messages({
+        "SummaryTablePane.catColumn=Category",
+        "SummaryTablePane.countColumn=# Files"})
     void initialize() {
         assert catColumn != null : "fx:id=\"catColumn\" was not injected: check your FXML file 'SummaryTablePane.fxml'.";
         assert countColumn != null : "fx:id=\"countColumn\" was not injected: check your FXML file 'SummaryTablePane.fxml'.";
@@ -67,11 +70,11 @@ public class SummaryTablePane extends AnchorPane {
         tableView.prefHeightProperty().set(7 * 25);
 
         //set up columns
-        catColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<DhsImageCategory, Long>, String> p) -> new SimpleObjectProperty<>(p.getValue().getKey().getDisplayName()));
+        catColumn.setCellValueFactory(params -> new SimpleObjectProperty<>(params.getValue().getKey().getDisplayName()));
         catColumn.setPrefWidth(USE_COMPUTED_SIZE);
         catColumn.setText(Bundle.SummaryTablePane_catColumn());
 
-        countColumn.setCellValueFactory((TableColumn.CellDataFeatures<Pair<DhsImageCategory, Long>, Long> p) -> new SimpleObjectProperty<>(p.getValue().getValue()));
+        countColumn.setCellValueFactory(params -> new SimpleObjectProperty<>(params.getValue().getValue()));
         countColumn.setPrefWidth(USE_COMPUTED_SIZE);
         countColumn.setText(Bundle.SummaryTablePane_countColumn());
 
@@ -85,14 +88,15 @@ public class SummaryTablePane extends AnchorPane {
     public SummaryTablePane(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "SummaryTablePane.fxml"); //NON-NLS
-
     }
 
     /**
      * listen to Category updates and rebuild the table
+     *
+     * @param evt The change event.
      */
     @Subscribe
-    public void handleCategoryChanged(org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager.CategoryChangeEvent evt) {
+    public void handleCategoryChanged(CategoryChangeEvent evt) {
         final ObservableList<Pair<DhsImageCategory, Long>> data = FXCollections.observableArrayList();
         if (Case.isCaseOpen()) {
             for (DhsImageCategory cat : DhsImageCategory.values()) {

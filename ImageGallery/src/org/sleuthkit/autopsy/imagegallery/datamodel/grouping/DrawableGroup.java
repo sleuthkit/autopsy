@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18  Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,16 +26,19 @@ import java.util.logging.Level;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.IntegerBinding;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Represents a set of image/video files in a group. The UI listens to changes
@@ -76,7 +79,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     }
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
-    public synchronized ObservableList<Long> getFileIDs() {
+    public ObservableList<Long> getFileIDs() {
         return unmodifiableFileIDS;
     }
 
@@ -121,11 +124,11 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         if (hashSetHitsCount.get() < 0) {
             try {
                 hashSetHitsCount.set(fileIDs.stream()
-                        .map(fileID -> ImageGalleryController.getDefault().getHashSetManager().isInAnyHashSet(fileID))
+                        .map(ImageGalleryModule.getController().getHashSetManager()::isInAnyHashSet)
                         .filter(Boolean::booleanValue)
                         .count());
-            } catch (IllegalStateException | NullPointerException ex) {
-                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             }
         }
         return hashSetHitsCount.get();
@@ -139,10 +142,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     public final synchronized long getUncategorizedCount() {
         if (uncatCount.get() < 0) {
             try {
-                uncatCount.set(ImageGalleryController.getDefault().getDatabase().getUncategorizedCount(fileIDs));
+                uncatCount.set(ImageGalleryModule.getController().getDatabase().getUncategorizedCount(fileIDs));
 
-            } catch (IllegalStateException | NullPointerException ex) {
-                LOGGER.log(Level.WARNING, "could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             }
         }
 
@@ -163,8 +166,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         return seen.get();
     }
 
-    public ReadOnlyBooleanWrapper seenProperty() {
-        return seen;
+    public ReadOnlyBooleanProperty seenProperty() {
+        return seen.getReadOnlyProperty();
     }
 
     @Subscribe
