@@ -399,6 +399,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
+     * @deprecated 
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     @Deprecated
