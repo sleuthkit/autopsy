@@ -87,7 +87,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         "# {0} - case name",
         "# {1} - attr type",
         "# {2} - threshold string",
-        "SingleInterCaseCommonAttributeSearcher.buildTabTitle.titleInterSingle=Common Attributes (Central Repository Case: {0}, {1}{2})"})
+        "SingleInterCaseCommonAttributeSearcher.buildTabTitle.titleInterSingle=Common Properties (Central Repository Case: {0}, {1}{2})"})
 
     @Override
     String getTabTitle() {

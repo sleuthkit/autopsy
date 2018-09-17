@@ -60,7 +60,7 @@ final public class SingleIntraCaseCommonAttributeSearcher extends IntraCaseCommo
         "# {0} - data source name",
         "# {1} - build category",
         "# {2} - threshold string",
-        "SingleIntraCaseCommonAttributeSearcher.buildTabTitle.titleIntraSingle=Common Attributes (Data Source: {0}, {1}{2})"})
+        "SingleIntraCaseCommonAttributeSearcher.buildTabTitle.titleIntraSingle=Common Properties (Data Source: {0}, {1}{2})"})
     @Override
     String getTabTitle() {
         return Bundle.SingleIntraCaseCommonAttributeSearcher_buildTabTitle_titleIntraSingle(this.dataSourceName, this.buildCategorySelectionString(), this.getPercentThresholdString());

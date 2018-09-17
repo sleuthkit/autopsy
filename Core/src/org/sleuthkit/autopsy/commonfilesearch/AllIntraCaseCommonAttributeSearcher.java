@@ -54,7 +54,7 @@ final public class AllIntraCaseCommonAttributeSearcher extends IntraCaseCommonAt
     @NbBundle.Messages({
         "# {0} - build category",
         "# {1} - threshold string",
-        "AllIntraCaseCommonAttributeSearcher.buildTabTitle.titleIntraAll=Common Attributes (All Data Sources, {0}{1})"
+        "AllIntraCaseCommonAttributeSearcher.buildTabTitle.titleIntraAll=Common Properties (All Data Sources, {0}{1})"
     })
     @Override
     String getTabTitle() {

@@ -57,7 +57,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     @NbBundle.Messages({
         "# {0} - attr type",
         "# {1} - threshold string",
-        "AllInterCaseCommonAttributeSearcher.buildTabTitle.titleInterAll=Common Attributes (All Central Repository Cases, {0}{1})"})
+        "AllInterCaseCommonAttributeSearcher.buildTabTitle.titleInterAll=Common Properties (All Central Repository Cases, {0}{1})"})
     @Override
     String getTabTitle() {
         return Bundle.AllInterCaseCommonAttributeSearcher_buildTabTitle_titleInterAll(this.corAttrType.getDisplayName(), this.getPercentThresholdString());
