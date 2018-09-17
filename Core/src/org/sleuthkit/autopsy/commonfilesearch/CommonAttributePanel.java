@@ -94,7 +94,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             this.disableIntercaseSearch();
         }
 
-        this.enablePercentageOptions(CommonAttributePanel.isEamDbAvailableForPercentageFrequencyCalculations());
+        this.updatePercentageOptions(CommonAttributePanel.getNumberOfDataSourcesAvailable());
 
         this.errorManager = new UserInputErrorManager();
 
@@ -153,21 +153,22 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }
 
     /**
-     * Get whether or not the central repository will be available for filtering
-     * results.
+     * Get the number of data sources in the central repository if it is
+     * enabled, zero if it is not enabled.
      *
-     * @return true if the central repository exists and has at least 1 case in
-     *         it, false otherwise.
+     * @return the number of data sources in the current central repo, or 0 if
+     *         it is disabled
      */
-    private static boolean isEamDbAvailableForPercentageFrequencyCalculations() {
+    private static Long getNumberOfDataSourcesAvailable() {
         try {
-            return EamDb.isEnabled()
-                    && EamDb.getInstance() != null
-                    && EamDb.getInstance().getCases().size() > 0;
+            if (EamDb.isEnabled()
+                    && EamDb.getInstance() != null) {
+                return EamDb.getInstance().getCountUniqueDataSources();
+            }
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Unexpected exception while  checking for EamDB enabled.", ex);
         }
-        return false;
+        return 0L;
     }
 
     /**
@@ -183,8 +184,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Perform the common attribute search.
      */
     @NbBundle.Messages({
-        "CommonAttributePanel.search.results.titleAll=Common Properties (All Data Sources)",
-        "CommonAttributePanel.search.results.titleSingle=Common Properties (Match Within Data Source: %s)",
         "CommonAttributePanel.search.results.pathText=Common Property Search Results",
         "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Property Search Results.",
         "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Property Search Results.",
@@ -194,34 +193,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         "CommonAttributePanel.search.done.interupted=Something went wrong finding common properties.",
         "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources."})
     private void search() {
-        String pathText = Bundle.CommonAttributePanel_search_results_pathText();
 
         new SwingWorker<CommonAttributeSearchResults, Void>() {
 
             private String tabTitle;
             private ProgressHandle progress;
-
-            /**
-             * Set the title of the search results for searches using all data
-             * sources.
-             */
-            private void setTitleForAllDataSources() {
-                this.tabTitle = Bundle.CommonAttributePanel_search_results_titleAll();
-            }
-
-            /**
-             * Set the title of the search results for searches using a single
-             * source.
-             *
-             * @param dataSourceId the datasource ID of the the source being
-             *                     used
-             */
-            private void setTitleForSingleSource(Long dataSourceId) {
-                final String CommonAttributePanel_search_results_titleSingle = Bundle.CommonAttributePanel_search_results_titleSingle();
-                final Object[] dataSourceName = new Object[]{intraCasePanel.getDataSourceMap().get(dataSourceId)};
-
-                this.tabTitle = String.format(CommonAttributePanel_search_results_titleSingle, dataSourceName);
-            }
 
             @Override
             protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
@@ -268,17 +244,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     }
                     if (Objects.equals(dataSourceId, CommonAttributePanel.NO_DATA_SOURCE_SELECTED)) {
                         builder = new AllIntraCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
-
-                        setTitleForAllDataSources();
                     } else {
                         builder = new SingleIntraCaseCommonAttributeSearcher(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
-
-                        setTitleForSingleSource(dataSourceId);
                     }
 
                 }
                 metadata = builder.findMatches();
-                this.tabTitle = builder.buildTabTitle();
+                this.tabTitle = builder.getTabTitle();
 
                 return metadata;
             }
@@ -303,7 +275,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     viewers.add(table);
 
                     progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
-                    DataResultTopComponent.createInstance(tabTitle, pathText, tableFilterWithDescendantsNode, metadata.size(), viewers);
+                    DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), tableFilterWithDescendantsNode, metadata.size(), viewers);
                     progress.finish();
 
                 } catch (InterruptedException ex) {
@@ -381,7 +353,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
              *         otherwise
              */
             private boolean caseHasMultipleSources() {
-                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 1; 
+                return CommonAttributePanel.this.intraCasePanel.getDataSourceMap().size() > 1;
             }
 
             @Override
@@ -516,8 +488,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         percentageThresholdTextTwo = new javax.swing.JLabel();
         intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
         interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
+        dataSourcesLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(450, 440));
+        setMinimumSize(new java.awt.Dimension(450, 460));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -525,9 +498,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
-        jPanel1.setMaximumSize(new java.awt.Dimension(450, 400));
-        jPanel1.setMinimumSize(new java.awt.Dimension(450, 400));
-        jPanel1.setPreferredSize(new java.awt.Dimension(450, 400));
+        jPanel1.setMaximumSize(new java.awt.Dimension(450, 460));
+        jPanel1.setMinimumSize(new java.awt.Dimension(450, 460));
+        jPanel1.setPreferredSize(new java.awt.Dimension(450, 460));
         jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(scopeLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.scopeLabel.text")); // NOI18N
@@ -582,12 +555,15 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdTextTwo, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextTwo.text_1")); // NOI18N
 
         intraCasePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.intraCasePanel.border.title"))); // NOI18N
-        intraCasePanel.setMinimumSize(new java.awt.Dimension(204, 204));
-        intraCasePanel.setPreferredSize(new java.awt.Dimension(430, 204));
+        intraCasePanel.setMaximumSize(new java.awt.Dimension(32779, 192));
+        intraCasePanel.setMinimumSize(new java.awt.Dimension(204, 192));
+        intraCasePanel.setPreferredSize(new java.awt.Dimension(430, 192));
+        intraCasePanel.setVerifyInputWhenFocusTarget(false);
 
         interCasePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.interCasePanel.border.title"))); // NOI18N
-        interCasePanel.setMinimumSize(new java.awt.Dimension(430, 249));
-        interCasePanel.setPreferredSize(new java.awt.Dimension(430, 249));
+        interCasePanel.setMaximumSize(new java.awt.Dimension(32779, 230));
+        interCasePanel.setMinimumSize(new java.awt.Dimension(430, 230));
+        interCasePanel.setPreferredSize(new java.awt.Dimension(430, 230));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -602,14 +578,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         .addComponent(searchButton)
                         .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(scopeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(37, 37, 37))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(percentageThresholdCheck)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(scopeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(37, 37, 37))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -622,7 +598,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(interCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(intraCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(dataSourcesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -636,15 +616,17 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(interCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(interCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(interCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(intraCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(intraCasePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(percentageThresholdCheck)
                     .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(percentageThresholdTextTwo))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -717,16 +699,24 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }
 
     /**
-     * Set the enabled status of the percentage threshold options
+     * Update the percentage options to reflect the number of data sources
+     * available.
      *
-     * @param enabled true to enable percentage threshold options, false to
-     *                disable them
+     * @param numberOfDataSources the number of data sources available in the
+     *                            central repository
      */
-    private void enablePercentageOptions(boolean enabled) {
+    @NbBundle.Messages({
+        "# {0} - number of datasources",
+        "CommonAttributePanel.dataSourcesLabel.text=The current Central Repository contains {0} data source(s)."})
+    private void updatePercentageOptions(Long numberOfDataSources) {
+        boolean enabled = numberOfDataSources > 0L;
+        String numberOfDataSourcesText = enabled ? Bundle.CommonAttributePanel_dataSourcesLabel_text(numberOfDataSources) : "";
+        this.dataSourcesLabel.setText(numberOfDataSourcesText);
         this.percentageThresholdInputBox.setEnabled(enabled);
         this.percentageThresholdCheck.setEnabled(enabled);
         this.percentageThresholdCheck.setSelected(enabled);
         this.percentageThresholdTextTwo.setEnabled(enabled);
+
     }
 
     /**
@@ -746,6 +736,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel commonItemSearchDescription;
+    private javax.swing.JLabel dataSourcesLabel;
     private javax.swing.JLabel errorText;
     private org.sleuthkit.autopsy.commonfilesearch.InterCasePanel interCasePanel;
     private javax.swing.JRadioButton interCaseRadio;

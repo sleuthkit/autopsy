@@ -190,6 +190,9 @@ public final class IntraCasePanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(onlySpecificDataSourceCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.onlySpecificDataSourceCheckbox.text")); // NOI18N
+        onlySpecificDataSourceCheckbox.setMaximumSize(new java.awt.Dimension(243, 23));
+        onlySpecificDataSourceCheckbox.setMinimumSize(new java.awt.Dimension(243, 23));
+        onlySpecificDataSourceCheckbox.setPreferredSize(new java.awt.Dimension(243, 23));
         onlySpecificDataSourceCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 onlySpecificDataSourceCheckboxActionPerformed(evt);
@@ -220,13 +223,13 @@ public final class IntraCasePanel extends javax.swing.JPanel {
                                             .addComponent(pictureVideoCheckbox))))))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addComponent(onlySpecificDataSourceCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE)
+            .addComponent(onlySpecificDataSourceCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(onlySpecificDataSourceCheckbox)
+                .addComponent(onlySpecificDataSourceCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
