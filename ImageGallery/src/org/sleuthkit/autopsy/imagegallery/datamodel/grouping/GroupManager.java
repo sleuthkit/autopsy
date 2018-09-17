@@ -46,6 +46,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -59,7 +60,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import org.apache.commons.lang3.ObjectUtils;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -99,7 +99,7 @@ public class GroupManager {
 
     /** An executor to submit async UI related background tasks to. */
     private final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
-            new BasicThreadFactory.Builder().namingPattern("GUI Task -%d").build())); //NON-NLS
+            new BasicThreadFactory.Builder().namingPattern("GroupManager BG Thread-%d").build())); //NON-NLS
 
     private final ImageGalleryController controller;
 
@@ -127,6 +127,7 @@ public class GroupManager {
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(DrawableAttribute.PATH);
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
+    private final ReadOnlyBooleanWrapper collaborativeModeProp = new ReadOnlyBooleanWrapper(false);
 
     private final GroupingService regrouper;
 
@@ -241,23 +242,24 @@ public class GroupManager {
      *
      * @return A ListenableFuture that encapsulates saving the seen state to the
      *         DB.
+     *
+     *
      */
     public ListenableFuture<?> markGroupSeen(DrawableGroup group, boolean seen) {
         return exec.submit(() -> {
             try {
                 Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
-
                 getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
                 group.setSeen(seen);
-                updateUnSeenGroups(group, seen);
+                updateUnSeenGroups(group);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
             }
         });
     }
 
-    synchronized private void updateUnSeenGroups(DrawableGroup group, boolean seen) {
-        if (seen) {
+    synchronized private void updateUnSeenGroups(DrawableGroup group) {
+        if (group.isSeen()) {
             unSeenGroups.removeAll(group);
         } else if (unSeenGroups.contains(group) == false) {
             unSeenGroups.add(group);
@@ -579,14 +581,14 @@ public class GroupManager {
                 try {
                     Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                     if (Objects.nonNull(fileIDs)) {
+
+                        long examinerID = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
+                        final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
                         DrawableGroup group;
 
-                        Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
-
-                        final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examiner.getId());
                         if (groupMap.containsKey(groupKey)) {
                             group = groupMap.get(groupKey);
-                            group.setFiles(ObjectUtils.defaultIfNull(fileIDs, Collections.emptySet()));
+                            group.setFiles(fileIDs);
                             group.setSeen(groupSeen);
                         } else {
                             group = new DrawableGroup(groupKey, fileIDs, groupSeen);
@@ -598,10 +600,9 @@ public class GroupManager {
                             analyzedGroups.add(group);
                             sortAnalyzedGroups();
                         }
-                        updateUnSeenGroups(group, groupSeen);
+                        updateUnSeenGroups(group);
 
                         return group;
-
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
@@ -634,9 +635,34 @@ public class GroupManager {
         }
     }
 
+    synchronized public void setCollaborativeMode(Boolean newValue) {
+        collaborativeModeProp.set(newValue);
+        analyzedGroups.forEach(group -> {
+            try {
+                boolean groupSeenByExaminer = getDrawableDB().isGroupSeenByExaminer(
+                        group.getGroupKey(),
+                        newValue ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId()
+                );
+                group.setSeen(groupSeenByExaminer);
+                updateUnSeenGroups(group);
+                if (group.isSeen()) {
+                    unSeenGroups.removeAll(group);
+                } else if (unSeenGroups.contains(group) == false) {
+                    unSeenGroups.add(group);
+                }
+
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking seen state of group.", ex);
+            }
+        });
+        sortUnseenGroups();
+    }
+
     /**
      * Task to query database for files in sorted groups and build
      * DrawableGroups for them.
+     *
+     * @param <AttrValType> The type of the values that this task will group by.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @NbBundle.Messages({"# {0} - groupBy attribute Name",
