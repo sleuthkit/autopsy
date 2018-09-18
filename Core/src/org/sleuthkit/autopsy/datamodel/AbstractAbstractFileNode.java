@@ -399,6 +399,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
+     * @deprecated
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     @Deprecated
@@ -422,6 +423,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
      * @param tags     the list of tags associated with the file
+     * @deprecated
      */
     @Deprecated
     protected final void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
@@ -461,6 +463,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @return The CSV list of hash set names.
      */
+    @Deprecated
     protected static String getHashSetHitsCsvList(AbstractFile file) {
         try {
             return StringUtils.join(file.getHashSetNames(), ", ");
