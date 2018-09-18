@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  *  2) Tika fails to open tables with spaces in table name 
  *  3) Tika fails to include the table names in output (except for the first table it parses)
  */
-public class SqliteTextExtractor extends ContentTextExtractor {
+class SqliteTextExtractor extends ContentTextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
