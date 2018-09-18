@@ -66,14 +66,14 @@ public final class SQLiteReader extends AbstractReader {
     public SQLiteReader(AbstractFile sqliteDbFile) throws FileReaderInitException {
         super(sqliteDbFile);
         try {
-            final String localDiskPath = super.getLocalDiskPath(sqliteDbFile);
+            final String localDiskPath = super.getLocalDiskPath();
             // Look for any meta files associated with this DB - WAL, SHM, etc. 
             findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
             findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
 
             connection = getDatabaseConnection(localDiskPath);
         } catch (ClassNotFoundException | SQLException |IOException | 
-                NoCurrentCaseException | TskCoreException | FileReaderException ex) {
+                NoCurrentCaseException | TskCoreException ex) {
             throw new FileReaderInitException(ex);
         }
     }
