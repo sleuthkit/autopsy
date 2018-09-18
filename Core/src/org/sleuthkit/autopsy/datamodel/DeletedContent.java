@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -39,6 +40,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -460,7 +462,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                             + " OR known IS NULL)"; //NON-NLS
                 }
 
-                if (UserPreferences.groupItemsInTreeByDatasource()) {
+                if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     query +=  " AND data_source_obj_id = " + filteringDSObjId;
                 }
                 

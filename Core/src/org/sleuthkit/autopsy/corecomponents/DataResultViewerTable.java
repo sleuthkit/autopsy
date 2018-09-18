@@ -96,7 +96,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final ImageIcon NOTABLE_ICON_SCORE = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
-    static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
     private final String title;
     private final Map<String, ETableColumn> columnMap;
     private final Map<Integer, Property<?>> propertiesMap;
@@ -160,7 +159,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setRootVisible(false);
         outline.setDragEnabled(false);
-        outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
 
         /*
          * Add a table listener to the child OutlineView (explorer view) to
@@ -842,54 +840,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    /**
-     * This custom renderer extends the renderer that was already being used by
-     * the outline table. This renderer colors a row if the tags property of the
-     * node is not empty.
-     */
-    private class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
-
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-
-            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-            // only override the color if a node is not selected
-            if (rootNode != null && !isSelected) {
-                Node node = rootNode.getChildren().getNodeAt(table.convertRowIndexToModel(row));
-                boolean tagFound = false;
-                if (node != null) {
-                    Node.PropertySet[] propSets = node.getPropertySets();
-                    if (propSets.length != 0) {
-                        // currently, a node has only one property set, named Sheet.PROPERTIES ("properties")
-                        Node.Property<?>[] props = propSets[0].getProperties();
-                        for (Property<?> prop : props) {
-                            if ("Tags".equals(prop.getName())) {//NON-NLS
-                                try {
-                                    tagFound = !prop.getValue().equals("");
-                                } catch (IllegalAccessException | InvocationTargetException ignore) {
-                                    //if unable to get the tags property value, treat it like it not having a comment
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-                //if the node does have associated tags, set its background color
-                if (tagFound) {
-                    component.setBackground(TAGGED_ROW_COLOR);
-                }
-            }
-            return component;
-        }
-    }
-
     /*
      * A renderer which based on the contents of the cell will display an icon
      * to indicate the presence of a comment related to the content.
      */
-    private final class HasCommentCellRenderer extends ColorTagCustomRenderer {
+    private final class HasCommentCellRenderer extends DefaultOutlineCellRenderer {
 
         private static final long serialVersionUID = 1L;
 
@@ -899,8 +854,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             "DataResultViewerTable.commentRenderer.noComment.toolTip=No comments found"})
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setBackground(component.getBackground());  //inherit highlighting
             setHorizontalAlignment(CENTER);
             Object switchValue = null;
             if ((value instanceof NodeProperty)) {
@@ -949,14 +902,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * A renderer which based on the contents of the cell will display an icon
      * to indicate the score associated with the item.
      */
-    private final class ScoreCellRenderer extends ColorTagCustomRenderer {
+    private final class ScoreCellRenderer extends DefaultOutlineCellRenderer {
 
         private static final long serialVersionUID = 1L;
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setBackground(component.getBackground());  //inherit highlighting
             setHorizontalAlignment(CENTER);
             Object switchValue = null;
             if ((value instanceof NodeProperty)) {
@@ -998,14 +949,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * A renderer which based on the contents of the cell will display an empty
      * cell if no count was available.
      */
-    private final class CountCellRenderer extends ColorTagCustomRenderer {
+    private final class CountCellRenderer extends DefaultOutlineCellRenderer {
 
         private static final long serialVersionUID = 1L;
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            setBackground(component.getBackground());  //inherit highlighting
             setHorizontalAlignment(LEFT);
             Object countValue = null;
             if ((value instanceof NodeProperty)) {

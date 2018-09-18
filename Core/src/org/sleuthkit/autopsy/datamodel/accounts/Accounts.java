@@ -57,6 +57,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -149,12 +150,14 @@ final public class Accounts implements AutopsyVisitableItem {
      * Returns the clause to filter artifacts by data source.
      *
      * @return A clause that will or will not filter artifacts by datasource 
-     *         based on the UserPreferences groupItemsInTreeByDatasource setting 
+     *         based on the CasePreferences groupItemsInTreeByDataSource setting 
      */
     private String getFilterByDataSourceClause() {
-        return  (UserPreferences.groupItemsInTreeByDatasource()) ? 
-                "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " " 
-                : " ";
+        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            return "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId + " ";
+        }
+        
+        return " ";
     }
 
     /**
@@ -164,6 +167,7 @@ final public class Accounts implements AutopsyVisitableItem {
      * @return An Action that will toggle whether rejected artifacts are shown
      *         in the tree rooted by this Accounts instance.
      */
+    @Deprecated
     public Action newToggleShowRejectedAction() {
         return new ToggleShowRejected();
     }
@@ -1686,6 +1690,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     }
 
+    @Deprecated
     private final class ToggleShowRejected extends AbstractAction {
 
         @NbBundle.Messages("ToggleShowRejected.name=Show Rejected Results")
@@ -1698,6 +1703,16 @@ final public class Accounts implements AutopsyVisitableItem {
             showRejected = !showRejected;
             reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
         }
+    }
+    
+    /**
+     * Update the user interface to show or hide rejected artifacts.
+     * 
+     * @param showRejected Show rejected artifacts? Yes if true; otherwise no.
+     */
+    public void setShowRejected(boolean showRejected) {
+        this.showRejected = showRejected;
+        reviewStatusBus.post(new ReviewStatusChangeEvent(Collections.emptySet(), null));
     }
 
     private abstract class ReviewStatusAction extends AbstractAction {

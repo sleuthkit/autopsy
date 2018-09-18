@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -387,7 +388,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
+        
         sheetSet.put(
                 new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_count_name(), Bundle.AbstractAbstractFileNode_createSheet_count_displayName(), description, count));
     }

@@ -138,7 +138,7 @@ public class CategorizeAction extends Action {
             TagName catZeroTagName = categoryManager.getTagName(DhsImageCategory.ZERO);
             for (long fileID : fileIDs) {
                 try {
-                    DrawableFile file = controller.getFileFromId(fileID);   //drawable db access
+                    DrawableFile file = controller.getFileFromID(fileID);   //drawable db access
                     if (createUndo) {
                         DhsImageCategory oldCat = file.getCategory();  //drawable db access
                         TagName oldCatTagName = categoryManager.getTagName(oldCat);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.Function;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.SelectionModel;
@@ -74,9 +75,9 @@ abstract class NavPanel<X> extends Tab {
 
         sortChooser = new SortChooser<>(GroupComparators.getValues());
         sortChooser.setComparator(getDefaultComparator());
-        sortChooser.sortOrderProperty().addListener(order -> sortGroups());
+        sortChooser.sortOrderProperty().addListener(order -> NavPanel.this.sortGroups());
         sortChooser.comparatorProperty().addListener((observable, oldComparator, newComparator) -> {
-            sortGroups();
+            NavPanel.this.sortGroups();
             //only need to listen to changes in category if we are sorting by/ showing the uncategorized count
             if (newComparator == GroupComparators.UNCATEGORIZED_COUNT) {
                 categoryManager.registerListener(NavPanel.this);
@@ -90,13 +91,20 @@ abstract class NavPanel<X> extends Tab {
         toolBar.getItems().add(sortChooser);
 
         //keep selection in sync with controller
-        controller.viewState().addListener(observable -> {
-            Optional.ofNullable(controller.viewState().get())
-                    .map(GroupViewState::getGroup)
-                    .ifPresent(this::setFocusedGroup);
+        controller.viewStateProperty().addListener(observable -> {
+            Platform.runLater(()
+                    -> Optional.ofNullable(controller.getViewState())
+                            .flatMap(GroupViewState::getGroup)
+                            .ifPresent(this::setFocusedGroup));
         });
 
-        getSelectionModel().selectedItemProperty().addListener(o -> updateControllersGroup());
+        // notify controller about group selection in this view
+        getSelectionModel().selectedItemProperty()
+                .addListener((observable, oldItem, newSelectedItem) -> {
+                    Optional.ofNullable(newSelectedItem)
+                            .map(getDataItemMapper())
+                            .ifPresent(group -> controller.advance(GroupViewState.tile(group)));
+                });
     }
 
     /**
@@ -106,7 +114,7 @@ abstract class NavPanel<X> extends Tab {
 
     @Subscribe
     public void handleCategoryChange(CategoryManager.CategoryChangeEvent event) {
-        sortGroups();
+        Platform.runLater(this::sortGroups);
     }
 
     /**
@@ -122,26 +130,23 @@ abstract class NavPanel<X> extends Tab {
     }
 
     /**
-     * notify controller about group selection in this view
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    void updateControllersGroup() {
-        Optional.ofNullable(getSelectionModel().getSelectedItem())
-                .map(getDataItemMapper())
-                .ifPresent(group -> controller.advance(GroupViewState.tile(group), false));
-    }
-
-    /**
      * Sort the groups in this view according to the currently selected sorting
      * options. Attempts to maintain selection.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     void sortGroups() {
+        sortGroups(true);
+    }
+
+    public void sortGroups(boolean preserveSelection) {
+
         X selectedItem = getSelectionModel().getSelectedItem();
         applyGroupComparator();
-        Optional.ofNullable(selectedItem)
-                .map(getDataItemMapper())
-                .ifPresent(this::setFocusedGroup);
+        if (preserveSelection) {
+            Optional.ofNullable(selectedItem)
+                    .map(getDataItemMapper())
+                    .ifPresent(this::setFocusedGroup);
+        }
     }
 
     /**

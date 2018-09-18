@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,6 @@ import javax.swing.SwingWorker;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.GetTagNameAndCommentDialog;
@@ -50,8 +49,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableTagsManager;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TagName;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this Action allow users to apply tags to content.
@@ -75,14 +74,14 @@ public class AddTagAction extends Action {
         setEventHandler(actionEvent -> addTagWithComment(""));
     }
 
-    static public Menu getTagMenu(ImageGalleryController controller) {
+    static public Menu getTagMenu(ImageGalleryController controller) throws TskCoreException {
         return new TagMenu(controller);
     }
 
     private void addTagWithComment(String comment) {
         addTagsToFiles(tagName, comment, selectedFileIDs);
     }
-    
+
     @NbBundle.Messages({"# {0} - fileID",
         "AddDrawableTagAction.addTagsToFiles.alert=Unable to tag file {0}."})
     private void addTagsToFiles(TagName tagName, String comment, Set<Long> selectedFiles) {
@@ -94,7 +93,7 @@ public class AddTagAction extends Action {
                 DrawableTagsManager tagsManager = controller.getTagsManager();
                 for (Long fileID : selectedFiles) {
                     try {
-                        final DrawableFile file = controller.getFileFromId(fileID);
+                        final DrawableFile file = controller.getFileFromID(fileID);
                         LOGGER.log(Level.INFO, "tagging {0} with {1} and comment {2}", new Object[]{file.getName(), tagName.getDisplayName(), comment}); //NON-NLS
 
                         List<ContentTag> contentTags = tagsManager.getContentTags(file);
@@ -141,7 +140,7 @@ public class AddTagAction extends Action {
         "AddDrawableTagAction.displayName.singular=Tag File"})
     private static class TagMenu extends Menu {
 
-        TagMenu(ImageGalleryController controller) {
+        TagMenu(ImageGalleryController controller) throws TskCoreException {
             setGraphic(new ImageView(DrawableAttribute.TAGS.getIcon()));
             ObservableSet<Long> selectedFileIDs = controller.getSelectionModel().getSelected();
             setText(selectedFileIDs.size() > 1
@@ -163,11 +162,10 @@ public class AddTagAction extends Action {
                 empty.setDisable(true);
                 quickTagMenu.getItems().add(empty);
             } else {
-                for (final TagName tagName : tagNames) {
-                    AddTagAction addDrawableTagAction = new AddTagAction(controller, tagName, selectedFileIDs);
-                    MenuItem tagNameItem = ActionUtils.createMenuItem(addDrawableTagAction);
-                    quickTagMenu.getItems().add(tagNameItem);
-                }
+                tagNames.stream()
+                        .map(tagName -> new AddTagAction(controller, tagName, selectedFileIDs))
+                        .map(ActionUtils::createMenuItem)
+                        .forEachOrdered(quickTagMenu.getItems()::add);
             }
 
             /*
