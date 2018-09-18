@@ -79,8 +79,6 @@ public final class ExcelReader extends AbstractReader {
      * overriding the workbook field. Additionally, I don't forsee needing to
      * support more than these two mime types.
      *
-     * @param localDiskPath To open an input stream for poi to read from
-     * @param mimeType      The mimeType passed to the constructor
      *
      * @return The corrent workbook instance
      *
@@ -286,7 +284,9 @@ public final class ExcelReader extends AbstractReader {
     }
 
     /**
-     *
+     * Resets the streaming reader so that the iterator starts at the start of each
+     * sheet. Matches functionality provided by apache POI.
+     * 
      * @throws
      * org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
      */
