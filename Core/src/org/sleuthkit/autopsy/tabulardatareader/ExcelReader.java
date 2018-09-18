@@ -148,7 +148,7 @@ public final class ExcelReader extends AbstractReader {
 
         while (sheetIter.hasNext()) {
             Row currRow = sheetIter.next();
-            rowList.add(getRowMap(tableName, currRow));
+            rowList.add(getRowMap(currRow));
         }
 
         //Reset the streaming reader for xlsx, so that there is a fresh iterator 
@@ -217,7 +217,7 @@ public final class ExcelReader extends AbstractReader {
         throw new FileReaderException("Operation Not Supported.");
     }
 
-    private Map<String, Object> getRowMap(String tableName, Row row) {
+    private Map<String, Object> getRowMap(Row row) {
         Map<String, Object> rowMap = new HashMap<>();
         for (Cell cell : row) {
             Object value = getCellValue(cell);
