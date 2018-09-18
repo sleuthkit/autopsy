@@ -47,9 +47,9 @@ import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
  */
 public class SqliteTextExtractor extends ContentTextExtractor {
 
-    private final String SQLITE_MIMETYPE = "application/x-sqlite3";
+    private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
-    private final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
+    private static final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
 
     @Override
     boolean isContentTypeSpecific() {
@@ -62,8 +62,8 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     @Override
-    public void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS
+    public void logWarning(String msg, Exception exception) {
+        logger.log(Level.WARNING, msg, exception); //NON-NLS
     }
 
     /**
@@ -196,7 +196,7 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         return new Segment(databaseCharArray, 0, characterCount);
     }
 
-    /*
+    /**
      * Formats input so that it reads as a table in the console or in a text
      * viewer
      */
@@ -206,16 +206,16 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         private Integer charactersAdded = 0;
 
         //Formatters
-        private final String HORIZONTAL_DELIMITER = "-";
-        private final String VERTICAL_DELIMITER = "|";
-        private final String HEADER_CORNER = "+";
+        private static final String HORIZONTAL_DELIMITER = "-";
+        private static final String VERTICAL_DELIMITER = "|";
+        private static final String HEADER_CORNER = "+";
 
-        private final String TAB = "\t";
-        private final String NEW_LINE = "\n";
-        private final String SPACE = " ";
+        private static final String TAB = "\t";
+        private static final String NEW_LINE = "\n";
+        private static final String SPACE = " ";
 
         //Number of escape sequences in the header row
-        private final int ESCAPE_SEQUENCES = 4;
+        private static final int ESCAPE_SEQUENCES = 4;
 
         private String tableName = "";
 

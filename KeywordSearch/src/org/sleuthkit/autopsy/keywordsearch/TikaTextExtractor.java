@@ -57,7 +57,7 @@ class TikaTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
-    private final String SQLITE_MIMETYPE = "application/x-sqlite3";
+    private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
     private final AutoDetectParser parser = new AutoDetectParser();
     
