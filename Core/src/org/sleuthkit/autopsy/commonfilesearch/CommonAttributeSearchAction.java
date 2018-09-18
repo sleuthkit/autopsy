@@ -19,12 +19,15 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -60,18 +63,7 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        boolean shouldBeEnabled = false;
-        try {
-            //dont refactor any of this to pull out common expressions - order of evaluation of each expression is significant
-            shouldBeEnabled
-                    = (Case.isCaseOpen()
-                    && Case.getCurrentCase().getDataSources().size() > 1)
-                    || CommonAttributePanel.isEamDbAvailableForIntercaseSearch();
-
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
-        }
-        return super.isEnabled() && shouldBeEnabled;
+        return super.isEnabled() && Case.isCaseOpen();
     }
 
     @Override
@@ -85,13 +77,55 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
     }
 
     /**
-     * Create the commonAttributePanel and diplay it.
+     * Create the commonAttributePanel and display it.
      */
+    @NbBundle.Messages({
+        "CommonAttributeSearchAction.openPanel.noCaseOpen=Unable to run Common Property Search - no case is open.",
+        "CommonAttributeSearchAction.openPanel.notEnoughData=Unable to run Common Property Search - there are not enough data sources available between the current case and central repository."})
     private void createAndShowPanel() {
-        CommonAttributePanel commonAttributePanel = new CommonAttributePanel();
-        //In order to update errors the CommonAttributePanel needs to observe its sub panels
-        commonAttributePanel.observeSubPanels();
-        commonAttributePanel.setVisible(true);
+        new SwingWorker<Boolean, Void>() {
+
+            String reason = "";
+            
+            @Override
+            protected Boolean doInBackground() throws Exception {
+                // Test whether we should open the common files panel
+                if(! Case.isCaseOpen()) {
+                    reason = Bundle.CommonAttributeSearchAction_openPanel_noCaseOpen();
+                    return false;
+                }
+                
+                if (Case.getCurrentCase().getDataSources().size() > 1) {
+                    // There are enough data sources to run the intra case seach
+                    return true;
+                }
+                
+                if( ! CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
+                    reason = Bundle.CommonAttributeSearchAction_openPanel_notEnoughData();
+                    return false;
+                }
+                return true;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    boolean openPanel = get();
+                    if(openPanel) {
+                        CommonAttributePanel commonAttributePanel = new CommonAttributePanel();
+                        //In order to update errors the CommonAttributePanel needs to observe its sub panels
+                        commonAttributePanel.observeSubPanels();
+                        commonAttributePanel.setVisible(true);
+                    } else {
+                        NotifyDescriptor descriptor = new NotifyDescriptor.Message(reason, NotifyDescriptor.INFORMATION_MESSAGE);
+                        DialogDisplayer.getDefault().notify(descriptor);
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening Common Properties Search", ex); //NON-NLS
+                }
+            }
+        }.execute();
     }
 
     @NbBundle.Messages({
