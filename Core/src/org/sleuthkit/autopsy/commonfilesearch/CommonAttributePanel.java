@@ -231,10 +231,10 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
                     }
                     if (caseId == InterCasePanel.NO_CASE_SELECTED) {
-                        builder = new AllInterCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, corType, percentageThreshold);
+                        builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);
                     } else {
 
-                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, corType, percentageThreshold);
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, filterByMedia, filterByDocuments, corType, percentageThreshold);
                     }
 
                 } else {
