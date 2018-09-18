@@ -361,10 +361,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private void processSQLiteFile() {       
         tablesDropdownList.removeAllItems();
         try {
-            String localDiskPath = Case.getCurrentCaseThrows().getTempDirectory() + 
-                    File.separator + sqliteDbFile.getName();
-            
-            sqliteReader = FileReaderFactory.createReader(SUPPORTED_MIMETYPES[0], sqliteDbFile, localDiskPath);
+            sqliteReader = FileReaderFactory.createReader(sqliteDbFile, SUPPORTED_MIMETYPES[0]);
             
             Map<String, String> dbTablesMap = sqliteReader.getTableSchemas();
             
@@ -376,9 +373,6 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     tablesDropdownList.addItem(tableName);
                 });
             }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Current case has been closed", ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_errorMessage_noCurrentCase());
         } catch (FileReaderException ex) {
             logger.log(Level.SEVERE, String.format(
                     "Failed to get tables from DB file  '%s' (objId=%d)", //NON-NLS
