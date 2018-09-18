@@ -101,7 +101,6 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
-            addTagProperty(sheetSet, tags);
         } else {
             sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),

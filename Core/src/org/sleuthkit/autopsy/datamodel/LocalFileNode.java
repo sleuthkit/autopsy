@@ -91,9 +91,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
 
-        // add tags property to the sheet
-        addTagProperty(sheetSet, tags);
-
         return sheet;
     }
 
