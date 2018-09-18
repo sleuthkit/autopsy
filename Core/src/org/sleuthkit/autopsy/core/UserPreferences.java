@@ -189,10 +189,12 @@ public final class UserPreferences {
         preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
     }
 
+    @Deprecated
     public static boolean groupItemsInTreeByDatasource() {
         return preferences.getBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, false);
     }
 
+    @Deprecated
     public static void setGroupItemsInTreeByDatasource(boolean value) {
         preferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
     }

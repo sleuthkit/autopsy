@@ -28,7 +28,6 @@ import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
@@ -81,8 +80,8 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
-            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
+            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
@@ -101,8 +100,8 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
             Long first = getDataSourceIdByName(SET1, dataSources);
 
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false);
-            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
+            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false, 0);
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);

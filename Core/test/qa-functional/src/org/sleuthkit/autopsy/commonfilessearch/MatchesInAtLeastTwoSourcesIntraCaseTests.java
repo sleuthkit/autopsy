@@ -105,8 +105,8 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
         try {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false);
-            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
 
             Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 

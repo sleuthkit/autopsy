@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Auto_Ingest",
         iconBase = "org/sleuthkit/autopsy/experimental/images/autoIngest32.png",
-        position = 4,
+        position = 5,
         keywords = "#OptionsCategory_Keywords_Auto_Ingest_Settings",
         keywordsCategory = "Auto Ingest")
 public final class AutoIngestSettingsPanelController extends OptionsPanelController {

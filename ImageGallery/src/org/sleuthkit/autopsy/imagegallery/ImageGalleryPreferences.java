@@ -46,8 +46,7 @@ public class ImageGalleryPreferences {
      * @return true if new cases should have image analyzer enabled.
      */
     public static boolean isEnabledByDefault() {
-        final boolean aBoolean = preferences.getBoolean(ENABLED_BY_DEFAULT, true);
-        return aBoolean;
+        return  preferences.getBoolean(ENABLED_BY_DEFAULT, true);
     }
 
     public static void setEnabledByDefault(boolean b) {

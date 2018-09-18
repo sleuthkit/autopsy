@@ -19,11 +19,14 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -70,11 +73,21 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
+        List<ContentTag> tags = getContentTagsFromDatabase();
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
-
         final String NO_DESCR = Bundle.AbstractFsContentNode_noDesc_text();
+        //add the name property before the comment property to ensure it is first column
+        sheetSet.put(new NodeProperty<>(AbstractFilePropertyType.NAME.toString(), 
+                AbstractFilePropertyType.NAME.toString(),
+                NO_DESCR,
+                getName()));
+        //add the cr status property before the propertyMap to ensure it is early in column order
+        addScoreProperty(sheetSet, tags);
+        //add the comment property before the propertyMap to ensure it is early in column order
+        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        addCountProperty(sheetSet, correlationAttribute);
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
@@ -82,9 +95,6 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         if (directoryBrowseMode) {
             sheetSet.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
-
-        // add tags property to the sheet
-        addTagProperty(sheetSet);
 
         return sheet;
     }

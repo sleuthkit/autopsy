@@ -39,6 +39,7 @@ final public class CommonAttributeValue {
     CommonAttributeValue(String md5, List<AbstractCommonAttributeInstance> fileInstances) {
         this.md5 = md5;
         this.fileInstances = fileInstances;
+
     }
 
     CommonAttributeValue(String md5) {

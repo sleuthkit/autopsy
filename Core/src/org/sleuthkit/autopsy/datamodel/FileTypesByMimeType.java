@@ -28,6 +28,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -41,6 +42,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
@@ -101,7 +103,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
                 + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal())) 
                 + "))"
-                + ( UserPreferences.groupItemsInTreeByDatasource() ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
+                + ( Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? " AND data_source_obj_id = " + this.filteringDataSourceObjId() : " ")
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
     }
 

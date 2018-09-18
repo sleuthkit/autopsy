@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.centralrepository;
 
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
@@ -31,21 +30,21 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
-    private final CorrelationAttribute correlationAttribute;
+    private final CorrelationAttributeInstance correlationAttributeInstance;
     private boolean commentUpdated = false;
     private String currentComment = "";
 
     /**
      * Create an instance.
      *
-     * @param correlationAttribute The correlation attribute to be modified.
+     * @param correlationAttributeInstance The correlation attribute to be modified.
      */
-    CentralRepoCommentDialog(CorrelationAttribute correlationAttribute) {
+    CentralRepoCommentDialog(CorrelationAttributeInstance correlationAttributeInstance) {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CentralRepoCommentDialog_title_addEditCentralRepoComment());
         
         initComponents();
 
-        CorrelationAttributeInstance instance = correlationAttribute.getInstances().get(0);
+        CorrelationAttributeInstance instance = correlationAttributeInstance;
         
         // Store the original comment
         if (instance.getComment() != null) {
@@ -54,7 +53,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
         commentTextArea.setText(instance.getComment());
 
-        this.correlationAttribute = correlationAttribute;
+        this.correlationAttributeInstance = correlationAttributeInstance;
     }
 
     /**
@@ -171,7 +170,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         currentComment = commentTextArea.getText();
-        correlationAttribute.getInstances().get(0).setComment(currentComment);
+        correlationAttributeInstance.setComment(currentComment);
         commentUpdated = true;
 
         dispose();

@@ -22,24 +22,29 @@ import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitExce
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Factory for creating the correct reader given the mime type of a file. 
+ * Factory for creating the correct reader given the mime type of a file.
  */
 public final class FileReaderFactory {
-    
+
     private FileReaderFactory() {
     }
+
     /**
-     * Instantiates the appropriate reader given the mimeType argument. Currently
-     * supports SQLite files and Excel files (.xls and .xlsx). BIFF5 format of .xls
-     * is not supported.
-     * 
-     * @param mimeType mimeType passed in from the ingest module
-     * @param file current file under inspection
+     * Instantiates the appropriate reader given the mimeType argument.
+     * Currently supports SQLite files and Excel files (.xls and .xlsx). BIFF5
+     * format of .xls is not supported.
+     *
+     * @param mimeType mimeType passed in from the ingest module g * @param file
+     *                 current file under inspection
+     *
+     * @param file Content file to be copied into
+     *
      * @return The correct reader class needed to read the file contents
-     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException 
+     *
+     * @throws
+     * org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
-    public static AbstractReader createReader(String mimeType, AbstractFile file) 
-            throws FileReaderInitException {
+    public static AbstractReader createReader(AbstractFile file, String mimeType) throws FileReaderInitException {
         switch (mimeType) {
             case "application/x-sqlite3":
                 return new SQLiteReader(file);
@@ -51,7 +56,7 @@ public final class FileReaderFactory {
                     //POI (such as EncryptedDocumentException) and wraps them
                     //into FileReaderInitException to be caught and logged
                     //in the ingest module.
-                } catch(Exception poiInitException) {
+                } catch (Exception poiInitException) {
                     throw new FileReaderInitException(poiInitException);
                 }
             default:

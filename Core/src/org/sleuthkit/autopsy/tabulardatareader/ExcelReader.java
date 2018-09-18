@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.tabulardatareader;
 
+import static com.google.common.collect.Lists.newArrayList;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -46,9 +47,6 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public final class ExcelReader extends AbstractReader {
 
-    /*
-     * Boilerplate code
-     */
     private final static IngestServices services = IngestServices.getInstance();
     private final static Logger logger = services.getLogger(ExcelReader.class.getName());
 
@@ -56,16 +54,19 @@ public final class ExcelReader extends AbstractReader {
     private final static String XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     private final static String XLS_MIME_TYPE = "application/vnd.ms-excel";
     private final static String EMPTY_CELL_STRING = "";
-    private Map<String, Row> headerCache;
+
+    private String LOCAL_DISK_PATH;
+    private String ACTIVE_MIME_TYPE;
 
     public ExcelReader(AbstractFile file, String mimeType)
             throws FileReaderInitException {
         super(file);
+        this.LOCAL_DISK_PATH = super.getLocalDiskPath();
+        this.ACTIVE_MIME_TYPE = mimeType;
+
         try {
-            final String localDiskPath = super.getLocalDiskPath(file);
-            this.workbook = createWorkbook(localDiskPath, mimeType);
-            headerCache = new HashMap<>();
-        } catch (IOException | FileReaderException ex) {
+            this.workbook = createWorkbook();
+        } catch (IOException ex) {
             throw new FileReaderInitException(ex);
         }
     }
@@ -78,8 +79,6 @@ public final class ExcelReader extends AbstractReader {
      * overriding the workbook field. Additionally, I don't forsee needing to
      * support more than these two mime types.
      *
-     * @param localDiskPath To open an input stream for poi to read from
-     * @param mimeType      The mimeType passed to the constructor
      *
      * @return The corrent workbook instance
      *
@@ -87,14 +86,14 @@ public final class ExcelReader extends AbstractReader {
      *                                 location at localDiskPath
      * @throws FileReaderInitException mimetype unsupported
      */
-    private Workbook createWorkbook(String localDiskPath, String mimeType) throws
+    private Workbook createWorkbook() throws
             IOException, FileReaderInitException {
-        switch (mimeType) {
+        switch (ACTIVE_MIME_TYPE) {
             case XLS_MIME_TYPE:
                 try {
                     //Apache POI only supports BIFF8 format, anything below is considered
                     //old excel format and is not a concern for us.
-                    return new HSSFWorkbook(new FileInputStream(new File(localDiskPath)));
+                    return new HSSFWorkbook(new FileInputStream(new File(LOCAL_DISK_PATH)));
                 } catch (OldExcelFormatException e) {
                     throw new FileReaderInitException(e);
                 }
@@ -104,10 +103,10 @@ public final class ExcelReader extends AbstractReader {
                 //large workbooks, not reading). This libary provides a workbook interface
                 //that is mostly identical to the poi workbook api, hence both the HSSFWorkbook
                 //and this can use the same functions below.
-                return StreamingReader.builder().rowCacheSize(500).open(new File(localDiskPath));
+                return StreamingReader.builder().rowCacheSize(500).open(new File(LOCAL_DISK_PATH));
             default:
                 throw new FileReaderInitException(String.format("Excel reader for mime "
-                        + "type [%s] is not supported", mimeType));
+                        + "type [%s] is not supported", ACTIVE_MIME_TYPE));
         }
     }
 
@@ -146,17 +145,52 @@ public final class ExcelReader extends AbstractReader {
         //missed.
         Iterator<Row> sheetIter = workbook.getSheet(tableName).rowIterator();
         List<Map<String, Object>> rowList = new ArrayList<>();
-        if (headerCache.containsKey(tableName)) {
-            Row header = headerCache.get(tableName);
-            rowList.add(getRowMap(tableName, header));
-        }
 
         while (sheetIter.hasNext()) {
             Row currRow = sheetIter.next();
-            rowList.add(getRowMap(tableName, currRow));
+            rowList.add(getRowMap(currRow));
         }
 
+        //Reset the streaming reader for xlsx, so that there is a fresh iterator 
+        //on each sheet. That way each call to this function returns all the results.
+        resetStreamingReader();
+
         return rowList;
+    }
+
+    /**
+     * Returns a map of column numbers to a list of column values.
+     *
+     * @param tableName
+     *
+     * @return
+     *
+     * @throws
+     * org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
+     */
+    @Override
+    public Map<String, List<Object>> getColumnsFromTable(String tableName) throws FileReaderException {
+        Map<String, List<Object>> columnViewOfSheet = new HashMap<>();
+
+        Iterator<Row> sheetIter = workbook.getSheet(tableName).rowIterator();
+
+        while (sheetIter.hasNext()) {
+            Row row = sheetIter.next();
+            for (Cell cell : row) {
+                String index = String.valueOf(cell.getColumnIndex());
+                if (columnViewOfSheet.containsKey(index)) {
+                    columnViewOfSheet.get(index).add(getCellValue(cell));
+                } else {
+                    columnViewOfSheet.put(index, newArrayList(getCellValue(cell)));
+                }
+            }
+        }
+
+        //Reset the streaming reader for xlsx, so that there is a fresh iterator 
+        //on each sheet. That way each call to this function returns all the results.
+        resetStreamingReader();
+
+        return columnViewOfSheet;
     }
 
     /**
@@ -183,7 +217,7 @@ public final class ExcelReader extends AbstractReader {
         throw new FileReaderException("Operation Not Supported.");
     }
 
-    private Map<String, Object> getRowMap(String tableName, Row row) {
+    private Map<String, Object> getRowMap(Row row) {
         Map<String, Object> rowMap = new HashMap<>();
         for (Cell cell : row) {
             Object value = getCellValue(cell);
@@ -221,29 +255,6 @@ public final class ExcelReader extends AbstractReader {
     }
 
     /**
-     * Returns the name of the column that the cell currently lives in Cell
-     * Value: 6784022342 -> Header name: Phone Number
-     *
-     * @param cell      current cell being read
-     * @param tableName current sheet name being read
-     *
-     * @return the name of the column the current cell lives in
-     */
-    private String getColumnName(Cell cell, String tableName) {
-        if (headerCache.containsKey(tableName)) {
-            Row header = headerCache.get(tableName);
-            Cell columnHeaderCell = header.getCell(cell.getRowIndex());
-            if (columnHeaderCell == null) {
-                return EMPTY_CELL_STRING;
-            }
-            Object columnHeaderValue = getCellValue(columnHeaderCell);
-            return columnHeaderValue.toString();
-        }
-        //No header present
-        return EMPTY_CELL_STRING;
-    }
-
-    /**
      * Returns a map of sheet names to headers (header is in a comma-seperated
      * string). Warning: Only call this ONCE per excel file.
      *
@@ -260,13 +271,33 @@ public final class ExcelReader extends AbstractReader {
             if (iterator.hasNext()) {
                 //Consume header
                 Row header = iterator.next();
-                headerCache.put(sheet.getSheetName(), header);
                 String headerStringFormat = StringUtils.join(header.cellIterator(), ", ");
                 tableSchemas.put(sheet.getSheetName(), headerStringFormat);
             }
         }
 
+        //Reset the streaming reader for xlsx, so that there is a fresh iterator 
+        //on each sheet. That way each call to this function returns all the results.
+        resetStreamingReader();
+
         return tableSchemas;
+    }
+
+    /**
+     * Resets the streaming reader so that the iterator starts at the start of each
+     * sheet. Matches functionality provided by apache POI.
+     * 
+     * @throws
+     * org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException
+     */
+    public void resetStreamingReader() throws FileReaderException {
+        if (ACTIVE_MIME_TYPE.equals(XLSX_MIME_TYPE)) {
+            try {
+                this.workbook = createWorkbook();
+            } catch (IOException | FileReaderInitException ex) {
+                throw new FileReaderException("Could not reset streaming iterator", ex);
+            }
+        }
     }
 
     @Override

@@ -361,8 +361,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     private void processSQLiteFile() {       
         tablesDropdownList.removeAllItems();
         try {
-            
-            sqliteReader = FileReaderFactory.createReader(SUPPORTED_MIMETYPES[0], sqliteDbFile);
+            sqliteReader = FileReaderFactory.createReader(sqliteDbFile, SUPPORTED_MIMETYPES[0]);
             
             Map<String, String> dbTablesMap = sqliteReader.getTableSchemas();
             

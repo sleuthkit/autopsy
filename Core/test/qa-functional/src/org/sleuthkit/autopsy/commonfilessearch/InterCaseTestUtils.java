@@ -25,8 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.netbeans.junit.NbTestCase;
@@ -57,53 +57,78 @@ import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
+import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
+import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
+import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
+import org.sleuthkit.autopsy.modules.iOS.iOSModuleFactory;
+import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Utilities for testing intercase correlation feature.
+ *
+ * This will be more useful when we add more flush out the intercase correlation
+ * features and need to add more tests. In particular, testing scenarios where
+ * we need different cases to be the current case will suggest that we create
+ * additional test classes, and we will want to import this utility in each new
+ * intercase test file.
+ *
+ * Description of Test Data: (Note: files of the same name and extension are
+ * identical; files of the same name and differing extension are not identical.)
+ *
+ * Case 1 
+ * +Data Set 1 
+ * - Hash-0.dat [testFile of size 0] 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
  * 
- * This will be more useful when we add more flush out the intercase
- * correlation features and need to add more tests.  In particular,
- * testing scenarios where we need different cases to be the current case
- * will suggest that we create additional test classes, and we will want to
- * import this utility in each new intercase test file.
+ * +Data Set2 
+ * - Hash-0.dat [testFile of size 0] 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
  * 
- * Description of Test Data:
- (Note: files of the same name and extension are identical; 
- files of the same name and differing extension are not identical.)
- 
- Case 1
-  +Data Set 1
-      - Hash-0.dat    [testFile of size 0]
-      - Hash-A.jpg
-      - Hash-A.pdf
-  +Data Set2
-      - Hash-0.dat    [testFile of size 0]
-      - Hash-A.jpg
-      - Hash-A.pdf
- Case 2
-  +Data Set 1
-      - Hash-B.jpg      
-      - Hash-B.pdf      
-  +Data Set 2
-      - Hash-A.jpg
-      - Hash-A.pdf
-      - Hash_D.doc
- Case 3
-  +Data Set 1
-      - Hash-A.jpg
-      - Hash-A.pdf
-      - Hash-C.jpg    
-      - Hash-C.pdf    
-      - Hash-D.jpg
-  +Data Set 2
-      - Hash-C.jpg    
-      - Hash-C.pdf
-      - Hash-D.doc
+ * Case 2 
+ * +Data Set 1 
+ * - Hash-B.jpg 
+ * - Hash-B.pdf 
+ * +Data Set 2 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
+ * - Hash_D.doc 
+ * 
+ * Case 3 
+ * +Data Set 1 
+ * - Hash-A.jpg 
+ * - Hash-A.pdf 
+ * - Hash-C.jpg 
+ * - Hash-C.pdf 
+ * - Hash-D.jpg 
+ * +Data Set 2 
+ * - Hash-C.jpg 
+ * - Hash-C.pdf 
+ * - Hash-D.doc
+ *
+ * Frequency Breakdown (ratio of datasources a given file appears in to total
+ * number of datasources):
+ *
+ * Hash-0.dat - moot; these are always excluded 
+ * Hash-A.jpg - 4/6 
+ * Hash-A.pdf - 4/6 
+ * Hash-B.jpg - 1/6 
+ * Hash-B.pdf - 1/6 
+ * Hash-C.jpg - 2/6 
+ * Hash-C.pdf - 2/6
+ * Hash_D.doc - 2/6 
+ * Hash-D.jpg - 1/6
+ *
  */
 class InterCaseTestUtils {
-
+    
     private static final Path CASE_DIRECTORY_PATH = Paths.get(System.getProperty("java.io.tmpdir"), "InterCaseCommonFilesSearchTest");
     private static final String CR_DB_NAME = "testcentralrepo.db";
 
@@ -135,13 +160,31 @@ class InterCaseTestUtils {
     static final String CASE2_DATASET_2 = "c2ds2_v1.vhd";
     static final String CASE3_DATASET_1 = "c3ds1_v1.vhd";
     static final String CASE3_DATASET_2 = "c3ds2_v1.vhd";
-
+    
+    final Path attrCase1Path;
+    final Path attrCase2Path;
+    final Path attrCase3Path;
+    final Path attrCase4Path;
+    
+    static final String ATTR_CASE1 = "CommonFilesAttrs_img1_v1.vhd";
+    static final String ATTR_CASE2 = "CommonFilesAttrs_img2_v1.vhd";
+    static final String ATTR_CASE3 = "CommonFilesAttrs_img3_v1.vhd";
+    static final String ATTR_CASE4 = "CommonFilesAttrs_img4_v1.vhd";
+    
     private final ImageDSProcessor imageDSProcessor;
 
     private final IngestJobSettings hashAndFileType;
     private final IngestJobSettings hashAndNoFileType;
+    private final IngestJobSettings kitchenShink;
+    
     private final DataSourceLoader dataSourceLoader;
-
+    
+    CorrelationAttributeInstance.Type FILE_TYPE;
+    CorrelationAttributeInstance.Type DOMAIN_TYPE;
+    CorrelationAttributeInstance.Type USB_ID_TYPE;
+    CorrelationAttributeInstance.Type EMAIL_TYPE;
+    CorrelationAttributeInstance.Type PHONE_TYPE;
+    
     InterCaseTestUtils(NbTestCase testCase) {
 
         this.case1DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_1);
@@ -150,13 +193,32 @@ class InterCaseTestUtils {
         this.case2DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE2_DATASET_2);
         this.case3DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_1);
         this.case3DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_2);
+        
+        this.attrCase1Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE1);
+        this.attrCase2Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE2);
+        this.attrCase3Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE3);
+        this.attrCase4Path = Paths.get(testCase.getDataDir().toString(), ATTR_CASE4);
 
         this.imageDSProcessor = new ImageDSProcessor();
 
-        final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        final IngestModuleTemplate exifTemplate = IngestUtils.getIngestModuleTemplate(new ExifParserModuleFactory());
+        final IngestModuleTemplate iOsTemplate = IngestUtils.getIngestModuleTemplate(new iOSModuleFactory());
+        final IngestModuleTemplate embeddedFileExtractorTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
+        final IngestModuleTemplate interestingItemsTemplate = IngestUtils.getIngestModuleTemplate(new InterestingItemsIngestModuleFactory());
         final IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
+        final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        final IngestModuleTemplate vmExtractorTemplate = IngestUtils.getIngestModuleTemplate(new VMExtractorIngestModuleFactory());
+        final IngestModuleTemplate photoRecTemplate = IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory());
+        final IngestModuleTemplate e01VerifierTemplate = IngestUtils.getIngestModuleTemplate(new E01VerifierModuleFactory());
         final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
-
+        final IngestModuleTemplate fileExtMismatchDetectorTemplate = IngestUtils.getIngestModuleTemplate(new FileExtMismatchDetectorModuleFactory());
+        //TODO we need to figure out how to get ahold of these objects because they are required for properly filling the CR with test data
+//        final IngestModuleTemplate objectDetectorTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.experimental.objectdetection.ObjectDetectionModuleFactory());
+//        final IngestModuleTemplate emailParserTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory());
+//        final IngestModuleTemplate recentActivityTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory());
+//        final IngestModuleTemplate keywordSearchTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory());
+        
+        //hash and mime
         ArrayList<IngestModuleTemplate> hashAndMimeTemplate = new ArrayList<>(2);
         hashAndMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(mimeTypeLookupTemplate);
@@ -164,30 +226,73 @@ class InterCaseTestUtils {
 
         this.hashAndFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndMimeTemplate);
 
+        //hash and no mime
         ArrayList<IngestModuleTemplate> hashAndNoMimeTemplate = new ArrayList<>(1);
         hashAndNoMimeTemplate.add(hashLookupTemplate);
         hashAndMimeTemplate.add(eamDbTemplate);
 
         this.hashAndNoFileType = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.FILES_ONLY, hashAndNoMimeTemplate);
 
+        //kitchen sink
+        ArrayList<IngestModuleTemplate> kitchenSink = new ArrayList<>();        
+        kitchenSink.add(exifTemplate);
+        kitchenSink.add(iOsTemplate);
+        kitchenSink.add(embeddedFileExtractorTemplate);
+        kitchenSink.add(interestingItemsTemplate);
+        kitchenSink.add(mimeTypeLookupTemplate);
+        kitchenSink.add(hashLookupTemplate);
+        kitchenSink.add(vmExtractorTemplate);
+        kitchenSink.add(photoRecTemplate);
+        kitchenSink.add(e01VerifierTemplate);
+        kitchenSink.add(eamDbTemplate);
+        kitchenSink.add(fileExtMismatchDetectorTemplate);
+        //TODO this list should probably be populated by way of loading the appropriate modules based on finding all of the @ServiceProvider(service = IngestModuleFactory.class) types
+//        kitchenSink.add(objectDetectorTemplate);
+//        kitchenSink.add(emailParserTemplate);
+//        kitchenSink.add(recentActivityTemplate);
+//        kitchenSink.add(keywordSearchTemplate);
+        
+        this.kitchenShink = new IngestJobSettings(InterCaseTestUtils.class.getCanonicalName(), IngestType.ALL_MODULES, kitchenSink);
+        
         this.dataSourceLoader = new DataSourceLoader();
+        
+        try {
+            Collection<CorrelationAttributeInstance.Type> types = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+                   
+            //TODO use ids instead of strings
+            FILE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Files")).findAny().get();
+            DOMAIN_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Domains")).findAny().get();
+            USB_ID_TYPE = types.stream().filter(type -> type.getDisplayName().equals("USB Devices")).findAny().get();
+            EMAIL_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Email Addresses")).findAny().get();
+            PHONE_TYPE = types.stream().filter(type -> type.getDisplayName().equals("Phone Numbers")).findAny().get();
+            
+        } catch (EamDbException ex) {
+            Assert.fail(ex.getMessage());
+            
+            //none of this really matters but satisfies the compiler
+            FILE_TYPE = null;
+            DOMAIN_TYPE = null;
+            USB_ID_TYPE = null;
+            EMAIL_TYPE = null;
+            PHONE_TYPE = null;
+        }
     }
 
-    void clearTestDir(){
-        if(CASE_DIRECTORY_PATH.toFile().exists()){
-            try{
-                if(EamDb.isEnabled()) {
+    void clearTestDir() {
+        if (CASE_DIRECTORY_PATH.toFile().exists()) {
+            try {
+                if (EamDb.isEnabled()) {
                     EamDb.getInstance().shutdownConnections();
                 }
                 FileUtils.deleteDirectory(CASE_DIRECTORY_PATH.toFile());
-            } catch(IOException | EamDbException ex){
+            } catch (IOException | EamDbException ex) {
                 Exceptions.printStackTrace(ex);
                 Assert.fail(ex.getMessage());
             }
         }
         CASE_DIRECTORY_PATH.toFile().exists();
     }
-    
+
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
         return this.dataSourceLoader.getDataSourceMap();
     }
@@ -215,6 +320,10 @@ class InterCaseTestUtils {
     IngestJobSettings getIngestSettingsForHashAndNoFileType() {
         return this.hashAndNoFileType;
     }
+    
+    IngestJobSettings getIngestSettingsForKitchenSink(){
+        return this.kitchenShink;
+    }
 
     void enableCentralRepo() throws EamDbException {
 
@@ -224,11 +333,11 @@ class InterCaseTestUtils {
         if (!crSettings.dbDirectoryExists()) {
             crSettings.createDbDirectory();
         }
-        
+
         crSettings.initializeDatabaseSchema();
         crSettings.insertDefaultDatabaseContent();
 
-        crSettings.saveSettings();
+       crSettings.saveSettings();
 
         EamDbUtil.setUseCentralRepo(true);
         EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
@@ -236,33 +345,33 @@ class InterCaseTestUtils {
     }
 
     /**
-     * Create 3 cases and ingest each with the given settings. Null settings are
-     * permitted but IngestUtils will not be run.
+     * Create the cases defined by caseNames and caseDataSourcePaths and ingest 
+     * each with the given settings. Null settings are permitted but 
+     * IngestUtils will not be run.
+     * 
+     * The length of caseNames and caseDataSourcePaths should be the same, and
+     * cases should appear in the same order.
      *
+     * @param caseNames list case names
+     * @param caseDataSourcePaths two dimensional array listing the datasources in each case
      * @param ingestJobSettings HashLookup FileType etc...
      * @param caseReferenceToStore
      */
-    Case createCases(IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException {
+    Case createCases(String[] caseNames, Path[][] caseDataSourcePaths, IngestJobSettings ingestJobSettings, String caseReferenceToStore) throws TskCoreException {
 
         Case currentCase = null;
 
-        String[] cases = new String[]{
-            CASE1,
-            CASE2,
-            CASE3};
-
-        Path[][] paths = {
-            {this.case1DataSet1Path, this.case1DataSet2Path},
-            {this.case2DataSet1Path, this.case2DataSet2Path},
-            {this.case3DataSet1Path, this.case3DataSet2Path}};
+        if(caseNames.length != caseDataSourcePaths.length){
+            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of the values given in the 'cases' parameter.").getMessage());
+        }
 
         String lastCaseName = null;
         Path[] lastPathsForCase = null;
         //iterate over the collections above, creating cases, and storing
         //  just one of them for future reference
-        for (int i = 0; i < cases.length; i++) {
-            String caseName = cases[i];
-            Path[] pathsForCase = paths[i];
+        for (int i = 0; i < caseNames.length; i++) {
+            String caseName = caseNames[i];
+            Path[] pathsForCase = caseDataSourcePaths[i];
 
             if (caseName.equals(caseReferenceToStore)) {
                 //put aside and do this one last so we can hang onto the case
@@ -280,7 +389,7 @@ class InterCaseTestUtils {
         }
 
         if (currentCase == null) {
-            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of: CASE1, CASE2, CASE3").getMessage());
+            Assert.fail(new IllegalArgumentException("caseReferenceToStore should be one of the values given in the 'cases' parameter.").getMessage());
             return null;
         } else {
             return currentCase;
@@ -304,70 +413,97 @@ class InterCaseTestUtils {
         }
     }
     
-    //TODO refactor
-    static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount){
-        
-        int tally = 0;
-        
-        for(Map.Entry<Integer, List<CommonAttributeValue>> entry : searchDomain.getMetadata().entrySet()){
-            
-            for(CommonAttributeValue value : entry.getValue()){
-                
-                for(AbstractCommonAttributeInstance commonAttribute : value.getInstances()){
-                    
-                    if(commonAttribute instanceof CentralRepoCommonAttributeInstance){
-                        CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
-                        for (DisplayableItemNode din : results.generateNodes()){
-                            
-                            if(din instanceof CentralRepoCommonAttributeInstanceNode){
-                                
-                                CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
-                                CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
-                                
-                                final String fullPath = instance.getFilePath();
-                                final File testFile = new File(fullPath);
+    static boolean verifyInstanceCount(CommonAttributeSearchResults searchDomain, int instanceCount){
+        try {
+            int tally = 0;
 
-                                final String testCaseName = instance.getCorrelationCase().getDisplayName();
+            for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
+                entry.getValue().displayDelayedMetadata();
+                for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
 
-                                final String testFileName = testFile.getName();
+                    tally += value.getInstanceCount();
+                }
+            }
 
-                                final String testDataSource = instance.getCorrelationDataSource().getName();
+            return tally == instanceCount;
 
-                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+            return false;
+        }
+    }
 
-                                if( sameFileName && sameDataSource && sameCrCase){
-                                    tally++;
-                                } 
-                            }
-                            
-                            if(din instanceof CaseDBCommonAttributeInstanceNode){
-                                
-                                CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
-                                AbstractFile file = node.getContent();
-                                
-                                final String testFileName = file.getName();
-                                final String testCaseName = node.getCase();
-                                final String testDataSource = node.getDataSource();
-                                
-                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
-                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                
-                                if(sameFileName && sameDataSource && sameCaseName){
-                                    tally++;
+    static boolean verifyInstanceExistanceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
+
+        try {
+            int tally = 0;
+
+            for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
+                entry.getValue().displayDelayedMetadata();
+                for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
+
+                    for (AbstractCommonAttributeInstance commonAttribute : value.getInstances()) {
+
+                        if (commonAttribute instanceof CentralRepoCommonAttributeInstance) {
+                            CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
+                            for (DisplayableItemNode din : results.generateNodes()) {
+
+                                if (din instanceof CentralRepoCommonAttributeInstanceNode) {
+
+                                    CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
+                                    CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
+
+                                    final String fullPath = instance.getFilePath();
+                                    final File testFile = new File(fullPath);
+
+                                    final String testCaseName = instance.getCorrelationCase().getDisplayName();
+
+                                    final String testFileName = testFile.getName();
+
+                                    final String testDataSource = instance.getCorrelationDataSource().getName();
+
+                                    boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                    boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+                                    boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
+
+                                    if (sameFileName && sameDataSource && sameCrCase) {
+                                        tally++;
+                                    }
+                                }
+
+                                if (din instanceof CaseDBCommonAttributeInstanceNode) {
+
+                                    CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
+                                    AbstractFile file = node.getContent();
+
+                                    final String testFileName = file.getName();
+                                    final String testCaseName = node.getCase();
+                                    final String testDataSource = node.getDataSource();
+
+                                    boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                    boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
+                                    boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+
+                                    if (sameFileName && sameDataSource && sameCaseName) {
+                                        tally++;
+                                    }
                                 }
                             }
+                        } else {
+                            Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
                         }
-                    } else {
-                        Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
                     }
-                }                
+                }
             }
+
+            return tally == instanceCount;
+
+        } catch (EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+            return false;
         }
-        
-        return tally == instanceCount;
     }
 
     /**
@@ -375,18 +511,43 @@ class InterCaseTestUtils {
      * central repo db.
      */
     void tearDown() {
-        
+
         CaseUtils.closeCurrentCase(false);
-        
-        String[] cases  = new String[]{CASE1,CASE2,CASE3};
-        
+
+        String[] cases = new String[]{CASE1, CASE2, CASE3};
+
         try {
-            for(String caze : cases){
+            for (String caze : cases) {
                 CaseUtils.deleteCaseDir(new File(caze));
             }
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * Is everything in metadata a result of the given attribute type?
+     * 
+     * @param metadata
+     * @param attributeType
+     * @return true if yes, else false
+     */
+    boolean areAllResultsOfType(CommonAttributeSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
+        try {
+            for(CommonAttributeValueList matches : metadata.getMetadata().values()){
+                for(CommonAttributeValue value : matches.getMetadataList()){
+                    return value
+                            .getInstances()
+                            .stream()
+                            .allMatch(inst -> inst.getCorrelationAttributeInstanceType().equals(attributeType));    
+                }
+                return false;
+            }
+            return false;
+        } catch (EamDbException ex) {
+            Assert.fail(ex.getMessage());
+            return false;
         }
     }
 }
