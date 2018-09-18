@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
@@ -208,7 +209,7 @@ class Ingester {
      * /update handler e.g. with XMLUpdateRequestHandler (deprecated in SOlr
      * 4.0.0), see if possible to stream with UpdateRequestHandler
      *
-     * @param chunk  The chunk content as a string
+     * @param chunk  The chunk content as a string, or null for metadata only
      * @param fields
      * @param size
      *
@@ -231,13 +232,23 @@ class Ingester {
         for (String key : fields.keySet()) {
             updateDoc.addField(key, fields.get(key));
         }
-        //add the content to the SolrInputDocument
-        //JMTODO: can we just add it to the field map before passing that in?
-        updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
 
         try {
             //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
+
+            //add the content to the SolrInputDocument
+            //JMTODO: can we just add it to the field map before passing that in?
+            updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
+
+            // We also add the content (if present) in lowercase form to facilitate case
+            // insensitive substring/regular expression search.
+            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
+            if (indexSchemaVersion >= 2.1) {
+                updateDoc.addField(Server.Schema.CONTENT_STR.toString(), ((chunk == null) ? "" : chunk.toLowerCase()));
+            }
+
             TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
+
             solrServer.addDocument(updateDoc);
             HealthMonitor.submitTimingMetric(metric);
             uncommitedIngests = true;

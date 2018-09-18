@@ -36,7 +36,6 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,9 +43,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import static org.sleuthkit.autopsy.keywordsearch.KeywordSearchSettings.MODULE_NAME;
-import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.CREDIT_CARD_NUM_PATTERN;
-import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.CREDIT_CARD_TRACK2_PATTERN;
-import static org.sleuthkit.autopsy.keywordsearch.TermsComponentQuery.KEYWORD_SEARCH_DOCUMENT_ID;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
@@ -92,6 +88,61 @@ final class RegexQuery implements KeywordSearchQuery {
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
     private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
+
+    /*
+     * The following fields are part of the initial implementation of credit
+     * card account search and should be factored into another class when time
+     * permits.
+     */
+    /**
+     * 12-19 digits, with possible single spaces or dashes in between. First
+     * digit is 2 through 6
+     *
+     */
+    static final Pattern CREDIT_CARD_NUM_PATTERN
+            = Pattern.compile("(?<ccn>[2-6]([ -]?[0-9]){11,18})");
+    static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
+            /*
+             * Track 1 is alphanumeric.
+             *
+             * This regex matches 12-19 digit ccns embeded in a track 1 formated
+             * string. This regex matches (and extracts groups) even if the
+             * entire track is not present as long as the part that is conforms
+             * to the track format.
+             */
+            "(?:" //begin nested optinal group //NON-NLS
+            + "%?" //optional start sentinal: % //NON-NLS
+            + "B)?" //format code  //NON-NLS
+            + "(?<accountNumber>[2-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 2,3,4,5, or 6 //NON-NLS
+            + "\\^" //separator //NON-NLS
+            + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
+            + "(?:\\^" //separator //NON-NLS
+            + "(?:(?:\\^|(?<expiration>\\d{4}))" //separator or 4 digit expiration YYMM //NON-NLS
+            + "(?:(?:\\^|(?<serviceCode>\\d{3}))"//separator or 3 digit service code //NON-NLS
+            + "(?:(?<discretionary>[^?]*)" // discretionary data not containing separator //NON-NLS
+            + "(?:\\?" // end sentinal: ? //NON-NLS
+            + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
+            + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
+    static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
+            /*
+             * Track 2 is numeric plus six punctuation symbolls :;<=>?
+             *
+             * This regex matches 12-19 digit ccns embeded in a track 2 formated
+             * string. This regex matches (and extracts groups) even if the
+             * entire track is not present as long as the part that is conforms
+             * to the track format.
+             *
+             */
+            "[:;<=>?]?" //(optional)start sentinel //NON-NLS
+            + "(?<accountNumber>[2-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 2,3,4,5, or 6 //NON-NLS
+            + "(?:[:;<=>?]" //separator //NON-NLS
+            + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
+            + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
+            + "(?:(?<discretionary>[^:;<=>?]*)" //discretionary data, not containing punctuation marks //NON-NLS
+            + "(?:[:;<=>?]" //end sentinel //NON-NLS
+            + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
+            + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
+    static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private final KeywordList keywordList;
@@ -172,10 +223,13 @@ final class RegexQuery implements KeywordSearchQuery {
         // a regular expression search) and .* as anchors (if the query doesn't
         // already have them). We do not add .* if there is a boundary character.
         boolean skipWildcardPrefix = queryStringContainsWildcardPrefix || getQueryString().startsWith("^");
-        boolean skipWildcardSuffix = queryStringContainsWildcardSuffix || 
-                (getQueryString().endsWith("$") && ( ! getQueryString().endsWith("\\$")));
+        boolean skipWildcardSuffix = queryStringContainsWildcardSuffix
+                || (getQueryString().endsWith("$") && (!getQueryString().endsWith("\\$")));
         solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/"
-                + (skipWildcardPrefix ? "" : ".*") + getQueryString()
+                + (skipWildcardPrefix ? "" : ".*")
+                // if the query is for a substring (i.e. literal search term) we want
+                // to escape characters such as ()[]-.
+                + (originalKeyword.searchTermIsLiteral() ? getEscapedQueryString().toLowerCase() : getQueryString().toLowerCase())
                 + (skipWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
@@ -241,7 +295,28 @@ final class RegexQuery implements KeywordSearchQuery {
 
         final Collection<Object> content_str = solrDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
-        final Pattern pattern = Pattern.compile(keywordString);
+        String searchPattern;
+        if (originalKeyword.searchTermIsLiteral()) {
+            /**
+             * For substring searches, the following pattern was arrived at
+             * through trial and error in an attempt to reproduce the same hits
+             * we were getting when we were using the TermComponent approach.
+             * This basically looks for zero of more word characters followed
+             * optionally by a dot or apostrophe, followed by the quoted
+             * lowercase substring following by zero or more word characters
+             * followed optionally by a dot or apostrophe. The reason that the
+             * dot and apostrophe characters are being handled here is because
+             * the old code used to find hits in domain names (e.g. hacks.ie)
+             * and possessives (e.g. hacker's). This obviously works for English
+             * but is probably not sufficient for other languages.
+             */
+            searchPattern = "[\\w[\\.']]*" + Pattern.quote(keywordString.toLowerCase()) + "[\\w[\\.']]*";
+        } else {
+            searchPattern = keywordString;
+        }
+
+        final Pattern pattern = Pattern.compile(searchPattern, Pattern.CASE_INSENSITIVE);
+
         try {
             for (Object content_obj : content_str) {
                 String content = (String) content_obj;
@@ -280,6 +355,31 @@ final class RegexQuery implements KeywordSearchQuery {
                         }
                         // Replace all non numeric at the end of the hit.
                         hit = hit.replaceAll("[^0-9]$", "");
+                    }
+
+                    /**
+                     * Boundary characters are removed from the start and end of
+                     * the hit to normalize the hits. This is being done for
+                     * substring searches only at this point. We don't do it for
+                     * real regular expression searches because the user may
+                     * have explicitly included boundary characters in their
+                     * regular expression.
+                     */
+                    if (originalKeyword.searchTermIsLiteral()) {
+                        hit = hit.replaceAll("^" + KeywordSearchList.BOUNDARY_CHARACTERS + "*", "");
+                        hit = hit.replaceAll(KeywordSearchList.BOUNDARY_CHARACTERS + "*$", "");
+
+                        /**
+                         * The Solr StandardTokenizerFactory maximum token
+                         * length is 255 and attempts to search for tokens
+                         * larger than this limit fail when we attempt to
+                         * highlight later. I have't found a programmatic
+                         * mechanism to get this value so I'm hardcoding it
+                         * here.
+                         */
+                        if (hit.length() > 255) {
+                            break;
+                        }
                     }
 
                     /**
@@ -340,7 +440,6 @@ final class RegexQuery implements KeywordSearchQuery {
                         }
                     }
                 }
-
             }
         } catch (Throwable error) {
             /*
@@ -457,24 +556,24 @@ final class RegexQuery implements KeywordSearchQuery {
             createCCNAccount(content, foundKeyword, hit, snippet, listName);
             return null;
         }
-        
+
         /*
-         * Create a "plain vanilla" keyword hit artifact with keyword and
-         * regex attributes
+         * Create a "plain vanilla" keyword hit artifact with keyword and regex
+         * attributes
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        
+
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
-        
+
         try {
             newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
             return null;
         }
-        
+
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
@@ -486,7 +585,11 @@ final class RegexQuery implements KeywordSearchQuery {
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+        if (originalKeyword.searchTermIsLiteral()) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+        } else {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+        }
 
         try {
             newArtifact.addAttributes(attributes);
@@ -498,7 +601,7 @@ final class RegexQuery implements KeywordSearchQuery {
     }
 
     private void createCCNAccount(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
-        
+
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
@@ -506,14 +609,14 @@ final class RegexQuery implements KeywordSearchQuery {
             return;
         }
         /*
-         * Create a credit card account  with attributes
-         * parsed from the snippet for the hit and looked up based on the
-         * parsed bank identifcation number.
+         * Create a credit card account with attributes parsed from the snippet
+         * for the hit and looked up based on the parsed bank identifcation
+         * number.
          */
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        
+
         Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
-        Matcher matcher = TermsComponentQuery.CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
+        Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
         if (matcher.find()) {
             parseTrack1Data(parsedTrackAttributeMap, matcher);
         }
@@ -523,7 +626,7 @@ final class RegexQuery implements KeywordSearchQuery {
         }
         final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
         if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
-           
+
             if (hit.isArtifactHit()) {
                 LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
             } else {
@@ -565,8 +668,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         /*
          * If the hit is from unused or unallocated space, record the Solr
-         * document id to support showing just the chunk that contained the
-         * hit.
+         * document id to support showing just the chunk that contained the hit.
          */
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
@@ -586,24 +688,24 @@ final class RegexQuery implements KeywordSearchQuery {
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
-        
+
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
-        
-        
+
         /*
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
-            
+            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content);
+
             ccAccountInstance.addAttributes(attributes);
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS
-            
+
         }
-        
+
     }
+
     /**
      * Parses the track 2 data from the snippet for a credit card account number
      * hit and turns them into artifact attributes.
@@ -649,14 +751,14 @@ final class RegexQuery implements KeywordSearchQuery {
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
 
-        if( ! attributeMap.containsKey(type)) {
+        if (!attributeMap.containsKey(type)) {
             String value = matcher.group(groupName);
             if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
                 attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD),
                         new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
-            
+
             if (StringUtils.isNotBlank(value)) {
                 attributeMap.put(type, new BlackboardAttribute(attrType, MODULE_NAME, value));
             }
