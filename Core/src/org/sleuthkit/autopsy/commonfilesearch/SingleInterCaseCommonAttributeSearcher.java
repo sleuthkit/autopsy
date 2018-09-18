@@ -46,9 +46,9 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      *
      * @throws EamDbException
      */
-    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType,
+    public SingleInterCaseCommonAttributeSearcher(int correlationCaseId, boolean filterByMediaMimeType,
             boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
+        super(filterByMediaMimeType, filterByDocMimeType, corAttrType, percentageThreshold);
 
         this.corrleationCaseId = correlationCaseId;
         this.correlationCaseName = "";
@@ -77,7 +77,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
     }
 
     CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.getDataSourceIdToNameMap(), this.corAttrType);
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
 
         return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
