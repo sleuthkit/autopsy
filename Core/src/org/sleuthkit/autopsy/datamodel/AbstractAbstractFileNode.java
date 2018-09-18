@@ -462,6 +462,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param file The file.
      *
      * @return The CSV list of hash set names.
+     * @deprecated
      */
     @Deprecated
     protected static String getHashSetHitsCsvList(AbstractFile file) {
