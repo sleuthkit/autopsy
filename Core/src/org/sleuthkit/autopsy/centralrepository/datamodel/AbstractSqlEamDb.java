@@ -230,7 +230,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + "examiner_name, examiner_email, examiner_phone, notes) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
-
+        ResultSet resultSet = null;
         try {
             preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
@@ -270,7 +270,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
             preparedStatement.executeUpdate();
             //update the case in the caches
-            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
                 throw new EamDbException(String.format("Failed to INSERT case %s in central repo", eamCase.getCaseUUID()));
             }
@@ -283,6 +283,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new case.", ex); // NON-NLS
         } finally {
+            EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
@@ -584,7 +585,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String sql = "INSERT INTO data_sources(device_id, case_id, name) VALUES (?, ?, ?) "
                 + getConflictClause();
-
+        ResultSet resultSet = null;
         try {
             preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
@@ -593,7 +594,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(3, eamDataSource.getName());
 
             preparedStatement.executeUpdate();
-            ResultSet resultSet = preparedStatement.getGeneratedKeys();
+            resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
                 throw new EamDbException(String.format("Failed to INSERT data source %s in central repo", eamDataSource.getName()));
             }
@@ -604,6 +605,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
         } finally {
+            EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
