@@ -116,7 +116,7 @@ final public class CommonAttributeSearchResults {
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
         }
         
-        CorrelationAttributeInstance.Type fileAttributeType = CorrelationAttributeInstance
+        CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()
                 .filter(filterType -> filterType.getId() == this.resultTypeId)
@@ -125,6 +125,9 @@ final public class CommonAttributeSearchResults {
         EamDb eamDb = EamDb.getInstance();
         
         Map<Integer, List<CommonAttributeValue>> itemsToRemove = new HashMap<>();
+        //Call countUniqueDataSources once to reduce the number of DB queries needed to get
+        //the frequencyPercentage
+        Double uniqueCaseDataSourceTuples = eamDb.getCountUniqueDataSources().doubleValue();
         
         for(Entry<Integer, CommonAttributeValueList> listOfValues : Collections.unmodifiableMap(this.instanceCountToAttributeValues).entrySet()){
             
@@ -134,7 +137,10 @@ final public class CommonAttributeSearchResults {
             for(CommonAttributeValue value : values.getDelayedMetadataList()){ // Need the real metadata
                 
                 try {
-                    int frequencyPercentage = eamDb.getFrequencyPercentage(new CorrelationAttributeInstance(fileAttributeType, value.getValue()));
+                    Double uniqueTypeValueTuples = eamDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(
+                            attributeType, value.getValue()).doubleValue();
+                    Double commonalityPercentage = uniqueTypeValueTuples / uniqueCaseDataSourceTuples * 100;
+                    int frequencyPercentage = commonalityPercentage.intValue();
                 
                     if(frequencyPercentage > maximumPercentageThreshold){
                         if(itemsToRemove.containsKey(key)){

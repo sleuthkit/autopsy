@@ -90,12 +90,12 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         addScoreProperty(sheetSet, tags);
         
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
         
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));

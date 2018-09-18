@@ -71,7 +71,7 @@ public final class UserPreferences {
     private static final int LOG_FILE_NUM_INT = 10;
     public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
-    public static final String HIDE_CENTRAL_REPO_NOTIFICATIONS = "HideCentralRepoNotifications";
+    public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -222,18 +222,27 @@ public final class UserPreferences {
     }
 
     /**
-     * //DLG:
+     * Get the user preference which identifies whether the Central Repository
+     * should be called to get comments and occurrences for the (C)omments and
+     * (O)ccurrences columns in the result view.
+     * 
+     * @return True if hiding Central Repository data for comments and
+     *         occurrences; otherwise false.
      */
-    public static boolean hideCentralRepoNotifications() {
-        return preferences.getBoolean(HIDE_CENTRAL_REPO_NOTIFICATIONS, false);
+    public static boolean hideCentralRepoCommentsAndOccurrences() {
+        return preferences.getBoolean(HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES, false);
     }
 
 
     /**
-     * //DLG:
+     * Set the user preference which identifies whether the Central Repository
+     * should be called to get comments and occurrences for the (C)omments and
+     * (O)ccurrences columns in the result view.
+     * 
+     * @param value The value of which to assign to the user preference.
      */
-    public static void setHideCentralRepoNotifications(boolean value) {
-        preferences.putBoolean(HIDE_CENTRAL_REPO_NOTIFICATIONS, value);
+    public static void setHideCentralRepoCommentsAndOccurrences(boolean value) {
+        preferences.putBoolean(HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES, value);
     }
 
     /**

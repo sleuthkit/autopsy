@@ -355,12 +355,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         addScoreProperty(sheetSet, tags);
         
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
         
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {

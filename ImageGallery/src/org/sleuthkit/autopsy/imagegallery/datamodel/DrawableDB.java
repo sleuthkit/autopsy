@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,7 +39,9 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -46,9 +49,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
+import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
@@ -59,24 +64,26 @@ import static org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy.
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
- * This class is the public interface to the Image / Video Analyzer SQLite
- * database. This class borrows a lot of ideas and techniques (for good or ill)
- * from {@link  SleuthkitCase}.
- *
- * TODO: Creating an abstract base class for sqlite databases may make sense in
- * the future. see also {@link EventsDB} in the timeline viewer.
+ * This class is the public interface to the Image Gallery SQLite database. This
+ * class borrows a lot of ideas and techniques (for good or ill) from
+ * SleuthkitCase
  */
 public final class DrawableDB {
 
-    private static final org.sleuthkit.autopsy.coreutils.Logger LOGGER = Logger.getLogger(DrawableDB.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableDB.class.getName());
 
     //column name constants//////////////////////
     private static final String ANALYZED = "analyzed"; //NON-NLS
@@ -85,23 +92,22 @@ public final class DrawableDB {
 
     private static final String HASH_SET_NAME = "hash_set_name"; //NON-NLS
 
+    private static final String GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
+    private static final String GROUPS_SEEN_TABLENAME = "image_gallery_groups_seen"; //NON-NLS
+
     private final PreparedStatement insertHashSetStmt;
-
-    private final PreparedStatement groupSeenQueryStmt;
-
-    private final PreparedStatement insertGroupStmt;
 
     private final List<PreparedStatement> preparedStatements = new ArrayList<>();
 
     private final PreparedStatement removeFileStmt;
-
-    private final PreparedStatement updateGroupStmt;
 
     private final PreparedStatement selectHashSetStmt;
 
     private final PreparedStatement selectHashSetNamesStmt;
 
     private final PreparedStatement insertHashHitStmt;
+
+    private final PreparedStatement updateDataSourceStmt;
 
     private final PreparedStatement updateFileStmt;
     private final PreparedStatement insertFileStmt;
@@ -122,11 +128,14 @@ public final class DrawableDB {
 
     private final PreparedStatement hashSetGroupStmt;
 
+    private final PreparedStatement pathGroupFilterByDataSrcStmt;
+
     /**
-     * map from {@link DrawableAttribute} to the {@link PreparedStatement} thet
+     * map from {@link DrawableAttribute} to the {@link PreparedStatement} that
      * is used to select groups for that attribute
      */
     private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementMap = new HashMap<>();
+    private final Map<DrawableAttribute<?>, PreparedStatement> groupStatementFilterByDataSrcMap = new HashMap<>();
 
     private final GroupManager groupManager;
 
@@ -142,11 +151,20 @@ public final class DrawableDB {
         try {
             Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to load sqlite JDBC driver", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to load sqlite JDBC driver", ex); //NON-NLS
         }
     }
     private final SleuthkitCase tskCase;
     private final ImageGalleryController controller;
+
+    /**
+     * Enum to track Image gallery db rebuild status for a data source
+     */
+    public enum DrawableDbBuildStatusEnum {
+        UNKNOWN, /// no known status
+        IN_PROGRESS, /// drawable db rebuild has been started for the data source
+        COMPLETE;       /// drawable db rebuild is complete for the data source
+    }
 
     //////////////general database logic , mostly borrowed from sleuthkitcase
     /**
@@ -195,7 +213,7 @@ public final class DrawableDB {
      *
      * @throws SQLException if there is problem creating or configuring the db
      */
-    private DrawableDB(Path dbPath, ImageGalleryController controller) throws SQLException, ExceptionInInitializerError, IOException {
+    private DrawableDB(Path dbPath, ImageGalleryController controller) throws TskCoreException, SQLException, IOException {
         this.dbPath = dbPath;
         this.controller = controller;
         this.tskCase = controller.getSleuthKitCase();
@@ -203,11 +221,15 @@ public final class DrawableDB {
         Files.createDirectories(dbPath.getParent());
         if (initializeDBSchema()) {
             updateFileStmt = prepareStatement(
-                    "INSERT OR REPLACE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
-                    + "VALUES (?,?,?,?,?,?,?,?)"); //NON-NLS
+                    "INSERT OR REPLACE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
+                    + "VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
             insertFileStmt = prepareStatement(
-                    "INSERT OR IGNORE INTO drawable_files (obj_id , path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
-                    + "VALUES (?,?,?,?,?,?,?,?)"); //NON-NLS
+                    "INSERT OR IGNORE INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed) " //NON-NLS
+                    + "VALUES (?,?,?,?,?,?,?,?,?)"); //NON-NLS
+
+            updateDataSourceStmt = prepareStatement(
+                    "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
+                    + " VALUES (?,?)"); //NON-NLS
 
             removeFileStmt = prepareStatement("DELETE FROM drawable_files WHERE obj_id = ?"); //NON-NLS
 
@@ -220,10 +242,8 @@ public final class DrawableDB {
             analyzedGroupStmt = prepareStatement("SELECT obj_id , analyzed FROM drawable_files WHERE analyzed = ?", DrawableAttribute.ANALYZED); //NON-NLS
             hashSetGroupStmt = prepareStatement("SELECT drawable_files.obj_id AS obj_id, analyzed FROM drawable_files ,  hash_sets , hash_set_hits  WHERE drawable_files.obj_id = hash_set_hits.obj_id AND hash_sets.hash_set_id = hash_set_hits.hash_set_id AND hash_sets.hash_set_name = ?", DrawableAttribute.HASHSET); //NON-NLS
 
-            updateGroupStmt = prepareStatement("insert or replace into groups (seen, value, attribute) values( ?, ? , ?)"); //NON-NLS
-            insertGroupStmt = prepareStatement("insert or ignore into groups (value, attribute) values (?,?)"); //NON-NLS
-
-            groupSeenQueryStmt = prepareStatement("SELECT seen FROM groups WHERE value = ? AND attribute = ?"); //NON-NLS
+            //add other xyzFilterByDataSrc prepared statments as we add support for filtering by DS to other groups
+            pathGroupFilterByDataSrcStmt = prepareFilterByDataSrcStatement("SELECT obj_id , analyzed FROM drawable_files WHERE path  = ? AND data_source_obj_id = ?", DrawableAttribute.PATH);
 
             selectHashSetNamesStmt = prepareStatement("SELECT DISTINCT hash_set_name FROM hash_sets"); //NON-NLS
             insertHashSetStmt = prepareStatement("INSERT OR IGNORE INTO hash_sets (hash_set_name)  VALUES (?)"); //NON-NLS
@@ -231,14 +251,28 @@ public final class DrawableDB {
 
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
 
-            for (DhsImageCategory cat : DhsImageCategory.values()) {
-                insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY);
+            CaseDbTransaction caseDbTransaction = null;
+            try {
+                caseDbTransaction = tskCase.beginTransaction();
+                for (DhsImageCategory cat : DhsImageCategory.values()) {
+                    insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
+                }
+                caseDbTransaction.commit();
+            } catch (TskCoreException ex) {
+                if (null != caseDbTransaction) {
+                    try {
+                        caseDbTransaction.rollback();
+                    } catch (TskCoreException ex2) {
+                        logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2);
+                    }
+                }
+                throw ex;
             }
+
             initializeImageList();
         } else {
-            throw new ExceptionInInitializerError();
+            throw new TskCoreException("Failed to initialize Image Gallery db schema");
         }
-
     }
 
     /**
@@ -281,23 +315,55 @@ public final class DrawableDB {
     }
 
     /**
-     * public factory method. Creates and opens a connection to a new database *
-     * at the given path.
+     * calls {@link DrawableDB#prepareStatement(java.lang.String) ,
+     *  and then add the statement to the groupStatementFilterByDataSrcMap map used to lookup
+     * statements by the attribute/column they group on
      *
-     * @param dbPath
+     * @param stmtString the string representation of the sqlite statement to
+     *                   prepare
+     * @param attr       the {@link DrawableAttribute} this query groups by
+     *      *
+     * @return the prepared statement
      *
-     * @return
+     * @throws SQLExceptionif unable to prepare the statement
      */
-    public static DrawableDB getDrawableDB(Path dbPath, ImageGalleryController controller) {
+    private PreparedStatement prepareFilterByDataSrcStatement(String stmtString, DrawableAttribute<?> attr) throws SQLException {
+        PreparedStatement prepareStatement = prepareStatement(stmtString);
+        if (attr != null) {
+            groupStatementFilterByDataSrcMap.put(attr, prepareStatement);
+        }
 
+        return prepareStatement;
+    }
+
+    private void setQueryParams(PreparedStatement statement, GroupKey<?> groupKey) throws SQLException {
+
+        statement.setObject(1, groupKey.getValue());
+
+        if (groupKey.getDataSource().isPresent()
+            && (groupKey.getAttribute() == DrawableAttribute.PATH)) {
+            statement.setObject(2, groupKey.getDataSourceObjId());
+        }
+    }
+
+    /**
+     * public factory method. Creates and opens a connection to a new database *
+     * at the given path. *
+     *
+     * @param controller
+     *
+     * @return A DrawableDB for the given controller.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
+        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase());
         try {
             return new DrawableDB(dbPath.resolve("drawable.db"), controller); //NON-NLS
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "sql error creating database connection", ex); //NON-NLS
-            return null;
-        } catch (ExceptionInInitializerError | IOException ex) {
-            LOGGER.log(Level.SEVERE, "error creating database connection", ex); //NON-NLS
-            return null;
+            throw new TskCoreException("sql error creating database connection", ex); //NON-NLS
+        } catch (IOException ex) {
+            throw new TskCoreException("Error creating database connection", ex); //NON-NLS
         }
     }
 
@@ -328,11 +394,11 @@ public final class DrawableDB {
         }
 
         try {
-            LOGGER.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode", //NON-NLS
+            logger.log(Level.INFO, String.format("sqlite-jdbc version %s loaded in %s mode", //NON-NLS
                     SQLiteJDBCLoader.getVersion(), SQLiteJDBCLoader.isNativeMode()
-                            ? "native" : "pure-java")); //NON-NLS
+                    ? "native" : "pure-java")); //NON-NLS
         } catch (Exception exception) {
-            LOGGER.log(Level.WARNING, "exception while checking sqlite-jdbc version and mode", exception); //NON-NLS
+            logger.log(Level.WARNING, "exception while checking sqlite-jdbc version and mode", exception); //NON-NLS
         }
 
     }
@@ -351,56 +417,92 @@ public final class DrawableDB {
             setPragmas();
 
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem accessing database", ex); //NON-NLS
-            return false;
-        }
-        try (Statement stmt = con.createStatement()) {
-            String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
-                    + "( obj_id INTEGER PRIMARY KEY, " //NON-NLS
-                    + " path VARCHAR(255), " //NON-NLS
-                    + " name VARCHAR(255), " //NON-NLS
-                    + " created_time integer, " //NON-NLS
-                    + " modified_time integer, " //NON-NLS
-                    + " make VARCHAR(255), " //NON-NLS
-                    + " model VARCHAR(255), " //NON-NLS
-                    + " analyzed integer DEFAULT 0)"; //NON-NLS
-            stmt.execute(sql);
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem creating drawable_files table", ex); //NON-NLS
+            logger.log(Level.SEVERE, "problem accessing database", ex); //NON-NLS
             return false;
         }
 
         try (Statement stmt = con.createStatement()) {
-            String sql = "CREATE TABLE  if not exists groups " //NON-NLS
-                    + "(group_id INTEGER PRIMARY KEY, " //NON-NLS
-                    + " value VARCHAR(255) not null, " //NON-NLS
-                    + " attribute VARCHAR(255) not null, " //NON-NLS
-                    + " seen integer DEFAULT 0, " //NON-NLS
-                    + " UNIQUE(value, attribute) )"; //NON-NLS
+            String sql = "CREATE TABLE IF NOT EXISTS datasources " //NON-NLS
+                         + "( id INTEGER PRIMARY KEY, " //NON-NLS
+                         + " ds_obj_id integer UNIQUE NOT NULL, "
+                         + " drawable_db_build_status VARCHAR(128) )"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
+            logger.log(Level.SEVERE, "problem creating datasources table", ex); //NON-NLS
+            return false;
+        }
+
+        try (Statement stmt = con.createStatement()) {
+            String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
+                         + "( obj_id INTEGER PRIMARY KEY, " //NON-NLS
+                         + " data_source_obj_id INTEGER NOT NULL, "
+                         + " path VARCHAR(255), " //NON-NLS
+                         + " name VARCHAR(255), " //NON-NLS
+                         + " created_time integer, " //NON-NLS
+                         + " modified_time integer, " //NON-NLS
+                         + " make VARCHAR(255), " //NON-NLS
+                         + " model VARCHAR(255), " //NON-NLS
+                         + " analyzed integer DEFAULT 0)"; //NON-NLS
+            stmt.execute(sql);
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "problem creating drawable_files table", ex); //NON-NLS
+            return false;
+        }
+
+        String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
+
+        // The image_gallery_groups table is created in the Case Database
+        try {
+            String tableSchema
+                    = "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
+                      + " data_source_obj_id integer DEFAULT 0, "
+                      + " value VARCHAR(255) not null, " //NON-NLS
+                      + " attribute VARCHAR(255) not null, " //NON-NLS
+                      + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
+
+            tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "problem creating groups table", ex); //NON-NLS
+            return false;
+        }
+
+        // The image_gallery_groups_seen table is created in the Case Database
+        try {
+
+            String tableSchema
+                    = "( id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
+                      + " group_id integer not null, " //NON-NLS
+                      + " examiner_id integer not null, " //NON-NLS
+                      + " seen integer DEFAULT 0, " //NON-NLS
+                      + " UNIQUE(group_id, examiner_id),"
+                      + " FOREIGN KEY(group_id) REFERENCES " + GROUPS_TABLENAME + "(group_id),"
+                      + " FOREIGN KEY(examiner_id) REFERENCES  tsk_examiners(examiner_id)"
+                      + " )"; //NON-NLS
+
+            tskCase.getCaseDbAccessManager().createTable(GROUPS_SEEN_TABLENAME, tableSchema);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "problem creating image_gallery_groups_seen table", ex); //NON-NLS
             return false;
         }
 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists hash_sets " //NON-NLS
-                    + "( hash_set_id INTEGER primary key," //NON-NLS
-                    + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)"; //NON-NLS
+                         + "( hash_set_id INTEGER primary key," //NON-NLS
+                         + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem creating hash_sets table", ex); //NON-NLS
+            logger.log(Level.SEVERE, "problem creating hash_sets table", ex); //NON-NLS
             return false;
         }
 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE TABLE  if not exists hash_set_hits " //NON-NLS
-                    + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, " //NON-NLS
-                    + " obj_id INTEGER REFERENCES drawable_files(obj_id) not null, " //NON-NLS
-                    + " PRIMARY KEY (hash_set_id, obj_id))"; //NON-NLS
+                         + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, " //NON-NLS
+                         + " obj_id INTEGER REFERENCES drawable_files(obj_id) not null, " //NON-NLS
+                         + " PRIMARY KEY (hash_set_id, obj_id))"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "problem creating hash_set_hits table", ex); //NON-NLS
+            logger.log(Level.SEVERE, "problem creating hash_set_hits table", ex); //NON-NLS
             return false;
         }
 
@@ -408,35 +510,35 @@ public final class DrawableDB {
             String sql = "CREATE  INDEX if not exists path_idx ON drawable_files(path)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem creating path_idx", ex); //NON-NLS
+            logger.log(Level.WARNING, "problem creating path_idx", ex); //NON-NLS
         }
 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists name_idx ON drawable_files(name)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem creating name_idx", ex); //NON-NLS
+            logger.log(Level.WARNING, "problem creating name_idx", ex); //NON-NLS
         }
 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists make_idx ON drawable_files(make)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem creating make_idx", ex); //NON-NLS
+            logger.log(Level.WARNING, "problem creating make_idx", ex); //NON-NLS
         }
 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists model_idx ON drawable_files(model)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem creating model_idx", ex); //NON-NLS
+            logger.log(Level.WARNING, "problem creating model_idx", ex); //NON-NLS
         }
 
         try (Statement stmt = con.createStatement()) {
             String sql = "CREATE  INDEX if not exists analyzed_idx ON drawable_files(analyzed)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem creating analyzed_idx", ex); //NON-NLS
+            logger.log(Level.WARNING, "problem creating analyzed_idx", ex); //NON-NLS
         }
 
         return true;
@@ -457,7 +559,7 @@ public final class DrawableDB {
                 closeStatements();
                 con.close();
             } catch (SQLException ex) {
-                LOGGER.log(Level.WARNING, "Failed to close connection to drawable.db", ex); //NON-NLS
+                logger.log(Level.WARNING, "Failed to close connection to drawable.db", ex); //NON-NLS
             }
         }
         con = null;
@@ -469,7 +571,7 @@ public final class DrawableDB {
                 con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Failed to open connection to drawable.db", ex); //NON-NLS
+            logger.log(Level.WARNING, "Failed to open connection to drawable.db", ex); //NON-NLS
         }
     }
 
@@ -520,47 +622,107 @@ public final class DrawableDB {
                 names.add(rs.getString(HASH_SET_NAME));
             }
         } catch (SQLException sQLException) {
-            LOGGER.log(Level.WARNING, "failed to get hash set names", sQLException); //NON-NLS
+            logger.log(Level.WARNING, "failed to get hash set names", sQLException); //NON-NLS
         } finally {
             dbReadUnlock();
         }
         return names;
     }
 
+    static private String getGroupIdQuery(GroupKey<?> groupKey) {
+        // query to find the group id from attribute/value
+        return String.format(" SELECT group_id FROM " + GROUPS_TABLENAME
+                             + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d",
+                groupKey.getAttribute().attrName.toString(),
+                groupKey.getValueDisplayName(),
+                (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
+    }
+
+    /**
+     * Returns true if the specified group has been any examiner
+     *
+     * @param groupKey
+     *
+     * @return
+     */
     public boolean isGroupSeen(GroupKey<?> groupKey) {
-        dbReadLock();
-        try {
-            groupSeenQueryStmt.clearParameters();
-            groupSeenQueryStmt.setString(1, groupKey.getValueDisplayName());
-            groupSeenQueryStmt.setString(2, groupKey.getAttribute().attrName.toString());
-            try (ResultSet rs = groupSeenQueryStmt.executeQuery()) {
-                while (rs.next()) {
-                    return rs.getBoolean("seen"); //NON-NLS
+        return isGroupSeenByExaminer(groupKey, -1);
+    }
+
+    /**
+     * Returns true if the specified group has been seen by the specified
+     * examiner
+     *
+     * @param groupKey   - key to identify the group
+     * @param examinerId
+     *
+     * @return true if the examine has this group, false otherwise
+     */
+    public boolean isGroupSeenByExaminer(GroupKey<?> groupKey, long examinerId) {
+
+        // Callback to process result of seen query
+        class GroupSeenQueryResultProcessor extends CompletableFuture<Boolean> implements CaseDbAccessQueryCallback {
+
+            @Override
+            public void process(ResultSet resultSet) {
+                try {
+                    if (resultSet != null) {
+                        while (resultSet.next()) {
+                            complete(resultSet.getInt("count") > 0); //NON-NLS;
+                            return;
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get group seen", ex); //NON-NLS
                 }
             }
-        } catch (SQLException ex) {
-            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
-            LOGGER.log(Level.WARNING, msg, ex);
-        } finally {
-            dbReadUnlock();
         }
+        // Callback to process result of seen query
+        GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
+
+        try {
+            String groupSeenQueryStmt = "COUNT(*) as count FROM " + GROUPS_SEEN_TABLENAME
+                                        + " WHERE seen = 1 "
+                                        + " AND group_id in ( " + getGroupIdQuery(groupKey) + ")"
+                                        + (examinerId > 0 ? " AND examiner_id = " + examinerId : "");// query to find the group id from attribute/value 
+
+            tskCase.getCaseDbAccessManager().select(groupSeenQueryStmt, queryResultProcessor);
+            return queryResultProcessor.get();
+        } catch (ExecutionException | InterruptedException | TskCoreException ex) {
+            String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
+            logger.log(Level.WARNING, msg, ex);
+        }
+
         return false;
     }
 
-    public void markGroupSeen(GroupKey<?> gk, boolean seen) {
-        dbWriteLock();
-        try {
-            //PreparedStatement updateGroup = con.prepareStatement("update groups set seen = ? where value = ? and attribute = ?");
-            updateGroupStmt.clearParameters();
-            updateGroupStmt.setBoolean(1, seen);
-            updateGroupStmt.setString(2, gk.getValueDisplayName());
-            updateGroupStmt.setString(3, gk.getAttribute().attrName.toString());
-            updateGroupStmt.execute();
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
-        } finally {
-            dbWriteUnlock();
+    /**
+     * Record in the DB that the group with the given key has the given seen
+     * state for the given examiner id.
+     *
+     * @param groupKey
+     * @param seen
+     * @param examinerID
+     *
+     * @throws TskCoreException
+     */
+    public void markGroupSeen(GroupKey<?> groupKey, boolean seen, long examinerID) throws TskCoreException {
+
+        // query to find the group id from attribute/value
+        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
+                                          + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
+                groupKey.getAttribute().attrName.toString(),
+                groupKey.getValueDisplayName(),
+                groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
+
+        String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
+
+        if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+            insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", seen ? 1 : 0);
         }
+
+        tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
+
     }
 
     public boolean removeFile(long id) {
@@ -571,23 +733,38 @@ public final class DrawableDB {
     }
 
     public void updateFile(DrawableFile f) {
-        DrawableTransaction trans = beginTransaction();
-        updateFile(f, trans);
-        commitTransaction(trans, true);
+        DrawableTransaction trans = null;
+        CaseDbTransaction caseDbTransaction = null;
+
+        try {
+            trans = beginTransaction();
+            caseDbTransaction = tskCase.beginTransaction();
+            updateFile(f, trans, caseDbTransaction);
+            caseDbTransaction.commit();
+            commitTransaction(trans, true);
+
+        } catch (TskCoreException ex) {
+            if (null != caseDbTransaction) {
+                try {
+                    caseDbTransaction.rollback();
+                } catch (TskCoreException ex2) {
+                    logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
+                }
+            }
+            if (null != trans) {
+                rollbackTransaction(trans);
+            }
+            logger.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
+        }
+
     }
 
-    public void insertFile(DrawableFile f) {
-        DrawableTransaction trans = beginTransaction();
-        insertFile(f, trans);
-        commitTransaction(trans, true);
+    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+        insertOrUpdateFile(f, tr, insertFileStmt, caseDbTransaction);
     }
 
-    public void insertFile(DrawableFile f, DrawableTransaction tr) {
-        insertOrUpdateFile(f, tr, insertFileStmt);
-    }
-
-    public void updateFile(DrawableFile f, DrawableTransaction tr) {
-        insertOrUpdateFile(f, tr, updateFileStmt);
+    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+        insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
 
     /**
@@ -603,7 +780,7 @@ public final class DrawableDB {
      * @param tr   a transaction to use, must not be null
      * @param stmt the statement that does the actull inserting
      */
-    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt) {
+    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
 
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
@@ -611,15 +788,16 @@ public final class DrawableDB {
 
         dbWriteLock();
         try {
-            // "INSERT OR IGNORE/ INTO drawable_files (path, name, created_time, modified_time, make, model, analyzed)"
+            // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
-            stmt.setString(2, f.getDrawablePath());
-            stmt.setString(3, f.getName());
-            stmt.setLong(4, f.getCrtime());
-            stmt.setLong(5, f.getMtime());
-            stmt.setString(6, f.getMake());
-            stmt.setString(7, f.getModel());
-            stmt.setBoolean(8, f.isAnalyzed());
+            stmt.setLong(2, f.getAbstractFile().getDataSource().getId());
+            stmt.setString(3, f.getDrawablePath());
+            stmt.setString(4, f.getName());
+            stmt.setLong(5, f.getCrtime());
+            stmt.setLong(6, f.getMtime());
+            stmt.setString(7, f.getMake());
+            stmt.setString(8, f.getModel());
+            stmt.setBoolean(9, f.isAnalyzed());
             stmt.executeUpdate();
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
@@ -646,31 +824,99 @@ public final class DrawableDB {
                     }
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
             }
 
             //and update all groups this file is in
             for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Comparable<?> val : vals) {
-                    //use empty string for null values (mime_type), this shouldn't happen!
                     if (null != val) {
-                        insertGroup(val.toString(), attr);
+                        if (attr == DrawableAttribute.PATH) {
+                            insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
+                        } else {
+                            insertGroup(val.toString(), attr, caseDbTransaction);
+                        }
                     }
                 }
             }
 
             tr.addUpdatedFile(f.getId());
 
-        } catch (SQLException | NullPointerException ex) {
+        } catch (SQLException | NullPointerException | TskCoreException ex) {
             /*
              * This is one of the places where we get an error if the case is
              * closed during processing, which doesn't need to be reported here.
              */
             if (Case.isCaseOpen()) {
-                LOGGER.log(Level.SEVERE, "failed to insert/update file" + f.getContentPathSafe(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "failed to insert/update file" + f.getContentPathSafe(), ex); //NON-NLS
             }
 
+        } finally {
+            dbWriteUnlock();
+        }
+    }
+
+    /**
+     * Gets all data source object ids from datasources table, and their
+     * DrawableDbBuildStatusEnum
+     *
+     * @return map of known data source object ids, and their db status
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public Map<Long, DrawableDbBuildStatusEnum> getDataSourceDbBuildStatus() throws TskCoreException {
+        Statement statement = null;
+        ResultSet rs = null;
+        Map<Long, DrawableDbBuildStatusEnum> map = new HashMap<>();
+        dbReadLock();
+        try {
+            statement = con.createStatement();
+            rs = statement.executeQuery("SELECT ds_obj_id, drawable_db_build_status FROM datasources "); //NON-NLS
+            while (rs.next()) {
+                map.put(rs.getLong("ds_obj_id"), DrawableDbBuildStatusEnum.valueOf(rs.getString("drawable_db_build_status")));
+            }
+        } catch (SQLException e) {
+            throw new TskCoreException("SQLException while getting data source object ids", e);
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing resultset", ex); //NON-NLS
+                }
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error closing statement ", ex); //NON-NLS
+                }
+            }
+            dbReadUnlock();
+        }
+        return map;
+    }
+
+    /**
+     * Insert/update given data source object id and it's DB rebuild status in
+     * the datasources table.
+     *
+     * If the object id exists in the table already, it updates the status
+     *
+     * @param dsObjectId data source object id to insert
+     * @param status     The db build statsus for datasource.
+     */
+    public void insertOrUpdateDataSource(long dsObjectId, DrawableDbBuildStatusEnum status) {
+        dbWriteLock();
+        try {
+            // "INSERT OR REPLACE INTO datasources (ds_obj_id, drawable_db_build_status) " //NON-NLS
+            updateDataSourceStmt.setLong(1, dsObjectId);
+            updateDataSourceStmt.setString(2, status.name());
+
+            updateDataSourceStmt.executeUpdate();
+        } catch (SQLException | NullPointerException ex) {
+            logger.log(Level.SEVERE, "failed to insert/update datasources table", ex); //NON-NLS
         } finally {
             dbWriteUnlock();
         }
@@ -687,6 +933,13 @@ public final class DrawableDB {
         tr.commit(notify);
     }
 
+    public void rollbackTransaction(DrawableTransaction tr) {
+        if (tr.isClosed()) {
+            throw new IllegalArgumentException("can't rollback already closed transaction");
+        }
+        tr.rollback();
+    }
+
     public Boolean isFileAnalyzed(DrawableFile f) {
         return isFileAnalyzed(f.getId());
     }
@@ -700,7 +953,7 @@ public final class DrawableDB {
             }
         } catch (SQLException ex) {
             String msg = String.format("Failed to determine if file %s is finalized", String.valueOf(fileId)); //NON-NLS
-            LOGGER.log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg, ex);
         } finally {
             dbReadUnlock();
         }
@@ -718,7 +971,7 @@ public final class DrawableDB {
                 return analyzedQuery.getInt(ANALYZED) == fileIds.size();
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex); //NON-NLS
+            logger.log(Level.WARNING, "problem counting analyzed files: ", ex); //NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -730,7 +983,6 @@ public final class DrawableDB {
         dbReadLock();
         try {
             Set<Long> fileIDsInGroup = getFileIDsInGroup(gk);
-
             try {
                 // In testing, this method appears to be a lot faster than doing one large select statement
                 for (Long fileID : fileIDsInGroup) {
@@ -745,10 +997,10 @@ public final class DrawableDB {
                 }
 
             } catch (SQLException ex) {
-                LOGGER.log(Level.WARNING, "problem counting analyzed files: ", ex); //NON-NLS
+                logger.log(Level.WARNING, "problem counting analyzed files: ", ex); //NON-NLS
             }
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException); //NON-NLS
+            logger.log(Level.WARNING, "problem counting analyzed files: ", tskCoreException); //NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -768,33 +1020,18 @@ public final class DrawableDB {
      * @throws TskCoreException
      */
     public Set<Long> findAllFileIdsWhere(String sqlWhereClause) throws TskCoreException {
-        Statement statement = null;
-        ResultSet rs = null;
+
         Set<Long> ret = new HashSet<>();
         dbReadLock();
-        try {
-            statement = con.createStatement();
-            rs = statement.executeQuery("SELECT obj_id FROM drawable_files WHERE " + sqlWhereClause); //NON-NLS
+        try (Statement statement = con.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT obj_id FROM drawable_files WHERE " + sqlWhereClause);) {
             while (rs.next()) {
                 ret.add(rs.getLong(1));
             }
         } catch (SQLException e) {
             throw new TskCoreException("SQLException thrown when calling 'DrawableDB.findAllFileIdsWhere(): " + sqlWhereClause, e);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing result set after executing  findAllFileIdsWhere", ex); //NON-NLS
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing statement after executing  findAllFileIdsWhere", ex); //NON-NLS
-                }
-            }
+
             dbReadUnlock();
         }
         return ret;
@@ -812,47 +1049,36 @@ public final class DrawableDB {
      * @throws TskCoreException
      */
     public long countFilesWhere(String sqlWhereClause) throws TskCoreException {
-        Statement statement = null;
-        ResultSet rs = null;
         dbReadLock();
-        try {
-            statement = con.createStatement();
-            rs = statement.executeQuery("SELECT COUNT (*) FROM drawable_files WHERE " + sqlWhereClause); //NON-NLS
-            return rs.getLong(1);
+        try (Statement statement = con.createStatement();
+                ResultSet rs = statement.executeQuery("SELECT COUNT(*) AS COUNT FROM drawable_files WHERE " + sqlWhereClause);) {
+            return rs.getLong("COUNT");
         } catch (SQLException e) {
             throw new TskCoreException("SQLException thrown when calling 'DrawableDB.countFilesWhere(): " + sqlWhereClause, e);
         } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing result set after executing countFilesWhere", ex); //NON-NLS
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing statement after executing countFilesWhere", ex); //NON-NLS
-                }
-            }
             dbReadUnlock();
         }
     }
 
     /**
+     * Get all the values that are in db for the given attribute.
      *
      *
-     *
-     * @param groupBy
-     * @param sortBy
-     * @param sortOrder
+     * @param <A>        The type of values for the given attribute.
+     * @param groupBy    The attribute to get the values for.
+     * @param sortBy     The way to sort the results. Only GROUP_BY_VAL and
+     *                   FILE_COUNT are supported.
+     * @param sortOrder  Sort ascending or descending.
+     * @param dataSource
      *
      * @return
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
+    @SuppressWarnings("unchecked")
+    public <A extends Comparable<A>> Multimap<DataSource, A> findValuesForAttribute(DrawableAttribute<A> groupBy, GroupSortBy sortBy, SortOrder sortOrder, DataSource dataSource) throws TskCoreException {
 
-        List<A> vals = new ArrayList<>();
+        Multimap<DataSource, A> values = HashMultimap.create();
 
         switch (groupBy.attrName) {
             case ANALYZED:
@@ -864,7 +1090,14 @@ public final class DrawableDB {
             default:
                 dbReadLock();
                 //TODO: convert this to prepared statement 
-                StringBuilder query = new StringBuilder("SELECT " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files GROUP BY " + groupBy.attrName.toString()); //NON-NLS
+
+                StringBuilder query = new StringBuilder("SELECT data_source_obj_id, " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
+
+                if (dataSource != null) {
+                    query.append(" WHERE data_source_obj_id = ").append(dataSource.getId());
+                }
+
+                query.append(" GROUP BY data_source_obj_id, ").append(groupBy.attrName.toString());
 
                 String orderByClause = "";
 
@@ -893,49 +1126,73 @@ public final class DrawableDB {
                 }
 
                 try (Statement stmt = con.createStatement();
-                        ResultSet valsResults = stmt.executeQuery(query.toString())) {
-                    while (valsResults.next()) {
+                        ResultSet results = stmt.executeQuery(query.toString())) {
+                    while (results.next()) {
                         /*
-                         * I don't like that we have to do this cast here, but
-                         * can't think of a better alternative at the momment
-                         * unless something has gone seriously wrong, we know
-                         * this should be of type A even if JAVA doesn't
+                         * I don't like that we have to do this cast to A here,
+                         * but can't think of a better alternative at the
+                         * momment unless something has gone seriously wrong, we
+                         * know this should be of type A even if JAVA doesn't
                          */
-                        @SuppressWarnings("unchecked")
-                        A value = (A) valsResults.getObject(groupBy.attrName.toString());
-                        vals.add(value);
+                        values.put(tskCase.getDataSource(results.getLong("data_source_obj_id")),
+                                (A) results.getObject(groupBy.attrName.toString()));
                     }
                 } catch (SQLException ex) {
-                    LOGGER.log(Level.WARNING, "Unable to get values for attribute", ex); //NON-NLS
+                    if (!(ex.getCause() instanceof java.lang.InterruptedException)) {
+
+                        /* It seems like this originaly comes out of c3p0 when
+                         * its thread is intereupted (cancelled because of
+                         * regroup). It should be safe to just swallow this and
+                         * move on.
+                         *
+                         * see
+                         * https://sourceforge.net/p/c3p0/mailman/c3p0-users/thread/EBB32BB8-6487-43AF-B291-9464C9051869@mchange.com/
+                         */
+                        throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS
+                    }
+                } catch (TskDataException ex) {
+                    throw new TskCoreException("Unable to get values for attribute", ex); //NON-NLS
                 } finally {
                     dbReadUnlock();
                 }
         }
 
-        return vals;
+        return values;
     }
 
     /**
      * Insert new group into DB
-     * @param value Value of the group (unique to the type)
-     * @param groupBy Type of the grouping (CATEGORY, MAKE, etc.)
+     *
+     * @param value             Value of the group (unique to the type)
+     * @param groupBy           Type of the grouping (CATEGORY, MAKE, etc.)
+     * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
-    private void insertGroup(final String value, DrawableAttribute<?> groupBy) {
-        dbWriteLock();
+    private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+        insertGroup(0, value, groupBy, caseDbTransaction);
+    }
 
+    /**
+     * Insert new group into DB
+     *
+     * @param ds_obj_id         data source object id
+     * @param value             Value of the group (unique to the type)
+     * @param groupBy           Type of the grouping (CATEGORY, MAKE, etc.)
+     * @param caseDbTransaction transaction to use for CaseDB insert/updates
+     */
+    private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
         try {
-            //PreparedStatement insertGroup = con.prepareStatement("insert or replace into groups (value, attribute, seen) values (?,?,0)");
-            insertGroupStmt.clearParameters();
-            insertGroupStmt.setString(1, value);
-            insertGroupStmt.setString(2, groupBy.attrName.toString());
-            insertGroupStmt.execute();
-        } catch (SQLException sQLException) {
+            String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
+                    ds_obj_id, value, groupBy.attrName.toString());
+
+            if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+                insertSQL += "ON CONFLICT DO NOTHING";
+            }
+            tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+        } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
-                LOGGER.log(Level.SEVERE, "Unable to insert group", sQLException); //NON-NLS
+                logger.log(Level.SEVERE, "Unable to insert group", ex); //NON-NLS
             }
-        } finally {
-            dbWriteUnlock();
         }
     }
 
@@ -953,8 +1210,8 @@ public final class DrawableDB {
             return DrawableFile.create(f,
                     areFilesAnalyzed(Collections.singleton(id)), isVideoFile(f));
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "there is no case open; failed to load file with id: {0}", id); //NON-NLS
-            return null;
+            logger.log(Level.SEVERE, "there is no case open; failed to load file with id: {0}", id); //NON-NLS
+            throw new TskCoreException("there is no case open; failed to load file with id: " + id, ex);
         }
     }
 
@@ -973,8 +1230,8 @@ public final class DrawableDB {
         Set<Long> files = new HashSet<>();
         dbReadLock();
         try {
-            PreparedStatement statement = getGroupStatment(groupKey.getAttribute());
-            statement.setObject(1, groupKey.getValue());
+            PreparedStatement statement = getGroupStatment(groupKey);
+            setQueryParams(statement, groupKey);
 
             try (ResultSet valsResults = statement.executeQuery()) {
                 while (valsResults.next()) {
@@ -982,7 +1239,7 @@ public final class DrawableDB {
                 }
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "failed to get file for group:" + groupKey.getAttribute() + " == " + groupKey.getValue(), ex); //NON-NLS
+            logger.log(Level.WARNING, "failed to get file for group:" + groupKey.getAttribute() + " == " + groupKey.getValue(), ex); //NON-NLS
         } finally {
             dbReadUnlock();
         }
@@ -996,26 +1253,26 @@ public final class DrawableDB {
         }
     }
 
-    private PreparedStatement getGroupStatment(DrawableAttribute<?> groupBy) {
-        return groupStatementMap.get(groupBy);
+    private PreparedStatement getGroupStatment(GroupKey<?> groupKey) {
+        DrawableAttribute<?> groupBy = groupKey.getAttribute();
+        if ((groupBy == DrawableAttribute.PATH) && groupKey.getDataSource().isPresent()) {
 
+            return this.groupStatementFilterByDataSrcMap.get(groupBy);
+        }
+
+        return groupStatementMap.get(groupBy);
     }
 
-    public int countAllFiles() {
-        int result = -1;
-        dbReadLock();
-        try (ResultSet rs = con.createStatement().executeQuery("SELECT COUNT(*) AS COUNT FROM drawable_files")) { //NON-NLS
-            while (rs.next()) {
+    public long countAllFiles() throws TskCoreException {
+        return countAllFiles(null);
+    }
 
-                result = rs.getInt("COUNT");
-                break;
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error accessing SQLite database"); //NON-NLS
-        } finally {
-            dbReadUnlock();
+    public long countAllFiles(DataSource dataSource) throws TskCoreException {
+        if (null != dataSource) {
+            return countFilesWhere(" data_source_obj_id = ");
+        } else {
+            return countFilesWhere(" 1 ");
         }
-        return result;
     }
 
     /**
@@ -1043,7 +1300,7 @@ public final class DrawableDB {
 
             //TODO: delete from hash_set_hits table also...
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "failed to delete row for obj_id = " + id, ex); //NON-NLS
+            logger.log(Level.WARNING, "failed to delete row for obj_id = " + id, ex); //NON-NLS
         } finally {
             dbWriteUnlock();
         }
@@ -1055,10 +1312,8 @@ public final class DrawableDB {
 
     public class MultipleTransactionException extends IllegalStateException {
 
-        private static final String CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO = "cannot have more than one open transaction"; //NON-NLS
-
         public MultipleTransactionException() {
-            super(CANNOT_HAVE_MORE_THAN_ONE_OPEN_TRANSACTIO);
+            super("cannot have more than one open transaction");//NON-NLS
         }
     }
 
@@ -1097,14 +1352,13 @@ public final class DrawableDB {
     private void initializeImageList() {
         synchronized (fileIDsInDB) {
             dbReadLock();
-            try {
-                Statement stmt = con.createStatement();
-                ResultSet analyzedQuery = stmt.executeQuery("select obj_id from drawable_files"); //NON-NLS
+            try (Statement stmt = con.createStatement();
+                    ResultSet analyzedQuery = stmt.executeQuery("select obj_id from drawable_files");) {
                 while (analyzedQuery.next()) {
                     addImageFileToList(analyzedQuery.getLong(OBJ_ID));
                 }
             } catch (SQLException ex) {
-                LOGGER.log(Level.WARNING, "problem loading file IDs: ", ex); //NON-NLS
+                logger.log(Level.WARNING, "problem loading file IDs: ", ex); //NON-NLS
             } finally {
                 dbReadUnlock();
             }
@@ -1155,9 +1409,9 @@ public final class DrawableDB {
                         .count();
             }
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.WARNING, "Case closed while getting files"); //NON-NLS
+            logger.log(Level.WARNING, "Case closed while getting files"); //NON-NLS
         } catch (TskCoreException ex1) {
-            LOGGER.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to get content tags by tag name.", ex1); //NON-NLS
         }
         return -1;
 
@@ -1176,20 +1430,20 @@ public final class DrawableDB {
      *
      * @param fileIDs the the files ids to count within
      *
-     * @return the number of files with Cat-0
+     * @return the number of files in the given set with Cat-0
      */
-    public long getUncategorizedCount(Collection<Long> fileIDs) {
-        
+    public long getUncategorizedCount(Collection<Long> fileIDs) throws TskCoreException {
+
         // if the fileset is empty, return count as 0
         if (fileIDs.isEmpty()) {
             return 0;
         }
-        
-        DrawableTagsManager tagsManager = controller.getTagsManager();
 
         // get a comma seperated list of TagName ids for non zero categories
-        String catTagNameIDs = DhsImageCategory.getNonZeroCategories().stream()
-                .map(tagsManager::getTagName)
+        DrawableTagsManager tagsManager = controller.getTagsManager();
+
+        String catTagNameIDs = tagsManager.getCategoryTagNames().stream()
+                .filter(tagName -> notEqual(tagName.getDisplayName(), DhsImageCategory.ZERO.getDisplayName()))
                 .map(TagName::getId)
                 .map(Object::toString)
                 .collect(Collectors.joining(",", "(", ")"));
@@ -1197,17 +1451,18 @@ public final class DrawableDB {
         String fileIdsList = "(" + StringUtils.join(fileIDs, ",") + " )";
 
         //count the file ids that are in the given list and don't have a non-zero category assigned to them.
-        String name =
-                "SELECT COUNT(obj_id) as obj_count FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
-                + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
+        String name
+                = "SELECT COUNT(obj_id) as obj_count FROM tsk_files where obj_id IN " + fileIdsList //NON-NLS
+                  + " AND obj_id NOT IN (SELECT obj_id FROM content_tags WHERE content_tags.tag_name_id IN " + catTagNameIDs + ")"; //NON-NLS
         try (SleuthkitCase.CaseDbQuery executeQuery = tskCase.executeQuery(name);
                 ResultSet resultSet = executeQuery.getResultSet();) {
             while (resultSet.next()) {
                 return resultSet.getLong("obj_count"); //NON-NLS
             }
-        } catch (SQLException | TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting category count.", ex); //NON-NLS
+        } catch (SQLException ex) {
+            throw new TskCoreException("Error getting category count.", ex); //NON-NLS
         }
+
         return -1;
     }
 
@@ -1240,7 +1495,7 @@ public final class DrawableDB {
                 con.setAutoCommit(false);
 
             } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "failed to set auto-commit to to false", ex); //NON-NLS
+                logger.log(Level.SEVERE, "failed to set auto-commit to to false", ex); //NON-NLS
             }
 
         }
@@ -1251,7 +1506,7 @@ public final class DrawableDB {
                     con.rollback();
                     updatedFiles.clear();
                 } catch (SQLException ex1) {
-                    LOGGER.log(Level.SEVERE, "Exception while attempting to rollback!!", ex1); //NON-NLS
+                    logger.log(Level.SEVERE, "Exception while attempting to rollback!!", ex1); //NON-NLS
                 } finally {
                     close();
                 }
@@ -1273,9 +1528,9 @@ public final class DrawableDB {
                     }
                 } catch (SQLException ex) {
                     if (Case.isCaseOpen()) {
-                        LOGGER.log(Level.SEVERE, "Error commiting drawable.db.", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Error commiting drawable.db.", ex); //NON-NLS
                     } else {
-                        LOGGER.log(Level.WARNING, "Error commiting drawable.db - case is closed."); //NON-NLS
+                        logger.log(Level.WARNING, "Error commiting drawable.db - case is closed."); //NON-NLS
                     }
                     rollback();
                 }
@@ -1288,9 +1543,9 @@ public final class DrawableDB {
                     con.setAutoCommit(true);
                 } catch (SQLException ex) {
                     if (Case.isCaseOpen()) {
-                        LOGGER.log(Level.SEVERE, "Error setting auto-commit to true.", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Error setting auto-commit to true.", ex); //NON-NLS
                     } else {
-                        LOGGER.log(Level.SEVERE, "Error setting auto-commit to true - case is closed"); //NON-NLS
+                        logger.log(Level.SEVERE, "Error setting auto-commit to true - case is closed"); //NON-NLS
                     }
                 } finally {
                     closed = true;

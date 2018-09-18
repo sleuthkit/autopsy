@@ -88,12 +88,12 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         addScoreProperty(sheetSet, tags);
         
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
         
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoNotifications() == false) {
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
