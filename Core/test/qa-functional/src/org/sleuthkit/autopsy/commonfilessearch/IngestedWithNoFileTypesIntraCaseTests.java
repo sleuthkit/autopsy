@@ -102,7 +102,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false, 0);
-            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
 
             Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 
@@ -126,7 +126,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
             Long third = IntraCaseTestUtils.getDataSourceIdByName(IntraCaseTestUtils.SET3, dataSources);
 
             IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, true, false, 0);
-            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
 
             Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 

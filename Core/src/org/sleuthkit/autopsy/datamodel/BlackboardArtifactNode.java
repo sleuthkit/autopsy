@@ -46,11 +46,20 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -61,6 +70,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Node wrapping a blackboard artifact object. This is generated from several
@@ -73,7 +83,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
             Case.Events.CONTENT_TAG_ADDED,
             Case.Events.CONTENT_TAG_DELETED,
-            Case.Events.CURRENT_CASE);
+            Case.Events.CURRENT_CASE,
+            Case.Events.CR_COMMENT_CHANGED);
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
@@ -125,6 +136,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
                 ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
                 if (event.getDeletedTagInfo().getContentID() == associated.getId()) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
+                CommentChangedEvent event = (CommentChangedEvent) evt;
+                if (event.getContentID() == associated.getId()) {
                     updateSheet();
                 }
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -319,6 +335,8 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
+        List<Tag> tags = getAllTagsFromDatabase();
+
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
@@ -332,6 +350,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
+        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        addScoreProperty(sheetSet, tags);
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        addCountProperty(sheetSet, correlationAttribute);
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -479,10 +501,27 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     path));
         }
-
-        addTagProperty(sheetSet);
+        addTagProperty(sheetSet, tags);
 
         return sheet;
+    }
+
+    /**
+     * Get all tags from the case database relating to the artifact and the file
+     * it is associated with.
+     *
+     * @return a list of tags which on the artifact or the file it is associated
+     *         with
+     */
+    protected final List<Tag> getAllTagsFromDatabase() {
+        List<Tag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(associated));
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+        }
+        return tags;
     }
 
     /**
@@ -494,6 +533,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.tags.displayName=Tags"})
+    @Deprecated
     protected void addTagProperty(Sheet.Set sheetSet) throws MissingResourceException {
         // add properties for tags
         List<Tag> tags = new ArrayList<>();
@@ -505,6 +545,137 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the tags property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags which should appear as the value for the
+     *                 property
+     */
+    protected final void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+    }
+
+    protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo()) {
+            correlationAttribute = EamArtifactUtil.getInstanceFromContent(associated);
+        }
+        return correlationAttribute;
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the comment
+     * property to their sheets.
+     *
+     * @param sheetSet  the modifiable Sheet.Set returned by
+     *                  Sheet.get(Sheet.PROPERTIES)
+     * @param tags      the list of tags associated with the file
+     * @param attribute the correlation attribute associated with this
+     *                  artifact's associated file, null if central repo is not
+     *                  enabled
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.comment.name=C",
+        "BlackboardArtifactNode.createSheet.comment.displayName=C"})
+    protected final void addCommentProperty(Sheet.Set sheetSet, List<Tag> tags, CorrelationAttributeInstance attribute) {
+        HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
+        for (Tag tag : tags) {
+            if (!StringUtils.isBlank(tag.getComment())) {
+                //if the tag is null or empty or contains just white space it will indicate there is not a comment
+                status = HasCommentStatus.TAG_COMMENT;
+                break;
+            }
+        }
+        //currently checks for a comment on the associated file in the central repo not the artifact itself 
+        //what we want the column property to reflect should be revisted when we have added a way to comment
+        //on the artifact itself
+        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
+            if (status == HasCommentStatus.TAG_COMMENT) {
+                status = HasCommentStatus.CR_AND_TAG_COMMENTS;
+            } else {
+                status = HasCommentStatus.CR_COMMENT;
+            }
+        }
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_comment_name(), Bundle.BlackboardArtifactNode_createSheet_comment_displayName(), NO_DESCR,
+                status));
+    }
+
+    /**
+     * Used by (subclasses of) BlackboardArtifactNode to add the Score property
+     * to their sheets.
+     *
+     * @param sheetSet the modifiable Sheet.Set returned by
+     *                 Sheet.get(Sheet.PROPERTIES)
+     * @param tags     the list of tags associated with the file
+     */
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.score.name=S",
+        "BlackboardArtifactNode.createSheet.score.displayName=S",
+        "BlackboardArtifactNode.createSheet.notableFile.description=Associated file recognized as notable.",
+        "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
+        "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
+        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
+    protected final void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
+        Score score = Score.NO_SCORE;
+        String description = "";
+        if (associated instanceof AbstractFile) {
+            if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
+                score = Score.NOTABLE_SCORE;
+                description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
+            }
+        }
+        try {
+            if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
+                score = Score.INTERESTING_SCORE;
+                description = Bundle.BlackboardArtifactNode_createSheet_interestingResult_description();
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting artifacts for artifact: " + content.getName(), ex);
+        }
+        if (tags.size() > 0 && (score == Score.NO_SCORE || score == Score.INTERESTING_SCORE)) {
+            score = Score.INTERESTING_SCORE;
+            description = Bundle.BlackboardArtifactNode_createSheet_taggedItem_description();
+            for (Tag tag : tags) {
+                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
+                    score = Score.NOTABLE_SCORE;
+                    description = Bundle.BlackboardArtifactNode_createSheet_notableTaggedItem_description();
+                    break;
+                }
+            }
+        }
+        sheetSet.put(new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_score_name(), Bundle.BlackboardArtifactNode_createSheet_score_displayName(), description, score));
+    }
+
+    @NbBundle.Messages({"BlackboardArtifactNode.createSheet.count.name=O",
+        "BlackboardArtifactNode.createSheet.count.displayName=O",
+        "BlackboardArtifactNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
+        "BlackboardArtifactNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this artifact's associated file when the column was populated",
+        "# {0} - occuranceCount",
+        "BlackboardArtifactNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
+
+    protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
+        Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+        String description = Bundle.BlackboardArtifactNode_createSheet_count_noCentralRepo_description();
+        try {
+            //don't perform the query if there is no correlation value
+            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
+                count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
+                description = Bundle.BlackboardArtifactNode_createSheet_count_description(count);
+            } else if (attribute != null) {
+                description = Bundle.BlackboardArtifactNode_createSheet_count_hashLookupNotRun_description();
+            }
+        } catch (EamDbException ex) {
+            logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+        }
+        catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+        }
+        sheetSet.put(
+                new NodeProperty<>(Bundle.BlackboardArtifactNode_createSheet_count_name(), Bundle.BlackboardArtifactNode_createSheet_count_displayName(), description, count));
     }
 
     private void updateSheet() {

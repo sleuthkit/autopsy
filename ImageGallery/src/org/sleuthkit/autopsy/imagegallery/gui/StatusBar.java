@@ -79,7 +79,7 @@ public class StatusBar extends AnchorPane {
         });
 
         Platform.runLater(() -> staleLabel.setTooltip(new Tooltip(Bundle.StatuBar_toolTip())));
-        staleLabel.visibleProperty().bind(controller.stale());
+        staleLabel.visibleProperty().bind(controller.staleProperty());
     }
 
     public StatusBar(ImageGalleryController controller) {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +34,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 /**
  * A node in the nav/hash tree. Manages inserts and removals. Has parents and
  * children. Does not have graphical properties these are configured in
- * {@link GroupTreeCell}. Each GroupTreeItem has a TreeNode which has a path
- * segment and may or may not have a group
+ * GroupTreeCell. Each GroupTreeItem has a TreeNode which has a path segment and
+ * may or may not have a group
  */
 class GroupTreeItem extends TreeItem<GroupTreeNode> {
 
@@ -131,7 +130,6 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
     }
 
     synchronized GroupTreeItem getTreeItemForPath(List<String> path) {
-
         if (path.isEmpty()) {
             // end of recursion
             return this;
@@ -154,9 +152,7 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
         if (parent != null) {
             parent.childMap.remove(getValue().getPath());
 
-            Platform.runLater(() -> {
-                parent.getChildren().removeAll(Collections.singleton(GroupTreeItem.this));
-            });
+            Platform.runLater(() -> parent.getChildren().remove(this));
 
             if (parent.childMap.isEmpty()) {
                 parent.removeFromParent();
@@ -173,8 +169,6 @@ class GroupTreeItem extends TreeItem<GroupTreeNode> {
     synchronized void resortChildren(Comparator<DrawableGroup> newComp) {
         this.comp = newComp;
         getChildren().sort(Comparator.comparing(treeItem -> treeItem.getValue().getGroup(), Comparator.nullsLast(comp)));
-        for (GroupTreeItem ti : childMap.values()) {
-            ti.resortChildren(comp);
-        }
+        childMap.values().forEach(treeItem -> treeItem.resortChildren(comp));
     }
 }

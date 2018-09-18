@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2015-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,11 +34,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import static org.apache.commons.lang.ObjectUtils.notEqual;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -52,32 +53,35 @@ public class CategorizeGroupAction extends CategorizeAction {
     public CategorizeGroupAction(DhsImageCategory newCat, ImageGalleryController controller) {
         super(controller, newCat, null);
         setEventHandler(actionEvent -> {
-            ObservableList<Long> fileIDs = controller.viewState().get().getGroup().getFileIDs();
+            controller.getViewState().getGroup().ifPresent(group -> {
+                ObservableList<Long> fileIDs = group.getFileIDs();
 
-            if (ImageGalleryPreferences.isGroupCategorizationWarningDisabled()) {
-                //if they have preveiously disabled the warning, just go ahead and apply categories.
-                addCatToFiles(ImmutableSet.copyOf(fileIDs));
-            } else {
-                final Map<DhsImageCategory, Long> catCountMap = new HashMap<>();
-
-                for (Long fileID : fileIDs) {
-                    try {
-                        DhsImageCategory category = controller.getFileFromId(fileID).getCategory();
-                        if (false == DhsImageCategory.ZERO.equals(category) && newCat.equals(category) == false) {
-                            catCountMap.merge(category, 1L, Long::sum);
-                        }
-                    } catch (TskCoreException ex) {
-                        LOGGER.log(Level.SEVERE, "Failed to categorize files.", ex);
-                    }
-                }
-
-                if (catCountMap.isEmpty()) {
-                    //if there are not going to be any categories overwritten, skip the warning.
+                if (ImageGalleryPreferences.isGroupCategorizationWarningDisabled()) {
+                    //if they have preveiously disabled the warning, just go ahead and apply categories.
                     addCatToFiles(ImmutableSet.copyOf(fileIDs));
                 } else {
-                    showConfirmationDialog(catCountMap, newCat, fileIDs);
+                    final Map<DhsImageCategory, Long> catCountMap = new HashMap<>();
+
+                    for (Long fileID : fileIDs) {
+                        try {
+                            DhsImageCategory category = controller.getFileFromID(fileID).getCategory();
+                            if (false == DhsImageCategory.ZERO.equals(category) && newCat.equals(category) == false) {
+                                catCountMap.merge(category, 1L, Long::sum);
+                            }
+                        } catch (TskCoreException ex) {
+                            LOGGER.log(Level.SEVERE, "Failed to categorize files.", ex);
+                        }
+                    }
+
+                    if (catCountMap.isEmpty()) {
+                        //if there are not going to be any categories overwritten, skip the warning.
+                        addCatToFiles(ImmutableSet.copyOf(fileIDs));
+                    } else {
+                        showConfirmationDialog(catCountMap, newCat, fileIDs);
+                    }
                 }
-            }
+            });
+
         });
     }
 
@@ -88,19 +92,18 @@ public class CategorizeGroupAction extends CategorizeAction {
         "CategorizeGroupAction.fileCountHeader=Files in the following categories will have their categories overwritten: "})
     private void showConfirmationDialog(final Map<DhsImageCategory, Long> catCountMap, DhsImageCategory newCat, ObservableList<Long> fileIDs) {
 
-        ButtonType categorizeButtonType =
-                new ButtonType(Bundle.CategorizeGroupAction_OverwriteButton_text(), ButtonBar.ButtonData.APPLY);
+        ButtonType categorizeButtonType
+                = new ButtonType(Bundle.CategorizeGroupAction_OverwriteButton_text(), ButtonBar.ButtonData.APPLY);
 
         VBox textFlow = new VBox();
 
         for (Map.Entry<DhsImageCategory, Long> entry : catCountMap.entrySet()) {
-            if (entry.getKey().equals(newCat) == false) {
-                if (entry.getValue() > 0) {
-                    Label label = new Label(Bundle.CategorizeGroupAction_fileCountMessage(entry.getValue(), entry.getKey().getDisplayName()),
-                            entry.getKey().getGraphic());
-                    label.setContentDisplay(ContentDisplay.RIGHT);
-                    textFlow.getChildren().add(label);
-                }
+            if (entry.getValue() > 0
+                && notEqual(entry.getKey(), newCat)) {
+                Label label = new Label(Bundle.CategorizeGroupAction_fileCountMessage(entry.getValue(), entry.getKey().getDisplayName()),
+                        entry.getKey().getGraphic());
+                label.setContentDisplay(ContentDisplay.RIGHT);
+                textFlow.getChildren().add(label);
             }
         }
 
