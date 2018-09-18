@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
@@ -662,19 +661,25 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private class IconRendererTableListener implements TableColumnModelListener {
 
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
+            "DataResultViewerTable.commentRender.toolTip=Indicates the presence of a comment associated with the item",
             "DataResultViewerTable.scoreRender.name=S",
-            "DataResultViewerTable.countRender.name=O"})
+            "DataResultViewerTable.scoreRender.toolTip=Indicates item is tagged, notable, or otherwise may be of interest",
+            "DataResultViewerTable.countRender.name=O",
+            "DataResultViewerTable.countRender.toolTip=Number of data sources containing item in the Central Repository"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
             if (e.getSource() instanceof ETableColumnModel) {
                 TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
                 if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
                     //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
+                    outlineView.setPropertyColumnDescription(column.getHeaderValue().toString(), Bundle.DataResultViewerTable_commentRender_toolTip());
                     column.setCellRenderer(new HasCommentCellRenderer());
                 } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_scoreRender_name())) {
                     //if the current column is a score column set the cell renderer to be the ScoreCellRenderer
+                    outlineView.setPropertyColumnDescription(column.getHeaderValue().toString(), Bundle.DataResultViewerTable_scoreRender_toolTip());
                     column.setCellRenderer(new ScoreCellRenderer());
                 } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_countRender_name())) {
+                    outlineView.setPropertyColumnDescription(column.getHeaderValue().toString(), Bundle.DataResultViewerTable_countRender_toolTip());
                     column.setCellRenderer(new CountCellRenderer());
                 }
             }
