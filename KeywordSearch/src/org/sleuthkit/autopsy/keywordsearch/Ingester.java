@@ -93,7 +93,7 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexChunk("", file.getName(), getContentFields(file));
+        indexChunk("", file.getName().toLowerCase(), getContentFields(file));
     }
 
     /**
@@ -355,7 +355,7 @@ class Ingester {
                 logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + file.getId(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
-            params.put(Server.Schema.FILE_NAME.toString(), file.getName());
+            params.put(Server.Schema.FILE_NAME.toString(), file.getName().toLowerCase());
             return params;
         }
 
