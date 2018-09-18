@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.tabulardatareader;
 
+import static com.google.common.collect.Lists.newArrayList;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -176,17 +177,13 @@ public final class ExcelReader extends AbstractReader {
         Iterator<Row> sheetIter = workbook.getSheet(tableName).rowIterator();
 
         while (sheetIter.hasNext()) {
-            Row r = sheetIter.next();
-            for (Cell cell : r) {
+            Row row = sheetIter.next();
+            for (Cell cell : row) {
                 String index = String.valueOf(cell.getColumnIndex());
                 if (columnViewOfSheet.containsKey(index)) {
                     columnViewOfSheet.get(index).add(getCellValue(cell));
                 } else {
-                    columnViewOfSheet.put(index, new ArrayList<Object>() {
-                        {
-                            add(getCellValue(cell));
-                        }
-                    });
+                    columnViewOfSheet.put(index, newArrayList(getCellValue(cell)));
                 }
             }
         }
