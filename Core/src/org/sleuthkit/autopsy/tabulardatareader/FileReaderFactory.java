@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.tabulardatareader;
 
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Factory for creating the correct reader given the mime type of a file. 
@@ -38,7 +38,7 @@ public final class FileReaderFactory {
      * @return The correct reader class needed to read the file contents
      * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException 
      */
-    public static AbstractReader createReader(String mimeType, Content file) 
+    public static AbstractReader createReader(String mimeType, AbstractFile file) 
             throws FileReaderInitException {
         switch (mimeType) {
             case "application/x-sqlite3":

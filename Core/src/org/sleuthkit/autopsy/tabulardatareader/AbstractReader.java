@@ -25,7 +25,7 @@ import java.util.Map;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractReader implements AutoCloseable {
     
-    public AbstractReader(Content file) 
+    public AbstractReader(AbstractFile file) 
             throws FileReaderInitException {
         
         try {
@@ -54,7 +54,7 @@ public abstract class AbstractReader implements AutoCloseable {
      * @return Valid local path for copying
      * @throws NoCurrentCaseException if the current case has been closed.
      */
-    final String getLocalDiskPath(Content file) throws FileReaderException {
+    final String getLocalDiskPath(AbstractFile file) throws FileReaderException {
         try {
             return Case.getCurrentCaseThrows().getTempDirectory() + 
                     File.separator + file.getId() + file.getName();
@@ -73,7 +73,7 @@ public abstract class AbstractReader implements AutoCloseable {
      * @throws NoCurrentCaseException Current case closed during file copying
      * @throws TskCoreException Exception finding files from abstract file
      */
-    private void writeDataSourceToLocalDisk(Content file, String localDiskPath) 
+    private void writeDataSourceToLocalDisk(AbstractFile file, String localDiskPath) 
         throws FileReaderInitException {
         
         try {

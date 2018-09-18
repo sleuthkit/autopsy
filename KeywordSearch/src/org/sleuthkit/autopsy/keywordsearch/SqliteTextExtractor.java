@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitExce
 import org.sleuthkit.datamodel.Content;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Dedicated SqliteTextExtractor to solve the problems associated with Tika's
@@ -91,8 +92,20 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
+        //Firewall for any content that is not an AbstractFile
+        if(!AbstractFile.class.isInstance(source)) {
+            try {
+                return CharSource.wrap(EMPTY_CHARACTER_SEQUENCE).openStream();
+            } catch (IOException ex) {
+                throw new TextExtractorException(
+                    String.format("Encountered an issue wrapping blank string" //NON-NLS
+                            + " with CharSource for non-abstract file with id: [%s]," //NON-NLS
+                            + " name: [%s].", source.getId(), source.getName())); //NON-NLS
+            }
+        }
+        
         try (AbstractReader reader = FileReaderFactory.createReader(
-                SQLITE_MIMETYPE, source)) {
+                SQLITE_MIMETYPE, (AbstractFile) source)) {
             final CharSequence databaseContent = getDatabaseContents(source, reader);
             //CharSource will maintain unicode strings correctly
             return CharSource.wrap(databaseContent).openStream();
