@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.SortClause;
@@ -225,11 +226,32 @@ final class RegexQuery implements KeywordSearchQuery {
         boolean skipWildcardPrefix = queryStringContainsWildcardPrefix || getQueryString().startsWith("^");
         boolean skipWildcardSuffix = queryStringContainsWildcardSuffix
                 || (getQueryString().endsWith("$") && (!getQueryString().endsWith("\\$")));
+
+        /**
+         * The query string to use depends on whether this is a substring or
+         * regex search. For substring searches, we want to escape the string.
+         * We may have been asked to perform a substring search on a phone
+         * number fragment containing special characters (e.g. (555)-) which
+         * requires us to escape the ( and -.
+         *
+         * Additionally, if we are querying a Solr index which is version 2.1 or
+         * above (where the content_str field is normalized to lowercase) we
+         * also need to convert the query string to lowercase. For Solr indexes
+         * that predate version 2.1, we do not lowercase the query string
+         * thereby allowing queries against existing indexes to behave the same
+         * way they did in previous versions.
+         */
+        String queryString = (originalKeyword.searchTermIsLiteral() ? getEscapedQueryString() : getQueryString());
+        double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
+        if (indexSchemaVersion >= 2.1) {
+            queryString = queryString.toLowerCase();
+        }
+
         solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/"
                 + (skipWildcardPrefix ? "" : ".*")
                 // if the query is for a substring (i.e. literal search term) we want
                 // to escape characters such as ()[]-.
-                + (originalKeyword.searchTermIsLiteral() ? getEscapedQueryString().toLowerCase() : getQueryString().toLowerCase())
+                + queryString
                 + (skipWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
