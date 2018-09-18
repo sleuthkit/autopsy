@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -32,10 +34,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractReader implements AutoCloseable {
     
-    public AbstractReader(AbstractFile file, String localDiskPath) 
+    private final String localDiskPath;
+    
+    public AbstractReader(Content file) 
             throws FileReaderInitException {
         
-        writeDataSourceToLocalDisk(file, localDiskPath);
+        try {
+            localDiskPath = getLocalDiskPath(file);
+            writeDataSourceToLocalDisk(file);
+        } catch (FileReaderInitException ex) {
+            throw new FileReaderInitException(ex);
+        }
     }
     
     /**
@@ -48,7 +57,7 @@ public abstract class AbstractReader implements AutoCloseable {
      * @throws NoCurrentCaseException Current case closed during file copying
      * @throws TskCoreException Exception finding files from abstract file
      */
-    private void writeDataSourceToLocalDisk(AbstractFile file, String localDiskPath) 
+    private void writeDataSourceToLocalDisk(Content file) 
         throws FileReaderInitException {
         
         try {
@@ -58,6 +67,30 @@ public abstract class AbstractReader implements AutoCloseable {
             }
         } catch (IOException ex) {
             throw new FileReaderInitException(ex);
+        }
+    }
+    
+    public String getLocalDiskPath() {
+        return localDiskPath;
+    }
+    
+    /**
+     * Generates a local disk path for abstract file contents to be copied. All
+     * file sources must be copied to local disk to be opened by abstract
+     * reader.
+     *
+     * @param file The database abstract file
+     *
+     * @return Valid local path for copying
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
+     *
+     */
+    private String getLocalDiskPath(Content file) throws FileReaderInitException {
+        try {
+            return Case.getCurrentCaseThrows().getTempDirectory()
+                + File.separator + file.getId() + file.getName();
+        } catch(NoCurrentCaseException ex) {
+            throw new FileReaderInitException("No current case open when trying to get temp directory", ex);
         }
     }
     
@@ -88,6 +121,15 @@ public abstract class AbstractReader implements AutoCloseable {
      */
     public abstract List<Map<String, Object>> getRowsFromTable(String tableName) throws FileReaderException;
 
+    /**
+     * Returns a map of column names to a list of column values.
+     * 
+     * @param tableName
+     * @return A map of column names to a list of column values
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException 
+     */
+    public abstract Map<String, List<Object>> getColumnsFromTable(String tableName) throws FileReaderException;
+    
     /**
      * Returns a window of rows starting at the offset and ending when the number of rows read 
      * equals the 'numRowsToRead' parameter or there is nothing left to read.
