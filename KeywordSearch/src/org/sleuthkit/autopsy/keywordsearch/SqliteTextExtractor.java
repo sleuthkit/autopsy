@@ -113,7 +113,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
             throw new TextExtractorException(
                     String.format("Encountered a FileReaderInitException" //NON-NLS
                             + " when trying to initialize a SQLiteReader" //NON-NLS
-                            + " for Content with id: [%s], name: [%s].", //NON-NLS
+                            + " for AbstractFile with id: [%s], name: [%s].", //NON-NLS
                             source.getId(), source.getName()));
         }
     }
