@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="Autopsy Keyword Search" version="2.0">
+<schema name="Autopsy Keyword Search" version="2.1">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.4" is Solr's version number for the schema syntax and semantics.  It should
@@ -60,6 +60,8 @@
        1.7 added _version_ field for Solr Cloud
        1.8 added new content_str string field and stopped copying content and file_name into content_ws
        2.0 added chunk_size field
+       2.1 to facilitate case insensitive regex search,no longer copying content into content_str.
+           content_str will be populated with lowercase content by Autopsy.
      -->
 
   <types>
@@ -649,10 +651,15 @@
    <copyField source="file_name" dest="content_ws"/>
  -->
 
-   <!-- Copy content into content_str field for regex searches -->
-   <copyField source="content" dest="content_str"/>
+   <!-- Copying of content into content_str field has been removed
+        so that we can perform case insensitive regex searches.
+        The content_str field will be populated directly by Autopsy
+
+        copyField source="content" dest="content_str"/ -->
+
+   <!-- Copy file_name into content_str field for regex searches -->
    <copyField source="file_name" dest="content_str"/>
- 
+
    <!-- Above, multiple source fields are copied to the [text] field. 
 	  Another way to map multiple source fields to the same 
 	  destination field is to use the dynamic field syntax. 
