@@ -212,11 +212,16 @@ final class InterCaseSearchResultsProcessor {
                     countAndAddCommonAttributes(corValue, resultId);
 
                 }
-                //Add the final instances
-                CommonAttributeValueList value = new CommonAttributeValueList();
+                //Add the final instance(s)
                 if (commonAttributeValue != null) {
-                    value.addMetadataToList(commonAttributeValue);
-                    instanceCollatedCommonFiles.put(commonAttributeValue.getInstanceCount(), value);
+                    int size = commonAttributeValue.getInstanceCount();
+                    if (instanceCollatedCommonFiles.containsKey(size)) {
+                        instanceCollatedCommonFiles.get(size).addMetadataToList(commonAttributeValue);
+                    } else {
+                        CommonAttributeValueList value = new CommonAttributeValueList();
+                        value.addMetadataToList(commonAttributeValue);
+                        instanceCollatedCommonFiles.put(size, value);
+                    }
                 }
             } catch (SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
