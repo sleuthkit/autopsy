@@ -364,7 +364,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             }
             for (AbstractFile resolvedFile : abstractFiles) {
                 // double check its an exact match
-                if (filePath.toLowerCase().matches(resolvedFile.getParentPath().toLowerCase())) {
+                if (filePath.equalsIgnoreCase(resolvedFile.getParentPath())) {
                     // cache it for next time
                     previousFile = resolvedFile;
                     return resolvedFile;
