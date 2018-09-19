@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -402,6 +403,9 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
         try {
             return caseCacheByUUID.get(caseUUID, () -> getCaseByUUIDFromCr(caseUUID));
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the case does not exist in the central repo yet
+            return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting autopsy case from Central repo", ex);
         }
@@ -460,6 +464,9 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationCase getCaseById(int caseId) throws EamDbException {
         try {
             return caseCacheById.get(caseId, () -> getCaseByIdFromCr(caseId));
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the case does not exist in the central repo yet
+            return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting autopsy case from Central repo", ex);
         }
@@ -544,9 +551,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Create a key to the DataSourceCacheByDeviceId 
+     * Create a key to the DataSourceCacheByDeviceId
      *
-     * @param caseId - the id of the CorrelationCase in the Central Repository
+     * @param caseId             - the id of the CorrelationCase in the Central
+     *                           Repository
      * @param dataSourceDeviceId - the device Id of the data source
      *
      * @return a String to be used as a key for the dataSourceCacheByDeviceId
@@ -558,8 +566,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Create a key to the DataSourceCacheById
      *
-     * @param caseId - the id of the CorrelationCase in the Central Repository
+     * @param caseId       - the id of the CorrelationCase in the Central
+     *                     Repository
      * @param dataSourceId - the id of the datasource in the central repository
+     *
      * @return a String to be used as a key for the dataSourceCacheById
      */
     private static String getDataSourceByIdCacheKey(int caseId, int dataSourceId) {
@@ -630,6 +640,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
         try {
             return dataSourceCacheByDeviceId.get(getDataSourceByDeviceIdCacheKey(correlationCase.getID(), dataSourceDeviceId), () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
+            return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
@@ -694,6 +707,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
         try {
             return dataSourceCacheById.get(getDataSourceByIdCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
+            return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
         }
@@ -868,7 +884,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
 
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
-        
+
         Connection conn = connect();
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
@@ -1440,7 +1456,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException {
-        
+
         if (correlationCase == null) {
             throw new EamDbException("Correlation case is null");
         }
@@ -1459,7 +1475,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             String normalizedValue = CorrelationAttributeNormalizer.normalize(type, value);
-        
+
             String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
             String sql
                     = "SELECT id, known_status, comment FROM "
@@ -1701,7 +1717,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     artifactInstances.add(artifactInstance);
                 } catch (CorrelationAttributeNormalizationException ex) {
                     logger.log(Level.INFO, "Unable to get artifact instance from resultset.", ex);
-                }               
+                }
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
@@ -1724,7 +1740,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public Long getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        
+
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
@@ -1771,7 +1787,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        
+
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
         Connection conn = connect();
@@ -1931,7 +1947,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws EamDbException, CorrelationAttributeNormalizationException {
 
         String normalizeValued = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value);
-        
+
         Connection conn = connect();
 
         Long matchingInstances = 0L;
@@ -1969,10 +1985,10 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public boolean isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        
+
         //this should be done here so that we can be certain that aType and value are valid before we proceed
         String normalizeValued = CorrelationAttributeNormalizer.normalize(aType, value);
-                
+
         // TEMP: Only support file correlation type
         if (aType.getId() != CorrelationAttributeInstance.FILES_TYPE_ID) {
             return false;
@@ -1985,7 +2001,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         ResultSet resultSet = null;
         String sql = "SELECT count(*) FROM %s WHERE value=? AND known_status=?";
 
-        try {            
+        try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(aType)));
             preparedStatement.setString(1, normalizeValued);
             preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
@@ -2595,7 +2611,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
-        
+
         return globalFileInstances;
     }
 
@@ -2872,6 +2888,9 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException {
         try {
             return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () -> getCorrelationTypeByIdFromCr(typeId));
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the correlation type does not exist in the central repo yet
+            return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting correlation type", ex);
         }
