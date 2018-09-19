@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.tabulardatareader.AbstractReader;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
 import org.sleuthkit.datamodel.Content;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException;
 import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -93,19 +94,19 @@ class SqliteTextExtractor extends ContentTextExtractor {
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
         //Firewall for any content that is not an AbstractFile
-        if(!AbstractFile.class.isInstance(source)) {
+        if (!AbstractFile.class.isInstance(source)) {
             try {
                 return CharSource.wrap(EMPTY_CHARACTER_SEQUENCE).openStream();
             } catch (IOException ex) {
                 throw new TextExtractorException(
-                    String.format("Encountered an issue wrapping blank string" //NON-NLS
-                            + " with CharSource for non-abstract file with id: [%s]," //NON-NLS
-                            + " name: [%s].", source.getId(), source.getName())); //NON-NLS
+                        String.format("Encountered an issue wrapping blank string" //NON-NLS
+                                + " with CharSource for non-abstract file with id: [%s]," //NON-NLS
+                                + " name: [%s].", source.getId(), source.getName()), ex); //NON-NLS
             }
         }
-        
+
         try (AbstractReader reader = FileReaderFactory.createReader(
-                SQLITE_MIMETYPE, (AbstractFile) source)) {
+                (AbstractFile) source, SQLITE_MIMETYPE)) {
             final CharSequence databaseContent = getDatabaseContents(source, reader);
             //CharSource will maintain unicode strings correctly
             return CharSource.wrap(databaseContent).openStream();
@@ -114,7 +115,12 @@ class SqliteTextExtractor extends ContentTextExtractor {
                     String.format("Encountered a FileReaderInitException" //NON-NLS
                             + " when trying to initialize a SQLiteReader" //NON-NLS
                             + " for AbstractFile with id: [%s], name: [%s].", //NON-NLS
-                            source.getId(), source.getName()));
+                            source.getId(), source.getName()), ex);
+        } catch (FileReaderException ex) {
+            throw new TextExtractorException(
+                    String.format("Could not get contents from database " //NON-NLS
+                            + "tables for AbstractFile with id [%s], name: [%s].", //NON-NLS
+                            source.getId(), source.getName()), ex);
         }
     }
 
@@ -126,24 +132,14 @@ class SqliteTextExtractor extends ContentTextExtractor {
      * @param reader Sqlite reader for the content source
      * @param source Sqlite file source
      */
-    private CharSequence getDatabaseContents(Content source, AbstractReader reader) {
-        try {
-            Map<String, String> tables = reader.getTableSchemas();
-            Collection<String> databaseStorage = new LinkedList<>();
+    private CharSequence getDatabaseContents(Content source, AbstractReader reader) throws FileReaderException {
+        Map<String, String> tables = reader.getTableSchemas();
+        Collection<String> databaseStorage = new LinkedList<>();
 
-            Integer charactersCopied = loadDatabaseIntoCollection(databaseStorage,
-                    tables, reader, source);
+        Integer charactersCopied = loadDatabaseIntoCollection(databaseStorage,
+                tables, reader, source);
 
-            return toCharSequence(databaseStorage, charactersCopied);
-        } catch (AbstractReader.FileReaderException ex) {
-            logger.log(Level.WARNING, String.format(
-                    "Error attempting to get tables from file: " //NON-NLS
-                    + "[%s] (id=%d).", source.getName(), //NON-NLS
-                    source.getId()), ex);
-        }
-
-        //Failed to get tables from file
-        return EMPTY_CHARACTER_SEQUENCE;
+        return toCharSequence(databaseStorage, charactersCopied);
     }
 
     /**
@@ -172,7 +168,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
                         tableBuilder.addRow(row.values());
                     }
                 }
-            } catch (AbstractReader.FileReaderException ex) {
+            } catch (FileReaderException ex) {
                 logger.log(Level.WARNING, String.format(
                         "Error attempting to read file table: [%s]" //NON-NLS
                         + " for file: [%s] (id=%d).", tableName, //NON-NLS
@@ -186,10 +182,17 @@ class SqliteTextExtractor extends ContentTextExtractor {
         return charactersCopied;
     }
 
+
     /**
-     * Copy linkedList elements into a CharSequence
-     *
-     * @return A character seqeunces of the database contents
+     * Copy elements from collection (which contains formatted database tables) 
+     * into a CharSequence so that it can be wrapped and used by the Google CharSource
+     * lib.
+     * 
+     * @param databaseStorage Collection containing database contents
+     * @param characterCount Number of characters needed to be allocated in the buffer
+     * so that all of the contents in the collection can be copied over.
+     * 
+     * @return CharSource of the formatted database contents
      */
     private CharSequence toCharSequence(Collection<String> databaseStorage,
             int characterCount) {
