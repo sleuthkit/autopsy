@@ -317,7 +317,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                 super(Bundle.Timeline_ui_countsview_menuItem_selectTimeRange());
                 setEventHandler(action -> {
                     try {
-                        controller.selectTimeAndType(interval, EventType.ROOT_EVEN_TYPE);
+                        controller.selectTimeAndType(interval, EventType.ROOT_EVENT_TYPE);
 
                     } catch (TskCoreException ex) {
                         Notifications.create().owner(getScene().getWindow())
