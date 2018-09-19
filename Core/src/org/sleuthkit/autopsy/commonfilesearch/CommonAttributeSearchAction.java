@@ -81,7 +81,7 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
      */
     @NbBundle.Messages({
         "CommonAttributeSearchAction.openPanel.noCaseOpen=Unable to run Common Property Search - no case is open.",
-        "CommonAttributeSearchAction.openPanel.notEnoughData=Unable to run Common Property Search - there are not enough data sources available between the current case and central repository."})
+        "CommonAttributeSearchAction.openPanel.notEnoughData=Unable to run Common Property Search - there are not enough data sources available in the current case and/or the Central Repository."})
     private void createAndShowPanel() {
         new SwingWorker<Boolean, Void>() {
 
