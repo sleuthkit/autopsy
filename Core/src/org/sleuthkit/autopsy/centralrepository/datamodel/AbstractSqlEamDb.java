@@ -403,9 +403,8 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
         try {
             return caseCacheByUUID.get(caseUUID, () -> getCaseByUUIDFromCr(caseUUID));
-        } catch (CacheLoader.InvalidCacheLoadException ex) {
-            //cache can not store null values
-            logger.log(Level.FINE, "Unable to get current autopsy case from Central repo returning null as current case", ex);
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the case does not exist in the central repo yet
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting autopsy case from Central repo", ex);
@@ -465,9 +464,8 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationCase getCaseById(int caseId) throws EamDbException {
         try {
             return caseCacheById.get(caseId, () -> getCaseByIdFromCr(caseId));
-        } catch (CacheLoader.InvalidCacheLoadException ex) {
-            //cache can not store null values
-            logger.log(Level.FINE, "Unable to get current autopsy case from Central repo returning null as current case", ex);
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the case does not exist in the central repo yet
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting autopsy case from Central repo", ex);
@@ -642,9 +640,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
         try {
             return dataSourceCacheByDeviceId.get(getDataSourceByDeviceIdCacheKey(correlationCase.getID(), dataSourceDeviceId), () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
-        } catch (CacheLoader.InvalidCacheLoadException ex) {
-            //cache can not store null values
-            logger.log(Level.FINE, "Unable to current get data source from Central repo returning null as current data source", ex);
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
@@ -710,9 +707,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
         try {
             return dataSourceCacheById.get(getDataSourceByIdCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
-        } catch (CacheLoader.InvalidCacheLoadException ex) {
-            //cache can not store null values
-            logger.log(Level.FINE, "Unable to current get data source from Central repo returning null as current data source", ex);
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
@@ -2892,9 +2888,8 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException {
         try {
             return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () -> getCorrelationTypeByIdFromCr(typeId));
-        } catch (CacheLoader.InvalidCacheLoadException ex) {
-            //cache can not store null values
-            logger.log(Level.FINE, "Unable to get correlation type from Central repo returning null as the correlation type", ex);
+        } catch (CacheLoader.InvalidCacheLoadException ignored) {
+            //lambda valueloader returned a null value and cache can not store null values this is normal if the correlation type does not exist in the central repo yet
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting correlation type", ex);
