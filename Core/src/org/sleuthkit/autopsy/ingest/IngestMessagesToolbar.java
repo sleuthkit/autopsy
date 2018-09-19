@@ -84,9 +84,9 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
 
         ingestMessagesButton.setFocusPainted(false);
         ingestMessagesButton.setContentAreaFilled(false);
-        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25.png"))); //NON-NLS
+        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/mail24.png"))); //NON-NLS
         ingestMessagesButton.setRolloverEnabled(true);
-        ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25-rollover.png"))); //NON-NLS
+        ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/mail24-rollover.png"))); //NON-NLS
         ingestMessagesButton.setToolTipText(
                 NbBundle.getMessage(this.getClass(), "IngestMessagesToolbar.customizeButton.toolTipText"));
         ingestMessagesButton.setBorder(null);
