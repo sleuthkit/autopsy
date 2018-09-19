@@ -93,7 +93,7 @@ final public class EventTypeUtils {
     }
 
     public static Color getColor(EventType type) {
-        if (type.equals(EventType.ROOT_EVEN_TYPE)) {
+        if (type.equals(EventType.ROOT_EVENT_TYPE)) {
             return Color.hsb(359, .9, .9, 0);
         }
 

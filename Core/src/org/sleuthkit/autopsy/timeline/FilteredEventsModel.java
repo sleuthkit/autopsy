@@ -367,7 +367,7 @@ public final class FilteredEventsModel {
                 tagsFilter,
                 hashHitsFilter,
                 new TextFilter(),
-                new TypeFilter(EventType.ROOT_EVEN_TYPE),
+                new TypeFilter(EventType.ROOT_EVENT_TYPE),
                 dataSourcesFilter,
                 Collections.emptySet()));
     }

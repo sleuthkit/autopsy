@@ -118,7 +118,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_has_run=Plaso Plugin has been run."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
-        statusHelper.switchToIndeterminate();
+        statusHelper.switchToDeterminate(100);
 
         if (!(dataSource instanceof Image)) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_dataSource_not_an_image());
@@ -142,7 +142,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         logger.log(Level.INFO, Bundle.PlasoIngestModule_startUp_message()); //NON-NLS
 
         try {
-            statusHelper.progress(Bundle.PlasoIngestModule_running_log2timeline());
+            // Run log2timeline
+            statusHelper.progress(Bundle.PlasoIngestModule_running_log2timeline(), 0);
             ExecUtil.execute(log2TimeLineCommand, new DataSourceIngestModuleProcessTerminator(context));
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_log2timeline_cancelled()); //NON-NLS
@@ -155,7 +156,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_log2timeline());
                 return ProcessResult.OK;
             }
-            statusHelper.progress(Bundle.PlasoIngestModule_running_psort());
+            
+            // sort the output
+            statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_psort_cancelled()); //NON-NLS
@@ -168,8 +171,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
                 return ProcessResult.OK;
             }
-            String plasoDb = moduleOutputPath + File.separator + "plasodb.db3";
-            createPlasoArtifacts(plasoDb, statusHelper);
+            
+            // parse the output and make artifacts
+            createPlasoArtifacts(plasoFile.getAbsolutePath(), statusHelper);
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_error_running(), ex);
@@ -275,6 +279,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
+            
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
@@ -291,13 +296,15 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     continue;
                 }
 
-                statusHelper.progress(resultSet.getString("filename"));
+                String currentFile = resultSet.getString("filename");
+                statusHelper.progress("Adding events to case: " + currentFile, 66);
 
-                Content resolvedFile = getAbstractFile(resultSet.getString("filename"));
+                Content resolvedFile = getAbstractFile(currentFile);
                 if (resolvedFile == null) {
                     logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
                     resolvedFile = image;
                 }
+                
                 long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
@@ -356,7 +363,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 return abstractFiles.get(0);
             }
             for (AbstractFile resolvedFile : abstractFiles) {
-                if (filePath.matches(resolvedFile.getParentPath().toLowerCase())) {
+                // double check its an exact match
+                if (filePath.toLowerCase().matches(resolvedFile.getParentPath().toLowerCase())) {
                     // cache it for next time
                     previousFile = resolvedFile;
                     return resolvedFile;
