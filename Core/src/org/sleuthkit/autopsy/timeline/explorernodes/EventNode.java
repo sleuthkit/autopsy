@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
@@ -62,13 +63,13 @@ public class EventNode extends DisplayableItemNode {
 
     private final TimelineEvent event;
 
-    EventNode(TimelineEvent event, AbstractFile file, BlackboardArtifact artifact) {
+    EventNode(TimelineEvent event, Content file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
         this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
     }
 
-    EventNode(TimelineEvent event, AbstractFile file) {
+    EventNode(TimelineEvent event, Content file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
         this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
@@ -227,7 +228,7 @@ public class EventNode extends DisplayableItemNode {
              */
         final TimelineEvent eventById = eventsModel.getEventById(eventID);
 
-            AbstractFile file = sleuthkitCase.getAbstractFileById(eventById.getFileID());
+            Content file = sleuthkitCase.getContentById(eventById.getFileObjID());
 
             if (eventById.getArtifactID().isPresent()) {
                 BlackboardArtifact blackboardArtifact = sleuthkitCase.getBlackboardArtifact(eventById.getArtifactID().get());

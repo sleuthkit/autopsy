@@ -38,9 +38,9 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
 
     private final long eventID;
     /**
-     * The TSK object ID of the file this event is derived from.
+     * The TSK object ID of the file (could be data source) this event is derived from.
      */
-    private final long objID;
+    private final long fileObjId;
 
     /**
      * The TSK artifact ID of the file this event is derived from. Null, if this
@@ -51,7 +51,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     /**
      * The TSK datasource ID of the datasource this event belongs to.
      */
-    private final long dataSourceID;
+    private final long dataSourceObjId;
 
     /**
      * The time of this event in second from the Unix epoch.
@@ -90,10 +90,25 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      */
     private MultiEvent<?> parent = null;
 
-    public SingleDetailsViewEvent(long eventID, long dataSourceID, long objID, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
+    /**
+     * 
+     * @param eventID
+     * @param dataSourceObjId
+     * @param fileObjId Object Id of file (could be a data source) that event is associated with
+     * @param artifactID
+     * @param time
+     * @param type
+     * @param fullDescription
+     * @param medDescription
+     * @param shortDescription
+     * @param known
+     * @param hashHit
+     * @param tagged 
+     */
+    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
-        this.dataSourceID = dataSourceID;
-        this.objID = objID;
+        this.dataSourceObjId = dataSourceObjId;
+        this.fileObjId = fileObjId;
         this.artifactID = Long.valueOf(0).equals(artifactID) ? null : artifactID;
         this.time = time;
         this.type = type;
@@ -107,8 +122,8 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
 
     public SingleDetailsViewEvent(TimelineEvent singleEvent) {
         this(singleEvent.getEventID(),
-                singleEvent.getDataSourceID(),
-                singleEvent.getFileID(),
+                singleEvent.getDataSourceObjID(),
+                singleEvent.getFileObjID(),
                 singleEvent.getArtifactID().orElse(null),
                 singleEvent.getTime(),
                 singleEvent.getEventType(),
@@ -130,7 +145,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      *         with the given parent.
      */
     public SingleDetailsViewEvent withParent(MultiEvent<?> newParent) {
-        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceID, objID, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), known, hashHit, tagged);
+        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), known, hashHit, tagged);
         singleEvent.parent = newParent;
         return singleEvent;
     }
@@ -176,12 +191,12 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     }
 
     /**
-     * Get the obj id of the file this event is derived from.
+     * Get the obj id of the file (which could be a data source) this event is derived from.
      *
      * @return the object id.
      */
     public long getFileID() {
-        return objID;
+        return fileObjId;
     }
 
     /**
@@ -250,8 +265,8 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      *
      * @return the datasource id.
      */
-    public long getDataSourceID() {
-        return dataSourceID;
+    public long getDataSourceObjID() {
+        return dataSourceObjId;
     }
 
     @Override

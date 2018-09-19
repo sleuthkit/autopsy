@@ -90,6 +90,7 @@ import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.listvew.datamodel.CombinedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -457,13 +458,13 @@ class ListTimeline extends BorderPane {
                 SortedSet<String> tagNames = new TreeSet<>();
                 try {
                     //get file tags
-                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
-                    tagsManager.getContentTagsByContent(abstractFileById).stream()
+                    Content file = sleuthkitCase.getContentById(getEvent().getFileObjID());
+                    tagsManager.getContentTagsByContent(file).stream()
                             .map(tag -> tag.getName().getDisplayName())
                             .forEach(tagNames::add);
 
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -527,12 +528,12 @@ class ListTimeline extends BorderPane {
                  */
                 setGraphic(new ImageView(HASH_HIT));
                 try {
-                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getContentById(getEvent().getFileObjID()).getHashSetNames());
                     Tooltip tooltip = new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames))); //NON-NLS
                     tooltip.setGraphic(new ImageView(HASH_HIT));
                     setTooltip(tooltip);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
