@@ -381,7 +381,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     Bundle.SQLiteViewer_errorMessage_failedToQueryDatabase());
         } catch (FileReaderInitException ex) {
             logger.log(Level.SEVERE, String.format(
-                    "Failed to create a SQLiteReader '%s' (objId=%d)", //NON-NLS
+                    "Failed to create a SQLiteReader for file: '%s' (objId=%d)", //NON-NLS
                     sqliteDbFile.getName(), sqliteDbFile.getId()), ex);
         }
     }
