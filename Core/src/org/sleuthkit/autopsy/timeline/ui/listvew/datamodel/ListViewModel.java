@@ -88,12 +88,12 @@ public class ListViewModel {
         final boolean needsTags = filterState.hasActiveTagsFilters();
         final boolean needsHashSets = filterState.hasActiveHashFilters();
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
-        final String querySql = "SELECT full_description, time, file_id, "
-                                + dbUtils.csvAggFunction("CAST(events.event_id AS VARCHAR)") + " AS eventIDs, "
+        final String querySql = "SELECT full_description, time, file_obj_id, "
+                                + dbUtils.csvAggFunction("CAST(tsk_events.event_id AS VARCHAR)") + " AS eventIDs, "
                                 + dbUtils.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
                                 + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets)
                                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter())
-                                + " GROUP BY time, full_description, file_id ORDER BY time ASC, full_description";
+                                + " GROUP BY time, full_description, file_obj_id ORDER BY time ASC, full_description";
 
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
@@ -108,7 +108,7 @@ public class ListViewModel {
                 for (int i = 0; i < eventIDs.size(); i++) {
                     eventMap.put(eventTypes.get(i), eventIDs.get(i));
                 }
-                combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000, resultSet.getString("full_description"), resultSet.getLong("file_id"), eventMap));
+                combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000, resultSet.getString("full_description"), resultSet.getLong("file_obj_id"), eventMap));
             }
 
         } catch (SQLException sqlEx) {
