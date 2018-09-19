@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.Map;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
@@ -96,10 +95,8 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
-
             //note that the params false and false are presently meaningless because that feature is not supported yet
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.FILE_TYPE, 0);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
             CommonAttributeSearchResults metadata = builder.findMatches();
 
             assertTrue("Results should not be empty", metadata.size() != 0);
@@ -146,11 +143,10 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testTwo() {
         try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, dataSources, false, false, fileType, 0);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
             
             CommonAttributeSearchResults metadata = builder.findMatches();
 
@@ -199,11 +195,10 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testThree(){
         try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
             
             //note that the params false and false are presently meaningless because that feature is not supported yet
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, fileType, 50);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, fileType, 50);
             
             CommonAttributeSearchResults metadata = builder.findMatches();
             
