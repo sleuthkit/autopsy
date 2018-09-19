@@ -133,11 +133,10 @@ class SqliteTextExtractor extends ContentTextExtractor {
      * @param source Sqlite file source
      */
     private CharSequence getDatabaseContents(Content source, AbstractReader reader) throws FileReaderException {
-        Map<String, String> tables = reader.getTableSchemas();
         Collection<String> databaseStorage = new LinkedList<>();
 
-        Integer charactersCopied = loadDatabaseIntoCollection(databaseStorage,
-                tables, reader, source);
+        Integer charactersCopied = loadDatabaseIntoCollection(databaseStorage, 
+                reader, source);
 
         return toCharSequence(databaseStorage, charactersCopied);
     }
@@ -152,8 +151,10 @@ class SqliteTextExtractor extends ContentTextExtractor {
      * @param reader          SqliteReader for interfacing with the database
      * @param source          Source database file for logging
      */
-    private int loadDatabaseIntoCollection(Collection<String> databaseStorage,
-            Map<String, String> tables, AbstractReader reader, Content source) {
+    private int loadDatabaseIntoCollection(Collection<String> databaseStorage, 
+            AbstractReader reader, Content source) throws FileReaderException {
+        //Will throw a FileReaderException if table schemas are unattainable
+        Map<String, String> tables = reader.getTableSchemas();
 
         int charactersCopied = 0;
         for (String tableName : tables.keySet()) {
@@ -161,6 +162,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
             tableBuilder.setTableName(tableName);
 
             try {
+                //Catch any exception at a particular table, we want to ensure we grab
+                //content from as many tables as possible
                 List<Map<String, Object>> rowsInTable = reader.getRowsFromTable(tableName);
                 if (!rowsInTable.isEmpty()) {
                     tableBuilder.addHeader(new ArrayList<>(rowsInTable.get(0).keySet()));
