@@ -329,6 +329,7 @@
                 <package>org.sleuthkit.autopsy.guiutils</package>
                 <package>org.sleuthkit.autopsy.healthmonitor</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
+                <package>org.sleuthkit.autopsy.ingest.events</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>
@@ -355,6 +356,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>

@@ -40,8 +40,6 @@ class PerCaseProperties {
 
     public static final String ENABLED = "enabled"; //NON-NLS
 
-    public static final String STALE = "stale"; //NON-NLS
-
     private final Case theCase;
 
     PerCaseProperties(Case c) {

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -31,6 +32,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -44,12 +46,17 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttribute;
-    private final Map<String, Long> dataSourceNameToIdMap;
+    private final CorrelationAttributeInstance.Type correlationType;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, CorrelationAttributeInstance.Type correlationType) {
         super();
         this.crFileId = attrInstId;
-        this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
+        this.correlationType = correlationType;
+    }
+    
+    @Override
+    public CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType(){
+        return this.correlationType;
     }
 
     void setCurrentAttributeInst(CorrelationAttributeInstance attribute) {
@@ -61,44 +68,56 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         Case currentCase;
         if (this.currentAttribute != null) {
-            
+
             final CorrelationAttributeInstance currentAttributeInstance = this.currentAttribute;
-            
-            String currentFullPath = currentAttributeInstance.getFilePath();
-            String currentDataSource = currentAttributeInstance.getCorrelationDataSource().getName();
-            
-            
-            if(this.dataSourceNameToIdMap.containsKey(currentDataSource)){
-                Long dataSourceObjectId = this.dataSourceNameToIdMap.get(currentDataSource);
-            
-                try {
-                    currentCase = Case.getCurrentCaseThrows();
+
+            try {
+                String currentFullPath = currentAttributeInstance.getFilePath();
+                currentCase = Case.getCurrentCaseThrows();
+
+                // Only attempt to make the abstract file if the attribute is from the current case
+                if (currentCase.getName().equals(currentAttributeInstance.getCorrelationCase().getCaseUUID())) {
 
                     SleuthkitCase tskDb = currentCase.getSleuthkitCase();
+                    
+                    // Find the correct data source
+                    Optional<DataSource> dataSource = tskDb.getDataSources().stream()
+                            .filter(p -> p.getDeviceId().equals(currentAttribute.getCorrelationDataSource().getDeviceID()))
+                            .findFirst();
+                    if (! dataSource.isPresent()) {
+                        LOGGER.log(Level.WARNING, String.format("Unable to find data source with device ID %s in the current case", currentAttribute.getCorrelationDataSource().getDeviceID()));
+                        return null;
+                    }
 
                     File fileFromPath = new File(currentFullPath);
                     String fileName = fileFromPath.getName();
-                    String parentPath = (fileFromPath.getParent() + File.separator).replace("\\", "/");
+                    
+                    // Create the parent path. Make sure not to add a separator if there is already one there.
+                    String parentPath = fileFromPath.getParent();
+                    if (! parentPath.endsWith(File.separator)) {
+                        parentPath = parentPath + File.separator;
+                    }
+                    parentPath = parentPath.replace("\\", "/");
 
-                    final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSourceObjectId);
+                    final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSource.get().getId());
                     List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
 
-                    if(potentialAbstractFiles.isEmpty()){
+                    if (potentialAbstractFiles.isEmpty()) {
                         return null;
-                    } else if(potentialAbstractFiles.size() > 1){
+                    } else if (potentialAbstractFiles.size() > 1) {
                         LOGGER.log(Level.WARNING, String.format("Unable to find an exact match for AbstractFile for record with filePath: %s.  May have returned the wrong file.", new Object[]{currentFullPath}));
                         return potentialAbstractFiles.get(0);
                     } else {
                         return potentialAbstractFiles.get(0);
                     }
-
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentFullPath}), ex);
+                } else {
                     return null;
                 }
-            } else {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentAttributeInstance.getFilePath()}), ex);
                 return null;
-            }            
+            }
+            
         }
         return null;
     }
@@ -107,7 +126,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     public DisplayableItemNode[] generateNodes() {
 
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor();
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(correlationType);
         CorrelationAttributeInstance corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
@@ -124,13 +143,5 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         }
 
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);
-    }
-
-    private Map<String, Long> invertMap(Map<Long, String> dataSourceIdToNameMap) {
-        HashMap<String, Long> invertedMap = new HashMap<>();
-        for (Map.Entry<Long, String> entry : dataSourceIdToNameMap.entrySet()){
-            invertedMap.put(entry.getValue(), entry.getKey());
-        }
-        return invertedMap;
     }
 }

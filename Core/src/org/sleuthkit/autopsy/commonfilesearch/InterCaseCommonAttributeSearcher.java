@@ -23,6 +23,7 @@ import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 
 /**
  * Provides logic for selecting common files from all data sources and all cases
@@ -31,6 +32,10 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
     private final EamDb dbManager;
+    /**
+     * The Correlation Type to find matches on.
+     */
+    final Type corAttrType;
 
     /**
      * Implements the algorithm for getting common files across all data sources
@@ -43,9 +48,10 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
      *
      * @throws EamDbException
      */
-    InterCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) throws EamDbException {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
+    InterCaseCommonAttributeSearcher(boolean filterByMediaMimeType, boolean filterByDocMimeType, Type corAttrType, int percentageThreshold) throws EamDbException {
+        super(filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
         dbManager = EamDb.getInstance();
+        this.corAttrType = corAttrType;
     }
 
     protected CorrelationCase getCorrelationCaseFromId(int correlationCaseId) throws EamDbException {
@@ -56,4 +62,5 @@ abstract class InterCaseCommonAttributeSearcher extends AbstractCommonAttributeS
         }
         throw new IllegalArgumentException("Cannot locate case.");
     }
+    
 }

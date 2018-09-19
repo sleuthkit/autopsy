@@ -24,72 +24,81 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Encapsulates a menu action which triggers the common files search dialog.
  */
-final public class CommonFilesSearchAction extends CallableSystemAction {
+final public class CommonAttributeSearchAction extends CallableSystemAction {
 
-    private static final Logger LOGGER = Logger.getLogger(CommonFilesSearchAction.class.getName());
-    
-    private static CommonFilesSearchAction instance = null;
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeSearchAction.class.getName());
+
+    private static CommonAttributeSearchAction instance = null;
     private static final long serialVersionUID = 1L;
-    
-    CommonFilesSearchAction() {
+
+    /**
+     * Get the default CommonAttributeSearchAction.
+     *
+     * @return the default instance of this action
+     */
+    public static synchronized CommonAttributeSearchAction getDefault() {
+        if (instance == null) {
+            instance = new CommonAttributeSearchAction();
+        }
+        return instance;
+    }
+
+    /**
+     * Create a CommonAttributeSearchAction for opening the common attribute
+     * search dialog
+     */
+    private CommonAttributeSearchAction() {
         super();
         this.setEnabled(false);
     }
 
     @Override
-    public boolean isEnabled(){
+    public boolean isEnabled() {
         boolean shouldBeEnabled = false;
         try {
             //dont refactor any of this to pull out common expressions - order of evaluation of each expression is significant
-            shouldBeEnabled = 
-                    (Case.isCaseOpen() && 
-                    Case.getCurrentCase().getDataSources().size() > 1) 
-                    || 
-                    (EamDb.isEnabled() && 
-                    EamDb.getInstance() != null && 
-                    EamDb.getInstance().getCases().size() > 1 && 
-                    Case.isCaseOpen() &&
-                    Case.getCurrentCase() != null && 
-                    EamDb.getInstance().getCase(Case.getCurrentCase()) != null);
-                    
-        } catch(TskCoreException ex) {
+            shouldBeEnabled
+                    = (Case.isCaseOpen()
+                    && Case.getCurrentCase().getDataSources().size() > 1)
+                    || CommonAttributePanel.isEamDbAvailableForIntercaseSearch();
+
+        } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data sources for action enabled check", ex);
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting CR cases for action enabled check", ex);
         }
         return super.isEnabled() && shouldBeEnabled;
     }
 
-    public static synchronized CommonFilesSearchAction getDefault() {
-        if (instance == null) {
-            instance = new CommonFilesSearchAction();
-        }
-        return instance;
-    }
-
     @Override
     public void actionPerformed(ActionEvent event) {
-        new CommonAttributePanel().setVisible(true);
+        createAndShowPanel();
     }
 
     @Override
     public void performAction() {
-        new CommonAttributePanel().setVisible(true);
+        createAndShowPanel();
+    }
+
+    /**
+     * Create the commonAttributePanel and diplay it.
+     */
+    private void createAndShowPanel() {
+        CommonAttributePanel commonAttributePanel = new CommonAttributePanel();
+        //In order to update errors the CommonAttributePanel needs to observe its sub panels
+        commonAttributePanel.observeSubPanels();
+        commonAttributePanel.setVisible(true);
     }
 
     @NbBundle.Messages({
-        "CommonFilesAction.getName.text=Common Files Search"})
+        "CommonAttributeSearchAction.getName.text=Common Property Search"})
     @Override
     public String getName() {
-        return Bundle.CommonFilesAction_getName_text();
+        return Bundle.CommonAttributeSearchAction_getName_text();
     }
 
     @Override

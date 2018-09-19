@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
  * Shows path based groups as a tree and others kinds of groups as a flat list (
@@ -77,17 +78,22 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
         groupTree.setShowRoot(false);
 
         getGroupManager().getAnalyzedGroups().addListener((ListChangeListener.Change<? extends DrawableGroup> change) -> {
+            GroupViewState oldState = getController().getViewState();
+
             while (change.next()) {
                 change.getAddedSubList().stream().forEach(this::insertGroup);
                 change.getRemoved().stream().forEach(this::removeFromTree);
             }
-            sortGroups();
+            Platform.runLater(() -> {
+                GroupTree.this.sortGroups(false);
+                Optional.ofNullable(oldState)
+                        .flatMap(GroupViewState::getGroup)
+                        .ifPresent(this::setFocusedGroup);
+            });
         });
 
-        for (DrawableGroup g : getGroupManager().getAnalyzedGroups()) {
-            insertGroup(g);
-        }
-        sortGroups();
+        getGroupManager().getAnalyzedGroups().forEach(this::insertGroup);
+        Platform.runLater(this::sortGroups);
     }
 
     /**
@@ -102,12 +108,10 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
 
         if (treeItemForGroup != null) {
             groupTree.getSelectionModel().select(treeItemForGroup);
-            Platform.runLater(() -> {
-                int row = groupTree.getRow(treeItemForGroup);
-                if (row != -1) {
-                    groupTree.scrollTo(row - 2); //put newly selected row 3 from the top
-                }
-            });
+            int row = groupTree.getRow(treeItemForGroup);
+            if (row != -1) {
+                groupTree.scrollTo(row - 2); //put newly selected row 3 from the top
+            }
         }
     }
 

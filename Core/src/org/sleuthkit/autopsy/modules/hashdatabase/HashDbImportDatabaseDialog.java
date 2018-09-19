@@ -27,6 +27,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -180,6 +181,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         fileTypeRadioButton = new javax.swing.JRadioButton();
         centralRepoRadioButton = new javax.swing.JRadioButton();
         jLabel4 = new javax.swing.JLabel();
+        saveInUserConfigFolderCheckbox = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -286,6 +288,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.jLabel4.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(saveInUserConfigFolderCheckbox, org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.saveInUserConfigFolderCheckbox.text")); // NOI18N
+        saveInUserConfigFolderCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.saveInUserConfigFolderCheckbox.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -334,6 +339,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                         .addComponent(cancelButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(saveInUserConfigFolderCheckbox)
                             .addComponent(jLabel2)
                             .addComponent(readOnlyCheckbox)
                             .addGroup(layout.createSequentialGroup()
@@ -384,7 +390,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                         .addComponent(readOnlyCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(sendIngestMessagesCheckbox)
-                        .addGap(0, 39, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(saveInUserConfigFolderCheckbox)
+                        .addGap(0, 29, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -397,7 +405,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
-        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), "HashDatabases").toString();
+        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME).toString();
         if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
             lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
         }
@@ -492,6 +500,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
         File file = new File(selectedFilePath);
         if (!file.exists()) {
             JOptionPane.showMessageDialog(this,
@@ -503,6 +512,22 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             return;
         }
 
+        if (saveInUserConfigFolderCheckbox.isSelected()) {
+            // copy the hash database to user configuration directory and use that path instead (JIRA-4177)
+            String locationInUserConfigDir = Paths.get(PlatformUtil.getUserConfigDirectory(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME, hashSetNameTextField.getText(), file.getName()).toString();
+            try {
+                FileUtils.copyFile(file, new File(locationInUserConfigDir));
+                // update the hash database location
+                selectedFilePath = locationInUserConfigDir;
+            } catch (IOException ex) {
+                String errorMessage = NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.unableToCopyToUserDirMsg", locationInUserConfigDir);
+                Logger.getLogger(HashDbImportDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
+                JOptionPane.showMessageDialog(this, errorMessage, NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.importHashDbErr"),
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+        
         KnownFilesType type;
         if (knownRadioButton.isSelected()) {
             type = KnownFilesType.KNOWN;
@@ -622,6 +647,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JButton orgButton;
     private javax.swing.JComboBox<String> orgComboBox;
     private javax.swing.JCheckBox readOnlyCheckbox;
+    private javax.swing.JCheckBox saveInUserConfigFolderCheckbox;
     private javax.swing.JCheckBox sendIngestMessagesCheckbox;
     private javax.swing.ButtonGroup storageTypeButtonGroup;
     private javax.swing.JTextField versionTextField;

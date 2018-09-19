@@ -81,7 +81,7 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
             Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
-            CommonAttributeSearchResults metadata = allSourcesBuilder.findFiles();
+            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
@@ -101,7 +101,7 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
             Long first = getDataSourceIdByName(SET1, dataSources);
 
             IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false, 0);
-            CommonAttributeSearchResults metadata = singleSourceBuilder.findFiles();
+            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
 
             int resultCount = metadata.size();
             assertEquals(resultCount, 0);
