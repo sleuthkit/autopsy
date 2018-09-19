@@ -26,6 +26,7 @@ import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.FeatureDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -37,8 +38,10 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
+import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import static javax.swing.SwingConstants.CENTER;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
@@ -58,12 +61,14 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
+import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
@@ -82,6 +87,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(DataResultViewerTable.class.getName());
+
+    private static final String NOTEPAD_ICON_PATH = "org/sleuthkit/autopsy/images/notepad16.png";
+    private static final String RED_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
+    private static final String YELLOW_CIRCLE_ICON_PATH = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
+    private static final ImageIcon COMMENT_ICON = new ImageIcon(ImageUtilities.loadImage(NOTEPAD_ICON_PATH, false));
+    private static final ImageIcon INTERESTING_SCORE_ICON = new ImageIcon(ImageUtilities.loadImage(YELLOW_CIRCLE_ICON_PATH, false));
+    private static final ImageIcon NOTABLE_ICON_SCORE = new ImageIcon(ImageUtilities.loadImage(RED_CIRCLE_ICON_PATH, false));
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     static private final Color TAGGED_ROW_COLOR = new Color(255, 255, 195);
@@ -90,6 +102,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final Map<Integer, Property<?>> propertiesMap;
     private final Outline outline;
     private final TableListener outlineViewListener;
+    private final IconRendererTableListener iconRendererListener;
     private Node rootNode;
 
     /**
@@ -156,6 +169,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outlineViewListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(outlineViewListener);
 
+        iconRendererListener = new IconRendererTableListener();
+        outline.getColumnModel().addColumnModelListener(iconRendererListener);
+
         /*
          * Add a mouse listener to the child OutlineView (explorer view) to make
          * sure the first column of the table is kept in place.
@@ -179,14 +195,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Gets the title of this tabular result viewer.
-     * @return  title of tab.
+     *
+     * @return title of tab.
      */
     @Override
     @NbBundle.Messages("DataResultViewerTable.title=Table")
     public String getTitle() {
         return title;
     }
-    
+
     /**
      * Indicates whether a given node is supported as a root node for this
      * tabular viewer.
@@ -208,11 +225,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode) {
-        if (! SwingUtilities.isEventDispatchThread()) {
+        if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");
             return;
         }
-        
+
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -252,9 +269,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Sets up the Outline view of this tabular result viewer by creating
-     * column headers based on the children of the current root node. The
-     * persisted column order, sorting and visibility is used.
+     * Sets up the Outline view of this tabular result viewer by creating column
+     * headers based on the children of the current root node. The persisted
+     * column order, sorting and visibility is used.
      */
     private void setupTable() {
         /*
@@ -286,7 +303,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * let the table resize itself.
          */
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
-       
+
         assignColumns(props); // assign columns to match the properties
         if (firstProp != null) {
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
@@ -345,12 +362,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * treated as un-hide/hide.
          */
         outlineViewListener.listenToVisibilityChanges(true);
+
     }
 
     /*
-     * Populates the column map for the child OutlineView of this tabular
-     * result viewer with references to the column objects for use when
-     * loading/storing the visibility info.
+     * Populates the column map for the child OutlineView of this tabular result
+     * viewer with references to the column objects for use when loading/storing
+     * the visibility info.
      */
     private void populateColumnMap() {
         columnMap.clear();
@@ -362,6 +380,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             if (entry.getKey() < columnCount) {
                 final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
                 columnMap.put(propName, column);
+
             }
         }
     }
@@ -406,8 +425,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
     }
-    
-    protected TableColumnModel getColumnModel(){
+
+    protected TableColumnModel getColumnModel() {
         return outline.getColumnModel();
     }
 
@@ -639,6 +658,57 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
+     * Listener which sets the custom icon renderer on columns which contain
+     * icons instead of text when a column is added.
+     */
+    private class IconRendererTableListener implements TableColumnModelListener {
+
+        @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
+            "DataResultViewerTable.scoreRender.name=S",
+            "DataResultViewerTable.countRender.name=O"})
+        @Override
+        public void columnAdded(TableColumnModelEvent e) {
+            if (e.getSource() instanceof ETableColumnModel) {
+                TableColumn column = ((TableColumnModel) e.getSource()).getColumn(e.getToIndex());
+                if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_commentRender_name())) {
+                    //if the current column is a comment column set the cell renderer to be the HasCommentCellRenderer
+                    column.setCellRenderer(new HasCommentCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_scoreRender_name())) {
+                    //if the current column is a score column set the cell renderer to be the ScoreCellRenderer
+                    column.setCellRenderer(new ScoreCellRenderer());
+                } else if (column.getHeaderValue().toString().equals(Bundle.DataResultViewerTable_countRender_name())) {
+                    column.setCellRenderer(new CountCellRenderer());
+                }
+            }
+        }
+
+        @Override
+        public void columnRemoved(TableColumnModelEvent e
+        ) {
+            //Don't do anything when column removed
+        }
+
+        @Override
+        public void columnMoved(TableColumnModelEvent e
+        ) {
+            //Don't do anything when column moved
+        }
+
+        @Override
+        public void columnMarginChanged(ChangeEvent e
+        ) {
+            //Don't do anything when column margin changed
+        }
+
+        @Override
+        public void columnSelectionChanged(ListSelectionEvent e
+        ) {
+            //Don't do anything when column selection changed
+        }
+
+    }
+
+    /**
      * Listens to mouse events and table column events and persists column order
      * sorting, and visibility changes.
      */
@@ -799,6 +869,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                                 try {
                                     tagFound = !prop.getValue().equals("");
                                 } catch (IllegalAccessException | InvocationTargetException ignore) {
+                                    //if unable to get the tags property value, treat it like it not having a comment
                                 }
                                 break;
                             }
@@ -812,6 +883,174 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
             return component;
         }
+    }
+
+    /*
+     * A renderer which based on the contents of the cell will display an icon
+     * to indicate the presence of a comment related to the content.
+     */
+    private final class HasCommentCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @NbBundle.Messages({"DataResultViewerTable.commentRenderer.crComment.toolTip=Comment exists in Central Repository",
+            "DataResultViewerTable.commentRenderer.tagComment.toolTip=Comment exists on associated tag(s)",
+            "DataResultViewerTable.commentRenderer.crAndTagComment.toolTip=Comments exist both in Central Repository and on associated tag(s)",
+            "DataResultViewerTable.commentRenderer.noComment.toolTip=No comments found"})
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(CENTER);
+            Object switchValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    switchValue = ((Node.Property) value).getValue();
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+            } else {
+                //JTables contain the value we want directly in the cell
+                switchValue = value;
+            }
+            setText("");
+            if ((switchValue instanceof HasCommentStatus)) {
+
+                switch ((HasCommentStatus) switchValue) {
+                    case CR_COMMENT:
+                        setIcon(COMMENT_ICON);
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_crComment_toolTip());
+                        break;
+                    case TAG_COMMENT:
+                        setIcon(COMMENT_ICON);
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_tagComment_toolTip());
+                        break;
+                    case CR_AND_TAG_COMMENTS:
+                        setIcon(COMMENT_ICON);
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_crAndTagComment_toolTip());
+                        break;
+                    case TAG_NO_COMMENT:
+                    case NO_COMMENT:
+                    default:
+                        setIcon(null);
+                        setToolTipText(Bundle.DataResultViewerTable_commentRenderer_noComment_toolTip());
+                }
+            } else {
+                setIcon(null);
+            }
+
+            return this;
+        }
+
+    }
+
+    /*
+     * A renderer which based on the contents of the cell will display an icon
+     * to indicate the score associated with the item.
+     */
+    private final class ScoreCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(CENTER);
+            Object switchValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    switchValue = ((Node.Property) value).getValue();
+                    setToolTipText(((FeatureDescriptor) value).getShortDescription());
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+
+            } else {
+                //JTables contain the value we want directly in the cell
+                switchValue = value;
+            }
+            setText("");
+            if ((switchValue instanceof Score)) {
+
+                switch ((Score) switchValue) {
+                    case INTERESTING_SCORE:
+                        setIcon(INTERESTING_SCORE_ICON);
+                        break;
+                    case NOTABLE_SCORE:
+                        setIcon(NOTABLE_ICON_SCORE);
+                        break;
+                    case NO_SCORE:
+                    default:
+                        setIcon(null);
+                }
+            } else {
+                setIcon(null);
+            }
+            return this;
+        }
+
+    }
+
+    /*
+     * A renderer which based on the contents of the cell will display an empty
+     * cell if no count was available.
+     */
+    private final class CountCellRenderer extends ColorTagCustomRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting
+            setHorizontalAlignment(LEFT);
+            Object countValue = null;
+            if ((value instanceof NodeProperty)) {
+                //The Outline view has properties in the cell, the value contained in the property is what we want
+                try {
+                    countValue = ((Node.Property) value).getValue();
+                    setToolTipText(((FeatureDescriptor) value).getShortDescription());
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    //Unable to get the value from the NodeProperty no Icon will be displayed
+                }
+            } else {
+                //JTables contain the value we want directly in the cell
+                countValue = value;
+            }
+            setText("");
+            if ((countValue instanceof Long)) {
+                //Don't display value if value is negative used so that sorting will behave as desired
+                if ((Long) countValue >= 0) {
+                    setText(countValue.toString());
+                }
+            }
+            return this;
+        }
+
+    }
+
+    /**
+     * Enum to denote the presence of a comment associated with the content or
+     * artifacts generated from it.
+     */
+    public enum HasCommentStatus {
+        NO_COMMENT,
+        TAG_NO_COMMENT,
+        CR_COMMENT,
+        TAG_COMMENT,
+        CR_AND_TAG_COMMENTS
+    }
+
+    /**
+     * Enum to denote the score given to an item to draw the users attention
+     */
+    public enum Score {
+        NO_SCORE,
+        INTERESTING_SCORE,
+        NOTABLE_SCORE
     }
 
     /**
@@ -837,7 +1076,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.openide.explorer.view.OutlineView outlineView;
+    protected org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
 }

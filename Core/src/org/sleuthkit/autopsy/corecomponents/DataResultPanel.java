@@ -370,6 +370,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.currentRootNode = rootNode;
         if (this.currentRootNode != null) {
+            /*
+             * The only place we reset the rootNodeListener allowing the
+             * contents of the results tab represented by this node to be
+             * changed a single time before it is necessary to reset it again.
+             * Necessary when transitioning from "Please wait..." node to having
+             * contents.
+             */
             rootNodeListener.reset();
             this.currentRootNode.addNodeListener(rootNodeListener);
         }
@@ -518,7 +525,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Closes down the component. Intended to be called by the parent top
->>>>>>> custom-release-may-2018
      * component when it is closed.
      */
     void close() {
@@ -529,7 +535,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         this.resultViewers.forEach((viewer) -> viewer.setNode(null));
 
-        if (!this.isMain) { // RJCTODO: What?
+        if (!this.isMain) {
             this.resultViewers.forEach(DataResultViewer::clearComponent);
             this.descriptionLabel.removeAll();
             this.numberOfChildNodesLabel.removeAll();
@@ -581,11 +587,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Responds to changes in the root node due to asynchronous child node
-     * creation.
+     * creation. This listener allows for the tabs of the result viewer to be
+     * set up again after the "Please wait..." node has ended and actual content
+     * should be displayed in the table.
      */
-    // RJCTODO: Why do we need this?
     private class RootNodeListener implements NodeListener {
 
+        //it is assumed we are still waiting for data when the node is initially constructed
         private volatile boolean waitingForData = true;
 
         public void reset() {
@@ -598,10 +606,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             updateMatches();
 
             /*
-             * There is a known issue in this code whereby we will only call
-             * setupTabs() once even though childrenAdded could be called
-             * multiple times. That means that each panel may not have access to
-             * all of the children when they decide if they support the content
+             * Ensures that after the initial call to setupTabs in the
+             * DataResultPanel.setNode method that we only call setupTabs one
+             * additional time. This is to account for the transition that is
+             * possible from a "Please wait..." node or a tab with no results in
+             * it and a tab containing data and thereby having all of it's
+             * columns.
              */
             if (waitingForData && containsReal(delta)) {
                 waitingForData = false;

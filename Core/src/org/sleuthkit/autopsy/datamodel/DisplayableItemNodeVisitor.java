@@ -18,10 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.commonfilesearch.CommonFilesNode;
-import org.sleuthkit.autopsy.commonfilesearch.FileInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
-import org.sleuthkit.autopsy.commonfilesearch.Md5Node;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
+import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -115,11 +116,13 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(InterestingHits.SetNameNode ihsn);
 
-    T visit(Md5Node mn);
+    T visit(CommonAttributeValueNode cavn);
 
-    T visit(CommonFilesNode cfn);
+    T visit(CommonAttributeSearchResultRootNode cfn);
 
-    T visit(FileInstanceNode fin);
+    T visit(CaseDBCommonAttributeInstanceNode fin);
+    
+    T visit(CentralRepoCommonAttributeInstanceNode crfin);
     
     T visit(InstanceCountNode icn);
 
@@ -192,23 +195,28 @@ public interface DisplayableItemNodeVisitor<T> {
         protected abstract T defaultVisit(DisplayableItemNode c);
 
         @Override
-        public T visit(FileInstanceNode fin) {
+        public T visit(CaseDBCommonAttributeInstanceNode fin) {
             return defaultVisit(fin);
         }
 
         @Override
-        public T visit(Md5Node mn) {
-            return defaultVisit(mn);
+        public T visit(CommonAttributeValueNode cavn) {
+            return defaultVisit(cavn);
         }
 
         @Override
-        public T visit(CommonFilesNode cfn) {
+        public T visit(CommonAttributeSearchResultRootNode cfn) {
             return defaultVisit(cfn);
         }
         
         @Override
         public T visit(InstanceCountNode icn){
             return defaultVisit(icn);
+        }
+        
+        @Override
+        public T visit(CentralRepoCommonAttributeInstanceNode crfin){
+            return defaultVisit(crfin);
         }
 
         @Override

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import java.lang.ref.SoftReference;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -32,6 +31,7 @@ import java.util.stream.Collectors;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import javax.annotation.Nonnull;
@@ -40,8 +40,8 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FileTypeUtils;
-import org.sleuthkit.autopsy.imagegallery.ThumbnailCache;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -67,15 +67,21 @@ public abstract class DrawableFile {
 
     /**
      * Skip the database query if we have already determined the file type.
+     *
+     * @param file     The underlying AbstractFile.
+     * @param analyzed Is the file analyzed.
+     * @param isVideo  Is the file a video.
+     *
+     * @return
      */
-    public static DrawableFile create(AbstractFile abstractFileById, boolean analyzed, boolean isVideo) {
+    public static DrawableFile create(AbstractFile file, boolean analyzed, boolean isVideo) {
         return isVideo
-                ? new VideoFile(abstractFileById, analyzed)
-                : new ImageFile(abstractFileById, analyzed);
+                ? new VideoFile(file, analyzed)
+                : new ImageFile(file, analyzed);
     }
 
-    public static DrawableFile create(Long id, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
-        return create(Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(id), analyzed);
+    public static DrawableFile create(Long fileID, boolean analyzed) throws TskCoreException, NoCurrentCaseException {
+        return create(Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(fileID), analyzed);
     }
 
     private SoftReference<Image> imageRef;
@@ -149,8 +155,8 @@ public abstract class DrawableFile {
         return file.getSleuthkitCase();
     }
 
-    private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> t) {
-        return new Pair<>(t, t.getValue(DrawableFile.this));
+    private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> attribute) {
+        return new Pair<>(attribute, attribute.getValue(this));
     }
 
     public String getModel() {
@@ -254,42 +260,17 @@ public abstract class DrawableFile {
         return getSleuthkitCase().getContentTagsByContent(file);
     }
 
-    @Deprecated
-    public Image getThumbnail() {
-        try {
-            return getThumbnailTask().get();
-        } catch (InterruptedException | ExecutionException ex) {
-            return null;
-        }
-
-    }
-
-    public Task<Image> getThumbnailTask() {
-        return ThumbnailCache.getDefault().getThumbnailTask(this);
-    }
-
-    @Deprecated //use non-blocking getReadFullSizeImageTask  instead for most cases
-    public Image getFullSizeImage() {
-        try {
-            return getReadFullSizeImageTask().get();
-        } catch (InterruptedException | ExecutionException ex) {
-            return null;
-        }
-    }
-
     public Task<Image> getReadFullSizeImageTask() {
         Image image = (imageRef != null) ? imageRef.get() : null;
         if (image == null || image.isError()) {
             Task<Image> readImageTask = getReadFullSizeImageTaskHelper();
             readImageTask.stateProperty().addListener(stateProperty -> {
-                switch (readImageTask.getState()) {
-                    case SUCCEEDED:
-                        try {
-                            imageRef = new SoftReference<>(readImageTask.get());
-                        } catch (InterruptedException | ExecutionException exception) {
-                            LOGGER.log(Level.WARNING, getMessageTemplate(exception), getContentPathSafe());
-                        }
-                        break;
+                if (readImageTask.getState() == Worker.State.SUCCEEDED) {
+                    try {
+                        imageRef = new SoftReference<>(readImageTask.get());
+                    } catch (InterruptedException | ExecutionException exception) {
+                        LOGGER.log(Level.WARNING, getMessageTemplate(exception), getContentPathSafe());
+                    }
                 }
             });
             return readImageTask;
@@ -316,14 +297,14 @@ public abstract class DrawableFile {
 
     /**
      * Get the width of the visual content.
-     * 
+     *
      * @return The width.
      */
     abstract Double getWidth();
 
     /**
      * Get the height of the visual content.
-     * 
+     *
      * @return The height.
      */
     abstract Double getHeight();

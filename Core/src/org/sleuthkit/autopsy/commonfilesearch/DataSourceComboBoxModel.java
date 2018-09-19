@@ -30,7 +30,7 @@ public class DataSourceComboBoxModel extends AbstractListModel<String> implement
 
     private static final long serialVersionUID = 1L;
     private final String[] dataSourceList;
-    String selection = null;
+    private String selection = null;
 
     /**
      * Use this to initialize the panel
