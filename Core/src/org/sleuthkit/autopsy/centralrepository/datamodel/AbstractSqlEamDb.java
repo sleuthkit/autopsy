@@ -405,7 +405,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return caseCacheByUUID.get(caseUUID, () -> getCaseByUUIDFromCr(caseUUID));
         } catch (CacheLoader.InvalidCacheLoadException ex) {
             //cache can not store null values
-            logger.log(Level.INFO, "Unable to get current autopsy case from Central repo returning null as current case", ex);
+            logger.log(Level.FINE, "Unable to get current autopsy case from Central repo returning null as current case", ex);
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting autopsy case from Central repo", ex);
@@ -467,7 +467,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return caseCacheById.get(caseId, () -> getCaseByIdFromCr(caseId));
         } catch (CacheLoader.InvalidCacheLoadException ex) {
             //cache can not store null values
-            logger.log(Level.INFO, "Unable to get current autopsy case from Central repo returning null as current case", ex);
+            logger.log(Level.FINE, "Unable to get current autopsy case from Central repo returning null as current case", ex);
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting autopsy case from Central repo", ex);
@@ -644,7 +644,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return dataSourceCacheByDeviceId.get(getDataSourceByDeviceIdCacheKey(correlationCase.getID(), dataSourceDeviceId), () -> getDataSourceFromCr(correlationCase, dataSourceDeviceId));
         } catch (CacheLoader.InvalidCacheLoadException ex) {
             //cache can not store null values
-            logger.log(Level.INFO, "Unable to current get data source from Central repo returning null as current data source", ex);
+            logger.log(Level.FINE, "Unable to current get data source from Central repo returning null as current data source", ex);
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
@@ -712,7 +712,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return dataSourceCacheById.get(getDataSourceByIdCacheKey(correlationCase.getID(), dataSourceId), () -> getDataSourceByIdFromCr(correlationCase, dataSourceId));
         } catch (CacheLoader.InvalidCacheLoadException ex) {
             //cache can not store null values
-            logger.log(Level.INFO, "Unable to current get data source from Central repo returning null as current data source", ex);
+            logger.log(Level.FINE, "Unable to current get data source from Central repo returning null as current data source", ex);
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting data source from central repository", ex);
@@ -2894,7 +2894,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () -> getCorrelationTypeByIdFromCr(typeId));
         } catch (CacheLoader.InvalidCacheLoadException ex) {
             //cache can not store null values
-            logger.log(Level.INFO, "Unable to get correlation type from Central repo returning null as the correlation type", ex);
+            logger.log(Level.FINE, "Unable to get correlation type from Central repo returning null as the correlation type", ex);
             return null;
         } catch (ExecutionException ex) {
             throw new EamDbException("Error getting correlation type", ex);
