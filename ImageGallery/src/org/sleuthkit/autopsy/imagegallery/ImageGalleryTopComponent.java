@@ -229,45 +229,47 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     synchronized private void setController(ImageGalleryController controller) {
-        if (this.controller != null && notEqual(this.controller, controller)) {
-            this.controller.reset();
-        }
-        this.controller = controller;
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                //initialize jfx ui
-                fullUIStack = new StackPane(); //this is passed into controller
-                myScene = new Scene(fullUIStack);
-                jfxPanel.setScene(myScene);
-                groupPane = new GroupPane(controller);
-                centralStack = new StackPane(groupPane); //this is passed into controller
-                fullUIStack.getChildren().add(borderPane);
-                splitPane = new SplitPane();
-                borderPane.setCenter(splitPane);
-                Toolbar toolbar = new Toolbar(controller);
-                borderPane.setTop(toolbar);
-                borderPane.setBottom(new StatusBar(controller));
-                metaDataTable = new MetaDataPane(controller);
-                groupTree = new GroupTree(controller);
-                hashHitList = new HashHitGroupList(controller);
-                TabPane tabPane = new TabPane(groupTree, hashHitList);
-                tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
-                tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
-                VBox.setVgrow(tabPane, Priority.ALWAYS);
-                leftPane = new VBox(tabPane, new SummaryTablePane(controller));
-                SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
-                SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
-                SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
-                splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
-                splitPane.setDividerPositions(0.1, 1.0);
-
-                controller.regroupDisabledProperty().addListener((Observable observable) -> checkForGroups());
-                controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> Platform.runLater(() -> checkForGroups()));
-
-                Platform.runLater(() -> checkForGroups());
+        if (notEqual(this.controller, controller)) {
+            if (this.controller != null) {
+                this.controller.reset();
             }
-        });
+            this.controller = controller;
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    //initialize jfx ui
+                    fullUIStack = new StackPane(); //this is passed into controller
+                    myScene = new Scene(fullUIStack);
+                    jfxPanel.setScene(myScene);
+                    groupPane = new GroupPane(controller);
+                    centralStack = new StackPane(groupPane); //this is passed into controller
+                    fullUIStack.getChildren().add(borderPane);
+                    splitPane = new SplitPane();
+                    borderPane.setCenter(splitPane);
+                    Toolbar toolbar = new Toolbar(controller);
+                    borderPane.setTop(toolbar);
+                    borderPane.setBottom(new StatusBar(controller));
+                    metaDataTable = new MetaDataPane(controller);
+                    groupTree = new GroupTree(controller);
+                    hashHitList = new HashHitGroupList(controller);
+                    TabPane tabPane = new TabPane(groupTree, hashHitList);
+                    tabPane.setPrefWidth(TabPane.USE_COMPUTED_SIZE);
+                    tabPane.setMinWidth(TabPane.USE_PREF_SIZE);
+                    VBox.setVgrow(tabPane, Priority.ALWAYS);
+                    leftPane = new VBox(tabPane, new SummaryTablePane(controller));
+                    SplitPane.setResizableWithParent(leftPane, Boolean.FALSE);
+                    SplitPane.setResizableWithParent(groupPane, Boolean.TRUE);
+                    SplitPane.setResizableWithParent(metaDataTable, Boolean.FALSE);
+                    splitPane.getItems().addAll(leftPane, centralStack, metaDataTable);
+                    splitPane.setDividerPositions(0.1, 1.0);
+
+                    controller.regroupDisabledProperty().addListener((Observable observable) -> checkForGroups());
+                    controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> Platform.runLater(() -> checkForGroups()));
+
+                    Platform.runLater(() -> checkForGroups());
+                }
+            });
+        }
     }
 
     /**

@@ -447,7 +447,8 @@ public class GroupManager {
         if (!Case.isCaseOpen()) {
             return;
         }
-
+        setSortBy(sortBy);
+        setSortOrder(sortOrder);
         //only re-query the db if the data source or group by attribute changed or it is forced
         if (dataSource != getDataSource()
             || groupBy != getGroupBy()
@@ -455,13 +456,11 @@ public class GroupManager {
 
             setDataSource(dataSource);
             setGroupBy(groupBy);
-            setSortBy(sortBy);
-            setSortOrder(sortOrder);
+
             Platform.runLater(regrouper::restart);
         } else {
             // resort the list of groups
-            setSortBy(sortBy);
-            setSortOrder(sortOrder);
+
             sortAnalyzedGroups();
             sortUnseenGroups();
         }
