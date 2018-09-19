@@ -661,11 +661,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private class IconRendererTableListener implements TableColumnModelListener {
 
         @NbBundle.Messages({"DataResultViewerTable.commentRender.name=C",
-            "DataResultViewerTable.commentRender.toolTip=Indicates the presence of a comment associated with the item",
+            "DataResultViewerTable.commentRender.toolTip=C(omments) indicates whether the item has a comment",
             "DataResultViewerTable.scoreRender.name=S",
-            "DataResultViewerTable.scoreRender.toolTip=Indicates item is tagged, notable, or otherwise may be of interest",
+            "DataResultViewerTable.scoreRender.toolTip=S(core) indicates whether the item is interesting or notable",
             "DataResultViewerTable.countRender.name=O",
-            "DataResultViewerTable.countRender.toolTip=Number of data sources containing item in the Central Repository"})
+            "DataResultViewerTable.countRender.toolTip=O(ccurrences) indicates the number of data sources containing the item in the Central Repository"})
         @Override
         public void columnAdded(TableColumnModelEvent e) {
             if (e.getSource() instanceof ETableColumnModel) {
