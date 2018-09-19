@@ -123,10 +123,12 @@ abstract class NavPanel<X> extends Tab {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     Comparator<DrawableGroup> getComparator() {
-        Comparator<DrawableGroup> comparator = sortChooser.getComparator();
-        return (sortChooser.getSortOrder() == SortOrder.ASCENDING)
+        GroupComparators<?> comparator = sortChooser.getComparator();
+        Comparator<DrawableGroup> comparator2 = (sortChooser.getSortOrder() == SortOrder.ASCENDING)
                 ? comparator
                 : comparator.reversed();
+
+        return comparator.isOrderReveresed() ? comparator2.reversed() : comparator2;
     }
 
     /**

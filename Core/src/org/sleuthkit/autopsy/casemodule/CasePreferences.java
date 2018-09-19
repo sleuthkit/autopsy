@@ -98,16 +98,22 @@ public final class CasePreferences {
                 Properties props = new Properties();
                 props.load(inputStream);
                 String groupByDataSourceValue = props.getProperty(KEY_GROUP_BY_DATA_SOURCE);
-                switch (groupByDataSourceValue) {
-                    case VALUE_TRUE:
-                        groupItemsInTreeByDataSource = true;
-                        break;
-                    case VALUE_FALSE:
-                        groupItemsInTreeByDataSource = false;
-                        break;
-                    default:
-                        groupItemsInTreeByDataSource = null;
-                        break;
+                if (groupByDataSourceValue != null) {
+                    switch (groupByDataSourceValue) {
+                        case VALUE_TRUE:
+                            groupItemsInTreeByDataSource = true;
+                            break;
+                        case VALUE_FALSE:
+                            groupItemsInTreeByDataSource = false;
+                            break;
+                        default:
+                            logger.log(Level.WARNING, String.format("Unexpected value '%s' for key '%s'. Using 'null' instead.",
+                                    groupByDataSourceValue, KEY_GROUP_BY_DATA_SOURCE));
+                            groupItemsInTreeByDataSource = null;
+                            break;
+                    }
+                } else {
+                    groupItemsInTreeByDataSource = null;
                 }
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error reading settings file", ex);

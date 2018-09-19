@@ -57,6 +57,7 @@ class TikaTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
+    private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
     private final AutoDetectParser parser = new AutoDetectParser();
     
@@ -194,9 +195,10 @@ class TikaTextExtractor extends ContentTextExtractor {
     @Override
     public boolean isSupported(Content content, String detectedFormat) {
         if (detectedFormat == null
-                || ContentTextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
+                || ContentTextExtractor.BINARY_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
                 || ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
                 || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
+                || detectedFormat.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. //NON-NLS
                 ) {
             return false;
         }

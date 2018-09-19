@@ -44,8 +44,6 @@ import org.sleuthkit.datamodel.HashUtility;
  */
 final class InterCaseSearchResultsProcessor {
 
-    private Map<Long, String> dataSources;
-
     /**
      * The CorrelationAttributeInstance.Type this Processor will query on
      */
@@ -70,9 +68,8 @@ final class InterCaseSearchResultsProcessor {
      * @param dataSources the cases to filter and correlate on
      * @param theType     the type of CR data to search
      */
-    InterCaseSearchResultsProcessor(Map<Long, String> dataSources, CorrelationAttributeInstance.Type theType) {
+    InterCaseSearchResultsProcessor(CorrelationAttributeInstance.Type theType) {
         this.correlationType = theType;
-        this.dataSources = dataSources;
         interCaseWhereClause = getInterCaseWhereClause();
         singleInterCaseWhereClause = getSingleInterCaseWhereClause();
     }
@@ -99,18 +96,6 @@ final class InterCaseSearchResultsProcessor {
                 .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
                 .append(" AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
         return sqlString.toString();
-    }
-
-    /**
-     * Used in the CentralRepoCommonAttributeInstance to find common attribute
-     * instances and generate nodes at the UI level.
-     *
-     * @param theType the type of CR data to search
-     */
-    InterCaseSearchResultsProcessor(CorrelationAttributeInstance.Type theType) {
-        this.correlationType = theType;
-        interCaseWhereClause = getInterCaseWhereClause();
-        singleInterCaseWhereClause = getSingleInterCaseWhereClause();
     }
 
     /**
@@ -257,7 +242,7 @@ final class InterCaseSearchResultsProcessor {
             // we don't *have* all the information for the rows in the CR,
             //  so we need to consult the present case via the SleuthkitCase object
             // Later, when the FileInstanceNode is built. Therefore, build node generators for now.
-            AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, InterCaseSearchResultsProcessor.this.dataSources, correlationType);
+            AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType);
             commonAttributeValue.addInstance(searchResult);
         }
 

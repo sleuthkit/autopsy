@@ -42,6 +42,7 @@ import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -286,17 +287,19 @@ public class GroupManager {
                 group.removeFile(fileID);
 
                 // If we're grouping by category, we don't want to remove empty groups.
-                if (groupKey.getAttribute() != DrawableAttribute.CATEGORY
-                    && group.getFileIDs().isEmpty()) {
-                    if (analyzedGroups.contains(group)) {
-                        analyzedGroups.remove(group);
-                        sortAnalyzedGroups();
+                if (group.getFileIDs().isEmpty()) {
+                    markGroupSeen(group, true);
+                    if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
+                        if (analyzedGroups.contains(group)) {
+                            analyzedGroups.remove(group);
+                            sortAnalyzedGroups();
+                        }
+                        
+                        if (unSeenGroups.contains(group)) {
+                            unSeenGroups.remove(group);
+                            sortUnseenGroups();
+                        }
                     }
-                    if (unSeenGroups.contains(group)) {
-                        unSeenGroups.remove(group);
-                        sortUnseenGroups();
-                    }
-
                 }
                 return group;
             }
@@ -447,7 +450,8 @@ public class GroupManager {
         if (!Case.isCaseOpen()) {
             return;
         }
-
+        setSortBy(sortBy);
+        setSortOrder(sortOrder);
         //only re-query the db if the data source or group by attribute changed or it is forced
         if (dataSource != getDataSource()
             || groupBy != getGroupBy()
@@ -455,13 +459,11 @@ public class GroupManager {
 
             setDataSource(dataSource);
             setGroupBy(groupBy);
-            setSortBy(sortBy);
-            setSortOrder(sortOrder);
+
             Platform.runLater(regrouper::restart);
         } else {
             // resort the list of groups
-            setSortBy(sortBy);
-            setSortOrder(sortOrder);
+
             sortAnalyzedGroups();
             sortUnseenGroups();
         }
@@ -501,21 +503,26 @@ public class GroupManager {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
+        markGroupSeen(group, false);
     }
 
     @Subscribe
     synchronized public void handleTagDeleted(ContentTagDeletedEvent evt) {
         GroupKey<?> groupKey = null;
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-        final TagName tagName = deletedTagInfo.getName();
-        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(tagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName), getDataSource());
-        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(tagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.TAGS, tagName, getDataSource());
+        final TagName deletedTagName = deletedTagInfo.getName();
+        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(deletedTagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(deletedTagName), null);
+        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(deletedTagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.TAGS, deletedTagName, null);
         }
         if (groupKey != null) {
             final long fileID = deletedTagInfo.getContentID();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
+
+            if (controller.getCategoryManager().getTagName(DhsImageCategory.ZERO).equals(deletedTagName) == false) {
+                addFileToGroup(null, new GroupKey<>(DrawableAttribute.CATEGORY, DhsImageCategory.ZERO, null), fileID);
+            }
         }
     }
 

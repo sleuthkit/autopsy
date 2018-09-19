@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.Map;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
@@ -111,9 +110,8 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
     private void assertResultsAreOfType(CorrelationAttributeInstance.Type type) {
 
         try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, type, 0);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, type, 0);
 
             CommonAttributeSearchResults metadata = builder.findMatches();
 
@@ -146,22 +144,21 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
      */
     public void testTwo() {
         try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 
             AbstractCommonAttributeSearcher builder;
             CommonAttributeSearchResults metadata;
 
-            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 100);
+            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 100);
             metadata = builder.findMatches();
             metadata.size();
             //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
 
-            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 20);
+            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 20);
             metadata = builder.findMatches();
             metadata.size();
             //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
 
-            builder = new AllInterCaseCommonAttributeSearcher(dataSources, false, false, this.utils.USB_ID_TYPE, 90);
+            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 90);
             metadata = builder.findMatches();
             metadata.size();
             //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));

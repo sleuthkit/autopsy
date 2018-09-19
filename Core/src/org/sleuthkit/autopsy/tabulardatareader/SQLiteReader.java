@@ -53,28 +53,27 @@ import org.sleuthkit.datamodel.TskCoreException;
 public final class SQLiteReader extends AbstractReader {
 
     private final Connection connection;
-    private final static IngestServices services = IngestServices.getInstance();
-    private final static Logger logger = services.getLogger(SQLiteReader.class.getName());
-
+    private final static IngestServices ingestServices = IngestServices.getInstance();
+    private final static Logger logger = ingestServices.getLogger(SQLiteReader.class.getName());
+    
     /**
      * Writes data source file contents to local disk and opens a sqlite JDBC
-     * connection.
-     *
-     * @param sqliteDbFile Data source content
-     *
-     * @throws
-     * org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
+     * connection. 
+     * 
+     * @param sqliteDbFile Data source abstract file
+     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
-    public SQLiteReader(Content sqliteDbFile) throws FileReaderInitException {
+    public SQLiteReader(AbstractFile sqliteDbFile) throws FileReaderInitException {
         super(sqliteDbFile);
         try {
+            final String localDiskPath = super.getLocalDiskPath();
             // Look for any meta files associated with this DB - WAL, SHM, etc. 
             findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-wal");
             findAndCopySQLiteMetaFile(sqliteDbFile, sqliteDbFile.getName() + "-shm");
 
-            connection = getDatabaseConnection(super.getLocalDiskPath());
-        } catch (ClassNotFoundException | SQLException | IOException
-                | NoCurrentCaseException | TskCoreException ex) {
+            connection = getDatabaseConnection(localDiskPath);
+        } catch (ClassNotFoundException | SQLException |IOException | 
+                NoCurrentCaseException | TskCoreException ex) {
             throw new FileReaderInitException(ex);
         }
     }

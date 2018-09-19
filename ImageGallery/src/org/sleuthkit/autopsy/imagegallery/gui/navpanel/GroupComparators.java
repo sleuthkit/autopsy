@@ -56,6 +56,10 @@ final class GroupComparators<T extends Comparable<T>> implements Comparator<Draw
     private final Function<DrawableGroup, T> extractor;
     private final Function<T, String> valueFormatter;
     private final boolean orderReveresed;
+
+     boolean isOrderReveresed() {
+        return orderReveresed;
+    }
     private final String displayName;
 
     private GroupComparators(String displayName, Function<DrawableGroup, T> extractor, Function<T, String> formatter, boolean defaultOrderReversed) {
