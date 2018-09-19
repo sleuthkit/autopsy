@@ -19,40 +19,44 @@
 package org.sleuthkit.autopsy.tabulardatareader;
 
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
- * Factory for creating the correct reader given the mime type of a file. 
+ * Factory for creating the correct reader given the mime type of a file.
  */
 public final class FileReaderFactory {
-    
+
     private FileReaderFactory() {
     }
+
     /**
-     * Instantiates the appropriate reader given the mimeType argument. Currently
-     * supports SQLite files and Excel files (.xls and .xlsx). BIFF5 format of .xls
-     * is not supported.
-     * 
-     * @param mimeType mimeType passed in from the ingest module
-g     * @param file current file under inspection
-     * @param localDiskPath path for abstract file contents to be written
+     * Instantiates the appropriate reader given the mimeType argument.
+     * Currently supports SQLite files and Excel files (.xls and .xlsx). BIFF5
+     * format of .xls is not supported.
+     *
+     * @param mimeType mimeType passed in from the ingest module g * @param file
+     *                 current file under inspection
+     *
+     * @param file Content file to be copied into
+     *
      * @return The correct reader class needed to read the file contents
-     * @throws org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException 
+     *
+     * @throws
+     * org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException
      */
-    public static AbstractReader createReader(String mimeType, AbstractFile file, 
-            String localDiskPath) throws FileReaderInitException {
+    public static AbstractReader createReader(Content file, String mimeType) throws FileReaderInitException {
         switch (mimeType) {
             case "application/x-sqlite3":
-                return new SQLiteReader(file, localDiskPath);
+                return new SQLiteReader(file);
             case "application/vnd.ms-excel":
             case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 try {
-                    return new ExcelReader(file, localDiskPath, mimeType);
+                    return new ExcelReader(file, mimeType);
                     //Catches runtime exceptions being emitted from Apache
                     //POI (such as EncryptedDocumentException) and wraps them
                     //into FileReaderInitException to be caught and logged
                     //in the ingest module.
-                } catch(Exception poiInitException) {
+                } catch (Exception poiInitException) {
                     throw new FileReaderInitException(poiInitException);
                 }
             default:

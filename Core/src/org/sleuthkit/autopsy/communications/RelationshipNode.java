@@ -120,7 +120,6 @@ final class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
-        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

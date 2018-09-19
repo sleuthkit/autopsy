@@ -34,7 +34,7 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/directorytree/external-viewer-rules-32x32.png",
         keywords = "#OptionsCategory_Keywords_ExternalViewer",
         keywordsCategory = "ExternalViewer",
-        position = 12
+        position = 13
 )
 public final class ExternalViewerOptionsPanelController extends OptionsPanelController {
 

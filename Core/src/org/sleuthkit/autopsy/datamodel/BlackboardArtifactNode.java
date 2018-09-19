@@ -501,7 +501,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     NO_DESCR,
                     path));
         }
-        addTagProperty(sheetSet, tags);
 
         return sheet;
     }
@@ -556,6 +555,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param tags     the list of tags which should appear as the value for the
      *                 property
      */
+    @Deprecated
     protected final void addTagProperty(Sheet.Set sheetSet, List<Tag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", Bundle.BlackboardArtifactNode_createSheet_tags_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));

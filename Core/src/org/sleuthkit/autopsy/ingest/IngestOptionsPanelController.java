@@ -30,7 +30,7 @@ import org.openide.util.Lookup;
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_IngestOptions",
         iconBase = "org/sleuthkit/autopsy/images/file_ingest_filter32x32.png",
-        position = 2,
+        position = 3,
         keywords = "#OptionsCategory_Keywords_IngestOptions",
         keywordsCategory = "IngestOptions")
 

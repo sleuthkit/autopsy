@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
+    @Deprecated
     public static enum LayoutContentPropertyType {
 
         PARTS {
@@ -99,9 +100,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
 
-        // add tags property to the sheet
-        addTagProperty(sheetSet, tags);
-
         return sheet;
     }
 
@@ -145,7 +143,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
     void fillPropertyMap(Map<String, Object> map) {
         AbstractAbstractFileNode.fillPropertyMap(map, getContent());
-        map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
     }
 
     @Override
