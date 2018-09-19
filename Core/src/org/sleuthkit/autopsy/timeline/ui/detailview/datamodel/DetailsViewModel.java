@@ -161,9 +161,9 @@ final public class DetailsViewModel {
         final boolean needsHashSets = filterState.hasActiveHashFilters();
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
-                          + dbUtils.csvAggFunction("events.event_id") + " as event_ids, " //NON-NLS
-                          + dbUtils.csvAggFunction("CASE WHEN hash_hit = 1 THEN events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
-                          + dbUtils.csvAggFunction("CASE WHEN tagged = 1 THEN events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
+                          + dbUtils.csvAggFunction("tsk_events.event_id") + " as event_ids, " //NON-NLS
+                          + dbUtils.csvAggFunction("CASE WHEN hash_hit = 1 THEN tsk_events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
+                          + dbUtils.csvAggFunction("CASE WHEN tagged = 1 THEN tsk_events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
                           + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets) // NON-NLS
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter()) // NON-NLS
