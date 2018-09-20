@@ -33,28 +33,41 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
 
     private final ObservableList<FilterState<SubFilterType>> subFilterStates = FXCollections.observableArrayList();
 
-    CompoundFilterStateImpl(C delegate) {
-        super(delegate);
-
-        delegate.getSubFilters().forEach(this::addSubFilterState);
-        delegate.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
+    /**
+     * A constructor that automatically makes sub FilterStates for all the
+     * subfilters of the given compound filter.
+     *
+     * @param filter The CompoundFilter this will represent the state of.
+     */
+    CompoundFilterStateImpl(C filter) {
+        super(filter);
+        filter.getSubFilters().forEach(this::addSubFilterState);
+        filter.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
             while (change.next()) {
                 change.getAddedSubList().forEach(CompoundFilterStateImpl.this::addSubFilterState);
             }
         });
-        /*
-         * enforce the following relationship between a compound filter and its
-         * subfilters: if a compound filter's active property changes, disable
-         * the subfilters if the compound filter is not active.
-         */
-        activeProperty().addListener(activeProperty -> disableSubFiltersIfNotActive());
-        disableSubFiltersIfNotActive();
+
+        configureListeners();
     }
 
-    CompoundFilterStateImpl(C delegate, Collection<FilterState<SubFilterType>> subFilterStates) {
-        super(delegate);
-
+    /**
+     * A constructor that doesn't make subfilter states automatically, but
+     * instead uses the given collection of sub filter states. Designed
+     * primarily for use when making a copy of an existing filterstate tree.
+     *
+     * @param filter          The CompoundFilter this will represent the state
+     *                        of.
+     * @param subFilterStates The filter states to use as the sub filter states.
+     */
+    CompoundFilterStateImpl(C filter, Collection<FilterState<SubFilterType>> subFilterStates) {
+        super(filter);
         subFilterStates.forEach(this::addSubFilterState);
+
+        configureListeners();
+    }
+
+    private void configureListeners() {
         /*
          * enforce the following relationship between a compound filter and its
          * subfilters: if a compound filter's active property changes, disable
@@ -62,6 +75,12 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
          */
         activeProperty().addListener(activeProperty -> disableSubFiltersIfNotActive());
         disableSubFiltersIfNotActive();
+        selectedProperty().addListener(selectedProperty -> {
+            if (isSelected() && getSubFilterStates().stream().noneMatch(FilterState::isSelected)) {
+                getSubFilterStates().forEach(subFilterState -> subFilterState.setSelected(true));
+            }
+        });
+
     }
 
     /**
