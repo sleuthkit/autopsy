@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import org.joda.time.Interval;
 import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 

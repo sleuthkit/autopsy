@@ -91,19 +91,16 @@ public class TimeLineModule {
                 return;
             }
 
-            switch (Case.Events.valueOf(evt.getPropertyName())) {
-                case CURRENT_CASE:
-                    // we care only about case closing here
-                    if (evt.getNewValue() != null) {
-                        break;
-                    }
+            if (Case.Events.valueOf(evt.getPropertyName()).equals(CURRENT_CASE)) {
+                // we care only about case closing here
+                if (evt.getNewValue() == null) {   
                     synchronized (controllerLock) {
                         if (controller != null) {
                             controller.shutDownTimeLine();
                         }
                         controller = null;
                     }
-                    break;
+                }
             }
         }
     }

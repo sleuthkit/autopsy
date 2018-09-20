@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +49,6 @@ import static javafx.concurrent.Worker.State.FAILED;
 import static javafx.concurrent.Worker.State.SUCCEEDED;
 import javafx.scene.control.Alert;
 import javax.annotation.concurrent.GuardedBy;
-import javax.annotation.concurrent.Immutable;
 import javax.swing.SwingUtilities;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -87,7 +85,6 @@ import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
-import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
@@ -101,7 +98,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
  * it needs external synchronization</li>
  * * <li>Since eventsRepository is internally synchronized, only compound
  * access to it needs external synchronization <li>
- * <li>Other state including listeningToAutopsy, mainFrame, viewMode, and the
+ * <li>Other state including  mainFrame, viewMode, and the
  * listeners should only be accessed with this object's intrinsic lock held, or
  * on the EDT as indicated.
  * </li>
@@ -192,9 +189,6 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private TimeLineTopComponent topComponent;
 
-    //are the listeners currently attached
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private boolean listeningToAutopsy = false;
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ViewMode> viewMode = new ReadOnlyObjectWrapper<>(ViewMode.COUNTS);
