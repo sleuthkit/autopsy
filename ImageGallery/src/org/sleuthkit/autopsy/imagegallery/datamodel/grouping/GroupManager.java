@@ -88,6 +88,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Provides an abstraction layer on top of DrawableDB ( and to some extent
@@ -164,10 +165,14 @@ public class GroupManager {
      *         a part of.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) throws TskCoreException, TskDataException {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : getGroupBy().getValue(file)) {
-            if (getGroupBy() == DrawableAttribute.TAGS) {
+
+            if (getGroupBy() == DrawableAttribute.PATH) {
+                resultSet.add(new GroupKey(getGroupBy(), val, file.getDataSource()));
+            } else if (getGroupBy() == DrawableAttribute.TAGS) {
+                //don't show groups for the categories when grouped by tags.
                 if (CategoryManager.isNotCategoryTagName((TagName) val)) {
                     resultSet.add(new GroupKey(getGroupBy(), val, getDataSource()));
                 }
@@ -191,8 +196,9 @@ public class GroupManager {
         try {
             DrawableFile file = getDrawableDB().getFileFromID(fileID);
             return getGroupKeysForFile(file);
-        } catch (TskCoreException ex) {
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
+
+        } catch (TskCoreException | TskDataException ex) {
+            logger.log(Level.SEVERE, "Failed to get group keys for file with ID " +fileID, ex); //NON-NLS
         }
         return Collections.emptySet();
     }
@@ -294,7 +300,7 @@ public class GroupManager {
                             analyzedGroups.remove(group);
                             sortAnalyzedGroups();
                         }
-                        
+
                         if (unSeenGroups.contains(group)) {
                             unSeenGroups.remove(group);
                             sortUnseenGroups();
@@ -663,6 +669,7 @@ public class GroupManager {
             }
         });
         sortUnseenGroups();
+
     }
 
     /**
@@ -715,15 +722,15 @@ public class GroupManager {
                 groupProgress.switchToDeterminate(valsByDataSource.entries().size());
                 int p = 0;
                 // For each key value, partially create the group and add it to the list.
-                for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
+                for (final Map.Entry<DataSource, AttrValType> valForDataSource : valsByDataSource.entries()) {
                     if (isCancelled()) {
                         return null;
                     }
                     p++;
-                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
+                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), valForDataSource.getValue()));
                     updateProgress(p, valsByDataSource.size());
-                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-                    popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
+                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), valForDataSource), p);
+                    popuplateIfAnalyzed(new GroupKey<>(groupBy, valForDataSource.getValue(), valForDataSource.getKey()), this);
                 }
 
                 Optional<DrawableGroup> viewedGroup
@@ -881,6 +888,7 @@ public class GroupManager {
      */
     private DrawableDB getDrawableDB() {
         return controller.getDatabase();
+
     }
 
     class GroupingService extends Service< Void> {
