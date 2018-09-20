@@ -137,7 +137,7 @@ final public class EventsTree extends BorderPane {
 
         eventsTree.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends TreeItem<DetailViewEvent>> change) -> {
             while (change.next()) {
-                change.getRemoved().stream().map(TreeItem<DetailViewEvent>::getValue).forEach(selectedEvents::remove);
+                change.getRemoved().stream().map(TreeItem<DetailViewEvent>::getValue).filter(Objects::nonNull).forEach(selectedEvents::remove);
                 change.getAddedSubList().stream().map(TreeItem<DetailViewEvent>::getValue).filter(Objects::nonNull).forEach(selectedEvents::add);
             }
         });
