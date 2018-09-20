@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.countsview;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.logging.Level;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -28,6 +29,8 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
@@ -38,7 +41,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.util.StringConverter;
-import javax.swing.JOptionPane;
 import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
@@ -46,10 +48,10 @@ import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Seconds;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ColorUtilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
@@ -452,13 +454,15 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
                         logger.log(Level.SEVERE, "Error zooming in.", ex);
                     }
                 } else {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Bundle.CountsViewPane_detailSwitchMessage(), ButtonType.YES, ButtonType.NO);
+                    alert.setTitle(Bundle.CountsViewPane_detailSwitchTitle());
+                    PromptDialogManager.setDialogIcons(alert);
 
-                    int showConfirmDialog = JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                            Bundle.CountsViewPane_detailSwitchMessage(),
-                            Bundle.CountsViewPane_detailSwitchTitle(), JOptionPane.YES_NO_OPTION);
-                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
-                        controller.setViewMode(ViewMode.DETAIL);
-                    }
+                    alert.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.YES) {
+                            controller.setViewMode(ViewMode.DETAIL);
+                        }
+                    });
                 }
             }
         }
