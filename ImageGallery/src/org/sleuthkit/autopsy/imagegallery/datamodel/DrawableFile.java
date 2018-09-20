@@ -49,10 +49,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * A file that contains visual information such as an image or video.
@@ -153,6 +155,10 @@ public abstract class DrawableFile {
 
     public SleuthkitCase getSleuthkitCase() {
         return file.getSleuthkitCase();
+    }
+
+    public DataSource getDataSource() throws TskCoreException, TskDataException {
+        return getSleuthkitCase().getDataSource(file.getDataSource().getId());
     }
 
     private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> attribute) {
