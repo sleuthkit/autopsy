@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2016-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
 
     private final ReadOnlyObjectWrapper<SortOrder> sortOrder = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final SimpleBooleanProperty sortOrderDisabled = new SimpleBooleanProperty(false);
-    private final SimpleObjectProperty<ValueType> valueType = new SimpleObjectProperty<>(ValueType.NUMERIC);
+    private final SimpleObjectProperty<ValueType> valueType = new SimpleObjectProperty<>(ValueType.LEXICOGRAPHIC);
 
     public SortChooser(ObservableList<Y> comps) {
         this.comparators = comps;
@@ -73,20 +73,23 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
         descRadio.getStyleClass().remove("radio-button");
         descRadio.getStyleClass().add("toggle-button");
 
-        valueType.addListener((observable, oldValue, newValue) -> {
-            ascRadio.setGraphic(new ImageView(newValue.getAscendingImage()));
-            descRadio.setGraphic(new ImageView(newValue.getDescendingImage()));
-        });
+        valueType.addListener(observable -> setValueTypeIcon(valueType.getValue()));
+        setValueTypeIcon(valueType.getValue());
 
         ascRadio.disableProperty().bind(sortOrderDisabled);
         descRadio.disableProperty().bind(sortOrderDisabled);
         ascRadio.selectedProperty().addListener(selectedToggle -> {
-            sortOrder.set(orderGroup.getSelectedToggle() == ascRadio ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+            sortOrder.set(ascRadio.isSelected() ? SortOrder.ASCENDING : SortOrder.DESCENDING);
         });
 
         sortByBox.setItems(comparators);
         sortByBox.setCellFactory(listView -> new ComparatorCell());
         sortByBox.setButtonCell(new ComparatorCell());
+    }
+
+    private void setValueTypeIcon(ValueType newValue) {
+        ascRadio.setGraphic(new ImageView(newValue.getAscendingImage()));
+        descRadio.setGraphic(new ImageView(newValue.getDescendingImage()));
     }
 
     public ValueType getValueType() {

@@ -39,20 +39,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractCommonAttributeSearcher {
 
-    private final Map<Long, String> dataSourceIdToNameMap;
     private boolean filterByMedia;
     private boolean filterByDoc;
     final int frequencyPercentageThreshold;
 
-    AbstractCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMedia, boolean filterByDoc, int percentageThreshold) {
+    AbstractCommonAttributeSearcher(boolean filterByMedia, boolean filterByDoc, int percentageThreshold) {
         this.filterByDoc = filterByDoc;
         this.filterByMedia = filterByMedia;
-        this.dataSourceIdToNameMap = dataSourceIdMap;
         this.frequencyPercentageThreshold = percentageThreshold;
-    }
-
-    Map<Long, String> getDataSourceIdToNameMap() {
-        return Collections.unmodifiableMap(this.dataSourceIdToNameMap);
     }
 
     /**

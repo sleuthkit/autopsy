@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
     private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
+    private final Map<Long, String> dataSourceIdToNameMap;
+    
     /**
      * Subclass this to implement different algorithms for getting common files.
      *
@@ -56,7 +59,13 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * broadly categorized as document types
      */
     IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) {
-        super(dataSourceIdMap, filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
+        super(filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
+        this.dataSourceIdToNameMap = dataSourceIdMap;
+    }
+    
+    
+    Map<Long, String> getDataSourceIdToNameMap() {
+        return Collections.unmodifiableMap(this.dataSourceIdToNameMap);
     }
 
     /**
