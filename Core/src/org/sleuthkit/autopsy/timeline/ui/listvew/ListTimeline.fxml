@@ -77,8 +77,7 @@
           <TableColumn fx:id="dateTimeColumn" editable="false" maxWidth="200.0" minWidth="150.0" prefWidth="150.0" resizable="false" sortable="false" text="Date/Time" />
             <TableColumn fx:id="typeColumn" editable="false" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" sortable="false" text="Event Type" />
             <TableColumn fx:id="descriptionColumn" editable="false" maxWidth="3000.0" minWidth="100.0" prefWidth="300.0" sortable="false" text="Description" />
-            <TableColumn fx:id="knownColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" sortable="false" text="Known" />
-          <TableColumn fx:id="idColumn" editable="false" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" resizable="false" sortable="false" text="ID" />
+            <TableColumn fx:id="idColumn" editable="false" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" resizable="false" sortable="false" text="ID" />
             <TableColumn fx:id="taggedColumn" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" text="Tagged" />
             <TableColumn fx:id="hashHitColumn" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" resizable="false" text="Hash Hit" />
         </columns>

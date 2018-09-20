@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +49,6 @@ import static javafx.concurrent.Worker.State.FAILED;
 import static javafx.concurrent.Worker.State.SUCCEEDED;
 import javafx.scene.control.Alert;
 import javax.annotation.concurrent.GuardedBy;
-import javax.annotation.concurrent.Immutable;
 import javax.swing.SwingUtilities;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -73,6 +71,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
@@ -99,7 +98,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
  * it needs external synchronization</li>
  * * <li>Since eventsRepository is internally synchronized, only compound
  * access to it needs external synchronization <li>
- * <li>Other state including listeningToAutopsy, mainFrame, viewMode, and the
+ * <li>Other state including  mainFrame, viewMode, and the
  * listeners should only be accessed with this object's intrinsic lock held, or
  * on the EDT as indicated.
  * </li>
@@ -190,12 +189,6 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private TimeLineTopComponent topComponent;
 
-    //are the listeners currently attached
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private boolean listeningToAutopsy = false;
-
-    private final PropertyChangeListener caseListener = new AutopsyCaseListener();
-    private final PropertyChangeListener ingestModuleListener = new AutopsyIngestModuleListener();
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ViewMode> viewMode = new ReadOnlyObjectWrapper<>(ViewMode.COUNTS);
@@ -280,7 +273,7 @@ public class TimeLineController {
         return viewMode.get();
     }
 
-    public TimeLineController(Case autoCase) throws TskCoreException {
+    TimeLineController(Case autoCase) throws TskCoreException {
         this.autoCase = autoCase;
         filteredEvents = new FilteredEventsModel(autoCase, currentParams.getReadOnlyProperty());
         /*
@@ -383,14 +376,10 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void shutDownTimeLine() {
-        listeningToAutopsy = false;
-        IngestManager.getInstance().removeIngestModuleEventListener(ingestModuleListener);
-        Case.removePropertyChangeListener(caseListener);
         if (topComponent != null) {
             topComponent.close();
             topComponent = null;
         }
-        OpenTimelineAction.invalidateController();
     }
 
     /**
@@ -403,12 +392,6 @@ public class TimeLineController {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void showTimeLine(AbstractFile file, BlackboardArtifact artifact) {
-        // listen for case changes (specifically images being added, and case changes).
-        if (Case.isCaseOpen() && !listeningToAutopsy) {
-            IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
-            Case.addPropertyChangeListener(caseListener);
-            listeningToAutopsy = true;
-        }
         Platform.runLater(() -> {
             //if there is an existing prompt or progressdialog,...
             if (promptDialogManager.bringCurrentDialogToFront()) {
@@ -726,14 +709,8 @@ public class TimeLineController {
 
     }
 
-    /**
-     * Listener for IngestManager.IngestModuleEvents.
-     */
-    @Immutable
-    private class AutopsyIngestModuleListener implements PropertyChangeListener {
 
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
+    void handleIngestModuleEvent(PropertyChangeEvent evt) {
             /**
              * Checking for a current case is a stop gap measure until a
              * different way of handling the closing of cases is worked out.
@@ -746,30 +723,39 @@ public class TimeLineController {
                 // Case is closed, do nothing.
                 return;
             }
+            
+            // ignore remote events.  The node running the ingest should update the Case DB
+            // @@@ We should signal though that there is more data and flush caches...
+            if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
+                return;
+            }
 
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case CONTENT_CHANGED:
+                    // new files were already added to the events table from SleuthkitCase.
+                    break;
                 case DATA_ADDED:
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                        executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true));
+                    }
                     break;
                 case FILE_DONE:
                     /*
                      * Since the known state or hash hit state may have changed
                      * invalidate caches.
                      */
-                    executor.submit(filteredEvents::invalidateAllCaches);
+                    //@@@ This causes HUGE slow downs during ingest when TL is open.  
+                    // executor.submit(filteredEvents::invalidateAllCaches);
+                    
+                    // known state should have been udpated automatically via SleuthkitCase.setKnown();
+                    // hashes should have been updated from event
             }
         }
-    }
 
-    /**
-     * Listener for Case.Events
-     */
-    @Immutable
-    private class AutopsyCaseListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            switch (Case.Events.valueOf(evt.getPropertyName())) {
+    
+    void handleCaseEvent(PropertyChangeEvent evt) {
+        switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case BLACKBOARD_ARTIFACT_TAG_ADDED:
                     executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
                     break;
@@ -793,6 +779,6 @@ public class TimeLineController {
                     executor.submit(filteredEvents::invalidateAllCaches);
                     break;
             }
-        }
     }
 }
+

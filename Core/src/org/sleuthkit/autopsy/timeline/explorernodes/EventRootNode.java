@@ -50,8 +50,8 @@ public class EventRootNode extends DisplayableItemNode {
      */
     public static final int MAX_EVENTS_TO_DISPLAY = 5000;
 
-    public EventRootNode(Collection<Long> fileIds, FilteredEventsModel filteredEvents) {
-        super(Children.create(new EventNodeChildFactory(fileIds, filteredEvents), true), Lookups.singleton(fileIds));
+    public EventRootNode(Collection<Long> eventIds, FilteredEventsModel filteredEvents) {
+        super(Children.create(new EventNodeChildFactory(eventIds, filteredEvents), true), Lookups.singleton(eventIds));
     }
 
     @Override
@@ -88,8 +88,8 @@ public class EventRootNode extends DisplayableItemNode {
         private Map<Long, Node > nodesMap = new HashMap<>();
         
 
-        EventNodeChildFactory(Collection<Long> fileIds, FilteredEventsModel filteredEvents) {
-            this.eventIDs = fileIds;
+        EventNodeChildFactory(Collection<Long> eventIds, FilteredEventsModel filteredEvents) {
+            this.eventIDs = eventIds;
             this.filteredEvents = filteredEvents;
         }
 

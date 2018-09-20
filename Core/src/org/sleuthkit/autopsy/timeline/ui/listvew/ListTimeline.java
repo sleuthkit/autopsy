@@ -88,8 +88,8 @@ import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.explorernodes.EventNode;
 import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import org.sleuthkit.autopsy.timeline.ui.listvew.datamodel.CombinedEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -155,8 +155,6 @@ class ListTimeline extends BorderPane {
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> typeColumn;
     @FXML
-    private TableColumn<CombinedEvent, CombinedEvent> knownColumn;
-    @FXML
     private TableColumn<CombinedEvent, CombinedEvent> taggedColumn;
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
@@ -216,8 +214,7 @@ class ListTimeline extends BorderPane {
         assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
-        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
-
+       
         //configure scroll controls
         scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
         scrollInrementComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
@@ -245,10 +242,6 @@ class ListTimeline extends BorderPane {
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());
-
-        knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
-                -> singleEvent.getKnown().getName()));
 
         taggedColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         taggedColumn.setCellFactory(col -> new TaggedCell());
@@ -457,13 +450,13 @@ class ListTimeline extends BorderPane {
                 SortedSet<String> tagNames = new TreeSet<>();
                 try {
                     //get file tags
-                    AbstractFile abstractFileById = sleuthkitCase.getAbstractFileById(getEvent().getFileID());
-                    tagsManager.getContentTagsByContent(abstractFileById).stream()
+                    Content file = sleuthkitCase.getContentById(getEvent().getFileObjID());
+                    tagsManager.getContentTagsByContent(file).stream()
                             .map(tag -> tag.getName().getDisplayName())
                             .forEach(tagNames::add);
 
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup tags for obj id " + getEvent().getFileObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())
@@ -527,12 +520,12 @@ class ListTimeline extends BorderPane {
                  */
                 setGraphic(new ImageView(HASH_HIT));
                 try {
-                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getAbstractFileById(getEvent().getFileID()).getHashSetNames());
+                    Set<String> hashSetNames = new TreeSet<>(sleuthkitCase.getContentById(getEvent().getFileObjID()).getHashSetNames());
                     Tooltip tooltip = new Tooltip(Bundle.ListTimeline_hashHitTooltip_text(String.join("\n", hashSetNames))); //NON-NLS
                     tooltip.setGraphic(new ImageView(HASH_HIT));
                     setTooltip(tooltip);
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to lookup hash set names for obj id " + getEvent().getFileObjID(), ex); //NON-NLS
                     Platform.runLater(() -> {
                         Notifications.create()
                                 .owner(getScene().getWindow())

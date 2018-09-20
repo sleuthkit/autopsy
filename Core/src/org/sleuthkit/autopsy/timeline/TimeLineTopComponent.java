@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
+import com.google.common.collect.ImmutableList;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -161,8 +162,10 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
          */
         @Override
         public void invalidated(Observable observable) {
-            List<Long> selectedEventIDs = controller.getSelectedEventIDs();
-
+            // make a copy because this list gets updated as the user navigates around
+            // and causes concurrent access exceptions
+            List<Long> selectedEventIDs = ImmutableList.copyOf(controller.getSelectedEventIDs());
+            
             //depending on the active view mode, we either update the dataResultPanel, or update the contentViewerPanel directly.
             switch (controller.getViewMode()) {
                 case LIST:

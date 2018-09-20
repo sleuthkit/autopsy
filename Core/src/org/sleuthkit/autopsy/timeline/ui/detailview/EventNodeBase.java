@@ -298,7 +298,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
                         try {
                             //TODO:push this to DB
                             for (TimelineEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
-                                Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
+                                Set<String> hashSetNames = sleuthkitCase.getContentById(tle.getFileObjID()).getHashSetNames();
                                 for (String hashSetName : hashSetNames) {
                                     hashSetCounts.merge(hashSetName, 1L, Long::sum);
                                 }
