@@ -753,7 +753,6 @@ public final class ImageGalleryController {
                         // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
                         if (null == f.getMIMEType()) {
                             // set to false to force the DB to be marked as stale
-                            logger.log(Level.WARNING, "NULL MIME type for file = " + f.getUniquePath() + " Ingest might not have completed or File Type identification module might not have run. IG database will be marked stale for this data source.");
                             this.setTaskCompletionStatus(false);
                         } else {
                             //unsupported mimtype => analyzed but shouldn't include
