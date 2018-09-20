@@ -854,6 +854,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             "DataResultViewerTable.commentRenderer.noComment.toolTip=No comments found"})
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting for selection
             setHorizontalAlignment(CENTER);
             Object switchValue = null;
             if ((value instanceof NodeProperty)) {
@@ -908,6 +910,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting for selection
             setHorizontalAlignment(CENTER);
             Object switchValue = null;
             if ((value instanceof NodeProperty)) {
@@ -955,6 +959,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setBackground(component.getBackground());  //inherit highlighting for selection
             setHorizontalAlignment(LEFT);
             Object countValue = null;
             if ((value instanceof NodeProperty)) {

@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.Content;
 abstract class ContentTextExtractor implements TextExtractor<Content> {
 
 
-    static final List<String> BLOB_MIME_TYPES
+    static final List<String> BINARY_MIME_TYPES
             = Arrays.asList(
                     //ignore binary blob data, for which string extraction will be used
                     "application/octet-stream", //NON-NLS
