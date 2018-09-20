@@ -274,8 +274,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Returns a string version of the table, with all of the formatters and
-         * escape sequences necessary to print nicely in the console output.
+         * Returns a string version of the table, with all of the escape sequences 
+         * necessary to print nicely in the console output.
          *
          * @return
          */
@@ -300,8 +300,6 @@ class SqliteTextExtractor extends ContentTextExtractor {
          * Example: \t John 12345678 john@email.com\n
          *
          * @param row          Array containing unformatted row content
-         * @param colMaxWidths An array of column maximum widths, so that
-         *                     everything is pretty printed.
          * @param outputTable  Buffer that formatted contents are written to
          */
         private void appendFormattedRow(String[] row, StringBuilder outputTable) {
