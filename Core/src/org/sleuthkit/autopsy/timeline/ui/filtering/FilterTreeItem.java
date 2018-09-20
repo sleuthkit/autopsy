@@ -52,7 +52,16 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
             CompoundFilterState<?, ?> compoundFilter = (CompoundFilterState<?, ?>) filterState;
 
             //add all sub filters
-            compoundFilter.getSubFilterStates().forEach(subFilterState -> getChildren().add(new FilterTreeItem(subFilterState, expansionMap)));
+            compoundFilter.getSubFilterStates().forEach(subFilterState -> {
+                /*
+                 * We removed the known_status column from the tsk_events table
+                 * but have not yet added back the logic to implement that
+                 * filter. For now, just hide it in the UI.
+                 */
+                if (subFilterState.getFilter() instanceof TimelineFilter.HideKnownFilter == false) {
+                    getChildren().add(new FilterTreeItem(subFilterState, expansionMap));
+                }
+            });
             //listen to changes in sub filters and keep tree in sync
             compoundFilter.getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<?>> change) -> {
                 while (change.next()) {
