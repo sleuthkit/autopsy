@@ -280,7 +280,7 @@ public final class ImageGalleryController {
     /**
      * reset the state of the controller (eg if the case is closed)
      */
-    public synchronized void reset() {
+    public synchronized void shutDown() {
         logger.info("Closing ImageGalleryControler for case."); //NON-NLS
 
         selectionModel.clearSelection();
@@ -289,7 +289,7 @@ public final class ImageGalleryController {
         groupManager.reset();
 
         shutDownDBExecutor();
-        dbExecutor = getNewDBExecutor();
+        drawableDB.closeDBCon();
     }
 
     /**
