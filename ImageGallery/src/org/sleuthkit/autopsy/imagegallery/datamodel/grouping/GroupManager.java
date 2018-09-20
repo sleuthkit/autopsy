@@ -232,9 +232,8 @@ public class GroupManager {
     }
 
     public boolean isRegrouping() {
-        Worker.State state = regrouper.getState();
         return Arrays.asList(Worker.State.READY, Worker.State.RUNNING, Worker.State.SCHEDULED)
-                .contains(state);
+                .contains(regrouper.getState());
     }
 
     public ReadOnlyObjectProperty<Worker.State> reGroupingState() {
