@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-16 Basis Technology Corp.
+ * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,23 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.events;
-
-import java.util.Set;
+package org.sleuthkit.autopsy.timeline;
 
 /**
- * A TagsUpdatedEvent for tags that have been removed from events.
- * NOTE: This event is internal to timeline components
+ * The org.openide.modules.OnStart annotation tells NetBeans to invoke this
+ * class's run method.
  */
-public class TagsDeletedEvent extends TagsUpdatedEvent {
+@org.openide.modules.OnStart
+public class OnStart implements Runnable {
 
     /**
-     * Constructor
-     *
-     * @param updatedEventIDs The event IDs of the events that have had tags
-     *                        removed from them.
+     * This method is invoked by virtue of the OnStart annotation on the this
+     * class
      */
-    public TagsDeletedEvent(Set<Long> updatedEventIDs) {
-        super(updatedEventIDs);
+    @Override
+    public void run() {
+        TimeLineModule.onStart();
     }
 }
+

@@ -644,8 +644,11 @@ public final class FilteredEventsModel {
         return updatedEventIDs;
     }
 
-    synchronized Set<Long> setFileStatus(AbstractFile file) throws TskCoreException {
-        Set<Long> updatedEventIDs = eventManager.setFileStatus(file);
+    synchronized public Set<Long> setHashHit(Collection<BlackboardArtifact> artifacts, boolean hasHashHit) throws TskCoreException {
+        Set<Long> updatedEventIDs = new HashSet<>();
+        for (BlackboardArtifact artifact : artifacts) {
+            updatedEventIDs.addAll(eventManager.setEventsHashed(artifact.getObjectID(), hasHashHit));
+        }
         if (!updatedEventIDs.isEmpty()) {
             invalidateCaches(updatedEventIDs);
         }

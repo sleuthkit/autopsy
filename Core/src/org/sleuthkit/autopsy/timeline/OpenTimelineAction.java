@@ -60,19 +60,10 @@ public final class OpenTimelineAction extends CallableSystemAction {
     private static final Logger logger = Logger.getLogger(OpenTimelineAction.class.getName());
     private static final int FILE_LIMIT = 6_000_000;
 
-    private static TimeLineController timeLineController;
-
     private final JMenuItem menuItem;
     private final JButton toolbarButton = new JButton(getName(),
             new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
 
-    /**
-     * Invalidate the reference to the controller so that a new one will be
-     * instantiated the next time this action is invoked
-     */
-    synchronized static void invalidateController() {
-        timeLineController = null;
-    }
 
     public OpenTimelineAction() {
         toolbarButton.addActionListener(actionEvent -> performAction());
@@ -95,11 +86,6 @@ public final class OpenTimelineAction extends CallableSystemAction {
     public void performAction() {
         if (tooManyFiles()) {
             Platform.runLater(PromptDialogManager::showTooManyFiles);
-            synchronized (OpenTimelineAction.this) {
-                if (timeLineController != null) {
-                    timeLineController.shutDownTimeLine();
-                }
-            }
             setEnabled(false);
         } else if ("false".equals(ModuleSettings.getConfigSetting("timeline", "enable_timeline"))) {
             Platform.runLater(PromptDialogManager::showTimeLineDisabledMessage);
@@ -125,13 +111,8 @@ public final class OpenTimelineAction extends CallableSystemAction {
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
                 return;
             }
-            if (timeLineController == null) {
-                timeLineController = new TimeLineController(currentCase);
-            } else if (timeLineController.getAutopsyCase() != currentCase) {
-                timeLineController.shutDownTimeLine();
-                timeLineController = new TimeLineController(currentCase);
-            }
-            timeLineController.showTimeLine(file, artifact);
+            TimeLineController controller = TimeLineModule.getController();
+            controller.showTimeLine(file, artifact);
         } catch (NoCurrentCaseException e) {
             //there is no case...   Do nothing.
         }
