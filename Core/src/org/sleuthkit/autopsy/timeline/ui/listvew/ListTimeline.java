@@ -156,8 +156,6 @@ class ListTimeline extends BorderPane {
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> typeColumn;
     @FXML
-    private TableColumn<CombinedEvent, CombinedEvent> knownColumn;
-    @FXML
     private TableColumn<CombinedEvent, CombinedEvent> taggedColumn;
     @FXML
     private TableColumn<CombinedEvent, CombinedEvent> hashHitColumn;
@@ -217,8 +215,7 @@ class ListTimeline extends BorderPane {
         assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
-        assert knownColumn != null : "fx:id=\"knownColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
-
+       
         //configure scroll controls
         scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
         scrollInrementComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
@@ -246,10 +243,6 @@ class ListTimeline extends BorderPane {
 
         typeColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         typeColumn.setCellFactory(col -> new EventTypeCell());
-
-        knownColumn.setCellValueFactory(CELL_VALUE_FACTORY);
-        knownColumn.setCellFactory(col -> new TextEventTableCell(singleEvent
-                -> singleEvent.getKnown().getName()));
 
         taggedColumn.setCellValueFactory(CELL_VALUE_FACTORY);
         taggedColumn.setCellFactory(col -> new TaggedCell());

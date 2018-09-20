@@ -69,11 +69,6 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     private final ImmutableMap<DescriptionLoD, String> descriptions;
 
     /**
-     * The known value for the file this event is derived from.
-     */
-    private final TskData.FileKnown known;
-
-    /**
      * True if the file this event is derived from hits any of the configured
      * hash sets.
      */
@@ -101,11 +96,10 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @param fullDescription
      * @param medDescription
      * @param shortDescription
-     * @param known
      * @param hashHit
      * @param tagged 
      */
-    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, TskData.FileKnown known, boolean hashHit, boolean tagged) {
+    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.dataSourceObjId = dataSourceObjId;
         this.fileObjId = fileObjId;
@@ -115,7 +109,6 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
         descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
                 DescriptionLoD.MEDIUM, medDescription,
                 DescriptionLoD.SHORT, shortDescription);
-        this.known = known;
         this.hashHit = hashHit;
         this.tagged = tagged;
     }
@@ -130,7 +123,6 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
                 singleEvent.getFullDescription(),
                 singleEvent.getMedDescription(),
                 singleEvent.getShortDescription(),
-                singleEvent.getKnown(),
                 singleEvent.isHashHit(),
                 singleEvent.isTagged());
     }
@@ -145,7 +137,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      *         with the given parent.
      */
     public SingleDetailsViewEvent withParent(MultiEvent<?> newParent) {
-        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), known, hashHit, tagged);
+        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), hashHit, tagged);
         singleEvent.parent = newParent;
         return singleEvent;
     }
@@ -240,14 +232,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
         return getDescription(DescriptionLoD.SHORT);
     }
 
-    /**
-     * Get the known value of the file this event is derived from.
-     *
-     * @return the known value
-     */
-    public TskData.FileKnown getKnown() {
-        return known;
-    }
+    
 
     /**
      * Get the description of this event at the give level of detail(LoD).
