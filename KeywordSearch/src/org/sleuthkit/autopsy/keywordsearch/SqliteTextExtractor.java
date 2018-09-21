@@ -21,30 +21,30 @@ package org.sleuthkit.autopsy.keywordsearch;
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
-import javax.swing.text.Segment;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.tabulardatareader.AbstractReader;
-import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
+import org.sleuthkit.autopsy.coreutils.SqliteUtil;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException;
-import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Dedicated SqliteTextExtractor to solve the problems associated with Tika's
  * Sqlite parser.
  *
- * Tika problems: 
- *  1) Tika fails to open virtual tables 
- *  2) Tika fails to open tables with spaces in table name 
- *  3) Tika fails to include the table names in output (except for the first table it parses)
+ * Tika problems: 1) Tika fails to open virtual tables 2) Tika fails to open
+ * tables with spaces in table name 3) Tika fails to include the table names in
+ * output (except for the first table it parses)
  */
 class SqliteTextExtractor extends ContentTextExtractor {
 
@@ -92,126 +92,190 @@ class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
-        //Firewall for any content that is not an AbstractFile
-        if (!AbstractFile.class.isInstance(source)) {
-            try {
+        try {
+            //Firewall for any content that is not an AbstractFile
+            if (!AbstractFile.class.isInstance(source)) {
                 return CharSource.wrap(EMPTY_CHARACTER_SEQUENCE).openStream();
-            } catch (IOException ex) {
-                throw new TextExtractorException(
-                        String.format("Encountered an issue wrapping blank string" //NON-NLS
-                                + " with CharSource for non-abstract file with id: [%s]," //NON-NLS
-                                + " name: [%s].", source.getId(), source.getName()), ex); //NON-NLS
             }
-        }
-
-        try (AbstractReader reader = FileReaderFactory.createReader(
-                (AbstractFile) source, SQLITE_MIMETYPE)) {
-            final CharSequence databaseContent = getDatabaseContents(source, reader);
-            //CharSource will maintain unicode strings correctly
-            return CharSource.wrap(databaseContent).openStream();
-        } catch (FileReaderInitException | IOException ex) {
+            return new SQLiteTableReader((AbstractFile) source);
+        } catch (NoCurrentCaseException | IOException | TskCoreException
+                | ClassNotFoundException | SQLException ex) {
             throw new TextExtractorException(
-                    String.format("Encountered a FileReaderInitException" //NON-NLS
-                            + " when trying to initialize a SQLiteReader" //NON-NLS
-                            + " for AbstractFile with id: [%s], name: [%s].", //NON-NLS
-                            source.getId(), source.getName()), ex);
-        } catch (FileReaderException ex) {
-            throw new TextExtractorException(
-                    String.format("Could not get contents from database " //NON-NLS
-                            + "tables for AbstractFile with id [%s], name: [%s].", //NON-NLS
-                            source.getId(), source.getName()), ex);
+                    String.format("Encountered an issue while trying to initialize " //NON-NLS
+                            + "a sqlite table steamer for abstract file with id: [%s], name: " //NON-NLS
+                            + "[%s].", source.getId(), source.getName()), ex); //NON-NLS
         }
     }
 
     /**
-     * Queries the sqlite database and adds all tables and rows to a
-     * TableBuilder, which formats the strings into a table view for clean
-     * results while searching for keywords in the application.
-     *
-     * @param reader Sqlite reader for the content source
-     * @param source Sqlite file source
+     * Wraps each table in a reader as the tables are streamed one at a time
+     * from the database.
      */
-    private CharSequence getDatabaseContents(Content source, AbstractReader reader) throws FileReaderException {
-        Collection<String> databaseStorage = new LinkedList<>();
+    private class SQLiteTableReader extends Reader {
 
-        Integer charactersCopied = loadDatabaseIntoCollection(databaseStorage, 
-                reader, source);
+        private final Iterator<String> tableIterator;
+        private final Connection connection;
+        private Reader currentTableReader;
+        private final AbstractFile source;
 
-        return toCharSequence(databaseStorage, charactersCopied);
-    }
+        /**
+         * Creates a reader that streams each table into memory and wraps a
+         * reader around it. Designed to save memory for large databases.
+         *
+         * @param file Sqlite database file
+         *
+         * @throws NoCurrentCaseException Current case has closed
+         * @throws IOException            Exception copying abstract file over
+         *                                to local temp directory
+         * @throws TskCoreException       Exception using file manager to find
+         *                                meta files
+         * @throws ClassNotFoundException Could not find sqlite JDBC class
+         * @throws SQLException           Could not establish jdbc connection
+         */
+        public SQLiteTableReader(AbstractFile file) throws NoCurrentCaseException,
+                IOException, TskCoreException, ClassNotFoundException, SQLException {
+            source = file;
 
-    /**
-     * Iterates all of the tables and populate the TableBuilder with all of the
-     * rows from the table. The table string will be added to the list of
-     * contents.
-     *
-     * @param databaseStorage Collection containing all of the database content
-     * @param tables          A map of table names to table schemas
-     * @param reader          SqliteReader for interfacing with the database
-     * @param source          Source database file for logging
-     */
-    private int loadDatabaseIntoCollection(Collection<String> databaseStorage, 
-            AbstractReader reader, Content source) throws FileReaderException {
-        //Will throw a FileReaderException if table schemas are unattainable
-        Map<String, String> tables = reader.getTableSchemas();
+            String localDiskPath = SqliteUtil.writeAbstractFileToLocalDisk(file);
+            SqliteUtil.findAndCopySQLiteMetaFile(file);
+            Class.forName("org.sqlite.JDBC"); //NON-NLS  
+            connection = DriverManager.getConnection("jdbc:sqlite:" + localDiskPath); //NON-NLS
+            tableIterator = getTables().iterator();
+        }
 
-        int charactersCopied = 0;
-        for (String tableName : tables.keySet()) {
-            TableBuilder tableBuilder = new TableBuilder();
-            tableBuilder.setTableName(tableName);
-
-            try {
-                //Catch any exception at a particular table, we want to ensure we grab
-                //content from as many tables as possible
-                List<Map<String, Object>> rowsInTable = reader.getRowsFromTable(tableName);
-                if (!rowsInTable.isEmpty()) {
-                    tableBuilder.addHeader(new ArrayList<>(rowsInTable.get(0).keySet()));
-                    for (Map<String, Object> row : rowsInTable) {
-                        tableBuilder.addRow(row.values());
-                    }
+        /**
+         * Gets the table names from the SQLite database file.
+         *
+         * @return Collection of table names from the database schema
+         */
+        private Collection<String> getTables() throws SQLException {
+            Collection<String> tableNames = new LinkedList<>();
+            try (Statement statement = connection.createStatement();
+                    ResultSet resultSet = statement.executeQuery(
+                            "SELECT name FROM sqlite_master "
+                            + " WHERE type= 'table' ")) {
+                while (resultSet.next()) {
+                    tableNames.add(resultSet.getString("name")); //NON-NLS
                 }
-            } catch (FileReaderException ex) {
+            }
+            return tableNames;
+        }
+
+        /**
+         * Reads from the database table and loads in the contents to a table
+         * builder, so that its properly formatted during indexing.
+         *
+         * @param tableName Database table to be read
+         */
+        private String getTableAsString(String tableName) {
+            TableBuilder table = new TableBuilder();
+            table.addTableName(tableName);
+            String quotedTableName = "\"" + tableName + "\"";
+
+            try (Statement statement = connection.createStatement();
+                    ResultSet resultSet = statement.executeQuery(
+                            "SELECT * FROM " + quotedTableName)) { //NON-NLS
+                ResultSetMetaData metaData = resultSet.getMetaData();
+                int columnCount = resultSet.getMetaData().getColumnCount();
+                Collection<String> row = new LinkedList<>();
+
+                //Add column names once from metadata
+                for (int i = 1; i < columnCount; i++) {
+                    row.add(metaData.getColumnName(i));
+                }
+
+                table.addHeader(row);
+                while (resultSet.next()) {
+                    row = new LinkedList<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        if (resultSet.getObject(i) == null || metaData.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
+                            //Ignore nulls and blobs
+                        } else {
+                            row.add(resultSet.getObject(i).toString());
+                        }
+                    }
+                    table.addRow(row);
+                }
+                table.addCell("\n");
+            } catch (SQLException ex) {
                 logger.log(Level.WARNING, String.format(
                         "Error attempting to read file table: [%s]" //NON-NLS
                         + " for file: [%s] (id=%d).", tableName, //NON-NLS
                         source.getName(), source.getId()), ex);
             }
 
-            String formattedTable = tableBuilder.toString();
-            charactersCopied += formattedTable.length();
-            databaseStorage.add(formattedTable);
-        }
-        return charactersCopied;
-    }
-
-
-    /**
-     * Copy elements from collection (which contains formatted database tables) 
-     * into a CharSequence so that it can be wrapped and used by the Google CharSource
-     * lib.
-     * 
-     * @param databaseStorage Collection containing database contents
-     * @param characterCount Number of characters needed to be allocated in the buffer
-     * so that all of the contents in the collection can be copied over.
-     * 
-     * @return CharSource of the formatted database contents
-     */
-    private CharSequence toCharSequence(Collection<String> databaseStorage,
-            int characterCount) {
-
-        final char[] databaseCharArray = new char[characterCount];
-
-        int currIndex = 0;
-        for (String table : databaseStorage) {
-            System.arraycopy(table.toCharArray(), 0, databaseCharArray,
-                    currIndex, table.length());
-            currIndex += table.length();
+            return table.toString();
         }
 
-        //Segment class does not make an internal copy of the character array
-        //being passed in (more efficient). It also implements a CharSequences 
-        //necessary for the CharSource class to create a compatible reader.
-        return new Segment(databaseCharArray, 0, characterCount);
+        /**
+         * Loads a database file into the character buffer until there are not
+         * more contents to read. The underlying implementation here only loads
+         * one table at a time, to conserve memory.
+         *
+         * @param cbuf Buffer to copy database content characters into
+         * @param off  offset to begin loading in buffer
+         * @param len  length of the buffer
+         *
+         * @return The number of characters read from the reader
+         *
+         * @throws IOException If there is an error with the CharSource wrapping
+         */
+        @Override
+        public int read(char[] cbuf, int off, int len) throws IOException {
+            if (currentTableReader == null) {
+                String tableString = getNextTableString();
+                if (tableString == null) {
+                    return -1;
+                }
+                currentTableReader = CharSource.wrap(tableString).openStream();
+            }
+
+            int charactersRead = currentTableReader.read(cbuf, off, len);
+            while (charactersRead == -1) {
+                String tableString = getNextTableString();
+                if (tableString == null) {
+                    return -1;
+                }
+                currentTableReader = CharSource.wrap(tableString).openStream();
+                charactersRead = currentTableReader.read(cbuf, off, len);
+            }
+
+            return charactersRead;
+        }
+
+        /**
+         * Grab the next table name from the collection of all table names, once
+         * we no longer have a table to process, return null which will be
+         * understoon to mean the end of parsing.
+         *
+         * @return String of current table contents or null if not more tables
+         *         to read
+         */
+        private String getNextTableString() {
+            if (tableIterator.hasNext()) {
+                return getTableAsString(tableIterator.next());
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Close the underlying connection to the database.
+         *
+         * @throws IOException Not applicable, we can just catch the
+         *                     SQLException
+         */
+        @Override
+        public void close() throws IOException {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                //Non-essential exception, user has no need for the connection 
+                //object at this stage so closing details are not important
+                logger.log(Level.WARNING, "Could not close JDBC connection", ex);
+            }
+        }
+
     }
 
     /**
@@ -220,22 +284,11 @@ class SqliteTextExtractor extends ContentTextExtractor {
      */
     private class TableBuilder {
 
-        private final List<String[]> rows = new LinkedList<>();
+        private final StringBuilder table = new StringBuilder();
 
         private static final String TAB = "\t";
         private static final String NEW_LINE = "\n";
         private static final String SPACE = " ";
-
-        private String tableName;
-        private Integer charactersAdded;
-        
-        /**
-         * Set tableName and charactersAdded to their default values.
-         */
-        public TableBuilder() {
-            tableName = "";
-            charactersAdded = 0;
-        }
 
         /**
          * Add the section to the top left corner of the table. This is where
@@ -243,8 +296,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
          *
          * @param tableName Table name
          */
-        public void setTableName(String tableName) {
-            this.tableName = tableName + NEW_LINE + NEW_LINE;
+        public void addTableName(String tableName) {
+            table.append(tableName).append(NEW_LINE + NEW_LINE);
         }
 
         /**
@@ -253,7 +306,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
          *
          * @param vals
          */
-        public void addHeader(Collection<Object> vals) {
+        public void addHeader(Collection<String> vals) {
             addRow(vals);
         }
 
@@ -263,52 +316,28 @@ class SqliteTextExtractor extends ContentTextExtractor {
          *
          * @param vals
          */
-        public void addRow(Collection<Object> vals) {
-            List<String> rowValues = new LinkedList<>();
+        public void addRow(Collection<String> vals) {
+            table.append(TAB);
             vals.forEach((val) -> {
-                rowValues.add(val.toString());
-                charactersAdded += val.toString().length();
+                table.append(val);
+                table.append(SPACE);
             });
-            rows.add(rowValues.toArray(
-                    new String[rowValues.size()]));
+            table.append(NEW_LINE);
+        }
+
+        public void addCell(String cell) {
+            table.append(cell);
         }
 
         /**
-         * Returns a string version of the table, with all of the escape sequences 
-         * necessary to print nicely in the console output.
+         * Returns a string version of the table, with all of the escape
+         * sequences necessary to print nicely in the console output.
          *
          * @return
          */
         @Override
         public String toString() {
-            StringBuilder outputTable = new StringBuilder(charactersAdded);
-            outputTable.append(tableName);
-            
-            Iterator<String[]> rowIterator = rows.iterator();
-            while (rowIterator.hasNext()) {
-                appendFormattedRow(rowIterator.next(), outputTable);
-            }
-            
-            outputTable.append(NEW_LINE);
-
-            return outputTable.toString();
-        }
-
-        /**
-         * Outputs a fully formatted row in the table
-         *
-         * Example: \t John 12345678 john@email.com\n
-         *
-         * @param row          Array containing unformatted row content
-         * @param outputTable  Buffer that formatted contents are written to
-         */
-        private void appendFormattedRow(String[] row, StringBuilder outputTable) {
-            outputTable.append(TAB);
-            for (int colNum = 0; colNum < row.length; colNum++) {
-                outputTable.append(row[colNum]);
-                outputTable.append(SPACE);
-            }
-            outputTable.append(NEW_LINE);
+            return table.toString();
         }
     }
 }
