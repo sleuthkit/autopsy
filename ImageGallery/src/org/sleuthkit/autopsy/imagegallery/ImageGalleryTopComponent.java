@@ -344,49 +344,48 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         + "or no groups are fully analyzed but ingest is not running."})
     private void checkForGroups() {
         GroupManager groupManager = controller.getGroupManager();
-        synchronized (groupManager) {
-            if (isNotEmpty(groupManager.getAnalyzedGroups())) {
-                clearNotification();
-                return;
-            }
 
-            if (IngestManager.getInstance().isIngestRunning()) {
+        if (isNotEmpty(groupManager.getAnalyzedGroups())) {
+            clearNotification();
+            return;
+        }
+
+        if (IngestManager.getInstance().isIngestRunning()) {
+            if (controller.isListeningEnabled()) {
+                replaceNotification(centralStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
+                                new ProgressIndicator()));
+            } else {
+                replaceNotification(fullUIStack,
+                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
+            }
+            return;
+        }
+        if (controller.getDBTasksQueueSizeProperty().get() > 0) {
+            replaceNotification(fullUIStack,
+                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
+                            new ProgressIndicator()));
+            return;
+        }
+        try {
+            if (controller.getDatabase().countAllFiles() <= 0) {
+                // there are no files in db
                 if (controller.isListeningEnabled()) {
-                    replaceNotification(centralStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg2(),
-                                    new ProgressIndicator()));
+                    replaceNotification(fullUIStack,
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
                 } else {
                     replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
+                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
                 }
                 return;
             }
-            if (controller.getDBTasksQueueSizeProperty().get() > 0) {
-                replaceNotification(fullUIStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
-                                new ProgressIndicator()));
-                return;
-            }
-            try {
-                if (controller.getDatabase().countAllFiles() <= 0) {
-                    // there are no files in db
-                    if (controller.isListeningEnabled()) {
-                        replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
-                    } else {
-                        replaceNotification(fullUIStack,
-                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
-                    }
-                    return;
-                }
-            } catch (TskCoreException tskCoreException) {
-                logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
-            }
+        } catch (TskCoreException tskCoreException) {
+            logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
+        }
 
-            if (false == groupManager.isRegrouping()) {
-                replaceNotification(centralStack,
-                        new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
-            }
+        if (false == groupManager.isRegrouping()) {
+            replaceNotification(centralStack,
+                    new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg6()));
         }
     }
 
