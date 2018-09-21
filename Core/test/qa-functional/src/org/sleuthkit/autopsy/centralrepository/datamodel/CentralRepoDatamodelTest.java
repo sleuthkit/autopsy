@@ -678,9 +678,10 @@ public class CentralRepoDatamodelTest extends TestCase {
         String devIdPath = "C:\\files\\devIdPath.txt";
 
         // Store the email type
-        CorrelationAttributeInstance.Type emailType;  //used again for another portion of this test below
+        CorrelationAttributeInstance.Type emailType;  //used again for other portions of this test
         try {
             emailType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.EMAIL_TYPE_ID);
+            assertEquals("Unexpected Correlation Type retrieved for Email type id", CorrelationAttributeInstance.EMAIL_TYPE_ID, emailType.getId());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail("Error thrown while attempting to get email attribute " + ex.getMessage());
