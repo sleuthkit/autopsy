@@ -50,10 +50,12 @@ import javax.annotation.Nonnull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -70,6 +72,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -728,10 +731,12 @@ public final class ImageGalleryController {
 
         CopyAnalyzedFiles(long dataSourceObjId, ImageGalleryController controller) {
             super(dataSourceObjId, controller);
+            taskDB.buildFileMetaDataCache();
         }
 
         @Override
         protected void cleanup(boolean success) {
+            taskDB.freeFileMetaDataCache();
             // at the end of the task, set the stale status based on the 
             // cumulative status of all data sources
             controller.setStale(controller.isDataSourcesTableStale());

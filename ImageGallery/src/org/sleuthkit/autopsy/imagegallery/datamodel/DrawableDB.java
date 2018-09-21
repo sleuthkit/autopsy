@@ -51,6 +51,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
@@ -766,6 +767,69 @@ public final class DrawableDB {
     public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
         insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
+    
+    Set<Long> hasTagCache = new HashSet<>();
+    Set<Long> hasHashCache = new HashSet<>();
+    Set<Long> hasExifCache = new HashSet<>();
+    boolean areCachesLoaded = false;
+    public void buildFileMetaDataCache() {
+        try {
+            // tag tags
+            try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
+                ResultSet rs = dbQuery.getResultSet();
+                while (rs.next()) {
+                    long id = rs.getLong("obj_id");
+                    hasTagCache.add(id);
+                }
+                
+            } catch (SQLException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
+        try {
+            // hash sets
+            try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())) {
+                ResultSet rs = dbQuery.getResultSet();
+                while (rs.next()) {
+                    long id = rs.getLong("obj_id");
+                    hasHashCache.add(id);
+                }
+                
+            } catch (SQLException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
+        try {
+            // EXIF
+            try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {
+                ResultSet rs = dbQuery.getResultSet();
+                while (rs.next()) {
+                    long id = rs.getLong("obj_id");
+                    hasExifCache.add(id);
+                }
+                
+            } catch (SQLException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
+        areCachesLoaded = true;
+    }
+    
+    public void freeFileMetaDataCache() {
+        areCachesLoaded = false;
+        hasTagCache.clear();
+        hasHashCache.clear();
+        hasExifCache.clear();
+    }
 
     /**
      * Update (or insert) a file in(to) the drawable db. Weather this is an
@@ -790,6 +854,7 @@ public final class DrawableDB {
         try {
             // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
+            // @@@ Should be able to get ID directly from abstract file...
             stmt.setLong(2, f.getAbstractFile().getDataSource().getId());
             stmt.setString(3, f.getDrawablePath());
             stmt.setString(4, f.getName());
@@ -802,39 +867,52 @@ public final class DrawableDB {
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
 
-            try {
-                for (String name : f.getHashSetNames()) {
+            if ((!areCachesLoaded) || (hasHashCache.contains(f.getId()))) {
+                try {
+                    for (String name : f.getHashSetNames()) {
 
-                    // "insert or ignore into hash_sets (hash_set_name)  values (?)"
-                    insertHashSetStmt.setString(1, name);
-                    insertHashSetStmt.executeUpdate();
+                        // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                        insertHashSetStmt.setString(1, name);
+                        insertHashSetStmt.executeUpdate();
 
-                    //TODO: use nested select to get hash_set_id rather than seperate statement/query
-                    //"select hash_set_id from hash_sets where hash_set_name = ?"
-                    selectHashSetStmt.setString(1, name);
-                    try (ResultSet rs = selectHashSetStmt.executeQuery()) {
-                        while (rs.next()) {
-                            int hashsetID = rs.getInt("hash_set_id"); //NON-NLS
-                            //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
-                            insertHashHitStmt.setInt(1, hashsetID);
-                            insertHashHitStmt.setLong(2, f.getId());
-                            insertHashHitStmt.executeUpdate();
-                            break;
+                        //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                        //"select hash_set_id from hash_sets where hash_set_name = ?"
+                        selectHashSetStmt.setString(1, name);
+                        try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                            while (rs.next()) {
+                                int hashsetID = rs.getInt("hash_set_id"); //NON-NLS
+                                //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                                insertHashHitStmt.setInt(1, hashsetID);
+                                insertHashHitStmt.setLong(2, f.getId());
+                                insertHashHitStmt.executeUpdate();
+                                break;
+                            }
                         }
                     }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
             }
 
             //and update all groups this file is in
             for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
+                if (attr == DrawableAttribute.TAGS) {
+                    if ((!areCachesLoaded) || (hasTagCache.contains(f.getId()) == false)) {
+                        continue;
+                    }
+                }
+                else if (attr == DrawableAttribute.MAKE || attr == DrawableAttribute.MODEL) {
+                    if ((!areCachesLoaded) || (hasExifCache.contains(f.getId()) == false)) {
+                        continue;
+                    }
+                }
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Comparable<?> val : vals) {
                     if (null != val) {
                         if (attr == DrawableAttribute.PATH) {
                             insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
-                        } else {
+                        }
+                        else {
                             insertGroup(val.toString(), attr, caseDbTransaction);
                         }
                     }
