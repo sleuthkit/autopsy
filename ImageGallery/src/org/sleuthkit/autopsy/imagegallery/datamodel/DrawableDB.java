@@ -778,7 +778,11 @@ public final class DrawableDB {
     Set<Long> hasHashCache = new HashSet<>();
     Set<Long> hasExifCache = new HashSet<>();
     boolean areCachesLoaded = false;
-    public void buildFileMetaDataCache() {
+    int cacheUserCount = 0;
+    synchronized public void buildFileMetaDataCache() {
+        cacheUserCount++;
+        if (areCachesLoaded == true)
+            return;
         try {
             // tag tags
             try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
@@ -830,7 +834,11 @@ public final class DrawableDB {
         areCachesLoaded = true;
     }
     
-    public void freeFileMetaDataCache() {
+    synchronized public void freeFileMetaDataCache() {
+        // dont' free these if there is another task still using them
+        if (--cacheUserCount > 0)
+            return;
+        
         areCachesLoaded = false;
         hasTagCache.clear();
         hasHashCache.clear();
@@ -866,8 +874,14 @@ public final class DrawableDB {
             stmt.setString(4, f.getName());
             stmt.setLong(5, f.getCrtime());
             stmt.setLong(6, f.getMtime());
-            stmt.setString(7, f.getMake());
-            stmt.setString(8, f.getModel());
+            if ((areCachesLoaded) && (hasExifCache.contains(f.getId()) == false)) {
+                stmt.setString(7, "");
+                stmt.setString(8, "");
+            }
+            else {
+                stmt.setString(7, f.getMake());
+                stmt.setString(8, f.getModel());
+            }
             stmt.setBoolean(9, f.isAnalyzed());
             stmt.executeUpdate();
             // Update the list of file IDs in memory

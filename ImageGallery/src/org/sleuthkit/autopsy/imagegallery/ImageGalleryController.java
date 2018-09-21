@@ -638,7 +638,7 @@ public final class ImageGalleryController {
         public void run() {
             progressHandle = getInitialProgressHandle();
             progressHandle.start();
-            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status());
+            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status()  + " (Data Source " + dataSourceObjId + ")" );
 
             DrawableDB.DrawableTransaction drawableDbTransaction = null;
             CaseDbTransaction caseDbTransaction = null;
@@ -675,7 +675,7 @@ public final class ImageGalleryController {
 
                 progressHandle.finish();
                 progressHandle = ProgressHandle.createHandle(Bundle.BulkTask_committingDb_status());
-                updateMessage(Bundle.BulkTask_committingDb_status());
+                updateMessage(Bundle.BulkTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")" );
                 updateProgress(1.0);
 
                 progressHandle.start();

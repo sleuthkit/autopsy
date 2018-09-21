@@ -183,7 +183,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
         Map<String, DataSource> dataSourceNames = new HashMap<>();
         dataSourceNames.put("All", null);
-        dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
+        dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName() + " (ID: " + dataSource.getId() + ")", dataSource));
 
         Platform.runLater(() -> {
             ChoiceDialog<String> datasourceDialog = new ChoiceDialog<>(null, dataSourceNames.keySet());
