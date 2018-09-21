@@ -37,6 +37,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -51,6 +52,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -191,9 +193,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         "CommonAttributePanel.search.done.noCurrentCaseException=Unable to open case file.",
         "CommonAttributePanel.search.done.exception=Unexpected exception running Common Property Search.",
         "CommonAttributePanel.search.done.interupted=Something went wrong finding common properties.",
-        "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources."})
+        "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources.",
+        "CommonAttributePanel.search.done.noResults=No results found."})
     private void search() {
-
         new SwingWorker<CommonAttributeSearchResults, Void>() {
 
             private String tabTitle;
@@ -259,24 +261,28 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             protected void done() {
                 try {
                     super.done();
-
                     CommonAttributeSearchResults metadata = this.get();
-
-                    CommonAttributeSearchResultRootNode commonFilesNode = new CommonAttributeSearchResultRootNode(metadata);
-
-                    // -3969
-                    DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
-
-                    TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
-
-                    DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
-
-                    Collection<DataResultViewer> viewers = new ArrayList<>(1);
-                    viewers.add(table);
-
-                    progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
-                    DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), tableFilterWithDescendantsNode, metadata.size(), viewers);
-                    progress.finish();
+                    boolean noKeysExist = true;
+                    try {
+                        noKeysExist = metadata.getMetadata().keySet().isEmpty();
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.SEVERE, "Unable to get keys from metadata", ex);
+                    }
+                    if (noKeysExist) {
+                        Node commonFilesNode = new TableFilterNode(new EmptyNode(Bundle.CommonAttributePanel_search_done_noResults()), true);
+                        progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
+                        DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), commonFilesNode, 1);
+                    } else {
+                        // -3969
+                        Node commonFilesNode = new CommonAttributeSearchResultRootNode(metadata);
+                        DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
+                        TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
+                        DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
+                        Collection<DataResultViewer> viewers = new ArrayList<>(1);
+                        viewers.add(table);
+                        progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
+                        DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), tableFilterWithDescendantsNode, metadata.size(), viewers);
+                    }
 
                 } catch (InterruptedException ex) {
                     LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
@@ -298,6 +304,8 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         errorMessage = Bundle.CommonAttributePanel_search_done_exception();
                     }
                     MessageNotifyUtil.Message.error(errorMessage);
+                } finally {
+                    progress.finish();
                 }
             }
         }.execute();
@@ -317,6 +325,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         "CommonAttributePanel.setupDataSources.done.interupted=Something went wrong building the Common Files Search dialog box.",
         "CommonAttributePanel.setupDataSources.done.sqlException=Unable to query db for data sources.",
         "CommonAttributePanel.setupDataSources.updateUi.noDataSources=No data sources were found."})
+
     private void setupDataSources() {
 
         new SwingWorker<Map<Long, String>, Void>() {
