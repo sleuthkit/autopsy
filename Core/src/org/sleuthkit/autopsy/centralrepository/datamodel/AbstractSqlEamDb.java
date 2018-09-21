@@ -219,6 +219,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public synchronized CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
 
         // check if there is already an existing CorrelationCase for this Case
+
         CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
         if (cRCase != null) {
             return cRCase;
@@ -401,6 +402,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
+        if (caseUUID == null){
+            return null;
+        }
         try {
             return caseCacheByUUID.get(caseUUID, () -> getCaseByUUIDFromCr(caseUUID));
         } catch (CacheLoader.InvalidCacheLoadException ignored) {
@@ -560,7 +564,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return a String to be used as a key for the dataSourceCacheByDeviceId
      */
     private static String getDataSourceByDeviceIdCacheKey(int caseId, String dataSourceDeviceId) {
-        return "Case" + caseId + "DeviceId" + dataSourceDeviceId; //NON-NLS
+        return "Case" + caseId + "DeviceId" + (dataSourceDeviceId == null ? "" : dataSourceDeviceId); //NON-NLS
     }
 
     /**
