@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderInitException;
 import org.sleuthkit.datamodel.Content;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.tabulardatareader.AbstractReader.FileReaderException;
 import org.sleuthkit.autopsy.tabulardatareader.FileReaderFactory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -222,21 +221,21 @@ class SqliteTextExtractor extends ContentTextExtractor {
     private class TableBuilder {
 
         private final List<String[]> rows = new LinkedList<>();
-        private Integer charactersAdded = 0;
-
-        //Formatters
-        private static final String HORIZONTAL_DELIMITER = "-";
-        private static final String VERTICAL_DELIMITER = "|";
-        private static final String HEADER_CORNER = "+";
 
         private static final String TAB = "\t";
         private static final String NEW_LINE = "\n";
         private static final String SPACE = " ";
 
-        //Number of escape sequences in the header row
-        private static final int ESCAPE_SEQUENCES = 4;
-
-        private String tableName = "";
+        private String tableName;
+        private Integer charactersAdded;
+        
+        /**
+         * Set tableName and charactersAdded to their default values.
+         */
+        public TableBuilder() {
+            tableName = "";
+            charactersAdded = 0;
+        }
 
         /**
          * Add the section to the top left corner of the table. This is where
@@ -246,16 +245,6 @@ class SqliteTextExtractor extends ContentTextExtractor {
          */
         public void setTableName(String tableName) {
             this.tableName = tableName + NEW_LINE + NEW_LINE;
-        }
-
-        /**
-         * Creates a border given the length param.
-         *
-         * @return Ex: \t+----------------------+\n
-         */
-        private String createBorder(int length) {
-            return TAB + HEADER_CORNER + StringUtils.repeat(
-                    HORIZONTAL_DELIMITER, length) + HEADER_CORNER + NEW_LINE;
         }
 
         /**
@@ -275,7 +264,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
          * @param vals
          */
         public void addRow(Collection<Object> vals) {
-            List<String> rowValues = new ArrayList<>();
+            List<String> rowValues = new LinkedList<>();
             vals.forEach((val) -> {
                 rowValues.add(val.toString());
                 charactersAdded += val.toString().length();
@@ -285,58 +274,22 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Gets the max width of a cell in each column and the max number of
-         * columns in any given row. This ensures that there are enough columns
-         * and enough space for even the longest entry.
-         *
-         * @return array of column widths
-         */
-        private int[] getMaxWidthPerColumn() {
-            int maxNumberOfColumns = 0;
-            for (String[] row : rows) {
-                maxNumberOfColumns = Math.max(
-                        maxNumberOfColumns, row.length);
-            }
-
-            int[] widths = new int[maxNumberOfColumns];
-            for (String[] row : rows) {
-                for (int colNum = 0; colNum < row.length; colNum++) {
-                    widths[colNum] = Math.max(
-                            widths[colNum],
-                            row[colNum].length()
-                    );
-                }
-            }
-
-            return widths;
-        }
-
-        /**
-         * Returns a string version of the table, with all of the formatters and
-         * escape sequences necessary to print nicely in the console output.
+         * Returns a string version of the table, with all of the escape sequences 
+         * necessary to print nicely in the console output.
          *
          * @return
          */
         @Override
         public String toString() {
             StringBuilder outputTable = new StringBuilder(charactersAdded);
-            int[] colMaxWidths = getMaxWidthPerColumn();
-            int borderLength = 0;
-
+            outputTable.append(tableName);
+            
             Iterator<String[]> rowIterator = rows.iterator();
-            if (rowIterator.hasNext()) {
-                //Length of the header defines the table boundaries
-                borderLength = appendFormattedHeader(rowIterator.next(),
-                        colMaxWidths, outputTable);
-
-                while (rowIterator.hasNext()) {
-                    appendFormattedRow(rowIterator.next(), colMaxWidths, outputTable);
-                }
-
-                outputTable.insert(0, tableName);
-                outputTable.append(createBorder(borderLength));
-                outputTable.append(NEW_LINE);
+            while (rowIterator.hasNext()) {
+                appendFormattedRow(rowIterator.next(), outputTable);
             }
+            
+            outputTable.append(NEW_LINE);
 
             return outputTable.toString();
         }
@@ -344,56 +297,18 @@ class SqliteTextExtractor extends ContentTextExtractor {
         /**
          * Outputs a fully formatted row in the table
          *
-         * Example: \t| John | 12345678 | john@email.com |\n
+         * Example: \t John 12345678 john@email.com\n
          *
          * @param row          Array containing unformatted row content
-         * @param colMaxWidths An array of column maximum widths, so that
-         *                     everything is pretty printed.
          * @param outputTable  Buffer that formatted contents are written to
          */
-        private void appendFormattedRow(String[] row,
-                int[] colMaxWidths, StringBuilder outputTable) {
+        private void appendFormattedRow(String[] row, StringBuilder outputTable) {
             outputTable.append(TAB);
             for (int colNum = 0; colNum < row.length; colNum++) {
-                outputTable.append(VERTICAL_DELIMITER);
-                outputTable.append(SPACE);
-                outputTable.append(StringUtils.rightPad(
-                        StringUtils.defaultString(row[colNum]),
-                        colMaxWidths[colNum]));
+                outputTable.append(row[colNum]);
                 outputTable.append(SPACE);
             }
-            outputTable.append(VERTICAL_DELIMITER);
             outputTable.append(NEW_LINE);
-        }
-
-        /**
-         * Adds a fully formatted header to the table builder and returns the
-         * length of this header. The length of the header is needed to set the
-         * table boundaries
-         *
-         * Example: \t+----------------------+\n 
-         *          \t| Email | Phone | Name |\n
-         *          \t+----------------------+\n
-         *
-         * @param row          Array of contents in each column
-         * @param colMaxWidths Widths for each column in the table
-         * @param outputTable  Output stringbuilder
-         *
-         * @return length of the formatted header, this length will be needed to
-         *         correctly print the bottom table border.
-         */
-        private int appendFormattedHeader(String[] row, int[] colMaxWidths, StringBuilder outputTable) {
-            appendFormattedRow(row, colMaxWidths, outputTable);
-            //Printable table dimensions are equal to the length of the header minus
-            //the number of escape sequences used to for formatting.
-            int borderLength = outputTable.length() - ESCAPE_SEQUENCES;
-            String border = createBorder(borderLength);
-
-            //Surround the header with borders above and below.
-            outputTable.insert(0, border);
-            outputTable.append(border);
-
-            return borderLength;
         }
     }
 }
