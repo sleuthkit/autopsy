@@ -773,6 +773,7 @@ public final class DrawableDB {
         insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
     
+    // WORK IN PROGRESS
     Set<Long> hasTagCache = new HashSet<>();
     Set<Long> hasHashCache = new HashSet<>();
     Set<Long> hasExifCache = new HashSet<>();
