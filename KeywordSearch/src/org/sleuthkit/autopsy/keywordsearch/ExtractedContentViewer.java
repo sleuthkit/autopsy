@@ -100,7 +100,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         List<IndexedText> sources = new ArrayList<>();
         Lookup nodeLookup = node.getLookup();
-        
+
         /**
          * Pull the search results, file, artifact and report objects (if any)
          * from the lookup.
@@ -109,7 +109,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         AbstractFile file = nodeLookup.lookup(AbstractFile.class);
         BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         Report report = nodeLookup.lookup(Report.class);
-        
+
         /*
          * First, get text with highlighted hits if this node is for a search
          * result.
@@ -372,6 +372,12 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public int isPreferred(Node node) {
+        AdHocQueryResult adhocResult = node.getLookup().lookup(AdHocQueryResult.class);
+        if (adhocResult != null) {
+            //The presence of an AdHocQueryResult indicates that this is a Keyword Hit and has a high preference for this content viewer
+            return 7;
+        }
+        
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         if (artifact == null) {
             return 4;
