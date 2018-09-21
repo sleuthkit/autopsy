@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +51,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -61,6 +63,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
@@ -368,18 +371,21 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             return;
         }
         try {
-            if (controller.getDatabase().countAllFiles() <= 0) {
-                // there are no files in db
-                if (controller.isListeningEnabled()) {
-                    replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
-                } else {
-                    replaceNotification(fullUIStack,
-                            new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+            DrawableDB database = controller.getDatabase();
+            if (database.isClosed() == false) {
+                if (database.countAllFiles() <= 0) {
+                    // there are no files in db
+                    if (controller.isListeningEnabled()) {
+                        replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg5()));
+                    } else {
+                        replaceNotification(fullUIStack,
+                                new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
+                    }
+                    return;
                 }
-                return;
             }
-        } catch (TskCoreException tskCoreException) {
+        } catch (TskCoreException | SQLException tskCoreException) {
             logger.log(Level.SEVERE, "Error counting files in the database.", tskCoreException);
         }
 
