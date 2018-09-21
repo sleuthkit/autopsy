@@ -1189,7 +1189,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             DbManager.addArtifactInstance(attr1);
             DbManager.addArtifactInstance(attr2);
             AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
-            DbManager.processInstanceTableWhere(fileType, String.format("value = %s", callbackTestFileHash), instancetableCallback);
+            DbManager.processInstanceTableWhere(fileType, "value='" +callbackTestFileHash+ "'", instancetableCallback);
             int count1 = instancetableCallback.getCounter();
             int count2 = instancetableCallback.getCounterNamingConvention();
             assertEquals("Unexpected value for Process Instance Where count with filepath naming convention", 2, count2);
