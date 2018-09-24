@@ -180,7 +180,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
                 Collection<String> row = new LinkedList<>();
 
                 //Add column names once from metadata
-                for (int i = 1; i < columnCount; i++) {
+                for (int i = 1; i <= columnCount; i++) {
                     row.add(metaData.getColumnName(i));
                 }
 
