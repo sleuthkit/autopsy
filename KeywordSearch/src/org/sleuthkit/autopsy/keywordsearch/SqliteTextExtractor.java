@@ -108,8 +108,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     /**
-     * Wraps each table in a reader as the tables are streamed one at a time
-     * from the database.
+     * Lazily loads tables from the database during reading to conserve memory.
      */
     private class SQLiteTableReader extends Reader {
 
@@ -162,8 +161,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Reads from the database table and loads in the contents to a table
-         * builder, so that its properly formatted during indexing.
+         * Reads from a database table and loads the contents into a table
+         * builder so that its properly formatted during indexing.
          *
          * @param tableName Database table to be read
          */
@@ -180,7 +179,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
                 Collection<String> row = new LinkedList<>();
 
                 //Add column names once from metadata
-                for (int i = 1; i < columnCount; i++) {
+                for (int i = 1; i <= columnCount; i++) {
                     row.add(metaData.getColumnName(i));
                 }
 
@@ -206,14 +205,16 @@ class SqliteTextExtractor extends ContentTextExtractor {
 
             return table.toString();
         }
-        
+
         /**
-         * Determines if the object result from the result set is worth addign to
-         * the row or not. Ignores nulls and blobs for the time being.
-         * 
+         * Determines if the result from the result set is worth adding to the
+         * row. Ignores nulls and blobs for the time being.
+         *
          * @param result Object result retrieved from resultSet
-         * @param type Type of objet retrieved from resultSet
-         * @return boolean where true means valuable, false implies it can be skipped.
+         * @param type   Type of objet retrieved from resultSet
+         *
+         * @return boolean where true means valuable, false implies it can be
+         *         skipped.
          */
         private boolean isValuableResult(Object result, String type) {
             //Ignore nulls and blobs
@@ -221,9 +222,9 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Loads a database file into the character buffer until there are not
-         * more contents to read. The underlying implementation here only loads
-         * one table at a time, to conserve memory.
+         * Loads a database file into the character buffer. The underlying
+         * implementation here only loads one table at a time to conserve
+         * memory.
          *
          * @param cbuf Buffer to copy database content characters into
          * @param off  offset to begin loading in buffer
@@ -259,10 +260,10 @@ class SqliteTextExtractor extends ContentTextExtractor {
         /**
          * Grab the next table name from the collection of all table names, once
          * we no longer have a table to process, return null which will be
-         * understoon to mean the end of parsing.
+         * understood to mean the end of parsing.
          *
-         * @return String of current table contents or null if not more tables
-         *         to read
+         * @return Current table contents or null meaning there are not more
+         *         tables to process
          */
         private String getNextTable() {
             if (tableIterator.hasNext()) {
@@ -297,7 +298,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
      */
     private class TableBuilder {
 
-        private final StringBuilder table = new StringBuilder();
+        private final Integer DEFAULT_CAPACITY = 32000;
+        private final StringBuilder table = new StringBuilder(DEFAULT_CAPACITY);
 
         private static final String TAB = "\t";
         private static final String NEW_LINE = "\n";
@@ -305,17 +307,18 @@ class SqliteTextExtractor extends ContentTextExtractor {
 
         /**
          * Add the section to the top left corner of the table. This is where
-         * the name of the table should go.
+         * the name of the table should go
          *
          * @param tableName Table name
          */
         public void addTableName(String tableName) {
-            table.append(tableName).append(NEW_LINE + NEW_LINE);
+            table.append(tableName)
+                 .append(NEW_LINE)
+                 .append(NEW_LINE);
         }
 
         /**
-         * Add header row to underlying list collection, which will be formatted
-         * when toString is called.
+         * Adds a formatted header row to the underlying StringBuilder
          *
          * @param vals
          */
@@ -324,8 +327,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Add a row to the underlying list collection, which will be formatted
-         * when toString is called.
+         * Adds a formatted row to the underlying StringBuilder
          *
          * @param vals
          */
@@ -346,7 +348,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
          * Returns a string version of the table, with all of the escape
          * sequences necessary to print nicely in the console output.
          *
-         * @return
+         * @return Formated table contents
          */
         @Override
         public String toString() {
