@@ -188,9 +188,9 @@ class SqliteTextExtractor extends ContentTextExtractor {
                 while (resultSet.next()) {
                     row = new LinkedList<>();
                     for (int i = 1; i <= columnCount; i++) {
-                        if (resultSet.getObject(i) == null || metaData.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
-                            //Ignore nulls and blobs
-                        } else {
+                        Object result = resultSet.getObject(i);
+                        String type = metaData.getColumnTypeName(i);
+                        if (isValuableResult(result, type)) {
                             row.add(resultSet.getObject(i).toString());
                         }
                     }
@@ -205,6 +205,19 @@ class SqliteTextExtractor extends ContentTextExtractor {
             }
 
             return table.toString();
+        }
+        
+        /**
+         * Determines if the object result from the result set is worth addign to
+         * the row or not. Ignores nulls and blobs for the time being.
+         * 
+         * @param result Object result retrieved from resultSet
+         * @param type Type of objet retrieved from resultSet
+         * @return boolean where true means valuable, false implies it can be skipped.
+         */
+        private boolean isValuableResult(Object result, String type) {
+            //Ignore nulls and blobs
+            return result != null && type.compareToIgnoreCase("blob") != 0;
         }
 
         /**
@@ -223,20 +236,20 @@ class SqliteTextExtractor extends ContentTextExtractor {
         @Override
         public int read(char[] cbuf, int off, int len) throws IOException {
             if (currentTableReader == null) {
-                String tableString = getNextTableString();
-                if (tableString == null) {
+                String tableResults = getNextTable();
+                if (tableResults == null) {
                     return -1;
                 }
-                currentTableReader = CharSource.wrap(tableString).openStream();
+                currentTableReader = CharSource.wrap(tableResults).openStream();
             }
 
             int charactersRead = currentTableReader.read(cbuf, off, len);
             while (charactersRead == -1) {
-                String tableString = getNextTableString();
-                if (tableString == null) {
+                String tableResults = getNextTable();
+                if (tableResults == null) {
                     return -1;
                 }
-                currentTableReader = CharSource.wrap(tableString).openStream();
+                currentTableReader = CharSource.wrap(tableResults).openStream();
                 charactersRead = currentTableReader.read(cbuf, off, len);
             }
 
@@ -251,7 +264,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
          * @return String of current table contents or null if not more tables
          *         to read
          */
-        private String getNextTableString() {
+        private String getNextTable() {
             if (tableIterator.hasNext()) {
                 return getTableAsString(tableIterator.next());
             } else {

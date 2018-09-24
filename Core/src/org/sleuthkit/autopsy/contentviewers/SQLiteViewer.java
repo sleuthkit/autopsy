@@ -39,24 +39,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
-import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SqliteUtil;
@@ -469,7 +463,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                     + " LIMIT " + Integer.toString(numRowsToRead)
                     + " OFFSET " + Integer.toString(startRow - 1))) {
 
-            ArrayList<Map<String, Object>> rows = resultSetToArrayList(resultSet);
+            List<Map<String, Object>> rows = resultSetToArrayList(resultSet);
             if (Objects.nonNull(rows)) {
                 selectedTableView.setupTable(rows);
             } else {
@@ -482,20 +476,20 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }
 
     @NbBundle.Messages("SQLiteViewer.BlobNotShown.message=BLOB Data not shown")
-    private ArrayList<Map<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
-        ResultSetMetaData metaData = rs.getMetaData();
+    private List<Map<String, Object>> resultSetToArrayList(ResultSet resultSet) throws SQLException {
+        ResultSetMetaData metaData = resultSet.getMetaData();
         int columns = metaData.getColumnCount();
         ArrayList<Map<String, Object>> rowlist = new ArrayList<>();
-        while (rs.next()) {
+        while (resultSet.next()) {
             Map<String, Object> row = new LinkedHashMap<>(columns);
             for (int i = 1; i <= columns; ++i) {
-                if (rs.getObject(i) == null) {
+                if (resultSet.getObject(i) == null) {
                     row.put(metaData.getColumnName(i), "");
                 } else {
                     if (metaData.getColumnTypeName(i).compareToIgnoreCase("blob") == 0) {
                         row.put(metaData.getColumnName(i), Bundle.SQLiteViewer_BlobNotShown_message());
                     } else {
-                        row.put(metaData.getColumnName(i), rs.getObject(i));
+                        row.put(metaData.getColumnName(i), resultSet.getObject(i));
                     }
                 }
             }
