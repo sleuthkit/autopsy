@@ -52,7 +52,6 @@ public abstract class AbstractReader implements AutoCloseable {
      * This function is common to all readers.
      * 
      * @param file AbstractFile from the data source 
-     * @param localDiskPath Local drive path to copy AbstractFile contents
      * @throws IOException Exception writing file contents
      * @throws NoCurrentCaseException Current case closed during file copying
      * @throws TskCoreException Exception finding files from abstract file

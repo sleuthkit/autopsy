@@ -304,7 +304,6 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param html              The HTML text to add the table to.
      * @param attributeInstance The attribute instance whose information will be
      *                          used to populate the table.
-     * @param correlationType   The correlation data type.
      */
     @NbBundle.Messages({
         "AnnotationsContentViewer.centralRepositoryEntryDataLabel.case=Case:",
