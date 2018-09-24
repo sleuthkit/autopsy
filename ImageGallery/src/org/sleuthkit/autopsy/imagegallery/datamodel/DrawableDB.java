@@ -347,8 +347,10 @@ public final class DrawableDB {
     }
 
     /**
-     * public factory method. Creates and opens a connection to a new database *
-     * at the given path. *
+     * Public factory method. Creates and opens a connection to a new database *
+     * at the given path. If there is already a db at the path, it is checked
+     * for compatibility, and deleted if it is incompatible, before a connection
+     * is opened.
      *
      * @param controller
      *
@@ -357,14 +359,40 @@ public final class DrawableDB {
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
-        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase());
+        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase()).resolve("drawable.db");
+        boolean hasDataSourceObjIdColumn = hasDataSourceObjIdColumn(dbPath);
         try {
-            return new DrawableDB(dbPath.resolve("drawable.db"), controller); //NON-NLS
+            if (hasDataSourceObjIdColumn == false) {
+                Files.deleteIfExists(dbPath);
+            }
+        } catch (IOException ex) {
+            throw new TskCoreException("Error deleting old database", ex); //NON-NLS
+        }
+
+        try {
+            return new DrawableDB(dbPath, controller); //NON-NLS
         } catch (SQLException ex) {
-            throw new TskCoreException("sql error creating database connection", ex); //NON-NLS
+            throw new TskCoreException("SQL error creating database connection", ex); //NON-NLS
         } catch (IOException ex) {
             throw new TskCoreException("Error creating database connection", ex); //NON-NLS
         }
+    }
+
+    private static boolean hasDataSourceObjIdColumn(Path dbPath1) throws TskCoreException {
+        String sql = "pragma table_info('drawable_files')";   //NON-NLS
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath1.toString()); //NON-NLS
+                Statement stmt = con.createStatement();
+                ResultSet results = stmt.executeQuery(sql);) {
+            while (results.next()) {
+                if ("data_source_obj_id".equals(results.getString("name"))) {
+                    return true;
+                }
+            }
+
+        } catch (SQLException ex) {
+            throw new TskCoreException("SQL error checking database compatibility", ex); //NON-NLS
+        }
+        return false;
     }
 
     private void setPragmas() throws SQLException {

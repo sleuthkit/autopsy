@@ -143,7 +143,7 @@ public final class OpenAction extends CallableSystemAction {
             return;
         }
         try {
-              ImageGalleryController controller = ImageGalleryModule.getController();
+            ImageGalleryController controller = ImageGalleryModule.getController();
             if (controller.isDataSourcesTableStale()) {
                 //drawable db is stale, ask what to do
                 int answer = JOptionPane.showConfirmDialog(
@@ -162,9 +162,13 @@ public final class OpenAction extends CallableSystemAction {
                          * user may want to review images, so we rebuild the
                          * database only when a user launches Image Gallery.
                          */
-                      
-
                         if (currentCase.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                            /*
+                             * Turning listening off is necessary in order to
+                             * invoke the listener that will call
+                             * controller.rebuildDB();
+                             */
+                            controller.setListeningEnabled(false);
                             controller.setListeningEnabled(true);
                         } else {
                             controller.rebuildDB();
