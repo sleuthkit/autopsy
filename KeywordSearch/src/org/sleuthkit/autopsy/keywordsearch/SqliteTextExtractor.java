@@ -298,7 +298,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
      */
     private class TableBuilder {
 
-        private final StringBuilder table = new StringBuilder();
+        private final Integer DEFAULT_CAPACITY = 32000;
+        private final StringBuilder table = new StringBuilder(DEFAULT_CAPACITY);
 
         private static final String TAB = "\t";
         private static final String NEW_LINE = "\n";
@@ -311,7 +312,9 @@ class SqliteTextExtractor extends ContentTextExtractor {
          * @param tableName Table name
          */
         public void addTableName(String tableName) {
-            table.append(tableName).append(NEW_LINE + NEW_LINE);
+            table.append(tableName)
+                 .append(NEW_LINE)
+                 .append(NEW_LINE);
         }
 
         /**
