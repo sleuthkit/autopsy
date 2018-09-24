@@ -360,6 +360,8 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
+
+        testSucceeded = true;
     }    
     
 }
