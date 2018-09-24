@@ -40,6 +40,8 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
      *                              broadly categorized as media types
      * @param filterByDocMimeType   match only on files whose mime types can be
      *                              broadly categorized as document types
+     * @param corAttrType           attribute type
+     * @param percentageThreshold   omit any matches with frequency above this threshold
      *
      * @throws EamDbException
      */
