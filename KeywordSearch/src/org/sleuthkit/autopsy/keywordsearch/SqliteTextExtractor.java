@@ -205,14 +205,16 @@ class SqliteTextExtractor extends ContentTextExtractor {
 
             return table.toString();
         }
-        
+
         /**
-         * Determines if the result from the result set is worth adding to
-         * the row. Ignores nulls and blobs for the time being.
-         * 
+         * Determines if the result from the result set is worth adding to the
+         * row. Ignores nulls and blobs for the time being.
+         *
          * @param result Object result retrieved from resultSet
-         * @param type Type of objet retrieved from resultSet
-         * @return boolean where true means valuable, false implies it can be skipped.
+         * @param type   Type of objet retrieved from resultSet
+         *
+         * @return boolean where true means valuable, false implies it can be
+         *         skipped.
          */
         private boolean isValuableResult(Object result, String type) {
             //Ignore nulls and blobs
@@ -220,8 +222,9 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Loads a database file into the character buffer. The underlying implementation here only loads
-         * one table at a time to conserve memory.
+         * Loads a database file into the character buffer. The underlying
+         * implementation here only loads one table at a time to conserve
+         * memory.
          *
          * @param cbuf Buffer to copy database content characters into
          * @param off  offset to begin loading in buffer
@@ -259,8 +262,8 @@ class SqliteTextExtractor extends ContentTextExtractor {
          * we no longer have a table to process, return null which will be
          * understood to mean the end of parsing.
          *
-         * @return Current table contents or null meaning there are not more tables
-         * to process
+         * @return Current table contents or null meaning there are not more
+         *         tables to process
          */
         private String getNextTable() {
             if (tableIterator.hasNext()) {
