@@ -234,12 +234,12 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 }
                 
                 if (commentDataFound == false) {
-                    addMessage(html, "There is no comment data for the selected content in the central repository.");
+                    addMessage(html, "There is no comment data for the selected content in the Central Repository.");
                 }
             } catch (EamDbException | TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error connecting to the central repository database.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.SEVERE, "Error normalizing instance from repository database.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error normalizing instance from Central Repository database.", ex); // NON-NLS
             }
             endSection(html);
         }
@@ -273,7 +273,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
      * @param message The message text.
      */
     private void addMessage(StringBuilder html, String message) {
-        html.append("<p style=\"font-style:italic;\">")
+        html.append("<p style=\"font-size:11px;font-style:italic;\">")
                 .append(message)
                 .append("</p><br>"); //NON-NLS
     }
@@ -299,7 +299,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     
     /**
      * Add a data table containing information about a correlation attribute
-     * instance in the central repository.
+     * instance in the Central Repository.
      * 
      * @param html              The HTML text to add the table to.
      * @param attributeInstance The attribute instance whose information will be

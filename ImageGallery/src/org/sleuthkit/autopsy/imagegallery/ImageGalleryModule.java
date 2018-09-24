@@ -121,17 +121,6 @@ public class ImageGalleryModule {
         }
     }
 
-    /** is the drawable db out of date for the given case
-     *
-     * @param c
-     *
-     * @return true if the drawable db is out of date for the given case, false
-     *         otherwise
-     */
-    public static boolean isDrawableDBStale(Case c) throws TskCoreException {
-        return new ImageGalleryController(c).isDataSourcesTableStale();
-    }
-
     /**
      * Is the given file 'supported' and not 'known'(nsrl hash hit). If so we
      * should include it in {@link DrawableDB} and UI
@@ -140,6 +129,9 @@ public class ImageGalleryModule {
      *
      * @return true if the given {@link AbstractFile} is "drawable" and not
      *         'known', else false
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException
      */
     public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);

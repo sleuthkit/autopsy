@@ -57,7 +57,7 @@ public class CentralRepoDatamodelTest extends TestCase {
     private static final String CR_DB_NAME = "testcentralrepo.db";
     private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
     private static final int DEFAULT_BULK_THRESHOLD = 1000; // hard coded from EamDb
-    
+
     SqliteEamDbSettings dbSettingsSqlite;
 
     private CorrelationCase case1;
@@ -188,31 +188,30 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     /**
      * Test the notable status of artifacts
- addArtifactInstance(CorrelationAttribute eamArtifact) tests:
- - Test that two artifacts created with BAD status still have it when fetched from the database
- - Test that two artifacts created with BAD and KNOWN status still have the correct status when fetched from the database
- setAttributeInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) tests:
- - Test updating status
- - Test updating artifact with two instances
- - Test updating null artifact	
- - Test updating artifact with null known status	 
- - Test updating artifact with null case
- - Test updating artifact with null data source
- getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) tests:
- - Test getting two notable instances
- - Test getting notable instances where one instance is notable and the other is known
- - Test getting notable instances with null type
- - Test getting notable instances with null value
- getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) tests:
- - Test getting count of two notable instances
- - Test getting notable instance count where one instance is notable and the other is known
- - Test getting notable instance count with null type
- - Test getting notable instance count with null value
- getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) tests:
- - Test getting cases with notable instances (all instances are notable)
- - Test getting cases with notable instances (only one instance is notable)
- - Test getting cases with null type
- - Test getting cases with null value
+     * addArtifactInstance(CorrelationAttribute eamArtifact) tests: - Test that
+     * two artifacts created with BAD status still have it when fetched from the
+     * database - Test that two artifacts created with BAD and KNOWN status
+     * still have the correct status when fetched from the database
+     * setAttributeInstanceKnownStatus(CorrelationAttribute eamArtifact,
+     * TskData.FileKnown knownStatus) tests: - Test updating status - Test
+     * updating artifact with two instances - Test updating null artifact - Test
+     * updating artifact with null known status - Test updating artifact with
+     * null case - Test updating artifact with null data source
+     * getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType,
+     * String value) tests: - Test getting two notable instances - Test getting
+     * notable instances where one instance is notable and the other is known -
+     * Test getting notable instances with null type - Test getting notable
+     * instances with null value
+     * getCountArtifactInstancesKnownBad(CorrelationAttributeInstance.Type
+     * aType, String value) tests: - Test getting count of two notable instances
+     * - Test getting notable instance count where one instance is notable and
+     * the other is known - Test getting notable instance count with null type -
+     * Test getting notable instance count with null value
+     * getListCasesHavingArtifactInstancesKnownBad(CorrelationAttributeInstance.Type
+     * aType, String value) tests: - Test getting cases with notable instances
+     * (all instances are notable) - Test getting cases with notable instances
+     * (only one instance is notable) - Test getting cases with null type - Test
+     * getting cases with null value
      */
     public void testNotableArtifactStatus() {
 
@@ -225,9 +224,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(notableHashInBothCases, fileType, case1, dataSource1fromCase1, "path1",
                     "", TskData.FileKnown.BAD);
             EamDb.getInstance().addArtifactInstance(attr1);
-            CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(notableHashInBothCases, fileType,  case2, dataSource1fromCase2, "path2",
+            CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(notableHashInBothCases, fileType, case2, dataSource1fromCase2, "path2",
                     "", TskData.FileKnown.BAD);
-  
+
             EamDb.getInstance().addArtifactInstance(attr2);
 
             List<CorrelationAttributeInstance> attrs = EamDb.getInstance().getArtifactInstancesByTypeValue(fileType, notableHashInBothCases);
@@ -244,9 +243,9 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(notableHashInOneCaseKnownOther, fileType, case1, dataSource1fromCase1, "path3",
                     "", TskData.FileKnown.BAD);
-            
+
             EamDb.getInstance().addArtifactInstance(attr1);
-            
+
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(notableHashInOneCaseKnownOther, fileType, case2, dataSource1fromCase2, "path4",
                     "", TskData.FileKnown.KNOWN);
 
@@ -272,7 +271,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(hashToChangeToNotable, fileType, case1, dataSource1fromCase2, "path5",
                     "", TskData.FileKnown.KNOWN);
-       
+
             EamDb.getInstance().addArtifactInstance(attr);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, TskData.FileKnown.BAD);
@@ -291,11 +290,11 @@ public class CentralRepoDatamodelTest extends TestCase {
                     "", TskData.FileKnown.KNOWN);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase2, BAD_PATH,
                     "", TskData.FileKnown.KNOWN);
-            
+
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr1, TskData.FileKnown.BAD);
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr2, TskData.FileKnown.BAD);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
-             Assert.fail("setArtifactInstanceKnownStatus threw an exception for sequential Correlation Attribute Instances updates");
+            Assert.fail("setArtifactInstanceKnownStatus threw an exception for sequential Correlation Attribute Instances updates");
         }
 
         // Try to update null artifact
@@ -415,7 +414,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -426,7 +425,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -457,7 +456,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -469,7 +468,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -477,15 +476,13 @@ public class CentralRepoDatamodelTest extends TestCase {
     private static final String BAD_PATH = "badPath";
 
     /**
-     * Test the methods associated with bulk artifacts (addAttributeInstanceBulk and
- commitAttributeInstancesBulk).
-     * First test the normal use case of a large number of valid artifacts getting added.
-     * Next test the error conditions:
-     * - Test preparing artifact with null type
-     * - Test preparing artifact with null case
-     * - Test preparing artifact with null data source
-     * - Test preparing artifact with null path
-     * - Test preparing artifact with null known status
+     * Test the methods associated with bulk artifacts (addAttributeInstanceBulk
+     * and commitAttributeInstancesBulk). First test the normal use case of a
+     * large number of valid artifacts getting added. Next test the error
+     * conditions: - Test preparing artifact with null type - Test preparing
+     * artifact with null case - Test preparing artifact with null data source -
+     * Test preparing artifact with null path - Test preparing artifact with
+     * null known status
      */
     public void testBulkArtifacts() {
 
@@ -624,56 +621,40 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     /**
      * Test most methods related to artifacts
- addArtifactInstance(CorrelationAttribute eamArtifact) tests:
- - Test adding artifact with one instance
- - Test adding artifact with one instance in each data source
- - Test adding artifact with two instances in the same data source
- - Test adding email artifact
- - Test adding phone artifact
- - Test adding domain artifact
- - Test adding device artifact
- - Test adding artifact with null case
- - Test adding artifact with invalid case ID
- - Test adding artifact with null data source
- - Test adding artifact with invalid data source ID
- - Test adding artifact with null path
- - Test adding artifact with null known status
- - Test adding artifact with null correlation type
- - Test adding artifact with null value
- getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) tests:
- - Test getting three expected instances
- - Test getting no expected instances
- - Test with null type
- - Test with null value
- getArtifactInstancesByPath(CorrelationAttributeInstance.Type aType, String filePath) tests:
- - Test with existing path
- - Test with non-existent path
- - Test with null type
- - Test with null path
- getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) tests:
- - Test getting three expected instances
- - Test getting no expected instances
- - Test with null type
- - Test with null value
- getFrequencyPercentage(CorrelationAttribute corAttr) tests:
- - Test value in every data source
- - Test value in one data source twice
- - Test email
- - Test value in no data sources
- - Test with null type
- - Test with null attribute
- getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) tests:
- - Test data source with seven instances
- - Test with null case UUID
- - Test with null device ID
- getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) tests:
- - Test value in every data source
- - Test value in one data source twice
- - Test value in no data sources
- - Test with null type
- - Test with null value
+     * addArtifactInstance(CorrelationAttribute eamArtifact) tests: - Test
+     * adding artifact with one instance - Test adding artifact with one
+     * instance in each data source - Test adding artifact with two instances in
+     * the same data source - Test adding email artifact - Test adding phone
+     * artifact - Test adding domain artifact - Test adding device artifact -
+     * Test adding artifact with null case - Test adding artifact with invalid
+     * case ID - Test adding artifact with null data source - Test adding
+     * artifact with invalid data source ID - Test adding artifact with null
+     * path - Test adding artifact with null known status - Test adding artifact
+     * with null correlation type - Test adding artifact with null value
+     * getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType,
+     * String value) tests: - Test getting three expected instances - Test
+     * getting no expected instances - Test with null type - Test with null
+     * value getArtifactInstancesByPath(CorrelationAttributeInstance.Type aType,
+     * String filePath) tests: - Test with existing path - Test with
+     * non-existent path - Test with null type - Test with null path
+     * getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type
+     * aType, String value) tests: - Test getting three expected instances -
+     * Test getting no expected instances - Test with null type - Test with null
+     * value getFrequencyPercentage(CorrelationAttribute corAttr) tests: - Test
+     * value in every data source - Test value in one data source twice - Test
+     * email - Test value in no data sources - Test with null type - Test with
+     * null attribute getCountArtifactInstancesByCaseDataSource(String caseUUID,
+     * String dataSourceID) tests: - Test data source with seven instances -
+     * Test with null case UUID - Test with null device ID
+     * getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type
+     * aType, String value) tests: - Test value in every data source - Test
+     * value in one data source twice - Test value in no data sources - Test
+     * with null type - Test with null value
      */
     public void testArtifacts() {
+
+        //the hash value of all 0s has not been inserted
+        final String unusedHashValue = "00000000000000000000000000000000";
 
         String inAllDataSourcesHash = "6cddb0e31787b79cfdcc0676b98a71ce";
         String inAllDataSourcesPath = "C:\\files\\path0.txt";
@@ -697,12 +678,13 @@ public class CentralRepoDatamodelTest extends TestCase {
         String devIdPath = "C:\\files\\devIdPath.txt";
 
         // Store the email type
-        CorrelationAttributeInstance.Type emailType;
+        CorrelationAttributeInstance.Type emailType;  //used again for other portions of this test
         try {
             emailType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.EMAIL_TYPE_ID);
+            assertEquals("Unexpected Correlation Type retrieved for Email type id", CorrelationAttributeInstance.EMAIL_TYPE_ID, emailType.getId());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to get email attribute " + ex.getMessage());
             return;
         }
 
@@ -712,7 +694,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add file attribute from single datasource the first time " + ex.getMessage());
         }
 
         // Test adding attribute with an instance in each data source
@@ -723,10 +705,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifactInstance(attr2);
             CorrelationAttributeInstance attr3 = new CorrelationAttributeInstance(inAllDataSourcesHash, fileType, case2, dataSource1fromCase2, inAllDataSourcesPath);
             EamDb.getInstance().addArtifactInstance(attr3);
- 
+
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add file attribute from all 3 datasources " + ex.getMessage());
         }
 
         // Test adding attribute with two instances in one data source
@@ -735,10 +717,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifactInstance(attr1);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(inDataSource1twiceHash, fileType, case1, dataSource1fromCase1, inDataSource1twicePath2);
             EamDb.getInstance().addArtifactInstance(attr2);
-   
+
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add file attribute from single datasource the second time " + ex.getMessage());
         }
 
         // Test adding the other types
@@ -748,45 +730,47 @@ public class CentralRepoDatamodelTest extends TestCase {
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add email attribute from single datasource " + ex.getMessage());
         }
 
         // Test adding a phone artifact
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(
-            phoneValue,
-            EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID),
-            case1, dataSource1fromCase1, phonePath);
+                    phoneValue,
+                    EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID),
+                    case1, dataSource1fromCase1, phonePath);
 
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add phone attribute from single datasource " + ex.getMessage());
         }
 
         // Test adding a domain artifact
         try {
+            CorrelationAttributeInstance.Type type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+            assertEquals("Unexpected Correlation Type retrieved for Domain type id", CorrelationAttributeInstance.DOMAIN_TYPE_ID, type.getId());
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(
-            domainValue,
-            EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.DOMAIN_TYPE_ID),
-            case1, dataSource1fromCase1, domainPath);
+                    domainValue,
+                    type,
+                    case1, dataSource1fromCase1, domainPath);
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add domain attribute from single datasource " + ex.getMessage());
         }
 
         // Test adding a device ID artifact
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(
-            devIdValue,
-            EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.USBID_TYPE_ID),
-            case1, dataSource1fromCase1, devIdPath);
+                    devIdValue,
+                    EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.USBID_TYPE_ID),
+                    case1, dataSource1fromCase1, devIdPath);
 
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error thrown while attempting to add device ID attribute from single datasource " + ex.getMessage());
         }
 
         // Test CorrelationAttributeInstance creation
@@ -794,19 +778,18 @@ public class CentralRepoDatamodelTest extends TestCase {
             new CorrelationAttributeInstance(fileType, randomHash());
         } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Creating correlation attribute instance " + ex.getMessage());
         }
 
         // Test adding instance with null case
         try {
             CorrelationAttributeInstance failAttrInst = new CorrelationAttributeInstance("badInstances", fileType, null, dataSource1fromCase2, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst);
-            fail("addArtifact failed to throw exception for null case");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown making and adding a CorrelationAttributeInstance with null case and was not");
         } catch (EamDbException ex) {
-            fail("was expecting to get CorrelationAttributeNormalizationException");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown making and adding a CorrelationAttributeInstance with null case, EamDbException was thrown instead " + ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test adding instance with invalid case ID
@@ -814,24 +797,22 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationCase badCase = new CorrelationCase("badCaseUuid", "badCaseName");
             CorrelationAttributeInstance failAttrInst2 = new CorrelationAttributeInstance(randomHash(), fileType, badCase, dataSource1fromCase2, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst2);
-            fail("addArtifact failed to throw exception for invalid case");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with invalid case ID and was not");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
-            fail("was expecting to get EamDbException");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with invalid case ID, CorrelationAttributeNormalizationException was thrown instead " + ex.getMessage());
         }
 
         // Test adding instance with null data source
         try {
             CorrelationAttributeInstance failAttrInst3 = new CorrelationAttributeInstance(randomHash(), fileType, case1, null, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst3);
-            fail("addArtifact failed to throw exception for null data source");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with null data source and was not");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
-            fail("was expecting to get EamDbException");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with null data source, CorrelationAttributeNormalizationException was thrown instead " + ex.getMessage());
         }
 
         // Test adding instance with invalid data source ID
@@ -839,36 +820,33 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationDataSource badDS = new CorrelationDataSource(case1, "badDSUuid", "badDSName");
             CorrelationAttributeInstance failAttrInst4 = new CorrelationAttributeInstance(randomHash(), fileType, case1, badDS, BAD_PATH);
             EamDb.getInstance().addArtifactInstance(failAttrInst4);
-            fail("addArtifact failed to throw exception for invalid data source");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with invalid data source ID and was not");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
-            fail("was expecting to get EamDbException");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with invalid data source ID, CorrelationAttributeNormalizationException was thrown instead " + ex.getMessage());
         }
 
         // Test adding instance with null path
         // This will fail in the CorrelationAttributeInstance constructor
         try {
             new CorrelationAttributeInstance(randomHash(), fileType, case1, dataSource1fromCase1, null);
-            fail("CorrelationAttributeInstance failed to throw exception for null path");
+            fail("Error EamDbException was expected to be thrown making a CorrelationAttributeInstance with null path and was not");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
-            fail("was expecting to get EamDbException");
+            fail("Error EamDbException was expected to be thrown making a CorrelationAttributeInstance with null path, CorrelationAttributeNormalizationException was thrown instead " + ex.getMessage());
         }
 
         // Test adding instance with null known status
         try {
             CorrelationAttributeInstance failAttrInst5 = new CorrelationAttributeInstance("badInstances", fileType, case1, dataSource1fromCase1, null, "comment", null);
             EamDb.getInstance().addArtifactInstance(failAttrInst5);
-            fail("addArtifact failed to throw exception for null known status");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with null known status and was not");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
-            fail("was expecting to get EamDbException");
+            fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with null known status, CorrelationAttributeNormalizationException was thrown instead " + ex.getMessage());
         }
 
         // Test CorrelationAttribute failure cases
@@ -876,315 +854,305 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(null, randomHash());
             EamDb.getInstance().addArtifactInstance(attr);
-            fail("addArtifact failed to throw exception for null type");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown making and adding a CorrelationAttributeInstance with null type and was not");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown making and adding a CorrelationAttributeInstance with null type, EamDbException was thrown instead " + ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test null value
         // This will fail in the CorrelationAttribute constructor
         try {
             new CorrelationAttributeInstance(fileType, null);
-            fail("addArtifact failed to throw exception for null value");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown making a CorrelationAttributeInstance with null type and was not");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (EamDbException ex) {
-            fail("expected to get CorrelationAttributeNormalizationException");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown making a CorrelationAttributeInstance with null type, EamDbException was thrown instead " + ex.getMessage());
         }
 
         // Test getting instances with expected results
         try {
             List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(fileType, inAllDataSourcesHash);
-            assertTrue("getArtifactInstancesByTypeValue returned " + instances.size() + " results - expected 3", instances.size() == 3);
+            assertEquals("Unexpected number of fileType instances gotten by type value for hash that should be in all 3 data sources", 3, instances.size());
 
             // This test works because all the instances of this hash were set to the same path
             for (CorrelationAttributeInstance inst : instances) {
-                assertTrue("getArtifactInstancesByTypeValue returned instance with unexpected path " + inst.getFilePath(),
+                assertTrue("getArtifactInstancesByTypeValue returned file instance with unexpected path " + inst.getFilePath() + " expected " + inAllDataSourcesPath,
                         inAllDataSourcesPath.equalsIgnoreCase(inst.getFilePath()));
             }
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error exception thrown while getting attributes by type value " + ex.getMessage());
         }
 
         // Test getting instances with mismatched data / data-type and expect an exception
         try {
             EamDb.getInstance().getArtifactInstancesByTypeValue(emailType, inAllDataSourcesHash);
-            fail("we should get an exception");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get email type attributes with a hash value");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get email type attributes with a hash value, EamDbException was thrown instead " + ex.getMessage());
+        } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with null type
         try {
             EamDb.getInstance().getArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
-            fail("getArtifactInstancesByTypeValue failed to throw exception for null type");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get null type attributes with a hash value");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get null type attributes with a hash value, EamDbException was thrown instead " + ex.getMessage());
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with null value
         try {
             EamDb.getInstance().getArtifactInstancesByTypeValue(fileType, null);
-            fail("this should produce an exception");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get file type attributes with a null value");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        } catch(CorrelationAttributeNormalizationException ex){
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get file type attributes with a null value, EamDbException was thrown instead " + ex.getMessage());
+        } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with path that should produce results
         try {
             List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByPath(fileType, inAllDataSourcesPath);
-            assertTrue("getArtifactInstancesByPath returned " + instances.size() + " objects - expected 3", instances.size() == 3);
+            assertEquals("Unexpected number of fileType instances retrieved when getting file type attributes by path that should be in all 3 data sources", 3, instances.size());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error EamDbException thrown while getting attributes when getting file type attributes by path" + ex.getMessage());
         }
 
         // Test getting instances with path that should not produce results
         try {
             List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByPath(fileType, "xyz");
-            assertTrue("getArtifactInstancesByPath returned " + instances.size() + " objects - expected 0", instances.isEmpty());
+            assertEquals("Unexpected number of fileType instances retrieved when getting file type attributes by path that should not be in any data sources", 0, instances.size());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error EamDbException thrown while getting attributes when getting file type attributes by path for path that should not exist" + ex.getMessage());
         }
 
         // Test getting instances with null type
         try {
             EamDb.getInstance().getArtifactInstancesByPath(null, inAllDataSourcesPath);
-            fail("getArtifactInstancesByPath failed to throw exception for null type");
+            fail("Error EamDbException was expected to be thrown when getting null type attributes by path");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instances with null path
         try {
             EamDb.getInstance().getArtifactInstancesByPath(fileType, null);
-            fail("getArtifactInstancesByPath failed to throw exception for null path");
+            fail("Error EamDbException was expected to be thrown when getting file type attributes with null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instance count with path that should produce results
         try {
             long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, inAllDataSourcesHash);
-            assertTrue("getCountArtifactInstancesByTypeValue returned " + count + " - expected 3", count == 3);
+            assertEquals("Unexpected number of fileType instances retrieved when getting count of file type value for hash that should be in all 3 data sources", 3, count);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown while getting count of file type value for hash that should exist" + ex.getMessage());
         }
 
         // Test getting instance count with path that should not produce results
         try {
-            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, randomHash());
-            assertTrue("getCountArtifactInstancesByTypeValue returned " + count + " - expected 0", count == 0);
+            long count = EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, unusedHashValue);
+            assertEquals("Unexpected number of fileType instances retrieved when getting count of file type value for hash that should not be in any data sources", 0, count);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown while getting count of file type value for hash that should not exist" + ex.getMessage());
         }
 
         // Test getting instance count with null type
         try {
             EamDb.getInstance().getCountArtifactInstancesByTypeValue(null, inAllDataSourcesHash);
-            fail("getCountArtifactInstancesByTypeValue failed to throw exception for null type");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get count of null type attributes with a hash value");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        } catch(CorrelationAttributeNormalizationException ex){
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get count of null type attributes with a hash value, EamDbException was thrown instead " + ex.getMessage());
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting instance count with null value
         try {
             EamDb.getInstance().getCountArtifactInstancesByTypeValue(fileType, null);
-            fail("getCountArtifactInstancesByTypeValue failed to throw exception for null value");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get count of file type attributes with a null hash value");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
-        } catch(CorrelationAttributeNormalizationException ex){
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown attempting to get count of null type attributes with a null hash value, EamDbException was thrown instead " + ex.getMessage());
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting frequency of value that is in all three data sources
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, inAllDataSourcesHash);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
-            assertTrue("getFrequencyPercentage returned " + freq + " - expected 100", freq == 100);
+            assertEquals("Unexpected frequency value of file type returned for value that should exist in all data sources", 100, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown while getting frequency of file type value for hash that should exist in all data sources" + ex.getMessage());
         }
 
         // Test getting frequency of value that appears twice in a single data source
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, inDataSource1twiceHash);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
-            assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
+            assertEquals("Unexpected frequency value of file type returned for value that should exist in one of three data sources", 33, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown while getting frequency of file type value for hash that should exist in one of three data sources" + ex.getMessage());
         }
 
         // Test getting frequency of non-file type
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(emailType, emailValue);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
-            assertTrue("getFrequencyPercentage returned " + freq + " - expected 33", freq == 33);
+            assertEquals("Unexpected frequency value of email type returned for value that should exist in one of three data sources", 33, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown while getting frequency of eamil type value for value that should exist in one of three data sources" + ex.getMessage());
         }
 
         // Test getting frequency of non-existent value
         try {
-            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash());
+            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, unusedHashValue);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
-            assertTrue("getFrequencyPercentage returned " + freq + " - expected 0", freq == 0);
+            assertEquals("Unexpected frequency value of file type returned for value that should not exist in any data sources", 0, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown while getting frequency of eamil type value for value that should not exist in any data sources" + ex.getMessage());
         }
 
         // Test getting frequency with null type
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(null, "randomValue");
             EamDb.getInstance().getFrequencyPercentage(attr);
-            fail("getFrequencyPercentage failed to throw exception for null type");
+            fail("Error Exception was expected to be thrown when getting frequency of null type attribute");
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting frequency with null attribute
         try {
             EamDb.getInstance().getFrequencyPercentage(null);
-            fail("getFrequencyPercentage failed to throw exception for null attribute");
+            fail("Error EamDbException was expected to be thrown when getting frequency of null attribute");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         } catch (CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
+            fail("Error EamDbException was expected to be thrown when getting frequency of null attribute, CorrelationAttributeNormalizationException was thrown instead " + ex.getMessage());
             fail(ex.getMessage());
         }
-        
+
         // Test updating a correlation attribute instance comment
         try {
+            String comment = "new comment";
+
             CorrelationAttributeInstance correlationAttribute = EamDb.getInstance().getCorrelationAttributeInstance(
                     usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
-            assertNotNull("getCorrelationAttributeInstance returned null", correlationAttribute);
-            
-            correlationAttribute.setComment("new comment");
+            assertNotNull("Correlation Attribute returned was null when it should not have been", correlationAttribute);
+
+            correlationAttribute.setComment(comment);
             EamDb.getInstance().updateAttributeInstanceComment(correlationAttribute);
-            
+
             // Get a fresh copy to verify the update.
             correlationAttribute = EamDb.getInstance().getCorrelationAttributeInstance(
                     usbDeviceType, case1, dataSource1fromCase1, devIdValue, devIdPath);
-            assertEquals("updateAttributeInstanceComment did not set comment to \"new comment\".",
-                    "new comment", correlationAttribute.getComment());
+            assertEquals("Comment was not successfully set to expected value",
+                    comment, correlationAttribute.getComment());
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown when setting and getting comment for attribute " + ex.getMessage());
         }
 
         // Test getting count for dataSource1fromCase1 (includes all types)
         try {
             long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), dataSource1fromCase1.getDeviceID());
-            assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 7", count == 7);
+            assertEquals("Unexpected count of artifact instances retrieved when getting count for case 1, data source 1", 7, count);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error EamDbException thrown when getting count of artifact instances for case 1, data source 1" + ex.getMessage());
         }
 
         // Test getting count with null case UUID
         try {
             long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(null, dataSource1fromCase1.getDeviceID());
-            assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 0", count == 0);
+            assertEquals("Unexpected count of artifact instances retrieved when getting count for null case, data source 1", 0, count);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error EamDbException thrown when getting count of artifact instances for null case, data source 1" + ex.getMessage());
         }
 
         // Test getting count with null device ID
         try {
             long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(case1.getCaseUUID(), null);
-            assertTrue("getCountArtifactInstancesByCaseDataSource returned " + count + " - expected 0", count == 0);
+            assertEquals("Unexpected count of artifact instances retrieved when getting count for case 1, null data source", 0, count);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error EamDbException thrown when getting count of artifact instances for case 1, null data source" + ex.getMessage());
         }
 
         // Test getting data source count for entry that is in all three
         try {
             long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, inAllDataSourcesHash);
-            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 3", count == 3);
+            assertEquals("Unexpected count of data sources retrieved when getting count for file types with a hash that should exist in all three data sources", 3, count);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown when getting count of data sources for file types with a hash that should exist in all three data sources" + ex.getMessage());
         }
 
         // Test getting data source count for entry that is in one data source twice
         try {
             long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, inDataSource1twiceHash);
-            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 1", count == 1);
+            assertEquals("Unexpected count of data sources retrieved when getting count for file types with a hash that should exist in a single data source twice", 1, count);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown when getting count of data sources for file types with a hash that should exist in a single data source twice" + ex.getMessage());
         }
 
         // Test getting data source count for entry that is not in any data sources
         try {
-            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, randomHash());
-            assertTrue("getCountUniqueCaseDataSourceTuplesHavingTypeValue returned " + count + " - expected 0", count == 0);
+            long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, unusedHashValue);
+            assertEquals("Unexpected count of data sources retrieved when getting count for file types with a hash that should not exist in any data source", 0, count);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("Error Exception thrown when getting count of data sources for file types with a hash that should not exist in any data source" + ex.getMessage());
         }
 
         // Test getting data source count for null type
         try {
-            EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, randomHash());
-            fail("getCountUniqueCaseDataSourceTuplesHavingTypeValue failed to throw exception for null type");
+            EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(null, unusedHashValue);
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown when getting number of datasources containing null type attribute");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown when getting number of datasources containing null type attribute, EamDbException was thrown instead " + ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting data source count for null value
         try {
             EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, null);
-            fail("we should get an exception here");
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown when getting number of datasources containing file type attribute with null hash");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());
+            fail("Error CorrelationAttributeNormalizationException was expected to be thrown when getting number of datasources containing file type attribute with null hash, EamDbException was thrown instead " + ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
-        
+
         // Test running processinstance which queries all rows from instances table
         try {
             // Add two instances to the central repository and use the callback query to verify we can see them
@@ -1197,22 +1165,22 @@ public class CentralRepoDatamodelTest extends TestCase {
             DbManager.processInstanceTable(fileType, instancetableCallback);
             int count1 = instancetableCallback.getCounter();
             int count2 = instancetableCallback.getCounterNamingConvention();
-            assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
-            assertTrue("Process Instance count with filepath without naming convention: " + count1 + "-expected greater than 0", count1 > 0);
+            assertEquals("Unexpected value for Process Instance count with filepath naming convention", 2, count2);
+            assertTrue("Unexpected value for Process Instance count with filepath without naming convention: " + count1 + " - expected greater than 0", count1 > 0);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
+            Assert.fail("Error Exception thrown when calling processInstanceTable " + ex.getMessage());
         }
 
         try {
             //test null inputs
             EamDb.getInstance().processInstanceTable(null, null);
-            fail("processinstance method failed to throw exception for null type value");
+            fail("Error EamDbException was expected to be thrown when calling processInstanceTable with null inputs");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
-        
-         // Test running processinstance which queries all rows from instances table
+
+        // Test running processinstance which queries all rows from instances table
         try {
             // Add two instances to the central repository and use the callback query to verify we can see them
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(callbackTestFileHash, fileType, case1, dataSource1fromCase1, callbackTestFilePath1);
@@ -1221,47 +1189,38 @@ public class CentralRepoDatamodelTest extends TestCase {
             DbManager.addArtifactInstance(attr1);
             DbManager.addArtifactInstance(attr2);
             AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
-            DbManager.processInstanceTableWhere(fileType, String.format("value = %s", callbackTestFileHash), instancetableCallback);
+            DbManager.processInstanceTableWhere(fileType, "value='" +callbackTestFileHash+ "'", instancetableCallback);
             int count1 = instancetableCallback.getCounter();
             int count2 = instancetableCallback.getCounterNamingConvention();
-            assertTrue("Process Instance count with filepath naming convention: " + count2 + "-expected 2", count2 == 2);
-            assertTrue("Process Instance count with filepath without naming convention: " + count1 + "-expected greater than 0", count1 > 0);
+            assertEquals("Unexpected value for Process Instance Where count with filepath naming convention", 2, count2);
+            assertTrue("Unexpected value for Process Instance Where count with filepath without naming convention: " + count1 + " - expected greater than 0", count1 > 0);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
+            Assert.fail("Error Exception thrown when calling processInstanceTableWhere " + ex.getMessage());
         }
 
         try {
             //test null inputs
             EamDb.getInstance().processInstanceTableWhere(null, null, null);
-            fail("processinstance method failed to throw exception for null type value");
+            fail("Error EamDbException was expected to be thrown when calling processInstanceTableWhere with null inputs");
         } catch (EamDbException ex) {
             // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
     }
 
     /**
      * Test methods related to correlation types
-     * newCorrelationType(CorrelationAttributeInstance.Type newType) tests: 
-     * - Test with valid data 
-     * - Test with duplicate data 
-     * - Test with null name 
-     * - Test with null db name 
-     * - Test with null type 
-     * getDefinedCorrelationTypes() tests: 
-     * - Test that the expected number are returned 
-     * getEnabledCorrelationTypes() tests: 
-     * - Test that the expected number are returned
-     * getSupportedCorrelationTypes() tests: 
-     * - Test that the expected number are returned 
-     * getCorrelationTypeById(int typeId) tests: 
-     * - Test with valid ID 
-     * - Test with invalid ID 
-     * updateCorrelationType(CorrelationAttributeInstance.Type aType) tests: 
-     * - Test with existing type 
-     * - Test with non-existent type 
-     * - Test updating to null name 
-     * - Test with null type
+     * newCorrelationType(CorrelationAttributeInstance.Type newType) tests: -
+     * Test with valid data - Test with duplicate data - Test with null name -
+     * Test with null db name - Test with null type getDefinedCorrelationTypes()
+     * tests: - Test that the expected number are returned
+     * getEnabledCorrelationTypes() tests: - Test that the expected number are
+     * returned getSupportedCorrelationTypes() tests: - Test that the expected
+     * number are returned getCorrelationTypeById(int typeId) tests: - Test with
+     * valid ID - Test with invalid ID
+     * updateCorrelationType(CorrelationAttributeInstance.Type aType) tests: -
+     * Test with existing type - Test with non-existent type - Test updating to
+     * null name - Test with null type
      */
     public void testCorrelationTypes() {
 
@@ -1426,28 +1385,17 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
 
     /**
-     * Test the methods related to organizations 
-     * newOrganization(EamOrganization eamOrg) tests:
-     * - Test with just org name
-     * - Test with org name and poc info 
-     * - Test adding duplicate org 
-     * - Test adding null org 
-     * - Test adding org with null name 
-     * getOrganizations() tests: 
-     * - Test getting the list of orgs
-     * getOrganizationByID(int orgID) tests: 
-     * - Test with valid ID 
-     * - Test with invalid ID 
-     * updateOrganization(EamOrganization updatedOrganization) tests:
-     * - Test updating valid org 
-     * - Test updating invalid org 
-     * - Test updating null org 
-     * - Test updating org to null name
-     * deleteOrganization(EamOrganization organizationToDelete) tests: 
-     * - Test deleting org that isn't in use 
-     * - Test deleting org that is in use 
-     * - Test deleting invalid org 
-     * - Test deleting null org
+     * Test the methods related to organizations newOrganization(EamOrganization
+     * eamOrg) tests: - Test with just org name - Test with org name and poc
+     * info - Test adding duplicate org - Test adding null org - Test adding org
+     * with null name getOrganizations() tests: - Test getting the list of orgs
+     * getOrganizationByID(int orgID) tests: - Test with valid ID - Test with
+     * invalid ID updateOrganization(EamOrganization updatedOrganization) tests:
+     * - Test updating valid org - Test updating invalid org - Test updating
+     * null org - Test updating org to null name
+     * deleteOrganization(EamOrganization organizationToDelete) tests: - Test
+     * deleting org that isn't in use - Test deleting org that is in use - Test
+     * deleting invalid org - Test deleting null org
      */
     public void testOrganizations() {
 
@@ -1569,7 +1517,6 @@ public class CentralRepoDatamodelTest extends TestCase {
         }
 
         // Test updating invalid org
-        
         try {
             EamOrganization temp = new EamOrganization("invalidOrg");
             EamDb.getInstance().updateOrganization(temp);
@@ -1651,43 +1598,28 @@ public class CentralRepoDatamodelTest extends TestCase {
     }
 
     /**
-     * Tests for adding / retrieving reference instances 
-     * Only the files type is currently implemented 
-     * addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttributeInstance.Type correlationType) tests:
-     * - Test adding multiple valid entries 
-     * - Test invalid reference set ID 
-     * - Test null hash (EamGlobalFileInstance constructor) 
-     * - Test null known status (EamGlobalFileInstance constructor) 
-     * - Test null correlation type
-     * bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttributeInstance.Type contentType) tests: 
-     * - Test with large valid list 
-     * - Test with null list 
-     * - Test with invalid reference set ID 
-     * - Test with null correlation type
-     * getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String aValue) tests: 
-     * - Test with valid entries 
-     * - Test with non-existent value 
-     * - Test with invalid type 
-     * - Test with null type 
-     * - Test with null value
-     * isFileHashInReferenceSet(String hash, int referenceSetID)tests: 
-     * - Test existing hash/ID 
-     * - Test non-existent (but valid) hash/ID 
-     * - Test invalid ID 
-     * - Test null hash 
-     * isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) tests: 
-     * - Test existing value/ID 
-     * - Test non-existent (but valid) value/ID 
-     * - Test invalid ID 
-     * - Test null value 
-     * - Test invalid type ID
-     * isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType, String value) tests: 
-     * - Test notable value 
-     * - Test known value 
-     * - Test non-existent value 
-     * - Test null value 
-     * - Test null type 
-     * - Test invalid type
+     * Tests for adding / retrieving reference instances Only the files type is
+     * currently implemented addReferenceInstance(EamGlobalFileInstance
+     * eamGlobalFileInstance, CorrelationAttributeInstance.Type correlationType)
+     * tests: - Test adding multiple valid entries - Test invalid reference set
+     * ID - Test null hash (EamGlobalFileInstance constructor) - Test null known
+     * status (EamGlobalFileInstance constructor) - Test null correlation type
+     * bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance>
+     * globalInstances, CorrelationAttributeInstance.Type contentType) tests: -
+     * Test with large valid list - Test with null list - Test with invalid
+     * reference set ID - Test with null correlation type
+     * getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType,
+     * String aValue) tests: - Test with valid entries - Test with non-existent
+     * value - Test with invalid type - Test with null type - Test with null
+     * value isFileHashInReferenceSet(String hash, int referenceSetID)tests: -
+     * Test existing hash/ID - Test non-existent (but valid) hash/ID - Test
+     * invalid ID - Test null hash isValueInReferenceSet(String value, int
+     * referenceSetID, int correlationTypeID) tests: - Test existing value/ID -
+     * Test non-existent (but valid) value/ID - Test invalid ID - Test null
+     * value - Test invalid type ID
+     * isArtifactKnownBadByReference(CorrelationAttributeInstance.Type aType,
+     * String value) tests: - Test notable value - Test known value - Test
+     * non-existent value - Test null value - Test null type - Test invalid type
      */
     public void testReferenceSetInstances() {
 
@@ -1897,7 +1829,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -1909,7 +1841,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch(CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -1945,7 +1877,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch(CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -1984,7 +1916,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
-        } catch (CorrelationAttributeNormalizationException ex){
+        } catch (CorrelationAttributeNormalizationException ex) {
             //this is expected
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
@@ -2046,7 +1978,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             fail("isArtifactKnownBadByReference failed to throw exception from null type");
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
-            fail(ex.getMessage());            
+            fail(ex.getMessage());
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
@@ -2068,39 +2000,24 @@ public class CentralRepoDatamodelTest extends TestCase {
     /**
      * Test method for the methods related to reference sets (does not include
      * instance testing) Only the files type is currently implemented
-     * newReferenceSet(EamGlobalSet eamGlobalSet) tests: 
-     * - Test creating notable reference set 
-     * - Test creating known reference set 
-     * - Test creating duplicate reference set 
-     * - Test creating almost duplicate reference set 
-     * - Test with invalid org ID 
-     * - Test with null name 
-     * - Test with null version 
-     * - Test with null known status 
-     * - Test with null file type
-     * referenceSetIsValid(int referenceSetID, String referenceSetName, String version) tests: 
-     * - Test on existing reference set 
-     * - Test on invalid reference set 
-     * - Test with null name 
-     * - Test with null version
-     * referenceSetExists(String referenceSetName, String version) tests: 
-     * - Test on existing reference set 
-     * - Test on invalid reference set 
-     * - Test with null name 
-     * - Test with null version 
-     * getReferenceSetByID(int globalSetID) tests: 
-     * - Test with valid ID 
-     * - Test with invalid ID
-     * getAllReferenceSets(CorrelationAttributeInstance.Type correlationType) tests: 
-     * - Test getting all file sets 
-     * - Test getting all email sets 
-     * - Test with null type parameter 
-     * deleteReferenceSet(int referenceSetID) tests: 
-     * - Test on valid reference set ID 
-     * - Test on invalid reference set ID
-     * getReferenceSetOrganization(int referenceSetID) tests: 
-     * - Test on valid reference set ID 
-     * - Test on invalid reference set ID
+     * newReferenceSet(EamGlobalSet eamGlobalSet) tests: - Test creating notable
+     * reference set - Test creating known reference set - Test creating
+     * duplicate reference set - Test creating almost duplicate reference set -
+     * Test with invalid org ID - Test with null name - Test with null version -
+     * Test with null known status - Test with null file type
+     * referenceSetIsValid(int referenceSetID, String referenceSetName, String
+     * version) tests: - Test on existing reference set - Test on invalid
+     * reference set - Test with null name - Test with null version
+     * referenceSetExists(String referenceSetName, String version) tests: - Test
+     * on existing reference set - Test on invalid reference set - Test with
+     * null name - Test with null version getReferenceSetByID(int globalSetID)
+     * tests: - Test with valid ID - Test with invalid ID
+     * getAllReferenceSets(CorrelationAttributeInstance.Type correlationType)
+     * tests: - Test getting all file sets - Test getting all email sets - Test
+     * with null type parameter deleteReferenceSet(int referenceSetID) tests: -
+     * Test on valid reference set ID - Test on invalid reference set ID
+     * getReferenceSetOrganization(int referenceSetID) tests: - Test on valid
+     * reference set ID - Test on invalid reference set ID
      */
     public void testReferenceSets() {
         String set1name = "referenceSet1";
@@ -2362,22 +2279,15 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     /**
      * Test method for the methods related to the data sources table
-     * newDataSource(CorrelationDataSource eamDataSource) tests: 
-     * - Test with valid data 
-     * - Test with duplicate data 
-     * - Test with duplicate device ID and name but different case 
-     * - Test with invalid case ID 
-     * - Test with null device ID 
-     * - Test with null name 
-     * getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) tests: 
-     * - Test with valid data
-     * - Test with non-existent data 
-     * - Test with null correlationCase 
-     * - Test with null device ID
-     * getDataSources()tests: 
-     * - Test that the count and device IDs are as expected
-     * getCountUniqueDataSources() tests: 
-     * - Test that the result is as expected
+     * newDataSource(CorrelationDataSource eamDataSource) tests: - Test with
+     * valid data - Test with duplicate data - Test with duplicate device ID and
+     * name but different case - Test with invalid case ID - Test with null
+     * device ID - Test with null name getDataSource(CorrelationCase
+     * correlationCase, String dataSourceDeviceId) tests: - Test with valid data
+     * - Test with non-existent data - Test with null correlationCase - Test
+     * with null device ID getDataSources()tests: - Test that the count and
+     * device IDs are as expected getCountUniqueDataSources() tests: - Test that
+     * the result is as expected
      */
     public void testDataSources() {
         final String dataSourceAname = "dataSourceA";
@@ -2510,28 +2420,17 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     /**
      * Test method for the methods related to the cases table
-     * newCase(CorrelationCase eamCase) tests: 
-     * - Test valid data 
-     * - Test null UUID 
-     * - Test null case name 
-     * - Test repeated UUID 
-     * newCase(Case autopsyCase) tests: 
-     * - Test valid data 
-     * - Test null autopsyCase
-     * updateCase(CorrelationCase eamCase) tests: 
-     * - Test with valid data, checking all fields 
-     * - Test null eamCase 
-     * getCase(Case autopsyCase) tests:
-     * - Test with current Autopsy case 
-     * getCaseByUUID(String caseUUID)
-     * - Test with UUID that is in the database 
-     * - Test with UUID that is not in the database 
-     * - Test with null UUID
-     * getCases() tests:
-     * - Test getting all cases, checking the count and fields
-     * bulkInsertCases(List<CorrelationCase> cases) 
-     * - Test on a list of cases larger than the bulk insert threshold. 
-     * - Test on a null list
+     * newCase(CorrelationCase eamCase) tests: - Test valid data - Test null
+     * UUID - Test null case name - Test repeated UUID newCase(Case autopsyCase)
+     * tests: - Test valid data - Test null autopsyCase
+     * updateCase(CorrelationCase eamCase) tests: - Test with valid data,
+     * checking all fields - Test null eamCase getCase(Case autopsyCase) tests:
+     * - Test with current Autopsy case getCaseByUUID(String caseUUID) - Test
+     * with UUID that is in the database - Test with UUID that is not in the
+     * database - Test with null UUID getCases() tests: - Test getting all
+     * cases, checking the count and fields
+     * bulkInsertCases(List<CorrelationCase> cases) - Test on a list of cases
+     * larger than the bulk insert threshold. - Test on a null list
      */
     public void testCases() {
         final String caseAname = "caseA";
@@ -2767,19 +2666,13 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     /**
      * Test method for the three methods related to the db_info table
-     * newDbInfo(String name, String value) tests: 
-     * - Test valid data 
-     * - Test null name 
-     * - Test null value 
-     * getDbInfo(String name) 
-     * - Test getting value for existing name 
-     * - Test getting value for non-existing name 
-     * - Test getting value for null name 
-     * updateDbInfo(String name, String value) 
-     * - Test updating existing name to valid new value 
-     * - Test updating existing name to null value 
-     * - Test updating null name 
-     * - Test updating non-existing name to new value
+     * newDbInfo(String name, String value) tests: - Test valid data - Test null
+     * name - Test null value getDbInfo(String name) - Test getting value for
+     * existing name - Test getting value for non-existing name - Test getting
+     * value for null name updateDbInfo(String name, String value) - Test
+     * updating existing name to valid new value - Test updating existing name
+     * to null value - Test updating null name - Test updating non-existing name
+     * to new value
      */
     public void testDbInfo() {
         final String name1 = "testName1";
@@ -2879,22 +2772,22 @@ public class CentralRepoDatamodelTest extends TestCase {
     private static final String THIS_IS_THE_EXPECTED_BEHAVIOR = "This is the expected behavior.";
 
     private static String randomHash() {
-        
+
         String[] chars = {"a", "b", "c", "d", "e", "f", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-        
+
         Random random = new Random();
         IntStream ints = random.ints(32, 0, chars.length - 1);
-        
+
         Iterator<Integer> it = ints.iterator();
-        
+
         StringBuilder md5 = new StringBuilder(32);
-        
-        while(it.hasNext()){
+
+        while (it.hasNext()) {
             Integer i = it.next();
             String character = chars[i];
             md5.append(character);
         }
-        
+
         return md5.toString();
     }
 
@@ -2902,14 +2795,14 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         int counterNamingConvention = 0;
         int counter = 0;
-        
+
         @Override
         public void process(ResultSet resultSet) {
             try {
-                while(resultSet.next()){
-                    if(InstanceTableCallback.getFilePath(resultSet).toLowerCase().contains("processinstancecallback")){
+                while (resultSet.next()) {
+                    if (InstanceTableCallback.getFilePath(resultSet).toLowerCase().contains("processinstancecallback")) {
                         counterNamingConvention++;
-                    }else{
+                    } else {
                         counter++;
                     }
                 }
@@ -2921,8 +2814,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         public int getCounter() {
             return counter;
         }
-        
-        public int getCounterNamingConvention(){
+
+        public int getCounterNamingConvention() {
             return counterNamingConvention;
         }
     }
