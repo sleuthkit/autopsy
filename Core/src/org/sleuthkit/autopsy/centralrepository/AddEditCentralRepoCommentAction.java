@@ -70,9 +70,8 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
             putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentEmptyFile());
         } else if (StringUtils.isBlank(file.getMd5Hash())) {
             putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentNoMD5());
-        }
-        else {
-            putValue(Action.NAME,Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
+        } else {
+            putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
         }
     }
 
