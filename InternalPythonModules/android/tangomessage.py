@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,11 +65,12 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findTangoMessagesInDB(jFile.toString(), abstractFile, dataSource)
                 except Exception as ex:
-                    self._logger.log(Level.SEVERE, "Error parsing Tango messages", ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                    # Error parsing Tango messages.
+                    # Catch and proceed to the next file in the loop.
+                    pass
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding Tango messages", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding Tango messages.
+            pass
 
     def __findTangoMessagesInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
@@ -79,17 +80,21 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
-        except (ClassNotFoundException, SQLException) as ex:
-            self._logger.log(Level.SEVERE, "Error opening database", ex)
+        except (ClassNotFoundException) as ex:
+            self._logger.log(Level.SEVERE, "Error loading JDBC driver", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+        except (SQLException) as ex:
+            # Error opening database.
+            return
 
- 	    # Create a 'Device' account using the data source device id
+         # Create a 'Device' account using the data source device id
         datasourceObjId = dataSource.getDataSource().getId()
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
+        resultSet = None
         try:
             resultSet = statement.executeQuery(
                 "SELECT conv_id, create_time, direction, payload FROM messages ORDER BY create_time DESC;")
@@ -120,9 +125,12 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index Tango message artifact for keyword search.", artifact.getDisplayName())
 
+        except SQLException as ex:
+            # Unable to execute Tango messages SQL query against database.
+            pass
         except Exception as ex:
-           self._logger.log(Level.SEVERE, "Error parsing Tango messages to the blackboard", ex)
-           self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error parsing Tango messages to the blackboard.
+            pass
         finally:
             try:
                 if resultSet is not None:
@@ -130,8 +138,8 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                 statement.close()
                 connection.close()
             except Exception as ex:
-                self._logger.log(Level.SEVERE, "Error closing database", ex)
-                self._logger.log(Level.SEVERE, traceback.format_exc())
+                # Error closing database.
+                pass
 
     # take the message string which is wrapped by a certain string, and return the text enclosed.
     @staticmethod
@@ -142,6 +150,6 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             Z = String(decoded, "UTF-8")
             result = Z.split(wrapper)[1]
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error decoding a Tango message", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error decoding a Tango message.
+            pass
         return result

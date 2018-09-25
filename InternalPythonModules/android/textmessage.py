@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-17 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,11 +67,12 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findTextsInDB(jFile.toString(), abstractFile, dataSource)
                 except Exception as ex:
-                    self._logger.log(Level.SEVERE, "Error parsing text messages", ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                    # Error parsing text messages.
+                    # Catch and proceed to the next file in the loop.
+                    pass
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding text messages", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding text messages.
+            pass
 
     def __findTextsInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
@@ -82,17 +83,21 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
-        except (ClassNotFoundException, SQLException) as ex:
-            self._logger.log(Level.SEVERE, "Error opening database", ex)
+        except (ClassNotFoundException) as ex:
+            self._logger.log(Level.SEVERE, "Error loading JDBC driver", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+        except (SQLException) as ex:
+            # Error opening database.
+            return
 
-	# Create a 'Device' account using the data source device id
+        # Create a 'Device' account using the data source device id
         datasourceObjId = dataSource.getDataSource().getId()
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
+        resultSet = None
         try:
             resultSet = statement.executeQuery(
                 "SELECT address, date, read, type, subject, body FROM sms;")
@@ -134,9 +139,12 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index text message artifact for keyword search.", artifact.getDisplayName())
 
+        except SQLException as ex:
+            # Unable to execute text messages SQL query against database.
+            pass
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing text messages to blackboard", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error parsing text messages to blackboard.
+            pass
         finally:
             if bbartifacts:
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE, bbartifacts))
@@ -147,5 +155,5 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 statement.close()
                 connection.close()
             except Exception as ex:
-                self._logger.log(Level.SEVERE, "Error closing database", ex)
-                self._logger.log(Level.SEVERE, traceback.format_exc())
+                # Error closing database.
+                pass

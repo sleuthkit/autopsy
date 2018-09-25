@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,11 +66,12 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInFile(jFile, abstractFile)
                 except Exception as ex:
-                    self._logger.log(Level.SEVERE, "Error parsing cached location files", ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                    # Error parsing cached location files.
+                    # Catch and proceed to the next file in the loop.
+                    pass
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding cached location files", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding cached location files.
+            pass
 
     def __findGeoLocationsInFile(self, file, abstractFile):
 
@@ -142,9 +143,12 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index GPS trackpoint artifact for keyword search.", artifact.getDisplayName())
 
+        except SQLException as ex:
+            # Unable to execute Cached GPS locations SQL query against database.
+            pass
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing Cached GPS locations to blackboard", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error parsing Cached GPS locations to blackboard.
+            pass
 
     def toDouble(byteArray):
         return ByteBuffer.wrap(byteArray).getDouble()

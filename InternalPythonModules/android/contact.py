@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-17 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,11 +69,12 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findContactsInDB(str(jFile.toString()), abstractFile, dataSource)
                 except Exception as ex:
-                    self._logger.log(Level.SEVERE, "Error parsing Contacts", ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                    # Error parsing Contacts.
+                    # Catch and proceed to the next file in the loop.
+                    pass
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding Contacts", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding Contacts.
+            pass
 
     """
     Will create artifact from a database given by the path
@@ -88,19 +89,23 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
-        except (ClassNotFoundException, SQLException) as ex:
-            self._logger.log(Level.SEVERE, "Error opening database", ex)
+        except (ClassNotFoundException) as ex:
+            self._logger.log(Level.SEVERE, "Error loading JDBC driver", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
+            return
+        except (SQLException) as ex:
+            # Error opening database.
             return
 
 
-    	# Create a 'Device' account using the data source device id
-    	datasourceObjId = dataSource.getDataSource().getId()
-    	ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-    	deviceID = ds.getDeviceId()
+        # Create a 'Device' account using the data source device id
+        datasourceObjId = dataSource.getDataSource().getId()
+        ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+        deviceID = ds.getDeviceId()
 
-    	deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
+        deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance  (Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
+        resultSet = None
         try:
             # get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             # sorted by name, so phonenumber/email would be consecutive for a person if they exist.
@@ -169,10 +174,11 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index contact artifact for keyword search.", artifact.getDisplayName())
 
         except SQLException as ex:
-            self._logger.log(Level.WARNING, "Unable to execute contacts SQL query against {0} : {1}", [databasePath, ex])
+            # Unable to execute contacts SQL query against database.
+            pass
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error posting to blackboard", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error posting to blackboard.
+            pass
         finally:
             if bbartifacts:
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts))
@@ -183,5 +189,5 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 statement.close()
                 connection.close()
             except Exception as ex:
-                self._logger.log(Level.SEVERE, "Error closing database", ex)
-                self._logger.log(Level.SEVERE, traceback.format_exc())
+                # Error closing database.
+                pass

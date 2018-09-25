@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-17 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -95,11 +95,12 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, file, context.dataSourceIngestIsCancelled)
                     self.__findCallLogsInDB(file.toString(), abstractFile, dataSource)
                 except IOException as ex:
-                    self._logger.log(Level.SEVERE, "Error writing temporary call log db to disk", ex)
-                    self._logger.log(Level.SEVERE, traceback.format_exc())
+                    # Error writing temporary call log db to disk.
+                    # Catch and proceed to the next file in the loop.
+                    pass
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding call logs", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding call logs.
+            pass
 
     def __findCallLogsInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
@@ -111,7 +112,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
 
- 	    # Create a 'Device' account using the data source device id
+             # Create a 'Device' account using the data source device id
             datasourceObjId = dataSource.getDataSource().getId()
             ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
             deviceID = ds.getDeviceId()
@@ -162,13 +163,15 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                                 MessageNotifyUtil.Notify.error("Failed to index call log artifact for keyword search.", artifact.getDisplayName())
 
                         except TskCoreException as ex:
-                            self._logger.log(Level.SEVERE, "Error posting call log record to the blackboard", ex)
-                            self._logger.log(Level.SEVERE, traceback.format_exc())
+                            # Error posting call log record to the blackboard.
+                            pass
                 except SQLException as ex:
-                    self._logger.log(Level.WARNING, String.format("Could not read table %s in db %s", tableName, databasePath), ex)
+                    # Could not read table in db.
+                    # Catch and proceed to the next table in the loop.
+                    pass
         except SQLException as ex:
-            self._logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + databasePath, ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Could not parse call log; error connecting to db.
+            pass
         finally:
             if bbartifacts:
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG, bbartifacts))
