@@ -401,9 +401,9 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
     }
 
     /**
-     * Gets the table names and schemas from the SQLite database file.
+     * Gets a collection of table names from the SQLite database file.
      *
-     * @return A mapping of table names to SQL CREATE TABLE statements.
+     * @return A collection of table names
      */
     private Collection<String> getTables() throws SQLException {
         Collection<String> tableNames = new LinkedList<>();
