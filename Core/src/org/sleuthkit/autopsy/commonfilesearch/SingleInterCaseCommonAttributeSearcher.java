@@ -43,6 +43,8 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @param correlationCaseId
      * @param filterByMediaMimeType
      * @param filterByDocMimeType
+     * @param corAttrType
+     * @param percentageThreshold
      *
      * @throws EamDbException
      */
@@ -57,9 +59,6 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
     /**
      * Collect metadata required to render the tree table where matches must
      * occur in the case with the given ID.
-     *
-     * @param correlationCaseId id of case where matches must occur (no other
-     *                          matches will be shown)
      *
      * @return business object needed to populate tree table with results
      *

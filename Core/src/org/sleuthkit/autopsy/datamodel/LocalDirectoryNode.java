@@ -24,6 +24,8 @@ import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LocalDirectory;
 
@@ -63,10 +65,18 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
                 Bundle.LocalDirectoryNode_createSheet_name_displayName(),
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
-        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        
         addScoreProperty(sheetSet, tags);
+        
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
         addCommentProperty(sheetSet, tags, correlationAttribute);
-        addCountProperty(sheetSet, correlationAttribute);
+        
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+            addCountProperty(sheetSet, correlationAttribute);
+        }
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
         // file set is a VirtualDirectory
         Map<String, Object> map = new LinkedHashMap<>();

@@ -1050,7 +1050,7 @@ class SevenZipExtractor {
          * Updates the unpackedNode data in the tree after the archive has been
          * expanded to local disk. 
          *
-         * @param EOR - ExtractOperationResult 
+         * @param result - ExtractOperationResult 
          *
          * @throws SevenZipException
          */

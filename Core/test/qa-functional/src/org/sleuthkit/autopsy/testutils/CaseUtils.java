@@ -22,107 +22,100 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
-import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
+import org.apache.commons.io.FileUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 
 /**
- * Class with common methods for testing related to the creation and elimination
- * of cases.
+ * Class with utility methods for opening and closing cases for functional
+ * testing purposes.
  */
 public final class CaseUtils {
 
     /**
-     * Create a case case directory and case for the given case name.
+     * Creates a case as the current case in the temp directory (system
+     * property: java.io.tmpdir). Deletes any previous version of the case in
+     * the same location, if it exists. Asserts if there is an error creating
+     * the case.
      *
-     * @param caseName The name for the case and case directory to have
+     * @param caseName The case name.
      *
-     * @return The new case
+     * @return The new case.
      */
     public static Case createAsCurrentCase(String caseName) {
-        Case currentCase = null;
-        //Make sure the case is starting with a clean state. So delete the case directory, if it exists.
+        /*
+         * Try to delete a previous version of the case, if it exists.
+         */
         Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
-        File caseDir = new File(caseDirectoryPath.toString());
-        try {
-            deleteCaseDir(caseDir);
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+        File caseDirectory = caseDirectoryPath.toFile();
+        if (caseDirectory.exists()) {
+            try {
+                FileUtils.deleteDirectory(caseDirectory);
+            } catch (IOException ex) {
+                Assert.fail(String.format("Failed to delete existing case %s at %s: %s", caseName, caseDirectoryPath, ex.getMessage()));
+                Exceptions.printStackTrace(ex);
+            }
         }
-        assertFalse("Unable to delete existing test directory", caseDir.exists());
-        // Create the test directory
-        caseDir.mkdirs();
-        assertTrue("Unable to create test directory", caseDir.exists());
 
+        /*
+         * Try to create the case.
+         */
+        Case currentCase = null;
         try {
             Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(caseName));
             currentCase = Case.getCurrentCaseThrows();
         } catch (CaseActionException | NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail(String.format("Failed to create case %s at %s: %s", caseName, caseDirectoryPath, ex.getMessage()));
         }
-
-        assertTrue(caseDir.exists());
-
         return currentCase;
     }
 
     /**
-     * Close the current case. This will fail the test if the case
-     * was unable to be closed.
-     * 
-     * @param deleteCase Delete the case after closure?
+     * Closes the current case, and optionally deletes it. Asserts if there is
+     * no current case or if there is an error closing or deleting the current
+     * case.
+     *
+     * @param deleteCase True if the case should be deleted after closing it.
      */
     public static void closeCurrentCase(boolean deleteCase) {
+        Case currentCase;
         try {
-            if (Case.isCaseOpen()) {
-                String currentCaseDirectory = Case.getCurrentCase().getCaseDirectory();
-                Case.closeCurrentCase();
-                System.gc();
-                
-                // Seems like we need some time to close the case, so file handler later can delete the case directory.
-                try {
-                    Thread.sleep(20000);
-                } catch (InterruptedException ex) {
-                    
-                }
-                
-                if (deleteCase) {
-                    deleteCaseDir(new File(currentCaseDirectory));
-                }
-            }
-        } catch (CaseActionException | IOException ex) {
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-        }
-    }
-
-    /**
-     * Delete the case directory if it exists, thows exception if unable to
-     * delete case dir to allow the user to determine failure with.
-     *
-     * @param caseDirectory The case directory to delete
-     *
-     * @throws IOException Thrown if there was an problem deleting the case
-     *                     directory
-     */
-    public static void deleteCaseDir(File caseDirectory) throws IOException {
-        if (!caseDirectory.exists()) {
+            Assert.fail("Failed to get current case");
             return;
         }
-        FileUtils.deleteDirectory(caseDirectory);
+
+        String caseName = currentCase.getName();
+        String caseDirectory = currentCase.getCaseDirectory();
+        try {
+            Case.closeCurrentCase();
+            if (deleteCase) {
+                /*
+                 * TODO (JIRA-4241): Restore the code to delete the case
+                 * directory when the Image Gallery tool cleans up its drawable
+                 * database connection deterministically, instead of in a
+                 * finalizer. As it is now, case deletion can fail due to an
+                 * open drawable database file handles.
+                 */
+                //FileUtils.deleteDirectory(caseDirectory);
+            }
+        } catch (CaseActionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
+        }
     }
 
     /**
-     * Private constructor to prevent utility class instantiation.
+     * Private constructor to prevent utility class object instantiation.
      */
     private CaseUtils() {
     }
+
 }

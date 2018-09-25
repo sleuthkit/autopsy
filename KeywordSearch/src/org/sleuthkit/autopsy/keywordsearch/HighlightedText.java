@@ -357,11 +357,7 @@ class HighlightedText implements IndexedText {
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
-            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
-            //choose field to highlight based on isLiteral and Solr index schema version.
-            highlightField = (isLiteral || (indexSchemaVersion < 2.0))
-                    ? LuceneQuery.HIGHLIGHT_FIELD
-                    : Server.Schema.CONTENT_STR.toString();
+            highlightField = LuceneQuery.HIGHLIGHT_FIELD;
             if (isLiteral) {
                 //if the query is literal try to get solr to do the highlighting
                 final String highlightQuery = keywords.stream()

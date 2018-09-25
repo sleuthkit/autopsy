@@ -37,4 +37,15 @@ Autopsy will generate events as the application runs and modules may want to lis
 Preventing a user from modifying settings during ingest can be accomplished by listening for Ingest Job Events, and when there is an event setting the enabled status of those settings based off the opposite of IngestManager.getInstance().isIngestRunning(), which returns a boolean.
 
 
+\subsection mod_dev_adv_right Right Click Options
+
+You can make a right-click menu that is displayed in the table. To do this, make a class that implements org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider and has the class as a ServiceProvider. Such as:
+
+    @ServiceProvider(service = ContextMenuActionsProvider.class)
+    public class SubmitContextMenuActionsProvider implements ContextMenuActionsProvider {
+
+You can then implement a getActions() method that can decide if it should provide an action and returns the Actions that are relevant. 
+
+For an example, refer to org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchContextMenuActionsProvider (<a href="https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/modules/fileextmismatch/FileExtMismatchContextMenuActionsProvider.java">github</a>). 
+
 */
