@@ -62,6 +62,12 @@ The Results tab is active when selecting entries that are part of the Results tr
 <br>
 \image html content_viewer_results_bookmark.png
 
+\section cv_annotations Annotations
+
+The Annotations tab shows information added by an analyst about a file or result. It displays any tags and comments associated with the file or result, and if the \ref central_repo_page is enabled it will also display any comments saved to the Central Repository.
+
+\image html content_viewer_annotations.png
+
 \section cv_other_occurrences Other Occurrences
 
 The Other Occurrences tab shows other instances of this file or result. Enabling the \ref central_repo_page adds additional functionality to this tab. See the \ref cr_content_viewer section for more information.

@@ -30,4 +30,17 @@ Then choose the Local Disk data source and select the desired drive.
 
 See the \ref ds_local page for more information on local disk data sources.
 
+\section live_triage_hash_db Using hash sets
+
+Follow these steps to import a hash set to use with the \ref hash_db_page :
+<ol>
+<li> Run Autopsy from the live triage drive, as described earlier
+<li> Go to Tools->Options and then the "Hash Set" tab
+<li> Import the hash set as normal (using a "Local" destination) but check the "Copy hash set into user configuration folder" option at the bottom
+
+\image html live_triage_import_hash.png
+</ol>
+
+This will allow the hash set to be used regardless of the drive letter assigned to the live triage drive.
+
 */
