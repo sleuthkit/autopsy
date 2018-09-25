@@ -55,8 +55,6 @@ public class EamArtifactUtil {
      * null.
      *
      * @param bbArtifact BlackboardArtifact to examine
-     * @param addInstanceDetails If true, add instance details from bbArtifact
-     * into the returned structure
      * @param checkEnabled If true, only create a CorrelationAttribute if it is
      * enabled
      *

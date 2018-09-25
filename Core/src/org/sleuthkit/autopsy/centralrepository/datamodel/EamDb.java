@@ -178,7 +178,7 @@ public interface EamDb {
     /**
      * Retrieves Case details based on Case ID
      *
-     * @param caseID unique identifier for a case
+     * @param caseId unique identifier for a case
      *
      * @return The retrieved case
      */

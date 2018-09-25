@@ -198,7 +198,7 @@ class FileSearchPanel extends javax.swing.JPanel {
                 TableFilterNode tableFilterNode = new TableFilterNode(sn, true, sn.getName());
                 final TopComponent searchResultWin;
                 if (contentList.isEmpty()) {
-                    Node emptyNode = new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text());
+                    Node emptyNode = new TableFilterNode(new EmptyNode(Bundle.FileSearchPanel_emptyNode_display_text()), true);
                     searchResultWin = DataResultTopComponent.createInstance(title, pathText,
                         emptyNode, 0);
                 } else {

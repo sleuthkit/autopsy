@@ -2887,7 +2887,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public CorrelationAttributeInstance.Type getCorrelationTypeById(int typeId) throws EamDbException {
         try {
-            return typeCache.get(CorrelationAttributeInstance.FILES_TYPE_ID, () -> getCorrelationTypeByIdFromCr(typeId));
+            return typeCache.get(typeId, () -> getCorrelationTypeByIdFromCr(typeId));
         } catch (CacheLoader.InvalidCacheLoadException ignored) {
             //lambda valueloader returned a null value and cache can not store null values this is normal if the correlation type does not exist in the central repo yet
             return null;

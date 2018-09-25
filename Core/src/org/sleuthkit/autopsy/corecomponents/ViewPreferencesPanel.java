@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
@@ -60,6 +61,9 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         dataSourcesHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
+        
+        commentsOccurencesColumnsCheckbox.setEnabled(EamDbUtil.useCentralRepo());
+        commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
@@ -82,6 +86,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCheckbox.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
+        UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -128,6 +133,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         useGMTTimeRadioButton = new javax.swing.JRadioButton();
         hideOtherUsersTagsCheckbox = new javax.swing.JCheckBox();
         hideOtherUsersTagsLabel = new javax.swing.JLabel();
+        commentsOccurencesColumnsCheckbox = new javax.swing.JCheckBox();
+        centralRepoLabel = new javax.swing.JLabel();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -212,6 +219,15 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(hideOtherUsersTagsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideOtherUsersTagsLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(commentsOccurencesColumnsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.commentsOccurencesColumnsCheckbox.text")); // NOI18N
+        commentsOccurencesColumnsCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                commentsOccurencesColumnsCheckboxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(centralRepoLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.centralRepoLabel.text")); // NOI18N
+
         javax.swing.GroupLayout globalSettingsPanelLayout = new javax.swing.GroupLayout(globalSettingsPanel);
         globalSettingsPanel.setLayout(globalSettingsPanelLayout);
         globalSettingsPanelLayout.setHorizontalGroup(
@@ -219,9 +235,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(hideOtherUsersTagsCheckbox))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(hideKnownFilesLabel)
@@ -249,8 +262,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                     .addComponent(useGMTTimeRadioButton)
                                     .addComponent(useLocalTimeRadioButton)))
                             .addComponent(selectFileLabel)))
-                    .addComponent(hideOtherUsersTagsLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(hideOtherUsersTagsLabel)
+                    .addComponent(centralRepoLabel)
+                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(commentsOccurencesColumnsCheckbox)
+                            .addComponent(hideOtherUsersTagsCheckbox))))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
             globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -284,7 +303,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(hideOtherUsersTagsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(hideOtherUsersTagsCheckbox))
+                .addComponent(hideOtherUsersTagsCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(centralRepoLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(commentsOccurencesColumnsCheckbox))
         );
 
         currentCaseSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentCaseSettingsPanel.border.title"))); // NOI18N
@@ -470,8 +493,18 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
 
+    private void commentsOccurencesColumnsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_commentsOccurencesColumnsCheckboxActionPerformed
+        if (immediateUpdates) {
+            UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_commentsOccurencesColumnsCheckboxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel centralRepoLabel;
+    private javax.swing.JCheckBox commentsOccurencesColumnsCheckbox;
     private javax.swing.JPanel currentCaseSettingsPanel;
     private javax.swing.JPanel currentSessionSettingsPanel;
     private javax.swing.JCheckBox dataSourcesHideKnownCheckbox;

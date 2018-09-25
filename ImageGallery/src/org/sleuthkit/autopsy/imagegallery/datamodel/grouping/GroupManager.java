@@ -122,13 +122,20 @@ public class GroupManager {
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
     /*
-     * --- current grouping/sorting attributes ---
+     * --- current grouping/sorting attributes --- all guarded by GroupManager intrisic lock, aka 'this'
      */
     @GuardedBy("this") //NOPMD
     private final ReadOnlyObjectWrapper< GroupSortBy> sortByProp = new ReadOnlyObjectWrapper<>(GroupSortBy.PRIORITY);
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(DrawableAttribute.PATH);
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
+     /**
+     * Is the GroupManager operating in 'collaborative mode': In collaborative
+     * mode, groups seen by ANY examiner are considered seen. When NOT in
+     * collaborative mode, groups seen by other examiners, are NOT considered
+     * seen.
+     */
+      @GuardedBy("this") //NOPMD
     private final ReadOnlyBooleanWrapper collaborativeModeProp = new ReadOnlyBooleanWrapper(false);
 
     private final GroupingService regrouper;
