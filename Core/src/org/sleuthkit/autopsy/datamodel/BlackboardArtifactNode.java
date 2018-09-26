@@ -639,7 +639,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         }
         //if the artifact being viewed is a hashhit check if the hashset is notable 
-        //if this check is no longer necessary following resolution of JIRA-4180 it should be removed 
         if ((score == Score.NO_SCORE || score == Score.INTERESTING_SCORE) && content.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attr = content.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME));
