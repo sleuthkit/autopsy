@@ -48,9 +48,9 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             "AddContentToHashDbAction.singleSelectionName");
     private final static String MULTIPLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.multipleSelectionName");
-    private final static String SINGLE_SELECTION_DURING_INGEST_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
+    private final static String SINGLE_SELECTION_NAME_DURING_INGEST = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.singleSelectionNameDuringIngest");
-    private final static String MULTIPLE_SELECTION_DURING_INGEST_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
+    private final static String MULTIPLE_SELECTION_NAME_DURING_INGEST = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.multipleSelectionNameDuringIngest");
 
     /**
@@ -92,9 +92,9 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
                 setEnabled(false);
                 if(selectedFiles.size() > 1) {
                     //Displays: 'Add files to hash set (ingest is running)'
-                    setText(MULTIPLE_SELECTION_DURING_INGEST_NAME);
+                    setText(MULTIPLE_SELECTION_NAME_DURING_INGEST);
                 } else {
-                    setText(SINGLE_SELECTION_DURING_INGEST_NAME);
+                    setText(SINGLE_SELECTION_NAME_DURING_INGEST);
                 }
                 return;
             }
