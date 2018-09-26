@@ -11,5 +11,30 @@ The second way is through Tools->Options and then selecting the "Views" tab:
 \image html view_options_options_panel.png
 
 
+\section view_options_global Global Settings
+
+The global settings ar
+
+\section view_options_case Current Case Settings
+
+The settings in this section only apply to the current case.
+
+\subsection view_options_group Group by data source
+
+The "Group by data source" option allows you to separate all elements in the \ref ui_tree by data source. This can help nodes load faster on large cases.
+
+\image html ui_layout_group_tree.PNG
+
+\section view_options_session Current Session Settings
+
+The settings for the current session will be in effect until you close the application.
+
+\subsection view_options_rejected Hide rejected results
+
+Accounts can be approved or rejected by the user, as shown in the screenshot below. 
+
+\image html view_options_reject_account.png
+
+Rejected accounts will not be included in the report, and by default will be hidden in the UI. If you accidentally reject an account and need to change its status, or simply want to view the the rejected accounts, you can uncheck the "hide rejected results" option.
 
 */
