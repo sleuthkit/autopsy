@@ -118,6 +118,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     private Node infoOverlay;
     private final Region infoOverLayBackground = new TranslucentRegion();
+    
+    
 
     /**
      * Returns whether the ImageGallery window is open or not.
@@ -142,6 +144,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         return WindowManager.getDefault().findTopComponent(PREFERRED_ID);
     }
 
+    /**
+     * NOTE: This usually gets called on the EDT
+     * 
+     * @throws NoCurrentCaseException 
+     */
     @Messages({
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.headerText=Choose a data source to view.",
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.contentText=Data source:",
@@ -149,24 +156,35 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.titleText=Image Gallery",})
     public static void openTopComponent() throws NoCurrentCaseException {
 
+        // This creates the top component and adds the UI widgets if it has not yet been opened
         final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (topComponent == null) {
             return;
         }
-        topComponentInitialized = true;
+        
         if (topComponent.isOpened()) {
             showTopComponent(topComponent);
             return;
         }
+        
+        // Wait until the FX UI has been created.  This way, we can always
+        // show the gray progress screen
+        // TODO: do this in a more elegant way.  
+        while (topComponentInitialized == false) {}
 
-        List<DataSource> dataSources = Collections.emptyList();
         ImageGalleryController controller = ImageGalleryModule.getController();
         ((ImageGalleryTopComponent) topComponent).setController(controller);
+        
+        // Display the UI so taht they can see the progress screen
+        showTopComponent(topComponent);
+        
+        List<DataSource> dataSources = Collections.emptyList();
         try {
             dataSources = controller.getSleuthKitCase().getDataSources();
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
         }
+        
         GroupManager groupManager = controller.getGroupManager();
         synchronized (groupManager) {
             if (dataSources.size() <= 1
@@ -175,8 +193,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                  * set to something other than path , don't both to ask for
                  * datasource */
                 groupManager.regroup(null, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
-
-                showTopComponent(topComponent);
                 return;
             }
         }
@@ -198,7 +214,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             synchronized (groupManager) {
                 groupManager.regroup(dataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
             }
-            SwingUtilities.invokeLater(() -> showTopComponent(topComponent));
         });
     }
 
@@ -266,6 +281,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                     controller.regroupDisabledProperty().addListener((Observable observable) -> checkForGroups());
                     controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> Platform.runLater(() -> checkForGroups()));
 
+                    topComponentInitialized = true;
+                    
+                    // This will cause the UI to show the progress dialog
                     Platform.runLater(() -> checkForGroups());
                 }
             });
@@ -329,6 +347,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      * Check if there are any fully analyzed groups available from the
      * GroupManager and remove blocking progress spinners if there are. If there
      * aren't, add a blocking progress spinner with appropriate message.
+     * 
+     * This gets called when any group becomes analyzed and when started.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @NbBundle.Messages({
@@ -345,11 +365,14 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     private void checkForGroups() {
         GroupManager groupManager = controller.getGroupManager();
 
+        // if there are groups to display, then display them
+        // @@@ Need to check timing on this and make sure we have only groups for the selected DS.  Seems like rebuild can cause groups to be created for a DS that is not later selected...
         if (isNotEmpty(groupManager.getAnalyzedGroups())) {
             clearNotification();
             return;
         }
 
+        // display a message based on if ingest is running and/or listening
         if (IngestManager.getInstance().isIngestRunning()) {
             if (controller.isListeningEnabled()) {
                 replaceNotification(centralStack,
@@ -361,12 +384,17 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             }
             return;
         }
+        
+        // display a message about stuff still being in the queue
         if (controller.getDBTasksQueueSizeProperty().get() > 0) {
             replaceNotification(fullUIStack,
                     new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
                             new ProgressIndicator()));
             return;
         }
+        
+        
+        // are there are files in the DB?
         try {
             if (controller.getDatabase().countAllFiles() <= 0) {
                 // there are no files in db

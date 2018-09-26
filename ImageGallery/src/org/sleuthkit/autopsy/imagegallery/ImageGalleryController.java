@@ -653,6 +653,7 @@ public final class ImageGalleryController {
                 taskCompletionStatus = true;
                 int workDone = 0;
 
+                // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
                 caseDbTransaction = tskCase.beginTransaction();
@@ -680,6 +681,7 @@ public final class ImageGalleryController {
 
                 progressHandle.start();
                 caseDbTransaction.commit();
+                // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
 
             } catch (TskCoreException ex) {
@@ -749,20 +751,19 @@ public final class ImageGalleryController {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-
                 try {
+                    // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
+                    if (null == f.getMIMEType()) {
+                        // set to false to force the DB to be marked as stale
+                        this.setTaskCompletionStatus(false);
+                    }
                     //supported mimetype => analyzed
-                    if (null != f.getMIMEType() && FileTypeUtils.hasDrawableMIMEType(f)) {
+                    else if (FileTypeUtils.hasDrawableMIMEType(f)) {
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    } else {
-                        // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
-                        if (null == f.getMIMEType()) {
-                            // set to false to force the DB to be marked as stale
-                            this.setTaskCompletionStatus(false);
-                        } else {
-                            //unsupported mimtype => analyzed but shouldn't include
-                            taskDB.removeFile(f.getId(), tr);
-                        }
+                    }
+                    //unsupported mimtype => analyzed but shouldn't include
+                    else {
+                        taskDB.removeFile(f.getId(), tr);
                     }
                 } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                     throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);

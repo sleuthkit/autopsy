@@ -151,8 +151,15 @@ public final class DrawableDB {
 
     private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
 
+    // caches to make inserts / updates faster
     private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
-        
+    private boolean areCachesLoaded = false; // if true, the below caches contain valid data
+    private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
+    private Set<Long> hasHashCache = new HashSet<>(); // obj id of files with hash set hits
+    private Set<Long> hasExifCache = new HashSet<>(); // obj id of files with EXIF (make/model)
+    private int cacheBuildCount = 0; // number of tasks taht requested the caches be built
+    
+    
     static {//make sure sqlite driver is loaded // possibly redundant
         try {
             Class.forName("org.sqlite.JDBC");
@@ -773,16 +780,17 @@ public final class DrawableDB {
         insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
     
-    // WORK IN PROGRESS
-    Set<Long> hasTagCache = new HashSet<>();
-    Set<Long> hasHashCache = new HashSet<>();
-    Set<Long> hasExifCache = new HashSet<>();
-    boolean areCachesLoaded = false;
-    int cacheUserCount = 0;
+    
+    // @@@ TODO: These caches shoudl be updated based on ingest events
+    /**
+     * Populate caches based on current state of Case DB
+     */
     synchronized public void buildFileMetaDataCache() {
-        cacheUserCount++;
+        cacheBuildCount++;
         if (areCachesLoaded == true)
             return;
+        
+        // @@@ TODO Add better error handling
         try {
             // tag tags
             try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
@@ -791,7 +799,6 @@ public final class DrawableDB {
                     long id = rs.getLong("obj_id");
                     hasTagCache.add(id);
                 }
-                
             } catch (SQLException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -834,9 +841,12 @@ public final class DrawableDB {
         areCachesLoaded = true;
     }
     
+    /**
+     * Free the cached case DB data
+     */
     synchronized public void freeFileMetaDataCache() {
         // dont' free these if there is another task still using them
-        if (--cacheUserCount > 0)
+        if (--cacheBuildCount > 0)
             return;
         
         areCachesLoaded = false;
@@ -884,9 +894,11 @@ public final class DrawableDB {
             }
             stmt.setBoolean(9, f.isAnalyzed());
             stmt.executeUpdate();
+            
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
 
+            // Update the hash set tables
             if ((!areCachesLoaded) || (hasHashCache.contains(f.getId()))) {
                 try {
                     for (String name : f.getHashSetNames()) {
@@ -939,6 +951,7 @@ public final class DrawableDB {
                 }
             }
 
+            // @@@ Consider storing more than ID so that we do not need to requery each file during commit
             tr.addUpdatedFile(f.getId());
 
         } catch (SQLException | NullPointerException | TskCoreException ex) {
@@ -1024,11 +1037,16 @@ public final class DrawableDB {
         return new DrawableTransaction();
     }
 
-    public void commitTransaction(DrawableTransaction tr, Boolean notify) {
+    /**
+     * 
+     * @param tr
+     * @param notifyGM If true, notify GroupManager about the changes.
+     */
+    public void commitTransaction(DrawableTransaction tr, Boolean notifyGM) {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't close already closed transaction");
         }
-        tr.commit(notify);
+        tr.commit(notifyGM);
     }
 
     public void rollbackTransaction(DrawableTransaction tr) {
@@ -1169,7 +1187,7 @@ public final class DrawableDB {
      * @param sortOrder  Sort ascending or descending.
      * @param dataSource
      *
-     * @return
+     * @return Map of data source (or null of group by attribute ignores data sources) to list of unique group values
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
@@ -1617,14 +1635,19 @@ public final class DrawableDB {
             }
         }
 
-        synchronized private void commit(Boolean notify) {
+        /**
+         * Commit changes that happened during this transaction
+         * 
+         * @param notifyGM If true, notify GroupManager about the changes. 
+         */
+        synchronized private void commit(Boolean notifyGM) {
             if (!closed) {
                 try {
                     con.commit();
                     // make sure we close before we update, bc they'll need locks
                     close();
 
-                    if (notify) {
+                    if (notifyGM) {
                         if (groupManager != null) {
                             groupManager.handleFileUpdate(updatedFiles);
                             groupManager.handleFileRemoved(removedFiles);
