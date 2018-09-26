@@ -11,6 +11,8 @@ The major areas in the Autopsy User Interface (UI) are:
 - \ref ui_keyword, shown outlined in yellow below
 - \ref ui_status, shown in solid purple below
 
+You can customize how data is shown in the UI through the \ref view_options_page panel.
+
 \image html ui-layout-1.PNG
 
 <br>

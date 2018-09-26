@@ -1,0 +1,15 @@
+/*! \page view_options_page View Options
+
+The View options allow you to configure how data is displayed in the Autopsy user interface.
+
+There are two ways to access the options. The first way is through the gear icon above the directory tree:
+
+\image html view_options_gear.png
+
+The second way is through Tools->Options and then selecting the "Views" tab:
+
+\image html view_options_options_panel.png
+
+
+
+*/
