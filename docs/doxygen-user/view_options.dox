@@ -17,7 +17,19 @@ The settings in this section persist through closing the application.
 
 \subsection view_options_hide_known Hide known files
 
+This option allows you to hide files marked as "known" by the hash_db_page. The option to hide known files in the data sources area will prevent these files from being displayed in the results view. Similarly, the option to hide slack in the views area will prevent slack files from appearing under the Views section of the tree.
+
 \subsection view_options_hide_slack Hide slack files
+
+Autopsy creates slack files (with the "-slack" extension) from any extra space at the end of a file. These files can be displayed or hidden from the data sources area and/or the views area. The following shows a slack file in the results view:
+
+\image html view_options_show_slack.png
+
+Checking the option to hide slack in the data sources area will prevent the slack file from being displayed:
+
+\image html view_options_hide_slack.png
+
+Similarly, the option to hide slack in the views area will prevent slack files from appearing under the Views section of the tree.
 
 \subsection view_options_hide_tags Hide tags from other users
 
@@ -25,23 +37,7 @@ This option allows you to hide tags from other users in the Tagging section of t
 
 \subsection view_options_cr_columns Do not use the Central Repository to populate columns
 
-By default, the first three columns after the file name in the results viewer are named "S", "C" and "O". These columns display the following:
-
-\image html view_options_sco.png
-
-<ul>
-<li> (S)core column - indicates whether the item is interesting or notable
-   <ul>
-     <li>Displays a red icon if the file is a match for a notable hash set or has been tagged with a notable tag
-     <li>Displays a yellow icon if the file has an interesting item match or has been tagged with a non-notable tag
-   </ul>
-<li> (C)omment column - indicates whether the item has a comment in the Central Repository or has a comment associated with a tag
-<li> (O)ther occurrences column - indicates how many data sources in the Central Repository contain this item. The count will include the selected item.
-</ul>
-
-To display more information about why an icon has appeared, you can hover over it.
-
-The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled using the checkbox. This will remove the Other occurrences column entirely, and the Comment column will be based only on tags.
+By default, the first three columns in the result viewer after the file name in the results viewer are named "S", "C" and "O". These are described in more detail on the \ref result_viewer_page page. The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled using the checkbox. This will remove the Other occurrences column entirely and the Comment column will be based only on tags.
 
 \subsection view_options_content_viewer Content viewer selection
 

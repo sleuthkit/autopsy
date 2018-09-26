@@ -6,6 +6,23 @@ The Result Viewer is located on the top right of the Autopsy screen. It shows li
 \image html result-viewer-example-1.PNG
 <br>
 
+By default, the first three columns after the file name in the results viewer are named "S", "C" and "O". 
+
+\image html view_options_sco.png
+
+These columns display the following:
+<ul>
+<li> (S)core column - indicates whether the item is interesting or notable
+   <ul>
+     <li>Displays a red icon if the file is a match for a notable hash set or has been tagged with a notable tag
+     <li>Displays a yellow icon if the file has an interesting item match or has been tagged with a non-notable tag
+   </ul>
+<li> (C)omment column - indicates whether the item has a comment in the Central Repository or has a comment associated with a tag
+<li> (O)ther occurrences column - indicates how many data sources in the Central Repository contain this item. The count will include the selected item.
+</ul>
+
+To display more information about why an icon has appeared, you can hover over it. The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled through the \ref view_options_page. This will remove the Other occurrences column entirely and the Comment column will be based only on tags.
+
 You can also switch it to Thumbnail view to see thumbnails of the content in the selected folder.
 
 <br>
