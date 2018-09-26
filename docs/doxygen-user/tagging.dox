@@ -67,7 +67,7 @@ or through the \ref cv_annotations content viewer:
 
 \image html content_viewer_annotations.png
 
-It is possible to hide all tagged files and results in the "Tags" area of the tree that were tagged by other users. Open the Views options menu either through the gear icon above the directory tree or through Tools->Options, and then select the checkbox to hide other users' tags in the tags area of the tree.
+It is possible to hide all tagged files and results in the "Tags" area of the tree that were tagged by other users. Open the \ref view_options_page menu either through the gear icon above the directory tree or through Tools->Options, and then select the checkbox to hide other users' tags in the tags area of the tree.
 
 \image html tagging_view_options.png
 

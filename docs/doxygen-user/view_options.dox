@@ -13,7 +13,47 @@ The second way is through Tools->Options and then selecting the "Views" tab:
 
 \section view_options_global Global Settings
 
-The global settings ar
+The settings in this section persist through closing the application.
+
+\subsection view_options_hide_known Hide known files
+
+\subsection view_options_hide_slack Hide slack files
+
+\subsection view_options_hide_tags Hide tags from other users
+
+This option allows you to hide tags from other users in the Tagging section of the tree. See \ref user_tags for more details.
+
+\subsection view_options_cr_columns Do not use the Central Repository to populate columns
+
+By default, the first three columns after the file name in the results viewer are named "S", "C" and "O". These columns display the following:
+
+\image html view_options_sco.png
+
+<ul>
+<li> (S)core column - indicates whether the item is interesting or notable
+   <ul>
+     <li>Displays a red icon if the file is a match for a notable hash set or has been tagged with a notable tag
+     <li>Displays a yellow icon if the file has an interesting item match or has been tagged with a non-notable tag
+   </ul>
+<li> (C)omment column - indicates whether the item has a comment in the Central Repository or has a comment associated with a tag
+<li> (O)ther occurrences column - indicates how many data sources in the Central Repository contain this item. The count will include the selected item.
+</ul>
+
+To display more information about why an icon has appeared, you can hover over it.
+
+The Comment and Other occurrences columns query the Central Repository. If this seems to be having a performance impact, it can be disabled using the checkbox. This will remove the Other occurrences column entirely, and the Comment column will be based only on tags.
+
+\subsection view_options_content_viewer Content viewer selection
+
+By default, the \ref content_viewer_page attempts to select the most relevant tab to display when choosing a node. If you would like to change this behavior to instead stay on the same content viewer when changing nodes, switch to the "Stay on the same file viewer" option.
+
+\subsection view_options_time Time format
+
+Timestamps can be viewed in either local time or GMT.
+
+\image html view_options_local_time.png
+<br>
+\image html view_options_gmt.png
 
 \section view_options_case Current Case Settings
 
