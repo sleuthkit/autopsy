@@ -69,9 +69,8 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findContactsInDB(str(jFile.toString()), abstractFile, dataSource)
                 except Exception as ex:
-                    # Error parsing Contacts.
-                    # Catch and proceed to the next file in the loop.
-                    pass
+                    self._logger.log(Level.SEVERE, "Error parsing Contacts", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding Contacts.
             pass
@@ -177,8 +176,8 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute contacts SQL query against database.
             pass
         except TskCoreException as ex:
-            # Error posting to blackboard.
-            pass
+            self._logger.log(Level.SEVERE, "Error posting to blackboard", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             if bbartifacts:
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts))

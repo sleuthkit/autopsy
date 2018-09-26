@@ -64,9 +64,8 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
                 except Exception as ex:
-                    # Error parsing browser location files.
-                    # Catch and proceed to the next file in the loop.
-                    pass
+                    self._logger.log(Level.SEVERE, "Error parsing browser location files", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding browser location files.
             pass
@@ -118,8 +117,8 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute browser location SQL query against database.
             pass
         except Exception as ex:
-            # Error putting artifacts to blackboard.
-            pass
+            self._logger.log(Level.SEVERE, "Error putting artifacts to blackboard", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:
                 if resultSet is not None:

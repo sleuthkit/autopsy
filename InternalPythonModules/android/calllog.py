@@ -95,9 +95,8 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, file, context.dataSourceIngestIsCancelled)
                     self.__findCallLogsInDB(file.toString(), abstractFile, dataSource)
                 except IOException as ex:
-                    # Error writing temporary call log db to disk.
-                    # Catch and proceed to the next file in the loop.
-                    pass
+                    self._logger.log(Level.SEVERE, "Error writing temporary call log db to disk", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding call logs.
             pass
@@ -163,8 +162,8 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                                 MessageNotifyUtil.Notify.error("Failed to index call log artifact for keyword search.", artifact.getDisplayName())
 
                         except TskCoreException as ex:
-                            # Error posting call log record to the blackboard.
-                            pass
+                            self._logger.log(Level.SEVERE, "Error posting call log record to the blackboard", ex)
+                            self._logger.log(Level.SEVERE, traceback.format_exc())
                 except SQLException as ex:
                     # Could not read table in db.
                     # Catch and proceed to the next table in the loop.

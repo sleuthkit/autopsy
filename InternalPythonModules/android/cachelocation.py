@@ -147,8 +147,8 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute Cached GPS locations SQL query against database.
             pass
         except Exception as ex:
-            # Error parsing Cached GPS locations to blackboard.
-            pass
+            self._logger.log(Level.SEVERE, "Error parsing Cached GPS locations to blackboard", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
 
     def toDouble(byteArray):
         return ByteBuffer.wrap(byteArray).getDouble()

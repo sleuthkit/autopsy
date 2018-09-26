@@ -65,9 +65,8 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findTangoMessagesInDB(jFile.toString(), abstractFile, dataSource)
                 except Exception as ex:
-                    # Error parsing Tango messages.
-                    # Catch and proceed to the next file in the loop.
-                    pass
+                    self._logger.log(Level.SEVERE, "Error parsing Tango messages", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding Tango messages.
             pass
@@ -129,8 +128,8 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute Tango messages SQL query against database.
             pass
         except Exception as ex:
-            # Error parsing Tango messages to the blackboard.
-            pass
+            self._logger.log(Level.SEVERE, "Error parsing Tango messages to the blackboard", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:
                 if resultSet is not None:

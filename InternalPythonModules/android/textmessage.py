@@ -67,9 +67,8 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findTextsInDB(jFile.toString(), abstractFile, dataSource)
                 except Exception as ex:
-                    # Error parsing text messages.
-                    # Catch and proceed to the next file in the loop.
-                    pass
+                    self._logger.log(Level.SEVERE, "Error parsing text messages", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding text messages.
             pass
@@ -143,8 +142,8 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             # Unable to execute text messages SQL query against database.
             pass
         except Exception as ex:
-            # Error parsing text messages to blackboard.
-            pass
+            self._logger.log(Level.SEVERE, "Error parsing text messages to blackboard", ex)
+            self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             if bbartifacts:
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE, bbartifacts))
