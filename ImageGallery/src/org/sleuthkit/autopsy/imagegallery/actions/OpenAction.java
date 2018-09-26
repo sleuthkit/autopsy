@@ -187,8 +187,10 @@ public final class OpenAction extends CallableSystemAction {
                 //drawable db is not stale, just open it
                 ImageGalleryTopComponent.openTopComponent();
             }
-        } catch (NoCurrentCaseException noCurrentCaseException) {
-            logger.log(Level.WARNING, "There was no case open when Image Gallery was opened.", noCurrentCaseException);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
         }
     }
 

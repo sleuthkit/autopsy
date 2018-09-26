@@ -50,6 +50,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -147,7 +148,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.contentText=Data source:",
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.openTopCommponent.chooseDataSourceDialog.titleText=Image Gallery",})
-    public static void openTopComponent() throws NoCurrentCaseException {
+    public static void openTopComponent() throws NoCurrentCaseException, TskCoreException {
 
         final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (topComponent == null) {
@@ -159,14 +160,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             return;
         }
 
-        List<DataSource> dataSources = Collections.emptyList();
         ImageGalleryController controller = ImageGalleryModule.getController();
         ((ImageGalleryTopComponent) topComponent).setController(controller);
-        try {
-            dataSources = controller.getSleuthKitCase().getDataSources();
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
-        }
+
+        List<DataSource> dataSources = controller.getSleuthKitCase().getDataSources();
+
         GroupManager groupManager = controller.getGroupManager();
         synchronized (groupManager) {
             if (dataSources.size() <= 1
@@ -222,10 +220,16 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
     }
 
-    public ImageGalleryTopComponent() throws NoCurrentCaseException {
+    public ImageGalleryTopComponent() {
         setName(Bundle.CTL_ImageGalleryTopComponent());
         initComponents();
-        setController(ImageGalleryModule.getController());
+        try {
+            setController(ImageGalleryModule.getController());
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+        }
     }
 
     synchronized private void setController(ImageGalleryController controller) {

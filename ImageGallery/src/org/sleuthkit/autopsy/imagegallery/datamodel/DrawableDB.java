@@ -378,9 +378,9 @@ public final class DrawableDB {
         }
     }
 
-    private static boolean hasDataSourceObjIdColumn(Path dbPath1) throws TskCoreException {
-        String sql = "pragma table_info('drawable_files')";   //NON-NLS
-        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath1.toString()); //NON-NLS
+    private static boolean hasDataSourceObjIdColumn(Path dbPath) throws TskCoreException {
+        String sql = "PRAGMA table_info('drawable_files')";   //NON-NLS
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
                 Statement stmt = con.createStatement();
                 ResultSet results = stmt.executeQuery(sql);) {
             while (results.next()) {
