@@ -666,8 +666,10 @@ public final class ImageGalleryController {
                         break;
                     }
 
-                    processFile(f, drawableDbTransaction, caseDbTransaction);
-
+                    if (f.isFile()) {
+                        processFile(f, drawableDbTransaction, caseDbTransaction);
+                    }
+ 
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
