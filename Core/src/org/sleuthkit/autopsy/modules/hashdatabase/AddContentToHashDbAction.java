@@ -91,6 +91,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             if (IngestManager.getInstance().isIngestRunning()) {
                 setEnabled(false);
                 if(selectedFiles.size() > 1) {
+                    //Displays: 'Add files to hash set (ingest is running)'
                     setText(MULTIPLE_SELECTION_DURING_INGEST_NAME);
                 } else {
                     setText(SINGLE_SELECTION_DURING_INGEST_NAME);
