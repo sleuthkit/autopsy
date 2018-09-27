@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
@@ -42,6 +44,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -147,6 +150,8 @@ public final class DrawableDB {
 
     private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
 
+    private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+        
     static {//make sure sqlite driver is loaded // possibly redundant
         try {
             Class.forName("org.sqlite.JDBC");
@@ -1180,6 +1185,11 @@ public final class DrawableDB {
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
     private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+        // don't waste DB round trip if we recently added it
+        String cacheKey = Long.toString(ds_obj_id) + "_" + value + "_" + groupBy.getDisplayName();
+        if (groupCache.getIfPresent(cacheKey) != null) 
+            return;
+        
         try {
             String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
                     ds_obj_id, value, groupBy.attrName.toString());
@@ -1188,6 +1198,7 @@ public final class DrawableDB {
                 insertSQL += "ON CONFLICT DO NOTHING";
             }
             tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+            groupCache.put(cacheKey, Boolean.TRUE);
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
