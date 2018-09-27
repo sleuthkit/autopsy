@@ -379,13 +379,26 @@ public final class DrawableDB {
     }
 
     private static boolean hasDataSourceObjIdColumn(Path dbPath) throws TskCoreException {
-        String sql = "PRAGMA table_info('drawable_files')";   //NON-NLS
         try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
-                Statement stmt = con.createStatement();
-                ResultSet results = stmt.executeQuery(sql);) {
-            while (results.next()) {
-                if ("data_source_obj_id".equals(results.getString("name"))) {
-                    return true;
+                Statement stmt = con.createStatement();) {
+            boolean tableExists = false;
+            try (ResultSet results = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table'");) {//NON-NLS
+                while (results.next()) {
+                    if ("drawable_files".equals(results.getString("name"))) {
+                        tableExists = true;
+                        break;
+                    }
+                }
+            }
+            if (false == tableExists) {
+                return false;
+            } else {
+                try (ResultSet results = stmt.executeQuery("PRAGMA table_info('drawable_files')");) {   //NON-NLS
+                    while (results.next()) {
+                        if ("data_source_obj_id".equals(results.getString("name"))) {
+                            return true;
+                        }
+                    }
                 }
             }
 
