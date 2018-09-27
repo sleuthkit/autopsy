@@ -46,7 +46,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-/** static definitions, utilities, and listeners for the ImageGallery module */
+/**
+ * static definitions, utilities, and listeners for the ImageGallery module
+ */
 @NbBundle.Messages({"ImageGalleryModule.moduleName=Image Gallery"})
 public class ImageGalleryModule {
 
@@ -102,11 +104,14 @@ public class ImageGalleryModule {
         return Paths.get(theCase.getModuleDirectory(), getModuleName());
     }
 
-    /** provides static utilities, can not be instantiated */
+    /**
+     * provides static utilities, can not be instantiated
+     */
     private ImageGalleryModule() {
     }
 
-    /** is listening enabled for the given case
+    /**
+     * is listening enabled for the given case
      *
      * @param c
      *
@@ -162,9 +167,11 @@ public class ImageGalleryModule {
             if (false == file.isFile()) {
                 return;
             }
-            /* only process individual files in realtime on the node that is
+            /*
+             * only process individual files in realtime on the node that is
              * running the ingest. on a remote node, image files are processed
-             * enblock when ingest is complete */
+             * enblock when ingest is complete
+             */
             if (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
@@ -177,10 +184,12 @@ public class ImageGalleryModule {
                             //this file should be included and we don't already know about it from hash sets (NSRL)
                             con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
                         } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                            /* Doing this check results in fewer tasks queued
+                            /*
+                             * Doing this check results in fewer tasks queued
                              * up, and faster completion of db update. This file
                              * would have gotten scooped up in initial grab, but
-                             * actually we don't need it */
+                             * actually we don't need it
+                             */
                             con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
                         }
 
@@ -210,60 +219,70 @@ public class ImageGalleryModule {
                  * components inactive may not have been made at start up.
                  */
                 Case.removePropertyChangeListener(this);
-                return;
-            }
-            ImageGalleryController con;
-            try {
-                con = getController();
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-                return;
-            }
-            switch (Case.Events.valueOf(evt.getPropertyName())) {
-                case CURRENT_CASE:
-                    synchronized (controllerLock) {
-                        // case has changes: close window, reset everything 
-                        SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
-                        if (controller != null) {
-                            controller.reset();
-                        }
-                        controller = null;
-
+            } else if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
+                /*
+                 * If a new case has been opened as the current case or the
+                 * current case has been closed, the image gallery controller
+                 * needs to be created or cleaned up.
+                 */
+                synchronized (controllerLock) {
+                    if (evt.getNewValue() != null) {
+                        /*
+                         * There is a new current case.
+                         */
                         Case newCase = (Case) evt.getNewValue();
                         if (newCase != null) {
-                            // a new case has been opened: connect db, groupmanager, start worker thread
                             try {
                                 controller = new ImageGalleryController(newCase);
                             } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Error changing case in ImageGallery.", ex);
+                                logger.log(Level.SEVERE, "Failed to handle opening of new case in Image Gallery", ex);
                             }
                         }
-                    }
-                    break;
-                case DATA_SOURCE_ADDED:
-                    //For a data source added on the local node, prepopulate all file data to drawable database
-                    if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                        Content newDataSource = (Content) evt.getNewValue();
-                        if (con.isListeningEnabled()) {
-                            con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
+                    } else {
+                        /*
+                         * The current case has been closed.
+                         */
+                        SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
+                        if (controller != null) {
+                            controller.shutDown();
                         }
+                        controller = null;
                     }
-                    break;
-                case CONTENT_TAG_ADDED:
-                    final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (con.getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
-                        con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                    }
-                    break;
-                case CONTENT_TAG_DELETED:
-                    final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                    if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                        con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                    }
-                    break;
-                default:
-                    //we don't need to do anything for other events.
-                    break;
+                }
+            } else {
+                ImageGalleryController con;
+                try {
+                    con = getController();
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Attempt to process a Case.Event with no case open", ex); //NON-NLS
+                    return;
+                }
+                switch (Case.Events.valueOf(evt.getPropertyName())) {
+                    case DATA_SOURCE_ADDED:
+                        //For a data source added on the local node, prepopulate all file data to drawable database
+                        if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            Content newDataSource = (Content) evt.getNewValue();
+                            if (con.isListeningEnabled()) {
+                                con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
+                            }
+                        }
+                        break;
+                    case CONTENT_TAG_ADDED:
+                        final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+                        if (con.getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
+                            con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                        }
+                        break;
+                    case CONTENT_TAG_DELETED:
+                        final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                        if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                            con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                        }
+                        break;
+                    default:
+                        //we don't need to do anything for other events.
+                        break;
+                }
             }
         }
     }
@@ -283,7 +302,7 @@ public class ImageGalleryModule {
         public void propertyChange(PropertyChangeEvent evt) {
             IngestJobEvent eventType = IngestJobEvent.valueOf(evt.getPropertyName());
             if (eventType != IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED
-                || ((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.REMOTE) {
+                    || ((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.REMOTE) {
                 return;
             }
             // A remote node added a new data source and just finished ingest on it.
@@ -311,7 +330,7 @@ public class ImageGalleryModule {
                         case JOptionPane.CANCEL_OPTION:
                         default:
                             break; //do nothing
-                    }
+                        }
                 });
             }
         }

@@ -231,7 +231,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     synchronized private void setController(ImageGalleryController controller) {
         if (notEqual(this.controller, controller)) {
             if (this.controller != null) {
-                this.controller.reset();
+                this.controller.shutDown();
             }
             this.controller = controller;
             Platform.runLater(new Runnable() {
