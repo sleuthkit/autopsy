@@ -378,7 +378,16 @@ public final class DrawableDB {
         }
     }
 
+    /**
+     * Check if the db at the given path has the data_source_obj_id column. If
+     * the db doesn't exist or doesn't even have the drawable_files table, this
+     * method returns false.
+     *
+     * NOTE: This method makes an ad-hoc connection to db, which has the side
+     * effect of creating the drawable.db file if it didn't already exist.
+     */
     private static boolean hasDataSourceObjIdColumn(Path dbPath) throws TskCoreException {
+
         try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
                 Statement stmt = con.createStatement();) {
             boolean tableExists = false;
@@ -392,16 +401,14 @@ public final class DrawableDB {
             }
             if (false == tableExists) {
                 return false;
-            } else {
-                try (ResultSet results = stmt.executeQuery("PRAGMA table_info('drawable_files')");) {   //NON-NLS
-                    while (results.next()) {
-                        if ("data_source_obj_id".equals(results.getString("name"))) {
-                            return true;
-                        }
+            }
+            try (ResultSet results = stmt.executeQuery("PRAGMA table_info('drawable_files')");) {   //NON-NLS
+                while (results.next()) {
+                    if ("data_source_obj_id".equals(results.getString("name"))) {
+                        return true;
                     }
                 }
             }
-
         } catch (SQLException ex) {
             throw new TskCoreException("SQL error checking database compatibility", ex); //NON-NLS
         }
