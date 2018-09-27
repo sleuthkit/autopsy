@@ -605,6 +605,7 @@ public final class ImageGalleryController {
 
             DRAWABLE_QUERY
                     = DATASOURCE_CLAUSE
+                      + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
                       + " AND ( "
                       + //grab files with supported extension
                     FILE_EXTENSION_CLAUSE
@@ -667,7 +668,7 @@ public final class ImageGalleryController {
                     }
 
                     processFile(f, drawableDbTransaction, caseDbTransaction);
-
+ 
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
