@@ -850,7 +850,7 @@ public class SingleUserCaseConverter {
         // content_tags
         biggestPK = 0;
         inputStatement = sqliteConnection.createStatement();
-        inputResultSet = inputStatement.executeQuery("SELECT * FROM content_tags OUTER LEFT JOIN tsk_examiners ON content_tags.examiner_id = tsk_examiners.examiner_id"); //NON-NLS
+        inputResultSet = inputStatement.executeQuery("SELECT * FROM content_tags LEFT OUTER JOIN tsk_examiners ON content_tags.examiner_id = tsk_examiners.examiner_id"); //NON-NLS
 
         while (inputResultSet.next()) {
             outputStatement = postgreSQLConnection.createStatement();
