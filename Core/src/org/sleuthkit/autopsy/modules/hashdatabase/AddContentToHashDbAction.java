@@ -90,7 +90,7 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
             // Disable the menu if file ingest is in progress.
             if (IngestManager.getInstance().isIngestRunning()) {
                 if(selectedFiles.size() > 1) {
-                    //Displays: 'Add files to hash set (ingest is running)'
+                    //Displays: 'Add Files to Hash Set (Ingest is running)'
                     setText(MULTIPLE_SELECTION_NAME_DURING_INGEST);
                 } else {
                     setText(SINGLE_SELECTION_NAME_DURING_INGEST);
