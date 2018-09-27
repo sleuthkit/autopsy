@@ -51,7 +51,7 @@ class IndexFinder {
 
     static Index findLatestVersionIndexDir(List<Index> allIndexes) {
         for (Index index : allIndexes) {
-            if (index.getSolrVersion().equals(CURRENT_SOLR_VERSION) && index.getSchemaVersion().equals(CURRENT_SOLR_SCHEMA_VERSION)) {
+            if (index.getSolrVersion().equals(CURRENT_SOLR_VERSION) && index.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
                 return index;
             }
         }

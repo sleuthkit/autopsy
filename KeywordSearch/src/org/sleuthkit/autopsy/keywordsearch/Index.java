@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 
 /**
@@ -132,5 +133,21 @@ final class Index {
      */
     String getIndexName() {
         return indexName;
+    }
+
+    /**
+     * Is the current Index instance compatible with the given version number
+     *
+     * @param version The version number to compare the current Index against
+     *
+     * @return true if the current major version number is equal to the given
+     *         major version number, otherwise false
+     */
+    boolean isCompatible(String version) {
+        // Versions are compatible if they have the same major version no
+        int currentMajorVersion = NumberUtils.toInt(schemaVersion.substring(0, schemaVersion.indexOf('.')));
+        int givenMajorVersion = NumberUtils.toInt(version.substring(0, version.indexOf('.')));
+
+        return currentMajorVersion == givenMajorVersion;
     }
 }

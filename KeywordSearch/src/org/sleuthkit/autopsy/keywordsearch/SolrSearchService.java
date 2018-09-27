@@ -325,7 +325,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
                 double indexSolrVersion = NumberUtils.toDouble(indexToUse.getSolrVersion());
                 if (indexSolrVersion == currentSolrVersion) {
-                    // latest Solr version but not latest schema. index should be used in read-only mode
+                    // latest Solr version but schema not compatible. index should be used in read-only mode
                     if (RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
                         JOptionPane optionPane = new JOptionPane(
