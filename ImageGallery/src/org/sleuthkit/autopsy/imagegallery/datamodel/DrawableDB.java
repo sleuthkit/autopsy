@@ -54,7 +54,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.swing.SortOrder;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
@@ -153,6 +152,7 @@ public final class DrawableDB {
 
     // caches to make inserts / updates faster
     private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private final Object cacheLock = new Object(); // protects access to the below cache-related objects
     private boolean areCachesLoaded = false; // if true, the below caches contain valid data
     private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
     private Set<Long> hasHashCache = new HashSet<>(); // obj id of files with hash set hits
@@ -784,59 +784,62 @@ public final class DrawableDB {
     /**
      * Populate caches based on current state of Case DB
      */
-    synchronized public void buildFileMetaDataCache() {
-        cacheBuildCount++;
-        if (areCachesLoaded == true)
-            return;
+    public void buildFileMetaDataCache() {
+        
+        synchronized (cacheLock) {      
+            cacheBuildCount++;
+            if (areCachesLoaded == true)
+                return;
 
-        try {
-            // get tags
-            try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
-                ResultSet rs = dbQuery.getResultSet();
-                while (rs.next()) {
-                    long id = rs.getLong("obj_id");
-                    hasTagCache.add(id);
+            try {
+                // get tags
+                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
+                    ResultSet rs = dbQuery.getResultSet();
+                    while (rs.next()) {
+                        long id = rs.getLong("obj_id");
+                        hasTagCache.add(id);
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error getting tags from DB", ex); //NON-NLS
                 }
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error getting tags from DB", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error executing query to get tags", ex); //NON-NLS
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error executing query to get tags", ex); //NON-NLS
-        }
-        
-        try {
-            // hash sets
-            try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())) {
-                ResultSet rs = dbQuery.getResultSet();
-                while (rs.next()) {
-                    long id = rs.getLong("obj_id");
-                    hasHashCache.add(id);
+
+            try {
+                // hash sets
+                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())) {
+                    ResultSet rs = dbQuery.getResultSet();
+                    while (rs.next()) {
+                        long id = rs.getLong("obj_id");
+                        hasHashCache.add(id);
+                    }
+
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error getting hashsets from DB", ex); //NON-NLS
                 }
-                
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error getting hashsets from DB", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error executing query to get hashsets", ex); //NON-NLS
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error executing query to get hashsets", ex); //NON-NLS
-        }
-        
-        try {
-            // EXIF
-            try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {
-                ResultSet rs = dbQuery.getResultSet();
-                while (rs.next()) {
-                    long id = rs.getLong("obj_id");
-                    hasExifCache.add(id);
+
+            try {
+                // EXIF
+                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {
+                    ResultSet rs = dbQuery.getResultSet();
+                    while (rs.next()) {
+                        long id = rs.getLong("obj_id");
+                        hasExifCache.add(id);
+                    }
+
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error getting EXIF from DB", ex); //NON-NLS
                 }
-                
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error getting EXIF from DB", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error executing query to get EXIF", ex); //NON-NLS
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error executing query to get EXIF", ex); //NON-NLS
+
+            areCachesLoaded = true;
         }
-        
-        areCachesLoaded = true;
     }
     
     /**
@@ -844,10 +847,12 @@ public final class DrawableDB {
      * @param objectID ObjId of file with EXIF
      */
     public void addExifCache(long objectID) {
-        // bail out if we are not maintaining caches
-        if (cacheBuildCount == 0)
-            return;
-        hasExifCache.add(objectID);
+        synchronized (cacheLock) {
+            // bail out if we are not maintaining caches
+            if (cacheBuildCount == 0)
+                return;
+            hasExifCache.add(objectID);
+        }
     }
     
     /**
@@ -855,10 +860,12 @@ public final class DrawableDB {
      * @param objectID ObjId of file with hash set
      */
     public void addHashSetCache(long objectID) {
-        // bail out if we are not maintaining caches
-        if (cacheBuildCount == 0)
-            return;
-        hasHashCache.add(objectID);
+        synchronized (cacheLock) {
+            // bail out if we are not maintaining caches
+            if (cacheBuildCount == 0)
+                return;
+            hasHashCache.add(objectID);
+        }
     }
     
     /**
@@ -866,24 +873,28 @@ public final class DrawableDB {
      * @param objectID ObjId of file with tags
      */
     public void addTagCache(long objectID) {
-        // bail out if we are not maintaining caches
-        if (cacheBuildCount == 0)
-            return;
-        hasTagCache.add(objectID);
+         synchronized (cacheLock) {
+            // bail out if we are not maintaining caches
+            if (cacheBuildCount == 0)
+                return;
+            hasTagCache.add(objectID);
+         }
     }
     
     /**
      * Free the cached case DB data
      */
-    synchronized public void freeFileMetaDataCache() {
-        // dont' free these if there is another task still using them
-        if (--cacheBuildCount > 0)
-            return;
-        
-        areCachesLoaded = false;
-        hasTagCache.clear();
-        hasHashCache.clear();
-        hasExifCache.clear();
+    public void freeFileMetaDataCache() {
+        synchronized (cacheLock) {
+            // dont' free these if there is another task still using them
+            if (--cacheBuildCount > 0)
+                return;
+
+            areCachesLoaded = false;
+            hasTagCache.clear();
+            hasHashCache.clear();
+            hasExifCache.clear();
+        }
     }
 
     /**
@@ -904,6 +915,18 @@ public final class DrawableDB {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
         }
+        
+        // get data from caches. Default to true and force the DB lookup if we don't have caches
+        boolean hasExif = true;
+        boolean hasHashSet = true;
+        boolean hasTag = true;
+        synchronized (cacheLock) {
+            if (areCachesLoaded) {
+                hasExif = hasExifCache.contains(f.getId());
+                hasHashSet = hasHashCache.contains(f.getId());
+                hasTag = hasTagCache.contains(f.getId());
+            }
+        }
 
         dbWriteLock();
         try {
@@ -914,13 +937,12 @@ public final class DrawableDB {
             stmt.setString(4, f.getName());
             stmt.setLong(5, f.getCrtime());
             stmt.setLong(6, f.getMtime());
-            if ((areCachesLoaded) && (hasExifCache.contains(f.getId()) == false)) {
-                stmt.setString(7, "");
-                stmt.setString(8, "");
-            }
-            else {
+            if (hasExif) {
                 stmt.setString(7, f.getMake());
                 stmt.setString(8, f.getModel());
+            } else {
+                stmt.setString(7, "");
+                stmt.setString(8, "");
             }
             stmt.setBoolean(9, f.isAnalyzed());
             stmt.executeUpdate();
@@ -929,7 +951,7 @@ public final class DrawableDB {
             addImageFileToList(f.getId());
 
             // Update the hash set tables
-            if ((!areCachesLoaded) || (hasHashCache.contains(f.getId()))) {
+            if (hasHashSet) {
                 try {
                     for (String name : f.getHashSetNames()) {
 
@@ -958,15 +980,12 @@ public final class DrawableDB {
 
             //and update all groups this file is in
             for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
-                if (attr == DrawableAttribute.TAGS) {
-                    if ((!areCachesLoaded) || (hasTagCache.contains(f.getId()) == false)) {
-                        continue;
-                    }
+                // skip attributes that we do not have data for
+                if ((attr == DrawableAttribute.TAGS) && (hasTag == false)) {
+                    continue;
                 }
-                else if (attr == DrawableAttribute.MAKE || attr == DrawableAttribute.MODEL) {
-                    if ((!areCachesLoaded) || (hasExifCache.contains(f.getId()) == false)) {
-                        continue;
-                    }
+                else if ((attr == DrawableAttribute.MAKE || attr == DrawableAttribute.MODEL) && (hasExif == false)) {
+                    continue;
                 }
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Comparable<?> val : vals) {
