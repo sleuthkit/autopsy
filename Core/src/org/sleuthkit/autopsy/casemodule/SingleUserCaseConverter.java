@@ -203,11 +203,11 @@ public class SingleUserCaseConverter {
                 icd.getCaseOutputFolder().toString(),
                 icd.getNewCaseName(),
                 new CaseDetails(icd.getNewCaseName(),
-                oldCaseMetadata.getCaseNumber(),
-                oldCaseMetadata.getExaminer(),
-                oldCaseMetadata.getExaminerPhone(),
-                oldCaseMetadata.getExaminerEmail(),
-                oldCaseMetadata.getCaseNotes()));
+                        oldCaseMetadata.getCaseNumber(),
+                        oldCaseMetadata.getExaminer(),
+                        oldCaseMetadata.getExaminerPhone(),
+                        oldCaseMetadata.getExaminerEmail(),
+                        oldCaseMetadata.getCaseNotes()));
         newCaseMetadata.setCaseDatabaseName(dbName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
@@ -850,7 +850,7 @@ public class SingleUserCaseConverter {
         // content_tags
         biggestPK = 0;
         inputStatement = sqliteConnection.createStatement();
-        inputResultSet = inputStatement.executeQuery("SELECT * FROM content_tags"); //NON-NLS
+        inputResultSet = inputStatement.executeQuery("SELECT * FROM content_tags LEFT OUTER JOIN tsk_examiners ON content_tags.examiner_id = tsk_examiners.examiner_id"); //NON-NLS
 
         while (inputResultSet.next()) {
             outputStatement = postgreSQLConnection.createStatement();
@@ -859,14 +859,14 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO content_tags (tag_id, obj_id, tag_name_id, comment, begin_byte_offset, end_byte_offset, user_name) VALUES (" //NON-NLS
+                outputStatement.executeUpdate("INSERT INTO content_tags (tag_id, obj_id, tag_name_id, comment, begin_byte_offset, end_byte_offset, examiner_id) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ",'"
                         + inputResultSet.getString(4) + "',"
                         + inputResultSet.getLong(5) + ","
-                        + inputResultSet.getLong(6) + ",'"
-                        + inputResultSet.getString(7)+ "')"); //NON-NLS
+                        + inputResultSet.getLong(6) + ","
+                        + inputResultSet.getInt(7) + ")"); //NON-NLS
 
             } catch (SQLException ex) {
                 if (ex.getErrorCode() != 0) { // 0 if the entry already exists
