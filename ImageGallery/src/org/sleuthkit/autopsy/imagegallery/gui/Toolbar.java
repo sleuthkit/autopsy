@@ -66,6 +66,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -74,6 +75,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Controller for the ToolBar
@@ -116,7 +118,9 @@ public class Toolbar extends ToolBar {
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
-            controller.getGroupManager().regroup(getSelectedDataSource(),
+            DataSource selectedDataSource = getSelectedDataSource();
+
+            controller.getGroupManager().regroup(selectedDataSource,
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
@@ -261,7 +265,27 @@ public class Toolbar extends ToolBar {
                         -> dataSourceSelectionModel.select(Optional.ofNullable(newDataSource)));
         dataSourceSelectionModel.select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
         dataSourceComboBox.disableProperty().bind(groupByBox.getSelectionModel().selectedItemProperty().isNotEqualTo(DrawableAttribute.PATH));
-        dataSourceSelectionModel.selectedItemProperty().addListener(queryInvalidationListener);
+        dataSourceSelectionModel.selectedItemProperty().addListener((observable, oldDataSource, newDataSource) -> {
+            //TODO: check that newDataSource is actually different than one in groupmanager.... avoid toomany files check.
+            Futures.addCallback(
+                    exec.submit(() -> controller.tooManyFiles(getSelectedDataSource())),
+                    new FutureCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                    if (result) {
+                        ImageGalleryTopComponent.showTooManyFiles();
+                        dataSourceSelectionModel.select(oldDataSource);
+                    } else {
+                        queryInvalidationListener.invalidated(observable);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    logger.log(Level.SEVERE, "Could not count files in datasource", t); //NON-NLS }
+                }
+            }, Platform::runLater);
+        });
     }
 
     private void initTagMenuButton() {
@@ -392,15 +416,36 @@ public class Toolbar extends ToolBar {
     /**
      * Cell used to represent a DataSource in the dataSourceComboBoc
      */
-    static private class DataSourceCell extends ListCell<Optional<DataSource>> {
+    private class DataSourceCell extends ListCell<Optional<DataSource>> {
 
         @Override
         protected void updateItem(Optional<DataSource> item, boolean empty) {
             super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText("All");
+            if (empty) {
+                setText("");
+            } else if (item == null) {
+                setText("");
             } else {
-                setText(item.map(DataSource::getName).orElse("All"));
+                String text;
+                DataSource dataSource = item.orElse(null);
+                if (item.isPresent()) {
+                    text = dataSource.getName() + " (Id: " + dataSource.getId() + ")";
+                } else {
+                    text = "All";
+                }
+                boolean tooManyFilesInDataSource;
+                try {
+                    tooManyFilesInDataSource = controller.tooManyFiles(dataSource);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error counting files in datasource", ex);
+                    tooManyFilesInDataSource = false;
+                }
+
+                setDisable(tooManyFilesInDataSource);
+                if (tooManyFilesInDataSource) {
+                    text += " - Too many files";
+                }
+                setText(text);
             }
         }
     }

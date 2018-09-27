@@ -262,13 +262,6 @@ public final class ImageGalleryController {
     }
 
     /**
-     * configure the controller for a specific case.
-     *
-     * @param theNewCase the case to configure the controller for
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    /**
      * Rebuilds the DrawableDB database.
      *
      */
@@ -346,6 +339,17 @@ public final class ImageGalleryController {
             logger.log(Level.SEVERE, "Image Gallery failed to check if datasources table is stale.", ex);
             return staleDataSourceIds;
         }
+
+    }
+
+    private static final long FILE_LIMIT = 85;
+
+    public boolean tooManyFiles(DataSource datasource) throws TskCoreException {
+        String whereClause = (datasource == null)
+                ? "1 = 1"
+                : "data_source_obj_id = " + datasource.getId();
+
+        return sleuthKitCase.countFilesWhere(whereClause) > FILE_LIMIT;
 
     }
 

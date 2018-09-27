@@ -65,7 +65,7 @@ public final class OpenAction extends CallableSystemAction {
 
     private static final Logger logger = Logger.getLogger(OpenAction.class.getName());
     private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
-    private static final long FILE_LIMIT = 6_000_000;
+
 
     private final PropertyChangeListener pcl;
     private final JMenuItem menuItem;
@@ -137,11 +137,6 @@ public final class OpenAction extends CallableSystemAction {
             return;
         }
 
-        if (tooManyFiles()) {
-            Platform.runLater(OpenAction::showTooManyFiles);
-            setEnabled(false);
-            return;
-        }
         try {
               ImageGalleryController controller = ImageGalleryModule.getController();
             if (controller.isDataSourcesTableStale()) {
@@ -188,17 +183,6 @@ public final class OpenAction extends CallableSystemAction {
         }
     }
 
-    private boolean tooManyFiles() {
-        try {
-            return FILE_LIMIT < Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1 = 1");
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Can not open image gallery with no case open.", ex);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error counting files in the DB.", ex);
-        }
-        //if there is any doubt (no case, tskcore error, etc) just disable .
-        return false;
-    }
 
     @NbBundle.Messages({
         "ImageGallery.showTooManyFiles.contentText="

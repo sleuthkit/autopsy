@@ -18,10 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -31,7 +30,12 @@ import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TabPane;
@@ -45,11 +49,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import javafx.util.Callback;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -159,18 +165,29 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             return;
         }
 
-        List<DataSource> dataSources = Collections.emptyList();
         ImageGalleryController controller = ImageGalleryModule.getController();
-        ((ImageGalleryTopComponent) topComponent).setController(controller);
+        ImageGalleryTopComponent IGTopComponent = (ImageGalleryTopComponent) topComponent;
+        IGTopComponent.setController(controller);
+        GroupManager groupManager = controller.getGroupManager();
+        List<DataSource> dataSources = new ArrayList<>();
+        dataSources.add(null);
         try {
-            dataSources = controller.getSleuthKitCase().getDataSources();
+            dataSources.addAll(controller.getSleuthKitCase().getDataSources());
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "Unable to get data sourcecs.", tskCoreException);
         }
-        GroupManager groupManager = controller.getGroupManager();
+
         synchronized (groupManager) {
             if (dataSources.size() <= 1
                 || groupManager.getGroupBy() != DrawableAttribute.PATH) {
+                try {
+                    if (controller.tooManyFiles(null)) {
+                        Platform.runLater(ImageGalleryTopComponent::showTooManyFiles);
+                        return;
+                    }
+                } catch (TskCoreException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
                 /* if there is only one datasource or the grouping is already
                  * set to something other than path , don't both to ask for
                  * datasource */
@@ -179,27 +196,46 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                 showTopComponent(topComponent);
                 return;
             }
-        }
-
-        Map<String, DataSource> dataSourceNames = new HashMap<>();
-        dataSourceNames.put("All", null);
-        dataSources.forEach(dataSource -> dataSourceNames.put(dataSource.getName(), dataSource));
-
+        } 
         Platform.runLater(() -> {
-            ChoiceDialog<String> datasourceDialog = new ChoiceDialog<>(null, dataSourceNames.keySet());
+            ChoiceDialog<DataSource> datasourceDialog = new ChoiceDialog<>(null, dataSources);
             datasourceDialog.setTitle(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_titleText());
             datasourceDialog.setHeaderText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_headerText());
             datasourceDialog.setContentText(Bundle.ImageGalleryTopComponent_openTopCommponent_chooseDataSourceDialog_contentText());
             datasourceDialog.initModality(Modality.APPLICATION_MODAL);
+            @SuppressWarnings("unchecked")
+            ComboBox<DataSource> comboBox = (ComboBox<DataSource>) datasourceDialog.getDialogPane().lookup(".combo-box");
+            comboBox.setCellFactory(param -> IGTopComponent.new DataSourceCell());
+            comboBox.setButtonCell(IGTopComponent.new DataSourceCell());
             GuiUtils.setDialogIcons(datasourceDialog);
 
-            Optional<String> dataSourceName = datasourceDialog.showAndWait();
-            DataSource dataSource = dataSourceName.map(dataSourceNames::get).orElse(null);
+            DataSource dataSource = datasourceDialog.showAndWait().orElse(null);
+            try {
+                if (controller.tooManyFiles(dataSource)) {
+                    Platform.runLater(ImageGalleryTopComponent::showTooManyFiles);
+                    return;
+                }
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
             synchronized (groupManager) {
                 groupManager.regroup(dataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
             }
             SwingUtilities.invokeLater(() -> showTopComponent(topComponent));
         });
+    }
+
+    @NbBundle.Messages({"ImageGallery.dialogTitle=Image Gallery",
+        "ImageGallery.showTooManyFiles.contentText=There are too many files in the selected datasource(s) to ensure reasonable performance.",
+        "ImageGallery.showTooManyFiles.headerText="})
+    public static void showTooManyFiles() {
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION,
+                Bundle.ImageGallery_showTooManyFiles_contentText(), ButtonType.OK);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle(Bundle.ImageGallery_dialogTitle());
+        GuiUtils.setDialogIcons(dialog);
+        dialog.setHeaderText(Bundle.ImageGallery_showTooManyFiles_headerText());
+        dialog.showAndWait();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -417,6 +453,39 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         TranslucentRegion() {
             setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
             setOpacity(.4);
+        }
+    }
+
+    /**
+     * Cell used to represent a DataSource in the dataSourceComboBoc
+     */
+    private class DataSourceCell extends ListCell<DataSource> {
+
+        @Override
+        protected void updateItem(DataSource item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty) {
+                setText("");
+            } else {
+                String text;
+                if (item == null) {
+                    text = "All";
+                } else {
+                    text = item.getName() + " (Id: " + item.getId() + ")";
+                }
+                boolean tooManyFilesInDataSource;
+                try {
+                    tooManyFilesInDataSource = controller.tooManyFiles(item);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error counting files in datasource", ex);
+                    tooManyFilesInDataSource = false;
+                }
+                if (tooManyFilesInDataSource) {
+                    text += " - Too many files";
+                }
+                setText(text);
+                setDisable(tooManyFilesInDataSource);
+            }
         }
     }
 }
