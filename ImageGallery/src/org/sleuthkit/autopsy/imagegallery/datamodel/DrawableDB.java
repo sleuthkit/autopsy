@@ -781,7 +781,6 @@ public final class DrawableDB {
     }
     
     
-    // @@@ TODO: These caches shoudl be updated based on ingest events
     /**
      * Populate caches based on current state of Case DB
      */
@@ -789,10 +788,9 @@ public final class DrawableDB {
         cacheBuildCount++;
         if (areCachesLoaded == true)
             return;
-        
-        // @@@ TODO Add better error handling
+
         try {
-            // tag tags
+            // get tags
             try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
                 ResultSet rs = dbQuery.getResultSet();
                 while (rs.next()) {
@@ -800,10 +798,10 @@ public final class DrawableDB {
                     hasTagCache.add(id);
                 }
             } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Error getting tags from DB", ex); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error executing query to get tags", ex); //NON-NLS
         }
         
         try {
@@ -816,10 +814,10 @@ public final class DrawableDB {
                 }
                 
             } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Error getting hashsets from DB", ex); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error executing query to get hashsets", ex); //NON-NLS
         }
         
         try {
@@ -832,13 +830,46 @@ public final class DrawableDB {
                 }
                 
             } catch (SQLException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "Error getting EXIF from DB", ex); //NON-NLS
             }
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Error executing query to get EXIF", ex); //NON-NLS
         }
         
         areCachesLoaded = true;
+    }
+    
+    /**
+     * Add a file to cache of files that have EXIF data
+     * @param objectID ObjId of file with EXIF
+     */
+    public void addExifCache(long objectID) {
+        // bail out if we are not maintaining caches
+        if (cacheBuildCount == 0)
+            return;
+        hasExifCache.add(objectID);
+    }
+    
+    /**
+     * Add a file to cache of files that have hash set hits
+     * @param objectID ObjId of file with hash set
+     */
+    public void addHashSetCache(long objectID) {
+        // bail out if we are not maintaining caches
+        if (cacheBuildCount == 0)
+            return;
+        hasHashCache.add(objectID);
+    }
+    
+    /**
+     * Add a file to cache of files that have tags
+     * @param objectID ObjId of file with tags
+     */
+    public void addTagCache(long objectID) {
+        // bail out if we are not maintaining caches
+        if (cacheBuildCount == 0)
+            return;
+        hasTagCache.add(objectID);
     }
     
     /**
@@ -866,7 +897,7 @@ public final class DrawableDB {
      *
      * @param f    The file to insert.
      * @param tr   a transaction to use, must not be null
-     * @param stmt the statement that does the actull inserting
+     * @param stmt the statement that does the actual inserting
      */
     private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
 
@@ -878,8 +909,7 @@ public final class DrawableDB {
         try {
             // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
-            // @@@ Should be able to get ID directly from abstract file...
-            stmt.setLong(2, f.getAbstractFile().getDataSource().getId());
+            stmt.setLong(2, f.getAbstractFile().getDataSourceObjectId());
             stmt.setString(3, f.getDrawablePath());
             stmt.setString(4, f.getName());
             stmt.setLong(5, f.getCrtime());
