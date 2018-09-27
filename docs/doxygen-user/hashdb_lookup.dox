@@ -41,6 +41,8 @@ To import an existing hash set, use the "Import Database" button on the Hash Set
 
 <b>Send ingest inbox message for each hit</b> - Determines whether a message is sent for each matching file. This can not be enabled for a "known" hash set.
 
+<b>Copy hash set into user configuration folder</b> - Makes a copy of the hash set instead of using the existing one. This is intended to be used with a \ref live_triage_page drive.
+
 \subsection hashset_indexing Indexing
 
 After importing the hash set, you may have to index it before it can be used. For most hash set types, Autopsy needs an index of the hash set to actually use a hash set. It can create the index if you import only the hash set. Any hash sets that require an index will be displayed in red, and their "Index Status" will indicate that an index needs to be created. This is done simply by using the Index button.
