@@ -1,8 +1,44 @@
-/*! \page common_files_page Common Files Search
+/*! \page common_files_page Common Properties Search
 
 \section common_files_overview Overview
 
-The common files feature allows you to search for multiple copies of the same file in different data sources within a case.
+The Common Properties Search feature allows you to search for multiple copies of a property within the current case or within the \ref central_repo_page.
+
+To start a search, go to Tools->Common Properties Search to bring up the main dialog. Searching requires at least one of the following to be true:
+<ul>
+<li> The current case has more than one data source
+<li> The Central Repository contains at least two cases
+</ul>
+
+A message will be displayed if both of these conditions are false.
+
+\section common_files_search_types Common Properties Search Scope
+
+Different parameters are needed for setting up the two types of searches. These will be described below.
+
+\subsection common_files_intra_case Scope - between data sources in the current case
+
+This type of search looks for files that are in multiple data sources within the current case. It does not require the Central Repository to be enabled, and currently only searches for common files. You must run the \ref hash_db_page to compute MD5 hashes on each data source prior to performing the search. The search results will not include any files that have been marked as "known" by the hash module (ex: files that are in the NSRL).
+
+\image html common_files_intra_case.png
+
+By default, the search will find matching files in any data sources. If desired, you can change the search to only show matches where one of the files is in a certain data source by selecting it from the list:
+
+\image html common_files_select_ds.png
+
+You can also choose to show any type of matching files or restrict the search to pictures and videos and/or documents.
+
+Finally, if you have the Central Repository enabled you can choose to hide matches that appear with a high frequency in the Central Repository. 
+
+\subsection common_files_central_repo Scope - between current case and cases in the Central Repository
+
+This type of search looks for common properties between the current case and other cases in the Central Repository. You must run the Correlation Engine ingest module on each case with the property you want to search for enabled, along with the ingest modules that produce that property type (see \ref cr_manage_properties). 
+
+\image html common_files_cr.png
+
+\section common_files_results Search Results
+
+
 
 \section common_files_usage Usage
 
