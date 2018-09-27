@@ -66,9 +66,8 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInFile(jFile, abstractFile)
                 except Exception as ex:
-                    # Error parsing cached location files.
-                    # Catch and proceed to the next file in the loop.
-                    pass
+                    self._logger.log(Level.SEVERE, "Error parsing cached location files", ex)
+                    self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
             # Error finding cached location files.
             pass
