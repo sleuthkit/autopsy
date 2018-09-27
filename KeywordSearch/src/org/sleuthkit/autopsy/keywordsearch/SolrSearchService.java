@@ -326,7 +326,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 double indexSolrVersion = NumberUtils.toDouble(indexToUse.getSolrVersion());
                 if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but schema not compatible. index should be used in read-only mode
-                    if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion()) && RuntimeProperties.runningWithGUI()) {
+                    if (RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
                         JOptionPane optionPane = new JOptionPane(
                                 NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
