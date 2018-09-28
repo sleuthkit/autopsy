@@ -257,12 +257,10 @@ public class ImageGalleryModule {
                          * There is a new current case.
                          */
                         Case newCase = (Case) evt.getNewValue();
-                        if (newCase != null) {
-                            try {
-                                controller = new ImageGalleryController(newCase);
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Failed to handle opening of new case in Image Gallery", ex);
-                            }
+                        try {
+                            controller = new ImageGalleryController(newCase);
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Failed to handle opening of new case in Image Gallery", ex);
                         }
                     } else {
                         /*
