@@ -628,10 +628,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.notableFile.description=Associated file recognized as notable.",
         "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
         "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
-        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
+        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag.",
+        "BlackboardArtifactNode.createSheet.noScore.description=No score"})
     protected final void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
         Score score = Score.NO_SCORE;
-        String description = "";
+        String description = Bundle.BlackboardArtifactNode_createSheet_noScore_description();
         if (associated instanceof AbstractFile) {
             if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
                 score = Score.NOTABLE_SCORE;
@@ -646,6 +647,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 for (HashDbManager.HashDb hashDb : notableHashsets) {
                     if (hashDb.getHashSetName().equals(attr.getValueString())) {
                         score = Score.NOTABLE_SCORE;
+                        description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
                         break;
                     }
                 }
