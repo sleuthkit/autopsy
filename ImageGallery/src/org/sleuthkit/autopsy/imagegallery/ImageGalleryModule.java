@@ -39,9 +39,13 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.FILE_DONE;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -159,14 +163,6 @@ public class ImageGalleryModule {
                 return;
             }
 
-            if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) != FILE_DONE) {
-                return;
-            }
-            // getOldValue has fileID getNewValue has  Abstractfile
-            AbstractFile file = (AbstractFile) evt.getNewValue();
-            if (false == file.isFile()) {
-                return;
-            }
             /*
              * only process individual files in realtime on the node that is
              * running the ingest. on a remote node, image files are processed
@@ -176,31 +172,63 @@ public class ImageGalleryModule {
                 return;
             }
 
+            // Bail out if the case is closed
             try {
-                ImageGalleryController con = getController();
-                if (con.isListeningEnabled()) {
-                    try {
-                        if (isDrawableAndNotKnown(file)) {
-                            //this file should be included and we don't already know about it from hash sets (NSRL)
-                            con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
-                        } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                            /*
-                             * Doing this check results in fewer tasks queued
-                             * up, and faster completion of db update. This file
-                             * would have gotten scooped up in initial grab, but
-                             * actually we don't need it
-                             */
-                            con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
-                        }
-
-                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                        logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error("Image Gallery Error",
-                                "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
-                    }
+                if (controller == null || Case.getCurrentCaseThrows() == null) {
+                    return;
                 }
             } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                return;
+            }
+
+            if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == FILE_DONE) {
+                // getOldValue has fileID getNewValue has  Abstractfile
+                AbstractFile file = (AbstractFile) evt.getNewValue();
+                if (false == file.isFile()) {
+                    return;
+                }
+
+                try {
+                    ImageGalleryController con = getController();
+                    if (con.isListeningEnabled()) {
+                        try {
+                            // Update the entry if it is a picture and not in NSRL
+                            if (isDrawableAndNotKnown(file)) {
+                                con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
+                            } // Remove it from the DB if it is no longer relevant, but had the correct extension
+                            else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                                /*
+                                 * Doing this check results in fewer tasks
+                                 * queued up, and faster completion of db
+                                 * update. This file would have gotten scooped
+                                 * up in initial grab, but actually we don't
+                                 * need it
+                                 */
+                                con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
+                            }
+                        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                            logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
+                            MessageNotifyUtil.Notify.error("Image Gallery Error",
+                                    "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
+                        }
+                    }
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                }
+            } else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
+                ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
+
+                if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                    DrawableDB drawableDB = controller.getDatabase();
+                    for (BlackboardArtifact art : mde.getArtifacts()) {
+                        drawableDB.addExifCache(art.getObjectID());
+                    }
+                } else if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                    DrawableDB drawableDB = controller.getDatabase();
+                    for (BlackboardArtifact art : mde.getArtifacts()) {
+                        drawableDB.addHashSetCache(art.getObjectID());
+                    }
+                }
             }
         }
     }
@@ -219,7 +247,10 @@ public class ImageGalleryModule {
                  * components inactive may not have been made at start up.
                  */
                 Case.removePropertyChangeListener(this);
-            } else if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
+                return;
+            }
+
+            if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
                 /*
                  * If a new case has been opened as the current case or the
                  * current case has been closed, the image gallery controller
@@ -269,7 +300,14 @@ public class ImageGalleryModule {
                         break;
                     case CONTENT_TAG_ADDED:
                         final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                        if (con.getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
+
+                        long objId = tagAddedEvent.getAddedTag().getContent().getId();
+
+                        // update the cache
+                        DrawableDB drawableDB = controller.getDatabase();
+                        drawableDB.addTagCache(objId);
+
+                        if (con.getDatabase().isInDB(objId)) {
                             con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
                         }
                         break;

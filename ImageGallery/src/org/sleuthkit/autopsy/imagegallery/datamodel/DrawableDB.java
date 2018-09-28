@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery.datamodel;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
@@ -42,6 +44,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -149,6 +152,15 @@ public final class DrawableDB {
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
 
     private final Lock DBLock = rwLock.writeLock(); //using exclusing lock for all db ops for now
+
+    // caches to make inserts / updates faster
+    private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private final Object cacheLock = new Object(); // protects access to the below cache-related objects
+    private boolean areCachesLoaded = false; // if true, the below caches contain valid data
+    private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
+    private Set<Long> hasHashCache = new HashSet<>(); // obj id of files with hash set hits
+    private Set<Long> hasExifCache = new HashSet<>(); // obj id of files with EXIF (make/model)
+    private int cacheBuildCount = 0; // number of tasks taht requested the caches be built
 
     static {//make sure sqlite driver is loaded // possibly redundant
         try {
@@ -354,8 +366,8 @@ public final class DrawableDB {
     }
 
     /**
-     * public factory method. Creates and opens a connection to a new database *
-     * at the given path. *
+     * Creates and opens a connection to a new drawable database at the given
+     * path.
      *
      * @param controller
      *
@@ -387,7 +399,7 @@ public final class DrawableDB {
 
             //TODO: test this
             statement.execute("PRAGMA journal_mode  = MEMORY"); //NON-NLS
-//
+
             //we don't use this feature, so turn it off for minimal speed up on queries
             //this is deprecated and not recomended
             statement.execute("PRAGMA count_changes = OFF;"); //NON-NLS
@@ -760,6 +772,130 @@ public final class DrawableDB {
     }
 
     /**
+     * Populate caches based on current state of Case DB
+     */
+    public void buildFileMetaDataCache() {
+
+        synchronized (cacheLock) {
+            cacheBuildCount++;
+            if (areCachesLoaded == true) {
+                return;
+            }
+
+            try {
+                // get tags
+                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM content_tags")) {
+                    ResultSet rs = dbQuery.getResultSet();
+                    while (rs.next()) {
+                        long id = rs.getLong("obj_id");
+                        hasTagCache.add(id);
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error getting tags from DB", ex); //NON-NLS
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error executing query to get tags", ex); //NON-NLS
+            }
+
+            try {
+                // hash sets
+                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID())) {
+                    ResultSet rs = dbQuery.getResultSet();
+                    while (rs.next()) {
+                        long id = rs.getLong("obj_id");
+                        hasHashCache.add(id);
+                    }
+
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error getting hashsets from DB", ex); //NON-NLS
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error executing query to get hashsets", ex); //NON-NLS
+            }
+
+            try {
+                // EXIF
+                try (SleuthkitCase.CaseDbQuery dbQuery = tskCase.executeQuery("SELECT obj_id FROM blackboard_artifacts WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID())) {
+                    ResultSet rs = dbQuery.getResultSet();
+                    while (rs.next()) {
+                        long id = rs.getLong("obj_id");
+                        hasExifCache.add(id);
+                    }
+
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error getting EXIF from DB", ex); //NON-NLS
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error executing query to get EXIF", ex); //NON-NLS
+            }
+
+            areCachesLoaded = true;
+        }
+    }
+
+    /**
+     * Add a file to cache of files that have EXIF data
+     *
+     * @param objectID ObjId of file with EXIF
+     */
+    public void addExifCache(long objectID) {
+        synchronized (cacheLock) {
+            // bail out if we are not maintaining caches
+            if (cacheBuildCount == 0) {
+                return;
+            }
+            hasExifCache.add(objectID);
+        }
+    }
+
+    /**
+     * Add a file to cache of files that have hash set hits
+     *
+     * @param objectID ObjId of file with hash set
+     */
+    public void addHashSetCache(long objectID) {
+        synchronized (cacheLock) {
+            // bail out if we are not maintaining caches
+            if (cacheBuildCount == 0) {
+                return;
+            }
+            hasHashCache.add(objectID);
+        }
+    }
+
+    /**
+     * Add a file to cache of files that have tags
+     *
+     * @param objectID ObjId of file with tags
+     */
+    public void addTagCache(long objectID) {
+        synchronized (cacheLock) {
+            // bail out if we are not maintaining caches
+            if (cacheBuildCount == 0) {
+                return;
+            }
+            hasTagCache.add(objectID);
+        }
+    }
+
+    /**
+     * Free the cached case DB data
+     */
+    public void freeFileMetaDataCache() {
+        synchronized (cacheLock) {
+            // dont' free these if there is another task still using them
+            if (--cacheBuildCount > 0) {
+                return;
+            }
+
+            areCachesLoaded = false;
+            hasTagCache.clear();
+            hasHashCache.clear();
+            hasExifCache.clear();
+        }
+    }
+
+    /**
      * Update (or insert) a file in(to) the drawable db. Weather this is an
      * insert or an update depends on the given prepared statement. This method
      * also inserts hash set hits and groups into their respective tables for
@@ -770,7 +906,7 @@ public final class DrawableDB {
      *
      * @param f    The file to insert.
      * @param tr   a transaction to use, must not be null
-     * @param stmt the statement that does the actull inserting
+     * @param stmt the statement that does the actual inserting
      */
     private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
 
@@ -778,49 +914,76 @@ public final class DrawableDB {
             throw new IllegalArgumentException("can't update database with closed transaction");
         }
 
+        // get data from caches. Default to true and force the DB lookup if we don't have caches
+        boolean hasExif = true;
+        boolean hasHashSet = true;
+        boolean hasTag = true;
+        synchronized (cacheLock) {
+            if (areCachesLoaded) {
+                hasExif = hasExifCache.contains(f.getId());
+                hasHashSet = hasHashCache.contains(f.getId());
+                hasTag = hasTagCache.contains(f.getId());
+            }
+        }
+
         dbWriteLock();
         try {
             // "INSERT OR IGNORE/ INTO drawable_files (obj_id, data_source_obj_id, path, name, created_time, modified_time, make, model, analyzed)"
             stmt.setLong(1, f.getId());
-            stmt.setLong(2, f.getAbstractFile().getDataSource().getId());
+            stmt.setLong(2, f.getAbstractFile().getDataSourceObjectId());
             stmt.setString(3, f.getDrawablePath());
             stmt.setString(4, f.getName());
             stmt.setLong(5, f.getCrtime());
             stmt.setLong(6, f.getMtime());
-            stmt.setString(7, f.getMake());
-            stmt.setString(8, f.getModel());
+            if (hasExif) {
+                stmt.setString(7, f.getMake());
+                stmt.setString(8, f.getModel());
+            } else {
+                stmt.setString(7, "");
+                stmt.setString(8, "");
+            }
             stmt.setBoolean(9, f.isAnalyzed());
             stmt.executeUpdate();
+
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
 
-            try {
-                for (String name : f.getHashSetNames()) {
+            // Update the hash set tables
+            if (hasHashSet) {
+                try {
+                    for (String name : f.getHashSetNames()) {
 
-                    // "insert or ignore into hash_sets (hash_set_name)  values (?)"
-                    insertHashSetStmt.setString(1, name);
-                    insertHashSetStmt.executeUpdate();
+                        // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                        insertHashSetStmt.setString(1, name);
+                        insertHashSetStmt.executeUpdate();
 
-                    //TODO: use nested select to get hash_set_id rather than seperate statement/query
-                    //"select hash_set_id from hash_sets where hash_set_name = ?"
-                    selectHashSetStmt.setString(1, name);
-                    try (ResultSet rs = selectHashSetStmt.executeQuery()) {
-                        while (rs.next()) {
-                            int hashsetID = rs.getInt("hash_set_id"); //NON-NLS
-                            //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
-                            insertHashHitStmt.setInt(1, hashsetID);
-                            insertHashHitStmt.setLong(2, f.getId());
-                            insertHashHitStmt.executeUpdate();
-                            break;
+                        //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                        //"select hash_set_id from hash_sets where hash_set_name = ?"
+                        selectHashSetStmt.setString(1, name);
+                        try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                            while (rs.next()) {
+                                int hashsetID = rs.getInt("hash_set_id"); //NON-NLS
+                                //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                                insertHashHitStmt.setInt(1, hashsetID);
+                                insertHashHitStmt.setLong(2, f.getId());
+                                insertHashHitStmt.executeUpdate();
+                                break;
+                            }
                         }
                     }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
             }
 
             //and update all groups this file is in
             for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
+                // skip attributes that we do not have data for
+                if ((attr == DrawableAttribute.TAGS) && (hasTag == false)) {
+                    continue;
+                } else if ((attr == DrawableAttribute.MAKE || attr == DrawableAttribute.MODEL) && (hasExif == false)) {
+                    continue;
+                }
                 Collection<? extends Comparable<?>> vals = attr.getValue(f);
                 for (Comparable<?> val : vals) {
                     if (null != val) {
@@ -833,6 +996,7 @@ public final class DrawableDB {
                 }
             }
 
+            // @@@ Consider storing more than ID so that we do not need to requery each file during commit
             tr.addUpdatedFile(f.getId());
 
         } catch (SQLException | NullPointerException | TskCoreException ex) {
@@ -921,11 +1085,16 @@ public final class DrawableDB {
         return new DrawableTransaction();
     }
 
-    public void commitTransaction(DrawableTransaction tr, Boolean notify) {
+    /**
+     *
+     * @param tr
+     * @param notifyGM If true, notify GroupManager about the changes.
+     */
+    public void commitTransaction(DrawableTransaction tr, Boolean notifyGM) {
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't close already closed transaction");
         }
-        tr.commit(notify);
+        tr.commit(notifyGM);
     }
 
     public void rollbackTransaction(DrawableTransaction tr) {
@@ -1084,7 +1253,8 @@ public final class DrawableDB {
      * @param sortOrder  Sort ascending or descending.
      * @param dataSource
      *
-     * @return
+     * @return Map of data source (or null of group by attribute ignores data
+     *         sources) to list of unique group values
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
@@ -1197,6 +1367,12 @@ public final class DrawableDB {
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
     private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+        // don't waste DB round trip if we recently added it
+        String cacheKey = Long.toString(ds_obj_id) + "_" + value + "_" + groupBy.getDisplayName();
+        if (groupCache.getIfPresent(cacheKey) != null) {
+            return;
+        }
+
         try {
             String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
                     ds_obj_id, value, groupBy.attrName.toString());
@@ -1205,6 +1381,7 @@ public final class DrawableDB {
                 insertSQL += "ON CONFLICT DO NOTHING";
             }
             tskCase.getCaseDbAccessManager().insert(CASEDB_GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+            groupCache.put(cacheKey, Boolean.TRUE);
         } catch (TskCoreException ex) {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
@@ -1532,7 +1709,12 @@ public final class DrawableDB {
             }
         }
 
-        synchronized private void commit(Boolean notify) {
+        /**
+         * Commit changes that happened during this transaction
+         *
+         * @param notifyGM If true, notify GroupManager about the changes.
+         */
+        synchronized private void commit(Boolean notifyGM) {
             if (!closed) {
                 try {
                     con.commit();
@@ -1542,7 +1724,7 @@ public final class DrawableDB {
                      * Manager, so that the lock is released.
                      */
                     close();
-                    if (notify) {
+                    if (notifyGM) {
                         if (groupManager != null) {
                             groupManager.handleFileUpdate(updatedFiles);
                             groupManager.handleFileRemoved(removedFiles);

@@ -90,7 +90,7 @@ public class HashSetManager {
      *
      * @param fileID the fileID to invalidate in the cache
      */
-    public void invalidateHashSetsForFile(long fileID) {
+    public void invalidateHashSetsCacheForFile(long fileID) {
         hashSetCache.invalidate(fileID);
     }
 }
