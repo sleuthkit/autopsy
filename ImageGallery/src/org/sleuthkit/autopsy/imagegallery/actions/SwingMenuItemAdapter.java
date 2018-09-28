@@ -55,6 +55,11 @@ class SwingMenuAdapter extends Menu {
     SwingMenuAdapter(final JMenu jMenu) {
         super(jMenu.getText());
         this.jMenu = jMenu;
+        if(!jMenu.isEnabled()) {
+            //Grey out text if the JMenu that this Menu is wrapping is 
+            //not enabled.
+            setDisable(true);
+        }
         buildChildren(jMenu);
 
     }

@@ -42,12 +42,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Instances of this Action allow users to content to a hash database.
  */
 final class AddContentToHashDbAction extends AbstractAction implements Presenter.Popup {
-
+    
     private static AddContentToHashDbAction instance;
     private final static String SINGLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.singleSelectionName");
     private final static String MULTIPLE_SELECTION_NAME = NbBundle.getMessage(AddContentToHashDbAction.class,
             "AddContentToHashDbAction.multipleSelectionName");
+    private final static String SINGLE_SELECTION_NAME_DURING_INGEST = NbBundle.getMessage(AddContentToHashDbAction.class,
+            "AddContentToHashDbAction.singleSelectionNameDuringIngest");
+    private final static String MULTIPLE_SELECTION_NAME_DURING_INGEST = NbBundle.getMessage(AddContentToHashDbAction.class,
+            "AddContentToHashDbAction.multipleSelectionNameDuringIngest");
 
     /**
      * AddContentToHashDbAction is a singleton to support multi-selection of
@@ -80,15 +84,21 @@ final class AddContentToHashDbAction extends AbstractAction implements Presenter
 
         AddContentToHashDbMenu() {
             super(SINGLE_SELECTION_NAME);
-
+            // Get any AbstractFile objects from the lookup of the currently focused top component. 
+            final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+            
             // Disable the menu if file ingest is in progress.
             if (IngestManager.getInstance().isIngestRunning()) {
-                setEnabled(false);
+                if(selectedFiles.size() > 1) {
+                    //Displays: 'Add Files to Hash Set (Ingest is running)'
+                    setText(MULTIPLE_SELECTION_NAME_DURING_INGEST);
+                } else {
+                    setText(SINGLE_SELECTION_NAME_DURING_INGEST);
+                }
+                setEnabled(false);     
                 return;
             }
 
-            // Get any AbstractFile objects from the lookup of the currently focused top component. 
-            final Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
             if (selectedFiles.isEmpty()) {
                 setEnabled(false);
                 return;
