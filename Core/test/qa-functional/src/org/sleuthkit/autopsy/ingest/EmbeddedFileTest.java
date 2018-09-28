@@ -69,13 +69,7 @@ public class EmbeddedFileTest extends NbTestCase {
     public void setUp() {
         testSucceeded = false;
 
-        /*
-         * TODO (JIRA-4241): Revisit this when the Image Gallery tool cleans up
-         * its drawable database connection deterministically, instead of in a
-         * finalizer. As it is now, case deletion can fail due to an open
-         * drawable database file handles, and that makes the tests fail.
-         */
-        openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_" + System.currentTimeMillis());
+        openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 

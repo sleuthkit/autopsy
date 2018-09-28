@@ -93,22 +93,18 @@ public final class CaseUtils {
         }
 
         String caseName = currentCase.getName();
-        String caseDirectory = currentCase.getCaseDirectory();
+        File caseDirectory = new File(currentCase.getCaseDirectory());
         try {
             Case.closeCurrentCase();
             if (deleteCase) {
-                /*
-                 * TODO (JIRA-4241): Restore the code to delete the case
-                 * directory when the Image Gallery tool cleans up its drawable
-                 * database connection deterministically, instead of in a
-                 * finalizer. As it is now, case deletion can fail due to an
-                 * open drawable database file handles.
-                 */
-                //FileUtils.deleteDirectory(caseDirectory);
+                FileUtils.deleteDirectory(caseDirectory);
             }
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(String.format("Failed to delete case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
         }
     }
 
