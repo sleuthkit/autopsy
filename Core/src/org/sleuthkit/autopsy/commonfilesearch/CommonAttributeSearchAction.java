@@ -28,6 +28,8 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -80,44 +82,64 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
      * Create the commonAttributePanel and display it.
      */
     @NbBundle.Messages({
-        "CommonAttributeSearchAction.openPanel.noCaseOpen=Unable to run Common Property Search - no case is open.",
-        "CommonAttributeSearchAction.openPanel.notEnoughData=Unable to run Common Property Search - there are not enough data sources available in the current case and/or the Central Repository."})
+        "CommonAttributeSearchAction.openPanel.intro=The common property search feature is not available because:",
+        "CommonAttributeSearchAction.openPanel.resolution=\n\nAddress one of these issues to enable this feature.",
+        "CommonAttributeSearchAction.openPanel.noCaseOpen=\n  - No case is open.",
+        "CommonAttributeSearchAction.openPanel.notEnoughDataSources=\n  - There are not multiple data sources in the current case.",
+        "CommonAttributeSearchAction.openPanel.centralRepoDisabled=\n  - The Central Repository is disabled.",
+        "CommonAttributeSearchAction.openPanel.caseNotInCentralRepo=\n  - The current case is not in the Central Repository.",
+        "CommonAttributeSearchAction.openPanel.notEnoughCases=\n  - Fewer than 2 cases exist in the Central Repository.",
+        "CommonAttributeSearchAction.openPanel.centralRepoInvalid=\n  - The Central Repository configuration is invalid."})
     private void createAndShowPanel() {
         new SwingWorker<Boolean, Void>() {
 
-            String reason = "";
-            
+            String reason = Bundle.CommonAttributeSearchAction_openPanel_intro();
+
             @Override
             protected Boolean doInBackground() throws Exception {
                 // Test whether we should open the common files panel
-                if(! Case.isCaseOpen()) {
-                    reason = Bundle.CommonAttributeSearchAction_openPanel_noCaseOpen();
+                if (!Case.isCaseOpen()) {
+                    reason += Bundle.CommonAttributeSearchAction_openPanel_noCaseOpen();
                     return false;
                 }
-                
                 if (Case.getCurrentCase().getDataSources().size() > 1) {
                     // There are enough data sources to run the intra case seach
                     return true;
+                } else {
+                    reason += Bundle.CommonAttributeSearchAction_openPanel_notEnoughDataSources();
                 }
-                
-                if( ! CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
-                    reason = Bundle.CommonAttributeSearchAction_openPanel_notEnoughData();
+                if (!EamDb.isEnabled()) {
+                    reason += Bundle.CommonAttributeSearchAction_openPanel_centralRepoDisabled();
+                    return false;
+                }
+                if (EamDb.getInstance() == null) {
+                    reason += Bundle.CommonAttributeSearchAction_openPanel_centralRepoInvalid();
+                    return false;
+                }
+                if (EamDb.getInstance().getCases().size() < 2) {
+                    reason += Bundle.CommonAttributeSearchAction_openPanel_notEnoughCases();
+                    return false;
+                }
+                if (EamDb.getInstance().getCase(Case.getCurrentCase()) == null) {
+                    reason += Bundle.CommonAttributeSearchAction_openPanel_caseNotInCentralRepo();
                     return false;
                 }
                 return true;
             }
 
             @Override
+
             protected void done() {
                 super.done();
                 try {
                     boolean openPanel = get();
-                    if(openPanel) {
+                    if (openPanel) {
                         CommonAttributePanel commonAttributePanel = new CommonAttributePanel();
                         //In order to update errors the CommonAttributePanel needs to observe its sub panels
                         commonAttributePanel.observeSubPanels();
                         commonAttributePanel.setVisible(true);
                     } else {
+                        reason += Bundle.CommonAttributeSearchAction_openPanel_resolution();
                         NotifyDescriptor descriptor = new NotifyDescriptor.Message(reason, NotifyDescriptor.INFORMATION_MESSAGE);
                         DialogDisplayer.getDefault().notify(descriptor);
                     }
@@ -125,7 +147,8 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while opening Common Properties Search", ex); //NON-NLS
                 }
             }
-        }.execute();
+        }
+                .execute();
     }
 
     @NbBundle.Messages({
