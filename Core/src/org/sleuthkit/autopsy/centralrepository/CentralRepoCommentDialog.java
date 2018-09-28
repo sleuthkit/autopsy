@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import javax.swing.text.AbstractDocument;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
@@ -37,20 +41,24 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     /**
      * Create an instance.
      *
-     * @param correlationAttributeInstance The correlation attribute to be modified.
+     * @param correlationAttributeInstance The correlation attribute to be
+     *                                     modified.
      */
     CentralRepoCommentDialog(CorrelationAttributeInstance correlationAttributeInstance) {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CentralRepoCommentDialog_title_addEditCentralRepoComment());
-        
+
         initComponents();
 
         CorrelationAttributeInstance instance = correlationAttributeInstance;
-        
+
         // Store the original comment
         if (instance.getComment() != null) {
             currentComment = instance.getComment();
         }
 
+        //Truncate legacy comments to be MAX_CHARACTERS characters, pressing 'okay'
+        //once the editted comment is loaded in will truncate it in the database as 
+        //well.
         commentTextArea.setText(instance.getComment());
 
         this.correlationAttributeInstance = correlationAttributeInstance;
@@ -76,16 +84,113 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     boolean isCommentUpdated() {
         return commentUpdated;
     }
-    
+
     /**
-     * Get the current comment.
-     * If the user hit OK, this will be the new comment.
-     * If the user canceled, this will be the original comment.
-     * 
+     * Get the current comment. If the user hit OK, this will be the new
+     * comment. If the user canceled, this will be the original comment.
+     *
      * @return the comment
      */
     String getComment() {
         return currentComment;
+    }
+
+    /**
+     * Limits the number of characters that can go into the Comment JTextArea of
+     * this Dialog box.
+     */
+    private class CentralRepoCommentLengthFilter extends DocumentFilter {
+
+        private final Integer MAX_CHARACTERS = 500;
+        private Integer remainingCharacters = MAX_CHARACTERS;
+
+        public CentralRepoCommentLengthFilter() {
+            charactersLabel.setText(getUpdatedCharacterText());
+        }
+
+        /**
+         * Truncates the insert string if its addition in the Comment dialog box
+         * will cause it to go past MAX_CHARACTERS in length.
+         *
+         * @param filter  FilterBypass that can be used to mutate Document
+         * @param offset  the offset into the document to insert the content >=
+         *                0. All positions that track change at or after the
+         *                given location will move.
+         * @param input   the string to insert
+         * @param attrSet the attributes to associate with the inserted content.
+         *                This may be null if there are no attributes.
+         *
+         * @throws BadLocationException the given insert position is not a valid
+         *                              position within the document
+         */
+        public void insertString(FilterBypass filter, int offset, String input,
+                AttributeSet attrSet) throws BadLocationException {
+            //Truncate the insert if its too long
+            this.replace(filter, offset, 0, input, attrSet);
+        }
+
+        /**
+         * Remove the number of characters from the Comment Text box and add
+         * back to our remaining count.
+         *
+         * @param filter FilterBypass that can be used to mutate Document
+         * @param offset the offset from the beginning >= 0
+         * @param length the number of characters to remove >= 0
+         *
+         * @throws BadLocationException some portion of the removal range was
+         *                              not a valid part of the document. The
+         *                              location in the exception is the first
+         *                              bad position encountered.
+         */
+        public void remove(FilterBypass filter, int offset, int length)
+                throws BadLocationException {
+            super.remove(filter, offset, length);
+            remainingCharacters += length;
+            charactersLabel.setText(getUpdatedCharacterText());
+        }
+
+        /**
+         * Replace the current text at the offset position with the inputted
+         * text. If the offset is the end of the text box, then this functions
+         * like an append. Truncate this input if its addition will cause the
+         * Comment text box to be > MAX_CHARACTERS in length.
+         *
+         * @param filter  FilterBypass that can be used to mutate Document
+         * @param offset  Location in Document
+         * @param length  Length of text to delete
+         * @param input   Text to insert, null indicates no text to insert
+         * @param attrSet AttributeSet indicating attributes of inserted text,
+         *                null is legal.
+         *
+         * @throws BadLocationException the given insert position is not a valid
+         *                              position within the document
+         */
+        public void replace(FilterBypass filter, int offset, int length, String input,
+                AttributeSet attrSet) throws BadLocationException {
+            //Truncate the replace if its too long
+            String truncatedText = input;
+            if ((filter.getDocument().getLength() + input.length() - length) > MAX_CHARACTERS) {
+                truncatedText = input.substring(0, MAX_CHARACTERS - filter.getDocument().getLength() - length);
+            }
+            super.replace(filter, offset, length, truncatedText, attrSet);
+            remainingCharacters -= truncatedText.length() - length;
+            charactersLabel.setText(getUpdatedCharacterText());
+        }
+
+        /**
+         * Returns remaining character count in HTML format. If the remaining
+         * count is at the 0, then make the text red
+         *
+         * @return HTML formatted JLabel text
+         */
+        private String getUpdatedCharacterText() {
+            if (remainingCharacters == 0) {
+                return String.format("<html><font color=\"red\">%d</font>%s</html>",
+                        remainingCharacters, " characters remaining");
+            }
+            return String.format("<html><font color=\"black\">%d</font>%s</html>",
+                    remainingCharacters, " characters remaining");
+        }
     }
 
     /**
@@ -102,6 +207,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         commentLabel = new javax.swing.JLabel();
+        charactersLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setSize(getPreferredSize());
@@ -111,6 +217,8 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         commentTextArea.setRows(5);
         commentTextArea.setTabSize(4);
         commentTextArea.setWrapStyleWord(true);
+	((AbstractDocument)commentTextArea.getDocument())
+                .setDocumentFilter(new CentralRepoCommentLengthFilter());
         jScrollPane1.setViewportView(commentTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(CentralRepoCommentDialog.class, "CentralRepoCommentDialog.okButton.text")); // NOI18N
@@ -141,7 +249,8 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                         .addComponent(commentLabel)
                         .addGap(0, 451, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(charactersLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -155,9 +264,11 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
-                    .addComponent(okButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cancelButton)
+                        .addComponent(okButton))
+                    .addComponent(charactersLabel))
                 .addContainerGap())
         );
 
@@ -180,6 +291,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
     private javax.swing.JTextArea commentTextArea;
+    private javax.swing.JLabel charactersLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okButton;
     // End of variables declaration//GEN-END:variables
