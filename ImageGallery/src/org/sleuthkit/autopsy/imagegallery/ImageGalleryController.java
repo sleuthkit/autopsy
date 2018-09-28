@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -283,7 +284,7 @@ public final class ImageGalleryController {
     /**
      * reset the state of the controller (eg if the case is closed)
      */
-    public synchronized void reset() {
+    public synchronized void shutDown() {
         logger.info("Closing ImageGalleryControler for case."); //NON-NLS
 
         selectionModel.clearSelection();
@@ -292,7 +293,7 @@ public final class ImageGalleryController {
         groupManager.reset();
 
         shutDownDBExecutor();
-        dbExecutor = getNewDBExecutor();
+        drawableDB.closeDBCon();
     }
 
     /**
@@ -391,7 +392,15 @@ public final class ImageGalleryController {
     }
 
     public DrawableFile getFileFromID(Long fileID) throws TskCoreException {
-        return drawableDB.getFileFromID(fileID);
+        try {
+            if (drawableDB.isClosed() == false) {
+                return drawableDB.getFileFromID(fileID);
+            } else {
+                return null;
+            }
+        } catch (SQLException ex) {
+          throw new TskCoreException("Error checking if DrawableDB is closed.", ex);
+        }
     }
 
     public ReadOnlyDoubleProperty regroupProgress() {

@@ -257,7 +257,7 @@ public class ImageGalleryModule {
                         // case has changes: close window, reset everything 
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         if (controller != null) {
-                            controller.reset();
+                            controller.shutDown();
                         }
                         controller = null;
 
