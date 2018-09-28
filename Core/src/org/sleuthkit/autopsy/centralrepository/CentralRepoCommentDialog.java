@@ -105,7 +105,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         private Integer remainingCharacters = MAX_CHARACTERS;
 
         public CentralRepoCommentLengthFilter() {
-            charactersLabel.setText(getUpdatedCharacterText());
+            charactersRemainingLabel.setText(getUpdatedCharacterText());
         }
 
         /**
@@ -146,7 +146,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                 throws BadLocationException {
             super.remove(filter, offset, length);
             remainingCharacters += length;
-            charactersLabel.setText(getUpdatedCharacterText());
+            charactersRemainingLabel.setText(getUpdatedCharacterText());
         }
 
         /**
@@ -174,7 +174,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
             }
             super.replace(filter, offset, length, truncatedText, attrSet);
             remainingCharacters -= truncatedText.length() - length;
-            charactersLabel.setText(getUpdatedCharacterText());
+            charactersRemainingLabel.setText(getUpdatedCharacterText());
         }
 
         /**
@@ -207,7 +207,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         commentLabel = new javax.swing.JLabel();
-        charactersLabel = new javax.swing.JLabel();
+        charactersRemainingLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setSize(getPreferredSize());
@@ -249,7 +249,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                         .addComponent(commentLabel)
                         .addGap(0, 451, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(charactersLabel)
+                        .addComponent(charactersRemainingLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -268,7 +268,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(cancelButton)
                         .addComponent(okButton))
-                    .addComponent(charactersLabel))
+                    .addComponent(charactersRemainingLabel))
                 .addContainerGap())
         );
 
@@ -291,7 +291,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
     private javax.swing.JTextArea commentTextArea;
-    private javax.swing.JLabel charactersLabel;
+    private javax.swing.JLabel charactersRemainingLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okButton;
     // End of variables declaration//GEN-END:variables
