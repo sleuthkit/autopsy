@@ -158,10 +158,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
         // This creates the top component and adds the UI widgets if it has not yet been opened
         final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-        if (topComponent == null) {
-            return;
-        }
-        
         if (topComponent.isOpened()) {
             showTopComponent(topComponent);
             return;
@@ -246,7 +242,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     synchronized private void setController(ImageGalleryController controller) {
         if (notEqual(this.controller, controller)) {
             if (this.controller != null) {
-                this.controller.reset();
+                this.controller.shutDown();
             }
             this.controller = controller;
             Platform.runLater(new Runnable() {
