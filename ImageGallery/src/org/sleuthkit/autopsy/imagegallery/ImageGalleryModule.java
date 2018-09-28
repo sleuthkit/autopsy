@@ -251,11 +251,6 @@ public class ImageGalleryModule {
             }
 
             if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
-                /*
-                 * If a new case has been opened as the current case or the
-                 * current case has been closed, the image gallery controller
-                 * needs to be created or cleaned up.
-                 */
                 synchronized (controllerLock) {
                     if (evt.getNewValue() != null) {
                         /*
