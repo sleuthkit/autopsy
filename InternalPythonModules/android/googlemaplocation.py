@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,8 +67,8 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, "Error parsing Google map locations", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding Google map locations", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding Google map locations.
+            pass
 
     def __findGeoLocationsInDB(self, databasePath, abstractFile):
         if not databasePath:
@@ -78,11 +78,15 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
-        except (ClassNotFoundException, SQLException) as ex:
-            self._logger.log(Level.SEVERE, "Error opening database", ex)
+        except (ClassNotFoundException) as ex:
+            self._logger.log(Level.SEVERE, "Error loading JDBC driver", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+        except (SQLException) as ex:
+            # Error opening database.
+            return
 
+        resultSet = None
         try:
             resultSet = statement.executeQuery(
                 "SELECT time, dest_lat, dest_lng, dest_title, dest_address, source_lat, source_lng FROM destination_history;")
@@ -119,6 +123,9 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index GPS route artifact for keyword search.", artifact.getDisplayName())
 
+        except SQLException as ex:
+            # Unable to execute Google map locations SQL query against database.
+            pass
         except Exception as ex:
             self._logger.log(Level.SEVERE, "Error parsing Google map locations to the blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -129,8 +136,8 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 statement.close()
                 connection.close()
             except Exception as ex:
-                self._logger.log(Level.SEVERE, "Error closing the database", ex)
-                self._logger.log(Level.SEVERE, traceback.format_exc())
+                # Error closing the database.
+                pass
 
     # add periods 6 decimal places before the end.
     @staticmethod
